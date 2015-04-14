@@ -13,16 +13,21 @@ __license__   = """
     limitations under the License.
 """
 
+from .Assignment import Assignment
 from .FastTrips import FastTrips
 from .Logger import FastTripsLogger, setupLogging
+from .Passenger import Passenger
 from .Route import Route
 from .Stop import Stop
+from .TAZ import TAZ
 from .Trip import Trip
 
 __all__ = [
     'FastTrips',
     'FastTripsLogger','setupLogging',
+    'Passenger',
     'Route',
     'Stop',
+    'TAZ',
     'Trip',
 ]

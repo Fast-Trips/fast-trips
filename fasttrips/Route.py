@@ -17,7 +17,7 @@ import pandas
 
 from .Logger import FastTripsLogger
 
-class Route:
+class Route(object):
     """
     Route class.  Documentation forthcoming.
     """
@@ -28,7 +28,7 @@ class Route:
 
     def __init__(self, route_record):
         """
-        Constructor from dictionary mapping attribute to string value.
+        Constructor from dictionary mapping attribute to value.
         """
         #: ID that uniquely identifies a route
         self.route_id           = route_record['routeId'        ]
@@ -48,7 +48,8 @@ class Route:
         self.service_type       = route_record['routeType']
         assert self.service_type in [0,1,2,3,4,5,6]
 
-        #: trip_id -> Trip instance
+        #: These are the :py:class:`fasttrips.Trip` instances that run on this route.
+        #: This a :py:class:`dict` mapping the *trip_id* to a :py:class:`fasttrips.Trip` instance
         self.trips              = {}
 
     def add_trip(self, trip):

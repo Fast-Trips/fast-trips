@@ -12,9 +12,10 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os,sys
+import datetime,os,sys
 import pandas
 
+from .Assignment import Assignment
 from .Logger import FastTripsLogger
 
 class Stop:
@@ -24,15 +25,20 @@ class Stop:
 
     #: File with stops.
     #: TODO document format
-    INPUT_STOPS_FILE = "ft_input_stops.dat"
+    INPUT_STOPS_FILE            = "ft_input_stops.dat"
 
     #: File with transfers.
     #: TODO: document format
-    INPUT_TRANSFERS_FILE = "ft_input_transfers.dat"
+    INPUT_TRANSFERS_FILE        = "ft_input_transfers.dat"
+
+    TRIPS_IDX_TRIP_ID           = 0  #: For accessing parts of :py:attr:`Stop.trips`
+    TRIPS_IDX_SEQUENCE          = 1  #: For accessing parts of :py:attr:`Stop.trips`
+    TRIPS_IDX_ARRIVAL_TIME      = 2  #: For accessing parts of :py:attr:`Stop.trips`
+    TRIPS_IDX_DEPARTURE_TIME    = 3  #: For accessing parts of :py:attr:`Stop.trips`
 
     def __init__(self, stop_record):
         """
-        Constructor from dictionary mapping attribute to string value.
+        Constructor from dictionary mapping attribute to value.
 
         {'stopName': 'AURORA AVE N & N 125TH ST',
          'capacity': 100L,
@@ -41,6 +47,7 @@ class Stop:
          'stopId': 7010L,
          'Latitude': 47.7197151}
         """
+        #: unique stop identifier
         self.stop_id            = stop_record['stopId'          ]
         self.name               = stop_record['stopName'        ]
         self.description        = stop_record['stopDescription' ]
@@ -48,11 +55,25 @@ class Stop:
         self.longitude          = stop_record['Longitude'       ]
         self.capacity           = stop_record['capacity'        ]
 
-        #: destination stop_id -> (transfer_distance, transfer_time)
+        #: These are stops that are transferrable from this stop.
+        #: This is a :py:class:`dict` mapping a destination *stop_id* to
+        #: (transfer_distance, transfer_time), where *transfer_distance* is in miles
+        #: and *transfer_time* is in minutes.
         self.transfers          = {}
 
-        #: routes that I'm part of
+        #: These are TAZs that are accessible from this stop.
+        #: This is a :py:class:`dict` mapping a *taz_id* to
+        #: (walk_dist, walk_time) which are in miles and minutes respectively.
+        self.tazs               = {}
+
+        #: These are the :py:class:`fasttrips.Route` instances that this stop is a part of
         self.routes             = set()
+
+        #: These are the trips this stop is a part of
+        #: This is a list of (trip_id, sequence, arrival time, departure time)
+        #: Use :py:attr:`Stop.TRIPS_IDX_TRIP_ID`, :py:attr:`Stop.TRIPS_IDX_SEQUENCE`,
+        #: :py:attr:`Stop.TRIPS_IDX_ARRIVAL_TIME` and :py:attr:`Stop.TRIPS_IDX_DEPARTURE_TIME` for access.
+        self.trips              = []
 
     def add_transfer(self, transfer_record):
         """
@@ -61,11 +82,50 @@ class Stop:
         # self.stop_id == transfer_record['fromStop']
         self.transfers[transfer_record['toStop']] = (transfer_record['dist'], transfer_record['time'])
 
-    def add_to_trip(self, trip):
+    def add_access_link(self, access_link_record):
+        """
+        Add an access link between this stop and a :py:class:`TAZ` by referencing the *taz_id*.
+        """
+        self.tazs[access_link_record['TAZ']] = (access_link_record['dist'],
+                                                access_link_record['time'])
+
+    def add_to_trip(self, trip, sequence, arrival_time, departure_time):
         """
         Add myself to the given trip.
+
+        :param trip: The trip of which this stop is a part.
+        :type trip: a :py:class:`Trip` instance
+        :param sequence: The sequence number of this stop within the trip
+        :param arrival_time: The arrival time at this stop for this trip.
+        :type arrival_time: a :py:class:`datetime.time` instance
+        :param departure_time: The departure time at this stop for this trip.
+        :type departure_time: a :py:class:`datetime.time` instance
+
         """
+        self.trips.append( (trip.trip_id, sequence, arrival_time, departure_time) )
+        # and route
         self.routes.add(trip.route_id)
+
+    def get_trips_arriving_within_time(self, latest_arrival, time_window):
+        """
+        Return list of [(trip_id, sequence, arrival_time)] where the arrival time is before *latest_arrival* but within *time_window*.
+
+        :param latest_arrival: The latest time the transit vehicle can arrive.
+        :type latest_arrival: a :py:class:`datetime.time` instance
+        :param time_window: The time window extending before *latest_arrival* within which an arrival is valid.
+        :type time_window: a :py:class:`datetime.timedelta` instance
+
+        """
+        to_return = []
+        for trip_record in self.trips:
+            # make this a datetime
+            today_arrival = datetime.datetime.combine(Assignment.TODAY, trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME])
+            if (today_arrival < latest_arrival) and (today_arrival > latest_arrival-time_window):
+               to_return.append( (trip_record[Stop.TRIPS_IDX_SEQUENCE],
+                                  trip_record[Stop.TRIPS_IDX_TRIP_ID],
+                                  trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME]) )
+        return to_return
+
 
     def is_transfer(self):
         """

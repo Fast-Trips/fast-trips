@@ -33,7 +33,6 @@ sys.path.insert(0, os.path.abspath(".."))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
@@ -41,6 +40,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -120,7 +120,7 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'classic'
+html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -297,10 +297,11 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'http://docs.python.org/2.7/': None}
 
 autodoc_default_flags = [ 'members', 'undoc-members', 'private-members', 'inherited-members', 'show-inheritance' ]
+autodoc_member_order = 'groupwise'
 
-autoclass_content = "both" # classes should include both the class' and the __init__ method's docstring
+autoclass_content = "class" # classes should include both the class' and the __init__ method's docstring
 
 autosummary_generate = True

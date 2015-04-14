@@ -18,4 +18,5 @@ if __name__ == "__main__":
 
     fasttrips.setupLogging("ft_info.log", "ft_debug.log", logToConsole=True)
 
-    fasttrips.FastTrips.run_model(INPUT_DIR, OUTPUT_DIR)
+    ft = fasttrips.FastTrips(INPUT_DIR)
+    ft.run_assignment(OUTPUT_DIR)

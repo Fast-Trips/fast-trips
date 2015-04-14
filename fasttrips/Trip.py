@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os,sys
+import datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
@@ -24,17 +24,24 @@ class Trip:
 
     #: File with trips.
     #: TODO document format
-    INPUT_TRIPS_FILE        = "ft_input_trips.dat"
+    INPUT_TRIPS_FILE            = "ft_input_trips.dat"
 
     #: File with stop times
     #: TODO document format
-    INPUT_STOPTIMES_FILE    = "ft_input_stopTimes.dat"
+    INPUT_STOPTIMES_FILE        = "ft_input_stopTimes.dat"
+
+    STOPS_IDX_STOP_ID           = 0  #: For accessing parts of :py:attr:`Trip.stops`
+    STOPS_IDX_ARRIVAL_TIME      = 1  #: For accessing parts of :py:attr:`Trip.stops`
+    STOPS_IDX_DEPARTURE_TIME    = 2  #: For accessing parts of :py:attr:`Trip.stops`
 
     def __init__(self, trip_record, route_id_to_route):
         """
-        Constructor from dictionary mapping attribute to string value.
+        Constructor from dictionary mapping attribute to value.
         """
+        #: unique trip identifier
         self.trip_id        = trip_record['tripId']
+
+        #: corresponds to :py:attr:`fasttrips.Route.route_id`
         self.route_id       = trip_record['routeId']
 
         #: Service type:
@@ -60,22 +67,38 @@ class Trip:
         # Tell the route about me!
         route_id_to_route[self.route_id].add_trip(self)
 
-        # list of (stop_id, arrival time, departure time)
+        #: List of (stop_id, arrival time, departure time)
+        #: Use :py:attr:`Trip.STOPS_IDX_STOP_ID`, :py:attr:`Trip.STOPS_IDX_ARRIVAL_TIME`, and
+        #: :py:attr:`Trip.STOPS_IDX_DEPARTURE_TIME` for access.
+        #: Times are :py:class:`datetime.time` instances.
         self.stops          = []
 
-    def add_stop(self, stop_time_record, stop_id_to_stop):
+    def add_stop_time(self, stop_time_record, stop_id_to_stop):
         """
         Add the stop time information to this trip.
+
+        The times are in HHMMSS format.
+        For example, 60738 = 6:07:38
+
         """
-        # verify they're in sequence
+        # verify they're in sequence and they start at one
         assert(stop_time_record['sequence']) == len(self.stops)+1
+
+        # the sequence is the index
         self.stops.append( (stop_time_record['stopId'],
-                            stop_time_record['arrivalTime'],
-                            stop_time_record['departureTime'])
-                         )
+                            datetime.time(hour = int(stop_time_record['arrivalTime']/10000) % 24,
+                                          minute = int((stop_time_record['arrivalTime'] % 10000)/100),
+                                          second = int(stop_time_record['arrivalTime'] % 100)),
+                            datetime.time(hour = int(stop_time_record['departureTime']/10000) % 24,
+                                          minute = int((stop_time_record['departureTime'] % 10000)/100),
+                                          second = int(stop_time_record['departureTime'] % 100))
+                        ) )
 
         # tell the stop to update accordingly
-        stop_id_to_stop[stop_time_record['stopId']].add_to_trip(self)
+        stop_id_to_stop[stop_time_record['stopId']].add_to_trip(self,
+                                                                stop_time_record['sequence'],
+                                                                self.stops[-1][Trip.STOPS_IDX_ARRIVAL_TIME],
+                                                                self.stops[-1][Trip.STOPS_IDX_DEPARTURE_TIME])
 
     @staticmethod
     def read_trips(input_dir, route_id_to_route):
@@ -108,7 +131,7 @@ class Trip:
         stop_time_records = stop_times_df.to_dict(orient='records')
         for stop_time_record in stop_time_records:
             trip = trip_id_to_trip[stop_time_record['tripId']]
-            trip.add_stop(stop_time_record, stop_id_to_stop)
+            trip.add_stop_time(stop_time_record, stop_id_to_stop)
 
         FastTripsLogger.info("Read %7d stop times" % len(stop_times_df))
 

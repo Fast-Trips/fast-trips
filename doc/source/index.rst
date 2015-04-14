@@ -6,18 +6,33 @@
 Welcome to fasttrips's documentation!
 =====================================
 
+Note that this documentation was generated with Sphinx v1.1.3.
+The current version (v1.3.1) seems to be broken as fars as the
+autosummary toctree is concerned. :(
+
+.. automodule:: fasttrips
+   :no-members:
+   :no-undoc-members:
+   :no-inherited-members:
+   :no-show-inheritance:
+
+autosummary wtf
+---------------
+
+.. currentmodule:: fasttrips
+
 .. autosummary::
    :nosignatures:
    :toctree: _generated
 
-   fasttrips.Logger
-   fasttrips.Assignment
-   fasttrips.Route
-   fasttrips.Stop
-   fasttrips.Trip
+   Assignment
+   FastTrips
+   Passenger
+   Route
+   Stop
+   TAZ
+   Trip
 
-TODOs
-=====
 
 Indices and tables
 ==================
