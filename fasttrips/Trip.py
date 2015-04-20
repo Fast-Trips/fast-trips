@@ -19,7 +19,7 @@ from .Logger import FastTripsLogger
 
 class Trip:
     """
-    Trip class.  Documentation forthcoming.
+    Trip class.  This is a transit vehicle trip.
     """
 
     #: File with trips.
@@ -123,6 +123,8 @@ class Trip:
     def read_stop_times(input_dir, trip_id_to_trip, stop_id_to_stop):
         """
         Read the stop times from the input file in *input_dir*.
+
+        TODO: This loses int types for stop_ids, etc.
         """
         stop_times_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE), sep="\t")
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(stop_times_df.head()))

@@ -12,10 +12,9 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os,sys
+import collections,datetime,os,sys
 import pandas
 
-from .Assignment import Assignment
 from .Logger import FastTripsLogger
 
 class Stop:
@@ -30,6 +29,9 @@ class Stop:
     #: File with transfers.
     #: TODO: document format
     INPUT_TRANSFERS_FILE        = "ft_input_transfers.dat"
+
+    TRANSFERS_IDX_DISTANCE      = 0  #: For accessing parts of :py:attr:`Stop.transfers`
+    TRANSFERS_IDX_TIME          = 1  #: For accessing parts of :py:attr:`Stop.transfers`
 
     TRIPS_IDX_TRIP_ID           = 0  #: For accessing parts of :py:attr:`Stop.trips`
     TRIPS_IDX_SEQUENCE          = 1  #: For accessing parts of :py:attr:`Stop.trips`
@@ -58,8 +60,9 @@ class Stop:
         #: These are stops that are transferrable from this stop.
         #: This is a :py:class:`dict` mapping a destination *stop_id* to
         #: (transfer_distance, transfer_time), where *transfer_distance* is in miles
-        #: and *transfer_time* is in minutes.
-        self.transfers          = {}
+        #: and *transfer_time* is a :py:class:`datetime.timedelta` instance.
+        #: TODO: This can be a dict, just making it an ordered dict for testing
+        self.transfers          = collections.OrderedDict()
 
         #: These are TAZs that are accessible from this stop.
         #: This is a :py:class:`dict` mapping a *taz_id* to
@@ -80,7 +83,8 @@ class Stop:
         Add a transfer from this stop to the stop given in the transfer_record dictionary.
         """
         # self.stop_id == transfer_record['fromStop']
-        self.transfers[transfer_record['toStop']] = (transfer_record['dist'], transfer_record['time'])
+        self.transfers[transfer_record['toStop']] = (transfer_record['dist'],
+                                                     datetime.timedelta(minutes=transfer_record['time']))
 
     def add_access_link(self, access_link_record):
         """
@@ -106,10 +110,13 @@ class Stop:
         # and route
         self.routes.add(trip.route_id)
 
-    def get_trips_arriving_within_time(self, latest_arrival, time_window):
+    def get_trips_arriving_within_time(self, assignment_date, latest_arrival, time_window):
         """
         Return list of [(trip_id, sequence, arrival_time)] where the arrival time is before *latest_arrival* but within *time_window*.
 
+        :param assignment_date: Date to use for assignment (:py:class:`datetime.timedelta` requires :py:class:`datetime.datettime` instances,
+                                and can't just use :py:class:`datetime.time` instances.)
+        :type assignment_date: a :py:class:`datetime.date` instance
         :param latest_arrival: The latest time the transit vehicle can arrive.
         :type latest_arrival: a :py:class:`datetime.time` instance
         :param time_window: The time window extending before *latest_arrival* within which an arrival is valid.
@@ -119,10 +126,10 @@ class Stop:
         to_return = []
         for trip_record in self.trips:
             # make this a datetime
-            today_arrival = datetime.datetime.combine(Assignment.TODAY, trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME])
-            if (today_arrival < latest_arrival) and (today_arrival > latest_arrival-time_window):
-               to_return.append( (trip_record[Stop.TRIPS_IDX_SEQUENCE],
-                                  trip_record[Stop.TRIPS_IDX_TRIP_ID],
+            asgn_arrival = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME])
+            if (asgn_arrival < latest_arrival) and (asgn_arrival > latest_arrival-time_window):
+               to_return.append( (trip_record[Stop.TRIPS_IDX_TRIP_ID],
+                                  trip_record[Stop.TRIPS_IDX_SEQUENCE],
                                   trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME]) )
         return to_return
 

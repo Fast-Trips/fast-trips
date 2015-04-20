@@ -12,10 +12,11 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os,sys
+import os,sys
 import pandas
 
 from .Logger import FastTripsLogger
+from .Path import Path
 
 class Passenger:
     """
@@ -26,9 +27,6 @@ class Passenger:
     #: TODO: document format
     INPUT_DEMAND_FILE = "ft_input_demand.dat"
 
-    DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
-    DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
-
     def __init__(self, passenger_record):
         """
         Constructor from dictionary mapping attribute to value.
@@ -36,31 +34,9 @@ class Passenger:
         #: unique passenger identifier
         self.passenger_id       = passenger_record['passengerID']
 
-        #: identifier for origin TAZ
-        self.origin_taz_id      = passenger_record['OrigTAZ'    ]
-
-        #: identifier for destination TAZ
-        self.destination_taz_id = passenger_record['DestTAZ'    ]
-
-        #: what is this?
-        self.mode               = passenger_record['mode'       ]
-
-        #: Demand time period (e.g. AM, PM, OP)
-        self.time_period        = passenger_record['timePeriod' ]
-
-        #: Should be one of :py:attr:`Passenger.DIR_OUTBOUND` or
-        #: :py:attr:`Passenger.DIR_INBOUND`
-        self.direction          = passenger_record['direction'  ]
-        assert(self.direction in [Passenger.DIR_OUTBOUND, Passenger.DIR_INBOUND])
-
-        #: Preferred arrival time if
-        #: :py:attr:`Passenger.direction` == :py:attr:`Passenger.DIR_OUTBOUND` or
-        #: preferred departure time if
-        #: :py:attr:`Passenger.direction` == :py:attr:`Passenger.DIR_INBOUND`
-        #: This is an instance of :py:class:`datetime.time`
-        pref_time_int           = passenger_record['PAT'        ]
-        self.preferred_time     = datetime.time(hour = int(pref_time_int/60.0),
-                                                minute = pref_time_int % 60)
+        #: the remainder of the input is related to the :py:class:`Path`
+        #: TODO: what about multiple trips for a single passenger?
+        self.path               = Path(passenger_record)
 
     @staticmethod
     def read_demand(input_dir):

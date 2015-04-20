@@ -28,6 +28,7 @@ autosummary wtf
    Assignment
    FastTrips
    Passenger
+   Path
    Route
    Stop
    TAZ

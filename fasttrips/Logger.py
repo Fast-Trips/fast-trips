@@ -40,13 +40,13 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True):
     if infoLogFilename:
         infologhandler = logging.StreamHandler(open(infoLogFilename, 'w'))
         infologhandler.setLevel(logging.INFO)
-        infologhandler.setFormatter(logging.Formatter('%(asctime)s  %(message)s', '%Y-%m-%d %H:%M'))
+        infologhandler.setFormatter(logging.Formatter('%(asctime)s  %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(infologhandler)
 
     if debugLogFilename:
         debugloghandler = logging.StreamHandler(open(debugLogFilename,'w'))
         debugloghandler.setLevel(logging.DEBUG)
-        debugloghandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s', '%Y-%m-%d %H:%M'))
+        debugloghandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(debugloghandler)
 
     if logToConsole:

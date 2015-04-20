@@ -80,4 +80,4 @@ class FastTrips:
 
     def run_assignment(self, output_dir):
         # Do it!
-        Assignment.assign_passengers(output_dir, self);
+        Assignment.assign_paths(output_dir, self);
