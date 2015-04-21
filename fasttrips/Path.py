@@ -14,6 +14,8 @@ __license__   = """
 """
 import collections,datetime
 
+from .Logger import FastTripsLogger
+
 class Path:
     """
     Represents a path for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`
@@ -23,11 +25,11 @@ class Path:
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 
-    STATE_IDX_LABEL     = 0
-    STATE_IDX_DEPARTURE = 1
-    STATE_IDX_DEPMODE   = 2
-    STATE_IDX_SUCCESSOR = 3
-    STATE_IDX_LINKTIME  = 4
+    STATE_IDX_LABEL     = 0  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_DEPARTURE = 1  #: :py:class:`datetime.datetime` instance
+    STATE_IDX_DEPMODE   = 2  #: string or trip identifier
+    STATE_IDX_SUCCESSOR = 3  #: stop identifier or TAZ identifier
+    STATE_IDX_LINKTIME  = 4  #: :py:class:`datetime.timedelta` instance
 
     STATE_MODE_ACCESS   = "Access"
     STATE_MODE_EGRESS   = "Egress"
@@ -75,6 +77,18 @@ class Path:
         """
         return (self.origin_taz_id != self.destination_taz_id)
 
+    def path_found(self):
+        """
+        Was a a transit path found from the origin to the destination with the constraints?
+        """
+        return len(self.states) > 1
+
+    def path_str_header():
+        """
+        The header for the path file.
+        """
+        return "passengerId\tmode\toriginTaz\tdestinationTaz\tstartTime\tboardingStops\tboardingTrips\talightingStops\twalkingTimes"
+
     def path_str(self):
         """
         String output of the path, in legacy format (tab-delimited):
@@ -88,6 +102,8 @@ class Path:
         * alighting stop IDs, comma-delimited and prefixed with 's'
         * access time, sum of transfer times, egress time in number of minutes, comma-delimited
 
+        TODO: fix start time
+        TODO: if the stop_ids and trip_ids are the correct type, no need to cast to int
         """
         boarding_stops  = ""
         boarding_trips  = ""
@@ -97,7 +113,8 @@ class Path:
         egress_time     = 0
         if len(self.states) > 1:
             for state_id,state in self.states.iteritems():
-                # print "%6s: %20s %s %10s %10s %10s" % (str(state_id), str(state[0]), state[1].strftime("%H:%M:%S"), str(state[2]), str(state[3]), str(state[4]))
+                FastTripsLogger.debug("%8s: %17s %s %10s %10s %10s" % (str(state_id), str(state[0]), state[1].strftime("%H:%M:%S"), 
+                                      str(state[2]), str(state[3]), str(state[4])))
 
                 # access
                 if state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_ACCESS:
@@ -117,8 +134,8 @@ class Path:
                                                  int(state_id))
                     boarding_trips += "%st%d" % ("," if len(boarding_trips) > 0 else "",
                                                  int(state[Path.STATE_IDX_DEPMODE]))
-                    alighting_stops += "%ss%s" %("," if len(alighting_stops) > 0 else "",
-                                                 str(state[Path.STATE_IDX_SUCCESSOR]))
+                    alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else "",
+                                                 int(state[Path.STATE_IDX_SUCCESSOR]))
 
         return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
         return_str += "%d\t%s\t%s\t%s\t" % (self.preferred_time.hour*60 + self.preferred_time.minute,

@@ -12,6 +12,9 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+
+from operator import attrgetter
+
 from .Assignment import Assignment
 from .Logger import FastTripsLogger
 from .Passenger import Passenger
@@ -60,8 +63,11 @@ class FastTrips:
         # read trips into those routes
         self.trips = Trip.read_trips(input_dir, self.routes)
 
-        # read the stops and their times into the trips
-        Trip.read_stop_times(input_dir, self.trips, self.stops)
+        # read the stops and their times into the trips and events
+        self.events = Trip.read_stop_times(input_dir, self.trips, self.stops)
+
+        # sort the events
+        self.events.sort(key=attrgetter('event_time', 'event_type', 'trip_id','stop_id'))
 
         transfer_stops = 0
         for stop_id,stop in self.stops.iteritems():
@@ -75,7 +81,7 @@ class FastTrips:
         # read the access links into both the TAZs and the stops involved
         TAZ.read_access_links(input_dir, self.tazs, self.stops)
 
-        # Read the demand
+        # Read the demand int passenger_id -> passenger instance
         self.passengers = Passenger.read_demand(input_dir)
 
     def run_assignment(self, output_dir):

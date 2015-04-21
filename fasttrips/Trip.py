@@ -15,6 +15,7 @@ __license__   = """
 import datetime,os,sys
 import pandas
 
+from .Event import Event
 from .Logger import FastTripsLogger
 
 class Trip:
@@ -99,6 +100,20 @@ class Trip:
                                                                 stop_time_record['sequence'],
                                                                 self.stops[-1][Trip.STOPS_IDX_ARRIVAL_TIME],
                                                                 self.stops[-1][Trip.STOPS_IDX_DEPARTURE_TIME])
+    def calculate_dwell_time(self, number_of_boards, number_of_alights):
+        """
+        Calculates the dwell time at a stop given the nuumber of boards and alights at the stop.
+        Returns a :py:class:`datetime.timedelta` instance.
+
+        TODO: should this be configurable?
+        """
+        if self.service_type == 0:
+            return datetime.timedelta(seconds=30)
+
+        if (number_of_boards>0) or (number_of_alights>0):
+            return datetime.timedelta(seconds=(4+max(4*number_of_boards, 2*number_of_alights)))
+
+        return datetime.timedelta(seconds=0)
 
     @staticmethod
     def read_trips(input_dir, route_id_to_route):
@@ -130,11 +145,16 @@ class Trip:
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(stop_times_df.dtypes))
 
+        events = []
         stop_time_records = stop_times_df.to_dict(orient='records')
         for stop_time_record in stop_time_records:
             trip = trip_id_to_trip[stop_time_record['tripId']]
             trip.add_stop_time(stop_time_record, stop_id_to_stop)
 
-        FastTripsLogger.info("Read %7d stop times" % len(stop_times_df))
+            events.append(Event(stop_time_record, Event.EVENT_TYPE_DEPARTURE))
+            events.append(Event(stop_time_record, Event.EVENT_TYPE_ARRIVAL))
+
+        FastTripsLogger.info("Read %7d stop times and %7d events" % (len(stop_times_df), len(events)))
+        return events
 
 
