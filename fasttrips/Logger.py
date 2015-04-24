@@ -15,12 +15,15 @@ __license__   = """
 
 import logging
 
-__all__ = ['FastTripsLogger', 'setupLogging']
+__all__ = ['FastTripsLogger', 'setupLogging', 'DEBUG_NOISY']
 
 #: This is the instance of :py:class:`Logger` that gets used for all dta logging needs!
 FastTripsLogger = logging.getLogger("FastTripsLogger")
 
-def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True):
+#: Use this for super noisy debugging
+DEBUG_NOISY = 5
+
+def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True, debug_noisy=False):
     """
     Sets up the logger.
 
@@ -29,13 +32,14 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True):
     :param debugLogFilename: debug log file, will receive log messages of level DEBUG or more important.
        Pass None for no debug log file.
     :param logToConsole: if true, INFO and above will also go to the console.
+    :param debug_noisy: to log really noisy debug stuff.
     """
     # already setup - don't setup more
     if len(FastTripsLogger.handlers) == 3:
         return
 
     # create a logger
-    FastTripsLogger.setLevel(logging.DEBUG)
+    FastTripsLogger.setLevel(DEBUG_NOISY if debug_noisy else logging.DEBUG)
 
     if infoLogFilename:
         infologhandler = logging.StreamHandler(open(infoLogFilename, 'w'))
@@ -45,7 +49,7 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True):
 
     if debugLogFilename:
         debugloghandler = logging.StreamHandler(open(debugLogFilename,'w'))
-        debugloghandler.setLevel(logging.DEBUG)
+        debugloghandler.setLevel(DEBUG_NOISY if debug_noisy else logging.DEBUG)
         debugloghandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(debugloghandler)
 
