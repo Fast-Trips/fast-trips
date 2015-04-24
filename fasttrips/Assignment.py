@@ -16,7 +16,7 @@ import Queue
 import collections,datetime,os,sys
 
 from .Event import Event
-from .Logger import FastTripsLogger
+from .Logger import FastTripsLogger, DEBUG_NOISY
 from .Passenger import Passenger
 from .Path import Path
 from .Stop import Stop
@@ -71,33 +71,6 @@ class Assignment:
     #: (minutes from start of day)
     SKIM_END_TIME                   = 600
 
-    #: Route choice configuration: Weight of in-vehicle time
-    IN_VEHICLE_TIME_WEIGHT          = 1.0
-
-    #: Route choice configuration: Weight of waiting time
-    WAIT_TIME_WEIGHT                = 1.77
-
-    #: Route choice configuration: Weight of access walk time
-    WALK_ACCESS_TIME_WEIGHT         = 3.93
-
-    #: Route choice configuration: Weight of egress walk time
-    WALK_EGRESS_TIME_WEIGHT         = 3.93
-
-    #: Route choice configuration: Weight of transfer walking time
-    WALK_TRANSFER_TIME_WEIGHT       = 3.93
-
-    #: Route choice configuration: Weight transfer penalty (minutes)
-    TRANSFER_PENALTY                = 47.73
-
-    #: Route choice configuration: Weight of schedule delay (0 - no penalty)
-    SCHEDULE_DELAY_WEIGHT           = 0.0
-
-    #: Route choice configuration: Fare in dollars per boarding (with no transfer credit)
-    FARE_PER_BOARDING               = 0.0
-
-    #: Route choice configuration: Value of time (dollars per hour)
-    VALUE_OF_TIME                   = 999
-
     #: Route choice configuration: Dispersion parameter in the logit function.
     #: Higher values result in less stochasticity. Must be nonnegative. 
     #: If unknown use a value between 0.5 and 1
@@ -108,6 +81,9 @@ class Assignment:
 
     #: Use this as the date
     TODAY                           = datetime.date.today()
+
+    #: Trace this passenger
+    TRACE_PASSENGER_ID              = -1
 
     @staticmethod
     def read_configuration():
@@ -131,26 +107,41 @@ class Assignment:
             elif Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_DET_ASGN:
 
                 # deterministic assignment
-                num_assign_passengers = Assignment.deterministically_assign_passengers(FT, iteration)
+                num_paths_assigned = Assignment.deterministically_assign_passengers(FT, iteration)
 
             elif Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
                 raise Exception("Stochastic assignment not implemented yet")
 
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
-                Assignment.simulate(FT)
+                num_passengers_arrived = Assignment.simulate(FT)
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                 Assignment.print_passenger_paths(FT, output_dir)
+                Assignment.print_passenger_times(FT, output_dir)
 
             # capacity gap stuff
+            num_bumped_passengers = num_paths_assigned - num_passengers_arrived
+            capacity_gap = 100.0*num_bumped_passengers/num_paths_assigned
+
+            FastTripsLogger.info("  TOTAL ASSIGNED PASSENGERS: %10d" % num_paths_assigned)
+            FastTripsLogger.info("  ARRIVED PASSENGERS:        %10d" % num_passengers_arrived)
+            FastTripsLogger.info("  MISSED PASSENGERS:         %10d" % num_bumped_passengers)
+            FastTripsLogger.info("  CAPACITY GAP:              %10.4f" % capacity_gap)
+
+            if capacity_gap < 0.001 or Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
+                break
 
         # end for loop
+        FastTripsLogger.info("**************************** WRITING OUTPUTS ****************************")
+        Assignment.print_load_profile(FT, output_dir)
 
     @staticmethod
     def deterministically_assign_passengers(FT, iteration):
         """
         Assigns paths to passengers using deterministic trip-based shortest path (TBSP).
+
+        Returns the number of paths assigned.
         """
         FastTripsLogger.info("**************************** GENERATING PATHS ****************************")
         start_time          = datetime.datetime.now()
@@ -163,15 +154,21 @@ class Assignment:
                 # TODO passenger status?
                 pass
 
+            if passenger_id == Assignment.TRACE_PASSENGER_ID:
+                FastTripsLogger.debug("Tracing assignment of passenger %s" % str(passenger_id))
+
             if passenger.path.direction == Path.DIR_OUTBOUND:
 
-                asgn_iters = Assignment.find_backwards_trip_based_shortest_path(FT, passenger.path)
+                asgn_iters = Assignment.find_backwards_trip_based_shortest_path(FT, passenger.path,
+                                                                                passenger_id==Assignment.TRACE_PASSENGER_ID)
 
             elif passenger.direction == Passenger.DIR_INBOUND:
 
-                asgn_iters = Assignment.find_forwards_trip_based_shortest_path(FT, passenger.path)
+                asgn_iters = Assignment.find_forwards_trip_based_shortest_path(FT, passenger.path,
+                                                                               passenger_id==Assignment.TRACE_PASSENGER_ID)
 
-            num_paths_assigned += 1
+            if passenger.path.path_found():
+                num_paths_assigned += 1
 
             if num_paths_assigned % 1000 == 0:
                 time_elapsed = datetime.datetime.now() - start_time
@@ -183,9 +180,10 @@ class Assignment:
                 return
             elif num_paths_assigned % 50 == 0:
                 FastTripsLogger.debug("%6d / %6d passenger paths assigned" % (num_paths_assigned, len(FT.passengers)))
+        return num_paths_assigned
 
     @staticmethod
-    def find_backwards_trip_based_shortest_path(FT, path):
+    def find_backwards_trip_based_shortest_path(FT, path, trace):
         """
         Perform backwards (destination to origin) trip-based shortest path search.
         Updates the path information in the given path and returns the number of label iterations required.
@@ -194,6 +192,8 @@ class Assignment:
         :type FT: a :py:class:`FastTrips` instance
         :param path: the path to fill in
         :type path: a :py:class:`Path` instance
+        :param trace: pass True if this path should be traced to the debug log
+        :type trace: boolean
 
         """
         # reset stuff?
@@ -215,11 +215,16 @@ class Assignment:
                                     path.destination_taz_id,               # successor
                                     access_link[TAZ.ACCESS_LINK_IDX_TIME]) # link time
             stop_queue.put( (access_link[TAZ.ACCESS_LINK_IDX_TIME], stop_id ))
+            if trace: FastTripsLogger.debug("  " + Path.state_str(stop_id, stop_states[stop_id]))
 
         # labeling loop
         label_iterations = 0
         while not stop_queue.empty():
             (current_label, current_stop_id) = stop_queue.get()
+            if trace:
+                FastTripsLogger.debug("Pulling from stop_queue:======")
+                FastTripsLogger.debug("  " + Path.state_str(current_stop_id, stop_states[current_stop_id]))
+                FastTripsLogger.debug("==============================")
 
             # done conditions for this stop
             if current_stop_id in stop_done: continue
@@ -228,7 +233,7 @@ class Assignment:
             current_stop_state = stop_states[current_stop_id]
 
             # Update by transfer
-            # (We don't want to transfer to egress or transfer to a transfer)tg
+            # (We don't want to transfer to egress or transfer to a transfer)
             if current_stop_state[Path.STATE_IDX_DEPMODE] not in [Path.STATE_MODE_EGRESS,Path.STATE_MODE_TRANSFER]:
 
                 for xfer_stop_id,xfer_attr in FT.stops[current_stop_id].transfers.iteritems():
@@ -250,6 +255,7 @@ class Assignment:
                                                      current_stop_id,           # successor
                                                      xfer_attr[Stop.TRANSFERS_IDX_TIME]) # link time
                         stop_queue.put( (new_label, xfer_stop_id) )
+                        if trace: FastTripsLogger.debug("  " + Path.state_str(xfer_stop_id, stop_states[xfer_stop_id]))
 
             # Update by trips
             # These are the trips that arrive at the stop in time to depart on time
@@ -286,6 +292,7 @@ class Assignment:
                                                    current_stop_id, # successor
                                                    in_vehicle_time+wait_time) # link time
                         stop_queue.put( (new_label, board_stop) )
+                        if trace: FastTripsLogger.debug("  " + Path.state_str(board_stop, stop_states[board_stop]))
 
             # Done with this label iteration!
             label_iterations += 1
@@ -298,20 +305,28 @@ class Assignment:
             if stop_id not in stop_states: continue
 
             stop_state      = stop_states[stop_id]
+
+            # first leg has to be a trip
+            if stop_state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_TRANSFER: continue
+            if stop_state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_EGRESS:   continue
+
             new_label       = stop_state[Path.STATE_IDX_LABEL] + access_link[TAZ.ACCESS_LINK_IDX_TIME]
             departure_time  = stop_state[Path.STATE_IDX_DEPARTURE] - access_link[TAZ.ACCESS_LINK_IDX_TIME]
             #?? check (departure mode, stop) in available capacity
 
-            if new_label < taz_state[Path.STATE_IDX_LABEL]:
-                taz_state = (new_label,                 # label,
-                             departure_time,            # departure time
-                             Path.STATE_MODE_ACCESS,    # departure mode
-                             stop_id,                   # successor
-                             access_link[TAZ.ACCESS_LINK_IDX_TIME]) # link time
+            new_taz_state   = (new_label,                 # label,
+                               departure_time,            # departure time
+                               Path.STATE_MODE_ACCESS,    # departure mode
+                               stop_id,                   # successor
+                               access_link[TAZ.ACCESS_LINK_IDX_TIME]) # link time
+            debug_str = ""
+            if new_taz_state[Path.STATE_IDX_LABEL] < taz_state[Path.STATE_IDX_LABEL]:
+                taz_state = new_taz_state
+                if trace: debug_str = " !"
+            if trace: FastTripsLogger.debug("  " + Path.state_str(path.origin_taz_id, new_taz_state) + debug_str)
 
         # Put results into path
         path.states[path.origin_taz_id] = taz_state
-        path
         if taz_state[Path.STATE_IDX_LABEL] != MAX_TIME:
 
             stop_state = taz_state
@@ -329,9 +344,23 @@ class Assignment:
         Print the passenger paths.
         """
         paths_out = open(os.path.join(output_dir, "ft_output_passengerPaths.dat"), 'w')
+        paths_out.write("passengerId\t%s\n" % Path.path_str_header())
         for passenger_id, passenger in FT.passengers.iteritems():
-            paths_out.write("%s\t%s\n" % (str(passenger_id), passenger.path.path_str()))
+            if passenger.path.path_found():
+                paths_out.write("%s\t%s\n" % (str(passenger_id), passenger.path.path_str()))
         paths_out.close()
+
+    @staticmethod
+    def print_passenger_times(FT, output_dir):
+        """
+        Print the passenger times.
+        """
+        times_out = open(os.path.join(output_dir, "ft_output_passengerTimes.dat"), 'w')
+        times_out.write("passengerId\t%s\n" % Path.time_str_header())
+        for passenger_id, passenger in FT.passengers.iteritems():
+            if passenger.path.path_found():
+                times_out.write("%s\t%s\n" % (str(passenger_id), passenger.path.time_str()))
+        times_out.close()
 
     @staticmethod
     def simulate(FT):
@@ -349,9 +378,10 @@ class Assignment:
         transfer_passengers     = []  # passenger ids for passengers who are currently walking or transfering
         bump_wait               = {}  # (trip_id, stop_id) -> earliest time a bumped passenger started waiting
 
-        passenger_arrivals      = collections.defaultdict(list)  # passenger id to [arrival time] at stop
-        passenger_boards        = collections.defaultdict(list)  # passenger id to [board time] at stop
-        passenger_alights       = collections.defaultdict(list)  # passenger id to [alight time] at stop
+        passenger_arrivals      = collections.defaultdict(list)  # passenger id to [arrival time] at stops
+        passenger_boards        = collections.defaultdict(list)  # passenger id to [board time] at stops
+        passenger_alights       = collections.defaultdict(list)  # passenger id to [alight time] at stops
+        passenger_dest_arrivals = {}                             # passenger id to arrival time at destination TAZ
 
         trip_boards             = collections.defaultdict(list)  # trip_id to [number boards per stop]
         trip_alights            = collections.defaultdict(list)  # trip_id to [number alights per stop]
@@ -387,19 +417,19 @@ class Assignment:
 
                     if alight_stop != event.stop_id: continue
 
-                    FastTripsLogger.debug("Event (trip %10d, stop %8d, type %s, time %s)" % 
+                    FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                           (int(event.trip_id), int(event.stop_id), event.event_type, 
                                            event.event_time.strftime("%H:%M:%S")))
-                    FastTripsLogger.debug("Alighting: --------")
-                    FastTripsLogger.debug(FT.passengers[passenger_id].path.path_str())
+                    FastTripsLogger.log(DEBUG_NOISY, "Alighting: --------\n%s" % str(FT.passengers[passenger_id].path))
 
                     passenger_id_to_state[passenger_id] = (PASSENGER_STATUS_WALKING, path_idx+1)
-                    passenger_alights[passenger_id].append(event.event_time)
+                    passenger_alights[passenger_id].append(event_datetime)
                     transfer_passengers.append(passenger_id)
                     trip_pax[event.trip_id].remove(passenger_id)
                     num_alights += 1
 
-                    FastTripsLogger.debug("-> Passenger %s: state: %s" % (str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                    FastTripsLogger.log(DEBUG_NOISY, "Alight @ %s -> Passenger %s: state: %s" % (event_datetime.strftime("%H:%M:%S"),
+                                          str(passenger_id), str(passenger_id_to_state[passenger_id])))
 
                 trip_alights[event.trip_id].append(num_alights)
 
@@ -410,46 +440,60 @@ class Assignment:
 
                     path_idx    = passenger_id_to_state[passenger_id][1]
                     path_state  = FT.passengers[passenger_id].path.states.items()[path_idx][1]
-                    alight_time = path_state[Path.STATE_IDX_DEPARTURE]
-                    walk_time   = path_state[Path.STATE_IDX_LINKTIME]
+                    if path_idx == 0:
+                        alight_time = path_state[Path.STATE_IDX_DEPARTURE]
+                    else:
+                        alight_time = passenger_alights[passenger_id][-1]
+
+                    # transfer to a different stop
+                    if path_state[Path.STATE_IDX_DEPMODE] in [Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]:
+                        walk_time   = path_state[Path.STATE_IDX_LINKTIME]
+                        board_stop  = path_state[Path.STATE_IDX_SUCCESSOR]
+                        new_path_idx= path_idx + 1
+                    else:  # passenger is already here - the board stop is the one path_idx points to
+                        walk_time   = datetime.timedelta()
+                        board_stop  = FT.passengers[passenger_id].path.states.items()[path_idx][0]
+                        new_path_idx= path_idx
                     arrive_time = alight_time + walk_time
 
                     # passenger arrived at boarding stop
                     if event_datetime >= arrive_time:
-                        FastTripsLogger.debug("Event (trip %10d, stop %8d, type %s, time %s)" % 
+                        FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                               (int(event.trip_id), int(event.stop_id), event.event_type, 
                                                event.event_time.strftime("%H:%M:%S")))
-                        FastTripsLogger.debug("Transfer: -------- ")
-                        FastTripsLogger.debug(FT.passengers[passenger_id].path.path_str())
+                        FastTripsLogger.log(DEBUG_NOISY, "Transfer: --------\n%s" % str(FT.passengers[passenger_id].path))
 
                         # arrived at destination
                         if path_state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_EGRESS:
-                            passenger_id_to_state[passenger_id] = (PASSENGER_STATUS_ARRIVED, path_idx+1)
-                            # set end time for path?
-                            passengers_arrived += 1
+                            passenger_id_to_state[passenger_id]     = (PASSENGER_STATUS_ARRIVED, new_path_idx)
+                            passenger_dest_arrivals[passenger_id]   = arrive_time
+                            passengers_arrived                      += 1
 
                         else:
-                            passenger_id_to_state[passenger_id] = (PASSENGER_STATUS_WAITING, path_idx+1)
-                            board_stop  = path_state[Path.STATE_IDX_SUCCESSOR]
+                            passenger_id_to_state[passenger_id] = (PASSENGER_STATUS_WAITING, new_path_idx)
                             stop_pax[board_stop].append(passenger_id)
                             passenger_arrivals[passenger_id].append(arrive_time)
 
                         transfer_passengers.remove(passenger_id)
-                        FastTripsLogger.debug("-> Passenger %s: state: %s" % (str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                        FastTripsLogger.log(DEBUG_NOISY, "Arrive @ %s -> Passenger %s: state: %s" % (arrive_time.strftime("%H:%M:%S"),
+                                              str(passenger_id), str(passenger_id_to_state[passenger_id])))
 
                 # board passengers at this stop
                 num_boards = 0
                 for passenger_id in list(stop_pax[event.stop_id]):
 
+                    path_idx    = passenger_id_to_state[passenger_id][1]
+                    path_state  = FT.passengers[passenger_id].path.states.items()[path_idx][1]
+                    if path_state[Path.STATE_IDX_DEPMODE] != event.trip_id: continue
+
                     available_capacity = FT.trips[event.trip_id].capacity - len(trip_pax[event.trip_id])
 
                     if available_capacity == 0:
 
-                        FastTripsLogger.debug("Event (trip %10d, stop %8d, type %s, time %s)" % 
+                        FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                               (int(event.trip_id), int(event.stop_id), event.event_type, 
                                                event.event_time.strftime("%H:%M:%S")))
-                        FastTripsLogger.debug("Bumping: --------")
-                        FastTripsLogger.debug(FT.passengers[passenger_id].path.path_str())
+                        FastTripsLogger.log(DEBUG_NOISY, "Bumping: --------\n%s" % str(FT.passengers[passenger_id].path))
 
                         passenger_id_to_state[passenger_id] = (PASSENGER_STATE_BUMPED, -1)
 
@@ -460,21 +504,21 @@ class Assignment:
 
                         passengers_bumped += 1
 
-                        FastTripsLogger.debug("-> Passenger %s: state: %s" % (str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                        FastTripsLogger.log(DEBUG_NOISY, "-> Passenger %s: state: %s" % (str(passenger_id), str(passenger_id_to_state[passenger_id])))
                     else:
 
-                        FastTripsLogger.debug("Event (trip %10d, stop %8d, type %s, time %s)" % 
+                        FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                               (int(event.trip_id), int(event.stop_id), event.event_type, 
                                                event.event_time.strftime("%H:%M:%S")))
-                        FastTripsLogger.debug("Boarding: --------")
-                        FastTripsLogger.debug(FT.passengers[passenger_id].path.path_str())
+                        FastTripsLogger.log(DEBUG_NOISY, "Boarding: --------\n%s" % str(FT.passengers[passenger_id].path))
 
                         trip_pax[event.trip_id].append(passenger_id)
                         passenger_id_to_state[passenger_id] = (PASSENGER_STATUS_ON_BOARD, passenger_id_to_state[passenger_id][1])
-                        passenger_boards[passenger_id].append(event.event_time)
+                        passenger_boards[passenger_id].append(event_datetime)
                         num_boards += 1
 
-                        FastTripsLogger.debug("-> Passenger %s: state: %s" % (str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                        FastTripsLogger.log(DEBUG_NOISY, "Board @ %s -> Passenger %s: state: %s" % (event_datetime.strftime("%H:%M:%S"),
+                                              str(passenger_id), str(passenger_id_to_state[passenger_id])))
                     # remove passenger from waiting list
                     stop_pax[event.stop_id].remove(passenger_id)
 
@@ -485,13 +529,37 @@ class Assignment:
                                                                                                trip_alights[event.trip_id][-1]))
 
             events_simulated += 1
-            if events_simulated % 1000 == 0:
+            if events_simulated % 10000 == 0:
                 time_elapsed = datetime.datetime.now() - start_time
                 FastTripsLogger.info(" %6d / %6d events simulated.  Time elapsed: %2dh:%2dm:%2ds" % (
                                      events_simulated, len(FT.events),
                                      int( time_elapsed.total_seconds() / 3600),
                                      int( (time_elapsed.total_seconds() % 3600) / 60),
                                      time_elapsed.total_seconds() % 60))
-                return
-            elif events_simulated % 50 == 0:
-                FastTripsLogger.debug("%6d / %6d events simulated" % (events_simulated, len(FT.events)))
+
+        # Put results into path
+        for passenger_id in FT.passengers.keys():
+            FT.passengers[passenger_id].path.set_experienced_times( \
+                passenger_arrivals[passenger_id],
+                passenger_boards[passenger_id],
+                passenger_alights[passenger_id],
+                passenger_dest_arrivals[passenger_id] if passenger_id in passenger_dest_arrivals else None)
+
+        # and trip
+        for trip_id, trip in FT.trips.iteritems():
+            trip.set_simulation_results(boards  = trip_boards[trip_id],
+                                        alights = trip_alights[trip_id],
+                                        dwells  = trip_dwells[trip_id])
+
+        return passengers_arrived
+
+    @staticmethod
+    def print_load_profile(FT, output_dir):
+        """
+        Print the load profile output
+        """
+        load_file = open(os.path.join(output_dir, "ft_output_loadProfile.dat"), 'w')
+        Trip.write_load_header_to_file(load_file)
+        for trip_id,trip in FT.trips.iteritems():
+            trip.write_load_to_file(load_file)
+        load_file.close()

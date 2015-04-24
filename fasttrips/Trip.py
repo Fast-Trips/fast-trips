@@ -74,6 +74,15 @@ class Trip:
         #: Times are :py:class:`datetime.time` instances.
         self.stops          = []
 
+        #: Simulation results: list of number of boards per stop
+        self.simulated_boards   = None
+
+        #: Simulation results: list of number of alights per stop
+        self.simulated_alights  = None
+
+        #: Simulation results: list of dwell times per stop
+        self.simulated_dwells   = None
+
     def add_stop_time(self, stop_time_record, stop_id_to_stop):
         """
         Add the stop time information to this trip.
@@ -114,6 +123,60 @@ class Trip:
             return datetime.timedelta(seconds=(4+max(4*number_of_boards, 2*number_of_alights)))
 
         return datetime.timedelta(seconds=0)
+
+    def set_simulation_results(self, boards, alights, dwells):
+        """
+        Save these simulation results.
+        """
+        self.simulated_boards   = boards
+        self.simulated_alights  = alights
+        self.simulated_dwells   = dwells
+
+    @staticmethod
+    def write_load_header_to_file(load_file):
+        load_file.write("routeId\tshapeId\ttripId\tdirection\tstopId\ttraveledDist\tdepartureTime\t" +
+                        "headway\tdwellTime\tboardings\talightings\tload\n")
+
+    def write_load_to_file(self, load_file):
+        """
+        Write simulation results to the given file.  Fields are:
+
+        * routeId
+        * shapeId
+        * tripId
+        * direction
+        * stopId
+        * traveled distance -- not implemented, just prints -1
+        * departure time, in minutes from the start of day
+        * headway
+        * dwell time of vehicle at stop in seconds
+        * number of boardings
+        * number of alightings
+        * load
+
+        """
+        stop_idx = 0
+        on_board = 0
+        for stop in self.stops:
+            on_board += self.simulated_boards[stop_idx]
+            on_board -= self.simulated_alights[stop_idx]
+            load_file.write("%s\t%s\t%s\t%s\t%s\t" % \
+                            (str(self.route_id),
+                             str(self.shape_id),
+                             str(self.trip_id),
+                             self.direction_id,
+                             str(stop[Trip.STOPS_IDX_STOP_ID])))
+            load_file.write("-1\t%.3f\t%s\t%f\t%d\t%d\t%f\n" % \
+                            ((stop[Trip.STOPS_IDX_DEPARTURE_TIME].hour*60.0 +
+                              stop[Trip.STOPS_IDX_DEPARTURE_TIME].minute +
+                              stop[Trip.STOPS_IDX_DEPARTURE_TIME].second/60.0),
+                             "0", # todo
+                             self.simulated_dwells[stop_idx].total_seconds(),
+                             self.simulated_boards[stop_idx],
+                             self.simulated_alights[stop_idx],
+                             on_board))
+            stop_idx += 1
+
 
     @staticmethod
     def read_trips(input_dir, route_id_to_route):

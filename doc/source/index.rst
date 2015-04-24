@@ -16,8 +16,8 @@ autosummary toctree is concerned. :(
    :no-inherited-members:
    :no-show-inheritance:
 
-autosummary wtf
----------------
+autosummary
+-----------
 
 .. currentmodule:: fasttrips
 
@@ -26,6 +26,7 @@ autosummary wtf
    :toctree: _generated
 
    Assignment
+   Event
    FastTrips
    Passenger
    Path

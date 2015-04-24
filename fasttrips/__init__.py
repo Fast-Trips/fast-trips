@@ -14,6 +14,7 @@ __license__   = """
 """
 
 from .Assignment import Assignment
+from .Event import Event
 from .FastTrips import FastTrips
 from .Logger import FastTripsLogger, setupLogging
 from .Passenger import Passenger
@@ -24,6 +25,7 @@ from .TAZ import TAZ
 from .Trip import Trip
 
 __all__ = [
+    'Event',
     'FastTrips',
     'FastTripsLogger','setupLogging',
     'Passenger',
