@@ -1,0 +1,49 @@
+fasttrips.Assignment
+====================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Assignment
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Assignment.assign_paths
+      ~Assignment.deterministically_assign_passengers
+      ~Assignment.find_backwards_trip_based_shortest_path
+      ~Assignment.print_load_profile
+      ~Assignment.print_passenger_paths
+      ~Assignment.print_passenger_times
+      ~Assignment.read_configuration
+      ~Assignment.simulate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Assignment.ASSIGNMENT_TYPE
+      ~Assignment.ASSIGNMENT_TYPE_DET_ASGN
+      ~Assignment.ASSIGNMENT_TYPE_SIM_ONLY
+      ~Assignment.ASSIGNMENT_TYPE_STO_ASGN
+      ~Assignment.CAPACITY_CONSTRAINT
+      ~Assignment.CREATE_SKIMS
+      ~Assignment.DISPERSION_PARAMETER
+      ~Assignment.ITERATION_FLAG
+      ~Assignment.OUTPUT_PASSENGER_TRAJECTORIES
+      ~Assignment.PATH_TIME_WINDOW
+      ~Assignment.SIMULATION_FLAG
+      ~Assignment.SKIM_END_TIME
+      ~Assignment.SKIM_START_TIME
+      ~Assignment.TODAY
+      ~Assignment.TRACE_PASSENGER_ID
+   
+   

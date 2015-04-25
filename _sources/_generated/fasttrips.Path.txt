@@ -1,0 +1,55 @@
+fasttrips.Path
+==============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Path
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Path.__init__
+      ~Path.goes_somewhere
+      ~Path.path_found
+      ~Path.path_str
+      ~Path.path_str_header
+      ~Path.set_experienced_times
+      ~Path.state_str
+      ~Path.time_str
+      ~Path.time_str_header
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Path.BUMP_EXPERIENCED_COST
+      ~Path.DIR_INBOUND
+      ~Path.DIR_OUTBOUND
+      ~Path.FARE_PER_BOARDING
+      ~Path.IN_VEHICLE_TIME_WEIGHT
+      ~Path.SCHEDULE_DELAY_WEIGHT
+      ~Path.STATE_IDX_DEPARTURE
+      ~Path.STATE_IDX_DEPMODE
+      ~Path.STATE_IDX_LABEL
+      ~Path.STATE_IDX_LINKTIME
+      ~Path.STATE_IDX_SUCCESSOR
+      ~Path.STATE_MODE_ACCESS
+      ~Path.STATE_MODE_EGRESS
+      ~Path.STATE_MODE_TRANSFER
+      ~Path.TRANSFER_PENALTY
+      ~Path.VALUE_OF_TIME
+      ~Path.WAIT_TIME_WEIGHT
+      ~Path.WALK_ACCESS_TIME_WEIGHT
+      ~Path.WALK_EGRESS_TIME_WEIGHT
+      ~Path.WALK_TRANSFER_TIME_WEIGHT
+   
+   

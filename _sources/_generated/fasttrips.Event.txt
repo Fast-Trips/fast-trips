@@ -1,0 +1,29 @@
+fasttrips.Event
+===============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Event
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Event.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Event.EVENT_TYPE_ARRIVAL
+      ~Event.EVENT_TYPE_DEPARTURE
+   
+   

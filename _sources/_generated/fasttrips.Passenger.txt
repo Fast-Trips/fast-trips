@@ -1,0 +1,29 @@
+fasttrips.Passenger
+===================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Passenger
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Passenger.__init__
+      ~Passenger.read_demand
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Passenger.INPUT_DEMAND_FILE
+   
+   

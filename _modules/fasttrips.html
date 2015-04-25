@@ -1,0 +1,131 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fasttrips &mdash; fasttrips 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for fasttrips</h1><div class="highlight"><pre>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015 Contributing Entities&quot;</span>
+<span class="n">__license__</span>   <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="s">    you may not use this file except in compliance with the License.</span>
+<span class="s">    You may obtain a copy of the License at</span>
+
+<span class="s">        http://www.apache.org/licenses/LICENSE-2.0</span>
+
+<span class="s">    Unless required by applicable law or agreed to in writing, software</span>
+<span class="s">    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="s">    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="s">    See the License for the specific language governing permissions and</span>
+<span class="s">    limitations under the License.</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">.Assignment</span> <span class="kn">import</span> <span class="n">Assignment</span>
+<span class="kn">from</span> <span class="nn">.Event</span> <span class="kn">import</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">.FastTrips</span> <span class="kn">import</span> <span class="n">FastTrips</span>
+<span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span><span class="p">,</span> <span class="n">setupLogging</span>
+<span class="kn">from</span> <span class="nn">.Passenger</span> <span class="kn">import</span> <span class="n">Passenger</span>
+<span class="kn">from</span> <span class="nn">.Path</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">.Route</span> <span class="kn">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">.Stop</span> <span class="kn">import</span> <span class="n">Stop</span>
+<span class="kn">from</span> <span class="nn">.TAZ</span> <span class="kn">import</span> <span class="n">TAZ</span>
+<span class="kn">from</span> <span class="nn">.Trip</span> <span class="kn">import</span> <span class="n">Trip</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">&#39;Event&#39;</span><span class="p">,</span>
+    <span class="s">&#39;FastTrips&#39;</span><span class="p">,</span>
+    <span class="s">&#39;FastTripsLogger&#39;</span><span class="p">,</span><span class="s">&#39;setupLogging&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Passenger&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Path&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Route&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Stop&#39;</span><span class="p">,</span>
+    <span class="s">&#39;TAZ&#39;</span><span class="p">,</span>
+    <span class="s">&#39;Trip&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Lisa Zorn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,505 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fasttrips.Path &mdash; fasttrips 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html" />
+    <link rel="next" title="fasttrips.Route" href="fasttrips.Route.html" />
+    <link rel="prev" title="fasttrips.Passenger" href="fasttrips.Passenger.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.Route.html" title="fasttrips.Route"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.Passenger.html" title="fasttrips.Passenger"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="fasttrips-path">
+<h1>fasttrips.Path<a class="headerlink" href="#fasttrips-path" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fasttrips.Path">
+<em class="property">class </em><tt class="descclassname">fasttrips.</tt><tt class="descname">Path</tt><big>(</big><em>passenger_record</em><big>)</big><a class="headerlink" href="#fasttrips.Path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a path for a passenger from an origin <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><tt class="xref py py-class docutils literal"><span class="pre">TAZ</span></tt></a> to a destination <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><tt class="xref py py-class docutils literal"><span class="pre">TAZ</span></tt></a>
+through a set of stops.</p>
+<dl class="method">
+<dt id="fasttrips.Path.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>passenger_record</em><big>)</big><a class="headerlink" href="#fasttrips.Path.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor from dictionary mapping attribute to value.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(passenger_record)</td>
+<td>Constructor from dictionary mapping attribute to value.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">goes_somewhere</span></tt>()</td>
+<td>Does this path go somewhere?  Does the destination differ from the origin?</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">path_found</span></tt>()</td>
+<td>Was a a transit path found from the origin to the destination with the constraints?</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">path_str</span></tt>()</td>
+<td>String output of the path, in legacy format (tab-delimited):</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">path_str_header</span></tt>()</td>
+<td>The header for the path file.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">set_experienced_times</span></tt>(arrival_times,&nbsp;...)</td>
+<td>Setter for <a class="reference internal" href="#fasttrips.Path.experienced_arrival_times" title="fasttrips.Path.experienced_arrival_times"><tt class="xref py py-attr docutils literal"><span class="pre">Path.experienced_arrival_times</span></tt></a>, <a class="reference internal" href="#fasttrips.Path.experienced_board_times" title="fasttrips.Path.experienced_board_times"><tt class="xref py py-attr docutils literal"><span class="pre">Path.experienced_board_times</span></tt></a>,</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">state_str</span></tt>(state_id,&nbsp;state)</td>
+<td>Returns a readable string version of the given state_id and state, as a single line.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">time_str</span></tt>()</td>
+<td>String output of the experienced times, in legacy format (tab-delimited):</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">time_str_header</span></tt>()</td>
+<td>The header for the time file.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">BUMP_EXPERIENCED_COST</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">DIR_INBOUND</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">DIR_OUTBOUND</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">FARE_PER_BOARDING</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">IN_VEHICLE_TIME_WEIGHT</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">SCHEDULE_DELAY_WEIGHT</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_DEPARTURE</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_DEPMODE</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_LABEL</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_LINKTIME</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_SUCCESSOR</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_ACCESS</span></tt></td>
+<td>str(object=&#8217;&#8216;) -&gt; string</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_EGRESS</span></tt></td>
+<td>str(object=&#8217;&#8216;) -&gt; string</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_TRANSFER</span></tt></td>
+<td>str(object=&#8217;&#8216;) -&gt; string</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">TRANSFER_PENALTY</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">VALUE_OF_TIME</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">WAIT_TIME_WEIGHT</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">WALK_ACCESS_TIME_WEIGHT</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">WALK_EGRESS_TIME_WEIGHT</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">WALK_TRANSFER_TIME_WEIGHT</span></tt></td>
+<td>float(x) -&gt; floating point number</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="fasttrips.Path.goes_somewhere">
+<tt class="descname">goes_somewhere</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Path.goes_somewhere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does this path go somewhere?  Does the destination differ from the origin?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Path.path_found">
+<tt class="descname">path_found</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Path.path_found" title="Permalink to this definition">¶</a></dt>
+<dd><p>Was a a transit path found from the origin to the destination with the constraints?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Path.path_str">
+<tt class="descname">path_str</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Path.path_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>String output of the path, in legacy format (tab-delimited):</p>
+<ul class="simple">
+<li>mode</li>
+<li>origin TAZ</li>
+<li>destination TAZ</li>
+<li>start time, in minutes after midnight</li>
+<li>boarding stop IDs, comma-delimited and prefixed with &#8216;s&#8217;</li>
+<li>boarding trip IDs, comma-delimited and prefixed with &#8216;t&#8217;</li>
+<li>alighting stop IDs, comma-delimited and prefixed with &#8216;s&#8217;</li>
+<li>access time, sum of transfer times, egress time in number of minutes, comma-delimited</li>
+</ul>
+<p>TODO: if the stop_ids and trip_ids are the correct type, no need to cast to int</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Path.path_str_header">
+<em class="property">static </em><tt class="descname">path_str_header</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Path.path_str_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>The header for the path file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Path.set_experienced_times">
+<tt class="descname">set_experienced_times</tt><big>(</big><em>arrival_times</em>, <em>board_times</em>, <em>alight_times</em>, <em>destination_arrival</em><big>)</big><a class="headerlink" href="#fasttrips.Path.set_experienced_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setter for <a class="reference internal" href="#fasttrips.Path.experienced_arrival_times" title="fasttrips.Path.experienced_arrival_times"><tt class="xref py py-attr docutils literal"><span class="pre">Path.experienced_arrival_times</span></tt></a>, <a class="reference internal" href="#fasttrips.Path.experienced_board_times" title="fasttrips.Path.experienced_board_times"><tt class="xref py py-attr docutils literal"><span class="pre">Path.experienced_board_times</span></tt></a>,
+and <a class="reference internal" href="#fasttrips.Path.experienced_alight_times" title="fasttrips.Path.experienced_alight_times"><tt class="xref py py-attr docutils literal"><span class="pre">Path.experienced_alight_times</span></tt></a>.</p>
+<p>If passenger never arrives at destination, pass <em>destination_arrival</em> = <em>None</em>.</p>
+<p>Calculates and set <a class="reference internal" href="#fasttrips.Path.experienced_cost" title="fasttrips.Path.experienced_cost"><tt class="xref py py-attr docutils literal"><span class="pre">Path.experienced_cost</span></tt></a></p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Path.state_str">
+<em class="property">static </em><tt class="descname">state_str</tt><big>(</big><em>state_id</em>, <em>state</em><big>)</big><a class="headerlink" href="#fasttrips.Path.state_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a readable string version of the given state_id and state, as a single line.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Path.time_str">
+<tt class="descname">time_str</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Path.time_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>String output of the experienced times, in legacy format (tab-delimited):</p>
+<ul class="simple">
+<li>mode</li>
+<li>origin TAZ</li>
+<li>destination TAZ</li>
+<li>start time, in minutes after midnight</li>
+<li>end time (arrival at destination), in minutes after midnight</li>
+<li>arrival times at stops, comma-delimited, in minutes after midnight</li>
+<li>boarding times at stops, comma-delimited, in minutes after midnight</li>
+<li>alighting times at stops, comma-delimited, in minutes after midnight</li>
+<li>travel cost</li>
+</ul>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Path.time_str_header">
+<em class="property">static </em><tt class="descname">time_str_header</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Path.time_str_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>The header for the time file.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.BUMP_EXPERIENCED_COST">
+<tt class="descname">BUMP_EXPERIENCED_COST</tt><em class="property"> = 999999</em><a class="headerlink" href="#fasttrips.Path.BUMP_EXPERIENCED_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.DIR_INBOUND">
+<tt class="descname">DIR_INBOUND</tt><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.Path.DIR_INBOUND" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trips inbound to home have preferred departure times</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.DIR_OUTBOUND">
+<tt class="descname">DIR_OUTBOUND</tt><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.Path.DIR_OUTBOUND" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trips outbound from home have preferred arrival times</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.FARE_PER_BOARDING">
+<tt class="descname">FARE_PER_BOARDING</tt><em class="property"> = 0.0</em><a class="headerlink" href="#fasttrips.Path.FARE_PER_BOARDING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Fare in dollars per boarding (with no transfer credit)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.IN_VEHICLE_TIME_WEIGHT">
+<tt class="descname">IN_VEHICLE_TIME_WEIGHT</tt><em class="property"> = 1.0</em><a class="headerlink" href="#fasttrips.Path.IN_VEHICLE_TIME_WEIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight of in-vehicle time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.SCHEDULE_DELAY_WEIGHT">
+<tt class="descname">SCHEDULE_DELAY_WEIGHT</tt><em class="property"> = 0.0</em><a class="headerlink" href="#fasttrips.Path.SCHEDULE_DELAY_WEIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight of schedule delay (0 - no penalty)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_IDX_DEPARTURE">
+<tt class="descname">STATE_IDX_DEPARTURE</tt><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_DEPARTURE" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt></a> instance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_IDX_DEPMODE">
+<tt class="descname">STATE_IDX_DEPMODE</tt><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_DEPMODE" title="Permalink to this definition">¶</a></dt>
+<dd><p>string or trip identifier</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_IDX_LABEL">
+<tt class="descname">STATE_IDX_LABEL</tt><em class="property"> = 0</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_LABEL" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> instance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_IDX_LINKTIME">
+<tt class="descname">STATE_IDX_LINKTIME</tt><em class="property"> = 4</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_LINKTIME" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> instance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_IDX_SUCCESSOR">
+<tt class="descname">STATE_IDX_SUCCESSOR</tt><em class="property"> = 3</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_SUCCESSOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>stop identifier or TAZ identifier</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_MODE_ACCESS">
+<tt class="descname">STATE_MODE_ACCESS</tt><em class="property"> = 'Access'</em><a class="headerlink" href="#fasttrips.Path.STATE_MODE_ACCESS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_MODE_EGRESS">
+<tt class="descname">STATE_MODE_EGRESS</tt><em class="property"> = 'Egress'</em><a class="headerlink" href="#fasttrips.Path.STATE_MODE_EGRESS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.STATE_MODE_TRANSFER">
+<tt class="descname">STATE_MODE_TRANSFER</tt><em class="property"> = 'Transfer'</em><a class="headerlink" href="#fasttrips.Path.STATE_MODE_TRANSFER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.TRANSFER_PENALTY">
+<tt class="descname">TRANSFER_PENALTY</tt><em class="property"> = 47.73</em><a class="headerlink" href="#fasttrips.Path.TRANSFER_PENALTY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight transfer penalty (minutes)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.VALUE_OF_TIME">
+<tt class="descname">VALUE_OF_TIME</tt><em class="property"> = 999</em><a class="headerlink" href="#fasttrips.Path.VALUE_OF_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Value of time (dollars per hour)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.WAIT_TIME_WEIGHT">
+<tt class="descname">WAIT_TIME_WEIGHT</tt><em class="property"> = 1.77</em><a class="headerlink" href="#fasttrips.Path.WAIT_TIME_WEIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight of waiting time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.WALK_ACCESS_TIME_WEIGHT">
+<tt class="descname">WALK_ACCESS_TIME_WEIGHT</tt><em class="property"> = 3.93</em><a class="headerlink" href="#fasttrips.Path.WALK_ACCESS_TIME_WEIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight of access walk time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.WALK_EGRESS_TIME_WEIGHT">
+<tt class="descname">WALK_EGRESS_TIME_WEIGHT</tt><em class="property"> = 3.93</em><a class="headerlink" href="#fasttrips.Path.WALK_EGRESS_TIME_WEIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight of egress walk time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT">
+<tt class="descname">WALK_TRANSFER_TIME_WEIGHT</tt><em class="property"> = 3.93</em><a class="headerlink" href="#fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Weight of transfer walking time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.destination_taz_id">
+<tt class="descname">destination_taz_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.destination_taz_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>identifier for destination TAZ</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.direction">
+<tt class="descname">direction</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.direction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should be one of <a class="reference internal" href="#fasttrips.Path.DIR_OUTBOUND" title="fasttrips.Path.DIR_OUTBOUND"><tt class="xref py py-attr docutils literal"><span class="pre">Path.DIR_OUTBOUND</span></tt></a> or
+<a class="reference internal" href="#fasttrips.Path.DIR_INBOUND" title="fasttrips.Path.DIR_INBOUND"><tt class="xref py py-attr docutils literal"><span class="pre">Path.DIR_INBOUND</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.experienced_alight_times">
+<tt class="descname">experienced_alight_times</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.experienced_alight_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Experienced times alighting from vehicle.  List of <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.experienced_arrival_times">
+<tt class="descname">experienced_arrival_times</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.experienced_arrival_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Experienced times arriving at a stop.  List of <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.experienced_board_times">
+<tt class="descname">experienced_board_times</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.experienced_board_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Experienced times boarding a vehicle.  List of <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.experienced_cost">
+<tt class="descname">experienced_cost</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.experienced_cost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Experienced cost in weighted minutes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.experienced_destination_arrival">
+<tt class="descname">experienced_destination_arrival</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.experienced_destination_arrival" title="Permalink to this definition">¶</a></dt>
+<dd><p>Experienced arrival time at destination. A <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.mode">
+<tt class="descname">mode</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>what is this?</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.origin_taz_id">
+<tt class="descname">origin_taz_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.origin_taz_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>identifier for origin TAZ</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.pref_time_int">
+<tt class="descname">pref_time_int</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.pref_time_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preferred arrival time if
+<a class="reference internal" href="#fasttrips.Path.direction" title="fasttrips.Path.direction"><tt class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></tt></a> == <a class="reference internal" href="#fasttrips.Path.DIR_OUTBOUND" title="fasttrips.Path.DIR_OUTBOUND"><tt class="xref py py-attr docutils literal"><span class="pre">Path.DIR_OUTBOUND</span></tt></a> or
+preferred departure time if
+<a class="reference internal" href="#fasttrips.Path.direction" title="fasttrips.Path.direction"><tt class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></tt></a> == <a class="reference internal" href="#fasttrips.Path.DIR_INBOUND" title="fasttrips.Path.DIR_INBOUND"><tt class="xref py py-attr docutils literal"><span class="pre">Path.DIR_INBOUND</span></tt></a>
+This is an instance of <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.states">
+<tt class="descname">states</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.states" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will include the stops and their related states
+Ordered dictionary: origin_taz_id -&gt; state,</p>
+<blockquote>
+<div>stop_id -&gt; state</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.time_period">
+<tt class="descname">time_period</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.time_period" title="Permalink to this definition">¶</a></dt>
+<dd><p>Demand time period (e.g. AM, PM, OP)</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="fasttrips.Passenger.html"
+                        title="previous chapter">fasttrips.Passenger</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="fasttrips.Route.html"
+                        title="next chapter">fasttrips.Route</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/_generated/fasttrips.Path.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.Route.html" title="fasttrips.Route"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.Passenger.html" title="fasttrips.Passenger"
+             >previous</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Lisa Zorn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

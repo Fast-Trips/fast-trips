@@ -1,0 +1,30 @@
+fasttrips.Route
+===============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Route
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Route.__init__
+      ~Route.add_trip
+      ~Route.read_routes
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Route.INPUT_ROUTES_FILE
+   
+   

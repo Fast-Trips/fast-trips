@@ -1,0 +1,339 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fasttrips.Trip &mdash; fasttrips 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html" />
+    <link rel="prev" title="fasttrips.TAZ" href="fasttrips.TAZ.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.TAZ.html" title="fasttrips.TAZ"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="fasttrips-trip">
+<h1>fasttrips.Trip<a class="headerlink" href="#fasttrips-trip" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fasttrips.Trip">
+<em class="property">class </em><tt class="descclassname">fasttrips.</tt><tt class="descname">Trip</tt><big>(</big><em>trip_record</em>, <em>route_id_to_route</em><big>)</big><a class="headerlink" href="#fasttrips.Trip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trip class.  This is a transit vehicle trip.</p>
+<dl class="method">
+<dt id="fasttrips.Trip.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>trip_record</em>, <em>route_id_to_route</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor from dictionary mapping attribute to value.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(trip_record,&nbsp;route_id_to_route)</td>
+<td>Constructor from dictionary mapping attribute to value.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">add_stop_time</span></tt>(stop_time_record,&nbsp;stop_id_to_stop)</td>
+<td>Add the stop time information to this trip.</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">calculate_dwell_time</span></tt>(number_of_boards,&nbsp;...)</td>
+<td>Calculates the dwell time at a stop given the nuumber of boards and alights at the stop.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">read_stop_times</span></tt>(input_dir,&nbsp;trip_id_to_trip,&nbsp;...)</td>
+<td>Read the stop times from the input file in <em>input_dir</em>.</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">read_trips</span></tt>(input_dir,&nbsp;route_id_to_route)</td>
+<td>Read the trips from the input file in <em>input_dir</em>.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">set_simulation_results</span></tt>(boards,&nbsp;alights,&nbsp;dwells)</td>
+<td>Save these simulation results.</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">write_load_header_to_file</span></tt>(load_file)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">write_load_to_file</span></tt>(load_file)</td>
+<td>Write simulation results to the given file.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">INPUT_STOPTIMES_FILE</span></tt></td>
+<td>str(object=&#8217;&#8216;) -&gt; string</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">INPUT_TRIPS_FILE</span></tt></td>
+<td>str(object=&#8217;&#8216;) -&gt; string</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">STOPS_IDX_ARRIVAL_TIME</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">STOPS_IDX_DEPARTURE_TIME</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">STOPS_IDX_STOP_ID</span></tt></td>
+<td>int(x=0) -&gt; int or long</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="fasttrips.Trip.add_stop_time">
+<tt class="descname">add_stop_time</tt><big>(</big><em>stop_time_record</em>, <em>stop_id_to_stop</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.add_stop_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the stop time information to this trip.</p>
+<p>The times are in HHMMSS format.
+For example, 60738 = 6:07:38</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Trip.calculate_dwell_time">
+<tt class="descname">calculate_dwell_time</tt><big>(</big><em>number_of_boards</em>, <em>number_of_alights</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.calculate_dwell_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the dwell time at a stop given the nuumber of boards and alights at the stop.
+Returns a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> instance.</p>
+<p>TODO: should this be configurable?</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Trip.read_stop_times">
+<em class="property">static </em><tt class="descname">read_stop_times</tt><big>(</big><em>input_dir</em>, <em>trip_id_to_trip</em>, <em>stop_id_to_stop</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.read_stop_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the stop times from the input file in <em>input_dir</em>.</p>
+<p>TODO: This loses int types for stop_ids, etc.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Trip.read_trips">
+<em class="property">static </em><tt class="descname">read_trips</tt><big>(</big><em>input_dir</em>, <em>route_id_to_route</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.read_trips" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the trips from the input file in <em>input_dir</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Trip.set_simulation_results">
+<tt class="descname">set_simulation_results</tt><big>(</big><em>boards</em>, <em>alights</em>, <em>dwells</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.set_simulation_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save these simulation results.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Trip.write_load_header_to_file">
+<em class="property">static </em><tt class="descname">write_load_header_to_file</tt><big>(</big><em>load_file</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.write_load_header_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Trip.write_load_to_file">
+<tt class="descname">write_load_to_file</tt><big>(</big><em>load_file</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.write_load_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write simulation results to the given file.  Fields are:</p>
+<ul class="simple">
+<li>routeId</li>
+<li>shapeId</li>
+<li>tripId</li>
+<li>direction</li>
+<li>stopId</li>
+<li>traveled distance &#8211; not implemented, just prints -1</li>
+<li>departure time, in minutes from the start of day</li>
+<li>headway</li>
+<li>dwell time of vehicle at stop in seconds</li>
+<li>number of boardings</li>
+<li>number of alightings</li>
+<li>load</li>
+</ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.INPUT_STOPTIMES_FILE">
+<tt class="descname">INPUT_STOPTIMES_FILE</tt><em class="property"> = 'ft_input_stopTimes.dat'</em><a class="headerlink" href="#fasttrips.Trip.INPUT_STOPTIMES_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with stop times
+TODO document format</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.INPUT_TRIPS_FILE">
+<tt class="descname">INPUT_TRIPS_FILE</tt><em class="property"> = 'ft_input_trips.dat'</em><a class="headerlink" href="#fasttrips.Trip.INPUT_TRIPS_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with trips.
+TODO document format</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.STOPS_IDX_ARRIVAL_TIME">
+<tt class="descname">STOPS_IDX_ARRIVAL_TIME</tt><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.Trip.STOPS_IDX_ARRIVAL_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><p>For accessing parts of <a class="reference internal" href="#fasttrips.Trip.stops" title="fasttrips.Trip.stops"><tt class="xref py py-attr docutils literal"><span class="pre">Trip.stops</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.STOPS_IDX_DEPARTURE_TIME">
+<tt class="descname">STOPS_IDX_DEPARTURE_TIME</tt><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.Trip.STOPS_IDX_DEPARTURE_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><p>For accessing parts of <a class="reference internal" href="#fasttrips.Trip.stops" title="fasttrips.Trip.stops"><tt class="xref py py-attr docutils literal"><span class="pre">Trip.stops</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.STOPS_IDX_STOP_ID">
+<tt class="descname">STOPS_IDX_STOP_ID</tt><em class="property"> = 0</em><a class="headerlink" href="#fasttrips.Trip.STOPS_IDX_STOP_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>For accessing parts of <a class="reference internal" href="#fasttrips.Trip.stops" title="fasttrips.Trip.stops"><tt class="xref py py-attr docutils literal"><span class="pre">Trip.stops</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.capacity">
+<tt class="descname">capacity</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.capacity" title="Permalink to this definition">¶</a></dt>
+<dd><p>The vehicle capacity for the trip</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.direction_id">
+<tt class="descname">direction_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.direction_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>binary varlue (0 or 1) indicating the direction of the trip</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.route_id">
+<tt class="descname">route_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.route_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>corresponds to <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route.route_id" title="fasttrips.Route.route_id"><tt class="xref py py-attr docutils literal"><span class="pre">fasttrips.Route.route_id</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.service_type">
+<tt class="descname">service_type</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.service_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Service type:
+0 - Tram, streetcar, light rail
+1 - Subway, metro
+2 - Rail
+3 - Bus
+4 - Ferry
+5 - Cable car
+6 - Gondola, suspended cable car</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.shape_id">
+<tt class="descname">shape_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.shape_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>ID that defines a shape for the trip</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.simulated_alights">
+<tt class="descname">simulated_alights</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.simulated_alights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulation results: list of number of alights per stop</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.simulated_boards">
+<tt class="descname">simulated_boards</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.simulated_boards" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulation results: list of number of boards per stop</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.simulated_dwells">
+<tt class="descname">simulated_dwells</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.simulated_dwells" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulation results: list of dwell times per stop</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.stops">
+<tt class="descname">stops</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.stops" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of (stop_id, arrival time, departure time)
+Use <a class="reference internal" href="#fasttrips.Trip.STOPS_IDX_STOP_ID" title="fasttrips.Trip.STOPS_IDX_STOP_ID"><tt class="xref py py-attr docutils literal"><span class="pre">Trip.STOPS_IDX_STOP_ID</span></tt></a>, <a class="reference internal" href="#fasttrips.Trip.STOPS_IDX_ARRIVAL_TIME" title="fasttrips.Trip.STOPS_IDX_ARRIVAL_TIME"><tt class="xref py py-attr docutils literal"><span class="pre">Trip.STOPS_IDX_ARRIVAL_TIME</span></tt></a>, and
+<a class="reference internal" href="#fasttrips.Trip.STOPS_IDX_DEPARTURE_TIME" title="fasttrips.Trip.STOPS_IDX_DEPARTURE_TIME"><tt class="xref py py-attr docutils literal"><span class="pre">Trip.STOPS_IDX_DEPARTURE_TIME</span></tt></a> for access.
+Times are <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instances.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.trip_id">
+<tt class="descname">trip_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Trip.trip_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>unique trip identifier</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="fasttrips.TAZ.html"
+                        title="previous chapter">fasttrips.TAZ</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/_generated/fasttrips.Trip.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.TAZ.html" title="fasttrips.TAZ"
+             >previous</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Lisa Zorn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

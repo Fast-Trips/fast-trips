@@ -1,0 +1,24 @@
+fasttrips.FastTrips
+===================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: FastTrips
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~FastTrips.__init__
+      ~FastTrips.read_input_files
+      ~FastTrips.run_assignment
+   
+   
+
+   
+   
+   

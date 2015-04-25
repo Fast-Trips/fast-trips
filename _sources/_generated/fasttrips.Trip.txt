@@ -1,0 +1,39 @@
+fasttrips.Trip
+==============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Trip
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Trip.__init__
+      ~Trip.add_stop_time
+      ~Trip.calculate_dwell_time
+      ~Trip.read_stop_times
+      ~Trip.read_trips
+      ~Trip.set_simulation_results
+      ~Trip.write_load_header_to_file
+      ~Trip.write_load_to_file
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Trip.INPUT_STOPTIMES_FILE
+      ~Trip.INPUT_TRIPS_FILE
+      ~Trip.STOPS_IDX_ARRIVAL_TIME
+      ~Trip.STOPS_IDX_DEPARTURE_TIME
+      ~Trip.STOPS_IDX_STOP_ID
+   
+   

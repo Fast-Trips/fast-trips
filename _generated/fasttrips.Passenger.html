@@ -1,0 +1,183 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>fasttrips.Passenger &mdash; fasttrips 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html" />
+    <link rel="next" title="fasttrips.Path" href="fasttrips.Path.html" />
+    <link rel="prev" title="fasttrips.FastTrips" href="fasttrips.FastTrips.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.Path.html" title="fasttrips.Path"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.FastTrips.html" title="fasttrips.FastTrips"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="fasttrips-passenger">
+<h1>fasttrips.Passenger<a class="headerlink" href="#fasttrips-passenger" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fasttrips.Passenger">
+<em class="property">class </em><tt class="descclassname">fasttrips.</tt><tt class="descname">Passenger</tt><big>(</big><em>passenger_record</em><big>)</big><a class="headerlink" href="#fasttrips.Passenger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Passenger class.  Documentation forthcoming.</p>
+<dl class="method">
+<dt id="fasttrips.Passenger.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>passenger_record</em><big>)</big><a class="headerlink" href="#fasttrips.Passenger.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor from dictionary mapping attribute to value.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(passenger_record)</td>
+<td>Constructor from dictionary mapping attribute to value.</td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">read_demand</span></tt>(input_dir)</td>
+<td>Read the demand from the input file in <em>input_dir</em>.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">INPUT_DEMAND_FILE</span></tt></td>
+<td>str(object=&#8217;&#8216;) -&gt; string</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="fasttrips.Passenger.read_demand">
+<em class="property">static </em><tt class="descname">read_demand</tt><big>(</big><em>input_dir</em><big>)</big><a class="headerlink" href="#fasttrips.Passenger.read_demand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the demand from the input file in <em>input_dir</em>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.INPUT_DEMAND_FILE">
+<tt class="descname">INPUT_DEMAND_FILE</tt><em class="property"> = 'ft_input_demand.dat'</em><a class="headerlink" href="#fasttrips.Passenger.INPUT_DEMAND_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with demand
+TODO: document format</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.passenger_id">
+<tt class="descname">passenger_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Passenger.passenger_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>unique passenger identifier</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.path">
+<tt class="descname">path</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Passenger.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>the remainder of the input is related to the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><tt class="xref py py-class docutils literal"><span class="pre">Path</span></tt></a>
+TODO: what about multiple trips for a single passenger?</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="fasttrips.FastTrips.html"
+                        title="previous chapter">fasttrips.FastTrips</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="fasttrips.Path.html"
+                        title="next chapter">fasttrips.Path</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/_generated/fasttrips.Passenger.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.Path.html" title="fasttrips.Path"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="fasttrips.FastTrips.html" title="fasttrips.FastTrips"
+             >previous</a> |</li>
+        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Lisa Zorn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

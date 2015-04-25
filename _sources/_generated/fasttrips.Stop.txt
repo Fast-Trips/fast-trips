@@ -1,0 +1,42 @@
+fasttrips.Stop
+==============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Stop
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Stop.__init__
+      ~Stop.add_access_link
+      ~Stop.add_to_trip
+      ~Stop.add_transfer
+      ~Stop.get_trips_arriving_within_time
+      ~Stop.is_transfer
+      ~Stop.read_stops
+      ~Stop.read_transfers
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Stop.INPUT_STOPS_FILE
+      ~Stop.INPUT_TRANSFERS_FILE
+      ~Stop.TRANSFERS_IDX_DISTANCE
+      ~Stop.TRANSFERS_IDX_TIME
+      ~Stop.TRIPS_IDX_ARRIVAL_TIME
+      ~Stop.TRIPS_IDX_DEPARTURE_TIME
+      ~Stop.TRIPS_IDX_SEQUENCE
+      ~Stop.TRIPS_IDX_TRIP_ID
+   
+   
