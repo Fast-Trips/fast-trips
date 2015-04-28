@@ -219,8 +219,9 @@ class Path:
         alighting_stops = ""
         start_time      = self.preferred_time
         access_time     = 0
-        transfer_time   = 0.0
+        transfer_time   = ""
         egress_time     = 0
+        prev_mode       = None
         if len(self.states) > 1:
             for state_id,state in self.states.iteritems():
                 # access
@@ -230,7 +231,7 @@ class Path:
 
                 # transfer
                 elif state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_TRANSFER:
-                    transfer_time  += state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0
+                    transfer_time  += ",%.2f" % (state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0)
 
                 # egress
                 elif state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_EGRESS:
@@ -244,13 +245,19 @@ class Path:
                                                  int(state[Path.STATE_IDX_DEPMODE]))
                     alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else "",
                                                  int(state[Path.STATE_IDX_SUCCESSOR]))
+                    # if the prev_mode is a trip link then we had a no-walk transfer
+                    if prev_mode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
+                        transfer_time  += ",%.2f" % 0
+
+                prev_mode = state[Path.STATE_IDX_DEPMODE]
 
         return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
         return_str += "%.2f\t%s\t%s\t%s\t" % (start_time.hour*60.0 + start_time.minute + start_time.second/60.0,
                                             boarding_stops,
                                             boarding_trips,
                                             alighting_stops)
-        return_str += "%.2f,%.2f,%.2f" % (access_time, transfer_time, egress_time)
+        # no transfers: access, trip egress
+        return_str += "%.2f%s,%.2f" % (access_time, transfer_time, egress_time)
         return return_str
 
     def time_str(self):
