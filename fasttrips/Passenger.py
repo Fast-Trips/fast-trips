@@ -27,6 +27,13 @@ class Passenger:
     #: TODO: document format
     INPUT_DEMAND_FILE = "ft_input_demand.dat"
 
+    STATUS_INITIAL    = 0
+    STATUS_WALKING    = 1
+    STATUS_WAITING    = 2
+    STATUS_ON_BOARD   = 3
+    STATUS_BUMPED     = 4 #: bumped: couldn't board because vehicle is full
+    STATUS_ARRIVED    = 5 #: arrived at destination
+
     def __init__(self, passenger_record):
         """
         Constructor from dictionary mapping attribute to value.
@@ -37,6 +44,18 @@ class Passenger:
         #: the remainder of the input is related to the :py:class:`Path`
         #: TODO: what about multiple trips for a single passenger?
         self.path               = Path(passenger_record)
+
+        #: Simulation status.  One of :py:attr:`STATUS_INITIAL`, :py:attr:`STATUS_WALKING`,
+        #: :py:attr:`STATUS_WAITING`, :py:attr:`STATUS_ON_BOARD`, :py:attr:`STATUS_BUMPED`,
+        #: :py:attr:`STATUS_ARRIVED`
+        self.simulation_status  = Passenger.STATUS_INITIAL
+
+    def set_experienced_status_and_times(self, status, arrival_times, board_times, alight_times, destination_arrival):
+        """
+        Setter for :py:attr:`Passenger.simulation_status`.  Passes times through to :py:meth:`Path.set_experienced_times`
+        """
+        self.simulation_status = status
+        self.path.set_experienced_times(arrival_times, board_times, alight_times, destination_arrival)
 
     @staticmethod
     def read_demand(input_dir):
