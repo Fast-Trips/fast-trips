@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os,sys
+import collections,datetime,os,sys
 import pandas
 
 from .Event import Event
@@ -166,11 +166,11 @@ class Trip:
                              str(self.trip_id),
                              self.direction_id,
                              str(stop[Trip.STOPS_IDX_STOP_ID])))
-            load_file.write("-1\t%.3f\t%s\t%f\t%d\t%d\t%f\n" % \
+            load_file.write("-1\t%.3f\t%s\t%d\t%d\t%d\t%d\n" % \
                             ((stop[Trip.STOPS_IDX_DEPARTURE_TIME].hour*60.0 +
                               stop[Trip.STOPS_IDX_DEPARTURE_TIME].minute +
                               stop[Trip.STOPS_IDX_DEPARTURE_TIME].second/60.0),
-                             "0", # todo
+                             "0", # todo headway
                              self.simulated_dwells[stop_idx].total_seconds(),
                              self.simulated_boards[stop_idx],
                              self.simulated_alights[stop_idx],
@@ -187,7 +187,7 @@ class Trip:
         FastTripsLogger.debug("=========== TRIPS ===========\n" + str(trips_df.head()))
         FastTripsLogger.debug("\n"+str(trips_df.dtypes))
 
-        trip_id_to_trip = {}
+        trip_id_to_trip = collections.OrderedDict()
         trip_records = trips_df.to_dict(orient='records')
         for trip_record in trip_records:
             trip = Trip(trip_record, route_id_to_route)
