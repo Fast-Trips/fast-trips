@@ -81,10 +81,14 @@ class Stop:
     def add_transfer(self, transfer_record):
         """
         Add a transfer from this stop to the stop given in the transfer_record dictionary.
+
+        .. todo: Original code replaces transfer time with calculated time assuming 3 mph walk speed.  Remove this?
+
         """
         # self.stop_id == transfer_record['fromStop']
         self.transfers[transfer_record['toStop']] = (transfer_record['dist'],
-                                                     datetime.timedelta(minutes=transfer_record['time']))
+                                                     datetime.timedelta(minutes=transfer_record['dist']*(60.0/3.0)))
+                                                     # datetime.timedelta(minutes=transfer_record['time']))
 
     def add_access_link(self, access_link_record):
         """

@@ -19,4 +19,6 @@ if __name__ == "__main__":
     fasttrips.setupLogging("ft_info.log", "ft_debug.log", logToConsole=True, debug_noisy=False)
 
     ft = fasttrips.FastTrips(INPUT_DIR)
+    fasttrips.Assignment.CAPACITY_CONSTRAINT = True
+    fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_STO_ASGN
     ft.run_assignment(OUTPUT_DIR)

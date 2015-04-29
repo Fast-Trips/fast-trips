@@ -56,6 +56,8 @@ class Path:
     STATE_IDX_DEPMODE   = 2  #: string or trip identifier
     STATE_IDX_SUCCESSOR = 3  #: stop identifier or TAZ identifier
     STATE_IDX_LINKTIME  = 4  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_COST      = 5  #: cost float, for hyperpath/stochastic assignment
+    STATE_IDX_ARRIVAL   = 6  #: arrival time, a :py:class:`datetime.datetime` instance, for hyperpath/stochastic assignment
 
     STATE_MODE_ACCESS   = "Access"
     STATE_MODE_EGRESS   = "Egress"
@@ -169,12 +171,26 @@ class Path:
         """
         Returns a readable string version of the given state_id and state, as a single line.
         """
-        return "%8s: %-17s %s %10s %10s %-17s" % (str(state_id),
-                                                str(state[Path.STATE_IDX_LABEL]),
-                                                state[Path.STATE_IDX_DEPARTURE].strftime("%H:%M:%S"),
-                                                str(state[Path.STATE_IDX_DEPMODE]),
-                                                str(state[Path.STATE_IDX_SUCCESSOR]),
-                                                str(state[Path.STATE_IDX_LINKTIME]))
+        # deterministic
+        if len(state) == 5:
+            return "%8s: %-17s  %s %10s %10s %-17s" % \
+            (str(state_id),
+             str(state[Path.STATE_IDX_LABEL]),
+             state[Path.STATE_IDX_DEPARTURE].strftime("%H:%M:%S"),
+             str(state[Path.STATE_IDX_DEPMODE]),
+             str(state[Path.STATE_IDX_SUCCESSOR]),
+             str(state[Path.STATE_IDX_LINKTIME]))
+
+        # stochastic
+        return "%8s: %8.4f  %s %10s %10s  %-17s %12.4f  %s" % \
+            (str(state_id),
+             state[Path.STATE_IDX_LABEL],
+             state[Path.STATE_IDX_DEPARTURE].strftime("%H:%M:%S"),
+             str(state[Path.STATE_IDX_DEPMODE]),
+             str(state[Path.STATE_IDX_SUCCESSOR]),
+             str(state[Path.STATE_IDX_LINKTIME]),
+             state[Path.STATE_IDX_COST],
+             state[Path.STATE_IDX_ARRIVAL].strftime("%H.%M:%S"))
 
     def __str__(self):
         """
