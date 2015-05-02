@@ -109,6 +109,15 @@ class Trip:
                                                                 stop_time_record['sequence'],
                                                                 self.stops[-1][Trip.STOPS_IDX_ARRIVAL_TIME],
                                                                 self.stops[-1][Trip.STOPS_IDX_DEPARTURE_TIME])
+    def get_scheduled_departure(self, stop_id):
+        """
+        Return the scheduled departure time for the given stop
+        """
+        for stop in self.stops:
+            if stop[Trip.STOPS_IDX_STOP_ID] == stop_id:
+                return stop[Trip.STOPS_IDX_DEPARTURE_TIME]
+        raise Exception("get_scheduled_departure: stop %s not find for trip %s" % (str(stop_id), str(self.trip_id)))
+
     def calculate_dwell_time(self, number_of_boards, number_of_alights):
         """
         Calculates the dwell time at a stop given the nuumber of boards and alights at the stop.
