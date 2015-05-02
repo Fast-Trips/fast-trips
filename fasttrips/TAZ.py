@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os,sys
+import collections,datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
@@ -47,7 +47,7 @@ class TAZ:
         #: where *walk_dist* is in miles and *walk_time* is a
         #: :py:class:`datetime.timedelta` instance.
         #: Use :py:attr:`TAZ.ACCESS_LINK_IDX_DIST` and :py:attr:`TAZ.ACCESS_LINK_IDX_TIME`
-        self.access_links   = {}
+        self.access_links   = collections.OrderedDict()
 
     def add_access_link(self, access_link_record):
         """
@@ -65,7 +65,7 @@ class TAZ:
         FastTripsLogger.debug("=========== TAZS ===========\n" + str(zones_df.head()))
         FastTripsLogger.debug("\n"+str(zones_df.dtypes))
 
-        taz_id_to_taz = {}
+        taz_id_to_taz = collections.OrderedDict()
         taz_records = zones_df.to_dict(orient='records')
         for taz_record in taz_records:
             taz = TAZ(taz_record)
