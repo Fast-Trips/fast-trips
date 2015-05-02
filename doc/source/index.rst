@@ -36,6 +36,11 @@ autosummary
    Trip
 
 
+Todo List
+=========
+
+.. todolist::
+
 Indices and tables
 ==================
 
