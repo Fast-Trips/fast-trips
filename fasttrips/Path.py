@@ -167,6 +167,16 @@ class Path:
         return len(self.states) > 1
 
     @staticmethod
+    def state_str_header(state):
+        """
+        Returns a header for the state_str
+        """
+        if len(state) == 5:
+            raise
+        return "%8s: %12s %9s %10s %10s  %-17s %12s  %s" % \
+            ("stop", "label", "departure", "dep_mode", "successor", "linktime", "cost", "arrival")
+
+    @staticmethod
     def state_str(state_id, state):
         """
         Returns a readable string version of the given state_id and state, as a single line.
@@ -182,7 +192,7 @@ class Path:
              str(state[Path.STATE_IDX_LINKTIME]))
 
         # stochastic
-        return "%8s: %8.4f  %s %10s %10s  %-17s %12.4f  %s" % \
+        return "%8s: %12.4f  %s %10s %10s  %-17s %12.4f  %s" % \
             (str(state_id),
              state[Path.STATE_IDX_LABEL],
              state[Path.STATE_IDX_DEPARTURE].strftime("%H:%M:%S"),
@@ -196,7 +206,7 @@ class Path:
         """
         Readable string version of the path.
         """
-        readable_str = ""
+        readable_str = "\n%s" % Path.state_str_header(self.states.items()[0][1])
         for state_id,state in self.states.iteritems():
             readable_str += "\n%s" % Path.state_str(state_id, state)
         return readable_str
