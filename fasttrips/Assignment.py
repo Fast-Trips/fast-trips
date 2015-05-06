@@ -83,7 +83,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace this passenger
-    TRACE_PASSENGER_ID              = 2
+    TRACE_PASSENGER_ID              = 56
 
     #: Temporary rand.txt location for :py:meth:`Assignment.test_rand`.
     RAND_FILENAME                   = r"../FAST-TrIPs-1/rand/rand.txt"
@@ -207,7 +207,6 @@ class Assignment:
         .. todo:: Available capacity stuff isn't implemented nor tested.
 
         """
-        # reset stuff?
         dest_taz = FT.tazs[path.destination_taz_id]
 
         stop_states = {}                    # stop_id -> (label, departure, departure_mode, successor)
@@ -386,7 +385,9 @@ class Assignment:
 
         """
         # Use test_rand() in a way consistent with the C++ implementation for now
-        random_num = Assignment.test_rand() % int(prob_state_list[-1][0]*1000)
+        random_num = Assignment.test_rand()
+        FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0]*1000)))
+        random_num = random_num % int(prob_state_list[-1][0]*1000)
         for (cum_prob,state) in prob_state_list:
             if random_num < int(cum_prob*1000):
                 return state
@@ -413,7 +414,6 @@ class Assignment:
         :type trace: boolean
 
         """
-        # reset stuff?
         dest_taz = FT.tazs[path.destination_taz_id]
 
         stop_states     = collections.defaultdict(list) # stop_id -> [(label, departure, departure_mode, successor, cost, arrival)]
@@ -555,51 +555,50 @@ class Assignment:
             # Done with this label iteration!
             label_iterations += 1
 
-        # connect to all other TAZs
-        taz_states = collections.defaultdict(list)
-        for taz_id,taz in FT.tazs.iteritems():
-            if taz_id != path.origin_taz_id: continue # who do the others?
-            for stop_id, access_link in taz.access_links.iteritems():
+        # all stops are labeled: let's look at the origin TAZ
+        origin_taz = FT.tazs[path.origin_taz_id]
+        taz_state  = []
+        for stop_id, access_link in origin_taz.access_links.iteritems():
 
-                access_time             = access_link[TAZ.ACCESS_LINK_IDX_TIME]
+            access_time             = access_link[TAZ.ACCESS_LINK_IDX_TIME]
 
-                if stop_id not in stop_states:
-                    earliest_departure  = MAX_DATETIME
-                    nonwalk_label       = MAX_COST
-                else:
-                    stop_state          = stop_states[stop_id] # this is a list
-                    earliest_departure  = stop_state[0][Path.STATE_IDX_DEPARTURE]
-                    for state in stop_state[1:]:
-                        earliest_departure = min( earliest_departure, state[Path.STATE_IDX_DEPARTURE])
-                    nonwalk_label       = Assignment.calculate_nonwalk_label(stop_state, MAX_COST)
+            if stop_id not in stop_states:
+                earliest_departure  = MAX_DATETIME
+                nonwalk_label       = MAX_COST
+            else:
+                stop_state          = stop_states[stop_id] # this is a list
+                earliest_departure  = stop_state[0][Path.STATE_IDX_DEPARTURE]
+                for state in stop_state[1:]:
+                    earliest_departure = min( earliest_departure, state[Path.STATE_IDX_DEPARTURE])
+                nonwalk_label       = Assignment.calculate_nonwalk_label(stop_state, MAX_COST)
 
-                departure_time  = earliest_departure - access_time
-                new_cost        = nonwalk_label + (Path.WALK_ACCESS_TIME_WEIGHT*access_time.total_seconds()/60.0)
+            departure_time  = earliest_departure - access_time
+            new_cost        = nonwalk_label + (Path.WALK_ACCESS_TIME_WEIGHT*access_time.total_seconds()/60.0)
 
-                old_label       = MAX_COST
-                new_label       = new_cost
-                if taz_id in taz_states:
-                    old_label   = taz_states[taz_id][-1][Path.STATE_IDX_LABEL]
-                    new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
-                                  math.exp(-1.0*Assignment.DISPERSION_PARAMETER*new_cost)
-                    new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+            old_label       = MAX_COST
+            new_label       = new_cost
+            if len(taz_state) > 0:
+                old_label   = taz_state[-1][Path.STATE_IDX_LABEL]
+                new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
+                              math.exp(-1.0*Assignment.DISPERSION_PARAMETER*new_cost)
+                new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
 
-                if new_label < MAX_COST and new_label > 0:
-                    taz_states[taz_id].append( [new_label,                 # label,
-                                                departure_time,            # departure time
-                                                Path.STATE_MODE_ACCESS,    # departure mode
-                                                stop_id,                   # successor
-                                                access_time,               # link time
-                                                new_cost,                  # cost
-                                                MAX_DATETIME] )            # arrival time
-                    if trace: FastTripsLogger.debug(" +taz      " + Path.state_str(taz_id, taz_states[taz_id][-1]))
+            if new_label < MAX_COST and new_label > 0:
+                taz_state.append( [new_label,                 # label,
+                                   departure_time,            # departure time
+                                   Path.STATE_MODE_ACCESS,    # departure mode
+                                   stop_id,                   # successor
+                                   access_time,               # link time
+                                   new_cost,                  # cost
+                                   MAX_DATETIME] )            # arrival time
+                if trace: FastTripsLogger.debug(" +taz      " + Path.state_str(path.origin_taz_id, taz_state[-1]))
 
         # Choose path and save those results
-        taz_label   = taz_states[path.origin_taz_id][-1][Path.STATE_IDX_LABEL]
+        taz_label   = taz_state[-1][Path.STATE_IDX_LABEL]
         cost_cutoff = taz_label - math.log(0.001)
         access_cum_prob = [] # (cum_prob, state)
         # Setup access probabilities
-        for state in taz_states[path.origin_taz_id]:
+        for state in taz_state:
             # these are too small to consider
             if state[Path.STATE_IDX_COST] > cost_cutoff: continue
             prob = math.exp(taz_label - state[Path.STATE_IDX_COST])
@@ -633,6 +632,12 @@ class Assignment:
                 stop_cum_prob.append( [0, state] ) # need to finish finding denom to fill in cum prob
                 if trace: FastTripsLogger.debug("           " + Path.state_str(current_stop, state))
 
+            # Nope, dead end
+            if len(stop_cum_prob) == 0:
+                # Try assignment again...
+                # TODO
+                return label_iterations
+
             # denom found - cum prob time
             for idx in range(len(stop_cum_prob)):
                 prob = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*stop_cum_prob[idx][1][Path.STATE_IDX_COST]) / sum_exp
@@ -655,7 +660,10 @@ class Assignment:
             path.states[current_stop] = next_state
             current_stop = next_state[Path.STATE_IDX_SUCCESSOR]
             last_trip    = next_state[Path.STATE_IDX_DEPMODE]
-            arrival_time = next_state[Path.STATE_IDX_ARRIVAL]
+            if next_state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_TRANSFER:
+                arrival_time = arrival_time + next_state[Path.STATE_IDX_LINKTIME]
+            else:
+                arrival_time = next_state[Path.STATE_IDX_ARRIVAL]
             # if we get to egress, we're done!
             if next_state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_EGRESS:
                 if trace: FastTripsLogger.debug("Final path: %s" % str(path))
