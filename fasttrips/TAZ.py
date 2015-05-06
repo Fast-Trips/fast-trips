@@ -79,7 +79,7 @@ class TAZ:
         """
         Read the access links from the input file in *input_dir*.
 
-        TODO: This loses int types for stop_ids, etc.
+        .. todo:: This loses int types for stop_ids, etc.
         """
         access_links_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_ACCESS_LINKS_FILE), sep="\t")
         FastTripsLogger.debug("=========== ACCESS LINKS ===========\n" + str(access_links_df.head()))

@@ -82,7 +82,7 @@ class Stop:
         """
         Add a transfer from this stop to the stop given in the transfer_record dictionary.
 
-        .. todo: Original code replaces transfer time with calculated time assuming 3 mph walk speed.  Remove this?
+        .. todo:: Original code replaces transfer time with calculated time assuming 3 mph walk speed.  Remove this?
 
         """
         # self.stop_id == transfer_record['fromStop']
