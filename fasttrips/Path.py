@@ -166,6 +166,12 @@ class Path:
         """
         return len(self.states) > 1
 
+    def reset_states(self):
+        """
+        Delete my states, something went wrong and it won't work out.
+        """
+        self.states.clear()
+
     @staticmethod
     def state_str_header(state):
         """

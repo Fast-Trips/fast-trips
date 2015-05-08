@@ -82,8 +82,11 @@ class Assignment:
     #: Use this as the date
     TODAY                           = datetime.date.today()
 
-    #: Trace this passenger
-    TRACE_PASSENGER_ID              = 56
+    #: Trace these passengers
+    TRACE_PASSENGER_IDS             = [48]
+
+    #: Maximum number of times to call :py:meth:`choose_path_from_hyperpath_states`
+    MAX_HYPERPATH_ASSIGN_ATTEMPTS   = 1001   # that's a lot
 
     #: Temporary rand.txt location for :py:meth:`Assignment.test_rand`.
     RAND_FILENAME                   = r"../FAST-TrIPs-1/rand/rand.txt"
@@ -156,26 +159,24 @@ class Assignment:
                 num_paths_assigned += 1
                 continue
 
-            if passenger_id == Assignment.TRACE_PASSENGER_ID:
+            trace_passenger = False
+            if passenger_id in Assignment.TRACE_PASSENGER_IDS:
                 FastTripsLogger.debug("Tracing assignment of passenger %s" % str(passenger_id))
+                trace_passenger = True
 
             if passenger.path.direction == Path.DIR_OUTBOUND:
 
                 if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_DET_ASGN:
-                    asgn_iters = Assignment.find_backwards_trip_based_shortest_path(FT, passenger.path,
-                                                                                    passenger_id==Assignment.TRACE_PASSENGER_ID)
+                    asgn_iters = Assignment.find_backwards_trip_based_shortest_path(FT, passenger.path, trace_passenger)
                 else:
-                    asgn_iters = Assignment.find_backwards_trip_based_hyperpath(FT, passenger.path,
-                                                                                passenger_id==Assignment.TRACE_PASSENGER_ID)
+                    asgn_iters = Assignment.find_backwards_trip_based_hyperpath(FT, passenger.path, trace_passenger)
 
             elif passenger.direction == Passenger.DIR_INBOUND:
 
                 if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_DET_ASGN:
-                    asgn_iters = Assignment.find_forwards_trip_based_shortest_path(FT, passenger.path,
-                                                                                   passenger_id==Assignment.TRACE_PASSENGER_ID)
+                    asgn_iters = Assignment.find_forwards_trip_based_shortest_path(FT, passenger.path, trace_passenger)
                 else:
-                    asgn_iters = Assignment.find_forwards_trip_based_hyperpath(FT, passenger.path,
-                                                                               passenger_id==Assignment.TRACE_PASSENGER_ID)
+                    asgn_iters = Assignment.find_forwards_trip_based_hyperpath(FT, passenger.path, trace_passenger)
 
             if passenger.path.path_found():
                 num_paths_assigned += 1
@@ -382,14 +383,15 @@ class Assignment:
         Returns the chosen state.
 
         .. todo:: For now, this uses :py:meth:`Assignment.test_rand`, but this should be removed.
+        .. todo:: For now, cumulative probabilities are multiplied by 1000 so they're integers.
 
         """
         # Use test_rand() in a way consistent with the C++ implementation for now
         random_num = Assignment.test_rand()
-        FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0]*1000)))
-        random_num = random_num % int(prob_state_list[-1][0]*1000)
+        # FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0])))
+        random_num = random_num % prob_state_list[-1][0]
         for (cum_prob,state) in prob_state_list:
-            if random_num < int(cum_prob*1000):
+            if random_num < cum_prob:
                 return state
         raise Exception("This shouldn't happen")
 
@@ -449,7 +451,7 @@ class Assignment:
             stop_done.add(current_stop_id)                              # process this stop now - just once
 
             if trace:
-                FastTripsLogger.debug("Pulling from stop_queue (iteration %d) :======" % label_iterations)
+                FastTripsLogger.debug("Pulling from stop_queue (iteration %d, label %.6f) :======" % (label_iterations, current_label))
                 FastTripsLogger.debug("           " + Path.state_str_header(stop_states[current_stop_id][0]))
                 for stop_state in stop_states[current_stop_id]:
                     FastTripsLogger.debug("           " + Path.state_str(current_stop_id, stop_state))
@@ -593,23 +595,41 @@ class Assignment:
                                    MAX_DATETIME] )            # arrival time
                 if trace: FastTripsLogger.debug(" +taz      " + Path.state_str(path.origin_taz_id, taz_state[-1]))
 
+        # Nothing found
+        if len(taz_state) == 0:  return label_iterations
+
         # Choose path and save those results
+        path_found = False
+        attempts   = 0
+        while not path_found and attempts < Assignment.MAX_HYPERPATH_ASSIGN_ATTEMPTS:
+            path_found = Assignment.choose_path_from_hyperpath_states(FT, path, trace, taz_state, stop_states)
+            attempts += 1
+            if not path_found: path.reset_states()
+        return label_iterations
+
+    @staticmethod
+    def choose_path_from_hyperpath_states(FT, path, trace, taz_state, stop_states):
+        """
+        Choose a path from the hyperpath states.
+        Returns True if path is set, False if we failed.
+        """
         taz_label   = taz_state[-1][Path.STATE_IDX_LABEL]
-        cost_cutoff = taz_label - math.log(0.001)
+        cost_cutoff = 1 #  taz_label - math.log(0.001)
         access_cum_prob = [] # (cum_prob, state)
         # Setup access probabilities
         for state in taz_state:
+            prob = int(1000.0*math.exp(-1.0*Assignment.DISPERSION_PARAMETER*state[Path.STATE_IDX_COST])/ \
+                              math.exp(-1.0*Assignment.DISPERSION_PARAMETER*taz_label))
             # these are too small to consider
-            if state[Path.STATE_IDX_COST] > cost_cutoff: continue
-            prob = math.exp(taz_label - state[Path.STATE_IDX_COST])
-            if len(access_cum_prob) == 0: 
+            if prob < cost_cutoff: continue
+            if len(access_cum_prob) == 0:
                 access_cum_prob.append( (prob, state) )
             else:
                 access_cum_prob.append( (prob + access_cum_prob[-1][0], state) )
-            if trace: FastTripsLogger.debug("%s: prob %4.3f  cum_prob %4.3f" % \
+            if trace: FastTripsLogger.debug("%10s: prob %4d  cum_prob %4d" % \
                                             (state[Path.STATE_IDX_SUCCESSOR], prob, access_cum_prob[-1][0]))
         path.states[path.origin_taz_id] = Assignment.choose_state(access_cum_prob)
-        if trace: FastTripsLogger.debug(" -> Chose %s" % Path.state_str(path.origin_taz_id, path.states[path.origin_taz_id]))
+        if trace: FastTripsLogger.debug(" -> Chose  %s" % Path.state_str(path.origin_taz_id, path.states[path.origin_taz_id]))
 
         current_stop = path.states[path.origin_taz_id][Path.STATE_IDX_SUCCESSOR]
         arrival_time = path.states[path.origin_taz_id][Path.STATE_IDX_DEPARTURE] + \
@@ -617,14 +637,14 @@ class Assignment:
         last_trip    = path.states[path.origin_taz_id][Path.STATE_IDX_DEPMODE]
         while True:
             # setup probabilities
-            FastTripsLogger.debug("current_stop=%8s; arrival_time=%s; last_trip=%s" % \
-                                  (str(current_stop), arrival_time.strftime("%H:%M:%S"), str(last_trip)))
+            if trace: FastTripsLogger.debug("current_stop=%8s; arrival_time=%s; last_trip=%s" % \
+                                            (str(current_stop), arrival_time.strftime("%H:%M:%S"), str(last_trip)))
             stop_cum_prob = [] # (cum_prob, state)
             sum_exp       = 0
             for state in stop_states[current_stop]:
                 # no double walk
                 if (state[Path.STATE_IDX_DEPMODE] in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_TRANSFER] and \
-                                        last_trip in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_TRANSFER]): continue
+                                        last_trip in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER]): continue
                 # we cannot depart before we arrive
                 if state[Path.STATE_IDX_DEPARTURE] < arrival_time: continue
                 # calculating denominator
@@ -636,20 +656,20 @@ class Assignment:
             if len(stop_cum_prob) == 0:
                 # Try assignment again...
                 # TODO
-                return label_iterations
+                return False
 
             # denom found - cum prob time
             for idx in range(len(stop_cum_prob)):
-                prob = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*stop_cum_prob[idx][1][Path.STATE_IDX_COST]) / sum_exp
+                prob = int(1000*math.exp(-1.0*Assignment.DISPERSION_PARAMETER*stop_cum_prob[idx][1][Path.STATE_IDX_COST]) / sum_exp)
                 if idx == 0:
                     stop_cum_prob[idx][0] = prob
                 else:
                     stop_cum_prob[idx][0] = stop_cum_prob[idx-1][0] + prob
-                if trace: FastTripsLogger.debug("%8s: prob %4.3f  cum_prob %4.3f" % \
+                if trace: FastTripsLogger.debug("%8s: prob %4d  cum_prob %4d" % \
                                                 (stop_cum_prob[idx][1][Path.STATE_IDX_SUCCESSOR], prob, stop_cum_prob[idx][0]))
             # choose!
             next_state   = Assignment.choose_state(stop_cum_prob)
-            if trace: FastTripsLogger.debug(" -> Chose %s" % Path.state_str(current_stop, next_state))
+            if trace: FastTripsLogger.debug(" -> Chose  %s" % Path.state_str(current_stop, next_state))
             # revise first link possibly -- let's not waste time
             if len(path.states) == 1:
                 dep_time = datetime.datetime.combine(Assignment.TODAY,
@@ -668,7 +688,7 @@ class Assignment:
             if next_state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_EGRESS:
                 if trace: FastTripsLogger.debug("Final path: %s" % str(path))
                 break
-        return label_iterations
+        return True
 
     @staticmethod
     def print_passenger_paths(FT, output_dir):
