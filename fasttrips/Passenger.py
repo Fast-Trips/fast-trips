@@ -72,7 +72,5 @@ class Passenger:
             passenger = Passenger(passenger_record)
             passenger_id_to_passenger[passenger.passenger_id] = passenger
 
-            if passenger.passenger_id == 100: break
-
         FastTripsLogger.info("Read %7d passengers" % len(passenger_id_to_passenger))
         return passenger_id_to_passenger
