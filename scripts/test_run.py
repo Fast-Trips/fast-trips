@@ -1,5 +1,6 @@
 import fasttrips
-import os, sys
+import os, pandas, sys
+import compare_output
 
 USAGE = r"""
 
@@ -16,9 +17,16 @@ if __name__ == "__main__":
     INPUT_DIR   = sys.argv[1]
     OUTPUT_DIR  = sys.argv[2]
 
+    pandas.set_option('display.width', 300)
     fasttrips.setupLogging("ft_info.log", "ft_debug.log", logToConsole=True, debug_noisy=False)
 
     ft = fasttrips.FastTrips(INPUT_DIR)
     fasttrips.Assignment.CAPACITY_CONSTRAINT = True
     fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_STO_ASGN
     ft.run_assignment(OUTPUT_DIR)
+
+    # Original output files are in input_dir
+    for output_file in ["ft_output_passengerPaths.dat",
+                        "ft_output_passengerTimes.dat",
+                        "ft_output_loadProfile.dat"]:
+        compare_output.compare_file(OUTPUT_DIR, INPUT_DIR, output_file)
