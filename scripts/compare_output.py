@@ -1,10 +1,14 @@
 import collections, csv, os, pandas, sys
+import fasttrips
+from fasttrips import FastTripsLogger
 
 USAGE = """
 
   python compare_output.py output_dir1 output_dir2
 
   Compares the fasttrips output files in output_dir1 to those in output_dir2 and tallies up information on differences.
+
+  Output is logged to ft_compare_info.log (for summary output) and ft_compare_debug.log (for detailed output).
 
 """
 
@@ -20,7 +24,7 @@ def compare_file(dir1, dir2, filename):
     """
     filename1 = os.path.join(dir1, filename)
     filename2 = os.path.join(dir2, filename)
-    print "Comparing %s to %s" % (filename1, filename2)
+    FastTripsLogger.info("============== Comparing %s to %s" % (filename1, filename2))
 
     df1 = pandas.read_csv(filename1, sep="\t")
     df2 = pandas.read_csv(filename2, sep="\t")
@@ -51,11 +55,11 @@ def compare_file(dir1, dir2, filename):
         df1 = pandas.concat(objs=[df1, split_df1], axis=1)
         df2 = pandas.concat(objs=[df2, split_df2], axis=1)
 
-    print "Read   %10d rows from %s" % (len(df1), filename1)
-    print "Read   %10d rows from %s" % (len(df2), filename2)
+    FastTripsLogger.info("Read   %10d rows from %s" % (len(df1), filename1))
+    FastTripsLogger.info("Read   %10d rows from %s" % (len(df2), filename2))
 
     df_diff  = df1.merge(right=df2, how='outer', left_index=True, right_index=True, suffixes=('_1','_2'))
-    print "Merged %10d rows" % len(df_diff)
+    FastTripsLogger.info("Merged %10d rows" % len(df_diff))
 
     # print df1.columns.values
     # print df2.columns.values
@@ -70,19 +74,34 @@ def compare_file(dir1, dir2, filename):
         # deal with the split versions instead
         if colname in SPLIT_COLS[filename]: continue
 
-        coldiff = "%s_diff" % colname
+        coldiff     = "%s_diff" % colname
+        colabsdiff  = "%s_absdiff" % colname
         if str(df_diff[col1].dtype) == 'object':
             df_diff[coldiff] = ((df_diff[col1] != df_diff[col2]) & (df_diff[col1].notnull() | df_diff[col2].notnull()))
         else:
             df_diff[coldiff] = df_diff[col1] - df_diff[col2]
+        df_diff[colabsdiff] = abs(df_diff[coldiff])
 
-        print "============================================ %s ============================================" % colname
-        print " -- head --"
-        print df_diff[[col1, col2, coldiff]].head()
-        print " -- describe --"
-        print df_diff[[col1, col2, coldiff]].describe()
-        print " -- diffs --"
-        print df_diff.loc[df_diff[coldiff] != 0, [col1, col2, coldiff]].head()
+        # Detailed output
+        FastTripsLogger.debug("============================================ %s ============================================" % colname)
+        FastTripsLogger.debug(" -- head --\n" + str(df_diff[[col1, col2, coldiff]].head()) + "\n")
+        FastTripsLogger.debug(" -- describe --\n" + str(df_diff[[col1, col2, coldiff]].describe()) + "\n")
+        if df_diff[colabsdiff].max() == 0:
+            FastTripsLogger.debug("-- no diffs --")
+        else:
+            FastTripsLogger.debug(" -- diffs --\n" + \
+                                  str(df_diff.sort(columns=colabsdiff, ascending=False).loc[:,[col1, col2, coldiff, colabsdiff]].head()) + "\n")
+
+        # Quick output
+        status = ""
+        if df_diff[colabsdiff].max() == 0:
+            status = "Match"
+        elif str(df_diff[col1].dtype) == 'object':
+            status = "%4d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
+        else:
+            status = "Values differ by [%6.2f,%6.2f]" % (df_diff[coldiff].min(), df_diff[coldiff].max())
+        FastTripsLogger.info(" %-20s  %s" % (colname, status))
+
 
         new_cols.extend([col1, col2, coldiff])
 
@@ -98,8 +117,10 @@ if __name__ == "__main__":
     OUTPUT_DIR1 = sys.argv[1]
     OUTPUT_DIR2 = sys.argv[2]
 
+    fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True, debug_noisy=False)
+
     pandas.set_option('display.width', 300)
-    for output_file in ["ft_output_loadProfile.dat",
-                         "ft_output_passengerTimes.dat",
-                         "ft_output_passengerPaths.dat"]:
-        compare_output_file(OUTPUT_DIR1, OUTPUT_DIR2, output_file)
+    for output_file in ["ft_output_passengerPaths.dat",
+                        "ft_output_passengerTimes.dat",
+                        "ft_output_loadProfile.dat"]:
+        compare_file(OUTPUT_DIR1, OUTPUT_DIR2, output_file)
