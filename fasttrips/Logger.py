@@ -34,9 +34,10 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True, debug_noi
     :param logToConsole: if true, INFO and above will also go to the console.
     :param debug_noisy: to log really noisy debug stuff.
     """
-    # already setup - don't setup more
-    if len(FastTripsLogger.handlers) == 3:
-        return
+    # already setup -- clear and set again
+    while len(FastTripsLogger.handlers) > 0:
+        h = FastTripsLogger.handlers[0]
+        FastTripsLogger.removeHandler(h)
 
     # create a logger
     FastTripsLogger.setLevel(DEBUG_NOISY if debug_noisy else logging.DEBUG)
