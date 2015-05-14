@@ -74,6 +74,11 @@ def compare_file(dir1, dir2, filename):
         # deal with the split versions instead
         if colname in SPLIT_COLS[filename]: continue
 
+        # if it's a time field, mod by 1440 minutes
+        if colname.find("Time") >= 0:
+            df_diff[col1] = df_diff[col1] % 1440
+            df_diff[col2] = df_diff[col2] % 1440
+
         coldiff     = "%s_diff" % colname
         colabsdiff  = "%s_absdiff" % colname
         if str(df_diff[col1].dtype) == 'object':
@@ -97,7 +102,7 @@ def compare_file(dir1, dir2, filename):
         if df_diff[colabsdiff].max() == 0:
             status = "Match"
         elif str(df_diff[col1].dtype) == 'object':
-            status = "%4d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
+            status = "%d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
         else:
             status = "Values differ by [%6.2f,%6.2f]" % (df_diff[coldiff].min(), df_diff[coldiff].max())
         FastTripsLogger.info(" %-20s  %s" % (colname, status))
