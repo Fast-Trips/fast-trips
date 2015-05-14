@@ -83,7 +83,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PASSENGER_IDS             = [48]
+    TRACE_PASSENGER_IDS             = []
 
     #: Maximum number of times to call :py:meth:`choose_path_from_hyperpath_states`
     MAX_HYPERPATH_ASSIGN_ATTEMPTS   = 1001   # that's a lot
@@ -94,6 +94,13 @@ class Assignment:
     RAND_FILE                       = None
     #: Maximum random number returned by :py:meth:`Assignment.test_rand`
     RAND_MAX                        = 0
+
+    #: Extra time so passengers don't get bumped (?)
+    BUMP_BUFFER                     = datetime.timedelta(minutes = 5)
+
+    #: This is the only simulation state that exists across iterations
+    #: It's a dictionary of (trip_id, stop_id) -> earliest time a bumped passenger started waiting
+    bump_wait                       = {}
 
     @staticmethod
     def read_configuration():
@@ -108,6 +115,7 @@ class Assignment:
         Finds the paths for the passengers.
         """
 
+        Assignment.bump_wait = {}
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
@@ -132,7 +140,7 @@ class Assignment:
             FastTripsLogger.info("  TOTAL ASSIGNED PASSENGERS: %10d" % num_paths_assigned)
             FastTripsLogger.info("  ARRIVED PASSENGERS:        %10d" % num_passengers_arrived)
             FastTripsLogger.info("  MISSED PASSENGERS:         %10d" % num_bumped_passengers)
-            FastTripsLogger.info("  CAPACITY GAP:              %10.4f" % capacity_gap)
+            FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
 
             if capacity_gap < 0.001 or Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
                 break
@@ -232,13 +240,15 @@ class Assignment:
         label_iterations = 0
         while not stop_queue.empty():
             (current_label, current_stop_id) = stop_queue.get()
-            if trace:
-                FastTripsLogger.debug("Pulling from stop_queue (iteration %d) :======" % label_iterations)
-                FastTripsLogger.debug("  " + Path.state_str(current_stop_id, stop_states[current_stop_id]))
-                FastTripsLogger.debug("==============================")
 
             if current_stop_id in stop_done: continue                   # stop is already processed
             stop_done.add(current_stop_id)                              # process this stop now - just once
+
+            if trace:
+                FastTripsLogger.debug("Pulling from stop_queue (iteration %d, label %.4f, stop %s) :======" % \
+                                      (label_iterations, current_label.total_seconds()/60.0, str(current_stop_id)))
+                FastTripsLogger.debug("  " + Path.state_str(current_stop_id, stop_states[current_stop_id]))
+                FastTripsLogger.debug("==============================")
 
             current_stop_state = stop_states[current_stop_id]
 
@@ -252,7 +262,17 @@ class Assignment:
                     new_label       = current_label + xfer_attr[Stop.TRANSFERS_IDX_TIME]
                     departure_time  = current_stop_state[Path.STATE_IDX_DEPARTURE] - xfer_attr[Stop.TRANSFERS_IDX_TIME]
 
-                    # todo check (departure mode, stop) in available capacity
+                    # check (departure mode, stop) if someone's waiting already
+                    if (current_stop_state[Path.STATE_IDX_DEPMODE], current_stop_id) in Assignment.bump_wait:
+                        # time a bumped passenger started waiting
+                        latest_time = Assignment.bump_wait[(current_stop_state[Path.STATE_IDX_DEPMODE], current_stop_id)]
+                        # we can't come in time
+                        if departure_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
+                        # leave earlier -- to get in line 5 minutes before bump wait time
+                        # (confused... We don't resimulate previous bumping passenger so why does this make sense?)
+                        new_label       = new_label + (current_stop_state[Path.STATE_IDX_DEPARTURE] - latest_time) + Assignment.BUMP_BUFFER
+                        departure_time  = latest_time - xfer_attr[Stop.TRANSFERS_IDX_TIME] - Assignment.BUMP_BUFFER
+
                     old_label       = MAX_TIME
                     if xfer_stop_id in stop_states:
                         old_label   = stop_states[xfer_stop_id][Path.STATE_IDX_LABEL]
@@ -273,15 +293,27 @@ class Assignment:
                                                                                    current_stop_state[Path.STATE_IDX_DEPARTURE],
                                                                                    Assignment.PATH_TIME_WINDOW)
             for (trip_id, seq, arrival_time) in valid_trips:
+                if trace: FastTripsLogger.debug("valid trips: %s  %d  %s" % (str(trip_id), seq, arrival_time.strftime("%H:%M:%S")))
 
                 if trip_id in trips_used: continue
-                trips_used.add(trip_id)
 
-                # todo check (departure mode, stop) in available capacity
                 arrival_datetime = datetime.datetime.combine(Assignment.TODAY, arrival_time)
                 wait_time = current_stop_state[Path.STATE_IDX_DEPARTURE] - arrival_datetime
 
+                # check (departure mode, stop) if someone's waiting already
+                if (current_stop_state[Path.STATE_IDX_DEPMODE], current_stop_id) in Assignment.bump_wait:
+                    # time a bumped passenger started waiting
+                    latest_time = Assignment.bump_wait[(current_stop_state[Path.STATE_IDX_DEPMODE], current_stop_id)]
+                    if trace: FastTripsLogger.debug("checking latest_time %s vs arrival_datetime %s for trip %s" % \
+                                                    (latest_time.strftime("%H:%M:%S"), arrival_datetime.strftime("%H:%M:%S"),
+                                                     str(trip_id)))
+                    if arrival_datetime + datetime.timedelta(minutes = 0.01) > latest_time and \
+                       current_stop_state[Path.STATE_IDX_DEPMODE] != trip_id:
+                        if trace: FastTripsLogger.debug("Continuing")
+                        continue
+
                 # iterate through the stops before this one
+                trips_used.add(trip_id)
                 for seq_num in range(seq-1, 0, -1):
                     possible_board = FT.trips[trip_id].stops[seq_num-1]
 
@@ -322,7 +354,15 @@ class Assignment:
 
             new_label       = stop_state[Path.STATE_IDX_LABEL] + access_link[TAZ.ACCESS_LINK_IDX_TIME]
             departure_time  = stop_state[Path.STATE_IDX_DEPARTURE] - access_link[TAZ.ACCESS_LINK_IDX_TIME]
-            # todo check (departure mode, stop) in available capacity
+
+            if (stop_state[Path.STATE_IDX_DEPMODE], stop_id) in Assignment.bump_wait:
+                # time a bumped passenger started waiting
+                latest_time = Assignment.bump_wait[(stop_state[Path.STATE_IDX_DEPMODE], stop_id)]
+                # we can't come in time
+                if departure_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
+                # leave earlier -- to get in line 5 minutes before bump wait time
+                new_label       = new_label + (stop_state[Path.STATE_IDX_DEPARTURE] - latest_time) + Assignment.BUMP_BUFFER
+                departure_time  = latest_time - access_link[TAZ.ACCESS_LINK_IDX_TIME] - Assignment.BUMP_BUFFER
 
             new_taz_state   = (new_label,                 # label,
                                departure_time,            # departure time
@@ -336,9 +376,10 @@ class Assignment:
             if trace: FastTripsLogger.debug("  " + Path.state_str(path.origin_taz_id, new_taz_state) + debug_str)
 
         # Put results into path
-        path.states[path.origin_taz_id] = taz_state
+        path.reset_states()
         if taz_state[Path.STATE_IDX_LABEL] != MAX_TIME:
 
+            path.states[path.origin_taz_id] = taz_state
             stop_state = taz_state
             while stop_state[Path.STATE_IDX_DEPMODE] != Path.STATE_MODE_EGRESS:
 
@@ -346,6 +387,7 @@ class Assignment:
                 stop_state = stop_states[stop_id]
                 path.states[stop_id] = stop_state
 
+        if trace: FastTripsLogger.debug("Final path:\n%s" % str(path))
         return label_iterations
 
     @staticmethod
@@ -710,6 +752,8 @@ class Assignment:
         times_out = open(os.path.join(output_dir, "ft_output_passengerTimes.dat"), 'w')
         times_out.write("passengerId\t%s\n" % Path.time_str_header())
         for passenger_id, passenger in FT.passengers.iteritems():
+            # Don't include paths that didn't actually experience arrival in simulation
+            if not passenger.path.experienced_arrival(): continue
             if passenger.path.path_found():
                 times_out.write("%s\t%s\n" % (str(passenger_id), passenger.path.time_str()))
         times_out.close()
@@ -728,7 +772,6 @@ class Assignment:
         stop_pax                = collections.defaultdict(list)  # stop_id to current [passenger_ids] waiting to board
         passenger_id_to_state   = {}  # state: (current passenger status, current path idx)
         transfer_passengers     = []  # passenger ids for passengers who are currently walking or transfering
-        bump_wait               = {}  # (trip_id, stop_id) -> earliest time a bumped passenger started waiting
 
         passenger_arrivals      = collections.defaultdict(list)  # passenger id to [arrival time] at stops
         passenger_boards        = collections.defaultdict(list)  # passenger id to [board time] at stops
@@ -799,12 +842,13 @@ class Assignment:
                         walk_time   = datetime.timedelta()
                         board_stop  = FT.passengers[passenger_id].path.states.items()[path_idx][0]
                         new_path_idx= path_idx
+
                     arrive_time = alight_time + walk_time
 
                     # passenger arrived at boarding stop
                     if event_datetime >= arrive_time:
-                        FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
-                                              (int(event.trip_id), int(event.stop_id), event.event_type, 
+                        FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" %
+                                              (int(event.trip_id), int(event.stop_id), event.event_type,
                                                event.event_time.strftime("%H:%M:%S")))
                         FastTripsLogger.log(DEBUG_NOISY, "Transfer: --------\n%s" % str(FT.passengers[passenger_id].path))
 
@@ -843,9 +887,9 @@ class Assignment:
                         passenger_id_to_state[passenger_id] = (Passenger.STATUS_BUMPED, -1)
 
                         # update bump_wait
-                        if (((event.trip_id, event.stop_id) not in bump_wait) or \
-                             (bump_wait[(event.trip_id, event.stop_id)] > passenger_arrivals[passenger_id][-1])):
-                            bump_wait[(event.trip_id, event.stop_id)] = passenger_arrivals[passenger_id][-1]
+                        if (((event.trip_id, event.stop_id) not in Assignment.bump_wait) or \
+                             (Assignment.bump_wait[(event.trip_id, event.stop_id)] > passenger_arrivals[passenger_id][-1])):
+                            Assignment.bump_wait[(event.trip_id, event.stop_id)] = passenger_arrivals[passenger_id][-1]
 
                         passengers_bumped += 1
 
@@ -897,6 +941,9 @@ class Assignment:
                                         alights = trip_alights[trip_id],
                                         dwells  = trip_dwells[trip_id])
 
+        FastTripsLogger.debug("Bump wait ---------")
+        for key,val in Assignment.bump_wait.iteritems():
+            FastTripsLogger.debug("(%s, %s) -> %s" % (str(key[0]), str(key[1]), val.strftime("%H:%M:%S")))
         return passengers_arrived
 
     @staticmethod
