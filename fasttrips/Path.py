@@ -166,6 +166,13 @@ class Path:
         """
         return len(self.states) > 1
 
+    def experienced_arrival(self):
+        """
+        During simulation, did the passenger actually arrive?  (As opposed to getting bumped.)
+        Returns boolean.
+        """
+        return (self.experienced_destination_arrival != None)
+
     def reset_states(self):
         """
         Delete my states, something went wrong and it won't work out.
@@ -178,7 +185,8 @@ class Path:
         Returns a header for the state_str
         """
         if len(state) == 5:
-            raise
+            return "%8s: %17s  %9s %10s %10s %-17s" % \
+            ("stop", "label", "departure", "dep_mode", "successor", "linktime")
         return "%8s: %12s %9s %10s %10s  %-17s %12s  %s" % \
             ("stop", "label", "departure", "dep_mode", "successor", "linktime", "cost", "arrival")
 
@@ -212,6 +220,7 @@ class Path:
         """
         Readable string version of the path.
         """
+        if len(self.states) == 0: return "\nNo path"
         readable_str = "\n%s" % Path.state_str_header(self.states.items()[0][1])
         for state_id,state in self.states.iteritems():
             readable_str += "\n%s" % Path.state_str(state_id, state)
