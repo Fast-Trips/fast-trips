@@ -52,9 +52,9 @@ class Path:
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 
     STATE_IDX_LABEL     = 0  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_DEPARTURE = 1  #: :py:class:`datetime.datetime` instance
-    STATE_IDX_DEPMODE   = 2  #: string or trip identifier
-    STATE_IDX_SUCCESSOR = 3  #: stop identifier or TAZ identifier
+    STATE_IDX_DEPARR    = 1  #: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.
+    STATE_IDX_DEPARRMODE= 2  #: string or trip identifier.
+    STATE_IDX_SUCCPRED  = 3  #: stop identifier or TAZ identifier
     STATE_IDX_LINKTIME  = 4  #: :py:class:`datetime.timedelta` instance
     STATE_IDX_COST      = 5  #: cost float, for hyperpath/stochastic assignment
     STATE_IDX_ARRIVAL   = 6  #: arrival time, a :py:class:`datetime.datetime` instance, for hyperpath/stochastic assignment
@@ -99,6 +99,8 @@ class Path:
         #: This will include the stops and their related states
         #: Ordered dictionary: origin_taz_id -> state,
         #:                     stop_id -> state
+        #: Note that if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`, then
+        #: this is in reverse order (egress to access)
         self.states = collections.OrderedDict()
 
         #: Experienced times arriving at a stop.  List of :py:class:`datetime.datetime` instances.
@@ -179,14 +181,31 @@ class Path:
         """
         self.states.clear()
 
+    def num_states(self):
+        """
+        Quick accessor for number of :py:attr:`Path.states`.
+        """
+        return len(self.states)
+
+    def outbound(self):
+        """
+        Quick accessor to see if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`.
+        """
+        return self.direction == Path.DIR_OUTBOUND
+
     @staticmethod
-    def state_str_header(state):
+    def state_str_header(state, direction=DIR_OUTBOUND):
         """
         Returns a header for the state_str
         """
         if len(state) == 5:
-            return "%8s: %17s  %9s %10s %10s %-17s" % \
-            ("stop", "label", "departure", "dep_mode", "successor", "linktime")
+            return "%8s: %14s    %9s %10s %10s %-17s" % \
+            ("stop",
+             "label",
+             "departure" if direction == Path.DIR_OUTBOUND else "arrival",
+             "dep_mode"  if direction == Path.DIR_OUTBOUND else "arr_mode",
+             "successor" if direction == Path.DIR_OUTBOUND else "predecessor",
+             "linktime")
         return "%8s: %12s %9s %10s %10s  %-17s %12s  %s" % \
             ("stop", "label", "departure", "dep_mode", "successor", "linktime", "cost", "arrival")
 
@@ -197,21 +216,21 @@ class Path:
         """
         # deterministic
         if len(state) == 5:
-            return "%8s: %-17s  %s %10s %10s %-17s" % \
+            return "%8s: %-14s     %s %10s %10s %-17s" % \
             (str(state_id),
              str(state[Path.STATE_IDX_LABEL]),
-             state[Path.STATE_IDX_DEPARTURE].strftime("%H:%M:%S"),
-             str(state[Path.STATE_IDX_DEPMODE]),
-             str(state[Path.STATE_IDX_SUCCESSOR]),
+             state[Path.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
+             str(state[Path.STATE_IDX_DEPARRMODE]),
+             str(state[Path.STATE_IDX_SUCCPRED]),
              str(state[Path.STATE_IDX_LINKTIME]))
 
         # stochastic
         return "%8s: %12.4f  %s %10s %10s  %-17s %12.4f  %s" % \
             (str(state_id),
              state[Path.STATE_IDX_LABEL],
-             state[Path.STATE_IDX_DEPARTURE].strftime("%H:%M:%S"),
-             str(state[Path.STATE_IDX_DEPMODE]),
-             str(state[Path.STATE_IDX_SUCCESSOR]),
+             state[Path.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
+             str(state[Path.STATE_IDX_DEPARRMODE]),
+             str(state[Path.STATE_IDX_SUCCPRED]),
              str(state[Path.STATE_IDX_LINKTIME]),
              state[Path.STATE_IDX_COST],
              state[Path.STATE_IDX_ARRIVAL].strftime("%H.%M:%S"))
@@ -219,9 +238,11 @@ class Path:
     def __str__(self):
         """
         Readable string version of the path.
+
+        Note: If inbound trip, then the states are in reverse order (egress to access)
         """
         if len(self.states) == 0: return "\nNo path"
-        readable_str = "\n%s" % Path.state_str_header(self.states.items()[0][1])
+        readable_str = "\n%s" % Path.state_str_header(self.states.items()[0][1], self.direction)
         for state_id,state in self.states.iteritems():
             readable_str += "\n%s" % Path.state_str(state_id, state)
         return readable_str
@@ -253,8 +274,39 @@ class Path:
         * alighting stop IDs, comma-delimited and prefixed with 's'
         * access time, sum of transfer times, egress time in number of minutes, comma-delimited
 
-        TODO: if the stop_ids and trip_ids are the correct type, no need to cast to int
+        .. todo:: if the stop_ids and trip_ids are the correct type, no need to cast to int
         """
+        # OUTBOUND passengers have states like this:
+        #    stop:          label    departure   dep_mode  successor linktime
+        # orig_taz                                 Access    b stop1
+        #  b stop1                                  trip1    a stop2
+        #  a stop2                               Transfer    b stop3
+        #  b stop3                                  trip2    a stop4
+        #  a stop4                                 Egress   dest_taz
+        #
+        # e.g. (preferred arrival = 404 = 06:44:00)
+        #    stop:          label    departure   dep_mode  successor linktime
+        #      29: 0:24:29.200000     06:19:30     Access    23855.0 0:11:16.200000
+        # 23855.0: 0:13:13            06:30:47   21649852    38145.0 0:06:51
+        # 38145.0: 0:06:22            06:37:38   Transfer      38650 0:00:42
+        #   38650: 0:05:40            06:38:20   25009729    76730.0 0:03:51.400000
+        # 76730.0: 0:01:48.600000     06:42:11     Egress         18 0:01:48.600000
+        #
+        # INBOUND passengers have states like this
+        #   stop:          label      arrival   arr_mode predecessor linktime
+        # dest_taz                                 Egress    a stop4
+        #  a stop4                                  trip2    b stop3
+        #  b stop3                               Transfer    a stop2
+        #  a stop2                                  trip1    b stop1
+        #  b stop1                                 Access   orig_taz
+        #
+        # e.g. (preferred departure = 447 = 07:27:00)
+        #    stop:          label      arrival   arr_mode predecessor linktime
+        #    1586: 0:49:06            08:16:06     Egress    73054.0 0:06:27
+        # 73054.0: 0:42:39            08:09:39   24201511    69021.0 0:13:11.600000
+        # 69021.0: 0:29:27.400000     07:56:27   Transfer      68007 0:00:26.400000
+        #   68007: 0:29:01            07:56:01   25539006    64065.0 0:28:11.200000
+        # 64065.0: 0:00:49.800000     07:27:49     Access       3793 0:00:49.800000
         boarding_stops  = ""
         boarding_trips  = ""
         alighting_stops = ""
@@ -264,33 +316,45 @@ class Path:
         egress_time     = 0
         prev_mode       = None
         if len(self.states) > 1:
-            for state_id,state in self.states.iteritems():
+            state_list = self.states.keys()
+            if not self.outbound(): state_list = list(reversed(state_list))
+
+            for state_id in state_list:
+                state = self.states[state_id]
                 # access
-                if state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_ACCESS:
+                if state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_ACCESS:
                     access_time     = state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0
-                    start_time      = state[Path.STATE_IDX_DEPARTURE]
+                    start_time      = state[Path.STATE_IDX_DEPARR]
+                    if not self.outbound(): start_time -= state[Path.STATE_IDX_LINKTIME]
 
                 # transfer
-                elif state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_TRANSFER:
+                elif state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_TRANSFER:
                     transfer_time  += ",%.2f" % (state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0)
 
                 # egress
-                elif state[Path.STATE_IDX_DEPMODE] == Path.STATE_MODE_EGRESS:
+                elif state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS:
                     egress_time     = state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0
 
                 # trip link
                 else:
-                    boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
-                                                 int(state_id))
+                    if self.outbound():
+                        boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
+                                                     int(state_id))
+                        alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else  "",
+                                                     int(state[Path.STATE_IDX_SUCCPRED]))
+                    else:
+                        boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
+                                                     int(state[Path.STATE_IDX_SUCCPRED]))
+                        alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else  "",
+                                                     int(state_id))
+
                     boarding_trips += "%st%d" % ("," if len(boarding_trips) > 0 else "",
-                                                 int(state[Path.STATE_IDX_DEPMODE]))
-                    alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else "",
-                                                 int(state[Path.STATE_IDX_SUCCESSOR]))
+                                                 int(state[Path.STATE_IDX_DEPARRMODE]))
                     # if the prev_mode is a trip link then we had a no-walk transfer
                     if prev_mode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
                         transfer_time  += ",%.2f" % 0
 
-                prev_mode = state[Path.STATE_IDX_DEPMODE]
+                prev_mode = state[Path.STATE_IDX_DEPARRMODE]
 
         return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
         return_str += "%.2f\t%s\t%s\t%s\t" % (start_time.hour*60.0 + start_time.minute + start_time.second/60.0,
@@ -317,7 +381,12 @@ class Path:
         """
         start_time = self.preferred_time
         if len(self.states) > 1:
-            start_time = self.states.items()[0][1][Path.STATE_IDX_DEPARTURE]
+            if self.outbound():
+                # departure for access state
+                start_time = self.states.items()[0][1][Path.STATE_IDX_DEPARR]
+            if not self.outbound():
+                # arrival for access state minus access link time
+                start_time = self.states.items()[-1][1][Path.STATE_IDX_DEPARR] - self.states.items()[-1][1][Path.STATE_IDX_LINKTIME]
 
         return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
         return_str += "%.2f\t" % (start_time.hour*60.0 + start_time.minute + start_time.second/60.0)

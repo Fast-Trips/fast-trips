@@ -137,6 +137,28 @@ class Stop:
                                   trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME]) )
         return to_return
 
+    def get_trips_departing_within_time(self, assignment_date, earliest_departure, time_window):
+        """
+        Return list of [(trip_id, sequence, departure_time)] where the departure time is after *earliest_departure* but within *time_window*.
+
+        :param assignment_date: Date to use for assignment (:py:class:`datetime.timedelta` requires :py:class:`datetime.datettime` instances,
+                                and can't just use :py:class:`datetime.time` instances.)
+        :type assignment_date: a :py:class:`datetime.date` instance
+        :param earliest_departure: The earliest time the transit vehicle can depart.
+        :type earliest_departure: a :py:class:`datetime.time` instance
+        :param time_window: The time window extending after *earliest_departure* within which a departure is valid.
+        :type time_window: a :py:class:`datetime.timedelta` instance
+
+        """
+        to_return = []
+        for trip_record in self.trips:
+            # make this a datetime
+            asgn_departure = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME])
+            if (asgn_departure > earliest_departure) and (asgn_departure < earliest_departure+time_window):
+               to_return.append( (trip_record[Stop.TRIPS_IDX_TRIP_ID],
+                                  trip_record[Stop.TRIPS_IDX_SEQUENCE],
+                                  trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME]) )
+        return to_return
 
     def is_transfer(self):
         """

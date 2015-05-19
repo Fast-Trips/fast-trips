@@ -83,6 +83,12 @@ class Trip:
         #: Simulation results: list of dwell times per stop
         self.simulated_dwells   = None
 
+    def number_of_stops(self):
+        """
+        Return the number of stops in this trip.
+        """
+        return(len(self.stops))
+
     def add_stop_time(self, stop_time_record, stop_id_to_stop):
         """
         Add the stop time information to this trip.
