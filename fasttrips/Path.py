@@ -206,8 +206,15 @@ class Path:
              "dep_mode"  if direction == Path.DIR_OUTBOUND else "arr_mode",
              "successor" if direction == Path.DIR_OUTBOUND else "predecessor",
              "linktime")
-        return "%8s: %12s %9s %10s %10s  %-17s %12s  %s" % \
-            ("stop", "label", "departure", "dep_mode", "successor", "linktime", "cost", "arrival")
+        return "%8s: %12s %9s %10s %11s %-17s %12s  %s" % \
+            ("stop",
+             "label",
+             "departure" if direction == Path.DIR_OUTBOUND else "arrival",
+             "dep_mode"  if direction == Path.DIR_OUTBOUND else "arr_mode",
+             "successor" if direction == Path.DIR_OUTBOUND else "predecessor",
+             "linktime",
+             "cost",
+             "arrival"   if direction == Path.DIR_OUTBOUND else "departure")
 
     @staticmethod
     def state_str(state_id, state):
