@@ -1195,5 +1195,6 @@ class Assignment:
         load_file = open(os.path.join(output_dir, "ft_output_loadProfile.dat"), 'w')
         Trip.write_load_header_to_file(load_file)
         for trip_id,trip in FT.trips.iteritems():
+            trip.calculate_headways(FT, Assignment.TODAY)
             trip.write_load_to_file(load_file)
         load_file.close()

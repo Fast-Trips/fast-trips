@@ -31,6 +31,9 @@ class Trip:
     #: TODO document format
     INPUT_STOPTIMES_FILE        = "ft_input_stopTimes.dat"
 
+    #: Default headway if no previous matching route/trip
+    DEFAULT_HEADWAY             = 60
+
     STOPS_IDX_STOP_ID           = 0  #: For accessing parts of :py:attr:`Trip.stops`
     STOPS_IDX_ARRIVAL_TIME      = 1  #: For accessing parts of :py:attr:`Trip.stops`
     STOPS_IDX_DEPARTURE_TIME    = 2  #: For accessing parts of :py:attr:`Trip.stops`
@@ -73,6 +76,7 @@ class Trip:
         #: :py:attr:`Trip.STOPS_IDX_DEPARTURE_TIME` for access.
         #: Times are :py:class:`datetime.time` instances.
         self.stops          = []
+        self.headways       = []
 
         #: Simulation results: list of number of boards per stop
         self.simulated_boards   = None
@@ -139,6 +143,31 @@ class Trip:
 
         return datetime.timedelta(seconds=0)
 
+    def calculate_headways(self, FT, today):
+        """
+        Calculates the headway for each stop in this trip by finding the previous departure time for vehicles
+        serving this same stop, route and direction.
+
+        Saves into :py:attr:`Trip.headways` list of :py:class:`datetime.timedelta` instances.
+
+        .. todo:: Some of the stop times might be after midnight; e.g. 24:21:21, making it so a previous trip departure like
+                  23:51:51 would be found in the C++ code.  We convert all times to :py:class:`datetime.time` instances so we
+                  get different results here when this conversion affects the headway calculation.
+
+        """
+        self.headways = []
+        for stop_idx in range(len(self.stops)):
+            stop_id      = self.stops[stop_idx][Trip.STOPS_IDX_STOP_ID]
+            arrival_time = self.stops[stop_idx][Trip.STOPS_IDX_ARRIVAL_TIME]
+            prev_dep     = FT.stops[stop_id].get_previous_trip_departure(FT, self.route_id, self.direction_id, arrival_time)
+
+            if prev_dep == None:
+                headway  = datetime.timedelta(minutes=Trip.DEFAULT_HEADWAY)
+            else:
+                headway  = datetime.datetime.combine(today, arrival_time) - \
+                           datetime.datetime.combine(today, prev_dep)
+            self.headways.append(headway)
+
     def set_simulation_results(self, boards, alights, dwells):
         """
         Save these simulation results.
@@ -181,11 +210,11 @@ class Trip:
                              str(self.trip_id),
                              self.direction_id,
                              str(stop[Trip.STOPS_IDX_STOP_ID])))
-            load_file.write("-1\t%.3f\t%s\t%d\t%d\t%d\t%d\n" % \
+            load_file.write("-1\t%.3f\t%s\t%.2f\t%d\t%d\t%d\n" % \
                             ((stop[Trip.STOPS_IDX_DEPARTURE_TIME].hour*60.0 +
                               stop[Trip.STOPS_IDX_DEPARTURE_TIME].minute +
                               stop[Trip.STOPS_IDX_DEPARTURE_TIME].second/60.0),
-                             "0", # todo headway
+                             self.headways[stop_idx].total_seconds()/60.0, 
                              self.simulated_dwells[stop_idx].total_seconds(),
                              self.simulated_boards[stop_idx],
                              self.simulated_alights[stop_idx],

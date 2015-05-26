@@ -16,3 +16,5 @@ python scripts\runTest.py ..\FAST-TrIPS-1\Examples\PSRC\pax200_stochastic_iter1_
 
 :pax100_stochastic_iter2_cap1
 python scripts\runTest.py ..\FAST-TrIPS-1\Examples\PSRC\pax200_stochastic_iter2_cap1 PSRC
+
+:done

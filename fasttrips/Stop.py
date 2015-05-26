@@ -37,6 +37,7 @@ class Stop:
     TRIPS_IDX_SEQUENCE          = 1  #: For accessing parts of :py:attr:`Stop.trips`
     TRIPS_IDX_ARRIVAL_TIME      = 2  #: For accessing parts of :py:attr:`Stop.trips`
     TRIPS_IDX_DEPARTURE_TIME    = 3  #: For accessing parts of :py:attr:`Stop.trips`
+    TRIPS_IDX_ROUTE_ID          = 4  #: For accessing parts of :py:attr:`Stop.trips`
 
     def __init__(self, stop_record):
         """
@@ -75,7 +76,8 @@ class Stop:
         #: These are the trips this stop is a part of
         #: This is a list of (trip_id, sequence, arrival time, departure time)
         #: Use :py:attr:`Stop.TRIPS_IDX_TRIP_ID`, :py:attr:`Stop.TRIPS_IDX_SEQUENCE`,
-        #: :py:attr:`Stop.TRIPS_IDX_ARRIVAL_TIME` and :py:attr:`Stop.TRIPS_IDX_DEPARTURE_TIME` for access.
+        #: :py:attr:`Stop.TRIPS_IDX_ARRIVAL_TIME`, :py:attr:`Stop.TRIPS_IDX_DEPARTURE_TIME`
+        #: and :py:attr:`Stop.TRIPS_IDX_ROUTE_ID` for access.
         self.trips              = []
 
     def add_transfer(self, transfer_record):
@@ -110,7 +112,7 @@ class Stop:
         :type departure_time: a :py:class:`datetime.time` instance
 
         """
-        self.trips.append( (trip.trip_id, sequence, arrival_time, departure_time) )
+        self.trips.append( (trip.trip_id, sequence, arrival_time, departure_time, trip.route_id) )
         # and route
         self.routes.add(trip.route_id)
 
@@ -159,6 +161,42 @@ class Stop:
                                   trip_record[Stop.TRIPS_IDX_SEQUENCE],
                                   trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME]) )
         return to_return
+
+    def get_previous_trip_departure(self, FT, route_id, trip_direction, before_departure_time):
+        """
+        Goes through the routes/trips that use this stop, and returns the most recent trip departure before *before_departure_time*.
+
+        Returns a :py:class:`datetime.time` instance or None if none found.
+        """
+        found                 = False
+        prev_departure_time   = None
+        if self.stop_id == 68584 and route_id == 102552 and trip_direction == 1:
+            FastTripsLogger.debug("Stop %d get previous trip departure for route %d trip direction %d before departure time %s" % \
+                                  (self.stop_id, route_id, trip_direction, before_departure_time.strftime("%H:%M:%S")))
+        for idx in range(len(self.trips)):
+            # match route
+            if self.trips[idx][Stop.TRIPS_IDX_ROUTE_ID] != route_id: continue
+
+            # match direction
+            trip = FT.trips[self.trips[idx][Stop.TRIPS_IDX_TRIP_ID]]
+            if trip.direction_id != trip_direction: continue
+
+            # it's before the required
+            trip_deptime = self.trips[idx][Stop.TRIPS_IDX_DEPARTURE_TIME]
+            if self.stop_id == 68584 and route_id == 102552 and trip_direction == 1:
+                FastTripsLogger.debug("Matching route, direction: %d.  trip_deptime: %s" % (trip.trip_id, str(trip_deptime)))
+            if trip_deptime >= before_departure_time: continue
+
+            if not found:
+                found                 = True
+                prev_departure_time   = trip_deptime
+            elif trip_deptime > prev_departure_time: # want the latest one
+                prev_departure_time = trip_deptime
+
+        if self.stop_id == 68584 and route_id == 102552 and trip_direction == 1:
+            FastTripsLogger.debug("Returning %s" % prev_departure_time.strftime("%H:%M:%S") if prev_departure_time else "--")
+        return prev_departure_time
+
 
     def is_transfer(self):
         """
