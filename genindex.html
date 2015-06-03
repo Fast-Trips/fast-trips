@@ -63,6 +63,7 @@
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
@@ -76,10 +77,14 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="_generated/fasttrips.Event.html#fasttrips.Event.__init__">__init__() (fasttrips.Event method)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.__init__">__init__() (fasttrips.Assignment method)</a>
   </dt>
 
       <dd><dl>
+        
+  <dt><a href="_generated/fasttrips.Event.html#fasttrips.Event.__init__">(fasttrips.Event method)</a>
+  </dt>
+
         
   <dt><a href="_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.__init__">(fasttrips.FastTrips method)</a>
   </dt>
@@ -149,10 +154,14 @@
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.add_transfer">add_transfer() (fasttrips.Stop method)</a>
   </dt>
 
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.add_trip">add_trip() (fasttrips.Route method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.add_trip">add_trip() (fasttrips.Route method)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.assign_passengers">assign_passengers() (fasttrips.Assignment static method)</a>
   </dt>
 
       
@@ -186,7 +195,17 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">BUMP_BUFFER (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.BUMP_EXPERIENCED_COST">BUMP_EXPERIENCED_COST (fasttrips.Path attribute)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.bump_wait">bump_wait (fasttrips.Assignment attribute)</a>
   </dt>
 
   </dl></td>
@@ -200,6 +219,14 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.calculate_headways">calculate_headways() (fasttrips.Trip method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.calculate_nonwalk_label">calculate_nonwalk_label() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.capacity">capacity (fasttrips.Trip attribute)</a>
   </dt>
 
@@ -207,6 +234,14 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CAPACITY_CONSTRAINT">CAPACITY_CONSTRAINT (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.choose_path_from_hyperpath_states">choose_path_from_hyperpath_states() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.choose_state">choose_state() (fasttrips.Assignment static method)</a>
   </dt>
 
       
@@ -220,23 +255,27 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.destination_taz_id">destination_taz_id (fasttrips.Path attribute)</a>
+  <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.DEFAULT_HEADWAY">DEFAULT_HEADWAY (fasttrips.Trip attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.deterministically_assign_passengers">deterministically_assign_passengers() (fasttrips.Assignment static method)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.delay_inbound_path_departure">delay_inbound_path_departure() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.destination_taz_id">destination_taz_id (fasttrips.Path attribute)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.DIR_INBOUND">DIR_INBOUND (fasttrips.Path attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.DIR_OUTBOUND">DIR_OUTBOUND (fasttrips.Path attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.direction">direction (fasttrips.Path attribute)</a>
   </dt>
@@ -271,6 +310,10 @@
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.experienced_alight_times">experienced_alight_times (fasttrips.Path attribute)</a>
   </dt>
 
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.experienced_arrival">experienced_arrival() (fasttrips.Path method)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
@@ -303,14 +346,18 @@
   <dt><a href="_generated/fasttrips.FastTrips.html#fasttrips.FastTrips">FastTrips (class in fasttrips)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="index.html#module-fasttrips">fasttrips (module)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.find_backwards_trip_based_shortest_path">find_backwards_trip_based_shortest_path() (fasttrips.Assignment static method)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.find_trip_based_hyperpath">find_trip_based_hyperpath() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.find_trip_based_shortest_path">find_trip_based_shortest_path() (fasttrips.Assignment static method)</a>
   </dt>
 
   </dl></td>
@@ -320,11 +367,23 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.get_previous_trip_departure">get_previous_trip_departure() (fasttrips.Stop method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.get_scheduled_departure">get_scheduled_departure() (fasttrips.Trip method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.get_trips_arriving_within_time">get_trips_arriving_within_time() (fasttrips.Stop method)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.get_trips_departing_within_time">get_trips_departing_within_time() (fasttrips.Stop method)</a>
+  </dt>
+
       
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.goes_somewhere">goes_somewhere() (fasttrips.Path method)</a>
   </dt>
@@ -398,7 +457,29 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.MAX_HYPERPATH_ASSIGN_ATTEMPTS">MAX_HYPERPATH_ASSIGN_ATTEMPTS (fasttrips.Assignment attribute)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.mode">mode (fasttrips.Path attribute)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.num_states">num_states() (fasttrips.Path method)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.number_of_stops">number_of_stops() (fasttrips.Trip method)</a>
   </dt>
 
   </dl></td>
@@ -409,6 +490,10 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.origin_taz_id">origin_taz_id (fasttrips.Path attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.outbound">outbound() (fasttrips.Path method)</a>
   </dt>
 
   </dl></td>
@@ -484,6 +569,18 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.RAND_FILE">RAND_FILE (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.RAND_FILENAME">RAND_FILENAME (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.RAND_MAX">RAND_MAX (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.read_access_links">read_access_links() (fasttrips.TAZ static method)</a>
   </dt>
 
@@ -507,12 +604,12 @@
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.read_stop_times">read_stop_times() (fasttrips.Trip static method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.read_stops">read_stops() (fasttrips.Stop static method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.read_TAZs">read_TAZs() (fasttrips.TAZ static method)</a>
   </dt>
@@ -523,6 +620,10 @@
 
       
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.read_trips">read_trips() (fasttrips.Trip static method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.reset_states">reset_states() (fasttrips.Path method)</a>
   </dt>
 
       
@@ -574,6 +675,10 @@
 
       </dl></dd>
       
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.set_experienced_status_and_times">set_experienced_status_and_times() (fasttrips.Passenger method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.set_experienced_times">set_experienced_times() (fasttrips.Path method)</a>
   </dt>
 
@@ -610,6 +715,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.simulation_status">simulation_status (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SKIM_END_TIME">SKIM_END_TIME (fasttrips.Assignment attribute)</a>
   </dt>
 
@@ -618,25 +727,33 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_DEPARTURE">STATE_IDX_DEPARTURE (fasttrips.Path attribute)</a>
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_ARRIVAL">STATE_IDX_ARRIVAL (fasttrips.Path attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_DEPMODE">STATE_IDX_DEPMODE (fasttrips.Path attribute)</a>
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_COST">STATE_IDX_COST (fasttrips.Path attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_DEPARR">STATE_IDX_DEPARR (fasttrips.Path attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_DEPARRMODE">STATE_IDX_DEPARRMODE (fasttrips.Path attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_LABEL">STATE_IDX_LABEL (fasttrips.Path attribute)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_LABEL">STATE_IDX_LABEL (fasttrips.Path attribute)</a>
-  </dt>
-
-      
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_LINKTIME">STATE_IDX_LINKTIME (fasttrips.Path attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_SUCCESSOR">STATE_IDX_SUCCESSOR (fasttrips.Path attribute)</a>
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.STATE_IDX_SUCCPRED">STATE_IDX_SUCCPRED (fasttrips.Path attribute)</a>
   </dt>
 
       
@@ -656,7 +773,35 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.state_str_header">state_str_header() (fasttrips.Path static method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.states">states (fasttrips.Path attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.STATUS_ARRIVED">STATUS_ARRIVED (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.STATUS_BUMPED">STATUS_BUMPED (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.STATUS_INITIAL">STATUS_INITIAL (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.STATUS_ON_BOARD">STATUS_ON_BOARD (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.STATUS_WAITING">STATUS_WAITING (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.STATUS_WALKING">STATUS_WALKING (fasttrips.Passenger attribute)</a>
   </dt>
 
       
@@ -714,6 +859,10 @@
 
       </dl></dd>
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.test_rand">test_rand() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Path.html#fasttrips.Path.time_period">time_period (fasttrips.Path attribute)</a>
   </dt>
 
@@ -730,7 +879,7 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRACE_PASSENGER_ID">TRACE_PASSENGER_ID (fasttrips.Assignment attribute)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRACE_PASSENGER_IDS">TRACE_PASSENGER_IDS (fasttrips.Assignment attribute)</a>
   </dt>
 
       
@@ -779,6 +928,10 @@
 
       
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.TRIPS_IDX_DEPARTURE_TIME">TRIPS_IDX_DEPARTURE_TIME (fasttrips.Stop attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.TRIPS_IDX_ROUTE_ID">TRIPS_IDX_ROUTE_ID (fasttrips.Stop attribute)</a>
   </dt>
 
       

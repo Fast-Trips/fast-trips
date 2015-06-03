@@ -170,6 +170,17 @@
 <dt id="fasttrips.Stop.add_transfer">
 <tt class="descname">add_transfer</tt><big>(</big><em>transfer_record</em><big>)</big><a class="headerlink" href="#fasttrips.Stop.add_transfer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a transfer from this stop to the stop given in the transfer_record dictionary.</p>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Original code replaces transfer time with calculated time assuming 3 mph walk speed.  Remove this?</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Stop.get_previous_trip_departure">
+<tt class="descname">get_previous_trip_departure</tt><big>(</big><em>FT</em>, <em>route_id</em>, <em>trip_direction</em>, <em>before_departure_time</em><big>)</big><a class="headerlink" href="#fasttrips.Stop.get_previous_trip_departure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Goes through the routes/trips that use this stop, and returns the most recent trip departure before <em>before_departure_time</em>.</p>
+<p>Returns a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instance or None if none found.</p>
 </dd></dl>
 
 <dl class="method">
@@ -185,6 +196,26 @@
 and can&#8217;t just use <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instances.)</li>
 <li><strong>latest_arrival</strong> (a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instance) &#8211; The latest time the transit vehicle can arrive.</li>
 <li><strong>time_window</strong> (a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> instance) &#8211; The time window extending before <em>latest_arrival</em> within which an arrival is valid.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Stop.get_trips_departing_within_time">
+<tt class="descname">get_trips_departing_within_time</tt><big>(</big><em>assignment_date</em>, <em>earliest_departure</em>, <em>time_window</em><big>)</big><a class="headerlink" href="#fasttrips.Stop.get_trips_departing_within_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of [(trip_id, sequence, departure_time)] where the departure time is after <em>earliest_departure</em> but within <em>time_window</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>assignment_date</strong> (a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.date" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.date</span></tt></a> instance) &#8211; Date to use for assignment (<a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> requires <tt class="xref py py-class docutils literal"><span class="pre">datetime.datettime</span></tt> instances,
+and can&#8217;t just use <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instances.)</li>
+<li><strong>earliest_departure</strong> (a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instance) &#8211; The earliest time the transit vehicle can depart.</li>
+<li><strong>time_window</strong> (a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> instance) &#8211; The time window extending after <em>earliest_departure</em> within which a departure is valid.</li>
 </ul>
 </td>
 </tr>
@@ -249,6 +280,12 @@ TODO: document format</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="fasttrips.Stop.TRIPS_IDX_ROUTE_ID">
+<tt class="descname">TRIPS_IDX_ROUTE_ID</tt><em class="property"> = 4</em><a class="headerlink" href="#fasttrips.Stop.TRIPS_IDX_ROUTE_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>For accessing parts of <a class="reference internal" href="#fasttrips.Stop.trips" title="fasttrips.Stop.trips"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.trips</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="fasttrips.Stop.TRIPS_IDX_SEQUENCE">
 <tt class="descname">TRIPS_IDX_SEQUENCE</tt><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.Stop.TRIPS_IDX_SEQUENCE" title="Permalink to this definition">¶</a></dt>
 <dd><p>For accessing parts of <a class="reference internal" href="#fasttrips.Stop.trips" title="fasttrips.Stop.trips"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.trips</span></tt></a></p>
@@ -296,7 +333,8 @@ TODO: This can be a dict, just making it an ordered dict for testing</p>
 <dd><p>These are the trips this stop is a part of
 This is a list of (trip_id, sequence, arrival time, departure time)
 Use <a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_TRIP_ID" title="fasttrips.Stop.TRIPS_IDX_TRIP_ID"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_TRIP_ID</span></tt></a>, <a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_SEQUENCE" title="fasttrips.Stop.TRIPS_IDX_SEQUENCE"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_SEQUENCE</span></tt></a>,
-<a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_ARRIVAL_TIME" title="fasttrips.Stop.TRIPS_IDX_ARRIVAL_TIME"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_ARRIVAL_TIME</span></tt></a> and <a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_DEPARTURE_TIME" title="fasttrips.Stop.TRIPS_IDX_DEPARTURE_TIME"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_DEPARTURE_TIME</span></tt></a> for access.</p>
+<a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_ARRIVAL_TIME" title="fasttrips.Stop.TRIPS_IDX_ARRIVAL_TIME"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_ARRIVAL_TIME</span></tt></a>, <a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_DEPARTURE_TIME" title="fasttrips.Stop.TRIPS_IDX_DEPARTURE_TIME"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_DEPARTURE_TIME</span></tt></a>
+and <a class="reference internal" href="#fasttrips.Stop.TRIPS_IDX_ROUTE_ID" title="fasttrips.Stop.TRIPS_IDX_ROUTE_ID"><tt class="xref py py-attr docutils literal"><span class="pre">Stop.TRIPS_IDX_ROUTE_ID</span></tt></a> for access.</p>
 </dd></dl>
 
 </dd></dl>

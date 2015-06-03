@@ -99,12 +99,50 @@
 <dd><p>Read the demand from the input file in <em>input_dir</em>.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="fasttrips.Passenger.set_experienced_status_and_times">
+<tt class="descname">set_experienced_status_and_times</tt><big>(</big><em>status</em>, <em>arrival_times</em>, <em>board_times</em>, <em>alight_times</em>, <em>destination_arrival</em><big>)</big><a class="headerlink" href="#fasttrips.Passenger.set_experienced_status_and_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setter for <a class="reference internal" href="#fasttrips.Passenger.simulation_status" title="fasttrips.Passenger.simulation_status"><tt class="xref py py-attr docutils literal"><span class="pre">Passenger.simulation_status</span></tt></a>.  Passes times through to <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.set_experienced_times" title="fasttrips.Path.set_experienced_times"><tt class="xref py py-meth docutils literal"><span class="pre">Path.set_experienced_times()</span></tt></a></p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="fasttrips.Passenger.INPUT_DEMAND_FILE">
 <tt class="descname">INPUT_DEMAND_FILE</tt><em class="property"> = 'ft_input_demand.dat'</em><a class="headerlink" href="#fasttrips.Passenger.INPUT_DEMAND_FILE" title="Permalink to this definition">¶</a></dt>
 <dd><p>File with demand
 TODO: document format</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.STATUS_ARRIVED">
+<tt class="descname">STATUS_ARRIVED</tt><em class="property"> = 5</em><a class="headerlink" href="#fasttrips.Passenger.STATUS_ARRIVED" title="Permalink to this definition">¶</a></dt>
+<dd><p>arrived at destination</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.STATUS_BUMPED">
+<tt class="descname">STATUS_BUMPED</tt><em class="property"> = 4</em><a class="headerlink" href="#fasttrips.Passenger.STATUS_BUMPED" title="Permalink to this definition">¶</a></dt>
+<dd><p>bumped: couldn&#8217;t board because vehicle is full</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.STATUS_INITIAL">
+<tt class="descname">STATUS_INITIAL</tt><em class="property"> = 0</em><a class="headerlink" href="#fasttrips.Passenger.STATUS_INITIAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.STATUS_ON_BOARD">
+<tt class="descname">STATUS_ON_BOARD</tt><em class="property"> = 3</em><a class="headerlink" href="#fasttrips.Passenger.STATUS_ON_BOARD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.STATUS_WAITING">
+<tt class="descname">STATUS_WAITING</tt><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.Passenger.STATUS_WAITING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.STATUS_WALKING">
+<tt class="descname">STATUS_WALKING</tt><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.Passenger.STATUS_WALKING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Passenger.passenger_id">
@@ -117,6 +155,14 @@ TODO: document format</p>
 <tt class="descname">path</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Passenger.path" title="Permalink to this definition">¶</a></dt>
 <dd><p>the remainder of the input is related to the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><tt class="xref py py-class docutils literal"><span class="pre">Path</span></tt></a>
 TODO: what about multiple trips for a single passenger?</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Passenger.simulation_status">
+<tt class="descname">simulation_status</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Passenger.simulation_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulation status.  One of <a class="reference internal" href="#fasttrips.Passenger.STATUS_INITIAL" title="fasttrips.Passenger.STATUS_INITIAL"><tt class="xref py py-attr docutils literal"><span class="pre">STATUS_INITIAL</span></tt></a>, <a class="reference internal" href="#fasttrips.Passenger.STATUS_WALKING" title="fasttrips.Passenger.STATUS_WALKING"><tt class="xref py py-attr docutils literal"><span class="pre">STATUS_WALKING</span></tt></a>,
+<a class="reference internal" href="#fasttrips.Passenger.STATUS_WAITING" title="fasttrips.Passenger.STATUS_WAITING"><tt class="xref py py-attr docutils literal"><span class="pre">STATUS_WAITING</span></tt></a>, <a class="reference internal" href="#fasttrips.Passenger.STATUS_ON_BOARD" title="fasttrips.Passenger.STATUS_ON_BOARD"><tt class="xref py py-attr docutils literal"><span class="pre">STATUS_ON_BOARD</span></tt></a>, <a class="reference internal" href="#fasttrips.Passenger.STATUS_BUMPED" title="fasttrips.Passenger.STATUS_BUMPED"><tt class="xref py py-attr docutils literal"><span class="pre">STATUS_BUMPED</span></tt></a>,
+<a class="reference internal" href="#fasttrips.Passenger.STATUS_ARRIVED" title="fasttrips.Passenger.STATUS_ARRIVED"><tt class="xref py py-attr docutils literal"><span class="pre">STATUS_ARRIVED</span></tt></a></p>
 </dd></dl>
 
 </dd></dl>

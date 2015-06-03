@@ -135,6 +135,32 @@ Returns a <a class="reference external" href="http://docs.python.org/2.7/library
 <p>TODO: should this be configurable?</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="fasttrips.Trip.calculate_headways">
+<tt class="descname">calculate_headways</tt><big>(</big><em>FT</em>, <em>today</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.calculate_headways" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the headway for each stop in this trip by finding the previous departure time for vehicles
+serving this same stop, route and direction.</p>
+<p>Saves into <tt class="xref py py-attr docutils literal"><span class="pre">Trip.headways</span></tt> list of <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></tt></a> instances.</p>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Some of the stop times might be after midnight; e.g. 24:21:21, making it so a previous trip departure like
+23:51:51 would be found in the C++ code.  We convert all times to <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.time" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">datetime.time</span></tt></a> instances so we
+get different results here when this conversion affects the headway calculation.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Trip.get_scheduled_departure">
+<tt class="descname">get_scheduled_departure</tt><big>(</big><em>stop_id</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.get_scheduled_departure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the scheduled departure time for the given stop</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Trip.number_of_stops">
+<tt class="descname">number_of_stops</tt><big>(</big><big>)</big><a class="headerlink" href="#fasttrips.Trip.number_of_stops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of stops in this trip.</p>
+</dd></dl>
+
 <dl class="staticmethod">
 <dt id="fasttrips.Trip.read_stop_times">
 <em class="property">static </em><tt class="descname">read_stop_times</tt><big>(</big><em>input_dir</em>, <em>trip_id_to_trip</em>, <em>stop_id_to_stop</em><big>)</big><a class="headerlink" href="#fasttrips.Trip.read_stop_times" title="Permalink to this definition">¶</a></dt>
@@ -177,6 +203,12 @@ Returns a <a class="reference external" href="http://docs.python.org/2.7/library
 <li>number of alightings</li>
 <li>load</li>
 </ul>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Trip.DEFAULT_HEADWAY">
+<tt class="descname">DEFAULT_HEADWAY</tt><em class="property"> = 60</em><a class="headerlink" href="#fasttrips.Trip.DEFAULT_HEADWAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default headway if no previous matching route/trip</p>
 </dd></dl>
 
 <dl class="attribute">
