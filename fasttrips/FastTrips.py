@@ -32,7 +32,7 @@ class FastTrips:
         """
         Constructor.  Reads input files from *input_dir*.
         """
-        #: :py:class:`dict` with :py:attr:`fasttrips.Passenger.passenger_id` key and :py:class:`fasttrips.Passenger` value
+        #: :py:class:`list` of :py:class:`fasttrips.Passenger` instances
         self.passengers      = None
 
         #: :py:class:`dict` with :py:attr:`fasttrips.Route.route_id` key and :py:class:`fasttrips.Route` value

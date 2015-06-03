@@ -38,7 +38,7 @@ class Passenger:
         """
         Constructor from dictionary mapping attribute to value.
         """
-        #: unique passenger identifier
+        #: passenger identifier, not necessarily unique
         self.passenger_id       = passenger_record['passengerID']
 
         #: the remainder of the input is related to the :py:class:`Path`
@@ -66,11 +66,10 @@ class Passenger:
         FastTripsLogger.debug("=========== DEMAND ===========\n" + str(demand_df.head()))
         FastTripsLogger.debug("\n"+str(demand_df.dtypes))
 
-        passenger_id_to_passenger = {}
+        passengers = []
         passenger_records = demand_df.to_dict(orient='records')
         for passenger_record in passenger_records:
-            passenger = Passenger(passenger_record)
-            passenger_id_to_passenger[passenger.passenger_id] = passenger
+            passengers.append(Passenger(passenger_record))
 
-        FastTripsLogger.info("Read %7d passengers" % len(passenger_id_to_passenger))
-        return passenger_id_to_passenger
+        FastTripsLogger.info("Read %7d passengers" % len(passengers))
+        return passengers

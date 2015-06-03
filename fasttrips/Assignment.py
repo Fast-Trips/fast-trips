@@ -102,6 +102,12 @@ class Assignment:
     #: It's a dictionary of (trip_id, stop_id) -> earliest time a bumped passenger started waiting
     bump_wait                       = {}
 
+    def __init__(self):
+        """
+        This does nothing.  Assignment methods are static methods for now.
+        """
+        pass
+
     @staticmethod
     def read_configuration():
         """
@@ -160,7 +166,8 @@ class Assignment:
         FastTripsLogger.info("**************************** GENERATING PATHS ****************************")
         start_time          = datetime.datetime.now()
         num_paths_assigned  = 0
-        for passenger_id, passenger in FT.passengers.iteritems():
+        for passenger in FT.passengers:
+            passenger_id = passenger.passenger_id
 
             if not passenger.path.goes_somewhere(): continue
 
@@ -932,9 +939,9 @@ class Assignment:
         """
         paths_out = open(os.path.join(output_dir, "ft_output_passengerPaths.dat"), 'w')
         paths_out.write("passengerId\t%s\n" % Path.path_str_header())
-        for passenger_id, passenger in FT.passengers.iteritems():
+        for passenger in FT.passengers:
             if passenger.path.path_found():
-                paths_out.write("%s\t%s\n" % (str(passenger_id), passenger.path.path_str()))
+                paths_out.write("%s\t%s\n" % (str(passenger.passenger_id), passenger.path.path_str()))
         paths_out.close()
 
     @staticmethod
@@ -944,11 +951,11 @@ class Assignment:
         """
         times_out = open(os.path.join(output_dir, "ft_output_passengerTimes.dat"), 'w')
         times_out.write("passengerId\t%s\n" % Path.time_str_header())
-        for passenger_id, passenger in FT.passengers.iteritems():
+        for passenger in FT.passengers:
             # Don't include paths that didn't actually experience arrival in simulation
             if not passenger.path.experienced_arrival(): continue
             if passenger.path.path_found():
-                times_out.write("%s\t%s\n" % (str(passenger_id), passenger.path.time_str()))
+                times_out.write("%s\t%s\n" % (str(passenger.passenger_id), passenger.path.time_str()))
         times_out.close()
 
     @staticmethod
@@ -961,29 +968,28 @@ class Assignment:
         passengers_arrived      = 0   #: arrived at destination TAZ
         passengers_bumped       = 0
 
-        trip_pax                = collections.defaultdict(list)  # trip_id to current [passenger_ids] on board
-        stop_pax                = collections.defaultdict(list)  # stop_id to current [passenger_ids] waiting to board
-        passenger_id_to_state   = {}  # state: (current passenger status, current path idx)
-        transfer_passengers     = []  # passenger ids for passengers who are currently walking or transfering
+        trip_pax                = collections.defaultdict(list)  # trip_id to current [passengers] on board
+        stop_pax                = collections.defaultdict(list)  # stop_id to current [passenger] waiting to board
+        passenger_to_state      = {}  # state: (current passenger status, current path idx)
+        transfer_passengers     = []  # passengers for passengers who are currently walking or transfering
 
-        passenger_arrivals      = collections.defaultdict(list)  # passenger id to [arrival time] at stops
-        passenger_boards        = collections.defaultdict(list)  # passenger id to [board time] at stops
-        passenger_alights       = collections.defaultdict(list)  # passenger id to [alight time] at stops
-        passenger_dest_arrivals = {}                             # passenger id to arrival time at destination TAZ
+        passenger_arrivals      = collections.defaultdict(list)  # passenger to [arrival time] at stops
+        passenger_boards        = collections.defaultdict(list)  # passenger to [board time] at stops
+        passenger_alights       = collections.defaultdict(list)  # passenger to [alight time] at stops
+        passenger_dest_arrivals = {}                             # passenger to arrival time at destination TAZ
 
         trip_boards             = collections.defaultdict(list)  # trip_id to [number boards per stop]
         trip_alights            = collections.defaultdict(list)  # trip_id to [number alights per stop]
         trip_dwells             = collections.defaultdict(list)  # trip_id to [dwell times per stop]
 
         # reset
-        for passenger_id in FT.passengers.keys():
-            passenger_path = FT.passengers[passenger_id].path
+        for passenger in FT.passengers:
+            passenger_path = passenger.path
             if not passenger_path.goes_somewhere():   continue
             if not passenger_path.path_found():       continue
 
-            passenger_id_to_state[passenger_id] = (Passenger.STATUS_WALKING,
-                                                   0 if passenger_path.outbound() else passenger_path.num_states()-1)
-            transfer_passengers.append(passenger_id)
+            passenger_to_state[passenger] = (Passenger.STATUS_WALKING, 0 if passenger_path.outbound() else passenger_path.num_states()-1)
+            transfer_passengers.append(passenger)
 
         # OUTBOUND passengers have states like this:
         #    stop:          label    departure   dep_mode  successor linktime
@@ -1024,10 +1030,10 @@ class Assignment:
 
                 # are there alight passengers at this stop?
                 num_alights = 0
-                for passenger_id in list(trip_pax[event.trip_id]):
+                for passenger in list(trip_pax[event.trip_id]):
 
-                    path_idx    = passenger_id_to_state[passenger_id][1]
-                    path        = FT.passengers[passenger_id].path
+                    path_idx    = passenger_to_state[passenger][1]
+                    path        = passenger.path
                     state_stop  = path.states.items()[path_idx][0]
                     path_state  = path.states.items()[path_idx][1]
                     alight_stop = path_state[Path.STATE_IDX_SUCCPRED] if path.outbound() else state_stop
@@ -1037,26 +1043,26 @@ class Assignment:
                     FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                           (int(event.trip_id), int(event.stop_id), event.event_type, 
                                            event.event_time.strftime("%H:%M:%S")))
-                    FastTripsLogger.log(DEBUG_NOISY, "Alighting: --------\n%s" % str(FT.passengers[passenger_id].path))
+                    FastTripsLogger.log(DEBUG_NOISY, "Alighting: --------\n%s" % str(passenger.path))
 
-                    passenger_id_to_state[passenger_id] = (Passenger.STATUS_WALKING, path_idx + (1 if path.outbound() else -1))
-                    passenger_alights[passenger_id].append(event_datetime)
-                    transfer_passengers.append(passenger_id)
-                    trip_pax[event.trip_id].remove(passenger_id)
+                    passenger_to_state[passenger] = (Passenger.STATUS_WALKING, path_idx + (1 if path.outbound() else -1))
+                    passenger_alights[passenger].append(event_datetime)
+                    transfer_passengers.append(passenger)
+                    trip_pax[event.trip_id].remove(passenger)
                     num_alights += 1
 
                     FastTripsLogger.log(DEBUG_NOISY, "Alight @ %s -> Passenger %s: state: %s" % (event_datetime.strftime("%H:%M:%S"),
-                                          str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                                          str(passenger.passenger_id), str(passenger_to_state[passenger])))
 
                 trip_alights[event.trip_id].append(num_alights)
 
             elif event.event_type == Event.EVENT_TYPE_DEPARTURE:
 
                 # transfer passengers: iterate on a copy so we can remove from the list
-                for passenger_id in list(transfer_passengers):
+                for passenger in list(transfer_passengers):
 
-                    path_idx    = passenger_id_to_state[passenger_id][1]
-                    path        = FT.passengers[passenger_id].path
+                    path_idx    = passenger_to_state[passenger][1]
+                    path        = passenger.path
                     state_stop  = path.states.items()[path_idx][0]
                     path_state  = path.states.items()[path_idx][1]
 
@@ -1070,7 +1076,7 @@ class Assignment:
                         # inbound access link:  depart origin time
                         alight_time = path_state[Path.STATE_IDX_DEPARR] - path_state[Path.STATE_IDX_LINKTIME]
                     else:
-                        alight_time = passenger_alights[passenger_id][-1]
+                        alight_time = passenger_alights[passenger][-1]
 
                     # transfer to a different stop
                     if path_state[Path.STATE_IDX_DEPARRMODE] in [Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]:
@@ -1089,29 +1095,29 @@ class Assignment:
                         FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" %
                                               (int(event.trip_id), int(event.stop_id), event.event_type,
                                                event.event_time.strftime("%H:%M:%S")))
-                        FastTripsLogger.log(DEBUG_NOISY, "Transfer: --------\n%s" % str(FT.passengers[passenger_id].path))
+                        FastTripsLogger.log(DEBUG_NOISY, "Transfer: --------\n%s" % str(passenger.path))
 
                         # arrived at destination
                         if path_state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS:
-                            passenger_id_to_state[passenger_id]     = (Passenger.STATUS_ARRIVED, new_path_idx)
-                            passenger_dest_arrivals[passenger_id]   = arrive_time
-                            passengers_arrived                      += 1
+                            passenger_to_state[passenger]        = (Passenger.STATUS_ARRIVED, new_path_idx)
+                            passenger_dest_arrivals[passenger]   = arrive_time
+                            passengers_arrived                   += 1
 
                         else:
-                            passenger_id_to_state[passenger_id] = (Passenger.STATUS_WAITING, new_path_idx)
-                            stop_pax[board_stop].append(passenger_id)
-                            passenger_arrivals[passenger_id].append(arrive_time)
+                            passenger_to_state[passenger] = (Passenger.STATUS_WAITING, new_path_idx)
+                            stop_pax[board_stop].append(passenger)
+                            passenger_arrivals[passenger].append(arrive_time)
 
-                        transfer_passengers.remove(passenger_id)
+                        transfer_passengers.remove(passenger)
                         FastTripsLogger.log(DEBUG_NOISY, "Arrive @ %s -> Passenger %s: state: %s" % (arrive_time.strftime("%H:%M:%S"),
-                                              str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                                              str(passenger.passenger_id), str(passenger_to_state[passenger])))
 
                 # board passengers at this stop
                 num_boards = 0
-                for passenger_id in list(stop_pax[event.stop_id]):
+                for passenger in list(stop_pax[event.stop_id]):
 
-                    path_idx    = passenger_id_to_state[passenger_id][1]
-                    path        = FT.passengers[passenger_id].path
+                    path_idx    = passenger_to_state[passenger][1]
+                    path        = passenger.path
                     state_stop  = path.states.items()[path_idx][0]
                     path_state  = path.states.items()[path_idx][1]
                     if path_state[Path.STATE_IDX_DEPARRMODE] != event.trip_id: continue
@@ -1125,7 +1131,7 @@ class Assignment:
                                                event.event_time.strftime("%H:%M:%S")))
                         FastTripsLogger.log(DEBUG_NOISY, "Bumping: --------\n%s" % str(FT.passengers[passenger_id].path))
 
-                        passenger_id_to_state[passenger_id] = (Passenger.STATUS_BUMPED, -1)
+                        passenger_to_state[passenger] = (Passenger.STATUS_BUMPED, -1)
 
                         # update bump_wait
                         if (((event.trip_id, event.stop_id) not in Assignment.bump_wait) or \
@@ -1134,23 +1140,23 @@ class Assignment:
 
                         passengers_bumped += 1
 
-                        FastTripsLogger.log(DEBUG_NOISY, "-> Passenger %s: state: %s" % (str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                        FastTripsLogger.log(DEBUG_NOISY, "-> Passenger %s: state: %s" % (str(passenger.passenger_id), str(passenger_to_state[passenger])))
                     else:
 
                         FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                               (int(event.trip_id), int(event.stop_id), event.event_type, 
                                                event.event_time.strftime("%H:%M:%S")))
-                        FastTripsLogger.log(DEBUG_NOISY, "Boarding: --------\n%s" % str(FT.passengers[passenger_id].path))
+                        FastTripsLogger.log(DEBUG_NOISY, "Boarding: --------\n%s" % str(passenger.path))
 
-                        trip_pax[event.trip_id].append(passenger_id)
-                        passenger_id_to_state[passenger_id] = (Passenger.STATUS_ON_BOARD, path_idx)
-                        passenger_boards[passenger_id].append(event_datetime)
+                        trip_pax[event.trip_id].append(passenger)
+                        passenger_to_state[passenger] = (Passenger.STATUS_ON_BOARD, path_idx)
+                        passenger_boards[passenger].append(event_datetime)
                         num_boards += 1
 
                         FastTripsLogger.log(DEBUG_NOISY, "Board @ %s -> Passenger %s: state: %s" % (event_datetime.strftime("%H:%M:%S"),
-                                              str(passenger_id), str(passenger_id_to_state[passenger_id])))
+                                              str(passenger.passenger_id), str(passenger_to_state[passenger])))
                     # remove passenger from waiting list
-                    stop_pax[event.stop_id].remove(passenger_id)
+                    stop_pax[event.stop_id].remove(passenger)
 
                 trip_boards[event.trip_id].append(num_boards)
 
@@ -1168,13 +1174,13 @@ class Assignment:
                                      time_elapsed.total_seconds() % 60))
 
         # Put results into path
-        for passenger_id in FT.passengers.keys():
-            FT.passengers[passenger_id].set_experienced_status_and_times( \
-                passenger_id_to_state[passenger_id][0] if passenger_id in passenger_id_to_state else Passenger.STATUS_INITIAL,
-                passenger_arrivals[passenger_id],
-                passenger_boards[passenger_id],
-                passenger_alights[passenger_id],
-                passenger_dest_arrivals[passenger_id] if passenger_id in passenger_dest_arrivals else None)
+        for passenger in FT.passengers:
+            passenger.set_experienced_status_and_times( \
+                passenger_to_state[passenger][0] if passenger in passenger_to_state else Passenger.STATUS_INITIAL,
+                passenger_arrivals[passenger],
+                passenger_boards[passenger],
+                passenger_alights[passenger],
+                passenger_dest_arrivals[passenger] if passenger in passenger_dest_arrivals else None)
 
         # and trip
         for trip_id, trip in FT.trips.iteritems():
