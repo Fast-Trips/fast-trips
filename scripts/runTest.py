@@ -6,7 +6,7 @@ USAGE = r"""
 
   python test_run.py input_dir output_dir
 
-  e.g. python test_run.py ..\FAST-TrIPs-1\Examples\PSRC\pax100_deterministic_iter1_nocap PSRC
+  e.g. python test_run.py ..\FAST-TrIPs-1\Examples\PSRC\pax100_deterministic_iter1_nocap Examples\PSRC
 
   Creates subdir in output_dir matching subdir in input_dir and places results there.
   Parses that subdir to determine test settings.

@@ -76,10 +76,11 @@ class Path:
         #: identifier for destination TAZ
         self.destination_taz_id = passenger_record['DestTAZ'    ]
 
-        #: what is this?
+        #: *Note*: This isn't used for anything, but it gets passed straight through to output.
         self.mode               = passenger_record['mode'       ]
 
         #: Demand time period (e.g. AM, PM, OP)
+        #: *Note*: Currently this is not used for anything.
         self.time_period        = passenger_record['timePeriod' ]
 
         #: Should be one of :py:attr:`Path.DIR_OUTBOUND` or
