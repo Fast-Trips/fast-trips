@@ -1129,14 +1129,14 @@ class Assignment:
                         FastTripsLogger.log(DEBUG_NOISY, "Event (trip %10d, stop %8d, type %s, time %s)" % 
                                               (int(event.trip_id), int(event.stop_id), event.event_type, 
                                                event.event_time.strftime("%H:%M:%S")))
-                        FastTripsLogger.log(DEBUG_NOISY, "Bumping: --------\n%s" % str(FT.passengers[passenger_id].path))
+                        FastTripsLogger.log(DEBUG_NOISY, "Bumping: --------\n%s" % str(path))
 
                         passenger_to_state[passenger] = (Passenger.STATUS_BUMPED, -1)
 
                         # update bump_wait
                         if (((event.trip_id, event.stop_id) not in Assignment.bump_wait) or \
-                             (Assignment.bump_wait[(event.trip_id, event.stop_id)] > passenger_arrivals[passenger_id][-1])):
-                            Assignment.bump_wait[(event.trip_id, event.stop_id)] = passenger_arrivals[passenger_id][-1]
+                             (Assignment.bump_wait[(event.trip_id, event.stop_id)] > passenger_arrivals[passenger][-1])):
+                            Assignment.bump_wait[(event.trip_id, event.stop_id)] = passenger_arrivals[passenger][-1]
 
                         passengers_bumped += 1
 
