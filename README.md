@@ -1,5 +1,5 @@
-# transit-assignment
+# fast-trips
 Dynamic transit assignment tool
 
-# Full Documentation
-[http://metropolitantransportationcommission.github.io/fast-trips/](http://metropolitantransportationcommission.github.io/fast-trips/)
+ * Project Website: http://analytics.mtc.ca.gov/fast-trips/
+ * Full Technical Documentation (API): http://metropolitantransportationcommission.github.io/fast-trips/
