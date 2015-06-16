@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
-import pandas
+import numpy,pandas
 
 from .Event import Event
 from .Logger import FastTripsLogger
@@ -128,6 +128,25 @@ class Trip:
                 return stop[Trip.STOPS_IDX_DEPARTURE_TIME]
         raise Exception("get_scheduled_departure: stop %s not find for trip %s" % (str(stop_id), str(self.trip_id)))
 
+    @staticmethod
+    def calculate_dwell_times(trips_df):
+        """
+        Creates dwell_time in the given :py:class:`pandas.DataFrame` instance.
+        """
+        trips_df['boardsx4']        = trips_df['boards']*4
+        trips_df['alightsx2']       = trips_df['alights']*2
+        trips_df['dwell_time']      = trips_df[['boardsx4','alightsx2']].max(axis=1) + 4
+        # no boards nor alights -> 0
+        trips_df.loc[(trips_df.boards==0)&(trips_df.alights==0), 'dwell_time'] = 0
+        # tram, streetcar, light rail -> 30 --- this seems arbitrary
+        trips_df.loc[trips_df.service_type==0, 'dwell_time']                   = 30
+
+        # drop our intermediate columns
+        trips_df.drop(['boardsx4','alightsx2'], axis=1, inplace=True)
+
+        # print "Dwell time > 0:"
+        # print trips_df.loc[trips_df.dwell_time>0]
+
     def calculate_dwell_time(self, number_of_boards, number_of_alights):
         """
         Calculates the dwell time at a stop given the nuumber of boards and alights at the stop.
@@ -143,7 +162,33 @@ class Trip:
 
         return datetime.timedelta(seconds=0)
 
-    def calculate_headways(self, FT, today):
+    @staticmethod
+    def calculate_headways(trips_df):
+        """
+        Calculates headways and sets them into the given
+        trips_df :py:class:`pandas.DataFrame`.
+
+        Returns :py:class:`pandas.DataFrame` with `headway` column added.
+        """
+        stop_group = trips_df[['stop_id','route_id','direction','depart_time','trip_id','stop_seq']].groupby(['stop_id','route_id','direction'])
+
+        stop_group_df = stop_group.apply(lambda x: x.sort('depart_time'))
+        # set headway, in minutes
+        stop_group_shift_df = stop_group_df.shift()
+        stop_group_df['headway'] = (stop_group_df['depart_time'] - stop_group_shift_df['depart_time'])/numpy.timedelta64(1,'m')
+        # zero out the first in each group
+        stop_group_df.loc[(stop_group_df.stop_id  !=stop_group_shift_df.stop_id  )|
+                          (stop_group_df.route_id !=stop_group_shift_df.route_id )|
+                          (stop_group_df.direction!=stop_group_shift_df.direction), 'headway'] = Trip.DEFAULT_HEADWAY
+        # print stop_group_df
+
+        trips_df_len = len(trips_df)
+        trips_df = pandas.merge(left=trips_df, right=stop_group_df[['trip_id','stop_id','stop_seq','headway']],
+                                on=['trip_id','stop_id','stop_seq'])
+        assert(len(trips_df)==trips_df_len)
+        return trips_df
+
+    def calculate_headway(self, FT, today):
         """
         Calculates the headway for each stop in this trip by finding the previous departure time for vehicles
         serving this same stop, route and direction.

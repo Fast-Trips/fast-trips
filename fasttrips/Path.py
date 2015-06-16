@@ -63,6 +63,9 @@ class Path:
     STATE_MODE_EGRESS   = "Egress"
     STATE_MODE_TRANSFER = "Transfer"
 
+    # new
+    STATE_MODE_TRIP     = "Trip" # onboard
+
     BUMP_EXPERIENCED_COST = 999999
 
     def __init__(self, passenger_record):
