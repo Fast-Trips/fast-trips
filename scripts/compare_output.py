@@ -104,7 +104,7 @@ def compare_file(dir1, dir2, filename):
         elif str(df_diff[col1].dtype) == 'object':
             status = "%d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
         else:
-            status = "Values differ by [%6.2f,%6.2f]" % (df_diff[coldiff].min(), df_diff[coldiff].max())
+            status = "Values differ by [% 8.2f,% 8.2f] with mean % 8.2f" % (df_diff[coldiff].min(), df_diff[coldiff].max(), df_diff[coldiff].mean())
         FastTripsLogger.info(" %-20s  %s" % (colname, status))
 
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     OUTPUT_DIR1 = sys.argv[1]
     OUTPUT_DIR2 = sys.argv[2]
 
-    fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True, debug_noisy=False)
+    fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True)
 
     pandas.set_option('display.width', 300)
     for output_file in ["ft_output_passengerPaths.dat",

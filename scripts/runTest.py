@@ -24,7 +24,6 @@ if __name__ == "__main__":
     test_pat    = re.compile(r"pax(\d+)_(deterministic|stochastic)_iter(\d+)_(cap\d+|nocap)")
     if not os.path.exists(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
     pandas.set_option('display.width', 300)
-
     m = test_pat.match(subdir)
 
     print "subdir = [%s]" % subdir
@@ -33,7 +32,7 @@ if __name__ == "__main__":
 
     fasttrips.setupLogging(os.path.join(OUTPUT_DIR,subdir,"ft_info.log"),
                            os.path.join(OUTPUT_DIR,subdir,"ft_debug.log"),
-                           logToConsole=True, debug_noisy=False)
+                           logToConsole=True)
 
     ft = fasttrips.FastTrips(os.path.join(INPUT_DIR, subdir))
 
