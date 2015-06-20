@@ -1116,9 +1116,16 @@ class Assignment:
              'depart_time'          :Assignment.datetime64_formatter,
              'waitqueue_start_time' :Assignment.datetime64_formatter}))
 
+        for trace_pax in Assignment.TRACE_PASSENGER_IDS:
+            FastTripsLogger.debug("Initial passengers_df for %s\n%s" % \
+               (str(trace_pax),
+                passengers_df.loc[passengers_df.passenger_id==trace_pax].to_string(formatters=\
+               {'A_time'               :Assignment.datetime64_min_formatter,
+                'B_time'               :Assignment.datetime64_min_formatter,
+                'linktime'             :Assignment.timedelta_formatter})))
 
         ######################################################################################################
-        ###### Step 1. Put passengers on transit vehicles to get vehicle boards/alights/load
+        FastTripsLogger.info("Step 1. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
 
         # Just look at trips
         passenger_trips = passengers_df.loc[passengers_df['linkmode']=='Trip']
@@ -1168,7 +1175,7 @@ class Assignment:
             pass
 
         ######################################################################################################
-        ###### Step 2. Find out board/alight times for passengers from vehicle times
+        FastTripsLogger.info("Step 2. Find out board/alight times for passengers from vehicle times")
 
         passenger_trips = pandas.merge(left   =passenger_trips,      right   =veh_trips_df[['stop_id','depart_time']].reset_index(),
                                        left_on=['trip_id','A_id'],   right_on=['trip_id','stop_id'],
@@ -1186,8 +1193,8 @@ class Assignment:
         passenger_trips.drop(['stop_id_x','stop_id_y'], axis=1, inplace=True) # redundant with A_id, B_id
 
         ######################################################################################################
-        ###### Step 3. Some trips (outbound) were found by searching backwards, so they wait *after arriving*.
-        ######         -> They should just move on and wait at the next stop (if there is one)
+        FastTripsLogger.info("Step 3. Some trips (outbound) were found by searching backwards, so they wait *after arriving*.")
+        FastTripsLogger.info("        -> They should just move on and wait at the next stop (if there is one)")
 
         # Get trip board/alight time back to the passengers table
         passengers_df = pandas.merge(left=passengers_df, right=passenger_trips[['passenger_id','path_id','trip_id','board_time','alight_time','A_seq','B_seq']],
@@ -1208,6 +1215,13 @@ class Assignment:
                            (passengers_df.linkmode==Path.STATE_MODE_EGRESS        ))& \
                            (passengers_df.A_time > passengers_df.alight_time_prev ), 'A_time'] -= passengers_df.A_time-passengers_df.alight_time_prev
 
+        # Sometimes stochastic assignment results in transfers that are too early -- fix
+        if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
+            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRANSFER      )& \
+                              (passengers_df.A_time   <passengers_df.alight_time_prev), 'B_time'] = passengers_df.alight_time_prev+passengers_df.linktime
+            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRANSFER      )& \
+                              (passengers_df.A_time   <passengers_df.alight_time_prev), 'A_time'] = passengers_df.alight_time_prev
+
         # Now subsequent trip arrival times can move up also
         passengers_df = pandas.merge(left      =passengers_df, right      =passengers_df[['B_time','linkmode']].shift(1),
                                      left_index=True,          right_index=True,
@@ -1217,9 +1231,16 @@ class Assignment:
         passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
                           (passengers_df.A_time   >passengers_df.B_time_prev), 'A_time'  ]  = passengers_df.B_time_prev
 
+        # Sometimes stochastic assignment results in trips arrivals that are too early -- fix
+        if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
+            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
+                              (passengers_df.A_time   <passengers_df.B_time_prev), 'linktime'] = passengers_df.B_time-passengers_df.B_time_prev
+            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
+                              (passengers_df.A_time   <passengers_df.B_time_prev), 'A_time'  ] = passengers_df.B_time_prev
+
         ######################################################################################################
-        ###### Step 4. Some trips leave too early and wait at the *first* stop.
-        ######         -> Assume they have perfect prediction and wait to leave.
+        FastTripsLogger.info("Step 4. Some trips leave too early and wait at the *first* stop.")
+        FastTripsLogger.info("        -> Assume they have perfect prediction and wait to leave.")
 
         # For trips: If first trip (right after access), if A < board time, get there later!
         passengers_df.loc[(passengers_df.linkmode     ==Path.STATE_MODE_TRIP  ) & \
@@ -1238,19 +1259,20 @@ class Assignment:
                           (passengers_df.B_time       <passengers_df.A_time_next), 'B_time']  = passengers_df.A_time_next
 
         ######################################################################################################
-        ###### Step 5. Add up travel costs
+        FastTripsLogger.info("Step 5. Add up travel costs")
         Path.calculate_tripcost(passengers_df)
 
         # passenger_trips is all wrong now -- redo
-        passenger_trips = passengers_df.loc[passengers_df['linkmode']=='Trip']
+        passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
         passenger_trips.rename(columns={'A_time' :'arrival_time'}, inplace=True)
 
         ######################################################################################################
-        ###### Step 4. Convert times to strings (minutes past midnight) for joining
+        FastTripsLogger.info("Step 6. Convert times to strings (minutes past midnight) for joining")
+
         ######         TODO: this is really catering to output format; an alternative might be more appropriate
-        passenger_trips.loc[:,  'board_time_str'] = passenger_trips[  'board_time'].apply(Assignment.datetime64_min_formatter)
-        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips['arrival_time'].apply(Assignment.datetime64_min_formatter)
-        passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[ 'alight_time'].apply(Assignment.datetime64_min_formatter)
+        passenger_trips.loc[:,  'board_time_str'] = passenger_trips.board_time.apply(Assignment.datetime64_min_formatter)
+        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips.arrival_time.apply(Assignment.datetime64_min_formatter)
+        passenger_trips.loc[:, 'alight_time_str'] = passenger_trips.alight_time.apply(Assignment.datetime64_min_formatter)
         assert(len(passenger_trips) == passenger_trips_len)
 
         # Aggregate (by joining) across each passenger + path
@@ -1265,8 +1287,8 @@ class Assignment:
             {'pathmode'     :'first',  # path mode
              'A_id'         :'first',  # origin
              'B_id'         :'last',   # destination
-             'A_time'       :'min',    # start time
-             'B_time'       :'max',    # end time
+             'A_time'       :'first',  # start time
+             'B_time'       :'last',   # end time
              'travelCost'   :'sum',    # total travel cost
             })
 
@@ -1280,7 +1302,7 @@ class Assignment:
         #                                        'B_time':Assignment.datetime64_min_formatter})
 
         for trace_pax in Assignment.TRACE_PASSENGER_IDS:
-            FastTripsLogger.debug("Passengers_df for %s\n%s" % \
+            FastTripsLogger.debug("Final passengers_df for %s\n%s" % \
                (str(trace_pax),
                 passengers_df.loc[passengers_df.passenger_id==trace_pax].to_string(formatters=\
                {'A_time'               :Assignment.datetime64_min_formatter,
