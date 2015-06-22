@@ -164,6 +164,7 @@ class Assignment:
             num_bumped_passengers = num_paths_assigned - num_passengers_arrived
             capacity_gap = 100.0*num_bumped_passengers/num_paths_assigned
 
+            FastTripsLogger.info("")
             FastTripsLogger.info("  TOTAL ASSIGNED PASSENGERS: %10d" % num_paths_assigned)
             FastTripsLogger.info("  ARRIVED PASSENGERS:        %10d" % num_passengers_arrived)
             FastTripsLogger.info("  MISSED PASSENGERS:         %10d" % num_bumped_passengers)
@@ -923,9 +924,6 @@ class Assignment:
         """
         # reset columns
         print_pax_exp_df = pax_exp_df.reset_index()
-        # TODO: old FAST-TrIPs handles multiple trips for a single passenger ID by dropping the first
-        # ones.  Replicate that here.
-        print_pax_exp_df.drop_duplicates(subset='passenger_id',take_last=True, inplace=True)
 
         print_pax_exp_df.reset_index(inplace=True)
         print_pax_exp_df['A_time_str'] = print_pax_exp_df['A_time'].apply(Assignment.datetime64_min_formatter)
@@ -1099,6 +1097,9 @@ class Assignment:
     def simulate(FT):
         """
         Actually assign the passengers trips to the vehicles.
+
+        .. todo:: Remove step zero.  Duplicate passenger IDs should be ok because we can generate unique path IDs.
+
         """
         start_time              = datetime.datetime.now()
         passengers_arrived      = 0   #: arrived at destination TAZ
@@ -1108,6 +1109,21 @@ class Assignment:
         passengers_df_len       = len(passengers_df)
         veh_trips_df            = Assignment.setup_trips(FT)
         veh_trips_df_len        = len(veh_trips_df)
+
+        ######################################################################################################
+        FastTripsLogger.info("Step 0. Drop passengers with duplicate passenger IDs to match old FAST-TrIPs behavior")
+        # TODO: Remove this.
+        #  Old FAST-TrIPs handles multiple trips for a single passenger ID by dropping the first
+        # ones.  Replicate that here.
+        passengers_dedupe       = passengers_df[['passenger_id','path_id']].copy()
+        passengers_dedupe.drop_duplicates(subset='passenger_id',take_last=True, inplace=True)
+        passengers_dedupe['keep'] = True
+
+        passengers_df = pandas.merge(left   =passengers_df,              right   =passengers_dedupe,
+                                     left_on=['passenger_id','path_id'], right_on=['passenger_id','path_id'],
+                                     how    ='left')
+        passengers_df = passengers_df[passengers_df.keep==True]
+        passengers_df.drop('keep', axis=1, inplace=True)
 
         # veh_trips_df.set_index(['trip_id','stop_seq','stop_id'],verify_integrity=True,inplace=True)
         FastTripsLogger.debug("veh_trips_df types = \n%s" % str(veh_trips_df.dtypes))
