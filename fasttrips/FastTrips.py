@@ -63,11 +63,8 @@ class FastTrips:
         # read trips into those routes
         self.trips = Trip.read_trips(input_dir, self.routes)
 
-        # read the stops and their times into the trips and events
-        self.events = Trip.read_stop_times(input_dir, self.trips, self.stops)
-
-        # sort the events
-        self.events.sort(key=attrgetter('event_time', 'event_type', 'trip_id','stop_id'))
+        # read the stops and their times into the trips
+        Trip.read_stop_times(input_dir, self.trips, self.stops)
 
         transfer_stops = 0
         for stop_id,stop in self.stops.iteritems():

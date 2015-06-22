@@ -15,7 +15,6 @@ __license__   = """
 import collections,datetime,os,sys
 import numpy,pandas
 
-from .Event import Event
 from .Logger import FastTripsLogger
 
 class Trip:
@@ -297,16 +296,11 @@ class Trip:
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(stop_times_df.dtypes))
 
-        events = []
         stop_time_records = stop_times_df.to_dict(orient='records')
         for stop_time_record in stop_time_records:
             trip = trip_id_to_trip[stop_time_record['tripId']]
             trip.add_stop_time(stop_time_record, stop_id_to_stop)
 
-            events.append(Event(stop_time_record, Event.EVENT_TYPE_DEPARTURE))
-            events.append(Event(stop_time_record, Event.EVENT_TYPE_ARRIVAL))
-
-        FastTripsLogger.info("Read %7d stop times and %7d events" % (len(stop_times_df), len(events)))
-        return events
+        FastTripsLogger.info("Read %7d stop times" % (len(stop_times_df)))
 
 

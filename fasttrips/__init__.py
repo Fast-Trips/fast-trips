@@ -14,7 +14,6 @@ __license__   = """
 """
 
 from .Assignment import Assignment
-from .Event import Event
 from .FastTrips import FastTrips
 from .Logger import FastTripsLogger, setupLogging
 from .Passenger import Passenger

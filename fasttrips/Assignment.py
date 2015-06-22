@@ -16,7 +16,6 @@ import Queue
 import collections,datetime,math,os,random,sys
 import numpy,pandas
 
-from .Event import Event
 from .Logger import FastTripsLogger
 from .Passenger import Passenger
 from .Path import Path
