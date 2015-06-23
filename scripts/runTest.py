@@ -36,7 +36,6 @@ if __name__ == "__main__":
 
     ft = fasttrips.FastTrips(os.path.join(INPUT_DIR, subdir))
 
-    # Adjust settings
     if m.group(2) == "deterministic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN
     elif m.group(2) == "stochastic":

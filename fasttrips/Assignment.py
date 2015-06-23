@@ -102,6 +102,12 @@ class Assignment:
     #: It's a dictionary of (trip_id, stop_id) -> earliest time a bumped passenger started waiting
     bump_wait                       = {}
 
+    #: assignment results - Passenger table
+    PASSENGERS_CSV                  = r"passengers_df.csv"
+
+    #: Vehicle trips table
+    VEH_TRIPS_CSV                   = r"veh_trips_df.csv"
+
     #: formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM.SS`
     @staticmethod
     def datetime64_formatter(x):
@@ -145,18 +151,25 @@ class Assignment:
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
-            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY:
-                # read existing paths
-                raise Exception("Simulation only not implemented yet")
+            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY or \
+               (os.path.exists(os.path.join(output_dir, Assignment.PASSENGERS_CSV)) and
+                os.path.exists(os.path.join(output_dir, Assignment.VEH_TRIPS_CSV))):
+                FastTripsLogger.info("Simulation only")
+                (num_paths_assigned, passengers_df, veh_trips_df) = Assignment.read_assignment_results(output_dir)
+
             else:
                 num_paths_assigned = Assignment.assign_passengers(FT, iteration)
+                passengers_df      = Assignment.setup_passengers(FT, output_dir)
+                veh_trips_df       = Assignment.setup_trips(FT, output_dir)
+
+            if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
+                Assignment.print_passenger_paths(passengers_df, output_dir)
 
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
-                (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT)
+                (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT, passengers_df, veh_trips_df)
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Assignment.print_passenger_paths(FT, output_dir)
                 Assignment.print_passenger_times(pax_exp_df, output_dir)
 
             # capacity gap stuff
@@ -905,15 +918,12 @@ class Assignment:
         return True
 
     @staticmethod
-    def print_passenger_paths(FT, output_dir):
+    def print_passenger_paths(passengers_df, output_dir):
         """
         Print the passenger paths.
         """
         paths_out = open(os.path.join(output_dir, "ft_output_passengerPaths.dat"), 'w')
-        paths_out.write("passengerId\t%s\n" % Path.path_str_header())
-        for passenger in FT.passengers:
-            if passenger.path.path_found():
-                paths_out.write("%s\t%s\n" % (str(passenger.passenger_id), passenger.path.path_str()))
+        Path.write_paths(passengers_df, paths_out)
         paths_out.close()
 
     @staticmethod
@@ -963,7 +973,61 @@ class Assignment:
         times_out.close()
 
     @staticmethod
-    def setup_passengers(FT):
+    def read_assignment_results(output_dir):
+        """
+        Reads assignment results from :py:attr:`Assignment.PASSENGERS_CSV` and :py:attr:Assignment.VEH_TRIPS_CSV`
+
+        Returns 3-tuple with:
+
+        * num_paths_assigned
+        * passengers_df
+        * veh_trips_df)
+        """
+        # 2015-06-22 15:42:31 DEBUG Setup passengers dataframe:
+        # passenger_id              int64
+        # path_id                   int64
+        # pathdir                   int64
+        # pathmode                  int64
+        # linkmode                 object
+        # trip_id                 float64
+        # A_id                    float64
+        # B_id                    float64
+        # A_time           datetime64[ns]
+        # B_time           datetime64[ns]
+        # linktime        timedelta64[ns]
+
+        # read existing paths
+        passengers_df = pandas.read_csv(os.path.join(output_dir, Assignment.PASSENGERS_CSV),
+                                        parse_dates=['A_time','B_time'])
+        passengers_df['linktime'] = pandas.to_timedelta(passengers_df['linktime'])
+
+        FastTripsLogger.info("Read %s" % os.path.join(output_dir, Assignment.PASSENGERS_CSV))
+        FastTripsLogger.debug("passengers_df.dtypes=\n%s" % str(passengers_df.dtypes))
+
+        # 2015-06-22 15:42:34 DEBUG Setup vehicle trips dataframe:
+        # route_id                 int64
+        # shape_id                 int64
+        # direction                int64
+        # trip_id                  int64
+        # stop_seq                 int64
+        # stop_id                  int64
+        # capacity                 int64
+        # arrive_time     datetime64[ns]
+        # depart_time     datetime64[ns]
+        # service_type             int64
+        veh_trips_df  = pandas.read_csv(os.path.join(output_dir, Assignment.VEH_TRIPS_CSV),
+                                        parse_dates=['arrive_time','depart_time'])
+
+        FastTripsLogger.info("Read %s" % os.path.join(output_dir, Assignment.VEH_TRIPS_CSV))
+        FastTripsLogger.debug("veh_trips_df.dtypes=\n%s" % str(veh_trips_df.dtypes))
+
+        uniq_pax = passengers_df[['passenger_id']].drop_duplicates(subset='passenger_id')
+        num_paths_assigned = len(uniq_pax)
+
+        return (num_paths_assigned, passengers_df, veh_trips_df)
+
+    @staticmethod
+    def setup_passengers(FT, output_dir):
         """
         Create pandas.DataFrame with passenger states
 
@@ -1016,6 +1080,7 @@ class Assignment:
             # 69021.0: 0:29:27.400000     07:56:27   Transfer      68007 0:00:26.400000
             #   68007: 0:29:01            07:56:01   25539006    64065.0 0:28:11.200000
             # 64065.0: 0:00:49.800000     07:27:49     Access       3793 0:00:49.800000
+            prev_linkmode = None
             if len(passenger.path.states) > 1:
                 state_list = passenger.path.states.keys()
                 if not passenger.path.outbound(): state_list = list(reversed(state_list))
@@ -1038,6 +1103,22 @@ class Assignment:
                         b_time      = state[Path.STATE_IDX_DEPARR]
                         a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
 
+                    # two trips in a row -- insert zero-walk transfer
+                    if linkmode == Path.STATE_MODE_TRIP and prev_linkmode == Path.STATE_MODE_TRIP:
+                        row = [passenger.passenger_id,
+                               path_id,
+                               passenger.path.direction,
+                               passenger.path.mode,
+                               Path.STATE_MODE_TRANSFER,
+                               None,
+                               a_id,
+                               a_id,
+                               a_time,
+                               a_time,
+                               datetime.timedelta()
+                              ]
+                        mylist.append(row)
+
                     row = [passenger.passenger_id,
                            path_id,
                            passenger.path.direction,
@@ -1050,6 +1131,8 @@ class Assignment:
                            b_time,
                            state[Path.STATE_IDX_LINKTIME]]
                     mylist.append(row)
+
+                    prev_linkmode = linkmode
             path_id += 1
         df =  pandas.DataFrame(mylist,
                                columns=['passenger_id', 'path_id',
@@ -1059,10 +1142,13 @@ class Assignment:
                                         'A_id','B_id',
                                         'A_time', 'B_time',
                                         'linktime'])
+        FastTripsLogger.debug("Setup passengers dataframe:\n%s" % str(df.dtypes))
+        df.to_csv(os.path.join(output_dir, Assignment.PASSENGERS_CSV), index=False)
+        FastTripsLogger.info("Wrote passengers dataframe to %s" % os.path.join(output_dir, Assignment.PASSENGERS_CSV))
         return df
 
     @staticmethod
-    def setup_trips(FT):
+    def setup_trips(FT, output_dir):
         """
         Sets up and returns a :py:class:`pandas.DataFrame` where each row contains a leg of a transit vehicle trip.
         """
@@ -1090,10 +1176,14 @@ class Assignment:
                                        'arrive_time','depart_time',
                                        'service_type', # for dwell time
                                       ])
+        FastTripsLogger.debug("Setup vehicle trips dataframe:\n%s" % str(df.dtypes))
+        df.to_csv(os.path.join(output_dir, Assignment.VEH_TRIPS_CSV), index=False)
+        FastTripsLogger.info("Wrote vehicle trips dataframe to %s" % os.path.join(output_dir, Assignment.VEH_TRIPS_CSV))
+
         return df
 
     @staticmethod
-    def simulate(FT):
+    def simulate(FT, passengers_df, veh_trips_df):
         """
         Actually assign the passengers trips to the vehicles.
 
@@ -1104,9 +1194,7 @@ class Assignment:
         passengers_arrived      = 0   #: arrived at destination TAZ
         passengers_bumped       = 0
 
-        passengers_df           = Assignment.setup_passengers(FT)
         passengers_df_len       = len(passengers_df)
-        veh_trips_df            = Assignment.setup_trips(FT)
         veh_trips_df_len        = len(veh_trips_df)
 
         ######################################################################################################
@@ -1145,7 +1233,7 @@ class Assignment:
         # Just look at trips
         passenger_trips = passengers_df.loc[passengers_df['linkmode']=='Trip']
         passenger_trips_len = len(passenger_trips)
-        FastTripsLogger.debug("Passenger Trips: \n%s" % str(passenger_trips))
+        FastTripsLogger.debug("Passenger Trips: \n%s" % str(passenger_trips.head()))
 
         # Group to boards by counting path_ids for a (trip_id, A_id as stop_id)
         passenger_trips_boards = passenger_trips[['path_id','trip_id','A_id']].groupby(['trip_id','A_id']).count()

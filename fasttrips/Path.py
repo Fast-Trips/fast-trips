@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,string
-import numpy
+import numpy,pandas
 
 from .Logger import FastTripsLogger
 
@@ -125,10 +125,7 @@ class Path:
 
         # flat
         passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.FARE_PER_BOARDING         * 60.0/Path.VALUE_OF_TIME
-
-        # this needs to go on Trips not transfers because if the transfer is at the same stop id, there's no transfer link
-        passengers_df.loc[(passengers_df.linkmode     ==Path.STATE_MODE_TRIP  )& \
-                          (passengers_df.linkmode_prev!=Path.STATE_MODE_ACCESS),'travelCost'] += Path.TRANSFER_PENALTY
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRANSFER,'travelCost'] += Path.TRANSFER_PENALTY
 
     def goes_somewhere(self):
         """
@@ -227,6 +224,77 @@ class Path:
         for state_id,state in self.states.iteritems():
             readable_str += "\n%s" % Path.state_str(state_id, state)
         return readable_str
+
+    @staticmethod
+    def write_paths(passengers_df, paths_out):
+        """
+        Write the assigned paths to the given output file.
+
+        :param passengers_df: Passenger paths assignment results
+        :type passengers_df: :py:class:`pandas.DataFrame` instance
+        :param paths_out: Output file, opened for writing
+        :type paths_out: :py:class:`file` instance
+
+        """
+        # get trip information -- board stops, board trips and alight stops
+        passenger_trips = passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP].copy()
+        # convert to strings for appending
+        passenger_trips['board_stop_str' ] = passenger_trips.A_id.apply(lambda x:'s%d' % x)
+        passenger_trips['board_trip_str' ] = passenger_trips.trip_id.apply(lambda x:'t%d' % x)
+        passenger_trips['alight_stop_str'] = passenger_trips.B_id.apply(lambda x:'s%d' % x)
+        ptrip_group     = passenger_trips.groupby(['passenger_id','path_id'])
+        # these are Series
+        board_stops_str = ptrip_group.board_stop_str.apply(lambda x:','.join(x))
+        board_trips_str = ptrip_group.board_trip_str.apply(lambda x:','.join(x))
+        alight_stops_str= ptrip_group.alight_stop_str.apply(lambda x:','.join(x))
+
+        # get walking times
+        walk_links = passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_ACCESS  )| \
+                                       (passengers_df.linkmode==Path.STATE_MODE_TRANSFER)| \
+                                       (passengers_df.linkmode==Path.STATE_MODE_EGRESS  )].copy()
+        walk_links['linktime_str'] = walk_links.linktime.apply(lambda x: "%.2f" % (x/numpy.timedelta64(1,'m')))
+        walklink_group = walk_links[['passenger_id','path_id','linktime_str']].groupby(['passenger_id','path_id'])
+        walktimes_str  = walklink_group.linktime_str.apply(lambda x:','.join(x))
+
+        # aggregate to one line per passenger_id, path_id
+        print_passengers_df = passengers_df[['passenger_id','path_id','pathmode','A_id','B_id','A_time']].groupby(['passenger_id','path_id']).agg(
+           {'pathmode'      :'first',   # path mode
+            'A_id'          :'first',   # origin
+            'B_id'          :'last',    # destination
+            'A_time'        :'first'    # start time
+           })
+
+        # put them all together
+        print_passengers_df = pandas.concat([print_passengers_df,
+                                            board_stops_str,
+                                            board_trips_str,
+                                            alight_stops_str,
+                                            walktimes_str], axis=1)
+
+        print_passengers_df.reset_index(inplace=True)
+        print_passengers_df.rename(columns=
+           {'passenger_id'      :'passengerId',
+            'pathmode'          :'mode',
+            'A_id'              :'originTaz',
+            'B_id'              :'destinationTaz',
+            'A_time'            :'startTime_time',
+            'board_stop_str'    :'boardingStops',
+            'board_trip_str'    :'boardingTrips',
+            'alight_stop_str'   :'alightingStops',
+            'linktime_str'      :'walkingTimes'}, inplace=True)
+        print_passengers_df[['originTaz','destinationTaz']] = print_passengers_df[['originTaz','destinationTaz']].astype(int)
+
+        print_passengers_df['startTime'] = print_passengers_df['startTime_time'].apply(lambda x: '%.2f' % \
+                        (pandas.to_datetime(x).hour*60.0 + \
+                         pandas.to_datetime(x).minute + \
+                         pandas.to_datetime(x).second/60.0))
+
+        print_passengers_df = print_passengers_df[['passengerId','mode','originTaz','destinationTaz','startTime',
+                                                   'boardingStops','boardingTrips','alightingStops','walkingTimes']]
+
+        print_passengers_df.to_csv(paths_out, sep="\t", index=False)
+        # passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes
+
 
     @staticmethod
     def path_str_header():
