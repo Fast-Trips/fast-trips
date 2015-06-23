@@ -89,6 +89,7 @@ def compare_file(dir1, dir2, filename):
 
         # Detailed output
         FastTripsLogger.debug("============================================ %s ============================================" % colname)
+        FastTripsLogger.debug(" -- dtypes --\n" + str(df_diff[[col1, col2, coldiff]].dtypes))
         FastTripsLogger.debug(" -- head --\n" + str(df_diff[[col1, col2, coldiff]].head()) + "\n")
         FastTripsLogger.debug(" -- describe --\n" + str(df_diff[[col1, col2, coldiff]].describe()) + "\n")
         if df_diff[colabsdiff].max() == 0:
@@ -103,6 +104,8 @@ def compare_file(dir1, dir2, filename):
             status = "Match"
         elif str(df_diff[col1].dtype) == 'object':
             status = "%d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
+        elif str(df_diff[col1].dtype)[:3] == 'int':
+            status = "Values differ by [% 8.2f,% 8.2f] with %d values differing" % (df_diff[coldiff].min(), df_diff[coldiff].max(), len(df_diff.loc[df_diff[coldiff]!=0]))
         else:
             status = "Values differ by [% 8.2f,% 8.2f] with mean % 8.2f" % (df_diff[coldiff].min(), df_diff[coldiff].max(), df_diff[coldiff].mean())
         FastTripsLogger.info(" %-20s  %s" % (colname, status))
