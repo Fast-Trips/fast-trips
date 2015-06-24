@@ -27,13 +27,6 @@ class Passenger:
     #: TODO: document format
     INPUT_DEMAND_FILE = "ft_input_demand.dat"
 
-    STATUS_INITIAL    = 0
-    STATUS_WALKING    = 1
-    STATUS_WAITING    = 2
-    STATUS_ON_BOARD   = 3
-    STATUS_BUMPED     = 4 #: bumped: couldn't board because vehicle is full
-    STATUS_ARRIVED    = 5 #: arrived at destination
-
     def __init__(self, passenger_record):
         """
         Constructor from dictionary mapping attribute to value.

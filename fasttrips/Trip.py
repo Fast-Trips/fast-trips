@@ -146,6 +146,10 @@ class Trip:
         # print "Dwell time > 0:"
         # print trips_df.loc[trips_df.dwell_time>0]
 
+        # these are integers -- make them as such for now
+        trips_df[['dwell_time']] = trips_df[['dwell_time']].astype(int)
+
+
     def calculate_dwell_time(self, number_of_boards, number_of_alights):
         """
         Calculates the dwell time at a stop given the nuumber of boards and alights at the stop.
