@@ -297,7 +297,9 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/2.7/': None}
+intersphinx_mapping = {'python':('http://docs.python.org/2.7/', None),
+                       'pandas':('http://pandas.pydata.org/pandas-docs/stable/',None),
+                       'numpy':('http://docs.scipy.org/doc/numpy/objects.inv',None)}
 
 autodoc_default_flags = [ 'members', 'undoc-members', 'private-members', 'inherited-members', 'show-inheritance' ]
 autodoc_member_order = 'groupwise'

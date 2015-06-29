@@ -13,8 +13,9 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,string
+import numpy,pandas
 
-from .Logger import FastTripsLogger, DEBUG_NOISY
+from .Logger import FastTripsLogger
 
 class Path:
     """
@@ -63,6 +64,9 @@ class Path:
     STATE_MODE_EGRESS   = "Egress"
     STATE_MODE_TRANSFER = "Transfer"
 
+    # new
+    STATE_MODE_TRIP     = "Trip" # onboard
+
     BUMP_EXPERIENCED_COST = 999999
 
     def __init__(self, passenger_record):
@@ -104,58 +108,24 @@ class Path:
         #: this is in reverse order (egress to access)
         self.states = collections.OrderedDict()
 
-        #: Experienced times arriving at a stop.  List of :py:class:`datetime.datetime` instances.
-        self.experienced_arrival_times = None
-
-        #: Experienced times boarding a vehicle.  List of :py:class:`datetime.datetime` instances.
-        self.experienced_board_times   = None
-
-        #: Experienced times alighting from vehicle.  List of :py:class:`datetime.datetime` instances.
-        self.experienced_alight_times  = None
-
-        #: Experienced arrival time at destination. A :py:class:`datetime.time` instance.
-        self.experienced_destination_arrival = None
-
-        #: Experienced cost in weighted minutes.
-        self.experienced_cost = Path.BUMP_EXPERIENCED_COST
-
-    def set_experienced_times(self, arrival_times, board_times, alight_times, destination_arrival):
+    @staticmethod
+    def calculate_tripcost(passengers_df):
         """
-        Setter for :py:attr:`Path.experienced_arrival_times`, :py:attr:`Path.experienced_board_times`,
-        and :py:attr:`Path.experienced_alight_times`.
-
-        If passenger never arrives at destination, pass *destination_arrival* = *None*.
-
-        Calculates and set :py:attr:`Path.experienced_cost`
+        Given a :py:class:`pandas.DataFrame` instance with each row representing a link in the passenger's trip,
+        adds a new colum, `travelCost`.
         """
-        self.experienced_arrival_times          = arrival_times
-        self.experienced_board_times            = board_times
-        self.experienced_alight_times           = alight_times
-        self.experienced_destination_arrival    = destination_arrival
+        passengers_df['travelCost'] = 0.0
+        # time-based
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_ACCESS  ,'travelCost'] += Path.WALK_ACCESS_TIME_WEIGHT   * (passengers_df.linktime/numpy.timedelta64(1,'m'))
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRANSFER,'travelCost'] += Path.WALK_TRANSFER_TIME_WEIGHT * (passengers_df.linktime/numpy.timedelta64(1,'m'))
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_EGRESS  ,'travelCost'] += Path.WALK_EGRESS_TIME_WEIGHT   * (passengers_df.linktime/numpy.timedelta64(1,'m'))
 
-        if self.experienced_destination_arrival == None:
-            return
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.IN_VEHICLE_TIME_WEIGHT    * ((passengers_df.alight_time-passengers_df.board_time)/numpy.timedelta64(1,'m'))
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.WAIT_TIME_WEIGHT          * ((passengers_df.board_time -passengers_df.A_time    )/numpy.timedelta64(1,'m'))
 
-        # Passenger arrived at their destination
-        wait_time           = datetime.timedelta()
-        walk_transfer_time  = datetime.timedelta()
-        in_vehicle_time     = datetime.timedelta()
-        for ride_num in range(len(self.experienced_board_times)):
-            wait_time               += self.experienced_board_times[ride_num] - self.experienced_arrival_times[ride_num]
-            if ride_num > 0:
-                walk_transfer_time  += self.experienced_arrival_times[ride_num] - self.experienced_alight_times[ride_num-1]
-            in_vehicle_time         += self.experienced_alight_times[ride_num] - self.experienced_board_times[ride_num]
-
-        access_state = self.states.items()[0][1]
-        egress_state = self.states.items()[-1][1]
-        self.experienced_cost = \
-            (Path.IN_VEHICLE_TIME_WEIGHT    * in_vehicle_time.total_seconds()/60.0                      ) + \
-            (Path.WAIT_TIME_WEIGHT          * wait_time.total_seconds()/60.0                            ) + \
-            (Path.WALK_TRANSFER_TIME_WEIGHT * walk_transfer_time.total_seconds()/60.0                   ) + \
-            (Path.WALK_ACCESS_TIME_WEIGHT   * access_state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0) + \
-            (Path.WALK_EGRESS_TIME_WEIGHT   * egress_state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0) + \
-            (Path.TRANSFER_PENALTY          * (len(self.experienced_board_times)-1)                     ) + \
-            (Path.FARE_PER_BOARDING         * len(self.experienced_board_times)*60.0/Path.VALUE_OF_TIME )
+        # flat
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.FARE_PER_BOARDING         * 60.0/Path.VALUE_OF_TIME
+        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRANSFER,'travelCost'] += Path.TRANSFER_PENALTY
 
     def goes_somewhere(self):
         """
@@ -256,18 +226,82 @@ class Path:
         return readable_str
 
     @staticmethod
+    def write_paths(passengers_df, paths_out):
+        """
+        Write the assigned paths to the given output file.
+
+        :param passengers_df: Passenger paths assignment results
+        :type passengers_df: :py:class:`pandas.DataFrame` instance
+        :param paths_out: Output file, opened for writing
+        :type paths_out: :py:class:`file` instance
+
+        """
+        # get trip information -- board stops, board trips and alight stops
+        passenger_trips = passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP].copy()
+        # convert to strings for appending
+        passenger_trips['board_stop_str' ] = passenger_trips.A_id.apply(lambda x:'s%d' % x)
+        passenger_trips['board_trip_str' ] = passenger_trips.trip_id.apply(lambda x:'t%d' % x)
+        passenger_trips['alight_stop_str'] = passenger_trips.B_id.apply(lambda x:'s%d' % x)
+        ptrip_group     = passenger_trips.groupby(['passenger_id','path_id'])
+        # these are Series
+        board_stops_str = ptrip_group.board_stop_str.apply(lambda x:','.join(x))
+        board_trips_str = ptrip_group.board_trip_str.apply(lambda x:','.join(x))
+        alight_stops_str= ptrip_group.alight_stop_str.apply(lambda x:','.join(x))
+
+        # get walking times
+        walk_links = passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_ACCESS  )| \
+                                       (passengers_df.linkmode==Path.STATE_MODE_TRANSFER)| \
+                                       (passengers_df.linkmode==Path.STATE_MODE_EGRESS  )].copy()
+        walk_links['linktime_str'] = walk_links.linktime.apply(lambda x: "%.2f" % (x/numpy.timedelta64(1,'m')))
+        walklink_group = walk_links[['passenger_id','path_id','linktime_str']].groupby(['passenger_id','path_id'])
+        walktimes_str  = walklink_group.linktime_str.apply(lambda x:','.join(x))
+
+        # aggregate to one line per passenger_id, path_id
+        print_passengers_df = passengers_df[['passenger_id','path_id','pathmode','A_id','B_id','A_time']].groupby(['passenger_id','path_id']).agg(
+           {'pathmode'      :'first',   # path mode
+            'A_id'          :'first',   # origin
+            'B_id'          :'last',    # destination
+            'A_time'        :'first'    # start time
+           })
+
+        # put them all together
+        print_passengers_df = pandas.concat([print_passengers_df,
+                                            board_stops_str,
+                                            board_trips_str,
+                                            alight_stops_str,
+                                            walktimes_str], axis=1)
+
+        print_passengers_df.reset_index(inplace=True)
+        print_passengers_df.rename(columns=
+           {'passenger_id'      :'passengerId',
+            'pathmode'          :'mode',
+            'A_id'              :'originTaz',
+            'B_id'              :'destinationTaz',
+            'A_time'            :'startTime_time',
+            'board_stop_str'    :'boardingStops',
+            'board_trip_str'    :'boardingTrips',
+            'alight_stop_str'   :'alightingStops',
+            'linktime_str'      :'walkingTimes'}, inplace=True)
+        print_passengers_df[['originTaz','destinationTaz']] = print_passengers_df[['originTaz','destinationTaz']].astype(int)
+
+        print_passengers_df['startTime'] = print_passengers_df['startTime_time'].apply(lambda x: '%.2f' % \
+                        (pandas.to_datetime(x).hour*60.0 + \
+                         pandas.to_datetime(x).minute + \
+                         pandas.to_datetime(x).second/60.0))
+
+        print_passengers_df = print_passengers_df[['passengerId','mode','originTaz','destinationTaz','startTime',
+                                                   'boardingStops','boardingTrips','alightingStops','walkingTimes']]
+
+        print_passengers_df.to_csv(paths_out, sep="\t", index=False)
+        # passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes
+
+
+    @staticmethod
     def path_str_header():
         """
         The header for the path file.
         """
         return "mode\toriginTaz\tdestinationTaz\tstartTime\tboardingStops\tboardingTrips\talightingStops\twalkingTimes"
-
-    @staticmethod
-    def time_str_header():
-        """
-        The header for the time file.
-        """
-        return "mode\toriginTaz\tdestinationTaz\tstartTime\tendTime\tarrivalTimes\tboardingTimes\talightingTimes\ttravelCost"
 
     def path_str(self):
         """
@@ -371,40 +405,4 @@ class Path:
                                             alighting_stops)
         # no transfers: access, trip egress
         return_str += "%.2f%s,%.2f" % (access_time, transfer_time, egress_time)
-        return return_str
-
-    def time_str(self):
-        """
-        String output of the experienced times, in legacy format (tab-delimited):
-
-        * mode
-        * origin TAZ
-        * destination TAZ
-        * start time, in minutes after midnight
-        * end time (arrival at destination), in minutes after midnight
-        * arrival times at stops, comma-delimited, in minutes after midnight
-        * boarding times at stops, comma-delimited, in minutes after midnight
-        * alighting times at stops, comma-delimited, in minutes after midnight
-        * travel cost
-        """
-        start_time = self.preferred_time
-        if len(self.states) > 1:
-            if self.outbound():
-                # departure for access state
-                start_time = self.states.items()[0][1][Path.STATE_IDX_DEPARR]
-            if not self.outbound():
-                # arrival for access state minus access link time
-                start_time = self.states.items()[-1][1][Path.STATE_IDX_DEPARR] - self.states.items()[-1][1][Path.STATE_IDX_LINKTIME]
-
-        return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
-        return_str += "%.2f\t" % (start_time.hour*60.0 + start_time.minute + start_time.second/60.0)
-        return_str += "%.2f\t" % ((self.experienced_destination_arrival.hour*60 +
-                                   self.experienced_destination_arrival.minute +
-                                   self.experienced_destination_arrival.second/60.0) if self.experienced_destination_arrival else 0)
-        return_str += string.join(["%.2f" % (x.hour*60.0 + x.minute + x.second/60.0) for x in self.experienced_arrival_times], ",")
-        return_str += "\t"
-        return_str += string.join(["%.2f" % (x.hour*60.0 + x.minute + x.second/60.0) for x in self.experienced_board_times], ",")
-        return_str += "\t"
-        return_str += string.join(["%.2f" % (x.hour*60.0 + x.minute + x.second/60.0) for x in self.experienced_alight_times], ",")
-        return_str += "\t%.2f" % self.experienced_cost
         return return_str

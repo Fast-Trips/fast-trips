@@ -1,4 +1,4 @@
-import collections, csv, os, pandas, sys
+import collections, csv, os, numpy, pandas, sys
 import fasttrips
 from fasttrips import FastTripsLogger
 
@@ -54,6 +54,12 @@ def compare_file(dir1, dir2, filename):
         split_df2['num_%s' % col] = split_df2.notnull().sum(axis=1)
         df1 = pandas.concat(objs=[df1, split_df1], axis=1)
         df2 = pandas.concat(objs=[df2, split_df2], axis=1)
+        if len(rename_cols1) < len(rename_cols2):
+            for k,v in rename_cols2.iteritems():
+                if k not in rename_cols1: df1[v] = numpy.NaN
+        if len(rename_cols2) < len(rename_cols1):
+            for k,v in rename_cols1.iteritems():
+                if k not in rename_cols2: df2[v] = numpy.NaN
 
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df1), filename1))
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df2), filename2))
@@ -89,6 +95,7 @@ def compare_file(dir1, dir2, filename):
 
         # Detailed output
         FastTripsLogger.debug("============================================ %s ============================================" % colname)
+        FastTripsLogger.debug(" -- dtypes --\n" + str(df_diff[[col1, col2, coldiff]].dtypes))
         FastTripsLogger.debug(" -- head --\n" + str(df_diff[[col1, col2, coldiff]].head()) + "\n")
         FastTripsLogger.debug(" -- describe --\n" + str(df_diff[[col1, col2, coldiff]].describe()) + "\n")
         if df_diff[colabsdiff].max() == 0:
@@ -103,8 +110,10 @@ def compare_file(dir1, dir2, filename):
             status = "Match"
         elif str(df_diff[col1].dtype) == 'object':
             status = "%d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
+        elif str(df_diff[col1].dtype)[:3] == 'int':
+            status = "Values differ by [% 8.2f,% 8.2f] with %d values differing" % (df_diff[coldiff].min(), df_diff[coldiff].max(), len(df_diff.loc[df_diff[coldiff]!=0]))
         else:
-            status = "Values differ by [%6.2f,%6.2f]" % (df_diff[coldiff].min(), df_diff[coldiff].max())
+            status = "Values differ by [% 8.2f,% 8.2f] with mean % 8.2f" % (df_diff[coldiff].min(), df_diff[coldiff].max(), df_diff[coldiff].mean())
         FastTripsLogger.info(" %-20s  %s" % (colname, status))
 
 
@@ -122,7 +131,7 @@ if __name__ == "__main__":
     OUTPUT_DIR1 = sys.argv[1]
     OUTPUT_DIR2 = sys.argv[2]
 
-    fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True, debug_noisy=False)
+    fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True)
 
     pandas.set_option('display.width', 300)
     for output_file in ["ft_output_passengerPaths.dat",

@@ -26,7 +26,6 @@ autosummary
    :toctree: _generated
 
    Assignment
-   Event
    FastTrips
    Passenger
    Path
