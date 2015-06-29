@@ -1,4 +1,4 @@
-import collections, csv, os, pandas, sys
+import collections, csv, os, numpy, pandas, sys
 import fasttrips
 from fasttrips import FastTripsLogger
 
@@ -54,6 +54,12 @@ def compare_file(dir1, dir2, filename):
         split_df2['num_%s' % col] = split_df2.notnull().sum(axis=1)
         df1 = pandas.concat(objs=[df1, split_df1], axis=1)
         df2 = pandas.concat(objs=[df2, split_df2], axis=1)
+        if len(rename_cols1) < len(rename_cols2):
+            for k,v in rename_cols2.iteritems():
+                if k not in rename_cols1: df1[v] = numpy.NaN
+        if len(rename_cols2) < len(rename_cols1):
+            for k,v in rename_cols1.iteritems():
+                if k not in rename_cols2: df2[v] = numpy.NaN
 
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df1), filename1))
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df2), filename2))
