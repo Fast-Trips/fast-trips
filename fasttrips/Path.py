@@ -169,15 +169,7 @@ class Path:
         """
         Returns a header for the state_str
         """
-        if len(state) == 5:
-            return "%8s: %14s    %9s %10s %10s %-17s" % \
-            ("stop",
-             "label",
-             "departure" if direction == Path.DIR_OUTBOUND else "arrival",
-             "dep_mode"  if direction == Path.DIR_OUTBOUND else "arr_mode",
-             "successor" if direction == Path.DIR_OUTBOUND else "predecessor",
-             "linktime")
-        return "%8s: %12s %9s %10s %11s %-17s %12s  %s" % \
+        return "%8s: %-14s %9s %10s %11s %-17s %-12s  %s" % \
             ("stop",
              "label",
              "departure" if direction == Path.DIR_OUTBOUND else "arrival",
@@ -192,25 +184,14 @@ class Path:
         """
         Returns a readable string version of the given state_id and state, as a single line.
         """
-        # deterministic
-        if len(state) == 5:
-            return "%8s: %-14s     %s %10s %10s %-17s" % \
+        return "%8s: %-14s  %s %10s %10s  %-17s %-12s  %s" % \
             (str(state_id),
-             str(state[Path.STATE_IDX_LABEL]),
-             state[Path.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
-             str(state[Path.STATE_IDX_DEPARRMODE]),
-             str(state[Path.STATE_IDX_SUCCPRED]),
-             str(state[Path.STATE_IDX_LINKTIME]))
-
-        # stochastic
-        return "%8s: %12.4f  %s %10s %10s  %-17s %12.4f  %s" % \
-            (str(state_id),
-             state[Path.STATE_IDX_LABEL],
+             str(state[Path.STATE_IDX_LABEL]) if type(state[Path.STATE_IDX_LABEL])==datetime.timedelta else "%.4f" % state[Path.STATE_IDX_LABEL],
              state[Path.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
              str(state[Path.STATE_IDX_DEPARRMODE]),
              str(state[Path.STATE_IDX_SUCCPRED]),
              str(state[Path.STATE_IDX_LINKTIME]),
-             state[Path.STATE_IDX_COST],
+             str(state[Path.STATE_IDX_COST]) if type(state[Path.STATE_IDX_COST])==datetime.timedelta else "%.4f" % state[Path.STATE_IDX_COST],
              state[Path.STATE_IDX_ARRIVAL].strftime("%H.%M:%S"))
 
     def __str__(self):
