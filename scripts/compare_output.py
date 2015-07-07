@@ -100,6 +100,9 @@ def compare_file(dir1, dir2, filename):
         FastTripsLogger.debug(" -- describe --\n" + str(df_diff[[col1, col2, coldiff]].describe()) + "\n")
         if df_diff[colabsdiff].max() == 0:
             FastTripsLogger.debug("-- no diffs --")
+        elif filename=="ft_output_passengerPaths.dat":
+            FastTripsLogger.debug(" -- diffs --\n" + \
+                                  str(df_diff.reset_index().sort(columns=[colabsdiff, 'passengerId'], ascending=[False,True]).loc[:,['passengerId','mode','originTaz','destinationTaz',col1, col2, coldiff, colabsdiff]].head()) + "\n")
         else:
             FastTripsLogger.debug(" -- diffs --\n" + \
                                   str(df_diff.sort(columns=colabsdiff, ascending=False).loc[:,[col1, col2, coldiff, colabsdiff]].head()) + "\n")
