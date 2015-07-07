@@ -82,7 +82,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PASSENGER_IDS             = []
+    TRACE_PASSENGER_IDS             = [48]
 
     #: Maximum number of times to call :py:meth:`choose_path_from_hyperpath_states`
     MAX_HYPERPATH_ASSIGN_ATTEMPTS   = 1001   # that's a lot
@@ -122,21 +122,28 @@ class Assignment:
     #: assignment results - Passenger table
     PASSENGERS_CSV                  = r"passengers_df_iter%d.csv"
 
-    #: formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM.SS`
     @staticmethod
     def datetime64_formatter(x):
+        """
+        Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM.SS`
+        """
         return pandas.to_datetime(x).strftime('%H:%M.%S')
 
-    #: formatter to convert :py:class:`numpy.datetime64` to minutes after minutes
-    #: (with two decimal places)
     @staticmethod
     def datetime64_min_formatter(x):
+        """
+        Formatter to convert :py:class:`numpy.datetime64` to minutes after minutes
+        (with two decimal places)
+        """
         return '%.2f' % (pandas.to_datetime(x).hour*60.0 + \
                          pandas.to_datetime(x).minute + \
                          pandas.to_datetime(x).second/60.0)
-    #: formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
+
     @staticmethod
     def timedelta_formatter(x):
+        """
+        Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
+        """
         seconds = x/numpy.timedelta64(1,'s')
         minutes = int(seconds/60)
         seconds -= minutes*60
@@ -228,10 +235,9 @@ class Assignment:
                 FastTripsLogger.debug("Tracing assignment of passenger %s" % str(passenger_id))
                 trace_passenger = True
 
-            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_DET_ASGN:
-                asgn_iters = Assignment.find_trip_based_shortest_path(FT, passenger.path, trace_passenger)
-            else:
-                asgn_iters = Assignment.find_trip_based_hyperpath(FT, passenger.path, trace_passenger)
+            asgn_iters = Assignment.find_trip_based_path(FT, passenger.path,
+                                                         hyperpath=Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                         trace=trace_passenger)
 
             if passenger.path.path_found():
                 num_paths_assigned += 1
@@ -246,253 +252,6 @@ class Assignment:
             elif num_paths_assigned % 50 == 0:
                 FastTripsLogger.debug("%6d / %6d passenger paths assigned" % (num_paths_assigned, len(FT.passengers)))
         return num_paths_assigned
-
-    @staticmethod
-    def find_trip_based_shortest_path(FT, path, trace):
-        """
-        Perform trip-based shortest path search.
-        Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
-        or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
-
-        Updates the path information in the given path and returns the number of label iterations required.
-
-        :param FT: fasttrips data
-        :type FT: a :py:class:`FastTrips` instance
-        :param path: the path to fill in
-        :type path: a :py:class:`Path` instance
-        :param trace: pass True if this path should be traced to the debug log
-        :type trace: boolean
-        """
-        if path.outbound():
-            start_taz_id    = path.destination_taz_id
-            dir_factor      = 1  # a lot of attributes are just the negative -- this facilitates that
-        else:
-            start_taz_id    = path.origin_taz_id
-            dir_factor      = -1
-
-        stop_states = {}                    # stop_id -> [label, departure, departure_mode, successor]
-        stop_queue  = Queue.PriorityQueue() # (label, stop_id)
-        MAX_TIME    = datetime.timedelta(minutes = 999.999)
-        stop_done   = set() # stop ids
-        trips_used  = set() # trip ids
-
-        # possible egress links
-        for stop_id, access_link in FT.tazs[start_taz_id].access_links.iteritems():
-            # outbound: departure time = destination - access
-            # inbound:  arrival time   = origin      + access
-            deparr_time          = datetime.datetime.combine(Assignment.TODAY, path.preferred_time) - \
-                                   (access_link[TAZ.ACCESS_LINK_IDX_TIME]*dir_factor)
-            stop_states[stop_id] = [ \
-                access_link[TAZ.ACCESS_LINK_IDX_TIME],                                  # label
-                deparr_time,                                                            # departure/arrival
-                Path.STATE_MODE_EGRESS if path.outbound() else Path.STATE_MODE_ACCESS,  # departure/arrival mode
-                start_taz_id,                                                           # successor/predecessor
-                access_link[TAZ.ACCESS_LINK_IDX_TIME]]                                  # link time
-            stop_queue.put( (access_link[TAZ.ACCESS_LINK_IDX_TIME], stop_id ))
-            if trace: FastTripsLogger.debug(" %s   %s" % ("+egress" if path.outbound() else "+access",
-                                                          Path.state_str(stop_id, stop_states[stop_id])))
-
-        # labeling loop
-        label_iterations = 0
-        while not stop_queue.empty():
-            (current_label, current_stop_id) = stop_queue.get()
-
-            if current_stop_id in stop_done: continue                   # stop is already processed
-            stop_done.add(current_stop_id)                              # process this stop now - just once
-
-            if trace:
-                FastTripsLogger.debug("Pulling from stop_queue (iteration %d, label %.4f, stop %s) :======" % \
-                                      (label_iterations, current_label.total_seconds()/60.0, str(current_stop_id)))
-                FastTripsLogger.debug("           " + Path.state_str(current_stop_id, stop_states[current_stop_id]))
-                FastTripsLogger.debug("==============================")
-
-            current_stop_state = stop_states[current_stop_id]
-
-            # Update by transfer
-            # (We don't want to transfer to egress or transfer to a transfer)
-            if current_stop_state[Path.STATE_IDX_DEPARRMODE] not in [Path.STATE_MODE_EGRESS,
-                                                                     Path.STATE_MODE_TRANSFER,
-                                                                     Path.STATE_MODE_ACCESS]:
-
-                for xfer_stop_id,xfer_attr in FT.stops[current_stop_id].transfers.iteritems():
-
-                    # new_label = length of trip so far if the passenger transfers from this stop
-                    new_label       = current_label + xfer_attr[Stop.TRANSFERS_IDX_TIME]
-                    # outbound: departure time = departure - transfer
-                    # inbound:  arrival time   = arrival + transfer
-                    deparr_time = current_stop_state[Path.STATE_IDX_DEPARR] - (xfer_attr[Stop.TRANSFERS_IDX_TIME]*dir_factor)
-
-                    # check (departure mode, stop) if someone's waiting already
-                    # curious... this only applies to OUTBOUND
-                    if path.outbound() and \
-                       (current_stop_state[Path.STATE_IDX_DEPARRMODE], current_stop_id) in Assignment.bump_wait:
-                        # time a bumped passenger started waiting
-                        latest_time = Assignment.bump_wait[(current_stop_state[Path.STATE_IDX_DEPARRMODE], current_stop_id)]
-                        # we can't come in time
-                        if deparr_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
-                        # leave earlier -- to get in line 5 minutes before bump wait time
-                        # (confused... We don't resimulate previous bumping passenger so why does this make sense?)
-                        new_label       = new_label + (current_stop_state[Path.STATE_IDX_DEPARR] - latest_time) + Assignment.BUMP_BUFFER
-                        deparr_time     = latest_time - xfer_attr[Stop.TRANSFERS_IDX_TIME] - Assignment.BUMP_BUFFER
-
-                    old_label       = MAX_TIME
-                    if xfer_stop_id in stop_states:
-                        old_label   = stop_states[xfer_stop_id][Path.STATE_IDX_LABEL]
-
-                    if new_label < old_label:
-                        stop_states[xfer_stop_id] = [new_label,                 # label,
-                                                     deparr_time,               # departure/arrival time
-                                                     Path.STATE_MODE_TRANSFER,  # departure/arrival mode
-                                                     current_stop_id,           # successor/predecessor
-                                                     xfer_attr[Stop.TRANSFERS_IDX_TIME]] # link time
-                        stop_queue.put( (new_label, xfer_stop_id) )
-                        if trace: FastTripsLogger.debug(" +transfer " + Path.state_str(xfer_stop_id, stop_states[xfer_stop_id]))
-
-            # Update by trips
-            if path.outbound():
-                # These are the trips that arrive at the stop in time to depart on time
-                valid_trips = FT.stops[current_stop_id].get_trips_arriving_within_time(Assignment.TODAY,
-                                                                                       current_stop_state[Path.STATE_IDX_DEPARR],
-                                                                                       Assignment.PATH_TIME_WINDOW)
-            else:
-                # These are the trips that depart from the stop in time for passenger
-                valid_trips = FT.stops[current_stop_id].get_trips_departing_within_time(Assignment.TODAY,
-                                                                                        current_stop_state[Path.STATE_IDX_DEPARR],
-                                                                                        Assignment.PATH_TIME_WINDOW)
-
-            for (trip_id, seq, arrdep_time) in valid_trips:
-                if trace: FastTripsLogger.debug("valid trips: %s  %d  %s" % (str(trip_id), seq, arrdep_time.strftime("%H:%M:%S")))
-
-                if trip_id in trips_used: continue
-
-                # trip arrival time (outbound) / trip departure time (inbound)
-                arrdep_datetime = datetime.datetime.combine(Assignment.TODAY, arrdep_time)
-                wait_time       = (current_stop_state[Path.STATE_IDX_DEPARR] - arrdep_datetime)*dir_factor
-
-                # check (departure, stop) to see if there's a queue
-                if path.outbound():
-                    # if outbound, this trip loop is possible trips *before* the current trip
-                    # checking that we get here in time for the current trip
-                    check_for_bump_wait = (current_stop_state[Path.STATE_IDX_DEPARRMODE], current_stop_id)
-                    # arrive from the loop trip
-                    arrive_datetime     = arrdep_datetime
-                else:
-                    # if inbound, the trip is the next trip
-                    # checking that we can get here in time for that trip
-                    check_for_bump_wait = (trip_id, current_stop_id)
-                    # arrive for this trip
-                    arrive_datetime     = current_stop_state[Path.STATE_IDX_DEPARR]
-
-                if check_for_bump_wait in Assignment.bump_wait:
-                    # time a bumped passenger started waiting
-                    latest_time = Assignment.bump_wait[check_for_bump_wait]
-                    if trace: FastTripsLogger.debug("checking latest_time %s vs arrive_datetime %s for potential trip %s" % \
-                                                    (latest_time.strftime("%H:%M:%S"), arrive_datetime.strftime("%H:%M:%S"),
-                                                     str(trip_id)))
-                    if arrive_datetime + datetime.timedelta(minutes = 0.01) >= latest_time and \
-                       current_stop_state[Path.STATE_IDX_DEPARRMODE] != trip_id:
-                        if trace: FastTripsLogger.debug("Continuing")
-                        continue
-
-                if path.outbound():  # outbound: iterate through the stops before this one
-                    trip_seq_list = range(seq-1, 0, -1)
-                else:                # inbound: iterate through the stops after this one
-                    trip_seq_list = range(seq+1, FT.trips[trip_id].number_of_stops()+1)
-
-                trips_used.add(trip_id)
-                for seq_num in trip_seq_list:
-                    # board for outbound / alight for inbound
-                    possible_board_alight  = FT.trips[trip_id].stops[seq_num-1]
-
-                    # new_label = length of trip so far if the passenger boards/alights at this stop
-                    board_alight_stop   = possible_board_alight[Trip.STOPS_IDX_STOP_ID]
-                    deparr_time         = datetime.datetime.combine(Assignment.TODAY,
-                                          possible_board_alight[Trip.STOPS_IDX_DEPARTURE_TIME] if path.outbound() else \
-                                          possible_board_alight[Trip.STOPS_IDX_ARRIVAL_TIME])
-                    in_vehicle_time     = (arrdep_datetime - deparr_time)*dir_factor
-                    new_label           = current_label + in_vehicle_time + wait_time
-
-                    old_label           = MAX_TIME
-                    if board_alight_stop in stop_states:
-                        old_label       = stop_states[board_alight_stop][Path.STATE_IDX_LABEL]
-
-                    if new_label < old_label:
-                        stop_states[board_alight_stop] = [ \
-                            new_label,                  # label,
-                            deparr_time,                # departure/arrival time
-                            trip_id,                    # departure/arrival mode
-                            current_stop_id,            # successor/predessor
-                            in_vehicle_time+wait_time ] # link time
-                        stop_queue.put( (new_label, board_alight_stop) )
-                        if trace: FastTripsLogger.debug(" +trip     " + Path.state_str(board_alight_stop, stop_states[board_alight_stop]))
-
-            # Done with this label iteration!
-            label_iterations += 1
-
-        # all stops are labeled: let's look at the end TAZ
-        if path.outbound():
-            end_taz_id = path.origin_taz_id
-        else:
-            end_taz_id = path.destination_taz_id
-        taz_state  = (MAX_TIME, 0, "", 0)
-        for stop_id, access_link in FT.tazs[end_taz_id].access_links.iteritems():
-
-            if stop_id not in stop_states: continue
-
-            stop_state      = stop_states[stop_id]
-
-            # first leg has to be a trip
-            if stop_state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_TRANSFER: continue
-            if stop_state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS:   continue
-            if stop_state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_ACCESS:   continue
-
-            # outbound: depart time = depart time - access time
-            # inbound:  arrive time = arrive time + access time
-            new_label       = stop_state[Path.STATE_IDX_LABEL]  + access_link[TAZ.ACCESS_LINK_IDX_TIME]
-            deparr_time     = stop_state[Path.STATE_IDX_DEPARR] - (access_link[TAZ.ACCESS_LINK_IDX_TIME]*dir_factor)
-
-            if path.outbound() and \
-               (stop_state[Path.STATE_IDX_DEPARRMODE], stop_id) in Assignment.bump_wait:
-                # time a bumped passenger started waiting
-                latest_time = Assignment.bump_wait[(stop_state[Path.STATE_IDX_DEPARRMODE], stop_id)]
-                # we can't come in time
-                if deparr_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
-                # leave earlier -- to get in line 5 minutes before bump wait time
-                new_label       = new_label + (stop_state[Path.STATE_IDX_DEPARR] - latest_time) + Assignment.BUMP_BUFFER
-                deparr_time  = latest_time - access_link[TAZ.ACCESS_LINK_IDX_TIME] - Assignment.BUMP_BUFFER
-
-            new_taz_state   = ( \
-                new_label,                                                                                  # label,
-                deparr_time,                                                                                # departure/arrival time
-                Path.STATE_MODE_ACCESS if path.direction==Path.DIR_OUTBOUND else Path.STATE_MODE_EGRESS,    # departure/arrival mode
-                stop_id,                                                                                    # successor/predessor
-                access_link[TAZ.ACCESS_LINK_IDX_TIME])                                                      # link time
-
-            debug_str = ""
-            if new_taz_state[Path.STATE_IDX_LABEL] < taz_state[Path.STATE_IDX_LABEL]:
-                taz_state = new_taz_state
-                if trace: debug_str = " !"
-
-            if trace: FastTripsLogger.debug(" %s   %s %s" % ("+access" if path.outbound() else "+egress",
-                                                            Path.state_str(end_taz_id, new_taz_state), debug_str))
-        # Put results into path
-        path.reset_states()
-        if taz_state[Path.STATE_IDX_LABEL] != MAX_TIME:
-
-            path.states[end_taz_id] = taz_state
-            stop_state              = taz_state
-            if path.outbound():  # outbound: egress to access and back
-                final_state_type = Path.STATE_MODE_EGRESS
-            else:                # inbound: access to egress and back
-                final_state_type = Path.STATE_MODE_ACCESS
-            while stop_state[Path.STATE_IDX_DEPARRMODE] != final_state_type:
-
-                stop_id    = stop_state[Path.STATE_IDX_SUCCPRED]
-                stop_state = stop_states[stop_id]
-                path.states[stop_id] = stop_state
-
-        if trace: FastTripsLogger.debug("Final path:\n%s" % str(path))
-        return label_iterations
 
     @staticmethod
     def calculate_nonwalk_label(state_list, not_found_value):
@@ -523,7 +282,7 @@ class Assignment:
         return int(Assignment.RAND_FILE.readline().strip())
 
     @staticmethod
-    def choose_state(prob_state_list):
+    def choose_state(prob_state_list, trace):
         """
         prob_state_list = list of (cumulative probability, state)
         Returns the chosen state.
@@ -534,7 +293,7 @@ class Assignment:
         """
         # Use test_rand() in a way consistent with the C++ implementation for now
         random_num = Assignment.test_rand()
-        # FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0])))
+        if trace: FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0])))
         random_num = random_num % prob_state_list[-1][0]
         for (cum_prob,state) in prob_state_list:
             if random_num < cum_prob:
@@ -549,9 +308,10 @@ class Assignment:
         raise
 
     @staticmethod
-    def find_trip_based_hyperpath(FT, path, trace):
+    def find_trip_based_path(FT, path, hyperpath, trace):
         """
-        Perform backwards (destination to origin) trip-based hyperpath search.
+        Perform trip-based path search.
+
         Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
         or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
 
@@ -561,6 +321,9 @@ class Assignment:
         :type FT: a :py:class:`FastTrips` instance
         :param path: the path to fill in
         :type path: a :py:class:`Path` instance
+        :param hyperpath: pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
+                          search algorithm will be use.
+        :type hyperpath: boolean
         :param trace: pass True if this path should be traced to the debug log
         :type trace: boolean
 
@@ -572,7 +335,7 @@ class Assignment:
             start_taz_id    = path.origin_taz_id
             dir_factor      = -1
 
-        stop_states     = collections.defaultdict(list) # stop_id -> [label, departure, departure_mode, successor, cost, arrival]
+        stop_states     = collections.defaultdict(list)
         stop_queue      = Queue.PriorityQueue()         # (label, stop_id)
         MAX_TIME        = datetime.timedelta(minutes = 999.999)
         MAX_DATETIME    = datetime.datetime.combine(Assignment.TODAY, datetime.time()) + datetime.timedelta(hours=48)
@@ -584,11 +347,15 @@ class Assignment:
         for stop_id, access_link in FT.tazs[start_taz_id].access_links.iteritems():
             # outbound: departure time = destination - access
             # inbound:  arrival time   = origin      + access
-            deparr_time          = datetime.datetime.combine(Assignment.TODAY, path.preferred_time) - \
-                                   (access_link[TAZ.ACCESS_LINK_IDX_TIME]*dir_factor)
-            # todo: why the 1+ ?
-            cost                 = 1 + ((Path.WALK_EGRESS_TIME_WEIGHT if path.outbound() else Path.WALK_ACCESS_TIME_WEIGHT)* \
-                                        access_link[TAZ.ACCESS_LINK_IDX_TIME].total_seconds()/60.0)
+            deparr_time = datetime.datetime.combine(Assignment.TODAY, path.preferred_time) - \
+                          (access_link[TAZ.ACCESS_LINK_IDX_TIME]*dir_factor)
+
+            if hyperpath:
+                # todo: why the 1+ ?
+                cost    = 1 + ((Path.WALK_EGRESS_TIME_WEIGHT if path.outbound() else Path.WALK_ACCESS_TIME_WEIGHT)* \
+                          access_link[TAZ.ACCESS_LINK_IDX_TIME].total_seconds()/60.0)
+            else:
+                cost    = access_link[TAZ.ACCESS_LINK_IDX_TIME]
             stop_states[stop_id].append( [
                 cost,                                                                   # label
                 deparr_time,                                                            # departure/arrival
@@ -601,6 +368,19 @@ class Assignment:
             if trace: FastTripsLogger.debug(" %s   %s" % ("+egress" if path.outbound() else "+access",
                                                           Path.state_str(stop_id, stop_states[stop_id][0])))
 
+        # stop_states: stop_id -> [label, departure/arrival, departure/arrival mode, successor/precessor, cost, arrival]
+        #  *means*
+        # for outbound: we can depart from *stop_id*
+        #                      via *departure mode*
+        #                      at *departure time*
+        #                      and get to stop *successor*
+        #                      and the total cost from *stop_id* to the destination TAZ is *label*
+        # for inbound: we can arrive at *stop_id*
+        #                     via *arrival mode*
+        #                     at *arrival time*
+        #                     from stop *predecessor*
+        #                     and the total cost from the origin TAZ to the *stop_id* is *label*
+
         # labeling loop
         label_iterations = 0
         while not stop_queue.empty():
@@ -611,8 +391,10 @@ class Assignment:
             stop_done.add(current_stop_id)                              # process this stop now - just once
 
             if trace:
-                FastTripsLogger.debug("Pulling from stop_queue (iteration %d, label %.6f, stop %s) :======" % \
-                                      (label_iterations, current_label, str(current_stop_id)))
+                FastTripsLogger.debug("Pulling from stop_queue (iteration %d, label %-12s, stop %s) :======" % \
+                                      (label_iterations,
+                                       str(current_label) if type(current_label)==datetime.timedelta else "%.4f" % current_label,
+                                       str(current_stop_id)))
                 FastTripsLogger.debug("           " + Path.state_str_header(stop_states[current_stop_id][0], path.direction))
                 for stop_state in stop_states[current_stop_id]:
                     FastTripsLogger.debug("           " + Path.state_str(current_stop_id, stop_state))
@@ -635,29 +417,65 @@ class Assignment:
 
             # Update by transfer
             # (We don't want to transfer to egress or transfer to a transfer)
-            if current_mode not in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]:
-
-                # calculate the nonwalk label from nonwalk links
-                nonwalk_label = Assignment.calculate_nonwalk_label(current_stop_state, MAX_COST)
-                if trace: FastTripsLogger.debug("  nonwalk label:    %.4f" % nonwalk_label)
+            if current_mode not in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS,\
+                                    Path.STATE_MODE_TRANSFER if not hyperpath else "TransferOK"]:
+                nonwalk_label = 0
+                if hyperpath:
+                    # calculate the nonwalk label from nonwalk links
+                    nonwalk_label = Assignment.calculate_nonwalk_label(current_stop_state, MAX_COST)
+                    if trace: FastTripsLogger.debug("  nonwalk label:    %.4f" % nonwalk_label)
 
                 for xfer_stop_id,xfer_attr in FT.stops[current_stop_id].transfers.iteritems():
 
-                    transfer_time   = xfer_attr[Stop.TRANSFERS_IDX_TIME]
+                    transfer_time       = xfer_attr[Stop.TRANSFERS_IDX_TIME]
                     # outbound: departure time = latest departure - transfer
-                    # inbound:  arrival time   = earliest arrival + transfer
-                    deparr_time     = latest_dep_earliest_arr - (transfer_time*dir_factor)
-                    cost            = nonwalk_label + (Path.WALK_TRANSFER_TIME_WEIGHT*transfer_time.total_seconds()/60.0)
+                    #  inbound: arrival time   = earliest arrival + transfer
+                    deparr_time         = latest_dep_earliest_arr - (transfer_time*dir_factor)
+                    use_new_state       = False
 
-                    old_label       = MAX_COST
-                    new_label       = cost
-                    if xfer_stop_id in stop_states:
-                        old_label   = stop_states[xfer_stop_id][-1][Path.STATE_IDX_LABEL]
-                        new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
-                                      math.exp(-1.0*Assignment.DISPERSION_PARAMETER*cost)
-                        new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+                    # stochastic/hyperpath: cost update
+                    if hyperpath:
+                        cost            = nonwalk_label + (Path.WALK_TRANSFER_TIME_WEIGHT*transfer_time.total_seconds()/60.0)
 
-                    if new_label < MAX_COST and new_label > 0:
+                        old_label       = MAX_COST
+                        new_label       = cost
+                        if xfer_stop_id in stop_states:
+                            old_label   = stop_states[xfer_stop_id][-1][Path.STATE_IDX_LABEL]
+                            new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
+                                          math.exp(-1.0*Assignment.DISPERSION_PARAMETER*cost)
+                            new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+
+                        if new_label < MAX_COST and new_label > 0: use_new_state = True
+
+                    # deterministic: cost is just additive
+                    else:
+                        cost        = transfer_time
+                        new_label   = current_stop_state[0][Path.STATE_IDX_LABEL] + transfer_time
+
+                        # check (departure mode, stop) if someone's waiting already
+                        # curious... this only applies to OUTBOUND
+                        if path.outbound() and (current_mode, current_stop_id) in Assignment.bump_wait:
+                            # time a bumped passenger started waiting
+                            latest_time = Assignment.bump_wait[(current_mode, current_stop_id)]
+                            # we can't come in time
+                            if deparr_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
+                            # leave earlier -- to get in line 5 minutes before bump wait time
+                            # (confused... We don't resimulate previous bumping passenger so why does this make sense?)
+                            new_label       = new_label + (current_stop_state[0][Path.STATE_IDX_DEPARR] - latest_time) + Assignment.BUMP_BUFFER
+                            deparr_time     = latest_time - xfer_attr[Stop.TRANSFERS_IDX_TIME] - Assignment.BUMP_BUFFER
+
+                        old_label       = MAX_TIME
+                        if xfer_stop_id in stop_states:
+                            old_label   = stop_states[xfer_stop_id][0][Path.STATE_IDX_LABEL]
+
+                            if new_label < old_label:
+                                use_new_state = True
+                                # clear it - we only have one
+                                del stop_states[xfer_stop_id][0]
+                        else:
+                            use_new_state = True
+
+                    if use_new_state:
                         stop_states[xfer_stop_id].append( [
                             new_label,                 # label,
                             deparr_time,               # departure/arrival time
@@ -685,11 +503,37 @@ class Assignment:
                 if trace: FastTripsLogger.debug("valid trips: %s  %d  %s" % (str(trip_id), seq, arrdep_time.strftime("%H:%M:%S")))
 
                 if trip_id in trips_used: continue
-                trips_used.add(trip_id)
 
                 # trip arrival time (outbound) / trip departure time (inbound)
                 arrdep_datetime = datetime.datetime.combine(Assignment.TODAY, arrdep_time)
                 wait_time       = (latest_dep_earliest_arr - arrdep_datetime)*dir_factor
+
+                # deterministic assignment: check capacities
+                if not hyperpath:
+                    if path.outbound():
+                        # if outbound, this trip loop is possible trips *before* the current trip
+                        # checking that we get here in time for the current trip
+                        check_for_bump_wait = (current_stop_state[0][Path.STATE_IDX_DEPARRMODE], current_stop_id)
+                        # arrive from the loop trip
+                        arrive_datetime     = arrdep_datetime
+                    else:
+                        # if inbound, the trip is the next trip
+                        # checking that we can get here in time for that trip
+                        check_for_bump_wait = (trip_id, current_stop_id)
+                        # arrive for this trip
+                        arrive_datetime     = current_stop_state[0][Path.STATE_IDX_DEPARR]
+
+                    if check_for_bump_wait in Assignment.bump_wait:
+                        # time a bumped passenger started waiting
+                        latest_time = Assignment.bump_wait[check_for_bump_wait]
+                        if trace: FastTripsLogger.debug("checking latest_time %s vs arrive_datetime %s for potential trip %s" % \
+                                                        (latest_time.strftime("%H:%M:%S"), arrive_datetime.strftime("%H:%M:%S"),
+                                                         str(trip_id)))
+                        if arrive_datetime + datetime.timedelta(minutes = 0.01) >= latest_time and \
+                           current_stop_state[0][Path.STATE_IDX_DEPARRMODE] != trip_id:
+                            if trace: FastTripsLogger.debug("Continuing")
+                            continue
+                trips_used.add(trip_id)
 
                 if path.outbound():  # outbound: iterate through the stops before this one
                     trip_seq_list = range(1,seq)
@@ -700,36 +544,68 @@ class Assignment:
                     # board for outbound / alight for inbound
                     possible_board_alight   = FT.trips[trip_id].stops[seq_num-1]
 
-                    # new_label = length of trip so far if the passenger boards at this stop
+                    # new_label = length of trip so far if the passenger boards/alights at this stop
                     board_alight_stop   = possible_board_alight[Trip.STOPS_IDX_STOP_ID]
-                    new_mode            = stop_states[board_alight_stop][0][Path.STATE_IDX_DEPARRMODE] \
+
+                    if hyperpath:
+                        new_mode        = stop_states[board_alight_stop][0][Path.STATE_IDX_DEPARRMODE] \
                                           if board_alight_stop in stop_states else None  # why 0 index?
-                    if new_mode in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]: continue
+                        if new_mode in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]: continue
 
                     deparr_time         = datetime.datetime.combine(Assignment.TODAY,
                                           possible_board_alight[Trip.STOPS_IDX_DEPARTURE_TIME] if path.outbound() else \
                                           possible_board_alight[Trip.STOPS_IDX_ARRIVAL_TIME])
                     in_vehicle_time     = (arrdep_datetime - deparr_time)*dir_factor
+                    use_new_state       = False
 
-                    if current_mode in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]:
-                        cost = current_label + in_vehicle_time.total_seconds()/60.0                        + \
-                                               (Path.SCHEDULE_DELAY_WEIGHT*wait_time.total_seconds()/60.0) + \
-                                               (Path.FARE_PER_BOARDING*60.0/Path.VALUE_OF_TIME)
+                    # stochastic/hyperpath: cost update
+                    if hyperpath:
+                        if current_mode in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]:
+                            cost = current_label + in_vehicle_time.total_seconds()/60.0                        + \
+                                                   (Path.SCHEDULE_DELAY_WEIGHT*wait_time.total_seconds()/60.0) + \
+                                                   (Path.FARE_PER_BOARDING*60.0/Path.VALUE_OF_TIME)
+                        else:
+                            cost = current_label + in_vehicle_time.total_seconds()/60.0                   + \
+                                                   (Path.WAIT_TIME_WEIGHT*wait_time.total_seconds()/60.0) + \
+                                                   (Path.FARE_PER_BOARDING*60.0/Path.VALUE_OF_TIME)       + \
+                                                   Path.TRANSFER_PENALTY
+
+                        old_label       = MAX_COST
+                        new_label       = cost
+                        if board_alight_stop in stop_states:
+                            old_label   = stop_states[board_alight_stop][-1][Path.STATE_IDX_LABEL]
+                            new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
+                                          math.exp(-1.0*Assignment.DISPERSION_PARAMETER*cost)
+                            new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+
+                        if new_label < MAX_COST and new_label > 0: use_new_state = True
+                    # deterministic: cost is just additive
                     else:
-                        cost = current_label + in_vehicle_time.total_seconds()/60.0                   + \
-                                               (Path.WAIT_TIME_WEIGHT*wait_time.total_seconds()/60.0) + \
-                                               (Path.FARE_PER_BOARDING*60.0/Path.VALUE_OF_TIME)       + \
-                                               Path.TRANSFER_PENALTY
+                        cost            = in_vehicle_time + wait_time
+                        new_label       = current_label + in_vehicle_time + wait_time
 
-                    old_label       = MAX_COST
-                    new_label       = cost
-                    if board_alight_stop in stop_states:
-                        old_label   = stop_states[board_alight_stop][-1][Path.STATE_IDX_LABEL]
-                        new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
-                                      math.exp(-1.0*Assignment.DISPERSION_PARAMETER*cost)
-                        new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+                        old_label       = MAX_TIME
+                        if board_alight_stop in stop_states:
+                            old_label   = stop_states[board_alight_stop][0][Path.STATE_IDX_LABEL]
 
-                    if new_label < MAX_COST and new_label > 0:
+                            if new_label < old_label:
+                                use_new_state = True
+                                # clear it - we only have one
+                                del stop_states[board_alight_stop][0]
+                            elif trace:
+                                rej_state = [
+                                    new_label,                 # label,
+                                    deparr_time,               # departure/arrival time
+                                    trip_id,                   # departure/arrival mode
+                                    current_stop_id,           # successor/predecessor
+                                    in_vehicle_time+wait_time, # link time
+                                    cost,                      # cost
+                                    arrdep_datetime]           # arrival/departure
+                                FastTripsLogger.debug(" -trip     " + Path.state_str(board_alight_stop, rej_state) + " - old_label " + str(old_label))
+                        else:
+                            use_new_state = True
+
+                    if use_new_state:
                         stop_states[board_alight_stop].append([
                             new_label,                 # label,
                             deparr_time,               # departure/arrival time
@@ -749,14 +625,21 @@ class Assignment:
             end_taz_id = path.origin_taz_id
         else:
             end_taz_id = path.destination_taz_id
-        taz_state  = []
+
+        taz_state         = []
         for stop_id, access_link in FT.tazs[end_taz_id].access_links.iteritems():
 
-            access_time             = access_link[TAZ.ACCESS_LINK_IDX_TIME]
-
+            access_time   = access_link[TAZ.ACCESS_LINK_IDX_TIME]
+            use_new_state = False
             if stop_id not in stop_states:
-                latest_dep_earliest_arr = MAX_DATETIME
+                # for deterministic - we can't get to this stop so move on
+                if not hyperpath: continue
+
+                # for stochastic/hyperpath - this factors in to the cost...
+                # todo: why?
+                earliest_dep_latest_arr = MAX_DATETIME
                 nonwalk_label           = MAX_COST
+                stop_state              = None
             else:
                 stop_state              = stop_states[stop_id] # this is a list
 
@@ -769,20 +652,22 @@ class Assignment:
 
                 # earliest departure for outbound, latest arrival for inbound
                 earliest_dep_latest_arr  = stop_state[0][Path.STATE_IDX_DEPARR]
-                for state in stop_state[1:]:
-                    if path.outbound():
-                        earliest_dep_latest_arr = min( earliest_dep_latest_arr, state[Path.STATE_IDX_DEPARR] )
-                    else:
-                        earliest_dep_latest_arr = max( earliest_dep_latest_arr, state[Path.STATE_IDX_DEPARR] )
+                if hyperpath:
+                    for state in stop_state[1:]:
+                        if path.outbound():
+                            earliest_dep_latest_arr = min( earliest_dep_latest_arr, state[Path.STATE_IDX_DEPARR] )
+                        else:
+                            earliest_dep_latest_arr = max( earliest_dep_latest_arr, state[Path.STATE_IDX_DEPARR] )
 
-                nonwalk_label           = Assignment.calculate_nonwalk_label(stop_state, MAX_COST)
+                    nonwalk_label = Assignment.calculate_nonwalk_label(stop_state, MAX_COST)
 
-                # outbound: departure time = earlist departure - access
-                # inbound:  arrival time   = latest arrival    - egress --??  Why wouldn't we add?
-                deparr_time             = earliest_dep_latest_arr - access_time
-
-            new_cost        = nonwalk_label + ((Path.WALK_ACCESS_TIME_WEIGHT if path.outbound() else Path.WALK_EGRESS_TIME_WEIGHT)* \
-                                               access_time.total_seconds()/60.0)
+            # outbound: origin TAZ departure time = earliest departure from the first stop - access
+            # inbound:  dest   TAZ arrival time   = latest arrival at the last stop        - egress --??  Why wouldn't we add?
+            #: .. todo:: hyperpath seems wrong
+            if hyperpath:
+                deparr_time     = earliest_dep_latest_arr - access_time
+            else:
+                deparr_time     = earliest_dep_latest_arr - (access_time*dir_factor)
 
             # if trace:
             #     FastTripsLogger.debug(" %s: %s" % ("earliest departure" if path.outbound() else "latest arrival",
@@ -790,15 +675,52 @@ class Assignment:
             #     FastTripsLogger.debug("  nonwalk label:    %.4f" % nonwalk_label)
             #     FastTripsLogger.debug("       new cost:    %.4f" % new_cost)
 
-            old_label       = MAX_COST
-            new_label       = new_cost
-            if len(taz_state) > 0:
-                old_label   = taz_state[-1][Path.STATE_IDX_LABEL]
-                new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
-                              math.exp(-1.0*Assignment.DISPERSION_PARAMETER*new_cost)
-                new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+            # stochastic/hyperpath: cost update
+            if hyperpath:
+                new_cost    = nonwalk_label + ((Path.WALK_ACCESS_TIME_WEIGHT if path.outbound() else Path.WALK_EGRESS_TIME_WEIGHT)* \
+                              access_time.total_seconds()/60.0)
 
-            if new_label < MAX_COST and new_label > 0:
+                old_label       = MAX_COST
+                new_label       = new_cost
+                if len(taz_state) > 0:
+                    old_label   = taz_state[-1][Path.STATE_IDX_LABEL]
+                    new_label   = math.exp(-1.0*Assignment.DISPERSION_PARAMETER*old_label) + \
+                                  math.exp(-1.0*Assignment.DISPERSION_PARAMETER*new_cost)
+                    new_label   = max(0.01, -1.0/Assignment.DISPERSION_PARAMETER*math.log(new_label))
+
+                if new_label < MAX_COST and new_label > 0:
+                    use_new_state = True
+
+            # deterministic: cost is just additive
+            else:
+                # first leg has to be a trip
+                if stop_state[0][Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_TRANSFER: continue
+                if stop_state[0][Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS:   continue
+                if stop_state[0][Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_ACCESS:   continue
+                new_cost        = access_link[TAZ.ACCESS_LINK_IDX_TIME]
+                new_label       = stop_state[0][Path.STATE_IDX_LABEL] + access_link[TAZ.ACCESS_LINK_IDX_TIME]
+
+                # capacity check
+                if path.outbound() and (stop_state[0][Path.STATE_IDX_DEPARRMODE], stop_id) in Assignment.bump_wait:
+                   # time a bumped passenger started waiting
+                    latest_time = Assignment.bump_wait[(stop_state[0][Path.STATE_IDX_DEPARRMODE], stop_id)]
+                    # we can't come in time
+                    if deparr_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
+                    # leave earlier -- to get in line 5 minutes before bump wait time
+                    new_label   = new_label + (stop_state[Path.STATE_IDX_DEPARR] - latest_time) + Assignment.BUMP_BUFFER
+                    deparr_time = latest_time - access_link[TAZ.ACCESS_LINK_IDX_TIME] - Assignment.BUMP_BUFFER
+
+                old_label = MAX_TIME
+                if len(taz_state) > 0:
+                    old_label = taz_state[0][Path.STATE_IDX_LABEL]
+                    if new_label < old_label:
+                        use_new_state = True
+                        # clear it - we only have one
+                        del taz_state[0]
+                else:
+                    use_new_state = True
+
+            if use_new_state:
                 taz_state.append( [
                     new_label,                                                              # label,
                     deparr_time,                                                            # departure/arrival time
@@ -810,20 +732,37 @@ class Assignment:
                 if trace: FastTripsLogger.debug(" %s   %s" % ("+access" if path.outbound() else "+egress",
                                                               Path.state_str(end_taz_id, taz_state[-1])))
 
+        # Put results into path
+        path.reset_states()
+
         # Nothing found
         if len(taz_state) == 0:  return label_iterations
 
-        # Choose path and save those results
-        path_found = False
-        attempts   = 0
-        while not path_found and attempts < Assignment.MAX_HYPERPATH_ASSIGN_ATTEMPTS:
-            path_found = Assignment.choose_path_from_hyperpath_states(FT, path, trace, taz_state, stop_states)
-            attempts += 1
+        if hyperpath:
+            # Choose path and save those results
+            path_found = False
+            attempts   = 0
+            while not path_found and attempts < Assignment.MAX_HYPERPATH_ASSIGN_ATTEMPTS:
+                path_found = Assignment.choose_path_from_hyperpath_states(FT, path, trace, taz_state, stop_states)
+                attempts += 1
 
-            if not path_found:
-                path.reset_states()
-                continue
+                if not path_found:
+                    path.reset_states()
+                    continue
+        else:
+            path.states[end_taz_id] = taz_state[0]
+            stop_state              = taz_state[0]
+            if path.outbound():  # outbound: egress to access and back
+                final_state_type = Path.STATE_MODE_EGRESS
+            else:                # inbound: access to egress and back
+                final_state_type = Path.STATE_MODE_ACCESS
+            while stop_state[Path.STATE_IDX_DEPARRMODE] != final_state_type:
 
+                stop_id    = stop_state[Path.STATE_IDX_SUCCPRED]
+                stop_state = stop_states[stop_id][0]
+                path.states[stop_id] = stop_state
+
+        if trace: FastTripsLogger.debug("Final path:\n%s" % str(path))
         return label_iterations
 
     @staticmethod
@@ -845,8 +784,10 @@ class Assignment:
                 access_cum_prob.append( (prob, state) )
             else:
                 access_cum_prob.append( (prob + access_cum_prob[-1][0], state) )
-            if trace: FastTripsLogger.debug("%10s: prob %4d  cum_prob %4d" % \
-                                            (state[Path.STATE_IDX_SUCCPRED], prob, access_cum_prob[-1][0]))
+            if trace: FastTripsLogger.debug("%10s %10s: prob %4d  cum_prob %4d" % \
+                                            (state[Path.STATE_IDX_SUCCPRED],
+                                            str(state[Path.STATE_IDX_DEPARRMODE]),
+                                            prob, access_cum_prob[-1][0]))
 
         if path.outbound():
             start_state_id = path.origin_taz_id
@@ -855,7 +796,7 @@ class Assignment:
             start_state_id = path.destination_taz_id
             dir_factor     = -1
 
-        path.states[start_state_id] = Assignment.choose_state(access_cum_prob)
+        path.states[start_state_id] = Assignment.choose_state(access_cum_prob, trace)
         if trace: FastTripsLogger.debug(" -> Chose  %s" % Path.state_str(start_state_id, path.states[start_state_id]))
 
         current_stop = path.states[start_state_id][Path.STATE_IDX_SUCCPRED]
@@ -902,10 +843,12 @@ class Assignment:
                     stop_cum_prob[idx][0] = prob
                 else:
                     stop_cum_prob[idx][0] = stop_cum_prob[idx-1][0] + prob
-                if trace: FastTripsLogger.debug("%8s: prob %4d  cum_prob %4d" % \
-                                                (stop_cum_prob[idx][1][Path.STATE_IDX_SUCCPRED], prob, stop_cum_prob[idx][0]))
+                if trace: FastTripsLogger.debug("%8s %8s: prob %4d  cum_prob %4d" % \
+                                                (stop_cum_prob[idx][1][Path.STATE_IDX_SUCCPRED],
+                                                 str(stop_cum_prob[idx][1][Path.STATE_IDX_DEPARRMODE]),
+                                                 prob, stop_cum_prob[idx][0]))
             # choose!
-            next_state   = Assignment.choose_state(stop_cum_prob)
+            next_state   = Assignment.choose_state(stop_cum_prob, trace)
             if trace: FastTripsLogger.debug(" -> Chose  %s" % Path.state_str(current_stop, next_state))
 
             # revise first link possibly -- let's not waste time
@@ -927,7 +870,6 @@ class Assignment:
             # if we get to egress, we're done!
             if (    path.outbound() and next_state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS) or \
                (not path.outbound() and next_state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_ACCESS):
-                if trace: FastTripsLogger.debug("Final path: %s" % str(path))
                 break
         return True
 
