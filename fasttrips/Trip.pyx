@@ -1,3 +1,4 @@
+# cython: profile=True
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -262,7 +263,7 @@ class Trip:
                             ((stop[Trip.STOPS_IDX_DEPARTURE_TIME].hour*60.0 +
                               stop[Trip.STOPS_IDX_DEPARTURE_TIME].minute +
                               stop[Trip.STOPS_IDX_DEPARTURE_TIME].second/60.0),
-                             self.headways[stop_idx].total_seconds()/60.0, 
+                             self.headways[stop_idx].total_seconds()/60.0,
                              self.simulated_dwells[stop_idx].total_seconds(),
                              self.simulated_boards[stop_idx],
                              self.simulated_alights[stop_idx],

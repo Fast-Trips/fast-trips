@@ -1,4 +1,7 @@
 *.pyc
+*.pyd
 *.log
-
+*.c
+*.prof
 Examples/*
+build/*
