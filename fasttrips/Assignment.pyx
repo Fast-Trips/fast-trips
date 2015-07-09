@@ -1,3 +1,4 @@
+# cython: profile=True
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import Queue
+import heapq
 import collections,datetime,math,os,random,sys
 import numpy,pandas
 
@@ -71,7 +72,7 @@ class Assignment:
     SKIM_END_TIME                   = 600
 
     #: Route choice configuration: Dispersion parameter in the logit function.
-    #: Higher values result in less stochasticity. Must be nonnegative. 
+    #: Higher values result in less stochasticity. Must be nonnegative.
     #: If unknown use a value between 0.5 and 1
     DISPERSION_PARAMETER            = 1.0
 
@@ -336,7 +337,7 @@ class Assignment:
             dir_factor      = -1
 
         stop_states     = collections.defaultdict(list)
-        stop_queue      = Queue.PriorityQueue()         # (label, stop_id)
+        stop_queue      = [] # Queue.PriorityQueue()         # (label, stop_id)
         MAX_TIME        = datetime.timedelta(minutes = 999.999)
         MAX_DATETIME    = datetime.datetime.combine(Assignment.TODAY, datetime.time()) + datetime.timedelta(hours=48)
         MAX_COST        = 999999
@@ -364,7 +365,7 @@ class Assignment:
                 access_link[TAZ.ACCESS_LINK_IDX_TIME],                                  # link time
                 cost,                                                                   # cost
                 MAX_DATETIME] )                                                         # arrival/departure
-            stop_queue.put( (cost, stop_id) )
+            heapq.heappush(stop_queue, (cost, stop_id) )
             if trace: FastTripsLogger.debug(" %s   %s" % ("+egress" if path.outbound() else "+access",
                                                           Path.state_str(stop_id, stop_states[stop_id][0])))
 
@@ -383,8 +384,8 @@ class Assignment:
 
         # labeling loop
         label_iterations = 0
-        while not stop_queue.empty():
-            (current_label, current_stop_id) = stop_queue.get()
+        while stop_queue:  # continues until queue is empty
+            (current_label, current_stop_id) = heapq.heappop(stop_queue)
 
             if current_stop_id in stop_done: continue                   # stop is already processed
             if not FT.stops[current_stop_id].is_transfer(): continue    # no transfers to the stop
@@ -484,7 +485,7 @@ class Assignment:
                             transfer_time,             # link time
                             cost,                      # cost
                             MAX_DATETIME] )            # arrival/departure
-                        stop_queue.put( (new_label, xfer_stop_id) )
+                        heapq.heappush(stop_queue, (new_label, xfer_stop_id) )
                         if trace: FastTripsLogger.debug(" +transfer " + Path.state_str(xfer_stop_id, stop_states[xfer_stop_id][-1]))
 
             # Update by trips
@@ -614,7 +615,7 @@ class Assignment:
                             in_vehicle_time+wait_time, # link time
                             cost,                      # cost
                             arrdep_datetime] )         # arrival/departure
-                        stop_queue.put( (new_label, board_alight_stop) )
+                        heapq.heappush(stop_queue, (new_label, board_alight_stop) )
                         if trace: FastTripsLogger.debug(" +trip     " + Path.state_str(board_alight_stop, stop_states[board_alight_stop][-1]))
 
             # Done with this label iteration!
