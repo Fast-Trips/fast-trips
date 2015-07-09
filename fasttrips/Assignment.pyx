@@ -329,6 +329,13 @@ class Assignment:
         :type trace: boolean
 
         """
+        cdef:
+            int start_taz_id, dir_factor
+            int stop_id, trip_id, seq
+            int label_iterations
+            object access_link
+
+
         if path.outbound():
             start_taz_id    = path.destination_taz_id
             dir_factor      = 1  # a lot of attributes are just the negative -- this facilitates that
@@ -491,12 +498,12 @@ class Assignment:
             # Update by trips
             if path.outbound():
                 # These are the trips that arrive at the stop in time to depart on time
-                valid_trips = FT.stops[current_stop_id].get_trips_arriving_within_time(Assignment.TODAY,
+                valid_trips = Stop.get_trips_arriving_within_time(FT.stops[current_stop_id].trips, Assignment.TODAY,
                                                                                        latest_dep_earliest_arr,
                                                                                        Assignment.PATH_TIME_WINDOW)
             else:
                 # These are the trips that depart from the stop in time for passenger
-                valid_trips = FT.stops[current_stop_id].get_trips_departing_within_time(Assignment.TODAY,
+                valid_trips = Stop.get_trips_departing_within_time(FT.stops[current_stop_id].trips, Assignment.TODAY,
                                                                                         latest_dep_earliest_arr,
                                                                                         Assignment.PATH_TIME_WINDOW)
 

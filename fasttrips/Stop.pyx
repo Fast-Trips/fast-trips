@@ -1,3 +1,4 @@
+# cython: profile=True
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,9 @@ import collections,datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
+
+epoch = datetime.date(1970,1,1)
+
 
 class Stop:
     """
@@ -116,7 +120,8 @@ class Stop:
         # and route
         self.routes.add(trip.route_id)
 
-    def get_trips_arriving_within_time(self, assignment_date, latest_arrival, time_window):
+    @staticmethod
+    def get_trips_arriving_within_time(trips, assignment_date, latest_arrival, time_window):
         """
         Return list of [(trip_id, sequence, arrival_time)] where the arrival time is before *latest_arrival* but within *time_window*.
 
@@ -129,17 +134,55 @@ class Stop:
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
+
+        cdef:
+          list to_return
+          int i
+          tuple trip_record
+          int asgn_arrival
+          int ad_y, ad_m, ad_d, ed_h, ed_m, ed_s, tw_d, tw_s
+          int ed_tot, tw_tot, ed_plus_tw
+          int ad_epoch
+          int trip_idx_id, trip_idx_seq, trip_idx_time
+
+        trip_idx_id = Stop.TRIPS_IDX_TRIP_ID
+        trip_idx_seq = Stop.TRIPS_IDX_SEQUENCE
+        trip_idx_time = Stop.TRIPS_IDX_ARRIVAL_TIME
+
         to_return = []
-        for trip_record in self.trips:
-            # make this a datetime
-            asgn_arrival = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME])
-            if (asgn_arrival < latest_arrival) and (asgn_arrival > latest_arrival-time_window):
-               to_return.append( (trip_record[Stop.TRIPS_IDX_TRIP_ID],
-                                  trip_record[Stop.TRIPS_IDX_SEQUENCE],
-                                  trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME]) )
+
+        # Seconds since 1970 'epoch'
+        ad_epoch = (assignment_date - epoch).total_seconds()
+
+        # Latest allowable arrival, in seconds since epoch
+        ed_h = latest_arrival.hour
+        ed_m = latest_arrival.minute
+        ed_s = latest_arrival.second
+        ed_tot = ad_epoch + ed_s + 60*ed_m + 3600*ed_h
+
+        # Total seconds in the acceptable time window
+        tw_d = time_window.days
+        tw_s = time_window.seconds
+        tw_tot = tw_s + tw_d*86400
+
+        # earliest allowable arrival, in seconds since epoch
+        ed_minus_tw = ed_tot - tw_tot
+
+        # i-loop is faster in cython
+        for i in xrange(len(trips)):
+            trip_record = trips[i]
+
+            asgn_d = trip_record[trip_idx_time]
+            asgn_arrival = ad_epoch + asgn_d.second + 60*asgn_d.minute + 3600*asgn_d.hour
+
+            if (asgn_arrival < ed_tot) and (asgn_arrival > ed_minus_tw):
+               to_return.append( (trip_record[trip_idx_id],
+                                  trip_record[trip_idx_seq],
+                                  trip_record[trip_idx_time]) )
         return to_return
 
-    def get_trips_departing_within_time(self, assignment_date, earliest_departure, time_window):
+    @staticmethod
+    def get_trips_departing_within_time(trips, assignment_date, earliest_departure, time_window):
         """
         Return list of [(trip_id, sequence, departure_time)] where the departure time is after *earliest_departure* but within *time_window*.
 
@@ -152,14 +195,57 @@ class Stop:
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
+        cdef:
+          list to_return
+          int i
+          tuple trip_record
+          int asgn_departure
+          int ad_y, ad_m, ad_d, ed_h, ed_m, ed_s, tw_d, tw_s
+          int ed_tot, tw_tot, ed_plus_tw
+          int ad_epoch
+          int trip_idx_id, trip_idx_seq, trip_idx_time
+
+        trip_idx_id = Stop.TRIPS_IDX_TRIP_ID
+        trip_idx_seq = Stop.TRIPS_IDX_SEQUENCE
+        trip_idx_time = Stop.TRIPS_IDX_DEPARTURE_TIME
+
         to_return = []
-        for trip_record in self.trips:
-            # make this a datetime
-            asgn_departure = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME])
-            if (asgn_departure > earliest_departure) and (asgn_departure < earliest_departure+time_window):
-               to_return.append( (trip_record[Stop.TRIPS_IDX_TRIP_ID],
-                                  trip_record[Stop.TRIPS_IDX_SEQUENCE],
-                                  trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME]) )
+
+        # This used to be a really simple datetime.combine(), but that turns out to be really slow
+        # inside a loop called a billion times. Switching to this ugly integer math, which cython
+        # compiles into very fast C code. Sorry for the ugly.
+
+        # Seconds since 1970 'epoch'
+        ad_epoch = (assignment_date - epoch).total_seconds()
+
+        # Earliest allowable departure, in seconds since epoch
+        ed_h = earliest_departure.hour
+        ed_m = earliest_departure.minute
+        ed_s = earliest_departure.second
+        ed_tot = ad_epoch + ed_s + 60*ed_m + 3600*ed_h
+
+        # Total seconds in the acceptable time window
+        tw_d = time_window.days
+        tw_s = time_window.seconds
+        tw_tot = tw_s + tw_d*86400
+
+        # latest allowable departure, in seconds since epoch
+        ed_plus_tw = ed_tot + tw_tot
+
+        # i-loop is faster in cython
+        for i in xrange(len(trips)):
+            trip_record = trips[i]
+
+            # old datetime code:
+            # asgn_departure = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME])
+            # if (asgn_departure > earliest_departure) and (asgn_departure < earliest_departure+time_window):
+            asgn_d = trip_record[trip_idx_time]
+            asgn_departure = ad_epoch + asgn_d.second + 60*asgn_d.minute + 3600*asgn_d.hour
+
+            if (asgn_departure > ed_tot) and (asgn_departure < ed_plus_tw):
+               to_return.append( (trip_record[trip_idx_id],
+                                  trip_record[trip_idx_seq],
+                                  trip_record[trip_idx_time]) )
         return to_return
 
     def get_previous_trip_departure(self, FT, route_id, trip_direction, before_departure_time):
