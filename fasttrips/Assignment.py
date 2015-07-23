@@ -229,7 +229,8 @@ class Assignment:
         for process_idx in range(1, 1+multiprocessing.cpu_count()):
             FastTripsLogger.info("Starting worker process %2d" % process_idx)
             process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                                                        args=(iteration, process_idx, FT, todo_queue, done_queue,
+                                                        args=(iteration, process_idx, FT.input_dir, FT.output_dir,
+                                                              todo_queue, done_queue,
                                                               Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
             process_list[-1].start()
 
@@ -1573,19 +1574,24 @@ class Assignment:
                               index=False)
         load_file.close()
 
-def find_trip_based_paths_process_worker(iteration, worker_num, FT, todo_path_queue, done_queue, hyperpath):
+def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, output_dir, todo_path_queue, done_queue, hyperpath):
     """
     Process worker function.  Processes all the paths in queue.
 
     todo_queue has (passenger_id, path object)
     """
-
-    # setup the logger for this worker
     worker_str = "_worker%02d" % worker_num
+
+    # Setup a new FT instance for this worker.
+    # This is just for reading input files into the FT structures,
+    # but it won't change the FT structures themselves (so it's a read-only instance).
+    #
+    # You'd think we could have just passed the FT structure to this method but that would involve pickling/unpickling the
+    # data and ends up meaning it takes a *really long time* to start the new process ~ 2 minutes per process.
+    # Simply reading the input files again is faster.  No need to read the demand tho.
     from .FastTrips import FastTrips
-    setupLogging(os.path.join(FT.output_dir, FastTrips.INFO_LOG  % worker_str),
-                 os.path.join(FT.output_dir, FastTrips.DEBUG_LOG % worker_str),
-                 logToConsole=False, append=True if iteration > 1 else False)
+    worker_FT = FastTrips(input_dir=input_dir, output_dir=output_dir, read_demand=False,
+                          log_to_console=False, logname_append=worker_str, appendLog=True if iteration > 1 else False)
 
     FastTripsLogger.info("Worker %2d starting" % worker_num)
 
@@ -1608,7 +1614,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, FT, todo_path_qu
             trace_passenger = True
 
         try:
-            (asgn_iters, return_states) = Assignment.find_trip_based_path(FT, path, hyperpath, trace=trace_passenger)
+            (asgn_iters, return_states) = Assignment.find_trip_based_path(worker_FT, path, hyperpath, trace=trace_passenger)
             done_queue.put( (passenger_id, path.path_id, asgn_iters, return_states) )
         except:
             FastTripsLogger.exception('Exception')

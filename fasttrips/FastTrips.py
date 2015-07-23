@@ -28,12 +28,33 @@ class FastTrips:
     This is the model itself.  Should be simple and run pieces and store the big data structures.
     """
 
+    #: Info log filename.  Writes brief information about program progression here.
     INFO_LOG  = "ft_info%s.log"
+
+    #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    def __init__(self, input_dir, output_dir):
+    def __init__(self, input_dir, output_dir, read_demand=True, log_to_console=True, logname_append="", appendLog=False):
         """
-        Constructor.  Reads input files from *input_dir*.
+        Constructor.
+
+        Reads input files from *input_dir*.
+        Writes output files to *output_dir*, including log files.
+
+        :param input_dir:      Location of csv files to read
+        :type input_dir:       string
+        :param output_dir:     Location to write output and log files.
+        :type output_dir:      string
+        :param read_demand:    Read passenger demand?  For parallelization, workers don't need to
+                               read demand since the main process will tell them what to do.
+        :type read_demand:     bool
+        :param log_to_console: Log info to console as well as info log?
+        :type log_to_console:  bool
+        :param logname_append: Modifier for info and debug log filenames.  So workers can write their own logs.
+        :type logname_append:  string
+        :param appendLog:      Append to info and debug logs?  When FastTrips assignment iterations (to
+                               handle capacity bumps), we'd like to append rather than overwrite.
+        :type appendLog:       bool
         """
         #: :py:class:`list` of :py:class:`fasttrips.Passenger` instances
         self.passengers      = None
@@ -50,17 +71,20 @@ class FastTrips:
         #: :py:class:`dict` with :py:attr:`fasttrips.Trip.trip_id` key and :py:class:`fasttrips.Trip` value
         self.trips           = None
 
+        #: string representing directory with input data
+        self.input_dir       = input_dir
+
         #: string representing directory in which to write our output
         self.output_dir      = output_dir
 
         # setup logging
-        setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % ""),
-                     os.path.join(self.output_dir, FastTrips.DEBUG_LOG % ""),
-                     logToConsole=True)
+        setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
+                     os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
+                     logToConsole=log_to_console, append=appendLog)
 
-        self.read_input_files(input_dir)
+        self.read_input_files(input_dir, read_demand)
 
-    def read_input_files(self, input_dir):
+    def read_input_files(self, input_dir, read_demand):
         """
         Reads in the input files files from *input_dir* and initializes the relevant data structures.
         """
@@ -89,8 +113,11 @@ class FastTrips:
         # read the access links into both the TAZs and the stops involved
         TAZ.read_access_links(input_dir, self.tazs, self.stops)
 
-        # Read the demand int passenger_id -> passenger instance
-        self.passengers = Passenger.read_demand(input_dir)
+        if read_demand:
+            # Read the demand int passenger_id -> passenger instance
+            self.passengers = Passenger.read_demand(input_dir)
+        else:
+            self.passengers = None
 
     def run_assignment(self, output_dir):
         # Do it!
