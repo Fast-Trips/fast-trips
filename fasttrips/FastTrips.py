@@ -12,11 +12,11 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-
+import os
 from operator import attrgetter
 
 from .Assignment import Assignment
-from .Logger import FastTripsLogger
+from .Logger import FastTripsLogger, setupLogging
 from .Passenger import Passenger
 from .Route import Route
 from .Stop import Stop
@@ -28,7 +28,10 @@ class FastTrips:
     This is the model itself.  Should be simple and run pieces and store the big data structures.
     """
 
-    def __init__(self, input_dir):
+    INFO_LOG  = "ft_info%s.log"
+    DEBUG_LOG = "ft_debug%s.log"
+
+    def __init__(self, input_dir, output_dir):
         """
         Constructor.  Reads input files from *input_dir*.
         """
@@ -46,6 +49,14 @@ class FastTrips:
 
         #: :py:class:`dict` with :py:attr:`fasttrips.Trip.trip_id` key and :py:class:`fasttrips.Trip` value
         self.trips           = None
+
+        #: string representing directory in which to write our output
+        self.output_dir      = output_dir
+
+        # setup logging
+        setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % ""),
+                     os.path.join(self.output_dir, FastTrips.DEBUG_LOG % ""),
+                     logToConsole=True)
 
         self.read_input_files(input_dir)
 
