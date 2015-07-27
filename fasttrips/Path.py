@@ -69,10 +69,15 @@ class Path:
 
     BUMP_EXPERIENCED_COST = 999999
 
+    PATH_ID_COUNTER = 0
+
     def __init__(self, passenger_record):
         """
         Constructor from dictionary mapping attribute to value.
         """
+        #: path id - unique for this passenger/path
+        self.path_id            = Path.PATH_ID_COUNTER
+        Path.PATH_ID_COUNTER    += 1 # increment it
 
         #: identifier for origin TAZ
         self.origin_taz_id      = passenger_record['OrigTAZ'    ]
@@ -200,9 +205,16 @@ class Path:
 
         Note: If inbound trip, then the states are in reverse order (egress to access)
         """
-        if len(self.states) == 0: return "\nNo path"
-        readable_str = "\n%s" % Path.state_str_header(self.states.items()[0][1], self.direction)
-        for state_id,state in self.states.iteritems():
+        return Path.states_to_str(self.states, self.direction)
+
+    @staticmethod
+    def states_to_str(states, direction=DIR_OUTBOUND):
+        """
+        Given that states is an ordered dict of states, returns a string version of the path therein.
+        """
+        if len(states) == 0: return "\nNo path"
+        readable_str = "\n%s" % Path.state_str_header(states.items()[0][1], direction)
+        for state_id,state in states.iteritems():
             readable_str += "\n%s" % Path.state_str(state_id, state)
         return readable_str
 

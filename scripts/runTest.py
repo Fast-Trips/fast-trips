@@ -30,11 +30,8 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(OUTPUT_DIR, subdir)):
         os.mkdir(os.path.join(OUTPUT_DIR, subdir))
 
-    fasttrips.setupLogging(os.path.join(OUTPUT_DIR,subdir,"ft_info.log"),
-                           os.path.join(OUTPUT_DIR,subdir,"ft_debug.log"),
-                           logToConsole=True)
-
-    ft = fasttrips.FastTrips(os.path.join(INPUT_DIR, subdir))
+    ft = fasttrips.FastTrips(os.path.join(INPUT_DIR,  subdir),
+                             os.path.join(OUTPUT_DIR, subdir))
 
     if m.group(2) == "deterministic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN

@@ -13,14 +13,14 @@ __license__   = """
     limitations under the License.
 """
 
-import logging
+import logging, multiprocessing
 
 __all__ = ['FastTripsLogger', 'setupLogging']
 
 #: This is the instance of :py:class:`Logger` that gets used for all dta logging needs!
-FastTripsLogger = logging.getLogger("FastTripsLogger")
+FastTripsLogger = multiprocessing.get_logger()
 
-def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True):
+def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True, append=False):
     """
     Sets up the logger.
 
@@ -39,19 +39,22 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True):
     FastTripsLogger.setLevel(logging.DEBUG)
 
     if infoLogFilename:
-        infologhandler = logging.StreamHandler(open(infoLogFilename, 'w'))
+        infologhandler = logging.StreamHandler(open(infoLogFilename, 'a' if append else 'w'))
         infologhandler.setLevel(logging.INFO)
-        infologhandler.setFormatter(logging.Formatter('%(asctime)s  %(message)s', '%Y-%m-%d %H:%M:%S'))
+        infologhandler.setFormatter(logging.Formatter('%(asctime)s %(processName)s %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(infologhandler)
+        FastTripsInfoLogFilename = infoLogFilename
 
     if debugLogFilename:
-        debugloghandler = logging.StreamHandler(open(debugLogFilename,'w'))
+        debugloghandler = logging.StreamHandler(open(debugLogFilename, 'a' if append else 'w'))
         debugloghandler.setLevel(logging.DEBUG)
-        debugloghandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s', '%Y-%m-%d %H:%M:%S'))
+        debugloghandler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(debugloghandler)
+        FastTripsDebugLogFilename = debugLogFilename
 
     if logToConsole:
         consolehandler = logging.StreamHandler()
         consolehandler.setLevel(logging.INFO)
-        consolehandler.setFormatter(logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s'))
+        consolehandler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(consolehandler)
+    FastTripsLogToConsole = logToConsole
