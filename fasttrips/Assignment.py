@@ -88,11 +88,22 @@ class Assignment:
     MAX_HYPERPATH_ASSIGN_ATTEMPTS   = 1001   # that's a lot
 
     #: Temporary rand.txt location for :py:meth:`Assignment.test_rand`.
+    #: This is to ensure that the random numbers used (and therefore the stochastic
+    #: results) match that of FAST-TrIPs, the C++ progenitor
+    #: (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
+    #: of this project.  Note that this only comes into play if
+    #: :py:attr:`Assignment.NUMBER_OF_PROCESSES` == 1.
     RAND_FILENAME                   = r"../FAST-TrIPs-1/rand/rand.txt"
     #: The file handle for :py:attr:`Assignment.RAND_FILENAME`
     RAND_FILE                       = None
     #: Maximum random number returned by :py:meth:`Assignment.test_rand`
     RAND_MAX                        = 0
+
+    #: Number of processes to use for path finding (via :py:mod:`multiprocessing`)
+    #: Set to 1 to run everything in this process
+    #: Set to less than 1 to use the result of :py:func:`multiprocessing.cpu_count`
+    #: Set to positive integer greater than 1 to set a fixed number of processes
+    NUMBER_OF_PROCESSES             = 8
 
     #: Extra time so passengers don't get bumped (?)
     BUMP_BUFFER                     = datetime.timedelta(minutes = 5)
@@ -221,20 +232,27 @@ class Assignment:
         FastTripsLogger.info("**************************** GENERATING PATHS ****************************")
         start_time          = datetime.datetime.now()
         process_list        = []
-        todo_queue          = multiprocessing.Queue()
-        done_queue          = multiprocessing.Queue()
-        process_idx         = 0
+        todo_queue          = None
+        done_queue          = None
+
+        num_processes       = Assignment.NUMBER_OF_PROCESSES
+        if  Assignment.NUMBER_OF_PROCESSES < 1:
+            num_processes   = multiprocessing.cpu_count()
 
         # Setup multiprocessing processes
-        for process_idx in range(1, 1+multiprocessing.cpu_count()):
-            FastTripsLogger.info("Starting worker process %2d" % process_idx)
-            process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                                                        args=(iteration, process_idx, FT.input_dir, FT.output_dir,
-                                                              todo_queue, done_queue,
-                                                              Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
-            process_list[-1].start()
+        if num_processes > 1:
+            todo_queue      = multiprocessing.Queue()
+            done_queue      = multiprocessing.Queue()
+            for process_idx in range(1, 1+num_processes):
+                FastTripsLogger.info("Starting worker process %2d" % process_idx)
+                process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
+                                                            args=(iteration, process_idx, FT.input_dir, FT.output_dir,
+                                                                  todo_queue, done_queue,
+                                                                  Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
+                process_list[-1].start()
 
-        # send tasks to workers for processing
+        # process tasks or send tasks to workers for processing
+        num_paths_found  = 0
         for passenger in FT.passengers:
             passenger_id = passenger.passenger_id
 
@@ -244,53 +262,76 @@ class Assignment:
                 num_paths_assigned += 1
                 continue
 
-            todo_queue.put( (passenger_id, passenger.path) )
-        # we're done, let each process know
-        for process_idx in range(len(process_list)):
-            todo_queue.put('DONE')
-
-        # get results
-        done_procs          = 0
-        num_paths_assigned  = 0
-        while done_procs < len(process_list):
-
-            result = done_queue.get()
-            if result == 'DONE':
-                FastTripsLogger.info("Received done")
-                done_procs += 1
-
+            if num_processes > 1:
+                todo_queue.put( (passenger_id, passenger.path) )
             else:
-                passenger_id    = result[0]
-                path_id         = result[1]
-                asgn_iters      = result[2]
-                return_states   = result[3]
+                trace_passenger = False
+                if passenger_id in Assignment.TRACE_PASSENGER_IDS:
+                    FastTripsLogger.debug("Tracing assignment of passenger %s" % str(passenger_id))
+                    trace_passenger = True
 
-                # find passenger with path_id and set return
-                # todo - inefficient.  fix.
-                for passenger in FT.passengers:
-                    if passenger.path.path_id == path_id:
-                        passenger.path.states = return_states
+                # do the work
+                (asgn_iters, return_states) = Assignment.find_trip_based_path(FT, passenger.path,
+                                                                              Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                                              trace=trace_passenger)
+                passenger.path.states = return_states
 
-                        if passenger.path.path_found():
-                            num_paths_assigned += 1
+                if passenger.path.path_found():
+                    num_paths_found += 1
 
-                        break
+                if True or num_paths_found % 1000 == 0:
+                    time_elapsed = datetime.datetime.now() - start_time
+                    FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                         num_paths_found, len(FT.passengers),
+                                         int( time_elapsed.total_seconds() / 3600),
+                                         int( (time_elapsed.total_seconds() % 3600) / 60),
+                                         time_elapsed.total_seconds() % 60))
 
-            if True or num_paths_assigned % 1000 == 0:
-                time_elapsed = datetime.datetime.now() - start_time
-                FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
-                                     num_paths_assigned, len(FT.passengers),
-                                     int( time_elapsed.total_seconds() / 3600),
-                                     int( (time_elapsed.total_seconds() % 3600) / 60),
-                                     time_elapsed.total_seconds() % 60))
-            elif num_paths_assigned % 50 == 0:
-                FastTripsLogger.debug("%6d / %6d passenger paths assigned" % (num_paths_assigned, len(FT.passengers)))
+        # multiprocessing follow-up
+        if num_processes > 1:
+            # we're done, let each process know
+            for process_idx in range(len(process_list)):
+                todo_queue.put('DONE')
 
-        # join up my processes
-        for proc in process_list:
-            proc.join()
+            # get results
+            done_procs          = 0
+            while done_procs < len(process_list):
 
-        return num_paths_assigned
+                result = done_queue.get()
+                if result == 'DONE':
+                    FastTripsLogger.info("Received done")
+                    done_procs += 1
+
+                else:
+                    passenger_id    = result[0]
+                    path_id         = result[1]
+                    asgn_iters      = result[2]
+                    return_states   = result[3]
+
+                    # find passenger with path_id and set return
+                    # todo - inefficient.  fix.
+                    for passenger in FT.passengers:
+                        if passenger.path.path_id == path_id:
+                            passenger.path.states = return_states
+
+                            if passenger.path.path_found():
+                                num_paths_found += 1
+
+                            break
+
+                if True or num_paths_found % 1000 == 0:
+                    time_elapsed = datetime.datetime.now() - start_time
+                    FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                         num_paths_found, len(FT.passengers),
+                                         int( time_elapsed.total_seconds() / 3600),
+                                         int( (time_elapsed.total_seconds() % 3600) / 60),
+                                         time_elapsed.total_seconds() % 60))
+
+            # join up my processes
+            for proc in process_list:
+                proc.join()
+
+        return num_paths_found
 
     @staticmethod
     def calculate_nonwalk_label(state_list, not_found_value):
@@ -330,21 +371,22 @@ class Assignment:
         .. todo:: For now, cumulative probabilities are multiplied by 1000 so they're integers.
 
         """
-        # Use test_rand() in a way consistent with the C++ implementation for now
-        random_num = Assignment.test_rand()
-        if trace: FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0])))
-        random_num = random_num % prob_state_list[-1][0]
-        for (cum_prob,state) in prob_state_list:
-            if random_num < cum_prob:
-                return state
-        raise Exception("This shouldn't happen")
+        if Assignment.NUMBER_OF_PROCESSES == 1:
+            # Use test_rand() in a way consistent with the C++ implementation for now
+            random_num = Assignment.test_rand()
+            if trace: FastTripsLogger.debug("random_num = %d -> %d" % (random_num, random_num % int(prob_state_list[-1][0])))
+            random_num = random_num % prob_state_list[-1][0]
+            for (cum_prob,state) in prob_state_list:
+                if random_num < cum_prob:
+                    return state
 
-        # This is how I would prefer to do this
-        random_num = random.random()*prob_state_list[-1][0]    #  [0.0, max cum prob)
-        for (cum_prob,state) in prob_state_list:
-            if random_num < cum_prob:
-                return state
-        raise
+        else:
+            # This is how I would prefer to do this
+            random_num = random.random()*prob_state_list[-1][0]    #  [0.0, max cum prob)
+            for (cum_prob,state) in prob_state_list:
+                if random_num < cum_prob:
+                    return state
+        raise Exception("This shouldn't happen")
 
     @staticmethod
     def find_trip_based_path(FT, path, hyperpath, trace):
@@ -367,6 +409,10 @@ class Assignment:
         :type trace: boolean
 
         """
+        # hyperpath means we use random numbers to choose options -- set the random seed to be repeatable
+        if hyperpath:
+            random.seed(path.path_id)
+
         if path.outbound():
             start_taz_id    = path.destination_taz_id
             dir_factor      = 1  # a lot of attributes are just the negative -- this facilitates that
@@ -839,7 +885,7 @@ class Assignment:
         return_states[start_state_id] = Assignment.choose_state(access_cum_prob, trace)
         if trace: FastTripsLogger.debug(" -> Chose  %s" % Path.state_str(start_state_id, return_states[start_state_id]))
 
-        current_stop = returnstates[start_state_id][Path.STATE_IDX_SUCCPRED]
+        current_stop = return_states[start_state_id][Path.STATE_IDX_SUCCPRED]
         # outbound: arrival time
         # inbound:  departure time
         arrdep_time  =  return_states[start_state_id][Path.STATE_IDX_DEPARR] + \
