@@ -1,4 +1,7 @@
-*.pyc
+*.py[cod]
 *.log
 
 Examples/*
+
+# Distribution / packaging
+build/

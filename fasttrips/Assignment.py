@@ -15,6 +15,7 @@ __license__   = """
 import Queue
 import collections,datetime,math,multiprocessing,os,random,sys
 import numpy,pandas
+import _fasttrips
 
 from .Logger import FastTripsLogger, setupLogging
 from .Passenger import Passenger
