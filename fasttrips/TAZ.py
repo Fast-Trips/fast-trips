@@ -53,8 +53,10 @@ class TAZ:
     ACCLINKS_COLUMN_STOP    = 'stop'
     #: Access links column name: Link walk distance
     ACCLINKS_COLUMN_DIST    = 'dist'
-    #: Access links column name: Link walk time
+    #: Access links column name: Link walk time.  This is a TimeDelta
     ACCLINKS_COLUMN_TIME    = 'time'
+    #: Access links column name: Link walk time in seconds.  This is float.
+    ACCLINKS_COLUMN_TIME_SEC= 'time_sec'
 
     def __init__(self, input_dir):
         """
@@ -84,12 +86,15 @@ class TAZ:
 
         # printing this before setting index
         FastTripsLogger.debug("=========== ACCESS LINKS ===========\n" + str(self.access_links_df.head()))
-        FastTripsLogger.debug("\n"+str(self.access_links_df.dtypes))
-        FastTripsLogger.info("Read %7d access links" % len(self.access_links_df))
+        FastTripsLogger.debug("As read\n"+str(self.access_links_df.dtypes))
 
         self.access_links_df.set_index([TAZ.ACCLINKS_COLUMN_TAZ,
                                      TAZ.ACCLINKS_COLUMN_STOP], inplace=True, verify_integrity=True)
+        # keep the seconds column as float
+        self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME_SEC] = self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME]
         # convert time column from float to timedelta
         self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME] = \
             self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME].map(lambda x: datetime.timedelta(minutes=x))
 
+        FastTripsLogger.debug("Final\n"+str(self.access_links_df.dtypes))
+        FastTripsLogger.info("Read %7d access links" % len(self.access_links_df))

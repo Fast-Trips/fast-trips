@@ -175,6 +175,19 @@ class Assignment:
         raise Exception("Not implemented")
 
     @staticmethod
+    def initialize_fasttrips_extension(process_number, FT):
+        """
+        Initialize the C++ fasttrips extension by passing it the network supply.
+        """
+        FastTripsLogger.info("Initializing fasttrips extension for process number %d\n" % process_number)
+        # make a copy to convert the 2-column MultiIndex to a 2D array easily
+        access_links_df = FT.tazs.access_links_df.reset_index()
+        print access_links_df.head()
+        print access_links_df.tail()
+        _fasttrips.initialize_supply(process_number,
+                                     access_links_df[[TAZ.ACCLINKS_COLUMN_TAZ,TAZ.ACCLINKS_COLUMN_STOP]].as_matrix().astype('int32'),
+                                     access_links_df[TAZ.ACCLINKS_COLUMN_TIME_SEC].values.astype('float32'))
+    @staticmethod
     def assign_paths(output_dir, FT):
         """
         Finds the paths for the passengers.
@@ -251,6 +264,8 @@ class Assignment:
                                                                   todo_queue, done_queue,
                                                                   Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
                 process_list[-1].start()
+        else:
+            Assignment.initialize_fasttrips_extension(0, FT)
 
         # process tasks or send tasks to workers for processing
         num_paths_found  = 0
@@ -1641,6 +1656,8 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, outpu
                           log_to_console=False, logname_append=worker_str, appendLog=True if iteration > 1 else False)
 
     FastTripsLogger.info("Worker %2d starting" % worker_num)
+
+    Assignment.initialize_fasttrips_extension(worker_num, worker_FT)
 
     while True:
         # go through my queue -- check if we're done

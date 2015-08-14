@@ -1,4 +1,8 @@
 #include <Python.h>
+
+#include <numpy/arrayobject.h>
+
+#include <map>
 #include <string>
 #include <queue>
 
@@ -16,16 +20,52 @@ _fasttrips_system(PyObject *self, PyObject *args)
     return Py_BuildValue("i", sts);
 }
 
+static PyObject *
+_fasttrips_initialize_supply(PyObject *self, PyObject *args)
+{
+    PyArrayObject *pyo;
+    int proc_num;
+    PyObject *input1, *input2, *input3;
+    if (!PyArg_ParseTuple(args, "iOO", &proc_num, &input1, &input2)) {
+        return NULL;
+    }
+
+    printf("_fasttrips_initialize_supply for proc num %d\n", proc_num);
+    // access_links index: TAZ id + stop id
+    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
+    if (pyo == NULL) return NULL;
+    int* indexes    = (int*)PyArray_DATA(pyo);
+    int num_indexes = PyArray_DIMS(pyo)[0];
+    assert(2 == PyArray_DIMS(pyo)[1]);
+
+    // access_links cost
+    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_FLOAT32, 1, 1);
+    float* costs    = (float*)PyArray_DATA(pyo);
+    int num_costs   = PyArray_DIMS(pyo)[0];
+
+    // these better be the same length
+    assert(num_indexes == num_costs);
+
+    // keep them
+    std::map<int, std::map<int,float>> access_links;
+    for(int i=0; i<num_indexes; ++i) {
+        access_links[indexes[2*i]][indexes[2*i+1]] = costs[i];
+        if ((i<5) || (i>num_indexes-5)) {
+            printf("access_links[%d][%d]=%f\n", indexes[2*i], indexes[2*i+1], costs[i]);
+        }
+    }
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef fasttripsMethods[] = {
     {"system",  _fasttrips_system, METH_VARARGS, "Execute a shell command."},
+    {"initialize_supply", _fasttrips_initialize_supply, METH_VARARGS, "initialize_supply"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
 PyMODINIT_FUNC
 init_fasttrips(void)
 {
-    PyObject *m;
-
     printf("init_fasttrips called\n");
 
     std::string x = "all animals want to live";
@@ -33,9 +73,11 @@ init_fasttrips(void)
 
     std::priority_queue<std::string> myqueue;
 
-    m = Py_InitModule("_fasttrips", fasttripsMethods);
+    PyObject *m = Py_InitModule("_fasttrips", fasttripsMethods);
     if (m == NULL)
         return;
+
+    import_array();
 
     pyError = PyErr_NewException("_fasttrips.error", NULL, NULL);
     Py_INCREF(pyError);
