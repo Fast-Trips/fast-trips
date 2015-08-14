@@ -2,11 +2,14 @@
 
 #include <numpy/arrayobject.h>
 
-#include <map>
+#include "pathfinder.h"
 #include <string>
 #include <queue>
 
 static PyObject *pyError;
+
+// global variable?
+fasttrips::PathFinder pathfinder;
 
 static PyObject *
 _fasttrips_system(PyObject *self, PyObject *args)
@@ -47,13 +50,8 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     assert(num_indexes == num_costs);
 
     // keep them
-    std::map<int, std::map<int,float>> access_links;
-    for(int i=0; i<num_indexes; ++i) {
-        access_links[indexes[2*i]][indexes[2*i+1]] = costs[i];
-        if ((i<5) || (i>num_indexes-5)) {
-            printf("access_links[%d][%d]=%f\n", indexes[2*i], indexes[2*i+1], costs[i]);
-        }
-    }
+    pathfinder.initializeSupply(proc_num, indexes, costs, num_indexes);
+
     Py_RETURN_NONE;
 }
 
