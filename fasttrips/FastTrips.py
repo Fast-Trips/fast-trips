@@ -107,11 +107,8 @@ class FastTrips:
 
         FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
-        # read the TAZs into taz_id -> TAZ instance
-        self.tazs = TAZ.read_TAZs(input_dir)
-
-        # read the access links into both the TAZs and the stops involved
-        TAZ.read_access_links(input_dir, self.tazs, self.stops)
+        # read the TAZs into a TAZ instance
+        self.tazs = TAZ(input_dir)
 
         if read_demand:
             # Read the demand int passenger_id -> passenger instance

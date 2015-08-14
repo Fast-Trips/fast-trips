@@ -430,24 +430,24 @@ class Assignment:
         trips_used      = set() # trip ids
 
         # possible egress/access links
-        for stop_id, access_link in FT.tazs[start_taz_id].access_links.iteritems():
+        for stop_id, access_link in FT.tazs.access_links_df.loc[start_taz_id].iterrows():
             # outbound: departure time = destination - access
             # inbound:  arrival time   = origin      + access
             deparr_time = datetime.datetime.combine(Assignment.TODAY, path.preferred_time) - \
-                          (access_link[TAZ.ACCESS_LINK_IDX_TIME]*dir_factor)
+                          (access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta()*dir_factor)
 
             if hyperpath:
                 # todo: why the 1+ ?
                 cost    = 1 + ((Path.WALK_EGRESS_TIME_WEIGHT if path.outbound() else Path.WALK_ACCESS_TIME_WEIGHT)* \
-                          access_link[TAZ.ACCESS_LINK_IDX_TIME].total_seconds()/60.0)
+                          access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta().total_seconds()/60.0)
             else:
-                cost    = access_link[TAZ.ACCESS_LINK_IDX_TIME]
+                cost    = access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta()
             stop_states[stop_id].append( [
                 cost,                                                                   # label
                 deparr_time,                                                            # departure/arrival
                 Path.STATE_MODE_EGRESS if path.outbound() else Path.STATE_MODE_ACCESS,  # departure/arrival mode
                 start_taz_id,                                                           # successor/prececessor
-                access_link[TAZ.ACCESS_LINK_IDX_TIME],                                  # link time
+                access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta(),                 # link time
                 cost,                                                                   # cost
                 MAX_DATETIME] )                                                         # arrival/departure
             stop_queue.put( (cost, stop_id) )
@@ -713,9 +713,9 @@ class Assignment:
             end_taz_id = path.destination_taz_id
 
         taz_state         = []
-        for stop_id, access_link in FT.tazs[end_taz_id].access_links.iteritems():
+        for stop_id, access_link in FT.tazs.access_links_df.loc[end_taz_id].iterrows():
 
-            access_time   = access_link[TAZ.ACCESS_LINK_IDX_TIME]
+            access_time   = access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta()
             use_new_state = False
             if stop_id not in stop_states:
                 # for deterministic - we can't get to this stop so move on
@@ -783,8 +783,8 @@ class Assignment:
                 if stop_state[0][Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_TRANSFER: continue
                 if stop_state[0][Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS:   continue
                 if stop_state[0][Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_ACCESS:   continue
-                new_cost        = access_link[TAZ.ACCESS_LINK_IDX_TIME]
-                new_label       = stop_state[0][Path.STATE_IDX_LABEL] + access_link[TAZ.ACCESS_LINK_IDX_TIME]
+                new_cost        = access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta()
+                new_label       = stop_state[0][Path.STATE_IDX_LABEL] + access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta()
 
                 # capacity check
                 if path.outbound() and (stop_state[0][Path.STATE_IDX_DEPARRMODE], stop_id) in Assignment.bump_wait:
@@ -794,7 +794,7 @@ class Assignment:
                     if deparr_time - Assignment.PATH_TIME_WINDOW > latest_time: continue
                     # leave earlier -- to get in line 5 minutes before bump wait time
                     new_label   = new_label + (stop_state[Path.STATE_IDX_DEPARR] - latest_time) + Assignment.BUMP_BUFFER
-                    deparr_time = latest_time - access_link[TAZ.ACCESS_LINK_IDX_TIME] - Assignment.BUMP_BUFFER
+                    deparr_time = latest_time - access_link[TAZ.ACCLINKS_COLUMN_TIME].to_pytimedelta() - Assignment.BUMP_BUFFER
 
                 old_label = MAX_TIME
                 if len(taz_state) > 0:
