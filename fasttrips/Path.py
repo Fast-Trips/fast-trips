@@ -102,9 +102,9 @@ class Path:
         #: preferred departure time if
         #: :py:attr:`Path.direction` == :py:attr:`Path.DIR_INBOUND`
         #: This is an instance of :py:class:`datetime.time`
-        pref_time_int           = passenger_record['PAT'        ]
-        self.preferred_time     = datetime.time(hour = int(pref_time_int/60.0),
-                                                minute = pref_time_int % 60)
+        self.pref_time_min      = passenger_record['PAT'        ]
+        self.preferred_time     = datetime.time(hour = int(self.pref_time_min/60.0),
+                                                minute = self.pref_time_min % 60)
 
         #: This will include the stops and their related states
         #: Ordered dictionary: origin_taz_id -> state,

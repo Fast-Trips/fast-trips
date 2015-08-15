@@ -55,8 +55,13 @@ class TAZ:
     ACCLINKS_COLUMN_DIST    = 'dist'
     #: Access links column name: Link walk time.  This is a TimeDelta
     ACCLINKS_COLUMN_TIME    = 'time'
-    #: Access links column name: Link walk time in seconds.  This is float.
-    ACCLINKS_COLUMN_TIME_SEC= 'time_sec'
+    #: Access links column name: Link walk time in minutes.  This is float.
+    ACCLINKS_COLUMN_TIME_MIN= 'time_min'
+
+    #: Access cost column name: Link generic cost for accessing stop from TAZ. Float.
+    ACCLINKS_COLUMN_ACC_COST= 'access_cost'
+    #: Egress cost column name: Link generic cost for egressing to TAZ from stop. Float.
+    ACCLINKS_COLUMN_EGR_COST= 'egress_cost'
 
     def __init__(self, input_dir):
         """
@@ -91,7 +96,7 @@ class TAZ:
         self.access_links_df.set_index([TAZ.ACCLINKS_COLUMN_TAZ,
                                      TAZ.ACCLINKS_COLUMN_STOP], inplace=True, verify_integrity=True)
         # keep the seconds column as float
-        self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME_SEC] = self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME]
+        self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN] = self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME]
         # convert time column from float to timedelta
         self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME] = \
             self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME].map(lambda x: datetime.timedelta(minutes=x))

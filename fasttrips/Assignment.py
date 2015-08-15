@@ -104,7 +104,7 @@ class Assignment:
     #: Set to 1 to run everything in this process
     #: Set to less than 1 to use the result of :py:func:`multiprocessing.cpu_count`
     #: Set to positive integer greater than 1 to set a fixed number of processes
-    NUMBER_OF_PROCESSES             = 8
+    NUMBER_OF_PROCESSES             = 1
 
     #: Extra time so passengers don't get bumped (?)
     BUMP_BUFFER                     = datetime.timedelta(minutes = 5)
@@ -179,14 +179,22 @@ class Assignment:
         """
         Initialize the C++ fasttrips extension by passing it the network supply.
         """
-        FastTripsLogger.info("Initializing fasttrips extension for process number %d\n" % process_number)
+        FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
         # make a copy to convert the 2-column MultiIndex to a 2D array easily
         access_links_df = FT.tazs.access_links_df.reset_index()
-        print access_links_df.head()
-        print access_links_df.tail()
+        # create access and egress cost
+        access_links_df[TAZ.ACCLINKS_COLUMN_ACC_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
+        access_links_df[TAZ.ACCLINKS_COLUMN_EGR_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
+
+        FastTripsLogger.debug("\n" + str(access_links_df.head()))
+        FastTripsLogger.debug("\n" + str(access_links_df.tail()))
         _fasttrips.initialize_supply(process_number,
-                                     access_links_df[[TAZ.ACCLINKS_COLUMN_TAZ,TAZ.ACCLINKS_COLUMN_STOP]].as_matrix().astype('int32'),
-                                     access_links_df[TAZ.ACCLINKS_COLUMN_TIME_SEC].values.astype('float32'))
+                                     access_links_df[[TAZ.ACCLINKS_COLUMN_TAZ,
+                                                      TAZ.ACCLINKS_COLUMN_STOP    ]].as_matrix().astype('int32'),
+                                     access_links_df[[TAZ.ACCLINKS_COLUMN_TIME_MIN,
+                                                      TAZ.ACCLINKS_COLUMN_ACC_COST,
+                                                      TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float32'))
+
     @staticmethod
     def assign_paths(output_dir, FT):
         """
@@ -425,6 +433,11 @@ class Assignment:
         :type trace: boolean
 
         """
+        # send it to the C++ extension
+        _fasttrips.find_path(path.path_id, hyperpath, path.origin_taz_id, path.destination_taz_id,
+                             1 if path.outbound() else 0, float(path.pref_time_min),
+                             1 if trace else 0)
+
         # hyperpath means we use random numbers to choose options -- set the random seed to be repeatable
         if hyperpath:
             random.seed(path.path_id)

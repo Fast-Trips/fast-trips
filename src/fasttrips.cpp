@@ -34,17 +34,18 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     }
 
     printf("_fasttrips_initialize_supply for proc num %d\n", proc_num);
-    // access_links index: TAZ id + stop id
+    // access_links index: TAZ id, stop id
     pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
     if (pyo == NULL) return NULL;
     int* indexes    = (int*)PyArray_DATA(pyo);
     int num_indexes = PyArray_DIMS(pyo)[0];
     assert(2 == PyArray_DIMS(pyo)[1]);
 
-    // access_links cost
-    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_FLOAT32, 1, 1);
+    // access_links cost: time, access cost, egress cost
+    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_FLOAT32, 2, 2);
     float* costs    = (float*)PyArray_DATA(pyo);
     int num_costs   = PyArray_DIMS(pyo)[0];
+    assert(3 == PyArray_DIMS(pyo)[1]);
 
     // these better be the same length
     assert(num_indexes == num_costs);
@@ -55,9 +56,29 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *
+_fasttrips_find_path(PyObject *self, PyObject *args)
+{
+    PyArrayObject *pyo;
+    fasttrips::PathSpecification path_spec;
+    int   hyperpath_i, outbound_i, trace_i;
+    if (!PyArg_ParseTuple(args, "iiiiifi", &path_spec.path_id_, &hyperpath_i,
+                          &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
+                          &outbound_i, &path_spec.preferred_time_, &trace_i)) {
+        return NULL;
+    }
+    path_spec.hyperpath_  = (hyperpath_i != 0);
+    path_spec.outbound_   = (outbound_i  != 0);
+    path_spec.trace_      = (trace_i     != 0);
+    pathfinder.findPath(path_spec);
+
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef fasttripsMethods[] = {
-    {"system",  _fasttrips_system, METH_VARARGS, "Execute a shell command."},
-    {"initialize_supply", _fasttrips_initialize_supply, METH_VARARGS, "initialize_supply"},
+    {"system",              _fasttrips_system,            METH_VARARGS, "Execute a shell command."  },
+    {"initialize_supply",   _fasttrips_initialize_supply, METH_VARARGS, "Initialize network supply" },
+    {"find_path",           _fasttrips_find_path,         METH_VARARGS, "Find trip-based path"      },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
