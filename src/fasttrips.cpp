@@ -27,13 +27,14 @@ static PyObject *
 _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
+    const char* output_dir;
     int proc_num;
     PyObject *input1, *input2, *input3;
-    if (!PyArg_ParseTuple(args, "iOO", &proc_num, &input1, &input2)) {
+    if (!PyArg_ParseTuple(args, "siOO", &output_dir, &proc_num, &input1, &input2)) {
         return NULL;
     }
 
-    printf("_fasttrips_initialize_supply for proc num %d\n", proc_num);
+    printf("_fasttrips_initialize_supply for output_dir %s proc num %d\n", output_dir, proc_num);
     // access_links index: TAZ id, stop id
     pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
     if (pyo == NULL) return NULL;
@@ -51,7 +52,7 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     assert(num_indexes == num_costs);
 
     // keep them
-    pathfinder.initializeSupply(proc_num, indexes, costs, num_indexes);
+    pathfinder.initializeSupply(output_dir, proc_num, indexes, costs, num_indexes);
 
     Py_RETURN_NONE;
 }

@@ -35,38 +35,48 @@ namespace fasttrips {
     } StopState;
 
     typedef struct {
-        float   cost_;
+        float   label_;
         int     stop_id_;
-    } CostStop;
+    } LabelStop;
 
-    struct CostStopCompare {
-        bool operator()(const CostStop &cs1, const CostStop &cs2) const {
-            return (cs1.cost_ > cs2.cost_);
+    struct LabelStopCompare {
+        bool operator()(const LabelStop &cs1, const LabelStop &cs2) const {
+            return (cs1.label_ > cs2.label_);
         }
     };
 
     typedef std::map<int, std::vector<StopState> > StopStates;
-    typedef std::priority_queue<CostStop, std::vector<CostStop>, struct CostStopCompare> CostStopQueue;
+    typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
 
     class PathFinder
     {
     protected:
+        // directory in which to write trace files
+        std::string output_dir_;
+
         // for multi-processing
         int process_num_;
 
         // taz id -> stop id -> costs
         std::map<int, std::map<int, TazStopCost>> taz_access_links_;
 
-        bool PathFinder::initializeStopStates(const struct PathSpecification& path_spec,
-                                              std::ofstream& trace_file,
-                                              StopStates& stop_states,
-                                              CostStopQueue& cost_stop_queue) const;
+        bool initializeStopStates(const struct PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  StopStates& stop_states,
+                                  LabelStopQueue& cost_stop_queue) const;
 
-        void printStopState(std::ostream& ostr, int stop_id, const StopState& ss) const;
+        void labelStops(const struct PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  StopStates& stop_states,
+                                  LabelStopQueue& cost_stop_queue) const;
+
+        void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const;
 
         void printTimeDuration(std::ostream& ostr, const float& timedur) const;
 
         void printTime(std::ostream& ostr, const float& timemin) const;
+
+        void printMode(std::ostream& ostr, const int& mode) const;
 
     public:
         const static int MODE_ACCESS    = -100;
@@ -76,10 +86,11 @@ namespace fasttrips {
         // Constructor
         PathFinder();
 
-        void initializeSupply(int    process_num,
-                              int*   taz_access_index,
-                              float* taz_access_cost,
-                              int    num_links);
+        void initializeSupply(const char*   output_dir,
+                              int           process_num,
+                              int*          taz_access_index,
+                              float*        taz_access_cost,
+                              int           num_links);
 
         // Destructor
         ~PathFinder();

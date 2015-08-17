@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iomanip>
 #include <math.h>
+#include <unordered_set>
+#include <algorithm>
 
 namespace fasttrips {
 
@@ -12,11 +14,13 @@ namespace fasttrips {
     }
 
     void PathFinder::initializeSupply(
-        int    process_num,
-        int*   taz_access_index,
-        float* taz_access_cost,
-        int    num_links)
+        const char* output_dir,
+        int         process_num,
+        int*        taz_access_index,
+        float*      taz_access_cost,
+        int         num_links)
     {
+        output_dir_  = output_dir;
         process_num_ = process_num;
 
         // std::ostringstream ss;
@@ -44,30 +48,36 @@ namespace fasttrips {
     void PathFinder::findPath(struct PathSpecification path_spec) const
     {
         // for now we'll just trace
-        if (!path_spec.trace_) { return; }
+        // if (!path_spec.trace_) { return; }
 
         std::ofstream trace_file;
         if (path_spec.trace_) {
             std::ostringstream ss;
+            ss << output_dir_ << "\\";
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
             trace_file.open(ss.str().c_str());
             trace_file << "Tracing assignment of passenger " << path_spec.path_id_ << std::endl;
         }
 
         StopStates      stop_states;
-        CostStopQueue   cost_stop_queue;
-        initializeStopStates(path_spec, trace_file, stop_states, cost_stop_queue);
+        LabelStopQueue  label_stop_queue;
+        // todo: handle failure
+        initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
 
-        trace_file << "Pulling stop " << cost_stop_queue.top().stop_id_ << " with cost ";
-        printTimeDuration(trace_file, cost_stop_queue.top().cost_);
-        trace_file << std::endl;
+        labelStops(path_spec, trace_file, stop_states, label_stop_queue);
+
         trace_file.close();
     }
 
+    /*
+     * Initialize the stop states from the access (for inbound) or egress (for outbound) links
+     * from the start TAZ.
+     * Returns success.  This method will only fail if there are no access/egress links for the starting TAZ.
+     */
     bool PathFinder::initializeStopStates(const struct PathSpecification& path_spec,
                                           std::ofstream& trace_file,
                                           StopStates& stop_states,
-                                          CostStopQueue& cost_stop_queue) const
+                                          LabelStopQueue& label_stop_queue) const
     {
         trace_file << "Initialize stop states" << std::endl;
         int     start_taz_id;
@@ -112,12 +122,12 @@ namespace fasttrips {
                 cost,
                 PathFinder::MAX_TIME };
             stop_states[stop_id].push_back(ss);
-            CostStop cs = { cost, stop_id };
-            cost_stop_queue.push( cs );
+            LabelStop cs = { cost, stop_id };
+            label_stop_queue.push( cs );
 
             if (path_spec.trace_) {
                 trace_file << (path_spec.outbound_ ? " +egress" : " +access") << "   ";
-                printStopState(trace_file, stop_id, ss);
+                printStopState(trace_file, stop_id, ss, path_spec);
                 trace_file << std::endl;
             }
         }
@@ -125,28 +135,105 @@ namespace fasttrips {
         return true;
     }
 
-    void PathFinder::printStopState(std::ostream& ostr, int stop_id, const StopState& ss) const
+    void PathFinder::labelStops(const struct PathSpecification& path_spec,
+                                          std::ofstream& trace_file,
+                                          StopStates& stop_states,
+                                          LabelStopQueue& label_stop_queue) const
+    {
+        int label_iterations = 0;
+        std::tr1::unordered_set<int> stop_done;
+        while (!label_stop_queue.empty()) {
+            /***************************************************************************************
+            * for outbound: we can depart from *stop_id*
+            *                      via *departure mode*
+            *                      at *departure time*
+            *                      and get to stop *successor*
+            *                      and the total cost from *stop_id* to the destination TAZ is *label*
+            * for inbound: we can arrive at *stop_id*
+            *                     via *arrival mode*
+            *                     at *arrival time*
+            *                     from stop *predecessor*
+            *                     and the total cost from the origin TAZ to the *stop_id* is *label*
+            **************************************************************************************/
+            LabelStop current_label_stop = label_stop_queue.top();
+            label_stop_queue.pop();
+
+            // stop is already processed
+            if (stop_done.find(current_label_stop.stop_id_) != stop_done.end()) continue;
+            // no transfers to the stop
+            // TODO
+            // process this stop now - just once
+            stop_done.insert(current_label_stop.stop_id_);
+
+            // current_stop_state is a vector
+            std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
+
+             if (path_spec.trace_) {
+                trace_file << "Pulling from label_stop_queue (iteration " << label_iterations << ", label ";
+                if (path_spec.hyperpath_) {
+                    trace_file << std::setprecision(4) << current_label_stop.label_;
+                }
+                else {
+                    printTimeDuration(trace_file, current_label_stop.label_);
+                }
+                trace_file << ", stop " << current_label_stop.stop_id_ << ") :======" << std::endl;
+                for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
+                                                            ssi != current_stop_state.end(); ++ssi) {
+                    printStopState(trace_file, current_label_stop.stop_id_, *ssi, path_spec);
+                    trace_file << std::endl;
+                }
+            }
+
+            int     current_mode            = current_stop_state[0].deparr_mode_;      // why index 0?
+            // latest departure for outbound, earliest arrival for inbound
+            float   latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
+            for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
+                                                        ssi != current_stop_state.end(); ++ssi) {
+                if (path_spec.outbound_) {
+                    latest_dep_earliest_arr = std::max(latest_dep_earliest_arr, ssi->deparr_time_);
+                } else {
+                    latest_dep_earliest_arr = std::min(latest_dep_earliest_arr, ssi->deparr_time_);
+                }
+            }
+
+            if (path_spec.trace_) {
+                trace_file << "  current mode:    " << std::left;
+                printMode(trace_file, current_mode);
+                trace_file << std::endl;
+                trace_file << (path_spec.outbound_ ? "  latest_departure: " : "  earliest_arrival: ");
+                printTime(trace_file, latest_dep_earliest_arr);
+                trace_file << std::endl;
+            }
+            //  Done with this label iteration!
+            label_iterations += 1;
+        }
+    }
+
+    void PathFinder::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const
     {
         ostr << std::setw( 8) << std::setfill(' ') << stop_id   << ": ";
-        printTimeDuration(ostr, ss.label_);
+        if (path_spec.hyperpath_) {
+            // label is a cost
+            ostr << std::setw(10) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.label_;
+        } else {
+            // label is a time duration
+            printTimeDuration(ostr, ss.label_);
+        }
         ostr << "  ";
         printTime(ostr, ss.deparr_time_);
         ostr << "  ";
-        if (ss.deparr_mode_ == PathFinder::MODE_ACCESS) {
-            ostr << std::setw(10) << std::setfill(' ') << "Access";
-        } else if (ss.deparr_mode_ == PathFinder::MODE_EGRESS) {
-            ostr << std::setw(10) << std::setfill(' ') << "Egress";
-        } else if (ss.deparr_mode_ == PathFinder::MODE_TRANSFER) {
-            ostr << std::setw(10) << std::setfill(' ') << "Transfer";
-        } else {
-            ostr << std::setw(10) << std::setfill(' ') << ss.deparr_mode_;
-        }
+        printMode(ostr, ss.deparr_mode_);
         ostr << "  ";
         ostr << std::setw(10) << std::setfill(' ') << ss.succpred_;
         ostr << "  ";
         printTimeDuration(ostr, ss.link_time_);
         ostr << "  ";
-        printTimeDuration(ostr, ss.cost_);
+        if (path_spec.hyperpath_) {
+            ostr << std::setw(10) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.cost_;
+        } else {
+            // cost is a time duration
+            printTimeDuration(ostr, ss.cost_);
+        }
         ostr << "  ";
         printTime(ostr, ss.arrdep_time_);
     }
@@ -182,6 +269,19 @@ namespace fasttrips {
         ostr << std::setw( 2) << std::setfill('0') << hour                       << ":"; // hour
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)  << ":"; // minutes
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(secpart);
+    }
+
+    void PathFinder::printMode(std::ostream& ostr, const int& mode) const
+    {
+        if (mode == PathFinder::MODE_ACCESS) {
+            ostr << std::setw(10) << std::setfill(' ') << "Access";
+        } else if (mode == PathFinder::MODE_EGRESS) {
+            ostr << std::setw(10) << std::setfill(' ') << "Egress";
+        } else if (mode == PathFinder::MODE_TRANSFER) {
+            ostr << std::setw(10) << std::setfill(' ') << "Transfer";
+        } else {
+            ostr << std::setw(10) << std::setfill(' ') << mode;
+        }
     }
 
 }

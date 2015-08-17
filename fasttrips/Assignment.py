@@ -175,7 +175,7 @@ class Assignment:
         raise Exception("Not implemented")
 
     @staticmethod
-    def initialize_fasttrips_extension(process_number, FT):
+    def initialize_fasttrips_extension(process_number, output_dir, FT):
         """
         Initialize the C++ fasttrips extension by passing it the network supply.
         """
@@ -188,7 +188,7 @@ class Assignment:
 
         FastTripsLogger.debug("\n" + str(access_links_df.head()))
         FastTripsLogger.debug("\n" + str(access_links_df.tail()))
-        _fasttrips.initialize_supply(process_number,
+        _fasttrips.initialize_supply(output_dir, process_number,
                                      access_links_df[[TAZ.ACCLINKS_COLUMN_TAZ,
                                                       TAZ.ACCLINKS_COLUMN_STOP    ]].as_matrix().astype('int32'),
                                      access_links_df[[TAZ.ACCLINKS_COLUMN_TIME_MIN,
@@ -211,7 +211,7 @@ class Assignment:
                 (num_paths_assigned, passengers_df) = Assignment.read_assignment_results(output_dir, iteration)
 
             else:
-                num_paths_assigned = Assignment.assign_passengers(FT, iteration)
+                num_paths_assigned = Assignment.assign_passengers(FT, output_dir, iteration)
                 passengers_df      = Assignment.setup_passengers(FT, output_dir, iteration)
 
             veh_trips_df       = Assignment.setup_trips(FT)
@@ -244,7 +244,7 @@ class Assignment:
         Assignment.print_load_profile(veh_trips_df, output_dir)
 
     @staticmethod
-    def assign_passengers(FT, iteration):
+    def assign_passengers(FT, output_dir, iteration):
         """
         Assigns paths to passengers using deterministic trip-based shortest path (TBSP) or
         stochastic trip-based hyperpath (TBHP).
@@ -273,7 +273,7 @@ class Assignment:
                                                                   Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
                 process_list[-1].start()
         else:
-            Assignment.initialize_fasttrips_extension(0, FT)
+            Assignment.initialize_fasttrips_extension(0, output_dir, FT)
 
         # process tasks or send tasks to workers for processing
         num_paths_found  = 0
@@ -433,10 +433,12 @@ class Assignment:
         :type trace: boolean
 
         """
+        # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
         _fasttrips.find_path(path.path_id, hyperpath, path.origin_taz_id, path.destination_taz_id,
                              1 if path.outbound() else 0, float(path.pref_time_min),
                              1 if trace else 0)
+        # FastTripsLogger.debug("C++ extension complete")
 
         # hyperpath means we use random numbers to choose options -- set the random seed to be repeatable
         if hyperpath:
@@ -1670,7 +1672,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, outpu
 
     FastTripsLogger.info("Worker %2d starting" % worker_num)
 
-    Assignment.initialize_fasttrips_extension(worker_num, worker_FT)
+    Assignment.initialize_fasttrips_extension(worker_num, output_dir, worker_FT)
 
     while True:
         # go through my queue -- check if we're done
