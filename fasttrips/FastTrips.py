@@ -96,10 +96,7 @@ class FastTrips:
         # read routes into route_id -> Route instance
         self.routes = Route.read_routes(input_dir)
         # read trips into those routes
-        self.trips = Trip.read_trips(input_dir, self.routes)
-
-        # read the stops and their times into the trips
-        Trip.read_stop_times(input_dir, self.trips, self.stops)
+        self.trips = Trip(input_dir, self.routes, self.stops, Assignment.TODAY)
 
         transfer_stops = 0
         for stop_id,stop in self.stops.iteritems():

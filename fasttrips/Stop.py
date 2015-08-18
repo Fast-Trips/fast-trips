@@ -99,7 +99,7 @@ class Stop:
         self.tazs[access_link_record['TAZ']] = (access_link_record['dist'],
                                                 access_link_record['time'])
 
-    def add_to_trip(self, trip, sequence, arrival_time, departure_time):
+    def add_to_trip(self, trip_id, route_id, sequence, arrival_time, departure_time):
         """
         Add myself to the given trip.
 
@@ -112,9 +112,9 @@ class Stop:
         :type departure_time: a :py:class:`datetime.time` instance
 
         """
-        self.trips.append( (trip.trip_id, sequence, arrival_time, departure_time, trip.route_id) )
+        self.trips.append( (trip_id, sequence, arrival_time, departure_time, route_id) )
         # and route
-        self.routes.add(trip.route_id)
+        self.routes.add(route_id)
 
     def get_trips_arriving_within_time(self, assignment_date, latest_arrival, time_window):
         """

@@ -83,7 +83,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PASSENGER_IDS             = [48]
+    TRACE_PASSENGER_IDS             = [11,48]
 
     #: Maximum number of times to call :py:meth:`choose_path_from_hyperpath_states`
     MAX_HYPERPATH_ASSIGN_ATTEMPTS   = 1001   # that's a lot
@@ -623,6 +623,7 @@ class Assignment:
                 # trip arrival time (outbound) / trip departure time (inbound)
                 arrdep_datetime = datetime.datetime.combine(Assignment.TODAY, arrdep_time)
                 wait_time       = (latest_dep_earliest_arr - arrdep_datetime)*dir_factor
+                if type(wait_time) == pandas.tslib.Timedelta: wait_time = wait_time.to_pytimedelta()
 
                 # deterministic assignment: check capacities
                 if not hyperpath:
@@ -654,24 +655,24 @@ class Assignment:
                 if path.outbound():  # outbound: iterate through the stops before this one
                     trip_seq_list = range(1,seq)
                 else:                # inbound: iterate through the stops after this one
-                    trip_seq_list = range(seq+1, FT.trips[trip_id].number_of_stops()+1)
+                    trip_seq_list = range(seq+1, FT.trips.number_of_stops(trip_id)+1)
 
                 for seq_num in trip_seq_list:
                     # board for outbound / alight for inbound
-                    possible_board_alight   = FT.trips[trip_id].stops[seq_num-1]
+                    possible_board_alight   = FT.trips.get_stop_times(trip_id).loc[seq_num]
 
                     # new_label = length of trip so far if the passenger boards/alights at this stop
-                    board_alight_stop   = possible_board_alight[Trip.STOPS_IDX_STOP_ID]
+                    board_alight_stop   = possible_board_alight[Trip.STOPTIMES_COLUMN_STOP_ID]
 
                     if hyperpath:
                         new_mode        = stop_states[board_alight_stop][0][Path.STATE_IDX_DEPARRMODE] \
                                           if board_alight_stop in stop_states else None  # why 0 index?
                         if new_mode in [Path.STATE_MODE_EGRESS, Path.STATE_MODE_ACCESS]: continue
 
-                    deparr_time         = datetime.datetime.combine(Assignment.TODAY,
-                                          possible_board_alight[Trip.STOPS_IDX_DEPARTURE_TIME] if path.outbound() else \
-                                          possible_board_alight[Trip.STOPS_IDX_ARRIVAL_TIME])
+                    deparr_time         = possible_board_alight[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] if path.outbound() else \
+                                          possible_board_alight[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]
                     in_vehicle_time     = (arrdep_datetime - deparr_time)*dir_factor
+                    in_vehicle_time     = in_vehicle_time.to_pytimedelta()  # pandas.tslib.Timedelta -> datetime.timedelta
                     use_new_state       = False
 
                     # stochastic/hyperpath: cost update
@@ -699,6 +700,8 @@ class Assignment:
                     else:
                         cost            = in_vehicle_time + wait_time
                         new_label       = current_label + in_vehicle_time + wait_time
+
+                        # print type(current_label), type(in_vehicle_time), type(wait_time), type(new_label)
 
                         old_label       = MAX_TIME
                         if board_alight_stop in stop_states:
@@ -970,8 +973,8 @@ class Assignment:
 
             # revise first link possibly -- let's not waste time
             if path.outbound() and len(return_states) == 1:
-                dep_time = datetime.datetime.combine(Assignment.TODAY,
-                                                     FT.trips[next_state[Path.STATE_IDX_DEPARRMODE]].get_scheduled_departure(current_stop))
+                dep_time = FT.trips.get_scheduled_departure(next_state[Path.STATE_IDX_DEPARRMODE], current_stop)
+
                 # effective trip start time
                 return_states[path.origin_taz_id][Path.STATE_IDX_DEPARR] = dep_time - return_states[path.origin_taz_id][Path.STATE_IDX_LINKTIME]
 
@@ -1210,8 +1213,8 @@ class Assignment:
         """
         Sets up and returns a :py:class:`pandas.DataFrame` where each row contains a leg of a transit vehicle trip.
         # 2015-06-22 15:42:34 DEBUG Setup vehicle trips dataframe:
-        # route_id                 int64
-        # shape_id                 int64
+        # routeId                  int64
+        # shapeId                  int64
         # direction                int64
         # trip_id                  int64
         # stop_seq                 int64
@@ -1221,31 +1224,22 @@ class Assignment:
         # depart_time     datetime64[ns]
         # service_type             int64
         """
-        mylist = []
-        for trip_id, trip in FT.trips.iteritems():
-            stop_seq = 0
-            for stop_tuple in trip.stops:
-                row = [trip.route_id,
-                       trip.shape_id,
-                       trip.direction_id,
-                       trip_id,
-                       stop_seq,
-                       stop_tuple[Trip.STOPS_IDX_STOP_ID],
-                       trip.capacity,
-                       datetime.datetime.combine(Assignment.TODAY,
-                                                 stop_tuple[Trip.STOPS_IDX_ARRIVAL_TIME]),
-                       datetime.datetime.combine(Assignment.TODAY,
-                                                 stop_tuple[Trip.STOPS_IDX_DEPARTURE_TIME]),
-                       trip.service_type
-                       ]
-                mylist.append(row)
-                stop_seq += 1
-        df = pandas.DataFrame(mylist,
-                              columns=['route_id','shape_id','direction', # these go into output -- otherwise they're useless
-                                       'trip_id','stop_seq','stop_id','capacity',
-                                       'arrive_time','depart_time',
-                                       'service_type', # for dwell time
-                                      ])
+        # join with trips to get additional fields
+        df = pandas.merge(left= FT.trips.stop_times_df.reset_index(),
+                          right= FT.trips.trips_df.reset_index(),
+                          how='left')
+        # print df.head()
+        assert(len(FT.trips.stop_times_df) == len(df))
+        df.rename(columns=
+           {Trip.TRIPS_COLUMN_DIRECTION_ID      :'direction',
+            Trip.STOPTIMES_COLUMN_TRIP_ID       :'trip_id',
+            Trip.STOPTIMES_COLUMN_SEQUENCE      :'stop_seq',
+            Trip.STOPTIMES_COLUMN_STOP_ID       :'stop_id',
+            Trip.TRIPS_COLUMN_CAPACITY          :'capacity',
+            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :'arrive_time',
+            Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:'depart_time',
+            Trip.TRIPS_COLUMN_SERVICE_TYPE      :'service_type'
+            }, inplace=True)
         return df
 
     @staticmethod
@@ -1626,9 +1620,7 @@ class Assignment:
 
         # rename columns
         print_veh_trips_df.rename(columns=
-           {'route_id'       :'routeId',
-            'shape_id'       :'shapeId',
-            'trip_id'        :'tripId',
+           {'trip_id'        :'tripId',
             'stop_id'        :'stopId',
             'dwell_time'     :'dwellTime',
             'boards'         :'boardings',
