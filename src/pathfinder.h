@@ -70,7 +70,7 @@ namespace fasttrips {
         int process_num_;
 
         // TAZ information: taz id -> stop id -> costs
-        std::map<int, std::map<int, TazStopCost>> taz_access_links_;
+        std::map<int, std::map<int, TazStopCost> > taz_access_links_;
         // Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
         std::map<int, std::vector<StopTripTime> > trip_stop_times_;
         // Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
@@ -90,7 +90,7 @@ namespace fasttrips {
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
          */
-        void getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<const StopTripTime>& return_trips,  float time_window=30.0) const;
+        void getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<StopTripTime>& return_trips,  float time_window=30.0) const;
 
         void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const;
 

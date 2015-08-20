@@ -4,9 +4,21 @@
 #include <sstream>
 #include <iomanip>
 #include <math.h>
-#include <unordered_set>
 #include <algorithm>
 
+#if __APPLE__
+#include <tr1/unordered_set>
+#elif _WIN32
+#include <unordered_set>
+#endif
+
+const char kPathSeparator =
+#ifdef _WIN32
+                            '\\';
+#else
+                            '/';
+#endif
+ 
 namespace fasttrips {
 
     const float PathFinder::DISPERSION_PARAMETER = 1.0;
@@ -79,7 +91,7 @@ namespace fasttrips {
         std::ofstream trace_file;
         if (path_spec.trace_) {
             std::ostringstream ss;
-            ss << output_dir_ << "\\";
+            ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
             trace_file.open(ss.str().c_str());
             trace_file << "Tracing assignment of passenger " << path_spec.path_id_ << std::endl;
@@ -117,7 +129,7 @@ namespace fasttrips {
         }
 
         // are there any egress/access links?
-        std::map<int, std::map<int, TazStopCost>>::const_iterator start_links = taz_access_links_.find(start_taz_id);
+        std::map<int, std::map<int, TazStopCost> >::const_iterator start_links = taz_access_links_.find(start_taz_id);
         if (start_links == taz_access_links_.end()) {
             return false;
         }
@@ -239,9 +251,9 @@ namespace fasttrips {
             // Update by transfer
 
             // Update by trips
-            std::vector<const StopTripTime> relevant_trips;
+            std::vector<StopTripTime> relevant_trips;
             getTripsWithinTime(current_label_stop.stop_id_, path_spec.outbound_, latest_dep_earliest_arr, relevant_trips);
-            for (std::vector<const StopTripTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
+            for (std::vector<StopTripTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
                 if (path_spec.trace_) {
                     trace_file << "valid trips: " << it->trip_id_ << " " << it->seq_ << " ";
                     printTime(trace_file, path_spec.outbound_ ? it->arrive_time_ : it->depart_time_);
@@ -377,7 +389,7 @@ namespace fasttrips {
      *
      * TODO: pass time_window parameter
      */
-    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<const StopTripTime>& return_trips, float time_window) const
+    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<StopTripTime>& return_trips, float time_window) const
     {
         // are there any trips for this stop?
         std::map<int, std::vector<StopTripTime> >::const_iterator mapiter = stop_trip_times_.find(stop_id);

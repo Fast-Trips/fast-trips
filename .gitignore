@@ -1,5 +1,7 @@
 *.py[cod]
 *.log
+*.swp
+*.so
 
 Examples/*
 
