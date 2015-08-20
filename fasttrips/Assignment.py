@@ -186,6 +186,9 @@ class Assignment:
         access_links_df[TAZ.ACCLINKS_COLUMN_ACC_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
         access_links_df[TAZ.ACCLINKS_COLUMN_EGR_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
 
+        stop_times_df = FT.trips.stop_times_df.reset_index()
+        print stop_times_df.head()
+
         FastTripsLogger.debug("\n" + str(access_links_df.head()))
         FastTripsLogger.debug("\n" + str(access_links_df.tail()))
         _fasttrips.initialize_supply(output_dir, process_number,
@@ -193,7 +196,12 @@ class Assignment:
                                                       TAZ.ACCLINKS_COLUMN_STOP    ]].as_matrix().astype('int32'),
                                      access_links_df[[TAZ.ACCLINKS_COLUMN_TIME_MIN,
                                                       TAZ.ACCLINKS_COLUMN_ACC_COST,
-                                                      TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float32'))
+                                                      TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float32'),
+                                    stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                   Trip.STOPTIMES_COLUMN_SEQUENCE,
+                                                   Trip.STOPTIMES_COLUMN_STOP_ID]].as_matrix().astype('int32'),
+                                    stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float32'))
 
     @staticmethod
     def assign_paths(output_dir, FT):

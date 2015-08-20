@@ -29,8 +29,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     const char* output_dir;
     int proc_num;
-    PyObject *input1, *input2, *input3;
-    if (!PyArg_ParseTuple(args, "siOO", &output_dir, &proc_num, &input1, &input2)) {
+    PyObject *input1, *input2, *input3, *input4;
+    if (!PyArg_ParseTuple(args, "siOOOO", &output_dir, &proc_num, &input1, &input2,
+                          &input3, &input4)) {
         return NULL;
     }
 
@@ -38,7 +39,7 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // access_links index: TAZ id, stop id
     pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
     if (pyo == NULL) return NULL;
-    int* indexes    = (int*)PyArray_DATA(pyo);
+    int* acc_indexes= (int*)PyArray_DATA(pyo);
     int num_indexes = PyArray_DIMS(pyo)[0];
     assert(2 == PyArray_DIMS(pyo)[1]);
 
@@ -51,8 +52,26 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // these better be the same length
     assert(num_indexes == num_costs);
 
+    // trip stop times index: trip id, sequence, stop id
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input3, NPY_INT32, 2, 2);
+    if (pyo == NULL) return NULL;
+    int* stop_indexes   = (int*)PyArray_DATA(pyo);
+    int num_stop_ind    = PyArray_DIMS(pyo)[0];
+    assert(3 == PyArray_DIMS(pyo)[1]);
+
+    // trip stop times data: arrival time, departure time
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input4, NPY_FLOAT32, 2, 2);
+    float* stop_times   = (float*)PyArray_DATA(pyo);
+    int num_stop_times  = PyArray_DIMS(pyo)[0];
+    assert(2 == PyArray_DIMS(pyo)[1]);
+
+    // these better be the same length
+    assert(num_stop_ind == num_stop_times);
+
     // keep them
-    pathfinder.initializeSupply(output_dir, proc_num, indexes, costs, num_indexes);
+    pathfinder.initializeSupply(output_dir, proc_num,
+                                acc_indexes, costs, num_indexes,
+                                stop_indexes, stop_times, num_stop_ind);
 
     Py_RETURN_NONE;
 }

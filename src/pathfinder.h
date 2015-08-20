@@ -6,12 +6,22 @@
 
 namespace fasttrips {
 
+    // Supply data: access/egress time and cost between TAZ and stops
     typedef struct TazStopCost {
         float   time_;          // in minutes
         float   access_cost_;   // general cost units
         float   egress_cost_;   // general cost units
         TazStopCost(float t=0.0, float a=0.0, float e=0.0) : time_(t), access_cost_(a), egress_cost_(e) {}
     } TazStopCost;
+
+    // Supply data: Transit vehicle schedules
+    typedef struct StopTripTime {
+        int     trip_id_;
+        int     seq_;           // start at 1
+        int     stop_id_;
+        float   arrive_time_;   // minutes after midnight
+        float   depart_time_;   // minutes after midnight
+    } StopTripTime;
 
     // package this in a struct because it'll get passed around a lot
     struct PathSpecification {
@@ -45,7 +55,9 @@ namespace fasttrips {
         }
     };
 
+    // stop id -> StopState
     typedef std::map<int, std::vector<StopState> > StopStates;
+    // label, stop id priority queue -- lowest label pops
     typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
 
     class PathFinder
@@ -57,8 +69,12 @@ namespace fasttrips {
         // for multi-processing
         int process_num_;
 
-        // taz id -> stop id -> costs
+        // TAZ information: taz id -> stop id -> costs
         std::map<int, std::map<int, TazStopCost>> taz_access_links_;
+        // Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
+        std::map<int, std::vector<StopTripTime> > trip_stop_times_;
+        // Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
+        std::map<int, std::vector<StopTripTime> > stop_trip_times_;
 
         bool initializeStopStates(const struct PathSpecification& path_spec,
                                   std::ofstream& trace_file,
@@ -69,6 +85,12 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& cost_stop_queue) const;
+
+        /**
+         * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
+         * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
+         */
+        void getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<const StopTripTime>& return_trips,  float time_window=30.0) const;
 
         void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const;
 
@@ -83,6 +105,7 @@ namespace fasttrips {
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
         const static int MAX_TIME       = 48*60; // 48 hours in minutes
+        const static float DISPERSION_PARAMETER;
         // Constructor
         PathFinder();
 
@@ -90,7 +113,10 @@ namespace fasttrips {
                               int           process_num,
                               int*          taz_access_index,
                               float*        taz_access_cost,
-                              int           num_links);
+                              int           num_links,
+                              int*          stoptime_index,
+                              float*        stoptime_times,
+                              int           num_stoptimes);
 
         // Destructor
         ~PathFinder();
