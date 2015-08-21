@@ -88,10 +88,8 @@ class FastTrips:
         """
         Reads in the input files files from *input_dir* and initializes the relevant data structures.
         """
-        # read stops into stop_id -> Stop instance
-        self.stops = Stop.read_stops(input_dir)
-        # incorporate transfers into those stops
-        Stop.read_transfers(input_dir, self.stops)
+        # read stops and transfers
+        self.stops = Stop(input_dir)
 
         # read routes into route_id -> Route instance
         self.routes = Route.read_routes(input_dir)

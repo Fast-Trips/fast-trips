@@ -48,7 +48,12 @@ namespace fasttrips {
         // logfile_ << "PathFinder InitializeSupply" << std::endl;
 
         for(int i=0; i<num_links; ++i) {
-            taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]] = TazStopCost(taz_access_cost[3*i], taz_access_cost[3*i+1], taz_access_cost[3*i+2]);
+            TazStopCost tsc = {
+                taz_access_cost[3*i],
+                taz_access_cost[3*i+1],
+                taz_access_cost[3*i+2]
+            };
+            taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]] = tsc;
             if ((process_num_<= 1) && ((i<5) || (i>num_links-5))) {
                 printf("access_links[%4d][%4d]=%f, %f, %f\n", taz_access_index[2*i], taz_access_index[2*i+1],
                        taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]].time_,

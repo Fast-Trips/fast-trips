@@ -95,7 +95,7 @@ class TAZ:
 
         self.access_links_df.set_index([TAZ.ACCLINKS_COLUMN_TAZ,
                                      TAZ.ACCLINKS_COLUMN_STOP], inplace=True, verify_integrity=True)
-        # keep the seconds column as float
+        # keep the time column as float
         self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN] = self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME]
         # convert time column from float to timedelta
         self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME] = \

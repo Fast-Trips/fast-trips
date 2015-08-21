@@ -19,16 +19,48 @@ from .Logger import FastTripsLogger
 
 class Stop:
     """
-    Stop class.  Documentation forthcoming.
+    Stop class.
+    
+    One instance represents all of the Stops as well as their transfer links.
+    
+    Stores stop information in :py:attr:`Stop.stops_df`, an instance of :py:class:`pandas.DataFrame`
+    and transfer link information in :py:attr:`Stop.transfers_df`, another instance of
+    :py:class:`pandas.DataFrame`.
     """
 
     #: File with stops.
-    #: TODO document format
+    #: This is a tab-delimited file with required columns specified by
+    #: :py:attr:`Stop.STOPS_COLUMN_ID`, :py:attr:`Stop.STOPS_COLUMN_NAME`
+    #: :py:attr:`Stop.STOPS_COLUMN_DESCRIPTION`,
+    #: :py:attr:`Stop.STOPS_COLUMN_LATITUDE`, :py:attr:`Stop.STOPS_COLUMN_LONGITUDE`
+    #: :py:attr:`Stop.STOPS_COLUMN_CAPACITY`
     INPUT_STOPS_FILE            = "ft_input_stops.dat"
-
+    #: Stops column name: Unique identifier
+    STOPS_COLUMN_ID             = 'stopId'
+    #: Stops column name: Stop name (string)
+    STOPS_COLUMN_NAME           = 'stopName'
+    #: Stops column name: Stop description (string)
+    STOPS_COLUMN_DESCRIPTION    = 'stopDescription'
+    #: Stops column name: Latitude
+    STOPS_COLUMN_LATITUDE       = 'Latitude'
+    #: Stops column name: Longitude
+    STOPS_COLUMN_LONGITUDE      = 'Longitude'
+    #: Stops column name: Capacity
+    STOPS_COLUMN_CAPACITY       = 'capacity'
+    
     #: File with transfers.
     #: TODO: document format
     INPUT_TRANSFERS_FILE        = "ft_input_transfers.dat"
+    #: Transfers column name: Origin stop identifier
+    TRANSFERS_COLUMN_FROM_STOP  = 'fromStop'
+    #: Transfers column name: Destination stop identifier
+    TRANSFERS_COLUMN_TO_STOP    = 'toStop'
+    #: Transfers column name: Link walk distance
+    TRANSFERS_COLUMN_DISTANCE   = 'dist'
+    #: Transfers column name: Link walk time.  This is a TimeDelta.
+    TRANSFERS_COLUMN_TIME       = 'time'
+    #: Transfers column name: Link walk time in minutes.  This is a float.
+    TRANSFERS_COLUMN_TIME_MIN   = 'time_min'
 
     TRANSFERS_IDX_DISTANCE      = 0  #: For accessing parts of :py:attr:`Stop.transfers`
     TRANSFERS_IDX_TIME          = 1  #: For accessing parts of :py:attr:`Stop.transfers`
@@ -39,31 +71,51 @@ class Stop:
     TRIPS_IDX_DEPARTURE_TIME    = 3  #: For accessing parts of :py:attr:`Stop.trips`
     TRIPS_IDX_ROUTE_ID          = 4  #: For accessing parts of :py:attr:`Stop.trips`
 
-    def __init__(self, stop_record):
+    def __init__(self, input_dir):
         """
-        Constructor from dictionary mapping attribute to value.
-
-        {'stopName': 'AURORA AVE N & N 125TH ST',
-         'capacity': 100L,
-         'stopDescription': '_',
-         'Longitude': -122.345047,
-         'stopId': 7010L,
-         'Latitude': 47.7197151}
+        Constructor.  Reads the Stops data from the input files in *input_dir*.
         """
-        #: unique stop identifier
-        self.stop_id            = stop_record['stopId'          ]
-        self.name               = stop_record['stopName'        ]
-        self.description        = stop_record['stopDescription' ]
-        self.latitude           = stop_record['Latitude'        ]
-        self.longitude          = stop_record['Longitude'       ]
-        self.capacity           = stop_record['capacity'        ]
+        pandas.set_option('display.width', 1000)
+        self.stops_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE), sep="\t")
+        # verify required columns are present
+        stops_cols = list(self.stops_df.columns.values)
+        assert(Stop.STOPS_COLUMN_ID             in stops_cols)
+        assert(Stop.STOPS_COLUMN_NAME           in stops_cols)
+        assert(Stop.STOPS_COLUMN_DESCRIPTION    in stops_cols)
+        assert(Stop.STOPS_COLUMN_LATITUDE       in stops_cols)
+        assert(Stop.STOPS_COLUMN_LONGITUDE      in stops_cols)
+        assert(Stop.STOPS_COLUMN_CAPACITY       in stops_cols)
+        self.stops_df.set_index(Stop.STOPS_COLUMN_ID, inplace=True, verify_integrity=True)
+        
+        FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
+        FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
+        FastTripsLogger.info("Read %7d stops" % len(self.stops_df))
 
-        #: These are stops that are transferrable from this stop.
-        #: This is a :py:class:`dict` mapping a destination *stop_id* to
-        #: (transfer_distance, transfer_time), where *transfer_distance* is in miles
-        #: and *transfer_time* is a :py:class:`datetime.timedelta` instance.
-        #: TODO: This can be a dict, just making it an ordered dict for testing
-        self.transfers          = collections.OrderedDict()
+        self.transfers_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_TRANSFERS_FILE), sep="\t")
+        # verify required columns are present
+        transfer_cols = list(self.transfers_df.columns.values)
+        assert(Stop.TRANSFERS_COLUMN_FROM_STOP  in transfer_cols)
+        assert(Stop.TRANSFERS_COLUMN_TO_STOP    in transfer_cols)
+        assert(Stop.TRANSFERS_COLUMN_DISTANCE   in transfer_cols)
+        assert(Stop.TRANSFERS_COLUMN_TIME       in transfer_cols)
+
+
+        FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
+        FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
+        
+        # ignore time column and calculate it from distance
+        # TODO: this is to be consistent with original implementation. Remove?
+        self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Stop.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0;
+        # convert time column from float to timedelta
+        self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
+            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datettime.timedelta(minutes=x))
+                
+        transfer_records = transfers_df.to_dict(orient='records')
+        for transfer_record in transfer_records:
+            stop_id_to_stop[transfer_record['fromStop']].add_transfer(transfer_record)
+
+        FastTripsLogger.debug("Final\n"+str(self.transfers_df.dtypes))
+        FastTripsLogger.info("Read %7d transfers" % len(self.transfers_df))
 
         #: These are TAZs that are accessible from this stop.
         #: This is a :py:class:`dict` mapping a *taz_id* to
@@ -79,18 +131,6 @@ class Stop:
         #: :py:attr:`Stop.TRIPS_IDX_ARRIVAL_TIME`, :py:attr:`Stop.TRIPS_IDX_DEPARTURE_TIME`
         #: and :py:attr:`Stop.TRIPS_IDX_ROUTE_ID` for access.
         self.trips              = []
-
-    def add_transfer(self, transfer_record):
-        """
-        Add a transfer from this stop to the stop given in the transfer_record dictionary.
-
-        .. todo:: Original code replaces transfer time with calculated time assuming 3 mph walk speed.  Remove this?
-
-        """
-        # self.stop_id == transfer_record['fromStop']
-        self.transfers[transfer_record['toStop']] = (transfer_record['dist'],
-                                                     datetime.timedelta(minutes=transfer_record['dist']*(60.0/3.0)))
-                                                     # datetime.timedelta(minutes=transfer_record['time']))
 
     def add_access_link(self, access_link_record):
         """
@@ -198,46 +238,13 @@ class Stop:
         return prev_departure_time
 
 
-    def is_transfer(self):
+    def is_transfer(self, stop_id):
         """
         Returns true iff this is a transfer stop; e.g. if it's served by multiple routes or has a transfer link.
         """
-        if len(self.routes) > 1:
-            return True
-        if len(self.transfers) > 0:
+            # if len(self.routes) > 1:
+            # return True
+        if len(self.transfers_df.loc[self.transfers_df.TRANSFERS_COLUMN_FROM_STOP==stop_id]) > 0:
             return True
         return False
 
-    @staticmethod
-    def read_stops(input_dir):
-        """
-        Read the stops from the input file in *input_dir*.
-        """
-        pandas.set_option('display.width', 1000)
-        stops_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE), sep="\t")
-        FastTripsLogger.debug("=========== STOPS ===========\n" + str(stops_df.head()))
-        FastTripsLogger.debug("\n"+str(stops_df.dtypes))
-
-        stop_id_to_stop = {}
-        stop_records = stops_df.to_dict(orient='records')
-        for stop_record in stop_records:
-            stop = Stop(stop_record)
-            stop_id_to_stop[stop.stop_id] = stop
-
-        FastTripsLogger.info("Read %7d stops" % len(stop_id_to_stop))
-        return stop_id_to_stop
-
-    @staticmethod
-    def read_transfers(input_dir, stop_id_to_stop):
-        """
-        Read the transfers from the input file in *input_dir*.
-        """
-        transfers_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_TRANSFERS_FILE), sep="\t")
-        FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(transfers_df.head()))
-        FastTripsLogger.debug("\n"+str(transfers_df.dtypes))
-
-        transfer_records = transfers_df.to_dict(orient='records')
-        for transfer_record in transfer_records:
-            stop_id_to_stop[transfer_record['fromStop']].add_transfer(transfer_record)
-
-        FastTripsLogger.info("Read %7d transfers" % len(transfers_df))

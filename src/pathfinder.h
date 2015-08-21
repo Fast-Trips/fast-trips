@@ -11,8 +11,13 @@ namespace fasttrips {
         float   time_;          // in minutes
         float   access_cost_;   // general cost units
         float   egress_cost_;   // general cost units
-        TazStopCost(float t=0.0, float a=0.0, float e=0.0) : time_(t), access_cost_(a), egress_cost_(e) {}
     } TazStopCost;
+
+    // Supply data: transfer time and cost between stops
+    typedef struct TransferCost {
+        float   time_;          // in minutes
+        float   cost_;          // general cost units
+    } TransferCost;
 
     // Supply data: Transit vehicle schedules
     typedef struct StopTripTime {
@@ -69,8 +74,11 @@ namespace fasttrips {
         // for multi-processing
         int process_num_;
 
+        // ================ Network supply ================
         // TAZ information: taz id -> stop id -> costs
         std::map<int, std::map<int, TazStopCost> > taz_access_links_;
+        // Transfer information: stop id -> stop id -> costs
+        std::map<int, std::map<int, TransferCost> > transfer_links_;
         // Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
         std::map<int, std::vector<StopTripTime> > trip_stop_times_;
         // Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
