@@ -186,22 +186,31 @@ class Assignment:
         access_links_df[TAZ.ACCLINKS_COLUMN_ACC_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
         access_links_df[TAZ.ACCLINKS_COLUMN_EGR_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
 
-        stop_times_df = FT.trips.stop_times_df.reset_index()
-        print stop_times_df.head()
-
         FastTripsLogger.debug("\n" + str(access_links_df.head()))
         FastTripsLogger.debug("\n" + str(access_links_df.tail()))
+
+        # make a copy for index flattening
+        stop_times_df = FT.trips.stop_times_df.reset_index()
+
+        # transfers copy for index flattening, cost
+        transfers_df = FT.stops.transfers_df.reset_index()
+        transfers_df[Stop.TRANSFERS_COLUMN_COST] = transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
+
         _fasttrips.initialize_supply(output_dir, process_number,
                                      access_links_df[[TAZ.ACCLINKS_COLUMN_TAZ,
                                                       TAZ.ACCLINKS_COLUMN_STOP    ]].as_matrix().astype('int32'),
                                      access_links_df[[TAZ.ACCLINKS_COLUMN_TIME_MIN,
                                                       TAZ.ACCLINKS_COLUMN_ACC_COST,
                                                       TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float32'),
-                                    stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                   Trip.STOPTIMES_COLUMN_SEQUENCE,
-                                                   Trip.STOPTIMES_COLUMN_STOP_ID]].as_matrix().astype('int32'),
-                                    stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float32'))
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                    Trip.STOPTIMES_COLUMN_SEQUENCE,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID]].as_matrix().astype('int32'),
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float32'),
+                                     transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                                   Stop.TRANSFERS_COLUMN_TO_STOP]].as_matrix().astype('int32'),
+                                     transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
+                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float32'))
 
     @staticmethod
     def assign_paths(output_dir, FT):
@@ -510,9 +519,9 @@ class Assignment:
         while not stop_queue.empty():
             (current_label, current_stop_id) = stop_queue.get()
 
-            if current_stop_id in stop_done: continue                   # stop is already processed
-            if not FT.stops[current_stop_id].is_transfer(): continue    # no transfers to the stop
-            stop_done.add(current_stop_id)                              # process this stop now - just once
+            if current_stop_id in stop_done: continue                                                   # stop is already processed
+            if not FT.stops.is_transfer(current_stop_id, xfer_from=False if path.outbound() else True): continue       # no transfers to the stop
+            stop_done.add(current_stop_id)                                                              # process this stop now - just once
 
             if trace:
                 FastTripsLogger.debug("Pulling from stop_queue (iteration %d, label %-12s, stop %s) :======" % \
@@ -549,9 +558,13 @@ class Assignment:
                     nonwalk_label = Assignment.calculate_nonwalk_label(current_stop_state, MAX_COST)
                     if trace: FastTripsLogger.debug("  nonwalk label:    %.4f" % nonwalk_label)
 
-                for xfer_stop_id,xfer_attr in FT.stops[current_stop_id].transfers.iteritems():
+                # if outbound, going backwards, so transfer TO this current stop
+                transers_df = FT.stops.get_transfers(current_stop_id, xfer_from=False if path.outbound() else True)
 
-                    transfer_time       = xfer_attr[Stop.TRANSFERS_IDX_TIME]
+                for transfer_row_num, transfer_row in transers_df.iterrows():
+
+                    xfer_stop_id        = transfer_row[Stop.TRANSFERS_COLUMN_FROM_STOP if path.outbound() else Stop.TRANSFERS_COLUMN_TO_STOP]
+                    transfer_time       = transfer_row[Stop.TRANSFERS_COLUMN_TIME].to_pytimedelta()
                     # outbound: departure time = latest departure - transfer
                     #  inbound: arrival time   = earliest arrival + transfer
                     deparr_time         = latest_dep_earliest_arr - (transfer_time*dir_factor)
@@ -586,7 +599,7 @@ class Assignment:
                             # leave earlier -- to get in line 5 minutes before bump wait time
                             # (confused... We don't resimulate previous bumping passenger so why does this make sense?)
                             new_label       = new_label + (current_stop_state[0][Path.STATE_IDX_DEPARR] - latest_time) + Assignment.BUMP_BUFFER
-                            deparr_time     = latest_time - xfer_attr[Stop.TRANSFERS_IDX_TIME] - Assignment.BUMP_BUFFER
+                            deparr_time     = latest_time - transfer_time - Assignment.BUMP_BUFFER
 
                         old_label       = MAX_TIME
                         if xfer_stop_id in stop_states:
@@ -614,22 +627,19 @@ class Assignment:
             # Update by trips
             if path.outbound():
                 # These are the trips that arrive at the stop in time to depart on time
-                valid_trips = FT.stops[current_stop_id].get_trips_arriving_within_time(Assignment.TODAY,
-                                                                                       latest_dep_earliest_arr,
+                valid_trips = FT.stops.get_trips_arriving_within_time(current_stop_id, latest_dep_earliest_arr,
                                                                                        Assignment.PATH_TIME_WINDOW)
             else:
                 # These are the trips that depart from the stop in time for passenger
-                valid_trips = FT.stops[current_stop_id].get_trips_departing_within_time(Assignment.TODAY,
-                                                                                        latest_dep_earliest_arr,
+                valid_trips = FT.stops.get_trips_departing_within_time(current_stop_id, latest_dep_earliest_arr,
                                                                                         Assignment.PATH_TIME_WINDOW)
 
-            for (trip_id, seq, arrdep_time) in valid_trips:
-                if trace: FastTripsLogger.debug("valid trips: %s  %d  %s" % (str(trip_id), seq, arrdep_time.strftime("%H:%M:%S")))
+            for (trip_id, seq, arrdep_datetime) in valid_trips:
+                if trace: FastTripsLogger.debug("valid trips: %s  %d  %s" % (str(trip_id), seq, arrdep_datetime.strftime("%H:%M:%S")))
 
                 if trip_id in trips_used: continue
 
                 # trip arrival time (outbound) / trip departure time (inbound)
-                arrdep_datetime = datetime.datetime.combine(Assignment.TODAY, arrdep_time)
                 wait_time       = (latest_dep_earliest_arr - arrdep_datetime)*dir_factor
                 if type(wait_time) == pandas.tslib.Timedelta: wait_time = wait_time.to_pytimedelta()
 

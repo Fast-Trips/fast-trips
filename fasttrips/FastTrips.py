@@ -96,11 +96,10 @@ class FastTrips:
         # read trips into those routes
         self.trips = Trip(input_dir, self.routes, self.stops, Assignment.TODAY)
 
-        transfer_stops = 0
-        for stop_id,stop in self.stops.iteritems():
-            if stop.is_transfer(): transfer_stops += 1
-
-        FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
+        # transfer_stops = 0
+        # for stop_id,stop in self.stops.iteritems():
+        #     if stop.is_transfer(): transfer_stops += 1
+        # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(input_dir)

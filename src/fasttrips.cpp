@@ -30,9 +30,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     const char* output_dir;
     int proc_num;
-    PyObject *input1, *input2, *input3, *input4;
-    if (!PyArg_ParseTuple(args, "siOOOO", &output_dir, &proc_num, &input1, &input2,
-                          &input3, &input4)) {
+    PyObject *input1, *input2, *input3, *input4, *input5, *input6;
+    if (!PyArg_ParseTuple(args, "siOOOOOO", &output_dir, &proc_num, &input1, &input2,
+                          &input3, &input4, &input5, &input6)) {
         return NULL;
     }
 
@@ -46,6 +46,7 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 
     // access_links cost: time, access cost, egress cost
     pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_FLOAT32, 2, 2);
+    if (pyo == NULL) return NULL;
     float* costs    = (float*)PyArray_DATA(pyo);
     int num_costs   = PyArray_DIMS(pyo)[0];
     assert(3 == PyArray_DIMS(pyo)[1]);
@@ -62,6 +63,7 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 
     // trip stop times data: arrival time, departure time
     pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input4, NPY_FLOAT32, 2, 2);
+    if (pyo == NULL) return NULL;
     float* stop_times   = (float*)PyArray_DATA(pyo);
     int num_stop_times  = PyArray_DIMS(pyo)[0];
     assert(2 == PyArray_DIMS(pyo)[1]);
@@ -69,10 +71,28 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // these better be the same length
     assert(num_stop_ind == num_stop_times);
 
+    // stop transfers index: from stop id, to stop id
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input5, NPY_INT32, 2, 2);
+    if (pyo == NULL) return NULL;
+    int* xfer_indexes   = (int*)PyArray_DATA(pyo);
+    int num_xfer_ind    = PyArray_DIMS(pyo)[0];
+    assert(2 == PyArray_DIMS(pyo)[1]);
+
+    // stop transfers data: time, cost
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input6, NPY_FLOAT32, 2, 2);
+    if (pyo == NULL) return NULL;
+    float* xfer_data   = (float*)PyArray_DATA(pyo);
+    int num_xfer_data  = PyArray_DIMS(pyo)[0];
+    assert(2 == PyArray_DIMS(pyo)[1]);
+
+    // these better be the same length
+    assert(num_xfer_ind == num_xfer_data);
+
     // keep them
     pathfinder.initializeSupply(output_dir, proc_num,
                                 acc_indexes, costs, num_indexes,
-                                stop_indexes, stop_times, num_stop_ind);
+                                stop_indexes, stop_times, num_stop_ind,
+                                xfer_indexes, xfer_data, num_xfer_ind);
 
     Py_RETURN_NONE;
 }

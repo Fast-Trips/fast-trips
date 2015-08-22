@@ -4,6 +4,12 @@
 #include <iostream>
 #include <fstream>
 
+#if __APPLE__
+#include <tr1/unordered_set>
+#elif _WIN32
+#include <unordered_set>
+#endif
+
 namespace fasttrips {
 
     // Supply data: access/egress time and cost between TAZ and stops
@@ -78,27 +84,47 @@ namespace fasttrips {
         // TAZ information: taz id -> stop id -> costs
         std::map<int, std::map<int, TazStopCost> > taz_access_links_;
         // Transfer information: stop id -> stop id -> costs
-        std::map<int, std::map<int, TransferCost> > transfer_links_;
+        std::map<int, std::map<int, TransferCost> > transfer_links_o_d_;
+        std::map<int, std::map<int, TransferCost> > transfer_links_d_o_;
         // Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
         std::map<int, std::vector<StopTripTime> > trip_stop_times_;
         // Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
         std::map<int, std::vector<StopTripTime> > stop_trip_times_;
+
 
         bool initializeStopStates(const struct PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& cost_stop_queue) const;
 
+        void updateStopStatesForTransfers(const struct PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  StopStates& stop_states,
+                                  LabelStopQueue& label_stop_queue,
+                                  const LabelStop& current_label_stop,
+                                  float latest_dep_earliest_arr) const;
+
+        void updateStopStatesForTrips(const struct PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  StopStates& stop_states,
+                                  LabelStopQueue& label_stop_queue,
+                                  const LabelStop& current_label_stop,
+                                  float latest_dep_earliest_arr,
+                                  std::tr1::unordered_set<int>& trips_done) const;
+
+
         void labelStops(const struct PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
-                                  LabelStopQueue& cost_stop_queue) const;
+                                  LabelStopQueue& label_stop_queue) const;
 
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
          */
         void getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<StopTripTime>& return_trips,  float time_window=30.0) const;
+
+        float calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
 
         void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const;
 
@@ -112,8 +138,11 @@ namespace fasttrips {
         const static int MODE_ACCESS    = -100;
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
-        const static int MAX_TIME       = 48*60; // 48 hours in minutes
+        const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
         const static float DISPERSION_PARAMETER;
+        const static float MAX_COST;
+        const static float MAX_TIME;
+
         // Constructor
         PathFinder();
 
@@ -124,7 +153,10 @@ namespace fasttrips {
                               int           num_links,
                               int*          stoptime_index,
                               float*        stoptime_times,
-                              int           num_stoptimes);
+                              int           num_stoptimes,
+                              int*          xfer_index,
+                              float*        xfer_data,
+                              int           num_xfers);
 
         // Destructor
         ~PathFinder();

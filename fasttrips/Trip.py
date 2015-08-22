@@ -89,7 +89,7 @@ class Trip:
     STOPS_IDX_ARRIVAL_TIME      = 1  #: For accessing parts of :py:attr:`Trip.stops`
     STOPS_IDX_DEPARTURE_TIME    = 2  #: For accessing parts of :py:attr:`Trip.stops`
 
-    def __init__(self, input_dir, route_id_to_route, stop_id_to_stop, today):
+    def __init__(self, input_dir, route_id_to_route, stops, today):
         """
         Constructor. Read the trips data from the input files in *input_dir*.
         """
@@ -161,31 +161,9 @@ class Trip:
         self.stop_times_df.set_index([Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_SEQUENCE], inplace=True, verify_integrity=True)
         FastTripsLogger.debug("Final\n" + str(self.stop_times_df.head()) + "\n" +str(self.stop_times_df.dtypes) )
 
-        #: TODO: this is slow... When Stops gets panda-ized, it won't be an issue
-        # tell the stop to update accordingly
-        for row_index, row in self.stop_times_df.iterrows():
-            stop_id_to_stop[row[Trip.STOPTIMES_COLUMN_STOP_ID]].add_to_trip \
-                (row_index[0],                                                  # trip id
-                 self.trips_df.loc[row_index[0]][Trip.TRIPS_COLUMN_ROUTE_ID],   # route id
-                 row_index[1],                                                  # sequence
-                 row[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].time(),                # arrival time
-                 row[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].time())              # departure time
-        FastTripsLogger.debug("Stops updated")
+        # tell the stops to update accordingly
+        stops.add_trips(self.stop_times_df)
 
-        # TODO
-        # self.headways       = []
-
-        # TODO
-        #: Simulation results: list of number of boards per stop
-        # self.simulated_boards   = None
-
-        # TODO
-        #: Simulation results: list of number of alights per stop
-        # self.simulated_alights  = None
-
-        # TODO
-        #: Simulation results: list of dwell times per stop
-        # self.simulated_dwells   = None
 
     def get_stop_times(self, trip_id):
         """
@@ -257,18 +235,3 @@ class Trip:
                                 on=['trip_id','stop_id','stop_seq'])
         assert(len(trips_df)==trips_df_len)
         return trips_df
-
-    def set_simulation_results(self, boards, alights, dwells):
-        """
-        Save these simulation results.
-        """
-        self.simulated_boards   = boards
-        self.simulated_alights  = alights
-        self.simulated_dwells   = dwells
-
-    @staticmethod
-    def write_load_header_to_file(load_file):
-        load_file.write("routeId\tshapeId\ttripId\tdirection\tstopId\ttraveledDist\tdepartureTime\t" +
-                        "headway\tdwellTime\tboardings\talightings\tload\n")
-
-

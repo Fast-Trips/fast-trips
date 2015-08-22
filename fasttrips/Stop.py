@@ -16,6 +16,7 @@ import collections,datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
+from .Trip import Trip
 
 class Stop:
     """
@@ -49,7 +50,6 @@ class Stop:
     STOPS_COLUMN_CAPACITY       = 'capacity'
     
     #: File with transfers.
-    #: TODO: document format
     INPUT_TRANSFERS_FILE        = "ft_input_transfers.dat"
     #: Transfers column name: Origin stop identifier
     TRANSFERS_COLUMN_FROM_STOP  = 'fromStop'
@@ -61,15 +61,8 @@ class Stop:
     TRANSFERS_COLUMN_TIME       = 'time'
     #: Transfers column name: Link walk time in minutes.  This is a float.
     TRANSFERS_COLUMN_TIME_MIN   = 'time_min'
-
-    TRANSFERS_IDX_DISTANCE      = 0  #: For accessing parts of :py:attr:`Stop.transfers`
-    TRANSFERS_IDX_TIME          = 1  #: For accessing parts of :py:attr:`Stop.transfers`
-
-    TRIPS_IDX_TRIP_ID           = 0  #: For accessing parts of :py:attr:`Stop.trips`
-    TRIPS_IDX_SEQUENCE          = 1  #: For accessing parts of :py:attr:`Stop.trips`
-    TRIPS_IDX_ARRIVAL_TIME      = 2  #: For accessing parts of :py:attr:`Stop.trips`
-    TRIPS_IDX_DEPARTURE_TIME    = 3  #: For accessing parts of :py:attr:`Stop.trips`
-    TRIPS_IDX_ROUTE_ID          = 4  #: For accessing parts of :py:attr:`Stop.trips`
+    #: Transfers column name: Link generic cost.  Float.
+    TRANSFERS_COLUMN_COST       = 'cost'
 
     def __init__(self, input_dir):
         """
@@ -86,7 +79,7 @@ class Stop:
         assert(Stop.STOPS_COLUMN_LONGITUDE      in stops_cols)
         assert(Stop.STOPS_COLUMN_CAPACITY       in stops_cols)
         self.stops_df.set_index(Stop.STOPS_COLUMN_ID, inplace=True, verify_integrity=True)
-        
+
         FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
         FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
         FastTripsLogger.info("Read %7d stops" % len(self.stops_df))
@@ -102,149 +95,100 @@ class Stop:
 
         FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
-        
+
         # ignore time column and calculate it from distance
         # TODO: this is to be consistent with original implementation. Remove?
         self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Stop.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0;
         # convert time column from float to timedelta
         self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
-            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datettime.timedelta(minutes=x))
-                
-        transfer_records = transfers_df.to_dict(orient='records')
-        for transfer_record in transfer_records:
-            stop_id_to_stop[transfer_record['fromStop']].add_transfer(transfer_record)
+            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
         FastTripsLogger.debug("Final\n"+str(self.transfers_df.dtypes))
         FastTripsLogger.info("Read %7d transfers" % len(self.transfers_df))
 
-        #: These are TAZs that are accessible from this stop.
-        #: This is a :py:class:`dict` mapping a *taz_id* to
-        #: (walk_dist, walk_time) which are in miles and minutes respectively.
-        self.tazs               = {}
+        #: Trips table.
+        self.trip_times_df      = None
 
-        #: These are the :py:class:`fasttrips.Route` instances that this stop is a part of
-        self.routes             = set()
-
-        #: These are the trips this stop is a part of
-        #: This is a list of (trip_id, sequence, arrival time, departure time)
-        #: Use :py:attr:`Stop.TRIPS_IDX_TRIP_ID`, :py:attr:`Stop.TRIPS_IDX_SEQUENCE`,
-        #: :py:attr:`Stop.TRIPS_IDX_ARRIVAL_TIME`, :py:attr:`Stop.TRIPS_IDX_DEPARTURE_TIME`
-        #: and :py:attr:`Stop.TRIPS_IDX_ROUTE_ID` for access.
-        self.trips              = []
-
-    def add_access_link(self, access_link_record):
-        """
-        Add an access link between this stop and a :py:class:`TAZ` by referencing the *taz_id*.
-        """
-        self.tazs[access_link_record['TAZ']] = (access_link_record['dist'],
-                                                access_link_record['time'])
-
-    def add_to_trip(self, trip_id, route_id, sequence, arrival_time, departure_time):
+    def add_trips(self, stop_times_df):
         """
         Add myself to the given trip.
 
-        :param trip: The trip of which this stop is a part.
-        :type trip: a :py:class:`Trip` instance
-        :param sequence: The sequence number of this stop within the trip
-        :param arrival_time: The arrival time at this stop for this trip.
-        :type arrival_time: a :py:class:`datetime.time` instance
-        :param departure_time: The departure time at this stop for this trip.
-        :type departure_time: a :py:class:`datetime.time` instance
+        :param stop_times_df: The :py:attr:`Trip.stop_times_df` table
+        :type stop_times_df: a :py:class:`pandas.DataFrame` instance
 
-        """
-        self.trips.append( (trip_id, sequence, arrival_time, departure_time, route_id) )
-        # and route
-        self.routes.add(route_id)
+        """ 
+        self.trip_times_df = stop_times_df.copy()
+        self.trip_times_df.reset_index(inplace=True)
+        self.trip_times_df.set_index([Trip.STOPTIMES_COLUMN_STOP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_SEQUENCE], inplace=True, verify_integrity=True)
+        FastTripsLogger.debug("Stop trip_times_df\n" + str(self.trip_times_df.head()))
 
-    def get_trips_arriving_within_time(self, assignment_date, latest_arrival, time_window):
+    def get_transfers(self, stop_id, xfer_from):
+        if xfer_from:
+            return self.transfers_df.loc[self.transfers_df[Stop.TRANSFERS_COLUMN_FROM_STOP]==stop_id]
+        else:
+            return self.transfers_df.loc[self.transfers_df[Stop.TRANSFERS_COLUMN_TO_STOP]==stop_id]
+
+
+    def get_trips_arriving_within_time(self, stop_id, latest_arrival, time_window):
         """
         Return list of [(trip_id, sequence, arrival_time)] where the arrival time is before *latest_arrival* but within *time_window*.
 
-        :param assignment_date: Date to use for assignment (:py:class:`datetime.timedelta` requires :py:class:`datetime.datettime` instances,
-                                and can't just use :py:class:`datetime.time` instances.)
-        :type assignment_date: a :py:class:`datetime.date` instance
         :param latest_arrival: The latest time the transit vehicle can arrive.
         :type latest_arrival: a :py:class:`datetime.time` instance
         :param time_window: The time window extending before *latest_arrival* within which an arrival is valid.
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
+        latest_arrival_min = 60.0*latest_arrival.hour + latest_arrival.minute + latest_arrival.second/60.0
+        # filter to stop
+        df = self.trip_times_df.loc[stop_id]
+        # arrive before latest arrival and arrive within time window
+        df = df.loc[(df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] < latest_arrival_min)&
+                    (df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] > (latest_arrival_min - time_window.total_seconds()/60.0))]
+
         to_return = []
-        for trip_record in self.trips:
-            # make this a datetime
-            asgn_arrival = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME])
-            if (asgn_arrival < latest_arrival) and (asgn_arrival > latest_arrival-time_window):
-               to_return.append( (trip_record[Stop.TRIPS_IDX_TRIP_ID],
-                                  trip_record[Stop.TRIPS_IDX_SEQUENCE],
-                                  trip_record[Stop.TRIPS_IDX_ARRIVAL_TIME]) )
+        df = df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]]
+        for index, row in df.iterrows():
+            to_return.append( (index[0],                                  # trip id
+                               index[1],                                  # sequence,
+                               row[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]    # arrival time
+                            ) )
         return to_return
 
-    def get_trips_departing_within_time(self, assignment_date, earliest_departure, time_window):
+    def get_trips_departing_within_time(self, stop_id, earliest_departure, time_window):
         """
         Return list of [(trip_id, sequence, departure_time)] where the departure time is after *earliest_departure* but within *time_window*.
 
-        :param assignment_date: Date to use for assignment (:py:class:`datetime.timedelta` requires :py:class:`datetime.datettime` instances,
-                                and can't just use :py:class:`datetime.time` instances.)
-        :type assignment_date: a :py:class:`datetime.date` instance
         :param earliest_departure: The earliest time the transit vehicle can depart.
         :type earliest_departure: a :py:class:`datetime.time` instance
         :param time_window: The time window extending after *earliest_departure* within which a departure is valid.
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
+        earliest_departure_min = 60.0*earliest_departure.hour + earliest_departure.minute + earliest_departure.second/60.0
+        # filter to stop
+        df = self.trip_times_df.loc[stop_id]
+        # depart after the earliest departure
+        df = df.loc[(df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] > earliest_departure_min)&
+                    (df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] < (earliest_departure_min + time_window.total_seconds()/60.0))]
+
         to_return = []
-        for trip_record in self.trips:
-            # make this a datetime
-            asgn_departure = datetime.datetime.combine(assignment_date, trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME])
-            if (asgn_departure > earliest_departure) and (asgn_departure < earliest_departure+time_window):
-               to_return.append( (trip_record[Stop.TRIPS_IDX_TRIP_ID],
-                                  trip_record[Stop.TRIPS_IDX_SEQUENCE],
-                                  trip_record[Stop.TRIPS_IDX_DEPARTURE_TIME]) )
+        df = df[[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]]
+        for index, row in df.iterrows():
+            to_return.append( (index[0],                                  # trip id
+                               index[1],                                  # sequence,
+                               row[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]    # arrival time
+                            ) )
         return to_return
 
-    def get_previous_trip_departure(self, FT, route_id, trip_direction, before_departure_time):
-        """
-        Goes through the routes/trips that use this stop, and returns the most recent trip departure before *before_departure_time*.
 
-        Returns a :py:class:`datetime.time` instance or None if none found.
-        """
-        found                 = False
-        prev_departure_time   = None
-        if self.stop_id == 68584 and route_id == 102552 and trip_direction == 1:
-            FastTripsLogger.debug("Stop %d get previous trip departure for route %d trip direction %d before departure time %s" % \
-                                  (self.stop_id, route_id, trip_direction, before_departure_time.strftime("%H:%M:%S")))
-        for idx in range(len(self.trips)):
-            # match route
-            if self.trips[idx][Stop.TRIPS_IDX_ROUTE_ID] != route_id: continue
-
-            # match direction
-            trip = FT.trips[self.trips[idx][Stop.TRIPS_IDX_TRIP_ID]]
-            if trip.direction_id != trip_direction: continue
-
-            # it's before the required
-            trip_deptime = self.trips[idx][Stop.TRIPS_IDX_DEPARTURE_TIME]
-            if self.stop_id == 68584 and route_id == 102552 and trip_direction == 1:
-                FastTripsLogger.debug("Matching route, direction: %d.  trip_deptime: %s" % (trip.trip_id, str(trip_deptime)))
-            if trip_deptime >= before_departure_time: continue
-
-            if not found:
-                found                 = True
-                prev_departure_time   = trip_deptime
-            elif trip_deptime > prev_departure_time: # want the latest one
-                prev_departure_time = trip_deptime
-
-        if self.stop_id == 68584 and route_id == 102552 and trip_direction == 1:
-            FastTripsLogger.debug("Returning %s" % prev_departure_time.strftime("%H:%M:%S") if prev_departure_time else "--")
-        return prev_departure_time
-
-
-    def is_transfer(self, stop_id):
+    def is_transfer(self, stop_id, xfer_from):
         """
         Returns true iff this is a transfer stop; e.g. if it's served by multiple routes or has a transfer link.
         """
-            # if len(self.routes) > 1:
-            # return True
-        if len(self.transfers_df.loc[self.transfers_df.TRANSFERS_COLUMN_FROM_STOP==stop_id]) > 0:
+        if xfer_from and len(self.transfers_df.loc[self.transfers_df[Stop.TRANSFERS_COLUMN_FROM_STOP]==stop_id]) > 0:
+            return True
+        if not xfer_from and len(self.transfers_df.loc[self.transfers_df[Stop.TRANSFERS_COLUMN_TO_STOP]==stop_id]) > 0:
             return True
         return False
 
