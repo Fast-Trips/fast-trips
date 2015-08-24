@@ -45,9 +45,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     assert(2 == PyArray_DIMS(pyo)[1]);
 
     // access_links cost: time, access cost, egress cost
-    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_FLOAT32, 2, 2);
+    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_DOUBLE, 2, 2);
     if (pyo == NULL) return NULL;
-    float* costs    = (float*)PyArray_DATA(pyo);
+    double* costs   = (double*)PyArray_DATA(pyo);
     int num_costs   = PyArray_DIMS(pyo)[0];
     assert(3 == PyArray_DIMS(pyo)[1]);
 
@@ -62,9 +62,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     assert(3 == PyArray_DIMS(pyo)[1]);
 
     // trip stop times data: arrival time, departure time
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input4, NPY_FLOAT32, 2, 2);
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input4, NPY_DOUBLE, 2, 2);
     if (pyo == NULL) return NULL;
-    float* stop_times   = (float*)PyArray_DATA(pyo);
+    double* stop_times  = (double*)PyArray_DATA(pyo);
     int num_stop_times  = PyArray_DIMS(pyo)[0];
     assert(2 == PyArray_DIMS(pyo)[1]);
 
@@ -79,9 +79,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     assert(2 == PyArray_DIMS(pyo)[1]);
 
     // stop transfers data: time, cost
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input6, NPY_FLOAT32, 2, 2);
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input6, NPY_DOUBLE, 2, 2);
     if (pyo == NULL) return NULL;
-    float* xfer_data   = (float*)PyArray_DATA(pyo);
+    double* xfer_data  = (double*)PyArray_DATA(pyo);
     int num_xfer_data  = PyArray_DIMS(pyo)[0];
     assert(2 == PyArray_DIMS(pyo)[1]);
 
@@ -103,7 +103,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
     int   hyperpath_i, outbound_i, trace_i;
-    if (!PyArg_ParseTuple(args, "iiiiifi", &path_spec.path_id_, &hyperpath_i,
+    if (!PyArg_ParseTuple(args, "iiiiidi", &path_spec.path_id_, &hyperpath_i,
                           &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
                           &outbound_i, &path_spec.preferred_time_, &trace_i)) {
         return NULL;

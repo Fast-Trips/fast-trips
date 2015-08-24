@@ -14,15 +14,15 @@ namespace fasttrips {
 
     // Supply data: access/egress time and cost between TAZ and stops
     typedef struct TazStopCost {
-        float   time_;          // in minutes
-        float   access_cost_;   // general cost units
-        float   egress_cost_;   // general cost units
+        double  time_;          // in minutes
+        double  access_cost_;   // general cost units
+        double  egress_cost_;   // general cost units
     } TazStopCost;
 
     // Supply data: transfer time and cost between stops
     typedef struct TransferCost {
-        float   time_;          // in minutes
-        float   cost_;          // general cost units
+        double  time_;          // in minutes
+        double  cost_;          // general cost units
     } TransferCost;
 
     // Supply data: Transit vehicle schedules
@@ -30,33 +30,33 @@ namespace fasttrips {
         int     trip_id_;
         int     seq_;           // start at 1
         int     stop_id_;
-        float   arrive_time_;   // minutes after midnight
-        float   depart_time_;   // minutes after midnight
+        double  arrive_time_;   // minutes after midnight
+        double  depart_time_;   // minutes after midnight
     } StopTripTime;
 
     // package this in a struct because it'll get passed around a lot
-    struct PathSpecification {
+    typedef struct PathSpecification {
         int     path_id_;
         bool    hyperpath_;
         int     origin_taz_id_;
         int     destination_taz_id_;
         bool    outbound_;
-        float   preferred_time_;    // minutes after midnight
+        double  preferred_time_;    // minutes after midnight
         bool    trace_;
-    };
+    } PathSpecification;
 
     typedef struct StopState {
-        float   label_;
-        float   deparr_time_;
+        double  label_;
+        double  deparr_time_;
         int     deparr_mode_;
         int     succpred_;
-        float   link_time_;
-        float   cost_;
-        float   arrdep_time_;
+        double  link_time_;
+        double  cost_;
+        double  arrdep_time_;
     } StopState;
 
     typedef struct {
-        float   label_;
+        double  label_;
         int     stop_id_;
     } LabelStop;
 
@@ -92,45 +92,49 @@ namespace fasttrips {
         std::map<int, std::vector<StopTripTime> > stop_trip_times_;
 
 
-        bool initializeStopStates(const struct PathSpecification& path_spec,
+        bool initializeStopStates(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& cost_stop_queue) const;
 
-        void updateStopStatesForTransfers(const struct PathSpecification& path_spec,
+        void updateStopStatesForTransfers(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
                                   const LabelStop& current_label_stop,
-                                  float latest_dep_earliest_arr) const;
+                                  double latest_dep_earliest_arr) const;
 
-        void updateStopStatesForTrips(const struct PathSpecification& path_spec,
+        void updateStopStatesForTrips(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
                                   const LabelStop& current_label_stop,
-                                  float latest_dep_earliest_arr,
+                                  double latest_dep_earliest_arr,
                                   std::tr1::unordered_set<int>& trips_done) const;
 
-
-        void labelStops(const struct PathSpecification& path_spec,
+        void labelStops(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue) const;
+
+        bool finalizeTazState(const PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  StopStates& stop_states) const;
 
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
          */
-        void getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<StopTripTime>& return_trips,  float time_window=30.0) const;
+        void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<StopTripTime>& return_trips,  double time_window=30.0) const;
 
-        float calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
+        double calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
 
-        void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const;
+        void printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const;
+        void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const;
 
-        void printTimeDuration(std::ostream& ostr, const float& timedur) const;
+        void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 
-        void printTime(std::ostream& ostr, const float& timemin) const;
+        void printTime(std::ostream& ostr, const double& timemin) const;
 
         void printMode(std::ostream& ostr, const int& mode) const;
 
@@ -139,9 +143,9 @@ namespace fasttrips {
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
-        const static float DISPERSION_PARAMETER;
-        const static float MAX_COST;
-        const static float MAX_TIME;
+        const static double DISPERSION_PARAMETER;
+        const static double MAX_COST;
+        const static double MAX_TIME;
 
         // Constructor
         PathFinder();
@@ -149,19 +153,19 @@ namespace fasttrips {
         void initializeSupply(const char*   output_dir,
                               int           process_num,
                               int*          taz_access_index,
-                              float*        taz_access_cost,
+                              double*       taz_access_cost,
                               int           num_links,
                               int*          stoptime_index,
-                              float*        stoptime_times,
+                              double*       stoptime_times,
                               int           num_stoptimes,
                               int*          xfer_index,
-                              float*        xfer_data,
+                              double*       xfer_data,
                               int           num_xfers);
 
         // Destructor
         ~PathFinder();
 
         // Find the path from the origin TAZ to the destination TAZ
-        void findPath(struct PathSpecification path_spec) const;
+        void findPath(PathSpecification path_spec) const;
     };
 }

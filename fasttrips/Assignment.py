@@ -201,16 +201,16 @@ class Assignment:
                                                       TAZ.ACCLINKS_COLUMN_STOP    ]].as_matrix().astype('int32'),
                                      access_links_df[[TAZ.ACCLINKS_COLUMN_TIME_MIN,
                                                       TAZ.ACCLINKS_COLUMN_ACC_COST,
-                                                      TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float32'),
+                                                      TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                     Trip.STOPTIMES_COLUMN_SEQUENCE,
                                                     Trip.STOPTIMES_COLUMN_STOP_ID]].as_matrix().astype('int32'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float32'),
+                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
                                      transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP,
                                                    Stop.TRANSFERS_COLUMN_TO_STOP]].as_matrix().astype('int32'),
                                      transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
-                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float32'))
+                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'))
 
     @staticmethod
     def assign_paths(output_dir, FT):
@@ -753,7 +753,6 @@ class Assignment:
                             arrdep_datetime] )         # arrival/departure
                         stop_queue.put( (new_label, board_alight_stop) )
                         if trace: FastTripsLogger.debug(" +trip     " + Path.state_str(board_alight_stop, stop_states[board_alight_stop][-1]))
-
             # Done with this label iteration!
             label_iterations += 1
 

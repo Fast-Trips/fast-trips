@@ -15,9 +15,9 @@ const char kPathSeparator =
  
 namespace fasttrips {
 
-    const float PathFinder::DISPERSION_PARAMETER = 1.0;
-    const float PathFinder::MAX_COST = 999999;
-    const float PathFinder::MAX_TIME = 999.999;
+    const double PathFinder::DISPERSION_PARAMETER = 1.0;
+    const double PathFinder::MAX_COST = 999999;
+    const double PathFinder::MAX_TIME = 999.999;
 
     PathFinder::PathFinder() : process_num_(-1)
     {
@@ -28,13 +28,13 @@ namespace fasttrips {
         const char* output_dir,
         int         process_num,
         int*        taz_access_index,
-        float*      taz_access_cost,
+        double*     taz_access_cost,
         int         num_links,
         int*        stoptime_index,
-        float*      stoptime_times,
+        double*     stoptime_times,
         int         num_stoptimes,
         int*        xfer_index,
-        float*      xfer_data,
+        double*     xfer_data,
         int         num_xfers)
     {
         output_dir_  = output_dir;
@@ -96,7 +96,7 @@ namespace fasttrips {
     }
 
     // Find the path from the origin TAZ to the destination TAZ
-    void PathFinder::findPath(struct PathSpecification path_spec) const
+    void PathFinder::findPath(PathSpecification path_spec) const
     {
         // for now we'll just trace
         // if (!path_spec.trace_) { return; }
@@ -117,6 +117,8 @@ namespace fasttrips {
 
         labelStops(path_spec, trace_file, stop_states, label_stop_queue);
 
+        finalizeTazState(path_spec, trace_file, stop_states);
+
         trace_file.close();
     }
 
@@ -126,20 +128,13 @@ namespace fasttrips {
      * Returns success.  This method will only fail if there are no access/egress links for the starting TAZ.
      */
     bool PathFinder::initializeStopStates(
-        const struct PathSpecification& path_spec,
+        const PathSpecification& path_spec,
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue) const
     {
-        int     start_taz_id;
-        float   dir_factor;
-        if (path_spec.outbound_) {
-            start_taz_id = path_spec.destination_taz_id_;
-            dir_factor   = 1.0;
-        } else {
-            start_taz_id = path_spec.origin_taz_id_;
-            dir_factor   = -1.0;
-        }
+        int     start_taz_id = path_spec.outbound_ ? path_spec.destination_taz_id_ : path_spec.origin_taz_id_;
+        double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links?
         std::map<int, std::map<int, TazStopCost> >::const_iterator start_links = taz_access_links_.find(start_taz_id);
@@ -154,9 +149,9 @@ namespace fasttrips {
 
             // outbound: departure time = destination - access
             // inbound:  arrival time   = origin      + access
-            float deparr_time = path_spec.preferred_time_ - (link_iter->second.time_*dir_factor);
+            double deparr_time = path_spec.preferred_time_ - (link_iter->second.time_*dir_factor);
 
-            float cost;
+            double cost;
             if (path_spec.hyperpath_) {
                 // todo: why the 1+
                 cost = 1.0 + (path_spec.outbound_ ? link_iter->second.egress_cost_ : link_iter->second.access_cost_);
@@ -187,14 +182,14 @@ namespace fasttrips {
     }
 
     void PathFinder::updateStopStatesForTransfers(
-        const struct PathSpecification& path_spec,
+        const PathSpecification& path_spec,
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
         const LabelStop& current_label_stop,
-        float latest_dep_earliest_arr) const
+        double latest_dep_earliest_arr) const
     {
-        float dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+        double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // current_stop_state is a vector
         std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
@@ -207,7 +202,7 @@ namespace fasttrips {
         if (!path_spec.hyperpath_ && current_mode == PathFinder::MODE_TRANSFER) return;
 
 
-        float nonwalk_label = 0;
+        double nonwalk_label = 0;
         if (path_spec.hyperpath_) {
             nonwalk_label = calculateNonwalkLabel(current_stop_state);
             if (path_spec.trace_) { trace_file << "  nonwalk label:    " << nonwalk_label << std::endl; }
@@ -224,27 +219,25 @@ namespace fasttrips {
             transfer_map_it = transfer_links_o_d_.find(current_label_stop.stop_id_);
             found_transfers = (transfer_map_it != transfer_links_o_d_.end());
         }
-        if (path_spec.trace_) { trace_file << "found_transfers: " << found_transfers << std::endl; }
         if (!found_transfers) { return; }
-        if (path_spec.trace_) { trace_file << "num_transfers: " << transfer_map_it->second.size() << std::endl; }
         for (std::map<int, TransferCost>::const_iterator transfer_it = transfer_map_it->second.begin();
              transfer_it != transfer_map_it->second.end(); ++transfer_it)
         {
             int     xfer_stop_id    = transfer_it->first;
-            float   transfer_time   = transfer_it->second.time_;
-            float   transfer_cost   = transfer_it->second.cost_;
+            double  transfer_time   = transfer_it->second.time_;
+            double  transfer_cost   = transfer_it->second.cost_;
             // outbound: departure time = latest departure - transfer
             //  inbound: arrival time   = earliest arrival + transfer
-            float   deparr_time     = latest_dep_earliest_arr - (transfer_time*dir_factor);
+            double  deparr_time     = latest_dep_earliest_arr - (transfer_time*dir_factor);
             bool    use_new_state   = false;
-            float   cost, new_label;
+            double  cost, new_label;
             StopStates::const_iterator possible_xfer_iter = stop_states.find(xfer_stop_id);
 
             // stochastic/hyperpath: cost update
             if (path_spec.hyperpath_)
             {
                 cost                = nonwalk_label + transfer_cost;
-                float old_label     = PathFinder::MAX_COST;
+                double old_label    = PathFinder::MAX_COST;
                 new_label           = cost;
                 if (possible_xfer_iter != stop_states.end())
                 {
@@ -267,7 +260,7 @@ namespace fasttrips {
                 // TODO
                 if (possible_xfer_iter != stop_states.end())
                 {
-                    float old_label = possible_xfer_iter->second.front().label_;
+                    double old_label = possible_xfer_iter->second.front().label_;
                     if (new_label < old_label) {
                         use_new_state = true;
                         stop_states[xfer_stop_id].clear();
@@ -302,15 +295,15 @@ namespace fasttrips {
     }
 
     void PathFinder::updateStopStatesForTrips(
-        const struct PathSpecification& path_spec,
+        const PathSpecification& path_spec,
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
         const LabelStop& current_label_stop,
-        float latest_dep_earliest_arr,
+        double latest_dep_earliest_arr,
         std::tr1::unordered_set<int>& trips_done) const
     {
-        float dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+        double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // current_stop_state is a vector
         std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
@@ -331,8 +324,8 @@ namespace fasttrips {
             if (trips_done.find(it->trip_id_) != trips_done.end()) continue;
 
             // trip arrival time (outbound) / trip departure time (inbound)
-            float arrdep_time = path_spec.outbound_ ? it->arrive_time_ : it->depart_time_;
-            float wait_time = (latest_dep_earliest_arr - arrdep_time)*dir_factor;
+            double arrdep_time = path_spec.outbound_ ? it->arrive_time_ : it->depart_time_;
+            double wait_time = (latest_dep_earliest_arr - arrdep_time)*dir_factor;
 
             // deterministic path-finding: check capacities
             if (!path_spec.hyperpath_) {
@@ -363,26 +356,33 @@ namespace fasttrips {
                     }
                 }
 
-                float   deparr_time     = path_spec.outbound_ ? possible_board_alight.depart_time_ : possible_board_alight.arrive_time_;
-                float   in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
+                double  deparr_time     = path_spec.outbound_ ? possible_board_alight.depart_time_ : possible_board_alight.arrive_time_;
+                double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
                 bool    use_new_state   = false;
-                float   cost, new_label;
+                double  cost, new_label;
 
                 // stochastic/hyperpath: cost update
                 if (path_spec.hyperpath_) {
                     // TODO: genericize??
-                    cost = current_label_stop.label_  +
-                           in_vehicle_time            +
-                           wait_time*1.77             +
-                           0.00;                      // FARE/VALUE OF TIME
                     if ((current_mode == PathFinder::MODE_ACCESS) || (current_mode == PathFinder::MODE_EGRESS)) {
-                        cost += (float)47.73;                      // TRANSFER PENALTY
+                        cost = current_label_stop.label_  +
+                               in_vehicle_time            +
+                               0.00                       +        // wait
+                               0.00                       +        // FARE/VALUE OF TIME
+                               0.00;                               // TRANSFER PENALTY
+                    } else {
+                        cost = current_label_stop.label_  +
+                               in_vehicle_time            +
+                               wait_time*1.77             +        // wait
+                               0.00                       +        // FARE/VALUE OF TIME
+                               (double)47.73;                       // TRANSFER PENALTY
                     }
-                    float old_label = PathFinder::MAX_COST;
+
+                    double old_label = PathFinder::MAX_COST;
                     new_label       = cost;
                     if (possible_stop_state_iter != stop_states.end()) {
                         old_label = possible_stop_state_iter->second.back().label_;
-                        new_label = float(exp(-1.0*PathFinder::DISPERSION_PARAMETER*old_label) +
+                        new_label = double(exp(-1.0*PathFinder::DISPERSION_PARAMETER*old_label) +
                                           exp(-1.0*PathFinder::DISPERSION_PARAMETER*cost));
                         new_label = std::max(0.01, -1.0/PathFinder::DISPERSION_PARAMETER*log(new_label));
                     }
@@ -392,7 +392,7 @@ namespace fasttrips {
                 else {
                     cost        = in_vehicle_time + wait_time;
                     new_label   = current_label_stop.label_ + cost;
-                    float old_label = PathFinder::MAX_TIME;
+                    double old_label = PathFinder::MAX_TIME;
                     if (possible_stop_state_iter != stop_states.end()) {
                         old_label = possible_stop_state_iter->second.front().label_;
                         if (new_label < old_label) {
@@ -445,7 +445,7 @@ namespace fasttrips {
         }
     }
 
-    void PathFinder::labelStops(const struct PathSpecification& path_spec,
+    void PathFinder::labelStops(const PathSpecification& path_spec,
                                           std::ofstream& trace_file,
                                           StopStates& stop_states,
                                           LabelStopQueue& label_stop_queue) const
@@ -453,7 +453,7 @@ namespace fasttrips {
         int label_iterations = 0;
         std::tr1::unordered_set<int> stop_done;
         std::tr1::unordered_set<int> trips_done;
-        float dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+        double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         while (!label_stop_queue.empty()) {
             /***************************************************************************************
@@ -490,6 +490,9 @@ namespace fasttrips {
                     printTimeDuration(trace_file, current_label_stop.label_);
                 }
                 trace_file << ", stop " << current_label_stop.stop_id_ << ") :======" << std::endl;
+                trace_file << "            ";
+                printStopStateHeader(trace_file, path_spec);
+                trace_file << std::endl;
                 for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
                                                             ssi != current_stop_state.end(); ++ssi) {
                     trace_file << "            ";
@@ -501,7 +504,7 @@ namespace fasttrips {
 
             int     current_mode            = current_stop_state[0].deparr_mode_;      // why index 0?
             // latest departure for outbound, earliest arrival for inbound
-            float   latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
+            double  latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
             for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
                                                         ssi != current_stop_state.end(); ++ssi) {
                 if (path_spec.outbound_) {
@@ -542,11 +545,124 @@ namespace fasttrips {
     }
 
 
+    bool PathFinder::finalizeTazState(
+        const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        StopStates& stop_states) const
+    {
+        int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+        double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+        std::vector<StopState> taz_state;
+
+        // are there any egress/access links?
+        std::map<int, std::map<int, TazStopCost> >::const_iterator end_links = taz_access_links_.find(end_taz_id);
+        if (end_links == taz_access_links_.end()) {
+            return false;
+        }
+
+        std::map<int, TazStopCost>::const_iterator link_iter;
+        for (link_iter  = end_links->second.begin();
+             link_iter != end_links->second.end(); ++link_iter)
+        {
+            int     stop_id                 = link_iter->first;
+            double  access_time             = link_iter->second.time_;
+
+            double  earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
+            double  nonwalk_label           = PathFinder::MAX_COST;
+
+            bool    use_new_state           = false;
+            double  deparr_time, new_label, new_cost;
+
+            std::map<int, std::vector<StopState> >::const_iterator stop_states_iter = stop_states.find(stop_id);
+            if (stop_states_iter == stop_states.end()) { continue; }
+
+            const std::vector<StopState>& current_stop_state = stop_states_iter->second;
+            earliest_dep_latest_arr = current_stop_state[0].deparr_time_;
+
+            if (path_spec.hyperpath_)
+            {
+                for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
+                                                            ssi != current_stop_state.end(); ++ssi)
+                {
+                    if (path_spec.outbound_) {
+                        earliest_dep_latest_arr = std::min(earliest_dep_latest_arr, ssi->deparr_time_);
+                    } else {
+                        earliest_dep_latest_arr = std::max(earliest_dep_latest_arr, ssi->deparr_time_);
+                    }
+                }
+                nonwalk_label = calculateNonwalkLabel(current_stop_state);
+
+                // todo: this should be - (access_time*dir_factor), right??
+                deparr_time = earliest_dep_latest_arr - access_time;
+
+                new_cost        = nonwalk_label + (path_spec.outbound_ ? link_iter->second.access_cost_ : link_iter->second.egress_cost_);
+                double old_label= PathFinder::MAX_COST;
+                new_label       = new_cost;
+
+                if (taz_state.size() > 0)
+                {
+                    old_label = taz_state.back().label_;
+                    new_label = exp(-1.0*PathFinder::DISPERSION_PARAMETER*old_label) +
+                                exp(-1.0*PathFinder::DISPERSION_PARAMETER*new_label);
+                    new_label = std::max(0.01, -1.0/PathFinder::DISPERSION_PARAMETER*log(new_label));
+                }
+                if ((new_label < PathFinder::MAX_COST) && (new_label > 0)) { use_new_state = true; }
+            }
+            // deterministic
+            else
+            {
+                deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
+
+                // first leg has to be a trip
+                if (current_stop_state.front().deparr_mode_ == PathFinder::MODE_TRANSFER) { continue; }
+                if (current_stop_state.front().deparr_mode_ == PathFinder::MODE_EGRESS  ) { continue; }
+                if (current_stop_state.front().deparr_mode_ == PathFinder::MODE_ACCESS  ) { continue; }
+                new_cost  = (path_spec.outbound_ ? link_iter->second.time_ : link_iter->second.time_);
+                new_label = current_stop_state.front().label_ + new_cost;
+
+                // capacity check
+                // todo
+                double old_label = PathFinder::MAX_TIME;
+                if (taz_state.size() > 0)
+                {
+                    old_label = taz_state.back().label_;
+                    if (new_label < old_label)
+                    {
+                        use_new_state = true;
+                        taz_state.clear();
+                    }
+                }
+                else { use_new_state = true; }
+
+            }
+
+            if (use_new_state)
+            {
+                StopState ts = {
+                    new_label,                                                                  // label
+                    deparr_time,                                                                // departure/arrival time
+                    path_spec.outbound_ ? PathFinder::MODE_ACCESS : PathFinder::MODE_EGRESS,    // departure/arrival mode
+                    stop_id,                                                                    // successor/predecessor
+                    access_time,                                                                // link time
+                    new_cost,                                                                   // cost
+                    PathFinder::MAX_DATETIME                                                    // arrival/departure time
+                };
+                taz_state.push_back(ts);
+                if (path_spec.trace_)
+                {
+                    trace_file << (path_spec.outbound_ ? " +access   " : " +egress   ");
+                    printStopState(trace_file, end_taz_id, ts, path_spec);
+                    trace_file << std::endl;
+                }
+            }
+        }
+    }
+
     /**
      * If outbound, then we're searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint.
      * If inbound,  then we're searching forwards,  so this returns trips that depart at the stop time after timepoint.
      */
-    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, float timepoint, std::vector<StopTripTime>& return_trips, float time_window) const
+    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<StopTripTime>& return_trips, double time_window) const
     {
         // are there any trips for this stop?
         std::map<int, std::vector<StopTripTime> >::const_iterator mapiter = stop_trip_times_.find(stop_id);
@@ -563,9 +679,9 @@ namespace fasttrips {
         }
     }
 
-    float PathFinder::calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const
+    double PathFinder::calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const
     {
-        float nonwalk_label = 0.0;
+        double nonwalk_label = 0.0;
         for (std::vector<StopState>::const_iterator it = current_stop_state.begin();
              it != current_stop_state.end(); ++it)
         {
@@ -583,8 +699,19 @@ namespace fasttrips {
         return -1.0/PathFinder::DISPERSION_PARAMETER*log(nonwalk_label);
     }
 
+    void PathFinder::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const
+    {
+        ostr << std::setw( 8) << std::setfill(' ') << std::right << "stop" << ": ";
+        ostr << std::setw(10) << "label";
+        ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
+        ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
+        ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
+        ostr << std::setw(15) << "linktime";
+        ostr << std::setw(14) << "linkcost";
+        ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
+    }
 
-    void PathFinder::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const struct PathSpecification& path_spec) const
+    void PathFinder::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const
     {
         ostr << std::setw( 8) << std::setfill(' ') << std::right << stop_id << ": ";
         if (path_spec.hyperpath_) {
@@ -604,9 +731,10 @@ namespace fasttrips {
         printTimeDuration(ostr, ss.link_time_);
         ostr << "  ";
         if (path_spec.hyperpath_) {
-            ostr << std::setw(10) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.cost_;
+            ostr << std::setw(12) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.cost_;
         } else {
             // cost is a time duration
+            ostr << "  ";
             printTimeDuration(ostr, ss.cost_);
         }
         ostr << "  ";
@@ -616,10 +744,10 @@ namespace fasttrips {
     /*
      * Assuming that timedur is duration in minutes, prints a formatted version.
      */
-    void PathFinder::printTimeDuration(std::ostream& ostr, const float& timedur) const
+    void PathFinder::printTimeDuration(std::ostream& ostr, const double& timedur) const
     {
         int hours = static_cast<int>(timedur/60.0);
-        float minutes = timedur - 60.0*hours;
+        double minutes = timedur - 60.0*hours;
         double minpart, secpart;
         secpart = modf(minutes, &minpart);
         secpart = secpart*60.0;
@@ -635,7 +763,7 @@ namespace fasttrips {
     /*
      * Assuming that timemin is a time in minutes after midnight, prints a formatted version.
      */
-    void PathFinder::printTime(std::ostream& ostr, const float& timemin) const
+    void PathFinder::printTime(std::ostream& ostr, const double& timemin) const
     {
         double minpart, secpart;
         int    hour = static_cast<int>(timemin/60.0);
