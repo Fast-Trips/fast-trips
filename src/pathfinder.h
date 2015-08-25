@@ -60,6 +60,14 @@ namespace fasttrips {
         int     stop_id_;
     } LabelStop;
 
+    // Used in PathFinder::hyperpathChoosePath
+    typedef struct ProbabilityStop {
+        double  probability_;
+        int     prob_i_;
+        int     stop_id_;
+        size_t  index_;
+    } ProbabilityStop;
+
     struct LabelStopCompare {
         bool operator()(const LabelStop &cs1, const LabelStop &cs2) const {
             return (cs1.label_ > cs2.label_);
@@ -119,7 +127,26 @@ namespace fasttrips {
 
         bool finalizeTazState(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
-                                  StopStates& stop_states) const;
+                                  const StopStates& stop_states,
+                                  std::vector<StopState>& taz_state) const;
+
+        bool hyperpathChoosePath(const PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  const StopStates& stop_states,
+                                  const std::vector<StopState>& taz_state,
+                                  std::map<int, StopState>& path_states,
+                                  std::vector<int> path_stops) const;
+
+        size_t chooseState(const PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  const std::vector<ProbabilityStop>& prob_stops) const;
+
+        bool getFoundPath(const PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  const StopStates& stop_states,
+                                  const std::vector<StopState>& taz_state,
+                                  std::map<int, StopState>& path_states,
+                                  std::vector<int> path_stops) const;
 
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
@@ -143,6 +170,7 @@ namespace fasttrips {
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
+        const static int MAX_HYPERPATH_ASSIGN_ATTEMPTS = 1001; // er....
         const static double DISPERSION_PARAMETER;
         const static double MAX_COST;
         const static double MAX_TIME;

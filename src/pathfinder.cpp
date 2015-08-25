@@ -117,7 +117,12 @@ namespace fasttrips {
 
         labelStops(path_spec, trace_file, stop_states, label_stop_queue);
 
-        finalizeTazState(path_spec, trace_file, stop_states);
+        std::vector<StopState> taz_state;
+        finalizeTazState(path_spec, trace_file, stop_states, taz_state);
+
+        std::map<int, StopState>    path_states;
+        std::vector<int>            path_stops;
+        getFoundPath(path_spec, trace_file, stop_states, taz_state, path_states, path_stops);
 
         trace_file.close();
     }
@@ -548,11 +553,11 @@ namespace fasttrips {
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        StopStates& stop_states) const
+        const StopStates& stop_states,
+        std::vector<StopState>& taz_state) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
-        std::vector<StopState> taz_state;
 
         // are there any egress/access links?
         std::map<int, std::map<int, TazStopCost> >::const_iterator end_links = taz_access_links_.find(end_taz_id);
@@ -658,6 +663,195 @@ namespace fasttrips {
         }
     }
 
+    // Return success
+    bool PathFinder::hyperpathChoosePath(
+        const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        const StopStates& stop_states,
+        const std::vector<StopState>& taz_state,
+        std::map<int, StopState>& path_states,
+        std::vector<int> path_stops) const
+    {
+        int    start_state_id   = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+        double dir_factor       = path_spec.outbound_ ? 1 : -1;
+
+        double taz_label        = taz_state.back().label_;
+        int    cost_cutoff      = 1;
+
+        // setup access/egress probabilities
+        std::vector<ProbabilityStop> access_cum_prob; // access/egress cumulative probabilities
+        for (size_t state_index = 0; state_index < taz_state.size(); ++state_index)
+        {
+            double probability = exp(-1.0*PathFinder::DISPERSION_PARAMETER*taz_state[state_index].cost_) /
+                                 exp(-1.0*PathFinder::DISPERSION_PARAMETER*taz_label);
+            // why?  :p
+            int prob_i = static_cast<int>(1000.0*probability);
+            // too small to consider
+            if (prob_i < cost_cutoff) { continue; }
+            if (access_cum_prob.size() == 0) {
+                ProbabilityStop pb = { probability, prob_i, taz_state[state_index].succpred_, state_index };
+                access_cum_prob.push_back( pb );
+            } else {
+                ProbabilityStop pb = { probability, access_cum_prob.back().prob_i_ + prob_i, taz_state[state_index].succpred_, state_index };
+                access_cum_prob.push_back( pb );
+            }
+            if (path_spec.trace_) {
+                trace_file << std::setw( 6) << std::setfill(' ') << taz_state[state_index].succpred_ << " ";
+                printMode(trace_file, taz_state[state_index].deparr_mode_);
+                trace_file << ": prob ";
+                trace_file << std::setw(10) << probability << " cum_prob ";
+                trace_file << std::setw( 6) << access_cum_prob.back().prob_i_ << std::endl;
+            }
+        }
+
+        size_t chosen_index = chooseState(path_spec, trace_file, access_cum_prob);
+        StopState ss = taz_state[chosen_index];
+        path_stops.push_back(start_state_id);
+        path_states[start_state_id] = ss;
+
+        if (path_spec.trace_)
+        {
+            trace_file << " -> Chose ";
+            printStopState(trace_file, start_state_id, ss, path_spec);
+            trace_file << std::endl;
+        }
+
+        int     current_stop_id = ss.succpred_;
+        // outbound: arrival time
+        //  inbound: departure time
+        double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
+        int     last_trip       = ss.deparr_mode_;
+        while (true)
+        {
+            // setup probabilities
+            if (path_spec.trace_) {
+                trace_file << "current_stop=" << current_stop_id;
+                trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
+                printTime(trace_file, arrdep_time);
+                trace_file << "; last_trip=" << last_trip << std::endl;
+            }
+            std::vector<ProbabilityStop> stop_cum_prob;
+            double sum_exp = 0;
+            StopStates::const_iterator ssi = stop_states.find(current_stop_id);
+            for (size_t stop_state_index = 0; stop_state_index < ssi->second.size(); ++stop_state_index)
+            {
+                const StopState& state = ssi->second[stop_state_index];
+
+                // no double walk
+                if (path_spec.outbound_ &&
+                    ((state.deparr_mode_ == PathFinder::MODE_EGRESS) || (state.deparr_mode_ == PathFinder::MODE_TRANSFER)) &&
+                    ((         last_trip == PathFinder::MODE_ACCESS) || (         last_trip == PathFinder::MODE_TRANSFER))) { continue; }
+                if (!path_spec.outbound_ &&
+                    ((state.deparr_mode_ == PathFinder::MODE_ACCESS) || (state.deparr_mode_ == PathFinder::MODE_TRANSFER)) &&
+                    ((         last_trip == PathFinder::MODE_EGRESS) || (         last_trip == PathFinder::MODE_TRANSFER))) { continue; }
+
+                // outbound: we cannot depart before we arrive
+                if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }
+                // inbound: we cannot arrive after we depart
+                if (!path_spec.outbound_ && state.deparr_time_ > arrdep_time) { continue; }
+
+                // calculating denominator
+                sum_exp += exp(-1.0*PathFinder::DISPERSION_PARAMETER*state.cost_);
+                // probabilities will be filled in later
+                ProbabilityStop pb = { 0, 0, state.succpred_, stop_state_index };
+                stop_cum_prob.push_back(pb);
+            }
+
+            // dead end
+            if (stop_cum_prob.size() == 0) {
+                return false;
+            }
+
+            // denom found - cum prob time
+
+        }
+        return true;
+    }
+
+    // return the index_ from chosen ProbabilityStop
+    size_t PathFinder::chooseState(
+        const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        const std::vector<ProbabilityStop>& prob_stops) const
+    {
+        int random_num = rand();
+        if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
+
+        // mod it by max prob
+        random_num = random_num % (prob_stops.back().prob_i_);
+        if (path_spec.trace_) { trace_file << random_num << std::endl; }
+
+        for (size_t ind = 0; ind < prob_stops.size(); ++ind)
+        {
+            if (random_num < prob_stops[ind].prob_i_) { return prob_stops[ind].index_; }
+        }
+        // shouldn't get here
+        printf("PathFinder::chooseState() This should never happen!\n");
+    }
+
+    // Return success
+    bool PathFinder::getFoundPath(
+        const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        const StopStates& stop_states,
+        const std::vector<StopState>& taz_state,
+        std::map<int, StopState>& path_states,
+        std::vector<int> path_stops) const
+    {
+        // no taz states -> no path found
+        if (taz_state.size() == 0) { return false; }
+
+        int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+
+        if (path_spec.hyperpath_)
+        {
+            bool path_found = false;
+            int  attempts   = 0;
+            while ((!path_found) && (attempts < PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS))
+            {
+                path_found = hyperpathChoosePath(path_spec, trace_file, stop_states, taz_state, path_states, path_stops);
+
+                attempts += 1;
+                if (!path_found)
+                {
+                    path_states.clear();
+                    path_stops.clear();
+                }
+            }
+        }
+        else
+        {
+            // outbound: egress to access and back
+            // inbound:  acess  to egress and back
+            int final_state_type = path_spec.outbound_ ? PathFinder::MODE_EGRESS : PathFinder::MODE_ACCESS;
+
+            StopState ss = taz_state.front(); // there's only one
+            path_states[end_taz_id] = ss;
+            path_stops.push_back(end_taz_id);
+
+            while (ss.deparr_mode_ != final_state_type)
+            {
+                int stop_id = ss.succpred_;
+                StopStates::const_iterator ssi = stop_states.find(stop_id);
+                ss          = ssi->second.front();
+                path_states[stop_id] = ss;
+                path_stops.push_back(stop_id);
+            }
+        }
+        if (path_spec.trace_)
+        {
+            trace_file << "Final path" << std::endl;
+            printStopStateHeader(trace_file, path_spec);
+            trace_file << std::endl;
+            for (std::vector<int>::const_iterator stop_id_iter  = path_stops.begin();
+                                                  stop_id_iter != path_stops.end(); ++stop_id_iter)
+            {
+                printStopState(trace_file, *stop_id_iter, path_states[*stop_id_iter], path_spec);
+                trace_file << std::endl;
+            }
+        }
+    }
+
     /**
      * If outbound, then we're searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint.
      * If inbound,  then we're searching forwards,  so this returns trips that depart at the stop time after timepoint.
@@ -702,12 +896,12 @@ namespace fasttrips {
     void PathFinder::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const
     {
         ostr << std::setw( 8) << std::setfill(' ') << std::right << "stop" << ": ";
-        ostr << std::setw(10) << "label";
+        ostr << std::setw(13) << "label";
         ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
         ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
         ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
         ostr << std::setw(15) << "linktime";
-        ostr << std::setw(14) << "linkcost";
+        ostr << std::setw(17) << "linkcost";
         ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
     }
 
