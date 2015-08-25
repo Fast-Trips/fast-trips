@@ -62,10 +62,10 @@ namespace fasttrips {
 
     // Used in PathFinder::hyperpathChoosePath
     typedef struct ProbabilityStop {
-        double  probability_;
-        int     prob_i_;
-        int     stop_id_;
-        size_t  index_;
+        double  probability_;       // probability
+        int     prob_i_;            // cumulative probability * 1000
+        int     stop_id_;           // stop id
+        size_t  index_;             // index into stop states (or taz states)
     } ProbabilityStop;
 
     struct LabelStopCompare {
@@ -135,7 +135,7 @@ namespace fasttrips {
                                   const StopStates& stop_states,
                                   const std::vector<StopState>& taz_state,
                                   std::map<int, StopState>& path_states,
-                                  std::vector<int> path_stops) const;
+                                  std::vector<int>& path_stops) const;
 
         size_t chooseState(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
@@ -146,8 +146,9 @@ namespace fasttrips {
                                   const StopStates& stop_states,
                                   const std::vector<StopState>& taz_state,
                                   std::map<int, StopState>& path_states,
-                                  std::vector<int> path_stops) const;
+                                  std::vector<int>& path_stops) const;
 
+        double getScheduledDeparture(int trip_id, int stop_id, int sequence=-1) const;
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
@@ -194,6 +195,8 @@ namespace fasttrips {
         ~PathFinder();
 
         // Find the path from the origin TAZ to the destination TAZ
-        void findPath(PathSpecification path_spec) const;
+        void findPath(PathSpecification         path_spec,
+                      std::map<int, StopState>& path_states,
+                      std::vector<int>&         path_stops) const;
     };
 }

@@ -437,7 +437,7 @@ class Assignment:
         Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
         or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
 
-        Updates the path information in the given path and returns the number of label iterations required.
+        Returns (number of label iterations, return_states).
 
         :param FT: fasttrips data
         :type FT: a :py:class:`FastTrips` instance
@@ -452,10 +452,45 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        _fasttrips.find_path(path.path_id, hyperpath, path.origin_taz_id, path.destination_taz_id,
+        (ret_ints, ret_doubles) = _fasttrips.find_path(path.path_id, hyperpath, path.origin_taz_id, path.destination_taz_id,
                              1 if path.outbound() else 0, float(path.pref_time_min),
                              1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
+
+        # Put the results into an ordered dict statelist
+        return_states = collections.OrderedDict()
+        midnight = datetime.datetime.combine(Assignment.TODAY, datetime.time())
+
+        for index in range(ret_ints.shape[0]):
+            mode = ret_ints[index,1]
+            if mode == -100:
+                mode = Path.STATE_MODE_ACCESS
+            elif mode == -101:
+                mode = Path.STATE_MODE_EGRESS
+            elif mode == -102:
+                mode = Path.STATE_MODE_TRANSFER
+
+            if hyperpath:
+                return_states[ret_ints[index, 0]] = [
+                              ret_doubles[index,0],                                         # label,
+                              midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
+                              mode,                                                         # departure/arrival mode
+                              ret_ints[index,2],                                            # successor/predecessor
+                              datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
+                              ret_doubles[index,3],                                         # cost
+                              midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
+                              ]
+            else:
+                return_states[ret_ints[index, 0]] = [
+                              datetime.timedelta(minutes=ret_doubles[index,0]),              # label,
+                              midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
+                              mode,                                                         # departure/arrival mode
+                              ret_ints[index,2],                                            # successor/predecessor
+                              datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
+                              datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
+                              midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
+                              ]
+        return (0, return_states)
 
         # hyperpath means we use random numbers to choose options -- set the random seed to be repeatable
         if hyperpath:
