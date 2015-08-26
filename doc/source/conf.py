@@ -23,6 +23,9 @@ import shlex
 
 sys.path.insert(0, os.path.abspath(".."))
 
+# Breathe path
+sys.path.append( r"C:\Python27\Lib\site-packages\breathe" )
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -41,7 +44,11 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
+    'breathe',
 ]
+
+breathe_projects = { "fast-trips-cpp": r"doxygen\xml"}
+breathe_default_project = "fast-trips-cpp"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -307,3 +314,5 @@ autodoc_member_order = 'groupwise'
 autoclass_content = "class" # classes should include both the class' and the __init__ method's docstring
 
 autosummary_generate = True
+
+numpydoc_show_class_members = False

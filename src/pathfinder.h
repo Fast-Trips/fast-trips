@@ -1,3 +1,9 @@
+/**
+ * \file pathfinder.h
+ *
+ * Defines the C++ the finds a transit path for fast-trips.
+ */
+
 #include <map>
 #include <vector>
 #include <queue>
@@ -12,20 +18,20 @@
 
 namespace fasttrips {
 
-    // Supply data: access/egress time and cost between TAZ and stops
+    //! Supply data: access/egress time and cost between TAZ and stops
     typedef struct TazStopCost {
         double  time_;          // in minutes
         double  access_cost_;   // general cost units
         double  egress_cost_;   // general cost units
     } TazStopCost;
 
-    // Supply data: transfer time and cost between stops
+    //! Supply data: transfer time and cost between stops
     typedef struct TransferCost {
         double  time_;          // in minutes
         double  cost_;          // general cost units
     } TransferCost;
 
-    // Supply data: Transit vehicle schedules
+    //! Supply data: Transit vehicle schedules
     typedef struct StopTripTime {
         int     trip_id_;
         int     seq_;           // start at 1
@@ -34,7 +40,7 @@ namespace fasttrips {
         double  depart_time_;   // minutes after midnight
     } StopTripTime;
 
-    // package this in a struct because it'll get passed around a lot
+    //! Package this in a struct because it'll get passed around a lot
     typedef struct PathSpecification {
         int     path_id_;
         bool    hyperpath_;
@@ -79,6 +85,9 @@ namespace fasttrips {
     // label, stop id priority queue -- lowest label pops
     typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
 
+    /*!
+    * This is the class that does all the work.  Setup the network supply first.
+    */
     class PathFinder
     {
     protected:
@@ -179,6 +188,9 @@ namespace fasttrips {
         // Constructor
         PathFinder();
 
+        /*!
+         * Setup the network.
+         */
         void initializeSupply(const char*   output_dir,
                               int           process_num,
                               int*          taz_access_index,
