@@ -6,10 +6,6 @@
 Welcome to fasttrips's documentation!
 =====================================
 
-Note that this documentation was generated with Sphinx v1.1.3.
-The current version (v1.3.1) seems to be broken as fars as the
-autosummary toctree is concerned. :(
-
 .. automodule:: fasttrips
    :no-members:
    :no-undoc-members:
