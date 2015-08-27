@@ -19,9 +19,11 @@ namespace fasttrips {
     const double PathFinder::MAX_COST = 999999;
     const double PathFinder::MAX_TIME = 999.999;
 
+    /**
+     * This doesn't really do anything.
+     */
     PathFinder::PathFinder() : process_num_(-1)
     {
-        std::cout << "PathFinder constructor" << std::endl;
     }
 
     void PathFinder::initializeSupply(
@@ -29,7 +31,7 @@ namespace fasttrips {
         int         process_num,
         int*        taz_access_index,
         double*     taz_access_cost,
-        int         num_links,
+        int         num_tazlinks,
         int*        stoptime_index,
         double*     stoptime_times,
         int         num_stoptimes,
@@ -40,14 +42,14 @@ namespace fasttrips {
         output_dir_  = output_dir;
         process_num_ = process_num;
 
-        for(int i=0; i<num_links; ++i) {
+        for(int i=0; i<num_tazlinks; ++i) {
             TazStopCost tsc = {
                 taz_access_cost[3*i],
                 taz_access_cost[3*i+1],
                 taz_access_cost[3*i+2]
             };
             taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]] = tsc;
-            if (false && (process_num_<= 1) && ((i<5) || (i>num_links-5))) {
+            if (false && (process_num_<= 1) && ((i<5) || (i>num_tazlinks-5))) {
                 printf("access_links[%4d][%4d]=%f, %f, %f\n", taz_access_index[2*i], taz_access_index[2*i+1],
                        taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]].time_,
                        taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]].access_cost_,
@@ -85,12 +87,13 @@ namespace fasttrips {
         }
     }
 
+    /// This doesn't really do anything because the instance variables are all STL structures
+    /// which take care of freeing memory.
     PathFinder::~PathFinder()
     {
         std::cout << "PathFinder destructor" << std::endl;
     }
 
-    // Find the path from the origin TAZ to the destination TAZ
     void PathFinder::findPath(PathSpecification path_spec,
                               std::map<int, StopState>& path_states,
                               std::vector<int>&         path_stops) const
@@ -122,11 +125,6 @@ namespace fasttrips {
         trace_file.close();
     }
 
-    /*
-     * Initialize the stop states from the access (for inbound) or egress (for outbound) links
-     * from the start TAZ.
-     * Returns success.  This method will only fail if there are no access/egress links for the starting TAZ.
-     */
     bool PathFinder::initializeStopStates(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -658,7 +656,9 @@ namespace fasttrips {
         }
     }
 
-    // Return success
+    /**
+     * Return success
+     */
     bool PathFinder::hyperpathChoosePath(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -820,7 +820,9 @@ namespace fasttrips {
         return true;
     }
 
-    // return the index_ from chosen ProbabilityStop
+    /**
+     * @return the index_ from chosen ProbabilityStop.
+     */
     size_t PathFinder::chooseState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,

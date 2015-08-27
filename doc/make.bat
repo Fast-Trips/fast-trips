@@ -44,6 +44,7 @@ if "%1" == "help" (
 if "%1" == "clean" (
 	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
 	del /q /s %BUILDDIR%\*
+	del /q /s source\doxygen
 	goto end
 )
 
@@ -73,6 +74,8 @@ if errorlevel 9009 (
 
 
 if "%1" == "html" (
+    echo.Running doxygen for C++ extension documentation.
+    doxygen doxygen.conf
 	%SPHINXBUILD% -E -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	echo.
