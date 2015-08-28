@@ -91,7 +91,7 @@ namespace fasttrips {
     /// which take care of freeing memory.
     PathFinder::~PathFinder()
     {
-        std::cout << "PathFinder destructor" << std::endl;
+        // std::cout << "PathFinder destructor" << std::endl;
     }
 
     void PathFinder::findPath(PathSpecification path_spec,
@@ -158,13 +158,15 @@ namespace fasttrips {
             }
 
             StopState ss = {
-                cost,
-                deparr_time,
-                path_spec.outbound_ ? PathFinder::MODE_EGRESS : PathFinder::MODE_ACCESS,
-                start_taz_id,
-                link_iter->second.time_,
-                cost,
-                PathFinder::MAX_DATETIME };
+                cost,                                                                       // label
+                deparr_time,                                                                // departure/arrival time
+                path_spec.outbound_ ? PathFinder::MODE_EGRESS : PathFinder::MODE_ACCESS,    // departure/arrival mode
+                start_taz_id,                                                               // successor/predecessor
+                -1,                                                                         // sequence
+                -1,                                                                         // sequence succ/pred
+                link_iter->second.time_,                                                    // link time
+                cost,                                                                       // cost
+                PathFinder::MAX_DATETIME };                                                 // arrival/departure time
             stop_states[stop_id].push_back(ss);
             LabelStop ls = { cost, stop_id };
             label_stop_queue.push( ls );
@@ -275,6 +277,8 @@ namespace fasttrips {
                     deparr_time,                    // departure/arrival time
                     PathFinder::MODE_TRANSFER,      // departure/arrival mode
                     current_label_stop.stop_id_,    // successor/predecessor
+                    -1,                             // sequence
+                    -1,                             // sequence succ/pred
                     transfer_time,                  // link time
                     cost,                           // cost
                     PathFinder::MAX_DATETIME        // arrival/departure time
@@ -403,6 +407,8 @@ namespace fasttrips {
                                 deparr_time,                    // departure/arrival time
                                 possible_board_alight.trip_id_, // trip id
                                 current_label_stop.stop_id_,    // successor/predecessor
+                                possible_board_alight.seq_,     // sequence
+                                it->seq_,                       // sequence succ/pred
                                 in_vehicle_time+wait_time,      // link time
                                 cost,                           // cost
                                 arrdep_time                     // arrival/departure time
@@ -424,6 +430,8 @@ namespace fasttrips {
                         deparr_time,                    // departure/arrival time
                         possible_board_alight.trip_id_, // trip id
                         current_label_stop.stop_id_,    // successor/predecessor
+                        possible_board_alight.seq_,     // sequence
+                        it->seq_,                       // sequence succ/pred
                         in_vehicle_time+wait_time,      // link time
                         cost,                           // cost
                         arrdep_time                     // arrival/departure time
@@ -641,6 +649,8 @@ namespace fasttrips {
                     deparr_time,                                                                // departure/arrival time
                     path_spec.outbound_ ? PathFinder::MODE_ACCESS : PathFinder::MODE_EGRESS,    // departure/arrival mode
                     stop_id,                                                                    // successor/predecessor
+                    -1,                                                                         // sequence
+                    -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     new_cost,                                                                   // cost
                     PathFinder::MAX_DATETIME                                                    // arrival/departure time
@@ -656,9 +666,7 @@ namespace fasttrips {
         }
     }
 
-    /**
-     * Return success
-     */
+
     bool PathFinder::hyperpathChoosePath(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -684,10 +692,10 @@ namespace fasttrips {
             // too small to consider
             if (prob_i < cost_cutoff) { continue; }
             if (access_cum_prob.size() == 0) {
-                ProbabilityStop pb = { probability, prob_i, taz_state[state_index].succpred_, state_index };
+                ProbabilityStop pb = { probability, prob_i, taz_state[state_index].stop_succpred_, state_index };
                 access_cum_prob.push_back( pb );
             } else {
-                ProbabilityStop pb = { probability, access_cum_prob.back().prob_i_ + prob_i, taz_state[state_index].succpred_, state_index };
+                ProbabilityStop pb = { probability, access_cum_prob.back().prob_i_ + prob_i, taz_state[state_index].stop_succpred_, state_index };
                 access_cum_prob.push_back( pb );
             }
             if (path_spec.trace_) {
@@ -711,7 +719,7 @@ namespace fasttrips {
             trace_file << std::endl;
         }
 
-        int     current_stop_id = ss.succpred_;
+        int     current_stop_id = ss.stop_succpred_;
         // outbound: arrival time
         //  inbound: departure time
         double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
@@ -748,7 +756,7 @@ namespace fasttrips {
                 // calculating denominator
                 sum_exp += exp(-1.0*PathFinder::DISPERSION_PARAMETER*state.cost_);
                 // probabilities will be filled in later - use cost for now
-                ProbabilityStop pb = { state.cost_, 0, state.succpred_, stop_state_index };
+                ProbabilityStop pb = { state.cost_, 0, state.stop_succpred_, stop_state_index };
                 stop_cum_prob.push_back(pb);
             }
 
@@ -798,7 +806,7 @@ namespace fasttrips {
             path_states[current_stop_id] = next_ss;
 
             // move on to the next
-            current_stop_id     = next_ss.succpred_;
+            current_stop_id     = next_ss.stop_succpred_;
             last_trip           = next_ss.deparr_mode_;
 
             // update arrdep_time
@@ -820,9 +828,7 @@ namespace fasttrips {
         return true;
     }
 
-    /**
-     * @return the index_ from chosen ProbabilityStop.
-     */
+
     size_t PathFinder::chooseState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -861,6 +867,8 @@ namespace fasttrips {
         {
             bool path_found = false;
             int  attempts   = 0;
+            // random seed
+            srand(path_spec.path_id_);
             while ((!path_found) && (attempts < PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS))
             {
                 path_found = hyperpathChoosePath(path_spec, trace_file, stop_states, taz_state, path_states, path_stops);
@@ -885,7 +893,7 @@ namespace fasttrips {
 
             while (ss.deparr_mode_ != final_state_type)
             {
-                int stop_id = ss.succpred_;
+                int stop_id = ss.stop_succpred_;
                 StopStates::const_iterator ssi = stop_states.find(stop_id);
                 ss          = ssi->second.front();
                 path_states[stop_id] = ss;
@@ -975,8 +983,10 @@ namespace fasttrips {
         ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
         ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
         ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
+        ostr << std::setw( 5) << "seq";
+        ostr << std::setw( 5) << (path_spec.outbound_ ? "suc" : "pred");
         ostr << std::setw(15) << "linktime";
-        ostr << std::setw(17) << "linkcost";
+        ostr << std::setw(17) << "cost";
         ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
     }
 
@@ -995,7 +1005,11 @@ namespace fasttrips {
         ostr << "  ";
         printMode(ostr, ss.deparr_mode_);
         ostr << "  ";
-        ostr << std::setw(10) << std::setfill(' ') << ss.succpred_;
+        ostr << std::setw(10) << std::setfill(' ') << ss.stop_succpred_;
+        ostr << "  ";
+        ostr << std::setw(3) << std::setfill(' ') << ss.seq_;
+        ostr << "  ";
+        ostr << std::setw(3) << std::setfill(' ') << ss.seq_succpred_;
         ostr << "  ";
         printTimeDuration(ostr, ss.link_time_);
         ostr << "  ";

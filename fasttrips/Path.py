@@ -52,13 +52,15 @@ class Path:
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 
-    STATE_IDX_LABEL     = 0  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_DEPARR    = 1  #: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.
-    STATE_IDX_DEPARRMODE= 2  #: string or trip identifier.
-    STATE_IDX_SUCCPRED  = 3  #: stop identifier or TAZ identifier
-    STATE_IDX_LINKTIME  = 4  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_COST      = 5  #: cost float, for hyperpath/stochastic assignment
-    STATE_IDX_ARRIVAL   = 6  #: arrival time, a :py:class:`datetime.datetime` instance, for hyperpath/stochastic assignment
+    STATE_IDX_LABEL         = 0  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_DEPARR        = 1  #: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.
+    STATE_IDX_DEPARRMODE    = 2  #: string or trip identifier.
+    STATE_IDX_SUCCPRED      = 3  #: stop identifier or TAZ identifier
+    STATE_IDX_SEQ           = 4  #: sequence (for trip)
+    STATE_IDX_SEQ_SUCCPRED  = 5  #: sequence for successor/predecessor
+    STATE_IDX_LINKTIME      = 6  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_COST          = 7  #: cost float, for hyperpath/stochastic assignment
+    STATE_IDX_ARRIVAL       = 8  #: arrival time, a :py:class:`datetime.datetime` instance, for hyperpath/stochastic assignment
 
     STATE_MODE_ACCESS   = "Access"
     STATE_MODE_EGRESS   = "Egress"

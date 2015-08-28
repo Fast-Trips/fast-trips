@@ -119,7 +119,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     // package for returning.  We'll separate ints and doubles.
     npy_intp dims_int[2];
     dims_int[0] = path_stops.size();
-    dims_int[1] = 3; // stop_id, deparr_mode_, succpred_
+    dims_int[1] = 5; // stop_id, deparr_mode_, stop_succpred_, seq_, seq_succpred_
     PyArrayObject *ret_int = (PyArrayObject *)PyArray_SimpleNew(2, dims_int, NPY_INT32);
 
     npy_intp dims_double[2];
@@ -131,7 +131,9 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
         int stop_id = path_stops[ind];
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 0) = stop_id;
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 1) = path_states[stop_id].deparr_mode_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path_states[stop_id].succpred_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path_states[stop_id].stop_succpred_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 3) = path_states[stop_id].seq_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path_states[stop_id].seq_succpred_;
 
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = path_states[stop_id].label_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path_states[stop_id].deparr_time_;
@@ -154,11 +156,7 @@ static PyMethodDef fasttripsMethods[] = {
 PyMODINIT_FUNC
 init_fasttrips(void)
 {
-    printf("init_fasttrips called\n");
-
-    std::string x = "all animals want to live";
-    printf("string x = [%s]\n", x.c_str());
-
+    // printf("init_fasttrips called\n");
     std::priority_queue<std::string> myqueue;
 
     PyObject *m = Py_InitModule("_fasttrips", fasttripsMethods);

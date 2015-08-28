@@ -67,8 +67,12 @@ namespace fasttrips {
     typedef struct {
         double  label_;                 ///< The label for this stop
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
-        int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound
-        int     succpred_;              ///< Successor stop for outbound, predecessor stop for inbound
+        int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
+                                        ///< One of PathFinder::MODE_ACCESS, PathFinder::MODE_EGRESS,
+                                        ///< PathFinder::MODE_TRANSFER, or a trip ID
+        int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
+        int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
+        int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time
         double  cost_;                  ///< Cost
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound

@@ -56,7 +56,7 @@ class FastTrips:
                                handle capacity bumps), we'd like to append rather than overwrite.
         :type appendLog:       bool
         """
-        #: :py:class:`list` of :py:class:`fasttrips.Passenger` instances
+        #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
         self.passengers      = None
 
         #: :py:class:`dict` with :py:attr:`fasttrips.Route.route_id` key and :py:class:`fasttrips.Route` value

@@ -83,7 +83,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PASSENGER_IDS             = [11,48]
+    TRACE_PASSENGER_IDS             = [11]
 
     #: Maximum number of times to call :py:meth:`choose_path_from_hyperpath_states`
     MAX_HYPERPATH_ASSIGN_ATTEMPTS   = 1001   # that's a lot
@@ -104,7 +104,7 @@ class Assignment:
     #: Set to 1 to run everything in this process
     #: Set to less than 1 to use the result of :py:func:`multiprocessing.cpu_count`
     #: Set to positive integer greater than 1 to set a fixed number of processes
-    NUMBER_OF_PROCESSES             = 1
+    NUMBER_OF_PROCESSES             = 14
 
     #: Extra time so passengers don't get bumped (?)
     BUMP_BUFFER                     = datetime.timedelta(minutes = 5)
@@ -274,104 +274,114 @@ class Assignment:
         todo_queue          = None
         done_queue          = None
 
+        info_freq           = pow(10, int(math.log(len(FT.passengers)+1,10)-2))
+        if info_freq < 1: info_freq = 1
+
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
             num_processes   = multiprocessing.cpu_count()
 
-        # Setup multiprocessing processes
-        if num_processes > 1:
-            todo_queue      = multiprocessing.Queue()
-            done_queue      = multiprocessing.Queue()
-            for process_idx in range(1, 1+num_processes):
-                FastTripsLogger.info("Starting worker process %2d" % process_idx)
-                process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                                                            args=(iteration, process_idx, FT.input_dir, FT.output_dir,
-                                                                  todo_queue, done_queue,
-                                                                  Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
-                process_list[-1].start()
-        else:
-            Assignment.initialize_fasttrips_extension(0, output_dir, FT)
-
-        # process tasks or send tasks to workers for processing
-        num_paths_found  = 0
-        for passenger in FT.passengers:
-            passenger_id = passenger.passenger_id
-
-            if not passenger.path.goes_somewhere(): continue
-
-            if iteration > 1 and passenger_id not in Assignment.bumped_ids:
-                num_paths_assigned += 1
-                continue
-
+        # this is probalby time consuming... put in a try block
+        try:
+            # Setup multiprocessing processes
             if num_processes > 1:
-                todo_queue.put( (passenger_id, passenger.path) )
+                todo_queue      = multiprocessing.Queue()
+                done_queue      = multiprocessing.Queue()
+                for process_idx in range(1, 1+num_processes):
+                    FastTripsLogger.info("Starting worker process %2d" % process_idx)
+                    process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
+                                                                args=(iteration, process_idx, FT.input_dir, FT.output_dir,
+                                                                      todo_queue, done_queue,
+                                                                      Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN)))
+                    process_list[-1].start()
             else:
-                trace_passenger = False
-                if passenger_id in Assignment.TRACE_PASSENGER_IDS:
-                    FastTripsLogger.debug("Tracing assignment of passenger %s" % str(passenger_id))
-                    trace_passenger = True
+                Assignment.initialize_fasttrips_extension(0, output_dir, FT)
 
-                # do the work
-                (asgn_iters, return_states) = Assignment.find_trip_based_path(FT, passenger.path,
-                                                                              Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
-                                                                              trace=trace_passenger)
-                passenger.path.states = return_states
+            # process tasks or send tasks to workers for processing
+            num_paths_found  = 0
+            for path_id,passenger in FT.passengers.iteritems():
+                passenger_id = passenger.passenger_id
 
-                if passenger.path.path_found():
-                    num_paths_found += 1
+                if not passenger.path.goes_somewhere(): continue
 
-                if True or num_paths_found % 1000 == 0:
-                    time_elapsed = datetime.datetime.now() - start_time
-                    FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
-                                         num_paths_found, len(FT.passengers),
-                                         int( time_elapsed.total_seconds() / 3600),
-                                         int( (time_elapsed.total_seconds() % 3600) / 60),
-                                         time_elapsed.total_seconds() % 60))
+                if iteration > 1 and passenger_id not in Assignment.bumped_ids:
+                    num_paths_assigned += 1
+                    continue
 
-        # multiprocessing follow-up
-        if num_processes > 1:
-            # we're done, let each process know
-            for process_idx in range(len(process_list)):
-                todo_queue.put('DONE')
-
-            # get results
-            done_procs          = 0
-            while done_procs < len(process_list):
-
-                result = done_queue.get()
-                if result == 'DONE':
-                    FastTripsLogger.info("Received done")
-                    done_procs += 1
-
+                if num_processes > 1:
+                    todo_queue.put( (passenger_id, passenger.path) )
                 else:
-                    passenger_id    = result[0]
-                    path_id         = result[1]
-                    asgn_iters      = result[2]
-                    return_states   = result[3]
+                    trace_passenger = False
+                    if passenger_id in Assignment.TRACE_PASSENGER_IDS:
+                        FastTripsLogger.debug("Tracing assignment of passenger %s" % str(passenger_id))
+                        trace_passenger = True
 
-                    # find passenger with path_id and set return
-                    # todo - inefficient.  fix.
-                    for passenger in FT.passengers:
-                        if passenger.path.path_id == path_id:
-                            passenger.path.states = return_states
+                    # do the work
+                    (asgn_iters, return_states) = Assignment.find_trip_based_path(FT, passenger.path,
+                                                                                  Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                                                  trace=trace_passenger)
+                    passenger.path.states = return_states
 
-                            if passenger.path.path_found():
-                                num_paths_found += 1
+                    if passenger.path.path_found():
+                        num_paths_found += 1
 
-                            break
+                    if num_paths_found % info_freq == 0:
+                        time_elapsed = datetime.datetime.now() - start_time
+                        FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                             num_paths_found, len(FT.passengers),
+                                             int( time_elapsed.total_seconds() / 3600),
+                                             int( (time_elapsed.total_seconds() % 3600) / 60),
+                                             time_elapsed.total_seconds() % 60))
 
-                if True or num_paths_found % 1000 == 0:
-                    time_elapsed = datetime.datetime.now() - start_time
-                    FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
-                                         num_paths_found, len(FT.passengers),
-                                         int( time_elapsed.total_seconds() / 3600),
-                                         int( (time_elapsed.total_seconds() % 3600) / 60),
-                                         time_elapsed.total_seconds() % 60))
+            # multiprocessing follow-up
+            if num_processes > 1:
+                # we're done, let each process know
+                for process_idx in range(len(process_list)):
+                    todo_queue.put('DONE')
 
-            # join up my processes
+                # get results
+                done_procs          = 0
+                while done_procs < len(process_list):
+
+                    result = done_queue.get()
+                    if result == 'DONE':
+                        FastTripsLogger.debug("Received done")
+                        done_procs += 1
+
+                    else:
+                        passenger_id    = result[0]
+                        path_id         = result[1]
+                        asgn_iters      = result[2]
+                        return_states   = result[3]
+
+                        # find passenger with path_id and set return
+                        FT.passengers[path_id].path.states = return_states
+                        if FT.passengers[path_id].path.path_found():
+                            num_paths_found += 1
+
+                    if num_paths_found % info_freq == 0:
+                        time_elapsed = datetime.datetime.now() - start_time
+                        FastTripsLogger.info(" %6d / %6d passenger paths assigned.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                             num_paths_found, len(FT.passengers),
+                                             int( time_elapsed.total_seconds() / 3600),
+                                             int( (time_elapsed.total_seconds() % 3600) / 60),
+                                             time_elapsed.total_seconds() % 60))
+
+                # join up my processes
+                for proc in process_list:
+                    proc.join()
+
+        except (KeyboardInterrupt, SystemExit):
+            FastTripsLogger.error("Exception caught: %s" % str(sys.exc_info()[0]))
+            FastTripsLogger.error("Terminating processes")
+            # terminating my processes
             for proc in process_list:
-                proc.join()
-
+                proc.terminate()
+            sys.exit(2)
+        except:
+            # some other error
+            FastTripsLogger.error("Exception caught: %s" % str(sys.exc_info()[0]))
+            # continue?
         return num_paths_found
 
     @staticmethod
@@ -476,6 +486,8 @@ class Assignment:
                               midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
                               mode,                                                         # departure/arrival mode
                               ret_ints[index,2],                                            # successor/predecessor
+                              ret_ints[index,3],                                            # sequence
+                              ret_ints[index,4],                                            # sequence succ/pred
                               datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
                               ret_doubles[index,3],                                         # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
@@ -486,6 +498,8 @@ class Assignment:
                               midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
                               mode,                                                         # departure/arrival mode
                               ret_ints[index,2],                                            # successor/predecessor
+                              ret_ints[index,3],                                            # sequence
+                              ret_ints[index,4],                                            # sequence succ/pred
                               datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
                               datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
@@ -1148,6 +1162,8 @@ class Assignment:
         `trip_id`               float64  the :py:attr:`Trip.trip_id` for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `A_id`                  float64  the :py:attr:`Stop.stop_id` at the start of the link, or a :py:attr:`TAZ.taz_id` for access links
         `B_id`                  float64  the :py:attr:`Stop.stop_id` at the end of the link, or a :py:attr:`TAZ.taz_id` for access links
+        `A_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
+        `B_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
         `A_time`         datetime64[ns]  the time the passenger arrives at `A_id`
         `B_time`         datetime64[ns]  the time the passenger arrives at `B_id`
         `linktime`      timedelta64[ns]  the time spent on the link
@@ -1157,8 +1173,7 @@ class Assignment:
         and labeled with the given `iteration`.
         """
         mylist = []
-        path_id = 0
-        for passenger in FT.passengers:
+        for path_id,passenger in FT.passengers.iteritems():
             if not passenger.path.goes_somewhere():   continue
             if not passenger.path.path_found():       continue
 
@@ -1208,11 +1223,15 @@ class Assignment:
 
                     a_id            = state_id
                     b_id            = state[Path.STATE_IDX_SUCCPRED]
+                    a_seq           = state[Path.STATE_IDX_SEQ]
+                    b_seq           = state[Path.STATE_IDX_SEQ_SUCCPRED]
                     a_time          = state[Path.STATE_IDX_DEPARR]
                     b_time          = a_time + state[Path.STATE_IDX_LINKTIME]
                     if not passenger.path.outbound():
                         a_id        = state[Path.STATE_IDX_SUCCPRED]
                         b_id        = state_id
+                        a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
+                        b_seq       = state[Path.STATE_IDX_SEQ]
                         b_time      = state[Path.STATE_IDX_DEPARR]
                         a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
 
@@ -1226,6 +1245,8 @@ class Assignment:
                                None,
                                a_id,
                                a_id,
+                               a_seq,
+                               a_seq,
                                a_time,
                                a_time,
                                datetime.timedelta()
@@ -1240,19 +1261,21 @@ class Assignment:
                            trip_id,
                            a_id,
                            b_id,
+                           a_seq,
+                           b_seq,
                            a_time,
                            b_time,
                            state[Path.STATE_IDX_LINKTIME]]
                     mylist.append(row)
 
                     prev_linkmode = linkmode
-            path_id += 1
         df =  pandas.DataFrame(mylist,
                                columns=['passenger_id', 'path_id',
                                         'pathdir',  # for debugging
                                         'pathmode', # for output
                                         'linkmode', 'trip_id',
                                         'A_id','B_id',
+                                        'A_seq','B_seq',
                                         'A_time', 'B_time',
                                         'linktime'])
         FastTripsLogger.debug("Setup passengers dataframe:\n%s" % str(df.dtypes))
@@ -1319,6 +1342,7 @@ class Assignment:
                                      how    ='left')
         passengers_df = passengers_df[passengers_df.keep==True]
         passengers_df.drop('keep', axis=1, inplace=True)
+        FastTripsLogger.debug(" -> Went from %d passengers to %d passengers" % (passengers_df_len, len(passengers_df)))
         passengers_df_len = len(passengers_df)
 
         # veh_trips_df.set_index(['trip_id','stop_seq','stop_id'],verify_integrity=True,inplace=True)
@@ -1341,28 +1365,29 @@ class Assignment:
 
         passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
         passenger_trips_len = len(passenger_trips)
+        FastTripsLogger.debug("       Have %d pasenger trips" % passenger_trips_len)
 
-        passenger_trips = pandas.merge(left   =passenger_trips,      right   =veh_trips_df[['trip_id','stop_seq','stop_id','depart_time']],
-                                       left_on=['trip_id','A_id'],   right_on=['trip_id','stop_id'],
+        passenger_trips = pandas.merge(left   =passenger_trips,              right   =veh_trips_df[['trip_id','stop_seq','stop_id','depart_time']],
+                                       left_on=['trip_id','A_id','A_seq'],   right_on=['trip_id','stop_id','stop_seq'],
                                        how='left')
-        passenger_trips = pandas.merge(left   =passenger_trips,      right   =veh_trips_df[['trip_id','stop_seq','stop_id','arrive_time']],
-                                       left_on=['trip_id','B_id'],   right_on=['trip_id','stop_id'],
+        passenger_trips = pandas.merge(left   =passenger_trips,              right   =veh_trips_df[['trip_id','stop_seq','stop_id','arrive_time']],
+                                       left_on=['trip_id','B_id','B_seq'],   right_on=['trip_id','stop_id','stop_seq'],
                                        how='left')
         passenger_trips.rename(columns=
            {'depart_time'   :'board_time',      # transit vehicle depart time (at A) = board time for pax
             'A_time'        :'arrival_time',    # passenger arrival at the stop
             'arrive_time'   :'alight_time',     # transit vehicle arrive time (at B) = alight time for pax
-            'stop_seq_x'    :'A_seq',
-            'stop_seq_y'    :'B_seq'
             }, inplace=True)
-        passenger_trips.drop(['stop_id_x','stop_id_y'], axis=1, inplace=True) # redundant with A_id, B_id
+        # redundant with A_id, B_id, A_seq, B_seq
+        passenger_trips.drop(['stop_id_x','stop_id_y','stop_seq_x','stop_seq_y'], axis=1, inplace=True)
+        FastTripsLogger.debug("       Have %d pasenger trips" % len(passenger_trips))
 
         ######################################################################################################
         FastTripsLogger.info("Step 2. Some trips (outbound) were found by searching backwards, so they wait *after arriving*.")
         FastTripsLogger.info("        -> They should just move on and wait at the next stop (if there is one)")
 
         # Get trip board/alight time back to the passengers table
-        passengers_df = pandas.merge(left=passengers_df, right=passenger_trips[['passenger_id','path_id','trip_id','board_time','alight_time','A_seq','B_seq']],
+        passengers_df = pandas.merge(left=passengers_df, right=passenger_trips[['passenger_id','path_id','trip_id','board_time','alight_time']],
                                      on=['passenger_id','path_id','trip_id'], how='left')
         passengers_df = pandas.merge(left      =passengers_df, right      =passengers_df[['board_time','alight_time']].shift(1),
                                      left_index=True,          right_index=True,
@@ -1423,9 +1448,10 @@ class Assignment:
         passengers_df.loc[(passengers_df.linkmode    ==Path.STATE_MODE_ACCESS)& \
                           (passengers_df.B_time       <passengers_df.A_time_next), 'B_time']  = passengers_df.A_time_next
 
+
         # passenger_trips is all wrong now -- redo
         passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
-        # FastTripsLogger.debug("Passenger Trips: \n%s" % str(passenger_trips.head()))
+        FastTripsLogger.debug("Passenger Trips: \n%s" % str(passenger_trips.head()))
 
         ######################################################################################################
         bump_iter = 0
@@ -1434,22 +1460,21 @@ class Assignment:
             FastTripsLogger.info("Step 4. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
 
             # Group to boards by counting path_ids for a (trip_id, A_id as stop_id)
-            passenger_trips_boards = passenger_trips[['path_id','trip_id','A_id']].groupby(['trip_id','A_id']).count()
-            passenger_trips_boards.index.names = ['trip_id','stop_id']
+            passenger_trips_boards = passenger_trips[['path_id','trip_id','A_id','A_seq']].groupby(['trip_id','A_id','A_seq']).count()
+            passenger_trips_boards.index.names = ['trip_id','stop_id','stop_seq']
 
             # And alights by counting path_ids for a (trip_id, B_id as stop_id)
-            passenger_trips_alights = passenger_trips[['path_id','trip_id','B_id']].groupby(['trip_id','B_id']).count()
-            passenger_trips_alights.index.names = ['trip_id','stop_id']
+            passenger_trips_alights = passenger_trips[['path_id','trip_id','B_id','B_seq']].groupby(['trip_id','B_id','B_seq']).count()
+            passenger_trips_alights.index.names = ['trip_id','stop_id','stop_seq']
 
             # Join them to the transit vehicle trips so we can put people on vehicles
-            # TODO: This will be wrong when stop_id is not unique for a trip
-            veh_loaded_df = pandas.merge(left   =veh_trips_df,          right      =passenger_trips_boards,
-                                         left_on=['trip_id','stop_id'], right_index=True,
+            veh_loaded_df = pandas.merge(left   =veh_trips_df,                     right      =passenger_trips_boards,
+                                         left_on=['trip_id','stop_id','stop_seq'], right_index=True,
                                          how    ='left')
             veh_loaded_df.rename(columns={'path_id':'boards'}, inplace=True)
 
-            veh_loaded_df = pandas.merge(left   =veh_loaded_df,          right      =passenger_trips_alights,
-                                        left_on=['trip_id','stop_id'], right_index=True,
+            veh_loaded_df = pandas.merge(left   =veh_loaded_df,                   right      =passenger_trips_alights,
+                                        left_on=['trip_id','stop_id','stop_seq'], right_index=True,
                                         how    ='left')
             veh_loaded_df.rename(columns={'path_id':'alights'}, inplace=True)
             veh_loaded_df.fillna(value=0, inplace=True)
@@ -1723,6 +1748,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, outpu
         todo = todo_path_queue.get()
         if todo == 'DONE':
             done_queue.put('DONE')
+            FastTripsLogger.debug("Received DONE from the todo_path_queue")
             return
 
         # do the work

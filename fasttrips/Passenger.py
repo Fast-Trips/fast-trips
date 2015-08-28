@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os,sys
+import collections,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
@@ -47,10 +47,11 @@ class Passenger:
         FastTripsLogger.debug("=========== DEMAND ===========\n" + str(demand_df.head()))
         FastTripsLogger.debug("\n"+str(demand_df.dtypes))
 
-        passengers = []
+        passengers = collections.OrderedDict()
         passenger_records = demand_df.to_dict(orient='records')
         for passenger_record in passenger_records:
-            passengers.append(Passenger(passenger_record))
+            pax = Passenger(passenger_record)
+            passengers[pax.path.path_id] = pax
 
         FastTripsLogger.info("Read %7d passengers" % len(passengers))
         return passengers
