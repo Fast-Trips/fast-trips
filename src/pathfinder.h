@@ -38,12 +38,28 @@ namespace fasttrips {
         int     stop_id_;
         double  arrive_time_;   // minutes after midnight
         double  depart_time_;   // minutes after midnight
-    } StopTripTime;
+    } TripStopTime;
+
+    /// For capacity lookups: TripStop definition
+    typedef struct {
+        int     trip_id_;
+        int     seq_;
+        int     stop_id_;
+    } TripStop;
+
+    /// Comparator for the PathFinder::bump_wait_ std::map
+    struct TripStopCompare {
+        bool operator()(const TripStop &ts1, const TripStop &ts2) const {
+            return ((ts1.trip_id_ < ts2.trip_id_) ||
+                    ((ts1.trip_id_ == ts2.trip_id_) && (ts1.seq_ < ts2.seq_)));
+        }
+    };
 
     /**
      * The definition of the path we're trying to find.
      */
     typedef struct {
+        int     passenger_id_;          ///< The passenger ID
         int     path_id_;               ///< The path ID - uniquely identifies a passenger+path
         bool    hyperpath_;             ///< If true, find path using stochastic algorithm
         int     origin_taz_id_;         ///< Origin of path
@@ -125,6 +141,12 @@ namespace fasttrips {
         /// for multi-processing
         int process_num_;
 
+        /// time window
+        double time_window_;
+
+        /// bump buffer
+        double bump_buffer_;
+
         // ================ Network supply ================
         /// TAZ information: taz id -> stop id -> costs
         std::map<int, std::map<int, TazStopCost> > taz_access_links_;
@@ -132,9 +154,19 @@ namespace fasttrips {
         std::map<int, std::map<int, TransferCost> > transfer_links_o_d_;
         std::map<int, std::map<int, TransferCost> > transfer_links_d_o_;
         /// Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
-        std::map<int, std::vector<StopTripTime> > trip_stop_times_;
+        std::map<int, std::vector<TripStopTime> > trip_stop_times_;
         /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
-        std::map<int, std::vector<StopTripTime> > stop_trip_times_;
+        std::map<int, std::vector<TripStopTime> > stop_trip_times_;
+
+        /**
+         * From simulation: When there are capacity limitations on a vehicle and passengers cannot
+         * board a vehicle, this is the time the bumped passengers arrive at a stop and wait for a
+         * vehicle they cannot board.
+         *
+         * This structure maps the fasttrips::TripStop to the arrival time of the first waiting
+         * would-be passenger.
+         */
+        std::map<TripStop, double, struct TripStopCompare> bump_wait_;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -233,7 +265,7 @@ namespace fasttrips {
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
          */
-        void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<StopTripTime>& return_trips,  double time_window=30.0) const;
+        void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips,  double time_window=30.0) const;
 
         double calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
 
@@ -293,6 +325,20 @@ namespace fasttrips {
                               int*          xfer_index,
                               double*       xfer_data,
                               int           num_xfers);
+
+        /**
+         * Setup the information for bumped passengers.
+         *
+         * @param bw_index          For populating PathFinder::bump_wait_, this array contains the
+         *                          fasttrips::TripStop fields.
+         * @param bw_data           For populating the PathFinder::bum_wait_, this contains the
+         *                          arrival time of the first would-be waiting passenger
+         * @param num_bw            The number of trip stops with bump waits described in the
+         *                          previous two arrays.
+         */
+        void setBumpWait(int*       bw_index,
+                         double*    bw_data,
+                         int        num_bw);
 
         /// Destructor
         ~PathFinder();

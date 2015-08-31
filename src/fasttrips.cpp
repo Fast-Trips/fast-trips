@@ -9,20 +9,8 @@
 
 static PyObject *pyError;
 
-// global variable?
+// global variable
 fasttrips::PathFinder pathfinder;
-
-static PyObject *
-_fasttrips_system(PyObject *self, PyObject *args)
-{
-    const char *command;
-    int sts;
-
-    if (!PyArg_ParseTuple(args, "s", &command))
-        return NULL;
-    sts = system(command);
-    return Py_BuildValue("i", sts);
-}
 
 static PyObject *
 _fasttrips_initialize_supply(PyObject *self, PyObject *args)
@@ -36,7 +24,7 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    printf("_fasttrips_initialize_supply for output_dir %s proc num %d\n", output_dir, proc_num);
+    // printf("_fasttrips_initialize_supply for output_dir %s proc num %d\n", output_dir, proc_num);
     // access_links index: TAZ id, stop id
     pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
     if (pyo == NULL) return NULL;
@@ -98,12 +86,39 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+_fasttrips_set_bump_wait(PyObject* self, PyObject *args)
+{
+    PyObject *input1, *input2;
+    if (!PyArg_ParseTuple(args, "OO", &input1, &input2)) {
+        return NULL;
+    }
+    PyArrayObject *pyo;
+
+    // bump wait index: trip id, stop sequence, stop id
+    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
+    if (pyo == NULL) return NULL;
+    int* bw_index = (int*)PyArray_DATA(pyo);
+    int num_bw    = PyArray_DIMS(pyo)[0];
+    assert(3 == PyArray_DIMS(pyo)[1]);
+
+    // bump wait data: arrival time
+    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_DOUBLE, 1, 1);
+    if (pyo == NULL) return NULL;
+    double* bw_times= (double*)PyArray_DATA(pyo);
+    int num_times   = PyArray_DIMS(pyo)[0];
+    assert(num_times == num_bw);
+
+    pathfinder.setBumpWait(bw_index, bw_times, num_bw);
+    Py_RETURN_NONE;
+}
+
+static PyObject *
 _fasttrips_find_path(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
     int   hyperpath_i, outbound_i, trace_i;
-    if (!PyArg_ParseTuple(args, "iiiiidi", &path_spec.path_id_, &hyperpath_i,
+    if (!PyArg_ParseTuple(args, "iiiiiidi", &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
                           &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
                           &outbound_i, &path_spec.preferred_time_, &trace_i)) {
         return NULL;
@@ -147,8 +162,8 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef fasttripsMethods[] = {
-    {"system",              _fasttrips_system,            METH_VARARGS, "Execute a shell command."  },
     {"initialize_supply",   _fasttrips_initialize_supply, METH_VARARGS, "Initialize network supply" },
+    {"set_bump_wait",       _fasttrips_set_bump_wait,     METH_VARARGS, "Update bump wait"          },
     {"find_path",           _fasttrips_find_path,         METH_VARARGS, "Find trip-based path"      },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

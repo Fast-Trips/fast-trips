@@ -2,6 +2,8 @@
 
 #include <assert.h>
 #include <sstream>
+#include <ios>
+#include <iostream>
 #include <iomanip>
 #include <math.h>
 #include <algorithm>
@@ -22,7 +24,7 @@ namespace fasttrips {
     /**
      * This doesn't really do anything.
      */
-    PathFinder::PathFinder() : process_num_(-1)
+    PathFinder::PathFinder() : process_num_(-1), time_window_(30.0), bump_buffer_(5.0)
     {
     }
 
@@ -58,7 +60,7 @@ namespace fasttrips {
         }
 
         for (int i=0; i<num_stoptimes; ++i) {
-            StopTripTime stt = {
+            TripStopTime stt = {
                 stoptime_index[3*i],    // trip id
                 stoptime_index[3*i+1],  // sequence
                 stoptime_index[3*i+2],  // stop id
@@ -87,6 +89,20 @@ namespace fasttrips {
         }
     }
 
+    void PathFinder::setBumpWait(int*       bw_index,
+                                 double*    bw_data,
+                                 int        num_bw)
+    {
+        for (int i=0; i<num_bw; ++i) {
+            TripStop ts = { bw_index[3*i], bw_index[3*i+1], bw_index[3*i+2] };
+            bump_wait_[ts] = bw_data[i];
+            if (true && (process_num_ <= 1) && ((i<5) || (i>num_bw-5))) {
+                printf("bump_wait[%6d %6d %6d] = %f\n",
+                       bw_index[3*i], bw_index[3*i+1], bw_index[3*i+2], bw_data[i] );
+            }
+        }
+    }
+
     /// This doesn't really do anything because the instance variables are all STL structures
     /// which take care of freeing memory.
     PathFinder::~PathFinder()
@@ -106,8 +122,8 @@ namespace fasttrips {
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
-            trace_file.open(ss.str().c_str());
-            trace_file << "Tracing assignment of passenger " << path_spec.path_id_ << std::endl;
+            trace_file.open(ss.str().c_str(), (std::ios_base::out | std::ios_base::app));
+            trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
         }
 
         StopStates      stop_states;
@@ -257,7 +273,22 @@ namespace fasttrips {
 
                 // check (departure mode, stop) if someone's waiting already
                 // curious... this only applies to OUTBOUND
-                // TODO
+                if (path_spec.outbound_)
+                {
+                    TripStop ts = { current_mode, current_stop_state[0].seq_, current_label_stop.stop_id_ };
+                    std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
+                    if (bwi != bump_wait_.end())
+                    {
+                        // time a bumped passenger started waiting
+                        float latest_time = bwi->second;
+                        // we can't come in time
+                        if (deparr_time - time_window_ > latest_time) { continue; }
+                        // leave earlier -- to get in line 5 minutes before bump wait time
+                        // (confused... We don't resimulate previous bumping passenger so why does this make sense?)
+                        new_label       = new_label + (current_stop_state[0].deparr_time_ - latest_time) + bump_buffer_;
+                        deparr_time     = latest_time - transfer_time - bump_buffer_;
+                    }
+                }
                 if (possible_xfer_iter != stop_states.end())
                 {
                     double old_label = possible_xfer_iter->second.front().label_;
@@ -312,9 +343,9 @@ namespace fasttrips {
         int current_mode = current_stop_state[0].deparr_mode_;      // why index 0?
 
         // Update by trips
-        std::vector<StopTripTime> relevant_trips;
+        std::vector<TripStopTime> relevant_trips;
         getTripsWithinTime(current_label_stop.stop_id_, path_spec.outbound_, latest_dep_earliest_arr, relevant_trips);
-        for (std::vector<StopTripTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
+        for (std::vector<TripStopTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
 
             if (path_spec.trace_) {
                 trace_file << "valid trips: " << it->trip_id_ << " " << it->seq_ << " ";
@@ -328,23 +359,58 @@ namespace fasttrips {
             // trip arrival time (outbound) / trip departure time (inbound)
             double arrdep_time = path_spec.outbound_ ? it->arrive_time_ : it->depart_time_;
             double wait_time = (latest_dep_earliest_arr - arrdep_time)*dir_factor;
+            double arrive_time;
 
             // deterministic path-finding: check capacities
             if (!path_spec.hyperpath_) {
-                // TODO
+                TripStop check_for_bump_wait;
+                if (path_spec.outbound_) {
+                    // if outbound, this trip loop is possible trips *before* the current trip
+                    // checking that we get here in time for the current trip
+                    check_for_bump_wait.trip_id_ = current_stop_state[0].deparr_mode_;
+                    check_for_bump_wait.seq_     = current_stop_state[0].seq_;
+                    check_for_bump_wait.stop_id_ = current_label_stop.stop_id_;
+                    //  arrive from the loop trip
+                    arrive_time = arrdep_time;
+                } else {
+                    // if inbound, the trip is the next trip
+                    // checking that we can get here in time for that trip
+                    check_for_bump_wait.trip_id_ = it->trip_id_;
+                    check_for_bump_wait.seq_     = it->seq_;
+                    check_for_bump_wait.stop_id_ = current_label_stop.stop_id_;
+                    // arrive for this trip
+                    arrive_time = current_stop_state[0].deparr_time_;
+                }
+                std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(check_for_bump_wait);
+                if (bwi != bump_wait_.end()) {
+                    // time a bumped passenger started waiting
+                    float latest_time = bwi->second;
+                    if (path_spec.trace_) {
+                        trace_file << "checking latest_time ";
+                        printTime(trace_file, latest_time);
+                        trace_file << " vs arrive_time ";
+                        printTime(trace_file, arrive_time);
+                        trace_file << " for potential trip " << it->trip_id_ << std::endl;
+                    }
+                    if ((arrive_time + 0.01 >= latest_time) &&
+                        (current_stop_state[0].deparr_mode_ != it->trip_id_)) {
+                        if (path_spec.trace_) { trace_file << "Continuing" << std::endl; }
+                        continue;
+                    }
+                }
             }
 
-            // get the StopTripTimes for this trip
-            std::map<int, std::vector<StopTripTime> >::const_iterator tstiter = trip_stop_times_.find(it->trip_id_);
+            // get the TripStopTimes for this trip
+            std::map<int, std::vector<TripStopTime> >::const_iterator tstiter = trip_stop_times_.find(it->trip_id_);
             assert(tstiter != trip_stop_times_.end());
-            const std::vector<StopTripTime>& possible_stops = tstiter->second;
+            const std::vector<TripStopTime>& possible_stops = tstiter->second;
 
             // these are the relevant potential trips/stops; iterate through them
             unsigned int start_seq = path_spec.outbound_ ? 1 : it->seq_+1;
             unsigned int end_seq   = path_spec.outbound_ ? it->seq_-1 : possible_stops.size();
             for (unsigned int seq_num = start_seq; seq_num <= end_seq; ++seq_num) {
                 // possible board for outbound / alight for inbound
-                const StopTripTime& possible_board_alight = possible_stops.at(seq_num-1);
+                const TripStopTime& possible_board_alight = possible_stops.at(seq_num-1);
 
                 // new label = length of trip so far if the passenger boards/alights at this stop
                 int board_alight_stop = possible_board_alight.stop_id_;
@@ -627,7 +693,21 @@ namespace fasttrips {
                 new_label = current_stop_state.front().label_ + new_cost;
 
                 // capacity check
-                // todo
+                if (path_spec.outbound_)
+                {
+                    TripStop ts = { current_stop_state[0].deparr_mode_, current_stop_state[0].seq_, stop_id };
+                    std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
+                    if (bwi != bump_wait_.end()) {
+                        // time a bumped passenger started waiting
+                        float latest_time = bwi->second;
+                        // we can't come in time
+                        if (deparr_time - time_window_ > latest_time) { continue; }
+                        // leave earlier -- to get in line 5 minutes before bump wait time
+                        new_label   = new_label + (current_stop_state[0].deparr_time_ - latest_time) + bump_buffer_;
+                        deparr_time = latest_time - access_time - bump_buffer_;
+                    }
+                }
+
                 double old_label = PathFinder::MAX_TIME;
                 if (taz_state.size() > 0)
                 {
@@ -921,7 +1001,7 @@ namespace fasttrips {
      */
     double PathFinder::getScheduledDeparture(int trip_id, int stop_id, int sequence) const
     {
-        std::map<int, std::vector<StopTripTime> >::const_iterator tsti = trip_stop_times_.find(trip_id);
+        std::map<int, std::vector<TripStopTime> >::const_iterator tsti = trip_stop_times_.find(trip_id);
         if (tsti == trip_stop_times_.end()) { return -1; }
 
         for (size_t stt_index = 0; stt_index < tsti->second.size(); ++stt_index)
@@ -939,14 +1019,14 @@ namespace fasttrips {
      * If outbound, then we're searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint.
      * If inbound,  then we're searching forwards,  so this returns trips that depart at the stop time after timepoint.
      */
-    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<StopTripTime>& return_trips, double time_window) const
+    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips, double time_window) const
     {
         // are there any trips for this stop?
-        std::map<int, std::vector<StopTripTime> >::const_iterator mapiter = stop_trip_times_.find(stop_id);
+        std::map<int, std::vector<TripStopTime> >::const_iterator mapiter = stop_trip_times_.find(stop_id);
         if (mapiter == stop_trip_times_.end()) {
             return;
         }
-        for (std::vector<StopTripTime>::const_iterator it  = mapiter->second.begin();
+        for (std::vector<TripStopTime>::const_iterator it  = mapiter->second.begin();
                                                        it != mapiter->second.end();   ++it) {
             if (outbound && (it->arrive_time_ < timepoint) && (it->arrive_time_ > timepoint-time_window)) {
                 return_trips.push_back(*it);
