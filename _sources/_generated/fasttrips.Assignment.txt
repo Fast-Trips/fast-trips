@@ -13,14 +13,26 @@ fasttrips.Assignment
 
    .. autosummary::
    
+      ~Assignment.__init__
+      ~Assignment.assign_passengers
       ~Assignment.assign_paths
-      ~Assignment.deterministically_assign_passengers
-      ~Assignment.find_backwards_trip_based_shortest_path
+      ~Assignment.calculate_nonwalk_label
+      ~Assignment.choose_path_from_hyperpath_states
+      ~Assignment.choose_state
+      ~Assignment.datetime64_formatter
+      ~Assignment.datetime64_min_formatter
+      ~Assignment.find_trip_based_path
+      ~Assignment.initialize_fasttrips_extension
       ~Assignment.print_load_profile
       ~Assignment.print_passenger_paths
       ~Assignment.print_passenger_times
+      ~Assignment.read_assignment_results
       ~Assignment.read_configuration
+      ~Assignment.setup_passengers
+      ~Assignment.setup_trips
       ~Assignment.simulate
+      ~Assignment.test_rand
+      ~Assignment.timedelta_formatter
    
    
 
@@ -34,16 +46,26 @@ fasttrips.Assignment
       ~Assignment.ASSIGNMENT_TYPE_DET_ASGN
       ~Assignment.ASSIGNMENT_TYPE_SIM_ONLY
       ~Assignment.ASSIGNMENT_TYPE_STO_ASGN
+      ~Assignment.BUMP_BUFFER
+      ~Assignment.BUMP_ONE_AT_A_TIME
       ~Assignment.CAPACITY_CONSTRAINT
       ~Assignment.CREATE_SKIMS
       ~Assignment.DISPERSION_PARAMETER
       ~Assignment.ITERATION_FLAG
+      ~Assignment.MAX_HYPERPATH_ASSIGN_ATTEMPTS
+      ~Assignment.NUMBER_OF_PROCESSES
       ~Assignment.OUTPUT_PASSENGER_TRAJECTORIES
+      ~Assignment.PASSENGERS_CSV
       ~Assignment.PATH_TIME_WINDOW
+      ~Assignment.RAND_FILE
+      ~Assignment.RAND_FILENAME
+      ~Assignment.RAND_MAX
       ~Assignment.SIMULATION_FLAG
       ~Assignment.SKIM_END_TIME
       ~Assignment.SKIM_START_TIME
       ~Assignment.TODAY
-      ~Assignment.TRACE_PASSENGER_ID
+      ~Assignment.TRACE_PASSENGER_IDS
+      ~Assignment.bump_wait
+      ~Assignment.bumped_ids
    
    

@@ -6,18 +6,14 @@
 Welcome to fasttrips's documentation!
 =====================================
 
-Note that this documentation was generated with Sphinx v1.1.3.
-The current version (v1.3.1) seems to be broken as fars as the
-autosummary toctree is concerned. :(
-
 .. automodule:: fasttrips
    :no-members:
    :no-undoc-members:
    :no-inherited-members:
    :no-show-inheritance:
 
-autosummary
------------
+fast-trips Classes
+------------------
 
 .. currentmodule:: fasttrips
 
@@ -26,7 +22,6 @@ autosummary
    :toctree: _generated
 
    Assignment
-   Event
    FastTrips
    Passenger
    Path
@@ -35,6 +30,10 @@ autosummary
    TAZ
    Trip
 
+fast-trips C++ Extension Classes
+--------------------------------
+.. toctree::
+   fasttrips_c_extension
 
 Todo List
 =========

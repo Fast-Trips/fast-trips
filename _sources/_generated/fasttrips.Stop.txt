@@ -14,13 +14,11 @@ fasttrips.Stop
    .. autosummary::
    
       ~Stop.__init__
-      ~Stop.add_access_link
-      ~Stop.add_to_trip
-      ~Stop.add_transfer
+      ~Stop.add_trips
+      ~Stop.get_transfers
       ~Stop.get_trips_arriving_within_time
+      ~Stop.get_trips_departing_within_time
       ~Stop.is_transfer
-      ~Stop.read_stops
-      ~Stop.read_transfers
    
    
 
@@ -32,11 +30,17 @@ fasttrips.Stop
    
       ~Stop.INPUT_STOPS_FILE
       ~Stop.INPUT_TRANSFERS_FILE
-      ~Stop.TRANSFERS_IDX_DISTANCE
-      ~Stop.TRANSFERS_IDX_TIME
-      ~Stop.TRIPS_IDX_ARRIVAL_TIME
-      ~Stop.TRIPS_IDX_DEPARTURE_TIME
-      ~Stop.TRIPS_IDX_SEQUENCE
-      ~Stop.TRIPS_IDX_TRIP_ID
+      ~Stop.STOPS_COLUMN_CAPACITY
+      ~Stop.STOPS_COLUMN_DESCRIPTION
+      ~Stop.STOPS_COLUMN_ID
+      ~Stop.STOPS_COLUMN_LATITUDE
+      ~Stop.STOPS_COLUMN_LONGITUDE
+      ~Stop.STOPS_COLUMN_NAME
+      ~Stop.TRANSFERS_COLUMN_COST
+      ~Stop.TRANSFERS_COLUMN_DISTANCE
+      ~Stop.TRANSFERS_COLUMN_FROM_STOP
+      ~Stop.TRANSFERS_COLUMN_TIME
+      ~Stop.TRANSFERS_COLUMN_TIME_MIN
+      ~Stop.TRANSFERS_COLUMN_TO_STOP
    
    

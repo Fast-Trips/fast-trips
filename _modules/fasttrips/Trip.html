@@ -1,0 +1,418 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.Trip &mdash; fasttrips 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="fasttrips 1.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../../index.html" class="icon icon-home"> fasttrips
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">fasttrips</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>fasttrips.Trip</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for fasttrips.Trip</h1><div class="highlight"><pre>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015 Contributing Entities&quot;</span>
+<span class="n">__license__</span>   <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="s">    you may not use this file except in compliance with the License.</span>
+<span class="s">    You may obtain a copy of the License at</span>
+
+<span class="s">        http://www.apache.org/licenses/LICENSE-2.0</span>
+
+<span class="s">    Unless required by applicable law or agreed to in writing, software</span>
+<span class="s">    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="s">    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="s">    See the License for the specific language governing permissions and</span>
+<span class="s">    limitations under the License.</span>
+<span class="s">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">collections</span><span class="o">,</span><span class="nn">datetime</span><span class="o">,</span><span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span><span class="o">,</span><span class="nn">pandas</span>
+
+<span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span>
+
+<div class="viewcode-block" id="Trip"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip">[docs]</a><span class="k">class</span> <span class="nc">Trip</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Trip class.</span>
+
+<span class="sd">    One instance represents all of the transit vehicle trips.</span>
+
+<span class="sd">    Stores Trip information in :py:attr:`Trip.trips_df`, an instance of :py:class:`pandas.DataFrame`</span>
+<span class="sd">    and stop time information in :py:attr:`Trip.stop_times_df`, another instance of</span>
+<span class="sd">    :py:class:`pandas.DataFrame`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c">#: File with trip data.</span>
+    <span class="c">#: This is a tab-delimited file with required columns specified by</span>
+    <span class="c">#: :py:attr:`Trip.TRIPS_COLUMN_ID`, :py:attr:`Trip.TRIPS_COLUMN_ROUTE_ID`,</span>
+    <span class="c">#: :py:attr:`Trip.TRIPS_COLUMN_SERVICE_TYPE`, :py:attr:`Trip.TRIPS_COLUMN_CAPACITY`,</span>
+    <span class="c">#: :py:attr:`Trip.TRIPS_COLUMN_SHAPE_ID`, :py:attr:`Trip.TRIPS_COLUMN_DIRECTION_ID`</span>
+    <span class="n">INPUT_TRIPS_FILE</span>                    <span class="o">=</span> <span class="s">&quot;ft_input_trips.dat&quot;</span>
+
+    <span class="c">#: Trips column name: Unique identifier.  This will be the index of the trips table.</span>
+    <span class="n">TRIPS_COLUMN_ID</span>                     <span class="o">=</span> <span class="s">&#39;tripId&#39;</span>
+    <span class="c">#: Trips column name: Route unique identifier.</span>
+    <span class="n">TRIPS_COLUMN_ROUTE_ID</span>               <span class="o">=</span> <span class="s">&#39;routeId&#39;</span>
+    <span class="c">#: Trips column name: Service type:</span>
+    <span class="c">#: * 0 - Tram, streetcar, light rail</span>
+    <span class="c">#: * 1 - Subway, metro</span>
+    <span class="c">#: * 2 - Rail</span>
+    <span class="c">#: * 3 - Bus</span>
+    <span class="c">#: * 4 - Ferry</span>
+    <span class="c">#: * 5 - Cable car</span>
+    <span class="c">#: * 6 - Gondola, suspended cable car</span>
+    <span class="n">TRIPS_COLUMN_SERVICE_TYPE</span>           <span class="o">=</span> <span class="s">&#39;type&#39;</span>
+    <span class="c">#: Trips column name: Capacity for the vehicle for the trip</span>
+    <span class="n">TRIPS_COLUMN_CAPACITY</span>               <span class="o">=</span> <span class="s">&#39;capacity&#39;</span>
+    <span class="c">#: Trips column name: Shape ID</span>
+    <span class="n">TRIPS_COLUMN_SHAPE_ID</span>               <span class="o">=</span> <span class="s">&#39;shapeId&#39;</span>
+    <span class="c">#: Trips column name: Direction ID</span>
+    <span class="n">TRIPS_COLUMN_DIRECTION_ID</span>           <span class="o">=</span> <span class="s">&#39;directionId&#39;</span>
+
+    <span class="c">#: File with stop times</span>
+    <span class="c">#: This is a tab-delimited file with required columns specified by</span>
+    <span class="c">#: :py:attr:`Trip.STOPTIMES_COLUMN_TRIP_ID`, :py:attr:`Trip.STOPTIMES_COLUMN_STOP_ID`,</span>
+    <span class="c">#: :py:attr:`Trip.STOPTIMES_COLUMN_ARRIVAL_TIME`, :py:attr:`Trip.STOPTIMES_COLUMN_DEPARTURE_TIME`,</span>
+    <span class="c">#: :py:attr:`Trip.STOPTIMES_COLUMN_SEQUENCE`</span>
+    <span class="n">INPUT_STOPTIMES_FILE</span>                <span class="o">=</span> <span class="s">&quot;ft_input_stopTimes.dat&quot;</span>
+
+    <span class="c">#: Stop times column name: Trip unique identifier</span>
+    <span class="n">STOPTIMES_COLUMN_TRIP_ID</span>            <span class="o">=</span> <span class="s">&#39;tripId&#39;</span>
+    <span class="c">#: Stop times column name: Stop unique identifier</span>
+    <span class="n">STOPTIMES_COLUMN_STOP_ID</span>            <span class="o">=</span> <span class="s">&#39;stopId&#39;</span>
+    <span class="c">#: Stop times column name: Sequence number of stop within a trip.</span>
+    <span class="c">#: Starts at 1 and is sequential</span>
+    <span class="n">STOPTIMES_COLUMN_SEQUENCE</span>           <span class="o">=</span> <span class="s">&#39;sequence&#39;</span>
+    <span class="c">#: Stop times column name: Arrival time string.  e.g. &#39;07:23:05&#39; or &#39;14:08:30&#39;.</span>
+    <span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_STR</span>   <span class="o">=</span> <span class="s">&#39;arrivalTime_str&#39;</span>
+    <span class="c">#: Stop times column name: Arrival time.  This is a float, minutes after midnight.</span>
+    <span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_MIN</span>   <span class="o">=</span> <span class="s">&#39;arrivalTime_min&#39;</span>
+    <span class="c">#: Stop times column name: Arrival time.  This is a DateTime.</span>
+    <span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span>       <span class="o">=</span> <span class="s">&#39;arrivalTime&#39;</span>
+    <span class="c">#: Stop times column name: Departure time string. e.g. &#39;07:23:05&#39; or &#39;14:08:30&#39;.</span>
+    <span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_STR</span> <span class="o">=</span> <span class="s">&#39;departureTime_str&#39;</span>
+    <span class="c">#: Stop times column name: Departure time. This is a float, minutes after midnight.</span>
+    <span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_MIN</span> <span class="o">=</span> <span class="s">&#39;departureTime_min&#39;</span>
+    <span class="c">#: Stop times column name: Departure time. This is a DateTime.</span>
+    <span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span>     <span class="o">=</span> <span class="s">&#39;departureTime&#39;</span>
+
+    <span class="c">#: Default headway if no previous matching route/trip</span>
+    <span class="n">DEFAULT_HEADWAY</span>             <span class="o">=</span> <span class="mi">60</span>
+
+    <span class="n">STOPS_IDX_STOP_ID</span>           <span class="o">=</span> <span class="mi">0</span>  <span class="c">#: For accessing parts of :py:attr:`Trip.stops`</span>
+    <span class="n">STOPS_IDX_ARRIVAL_TIME</span>      <span class="o">=</span> <span class="mi">1</span>  <span class="c">#: For accessing parts of :py:attr:`Trip.stops`</span>
+    <span class="n">STOPS_IDX_DEPARTURE_TIME</span>    <span class="o">=</span> <span class="mi">2</span>  <span class="c">#: For accessing parts of :py:attr:`Trip.stops`</span>
+
+<div class="viewcode-block" id="Trip.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">route_id_to_route</span><span class="p">,</span> <span class="n">stops</span><span class="p">,</span> <span class="n">today</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor. Read the trips data from the input files in *input_dir*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c">#: Trips table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">INPUT_TRIPS_FILE</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="n">trips_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="c"># verify required columns are present</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_ID</span>             <span class="ow">in</span> <span class="n">trips_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_ROUTE_ID</span>       <span class="ow">in</span> <span class="n">trips_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_SERVICE_TYPE</span>   <span class="ow">in</span> <span class="n">trips_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_CAPACITY</span>       <span class="ow">in</span> <span class="n">trips_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_SHAPE_ID</span>       <span class="ow">in</span> <span class="n">trips_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_DIRECTION_ID</span>   <span class="ow">in</span> <span class="n">trips_cols</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_ID</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># TODO check this</span>
+        <span class="c"># assert self.service_type in [0,1,2,3,4,5,6]</span>
+
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== TRIPS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">+</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%7d</span><span class="s"> trips&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trips_df</span><span class="p">))</span>
+
+        <span class="c"># Tell the route about me!</span>
+        <span class="c"># TODO: replace with vector version</span>
+        <span class="c"># route_id_to_route[self.route_id].add_trip(self)</span>
+
+        <span class="c">#: Stop times table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">INPUT_STOPTIMES_FILE</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="c"># verify required columns are present</span>
+        <span class="n">stop_times_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span>        <span class="ow">in</span> <span class="n">stop_times_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span>        <span class="ow">in</span> <span class="n">stop_times_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_SEQUENCE</span>       <span class="ow">in</span> <span class="n">stop_times_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span>   <span class="ow">in</span> <span class="n">stop_times_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span> <span class="ow">in</span> <span class="n">stop_times_cols</span><span class="p">)</span>
+
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== STOP TIMES ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">+</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+
+        <span class="c"># string version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_STR</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%2d</span><span class="s">:</span><span class="si">%02d</span><span class="s">:</span><span class="si">%02d</span><span class="s">&#39;</span> <span class="o">%</span> \
+                <span class="p">(</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="n">x</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span><span class="o">/</span><span class="mi">100</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_STR</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%2d</span><span class="s">:</span><span class="si">%02d</span><span class="s">:</span><span class="si">%02d</span><span class="s">&#39;</span> <span class="o">%</span> \
+                <span class="p">(</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="n">x</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span><span class="o">/</span><span class="mi">100</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)))</span>
+
+        <span class="c"># float version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> \
+                <span class="mi">60</span><span class="o">*</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">((</span><span class="n">x</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)</span><span class="o">/</span><span class="mf">60.0</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> \
+                <span class="mi">60</span><span class="o">*</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">((</span><span class="n">x</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)</span><span class="o">/</span><span class="mf">60.0</span> <span class="p">)</span>
+
+        <span class="c"># datetime version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> \
+                <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">today</span><span class="p">,</span>
+                                          <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="nb">int</span><span class="p">((</span><span class="n">x</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span><span class="o">/</span><span class="mi">100</span><span class="p">),</span> <span class="n">second</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)))</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> \
+                <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">today</span><span class="p">,</span>
+                                          <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="mi">10000</span><span class="p">)</span> <span class="o">%</span> <span class="mi">24</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="nb">int</span><span class="p">((</span><span class="n">x</span> <span class="o">%</span> <span class="mi">10000</span><span class="p">)</span><span class="o">/</span><span class="mi">100</span><span class="p">),</span> <span class="n">second</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)))</span> <span class="p">)</span>
+
+        <span class="c"># TODO: verify sequence information?</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_SEQUENCE</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Final</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span> <span class="p">)</span>
+
+        <span class="c"># tell the stops to update accordingly</span>
+        <span class="n">stops</span><span class="o">.</span><span class="n">add_trips</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Trip.get_stop_times"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip.get_stop_times">[docs]</a>    <span class="k">def</span> <span class="nf">get_stop_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trip_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns :py:class:`pandas.DataFrame` with stop times for the given trip id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">trip_id</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Trip.number_of_stops"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip.number_of_stops">[docs]</a>    <span class="k">def</span> <span class="nf">number_of_stops</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trip_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the number of stops in this trip.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">trip_id</span><span class="p">]))</span>
+</div>
+<div class="viewcode-block" id="Trip.get_scheduled_departure"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip.get_scheduled_departure">[docs]</a>    <span class="k">def</span> <span class="nf">get_scheduled_departure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trip_id</span><span class="p">,</span> <span class="n">stop_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the scheduled departure time for the given stop as a datetime.datetime</span>
+
+<span class="sd">        TODO: problematic if the stop id occurs more than once in the trip.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">seq</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_times_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">trip_id</span><span class="p">]</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">]</span> <span class="o">==</span> <span class="n">stop_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">row</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;get_scheduled_departure: stop </span><span class="si">%s</span><span class="s"> not find for trip </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">stop_id</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">trip_id</span><span class="p">)))</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Trip.calculate_dwell_times"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip.calculate_dwell_times">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_dwell_times</span><span class="p">(</span><span class="n">trips_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates dwell_time in the given :py:class:`pandas.DataFrame` instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">trips_df</span><span class="p">[</span><span class="s">&#39;boardsx4&#39;</span><span class="p">]</span>        <span class="o">=</span> <span class="n">trips_df</span><span class="p">[</span><span class="s">&#39;boards&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">4</span>
+        <span class="n">trips_df</span><span class="p">[</span><span class="s">&#39;alightsx2&#39;</span><span class="p">]</span>       <span class="o">=</span> <span class="n">trips_df</span><span class="p">[</span><span class="s">&#39;alights&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span>
+        <span class="n">trips_df</span><span class="p">[</span><span class="s">&#39;dwell_time&#39;</span><span class="p">]</span>      <span class="o">=</span> <span class="n">trips_df</span><span class="p">[[</span><span class="s">&#39;boardsx4&#39;</span><span class="p">,</span><span class="s">&#39;alightsx2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span>
+        <span class="c"># no boards nor alights -&gt; 0</span>
+        <span class="n">trips_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">trips_df</span><span class="o">.</span><span class="n">boards</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">trips_df</span><span class="o">.</span><span class="n">alights</span><span class="o">==</span><span class="mi">0</span><span class="p">),</span> <span class="s">&#39;dwell_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c"># tram, streetcar, light rail -&gt; 30 --- this seems arbitrary</span>
+        <span class="n">trips_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">trips_df</span><span class="o">.</span><span class="n">service_type</span><span class="o">==</span><span class="mi">0</span><span class="p">,</span> <span class="s">&#39;dwell_time&#39;</span><span class="p">]</span>                   <span class="o">=</span> <span class="mi">30</span>
+
+        <span class="c"># drop our intermediate columns</span>
+        <span class="n">trips_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s">&#39;boardsx4&#39;</span><span class="p">,</span><span class="s">&#39;alightsx2&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># print &quot;Dwell time &gt; 0:&quot;</span>
+        <span class="c"># print trips_df.loc[trips_df.dwell_time&gt;0]</span>
+
+        <span class="c"># these are integers -- make them as such for now</span>
+        <span class="n">trips_df</span><span class="p">[[</span><span class="s">&#39;dwell_time&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">trips_df</span><span class="p">[[</span><span class="s">&#39;dwell_time&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Trip.calculate_headways"><a class="viewcode-back" href="../../_generated/fasttrips.Trip.html#fasttrips.Trip.calculate_headways">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_headways</span><span class="p">(</span><span class="n">trips_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates headways and sets them into the given</span>
+<span class="sd">        trips_df :py:class:`pandas.DataFrame`.</span>
+
+<span class="sd">        Returns :py:class:`pandas.DataFrame` with `headway` column added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stop_group</span> <span class="o">=</span> <span class="n">trips_df</span><span class="p">[[</span><span class="s">&#39;stop_id&#39;</span><span class="p">,</span><span class="s">&#39;routeId&#39;</span><span class="p">,</span><span class="s">&#39;direction&#39;</span><span class="p">,</span><span class="s">&#39;depart_time&#39;</span><span class="p">,</span><span class="s">&#39;trip_id&#39;</span><span class="p">,</span><span class="s">&#39;stop_seq&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;stop_id&#39;</span><span class="p">,</span><span class="s">&#39;routeId&#39;</span><span class="p">,</span><span class="s">&#39;direction&#39;</span><span class="p">])</span>
+
+        <span class="n">stop_group_df</span> <span class="o">=</span> <span class="n">stop_group</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="s">&#39;depart_time&#39;</span><span class="p">))</span>
+        <span class="c"># set headway, in minutes</span>
+        <span class="n">stop_group_shift_df</span> <span class="o">=</span> <span class="n">stop_group_df</span><span class="o">.</span><span class="n">shift</span><span class="p">()</span>
+        <span class="n">stop_group_df</span><span class="p">[</span><span class="s">&#39;headway&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">stop_group_df</span><span class="p">[</span><span class="s">&#39;depart_time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">stop_group_shift_df</span><span class="p">[</span><span class="s">&#39;depart_time&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">)</span>
+        <span class="c"># zero out the first in each group</span>
+        <span class="n">stop_group_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">stop_group_df</span><span class="o">.</span><span class="n">stop_id</span>  <span class="o">!=</span><span class="n">stop_group_shift_df</span><span class="o">.</span><span class="n">stop_id</span>  <span class="p">)</span><span class="o">|</span>
+                          <span class="p">(</span><span class="n">stop_group_df</span><span class="o">.</span><span class="n">routeId</span>  <span class="o">!=</span><span class="n">stop_group_shift_df</span><span class="o">.</span><span class="n">routeId</span>  <span class="p">)</span><span class="o">|</span>
+                          <span class="p">(</span><span class="n">stop_group_df</span><span class="o">.</span><span class="n">direction</span><span class="o">!=</span><span class="n">stop_group_shift_df</span><span class="o">.</span><span class="n">direction</span><span class="p">),</span> <span class="s">&#39;headway&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Trip</span><span class="o">.</span><span class="n">DEFAULT_HEADWAY</span>
+        <span class="c"># print stop_group_df</span>
+
+        <span class="n">trips_df_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">trips_df</span><span class="p">)</span>
+        <span class="n">trips_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">trips_df</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">stop_group_df</span><span class="p">[[</span><span class="s">&#39;trip_id&#39;</span><span class="p">,</span><span class="s">&#39;stop_id&#39;</span><span class="p">,</span><span class="s">&#39;stop_seq&#39;</span><span class="p">,</span><span class="s">&#39;headway&#39;</span><span class="p">]],</span>
+                                <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;trip_id&#39;</span><span class="p">,</span><span class="s">&#39;stop_id&#39;</span><span class="p">,</span><span class="s">&#39;stop_seq&#39;</span><span class="p">])</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">trips_df</span><span class="p">)</span><span class="o">==</span><span class="n">trips_df_len</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">trips_df</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Lisa Zorn.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -14,14 +14,19 @@ fasttrips.Path
    .. autosummary::
    
       ~Path.__init__
+      ~Path.calculate_tripcost
+      ~Path.experienced_arrival
       ~Path.goes_somewhere
+      ~Path.num_states
+      ~Path.outbound
       ~Path.path_found
       ~Path.path_str
       ~Path.path_str_header
-      ~Path.set_experienced_times
+      ~Path.reset_states
       ~Path.state_str
-      ~Path.time_str
-      ~Path.time_str_header
+      ~Path.state_str_header
+      ~Path.states_to_str
+      ~Path.write_paths
    
    
 
@@ -36,15 +41,19 @@ fasttrips.Path
       ~Path.DIR_OUTBOUND
       ~Path.FARE_PER_BOARDING
       ~Path.IN_VEHICLE_TIME_WEIGHT
+      ~Path.PATH_ID_COUNTER
       ~Path.SCHEDULE_DELAY_WEIGHT
-      ~Path.STATE_IDX_DEPARTURE
-      ~Path.STATE_IDX_DEPMODE
+      ~Path.STATE_IDX_ARRIVAL
+      ~Path.STATE_IDX_COST
+      ~Path.STATE_IDX_DEPARR
+      ~Path.STATE_IDX_DEPARRMODE
       ~Path.STATE_IDX_LABEL
       ~Path.STATE_IDX_LINKTIME
-      ~Path.STATE_IDX_SUCCESSOR
+      ~Path.STATE_IDX_SUCCPRED
       ~Path.STATE_MODE_ACCESS
       ~Path.STATE_MODE_EGRESS
       ~Path.STATE_MODE_TRANSFER
+      ~Path.STATE_MODE_TRIP
       ~Path.TRANSFER_PENALTY
       ~Path.VALUE_OF_TIME
       ~Path.WAIT_TIME_WEIGHT

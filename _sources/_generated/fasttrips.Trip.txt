@@ -14,13 +14,11 @@ fasttrips.Trip
    .. autosummary::
    
       ~Trip.__init__
-      ~Trip.add_stop_time
-      ~Trip.calculate_dwell_time
-      ~Trip.read_stop_times
-      ~Trip.read_trips
-      ~Trip.set_simulation_results
-      ~Trip.write_load_header_to_file
-      ~Trip.write_load_to_file
+      ~Trip.calculate_dwell_times
+      ~Trip.calculate_headways
+      ~Trip.get_scheduled_departure
+      ~Trip.get_stop_times
+      ~Trip.number_of_stops
    
    
 
@@ -30,10 +28,26 @@ fasttrips.Trip
 
    .. autosummary::
    
+      ~Trip.DEFAULT_HEADWAY
       ~Trip.INPUT_STOPTIMES_FILE
       ~Trip.INPUT_TRIPS_FILE
       ~Trip.STOPS_IDX_ARRIVAL_TIME
       ~Trip.STOPS_IDX_DEPARTURE_TIME
       ~Trip.STOPS_IDX_STOP_ID
+      ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME
+      ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN
+      ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_STR
+      ~Trip.STOPTIMES_COLUMN_DEPARTURE_TIME
+      ~Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN
+      ~Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_STR
+      ~Trip.STOPTIMES_COLUMN_SEQUENCE
+      ~Trip.STOPTIMES_COLUMN_STOP_ID
+      ~Trip.STOPTIMES_COLUMN_TRIP_ID
+      ~Trip.TRIPS_COLUMN_CAPACITY
+      ~Trip.TRIPS_COLUMN_DIRECTION_ID
+      ~Trip.TRIPS_COLUMN_ID
+      ~Trip.TRIPS_COLUMN_ROUTE_ID
+      ~Trip.TRIPS_COLUMN_SERVICE_TYPE
+      ~Trip.TRIPS_COLUMN_SHAPE_ID
    
    

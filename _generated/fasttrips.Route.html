@@ -1,69 +1,135 @@
 
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.Route &mdash; fasttrips 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="fasttrips.Stop" href="fasttrips.Stop.html"/>
+        <link rel="prev" title="fasttrips.Path" href="fasttrips.Path.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> fasttrips
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">fasttrips</a>
+      </nav>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>fasttrips.Route &mdash; fasttrips 1.0 documentation</title>
-    
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '1.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html" />
-    <link rel="next" title="fasttrips.Stop" href="fasttrips.Stop.html" />
-    <link rel="prev" title="fasttrips.Path" href="fasttrips.Path.html" /> 
-  </head>
-  <body>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="fasttrips.Stop.html" title="fasttrips.Stop"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="fasttrips.Path.html" title="fasttrips.Path"
-             accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body">
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>fasttrips.Route</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_generated/fasttrips.Route.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
             
   <div class="section" id="fasttrips-route">
 <h1>fasttrips.Route<a class="headerlink" href="#fasttrips-route" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="fasttrips.Route">
-<em class="property">class </em><tt class="descclassname">fasttrips.</tt><tt class="descname">Route</tt><big>(</big><em>route_record</em><big>)</big><a class="headerlink" href="#fasttrips.Route" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Route</code><span class="sig-paren">(</span><em>route_record</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="http://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
 <p>Route class.  Documentation forthcoming.</p>
 <dl class="method">
 <dt id="fasttrips.Route.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>route_record</em><big>)</big><a class="headerlink" href="#fasttrips.Route.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>route_record</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor from dictionary mapping attribute to value.</p>
 </dd></dl>
 
@@ -74,13 +140,13 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">__init__</span></tt>(route_record)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(route_record)</td>
 <td>Constructor from dictionary mapping attribute to value.</td>
 </tr>
-<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">add_trip</span></tt>(trip)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_trip</span></code>(trip)</td>
 <td>Add the given trip to my trip list</td>
 </tr>
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">read_routes</span></tt>(input_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_routes</span></code>(input_dir)</td>
 <td>Read the stops from the input file in <em>input_dir</em>.</td>
 </tr>
 </tbody>
@@ -92,45 +158,45 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">INPUT_ROUTES_FILE</span></tt></td>
-<td>str(object=&#8217;&#8216;) -&gt; string</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">INPUT_ROUTES_FILE</span></code></td>
+<td>File with routes.</td>
 </tr>
 </tbody>
 </table>
 <dl class="method">
 <dt id="fasttrips.Route.add_trip">
-<tt class="descname">add_trip</tt><big>(</big><em>trip</em><big>)</big><a class="headerlink" href="#fasttrips.Route.add_trip" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_trip</code><span class="sig-paren">(</span><em>trip</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route.add_trip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route.add_trip" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add the given trip to my trip list</p>
 </dd></dl>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Route.read_routes">
-<em class="property">static </em><tt class="descname">read_routes</tt><big>(</big><em>input_dir</em><big>)</big><a class="headerlink" href="#fasttrips.Route.read_routes" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">read_routes</code><span class="sig-paren">(</span><em>input_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route.read_routes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route.read_routes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read the stops from the input file in <em>input_dir</em>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Route.INPUT_ROUTES_FILE">
-<tt class="descname">INPUT_ROUTES_FILE</tt><em class="property"> = 'ft_input_routes.dat'</em><a class="headerlink" href="#fasttrips.Route.INPUT_ROUTES_FILE" title="Permalink to this definition">¶</a></dt>
+<code class="descname">INPUT_ROUTES_FILE</code><em class="property"> = 'ft_input_routes.dat'</em><a class="headerlink" href="#fasttrips.Route.INPUT_ROUTES_FILE" title="Permalink to this definition">¶</a></dt>
 <dd><p>File with routes.
 TODO document format</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Route.long_name">
-<tt class="descname">long_name</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.long_name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">long_name</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.long_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Full name of the route</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Route.route_id">
-<tt class="descname">route_id</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.route_id" title="Permalink to this definition">¶</a></dt>
+<code class="descname">route_id</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.route_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>ID that uniquely identifies a route</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Route.service_type">
-<tt class="descname">service_type</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.service_type" title="Permalink to this definition">¶</a></dt>
+<code class="descname">service_type</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.service_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Service type:
 0 - Tram, streetcar, light rail
 1 - Subway, metro
@@ -143,15 +209,15 @@ TODO document format</p>
 
 <dl class="attribute">
 <dt id="fasttrips.Route.short_name">
-<tt class="descname">short_name</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.short_name" title="Permalink to this definition">¶</a></dt>
+<code class="descname">short_name</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.short_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Short name of the route</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Route.trips">
-<tt class="descname">trips</tt><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.trips" title="Permalink to this definition">¶</a></dt>
-<dd><p>These are the <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><tt class="xref py py-class docutils literal"><span class="pre">fasttrips.Trip</span></tt></a> instances that run on this route.
-This a <a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></a> mapping the <em>trip_id</em> to a <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><tt class="xref py py-class docutils literal"><span class="pre">fasttrips.Trip</span></tt></a> instance</p>
+<code class="descname">trips</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.trips" title="Permalink to this definition">¶</a></dt>
+<dd><p>These are the <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Trip</span></code></a> instances that run on this route.
+This a <a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> mapping the <em>trip_id</em> to a <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Trip</span></code></a> instance</p>
 </dd></dl>
 
 </dd></dl>
@@ -160,59 +226,68 @@ This a <a class="reference external" href="http://docs.python.org/2.7/library/st
 
 
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="fasttrips.Path.html"
-                        title="previous chapter">fasttrips.Path</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="fasttrips.Stop.html"
-                        title="next chapter">fasttrips.Stop</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="../_sources/_generated/fasttrips.Route.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="fasttrips.Stop.html" class="btn btn-neutral float-right" title="fasttrips.Stop" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fasttrips.Path.html" class="btn btn-neutral" title="fasttrips.Path" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="fasttrips.Stop.html" title="fasttrips.Stop"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="fasttrips.Path.html" title="fasttrips.Path"
-             >previous</a> |</li>
-        <li><a href="../index.html">fasttrips 1.0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>
-    <div class="footer">
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
         &copy; Copyright 2015, Lisa Zorn.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
-    </div>
-  </body>
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
 </html>

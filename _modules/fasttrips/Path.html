@@ -1,0 +1,577 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.Path &mdash; fasttrips 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="fasttrips 1.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../../index.html" class="icon icon-home"> fasttrips
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">fasttrips</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>fasttrips.Path</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for fasttrips.Path</h1><div class="highlight"><pre>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s">&quot;Copyright 2015 Contributing Entities&quot;</span>
+<span class="n">__license__</span>   <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="s">    you may not use this file except in compliance with the License.</span>
+<span class="s">    You may obtain a copy of the License at</span>
+
+<span class="s">        http://www.apache.org/licenses/LICENSE-2.0</span>
+
+<span class="s">    Unless required by applicable law or agreed to in writing, software</span>
+<span class="s">    distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="s">    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="s">    See the License for the specific language governing permissions and</span>
+<span class="s">    limitations under the License.</span>
+<span class="s">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">collections</span><span class="o">,</span><span class="nn">datetime</span><span class="o">,</span><span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">numpy</span><span class="o">,</span><span class="nn">pandas</span>
+
+<span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span>
+
+<div class="viewcode-block" id="Path"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path">[docs]</a><span class="k">class</span> <span class="nc">Path</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a path for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`</span>
+<span class="sd">    through a set of stops.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c">#: Path configuration: Weight of in-vehicle time</span>
+    <span class="n">IN_VEHICLE_TIME_WEIGHT</span>          <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="c">#: Path configuration: Weight of waiting time</span>
+    <span class="n">WAIT_TIME_WEIGHT</span>                <span class="o">=</span> <span class="mf">1.77</span>
+
+    <span class="c">#: Path configuration: Weight of access walk time</span>
+    <span class="n">WALK_ACCESS_TIME_WEIGHT</span>         <span class="o">=</span> <span class="mf">3.93</span>
+
+    <span class="c">#: Path configuration: Weight of egress walk time</span>
+    <span class="n">WALK_EGRESS_TIME_WEIGHT</span>         <span class="o">=</span> <span class="mf">3.93</span>
+
+    <span class="c">#: Path configuration: Weight of transfer walking time</span>
+    <span class="n">WALK_TRANSFER_TIME_WEIGHT</span>       <span class="o">=</span> <span class="mf">3.93</span>
+
+    <span class="c">#: Path configuration: Weight transfer penalty (minutes)</span>
+    <span class="n">TRANSFER_PENALTY</span>                <span class="o">=</span> <span class="mf">47.73</span>
+
+    <span class="c">#: Path configuration: Weight of schedule delay (0 - no penalty)</span>
+    <span class="n">SCHEDULE_DELAY_WEIGHT</span>           <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="c">#: Path configuration: Fare in dollars per boarding (with no transfer credit)</span>
+    <span class="n">FARE_PER_BOARDING</span>               <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="c">#: Path configuration: Value of time (dollars per hour)</span>
+    <span class="n">VALUE_OF_TIME</span>                   <span class="o">=</span> <span class="mi">999</span>
+
+    <span class="n">DIR_OUTBOUND</span>    <span class="o">=</span> <span class="mi">1</span>  <span class="c">#: Trips outbound from home have preferred arrival times</span>
+    <span class="n">DIR_INBOUND</span>     <span class="o">=</span> <span class="mi">2</span>  <span class="c">#: Trips inbound to home have preferred departure times</span>
+
+    <span class="n">STATE_IDX_LABEL</span>         <span class="o">=</span> <span class="mi">0</span>  <span class="c">#: :py:class:`datetime.timedelta` instance</span>
+    <span class="n">STATE_IDX_DEPARR</span>        <span class="o">=</span> <span class="mi">1</span>  <span class="c">#: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.</span>
+    <span class="n">STATE_IDX_DEPARRMODE</span>    <span class="o">=</span> <span class="mi">2</span>  <span class="c">#: string or trip identifier.</span>
+    <span class="n">STATE_IDX_SUCCPRED</span>      <span class="o">=</span> <span class="mi">3</span>  <span class="c">#: stop identifier or TAZ identifier</span>
+    <span class="n">STATE_IDX_SEQ</span>           <span class="o">=</span> <span class="mi">4</span>  <span class="c">#: sequence (for trip)</span>
+    <span class="n">STATE_IDX_SEQ_SUCCPRED</span>  <span class="o">=</span> <span class="mi">5</span>  <span class="c">#: sequence for successor/predecessor</span>
+    <span class="n">STATE_IDX_LINKTIME</span>      <span class="o">=</span> <span class="mi">6</span>  <span class="c">#: :py:class:`datetime.timedelta` instance</span>
+    <span class="n">STATE_IDX_COST</span>          <span class="o">=</span> <span class="mi">7</span>  <span class="c">#: cost float, for hyperpath/stochastic assignment</span>
+    <span class="n">STATE_IDX_ARRIVAL</span>       <span class="o">=</span> <span class="mi">8</span>  <span class="c">#: arrival time, a :py:class:`datetime.datetime` instance, for hyperpath/stochastic assignment</span>
+
+    <span class="n">STATE_MODE_ACCESS</span>   <span class="o">=</span> <span class="s">&quot;Access&quot;</span>
+    <span class="n">STATE_MODE_EGRESS</span>   <span class="o">=</span> <span class="s">&quot;Egress&quot;</span>
+    <span class="n">STATE_MODE_TRANSFER</span> <span class="o">=</span> <span class="s">&quot;Transfer&quot;</span>
+
+    <span class="c"># new</span>
+    <span class="n">STATE_MODE_TRIP</span>     <span class="o">=</span> <span class="s">&quot;Trip&quot;</span> <span class="c"># onboard</span>
+
+    <span class="n">BUMP_EXPERIENCED_COST</span> <span class="o">=</span> <span class="mi">999999</span>
+
+    <span class="n">PATH_ID_COUNTER</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Path.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">passenger_record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor from dictionary mapping attribute to value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c">#: path id - unique for this passenger/path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_id</span>            <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">PATH_ID_COUNTER</span>
+        <span class="n">Path</span><span class="o">.</span><span class="n">PATH_ID_COUNTER</span>    <span class="o">+=</span> <span class="mi">1</span> <span class="c"># increment it</span>
+
+        <span class="c">#: identifier for origin TAZ</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">origin_taz_id</span>      <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;OrigTAZ&#39;</span>    <span class="p">]</span>
+
+        <span class="c">#: identifier for destination TAZ</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">destination_taz_id</span> <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;DestTAZ&#39;</span>    <span class="p">]</span>
+
+        <span class="c">#: *Note*: This isn&#39;t used for anything, but it gets passed straight through to output.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>               <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;mode&#39;</span>       <span class="p">]</span>
+
+        <span class="c">#: Demand time period (e.g. AM, PM, OP)</span>
+        <span class="c">#: *Note*: Currently this is not used for anything.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_period</span>        <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;timePeriod&#39;</span> <span class="p">]</span>
+
+        <span class="c">#: Should be one of :py:attr:`Path.DIR_OUTBOUND` or</span>
+        <span class="c">#: :py:attr:`Path.DIR_INBOUND`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">direction</span>          <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;direction&#39;</span>  <span class="p">]</span>
+        <span class="k">assert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_INBOUND</span><span class="p">])</span>
+
+        <span class="c">#: Preferred arrival time if</span>
+        <span class="c">#: :py:attr:`Path.direction` == :py:attr:`Path.DIR_OUTBOUND` or</span>
+        <span class="c">#: preferred departure time if</span>
+        <span class="c">#: :py:attr:`Path.direction` == :py:attr:`Path.DIR_INBOUND`</span>
+        <span class="c">#: This is an instance of :py:class:`datetime.time`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span>      <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;PAT&#39;</span>        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preferred_time</span>     <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span><span class="o">/</span><span class="mf">60.0</span><span class="p">),</span>
+                                                <span class="n">minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span> <span class="o">%</span> <span class="mi">60</span><span class="p">)</span>
+
+        <span class="c">#: This will include the stops and their related states</span>
+        <span class="c">#: Ordered dictionary: origin_taz_id -&gt; state,</span>
+        <span class="c">#:                     stop_id -&gt; state</span>
+        <span class="c">#: Note that if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`, then</span>
+        <span class="c">#: this is in reverse order (egress to access)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.calculate_tripcost"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.calculate_tripcost">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_tripcost</span><span class="p">(</span><span class="n">passengers_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a :py:class:`pandas.DataFrame` instance with each row representing a link in the passenger&#39;s trip,</span>
+<span class="sd">        adds a new colum, `travelCost`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">passengers_df</span><span class="p">[</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="c"># time-based</span>
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span>  <span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">WALK_ACCESS_TIME_WEIGHT</span>   <span class="o">*</span> <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linktime</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">))</span>
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRANSFER</span><span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">WALK_TRANSFER_TIME_WEIGHT</span> <span class="o">*</span> <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linktime</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">))</span>
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_EGRESS</span>  <span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">WALK_EGRESS_TIME_WEIGHT</span>   <span class="o">*</span> <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linktime</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">))</span>
+
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRIP</span>    <span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">IN_VEHICLE_TIME_WEIGHT</span>    <span class="o">*</span> <span class="p">((</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">alight_time</span><span class="o">-</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">board_time</span><span class="p">)</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">))</span>
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRIP</span>    <span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">WAIT_TIME_WEIGHT</span>          <span class="o">*</span> <span class="p">((</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">board_time</span> <span class="o">-</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">A_time</span>    <span class="p">)</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">))</span>
+
+        <span class="c"># flat</span>
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRIP</span>    <span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">FARE_PER_BOARDING</span>         <span class="o">*</span> <span class="mf">60.0</span><span class="o">/</span><span class="n">Path</span><span class="o">.</span><span class="n">VALUE_OF_TIME</span>
+        <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRANSFER</span><span class="p">,</span><span class="s">&#39;travelCost&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">TRANSFER_PENALTY</span>
+</div>
+<div class="viewcode-block" id="Path.goes_somewhere"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.goes_somewhere">[docs]</a>    <span class="k">def</span> <span class="nf">goes_somewhere</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Does this path go somewhere?  Does the destination differ from the origin?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_taz_id</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination_taz_id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Path.path_found"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.path_found">[docs]</a>    <span class="k">def</span> <span class="nf">path_found</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Was a a transit path found from the origin to the destination with the constraints?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="Path.reset_states"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.reset_states">[docs]</a>    <span class="k">def</span> <span class="nf">reset_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Delete my states, something went wrong and it won&#39;t work out.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Path.num_states"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.num_states">[docs]</a>    <span class="k">def</span> <span class="nf">num_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quick accessor for number of :py:attr:`Path.states`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Path.outbound"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.outbound">[docs]</a>    <span class="k">def</span> <span class="nf">outbound</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Quick accessor to see if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.state_str_header"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.state_str_header">[docs]</a>    <span class="k">def</span> <span class="nf">state_str_header</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">DIR_OUTBOUND</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a header for the state_str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%8s</span><span class="s">: </span><span class="si">%-14s</span><span class="s"> </span><span class="si">%9s</span><span class="s"> </span><span class="si">%10s</span><span class="s"> </span><span class="si">%11s</span><span class="s"> </span><span class="si">%-17s</span><span class="s"> </span><span class="si">%-12s</span><span class="s">  </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> \
+            <span class="p">(</span><span class="s">&quot;stop&quot;</span><span class="p">,</span>
+             <span class="s">&quot;label&quot;</span><span class="p">,</span>
+             <span class="s">&quot;departure&quot;</span> <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span> <span class="k">else</span> <span class="s">&quot;arrival&quot;</span><span class="p">,</span>
+             <span class="s">&quot;dep_mode&quot;</span>  <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span> <span class="k">else</span> <span class="s">&quot;arr_mode&quot;</span><span class="p">,</span>
+             <span class="s">&quot;successor&quot;</span> <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span> <span class="k">else</span> <span class="s">&quot;predecessor&quot;</span><span class="p">,</span>
+             <span class="s">&quot;linktime&quot;</span><span class="p">,</span>
+             <span class="s">&quot;cost&quot;</span><span class="p">,</span>
+             <span class="s">&quot;arrival&quot;</span>   <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span> <span class="k">else</span> <span class="s">&quot;departure&quot;</span><span class="p">)</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.state_str"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.state_str">[docs]</a>    <span class="k">def</span> <span class="nf">state_str</span><span class="p">(</span><span class="n">state_id</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a readable string version of the given state_id and state, as a single line.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%8s</span><span class="s">: </span><span class="si">%-14s</span><span class="s">  </span><span class="si">%s</span><span class="s"> </span><span class="si">%10s</span><span class="s"> </span><span class="si">%10s</span><span class="s">  </span><span class="si">%-17s</span><span class="s"> </span><span class="si">%-12s</span><span class="s">  </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> \
+            <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">state_id</span><span class="p">),</span>
+             <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LABEL</span><span class="p">])</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LABEL</span><span class="p">])</span><span class="o">==</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span> <span class="k">else</span> <span class="s">&quot;</span><span class="si">%.4f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LABEL</span><span class="p">],</span>
+             <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARR</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&quot;%H:%M:%S&quot;</span><span class="p">),</span>
+             <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARRMODE</span><span class="p">]),</span>
+             <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_SUCCPRED</span><span class="p">]),</span>
+             <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LINKTIME</span><span class="p">]),</span>
+             <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_COST</span><span class="p">])</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_COST</span><span class="p">])</span><span class="o">==</span><span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span> <span class="k">else</span> <span class="s">&quot;</span><span class="si">%.4f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_COST</span><span class="p">],</span>
+             <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_ARRIVAL</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&quot;%H.%M:%S&quot;</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Readable string version of the path.</span>
+
+<span class="sd">        Note: If inbound trip, then the states are in reverse order (egress to access)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="o">.</span><span class="n">states_to_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.states_to_str"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.states_to_str">[docs]</a>    <span class="k">def</span> <span class="nf">states_to_str</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">DIR_OUTBOUND</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given that states is an ordered dict of states, returns a string version of the path therein.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">No path&quot;</span>
+        <span class="n">readable_str</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Path</span><span class="o">.</span><span class="n">state_str_header</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span><span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">readable_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Path</span><span class="o">.</span><span class="n">state_str</span><span class="p">(</span><span class="n">state_id</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">readable_str</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.write_paths"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.write_paths">[docs]</a>    <span class="k">def</span> <span class="nf">write_paths</span><span class="p">(</span><span class="n">passengers_df</span><span class="p">,</span> <span class="n">paths_out</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the assigned paths to the given output file.</span>
+
+<span class="sd">        :param passengers_df: Passenger paths assignment results</span>
+<span class="sd">        :type passengers_df: :py:class:`pandas.DataFrame` instance</span>
+<span class="sd">        :param paths_out: Output file, opened for writing</span>
+<span class="sd">        :type paths_out: :py:class:`file` instance</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># get trip information -- board stops, board trips and alight stops</span>
+        <span class="n">passenger_trips</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRIP</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c"># convert to strings for appending</span>
+        <span class="n">passenger_trips</span><span class="p">[</span><span class="s">&#39;board_stop_str&#39;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">A_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;s</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">passenger_trips</span><span class="p">[</span><span class="s">&#39;board_trip_str&#39;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">trip_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;t</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">passenger_trips</span><span class="p">[</span><span class="s">&#39;alight_stop_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">B_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;s</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">ptrip_group</span>     <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">])</span>
+        <span class="c"># these are Series</span>
+        <span class="n">board_stops_str</span> <span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">board_stop_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">board_trips_str</span> <span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">board_trip_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">alight_stops_str</span><span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">alight_stop_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+        <span class="c"># get walking times</span>
+        <span class="n">walk_links</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span>  <span class="p">)</span><span class="o">|</span> \
+                                       <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRANSFER</span><span class="p">)</span><span class="o">|</span> \
+                                       <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_EGRESS</span>  <span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">walk_links</span><span class="p">[</span><span class="s">&#39;linktime_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">walk_links</span><span class="o">.</span><span class="n">linktime</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">&quot;</span><span class="si">%.2f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">)))</span>
+        <span class="n">walklink_group</span> <span class="o">=</span> <span class="n">walk_links</span><span class="p">[[</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">,</span><span class="s">&#39;linktime_str&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">])</span>
+        <span class="n">walktimes_str</span>  <span class="o">=</span> <span class="n">walklink_group</span><span class="o">.</span><span class="n">linktime_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+        <span class="c"># aggregate to one line per passenger_id, path_id</span>
+        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="p">[[</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">,</span><span class="s">&#39;pathmode&#39;</span><span class="p">,</span><span class="s">&#39;A_id&#39;</span><span class="p">,</span><span class="s">&#39;B_id&#39;</span><span class="p">,</span><span class="s">&#39;A_time&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+           <span class="p">{</span><span class="s">&#39;pathmode&#39;</span>      <span class="p">:</span><span class="s">&#39;first&#39;</span><span class="p">,</span>   <span class="c"># path mode</span>
+            <span class="s">&#39;A_id&#39;</span>          <span class="p">:</span><span class="s">&#39;first&#39;</span><span class="p">,</span>   <span class="c"># origin</span>
+            <span class="s">&#39;B_id&#39;</span>          <span class="p">:</span><span class="s">&#39;last&#39;</span><span class="p">,</span>    <span class="c"># destination</span>
+            <span class="s">&#39;A_time&#39;</span>        <span class="p">:</span><span class="s">&#39;first&#39;</span>    <span class="c"># start time</span>
+           <span class="p">})</span>
+
+        <span class="c"># put them all together</span>
+        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">print_passengers_df</span><span class="p">,</span>
+                                            <span class="n">board_stops_str</span><span class="p">,</span>
+                                            <span class="n">board_trips_str</span><span class="p">,</span>
+                                            <span class="n">alight_stops_str</span><span class="p">,</span>
+                                            <span class="n">walktimes_str</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span>
+           <span class="p">{</span><span class="s">&#39;passenger_id&#39;</span>      <span class="p">:</span><span class="s">&#39;passengerId&#39;</span><span class="p">,</span>
+            <span class="s">&#39;pathmode&#39;</span>          <span class="p">:</span><span class="s">&#39;mode&#39;</span><span class="p">,</span>
+            <span class="s">&#39;A_id&#39;</span>              <span class="p">:</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span>
+            <span class="s">&#39;B_id&#39;</span>              <span class="p">:</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span>
+            <span class="s">&#39;A_time&#39;</span>            <span class="p">:</span><span class="s">&#39;startTime_time&#39;</span><span class="p">,</span>
+            <span class="s">&#39;board_stop_str&#39;</span>    <span class="p">:</span><span class="s">&#39;boardingStops&#39;</span><span class="p">,</span>
+            <span class="s">&#39;board_trip_str&#39;</span>    <span class="p">:</span><span class="s">&#39;boardingTrips&#39;</span><span class="p">,</span>
+            <span class="s">&#39;alight_stop_str&#39;</span>   <span class="p">:</span><span class="s">&#39;alightingStops&#39;</span><span class="p">,</span>
+            <span class="s">&#39;linktime_str&#39;</span>      <span class="p">:</span><span class="s">&#39;walkingTimes&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">print_passengers_df</span><span class="p">[</span><span class="s">&#39;startTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[</span><span class="s">&#39;startTime_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%.2f</span><span class="s">&#39;</span> <span class="o">%</span> \
+                        <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">hour</span><span class="o">*</span><span class="mf">60.0</span> <span class="o">+</span> \
+                         <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> \
+                         <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">))</span>
+
+        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;passengerId&#39;</span><span class="p">,</span><span class="s">&#39;mode&#39;</span><span class="p">,</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span><span class="s">&#39;startTime&#39;</span><span class="p">,</span>
+                                                   <span class="s">&#39;boardingStops&#39;</span><span class="p">,</span><span class="s">&#39;boardingTrips&#39;</span><span class="p">,</span><span class="s">&#39;alightingStops&#39;</span><span class="p">,</span><span class="s">&#39;walkingTimes&#39;</span><span class="p">]]</span>
+
+        <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">paths_out</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="c"># passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes</span>
+
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.path_str_header"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.path_str_header">[docs]</a>    <span class="k">def</span> <span class="nf">path_str_header</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The header for the path file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;mode</span><span class="se">\t</span><span class="s">originTaz</span><span class="se">\t</span><span class="s">destinationTaz</span><span class="se">\t</span><span class="s">startTime</span><span class="se">\t</span><span class="s">boardingStops</span><span class="se">\t</span><span class="s">boardingTrips</span><span class="se">\t</span><span class="s">alightingStops</span><span class="se">\t</span><span class="s">walkingTimes&quot;</span>
+</div>
+<div class="viewcode-block" id="Path.path_str"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.path_str">[docs]</a>    <span class="k">def</span> <span class="nf">path_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        String output of the path, in legacy format (tab-delimited):</span>
+
+<span class="sd">        * mode</span>
+<span class="sd">        * origin TAZ</span>
+<span class="sd">        * destination TAZ</span>
+<span class="sd">        * start time, in minutes after midnight</span>
+<span class="sd">        * boarding stop IDs, comma-delimited and prefixed with &#39;s&#39;</span>
+<span class="sd">        * boarding trip IDs, comma-delimited and prefixed with &#39;t&#39;</span>
+<span class="sd">        * alighting stop IDs, comma-delimited and prefixed with &#39;s&#39;</span>
+<span class="sd">        * access time, sum of transfer times, egress time in number of minutes, comma-delimited</span>
+
+<span class="sd">        .. todo:: if the stop_ids and trip_ids are the correct type, no need to cast to int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># OUTBOUND passengers have states like this:</span>
+        <span class="c">#    stop:          label    departure   dep_mode  successor linktime</span>
+        <span class="c"># orig_taz                                 Access    b stop1</span>
+        <span class="c">#  b stop1                                  trip1    a stop2</span>
+        <span class="c">#  a stop2                               Transfer    b stop3</span>
+        <span class="c">#  b stop3                                  trip2    a stop4</span>
+        <span class="c">#  a stop4                                 Egress   dest_taz</span>
+        <span class="c">#</span>
+        <span class="c"># e.g. (preferred arrival = 404 = 06:44:00)</span>
+        <span class="c">#    stop:          label    departure   dep_mode  successor linktime</span>
+        <span class="c">#      29: 0:24:29.200000     06:19:30     Access    23855.0 0:11:16.200000</span>
+        <span class="c"># 23855.0: 0:13:13            06:30:47   21649852    38145.0 0:06:51</span>
+        <span class="c"># 38145.0: 0:06:22            06:37:38   Transfer      38650 0:00:42</span>
+        <span class="c">#   38650: 0:05:40            06:38:20   25009729    76730.0 0:03:51.400000</span>
+        <span class="c"># 76730.0: 0:01:48.600000     06:42:11     Egress         18 0:01:48.600000</span>
+        <span class="c">#</span>
+        <span class="c"># INBOUND passengers have states like this</span>
+        <span class="c">#   stop:          label      arrival   arr_mode predecessor linktime</span>
+        <span class="c"># dest_taz                                 Egress    a stop4</span>
+        <span class="c">#  a stop4                                  trip2    b stop3</span>
+        <span class="c">#  b stop3                               Transfer    a stop2</span>
+        <span class="c">#  a stop2                                  trip1    b stop1</span>
+        <span class="c">#  b stop1                                 Access   orig_taz</span>
+        <span class="c">#</span>
+        <span class="c"># e.g. (preferred departure = 447 = 07:27:00)</span>
+        <span class="c">#    stop:          label      arrival   arr_mode predecessor linktime</span>
+        <span class="c">#    1586: 0:49:06            08:16:06     Egress    73054.0 0:06:27</span>
+        <span class="c"># 73054.0: 0:42:39            08:09:39   24201511    69021.0 0:13:11.600000</span>
+        <span class="c"># 69021.0: 0:29:27.400000     07:56:27   Transfer      68007 0:00:26.400000</span>
+        <span class="c">#   68007: 0:29:01            07:56:01   25539006    64065.0 0:28:11.200000</span>
+        <span class="c"># 64065.0: 0:00:49.800000     07:27:49     Access       3793 0:00:49.800000</span>
+        <span class="n">boarding_stops</span>  <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="n">boarding_trips</span>  <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="n">alighting_stops</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="n">start_time</span>      <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preferred_time</span>
+        <span class="n">access_time</span>     <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">transfer_time</span>   <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="n">egress_time</span>     <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">prev_mode</span>       <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">state_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">outbound</span><span class="p">():</span> <span class="n">state_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">state_list</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">state_id</span> <span class="ow">in</span> <span class="n">state_list</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">state_id</span><span class="p">]</span>
+                <span class="c"># access</span>
+                <span class="k">if</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARRMODE</span><span class="p">]</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span><span class="p">:</span>
+                    <span class="n">access_time</span>     <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LINKTIME</span><span class="p">]</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span>
+                    <span class="n">start_time</span>      <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARR</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">outbound</span><span class="p">():</span> <span class="n">start_time</span> <span class="o">-=</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LINKTIME</span><span class="p">]</span>
+
+                <span class="c"># transfer</span>
+                <span class="k">elif</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARRMODE</span><span class="p">]</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRANSFER</span><span class="p">:</span>
+                    <span class="n">transfer_time</span>  <span class="o">+=</span> <span class="s">&quot;,</span><span class="si">%.2f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LINKTIME</span><span class="p">]</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)</span>
+
+                <span class="c"># egress</span>
+                <span class="k">elif</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARRMODE</span><span class="p">]</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_EGRESS</span><span class="p">:</span>
+                    <span class="n">egress_time</span>     <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_LINKTIME</span><span class="p">]</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span>
+
+                <span class="c"># trip link</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outbound</span><span class="p">():</span>
+                        <span class="n">boarding_stops</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">s</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;,&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">boarding_stops</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+                                                     <span class="nb">int</span><span class="p">(</span><span class="n">state_id</span><span class="p">))</span>
+                        <span class="n">alighting_stops</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">s</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="s">&quot;,&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alighting_stops</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span>  <span class="s">&quot;&quot;</span><span class="p">,</span>
+                                                     <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_SUCCPRED</span><span class="p">]))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">boarding_stops</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">s</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;,&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">boarding_stops</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+                                                     <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_SUCCPRED</span><span class="p">]))</span>
+                        <span class="n">alighting_stops</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">s</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="s">&quot;,&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alighting_stops</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span>  <span class="s">&quot;&quot;</span><span class="p">,</span>
+                                                     <span class="nb">int</span><span class="p">(</span><span class="n">state_id</span><span class="p">))</span>
+
+                    <span class="n">boarding_trips</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">t</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&quot;,&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">boarding_trips</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s">&quot;&quot;</span><span class="p">,</span>
+                                                 <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARRMODE</span><span class="p">]))</span>
+                    <span class="c"># if the prev_mode is a trip link then we had a no-walk transfer</span>
+                    <span class="k">if</span> <span class="n">prev_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRANSFER</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_EGRESS</span><span class="p">]:</span>
+                        <span class="n">transfer_time</span>  <span class="o">+=</span> <span class="s">&quot;,</span><span class="si">%.2f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="mi">0</span>
+
+                <span class="n">prev_mode</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_IDX_DEPARRMODE</span><span class="p">]</span>
+
+        <span class="n">return_str</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="se">\t</span><span class="si">%s</span><span class="se">\t</span><span class="si">%s</span><span class="se">\t</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_taz_id</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">destination_taz_id</span><span class="p">))</span>
+        <span class="n">return_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%.2f</span><span class="se">\t</span><span class="si">%s</span><span class="se">\t</span><span class="si">%s</span><span class="se">\t</span><span class="si">%s</span><span class="se">\t</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">start_time</span><span class="o">.</span><span class="n">hour</span><span class="o">*</span><span class="mf">60.0</span> <span class="o">+</span> <span class="n">start_time</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="n">start_time</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">,</span>
+                                            <span class="n">boarding_stops</span><span class="p">,</span>
+                                            <span class="n">boarding_trips</span><span class="p">,</span>
+                                            <span class="n">alighting_stops</span><span class="p">)</span>
+        <span class="c"># no transfers: access, trip egress</span>
+        <span class="n">return_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%.2f%s</span><span class="s">,</span><span class="si">%.2f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">access_time</span><span class="p">,</span> <span class="n">transfer_time</span><span class="p">,</span> <span class="n">egress_time</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">return_str</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Lisa Zorn.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

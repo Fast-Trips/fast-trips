@@ -21,4 +21,11 @@ fasttrips.FastTrips
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FastTrips.DEBUG_LOG
+      ~FastTrips.INFO_LOG
+   
    

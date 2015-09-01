@@ -14,9 +14,6 @@ fasttrips.TAZ
    .. autosummary::
    
       ~TAZ.__init__
-      ~TAZ.add_access_link
-      ~TAZ.read_TAZs
-      ~TAZ.read_access_links
    
    
 
@@ -26,9 +23,17 @@ fasttrips.TAZ
 
    .. autosummary::
    
-      ~TAZ.ACCESS_LINK_IDX_DIST
-      ~TAZ.ACCESS_LINK_IDX_TIME
+      ~TAZ.ACCLINKS_COLUMN_ACC_COST
+      ~TAZ.ACCLINKS_COLUMN_DIST
+      ~TAZ.ACCLINKS_COLUMN_EGR_COST
+      ~TAZ.ACCLINKS_COLUMN_STOP
+      ~TAZ.ACCLINKS_COLUMN_TAZ
+      ~TAZ.ACCLINKS_COLUMN_TIME
+      ~TAZ.ACCLINKS_COLUMN_TIME_MIN
       ~TAZ.INPUT_ACCESS_LINKS_FILE
       ~TAZ.INPUT_TAZ_FILE
+      ~TAZ.ZONES_COLUMN_ID
+      ~TAZ.ZONES_COLUMN_LATITUDE
+      ~TAZ.ZONES_COLUMN_LONGITUDE
    
    
