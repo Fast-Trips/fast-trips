@@ -56,7 +56,7 @@ class FastTrips:
                                handle capacity bumps), we'd like to append rather than overwrite.
         :type appendLog:       bool
         """
-        #: :py:class:`list` of :py:class:`fasttrips.Passenger` instances
+        #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
         self.passengers      = None
 
         #: :py:class:`dict` with :py:attr:`fasttrips.Route.route_id` key and :py:class:`fasttrips.Route` value
@@ -88,30 +88,21 @@ class FastTrips:
         """
         Reads in the input files files from *input_dir* and initializes the relevant data structures.
         """
-        # read stops into stop_id -> Stop instance
-        self.stops = Stop.read_stops(input_dir)
-        # incorporate transfers into those stops
-        Stop.read_transfers(input_dir, self.stops)
+        # read stops and transfers
+        self.stops = Stop(input_dir)
 
         # read routes into route_id -> Route instance
         self.routes = Route.read_routes(input_dir)
         # read trips into those routes
-        self.trips = Trip.read_trips(input_dir, self.routes)
+        self.trips = Trip(input_dir, self.routes, self.stops, Assignment.TODAY)
 
-        # read the stops and their times into the trips
-        Trip.read_stop_times(input_dir, self.trips, self.stops)
+        # transfer_stops = 0
+        # for stop_id,stop in self.stops.iteritems():
+        #     if stop.is_transfer(): transfer_stops += 1
+        # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
-        transfer_stops = 0
-        for stop_id,stop in self.stops.iteritems():
-            if stop.is_transfer(): transfer_stops += 1
-
-        FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
-
-        # read the TAZs into taz_id -> TAZ instance
-        self.tazs = TAZ.read_TAZs(input_dir)
-
-        # read the access links into both the TAZs and the stops involved
-        TAZ.read_access_links(input_dir, self.tazs, self.stops)
+        # read the TAZs into a TAZ instance
+        self.tazs = TAZ(input_dir)
 
         if read_demand:
             # Read the demand int passenger_id -> passenger instance

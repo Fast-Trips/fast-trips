@@ -19,78 +19,87 @@ from .Logger import FastTripsLogger
 
 class TAZ:
     """
-    TAZ class.  Documentation forthcoming.
+    TAZ class.
+
+    One instance represents all of the Transportation Analysis Zones as well as their access links.
+
+    Stores TAZ information in :py:attr:`TAZ.zones_df`, an instance of :py:class:`pandas.DataFrame`
+    and access link information in :py:attr:`TAZ.access_links_df`, another instance of
+    :py:class:`pandas.DataFrame`.
     """
 
-    #: File with TAZ (Transporation Analysis Zone) data
-    #: TODO document format
+    #: File with TAZ (Transporation Analysis Zone) data.
+    #: This is a tab-delimited file with required columns specified by
+    #: :py:attr:`TAZ.ZONES_COLUMN_ID`, :py:attr:`TAZ.ZONES_COLUMN_LATITUDE` and
+    #: :py:attr:`TAZ.ZONES_COLUMN_LONGITUDE`.
     INPUT_TAZ_FILE          = "ft_input_zones.dat"
 
+    #: Zones column name: Unique identifier. This will be the index of the zones table.
+    ZONES_COLUMN_ID         = 'ID'
+    #: Zones column name: Latitude
+    ZONES_COLUMN_LATITUDE   = 'Lat'
+    #: Zones column name: Longitude
+    ZONES_COLUMN_LONGITUDE  = 'ID'
+
     #: File with access links
-    #: TODO document format
+    #: This is a tab-delimited file with required columns specified by
+    #: :py:attr:`TAZ.ACCLINKS_COLUMN_TAZ`, :py:attr:`TAZ.ACCLINKS_COLUMN_STOP`,
+    #: :py:attr:`TAZ.ACCLINKS_COLUMN_DIST` and :py:attr:`TAZ.ACCLINKS_COLUMN_TIME`.
     INPUT_ACCESS_LINKS_FILE = "ft_input_accessLinks.dat"
 
-    ACCESS_LINK_IDX_DIST    = 0  #: For accessing parts of :py:attr:`TAZ.access_links`
-    ACCESS_LINK_IDX_TIME    = 1  #: For accessing parts of :py:attr:`TAZ.access_links`
+    #: Access links column name: TAZ identifier
+    ACCLINKS_COLUMN_TAZ     = 'TAZ'
+    #: Access links column name: Stop identifier
+    ACCLINKS_COLUMN_STOP    = 'stop'
+    #: Access links column name: Link walk distance
+    ACCLINKS_COLUMN_DIST    = 'dist'
+    #: Access links column name: Link walk time.  This is a TimeDelta
+    ACCLINKS_COLUMN_TIME    = 'time'
+    #: Access links column name: Link walk time in minutes.  This is float.
+    ACCLINKS_COLUMN_TIME_MIN= 'time_min'
 
-    def __init__(self, taz_record):
+    #: Access cost column name: Link generic cost for accessing stop from TAZ. Float.
+    ACCLINKS_COLUMN_ACC_COST= 'access_cost'
+    #: Egress cost column name: Link generic cost for egressing to TAZ from stop. Float.
+    ACCLINKS_COLUMN_EGR_COST= 'egress_cost'
+
+    def __init__(self, input_dir):
         """
-        Constructor from dictionary mapping attributes to value.
+        Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
-        #: unique TAZ identifier
-        self.taz_id         = taz_record['ID']
-        self.latitude       = taz_record['Lat']
-        self.longitude      = taz_record['Lon']
+        #: Zones table
+        self.zones_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_TAZ_FILE), sep="\t")
+        # verify required columns are present
+        zone_cols = list(self.zones_df.columns.values)
+        assert(TAZ.ZONES_COLUMN_ID          in zone_cols)
+        assert(TAZ.ZONES_COLUMN_LATITUDE    in zone_cols)
+        assert(TAZ.ZONES_COLUMN_LONGITUDE   in zone_cols)
+        self.zones_df.set_index(TAZ.ZONES_COLUMN_ID, inplace=True, verify_integrity=True)
 
-        #: The stops that have access from this TAZ.
-        #: This is a :py:class:`dict` mapping a *stop_id* to (walk_dist, walk_time)
-        #: where *walk_dist* is in miles and *walk_time* is a
-        #: :py:class:`datetime.timedelta` instance.
-        #: Use :py:attr:`TAZ.ACCESS_LINK_IDX_DIST` and :py:attr:`TAZ.ACCESS_LINK_IDX_TIME`
-        self.access_links   = collections.OrderedDict()
+        FastTripsLogger.debug("=========== TAZS ===========\n" + str(self.zones_df.head()))
+        FastTripsLogger.debug("\n"+str(self.zones_df.index.dtype)+"\n"+str(self.zones_df.dtypes))
+        FastTripsLogger.info("Read %7d TAZs" % len(self.zones_df))
 
-    def add_access_link(self, access_link_record):
-        """
-        Add the given access link to this TAZ.
-        """
-        self.access_links[access_link_record['stop']] = (access_link_record['dist'],
-                                                         datetime.timedelta(minutes=access_link_record['time']))
+        #: Access links table
+        self.access_links_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_ACCESS_LINKS_FILE), sep="\t")
+        # verify required columns are present
+        access_links_cols = list(self.access_links_df.columns.values)
+        assert(TAZ.ACCLINKS_COLUMN_TAZ      in access_links_cols)
+        assert(TAZ.ACCLINKS_COLUMN_STOP     in access_links_cols)
+        assert(TAZ.ACCLINKS_COLUMN_DIST     in access_links_cols)
+        assert(TAZ.ACCLINKS_COLUMN_TIME     in access_links_cols)
 
-    @staticmethod
-    def read_TAZs(input_dir):
-        """
-        Read the TAZ data from the input file in *input_dir*.
-        """
-        zones_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_TAZ_FILE), sep="\t")
-        FastTripsLogger.debug("=========== TAZS ===========\n" + str(zones_df.head()))
-        FastTripsLogger.debug("\n"+str(zones_df.dtypes))
+        # printing this before setting index
+        FastTripsLogger.debug("=========== ACCESS LINKS ===========\n" + str(self.access_links_df.head()))
+        FastTripsLogger.debug("As read\n"+str(self.access_links_df.dtypes))
 
-        taz_id_to_taz = collections.OrderedDict()
-        taz_records = zones_df.to_dict(orient='records')
-        for taz_record in taz_records:
-            taz = TAZ(taz_record)
-            taz_id_to_taz[taz.taz_id] = taz
+        self.access_links_df.set_index([TAZ.ACCLINKS_COLUMN_TAZ,
+                                     TAZ.ACCLINKS_COLUMN_STOP], inplace=True, verify_integrity=True)
+        # keep the time column as float
+        self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN] = self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME]
+        # convert time column from float to timedelta
+        self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME] = \
+            self.access_links_df[TAZ.ACCLINKS_COLUMN_TIME].map(lambda x: datetime.timedelta(minutes=x))
 
-        FastTripsLogger.info("Read %7d TAZs" % len(taz_id_to_taz))
-        return taz_id_to_taz
-
-    @staticmethod
-    def read_access_links(input_dir, taz_id_to_taz, stop_id_to_stop):
-        """
-        Read the access links from the input file in *input_dir*.
-
-        .. todo:: This loses int types for stop_ids, etc.
-        """
-        access_links_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_ACCESS_LINKS_FILE), sep="\t")
-        FastTripsLogger.debug("=========== ACCESS LINKS ===========\n" + str(access_links_df.head()))
-        FastTripsLogger.debug("\n"+str(access_links_df.dtypes))
-
-        access_link_records = access_links_df.to_dict(orient='records')
-        for access_link_record in access_link_records:
-            taz = taz_id_to_taz[access_link_record['TAZ']]
-            taz.add_access_link(access_link_record)
-
-            stop = stop_id_to_stop[access_link_record['stop']]
-            stop.add_access_link(access_link_record)
-
-        FastTripsLogger.info("Read %7d access links" % len(access_links_df))
+        FastTripsLogger.debug("Final\n"+str(self.access_links_df.dtypes))
+        FastTripsLogger.info("Read %7d access links" % len(self.access_links_df))

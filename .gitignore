@@ -1,4 +1,9 @@
-*.pyc
+*.py[cod]
 *.log
+*.swp
+*.so
 
 Examples/*
+
+# Distribution / packaging
+build/

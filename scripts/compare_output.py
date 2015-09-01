@@ -41,8 +41,14 @@ def compare_file(dir1, dir2, filename):
     # split the columns that have multiple items in them
     split_cols = SPLIT_COLS[filename]
     for col in split_cols:
+        if str(df1[col].dtype) == 'float64':
+            df1[col] = df1[col].map(lambda x: '%f' % x)
+        if str(df2[col].dtype) == 'float64':
+            df2[col] = df2[col].map(lambda x: '%f' % x)
+
         split_df1 = df1[col].apply(lambda x: pandas.Series(x.split(',')))
         split_df2 = df2[col].apply(lambda x: pandas.Series(x.split(',')))
+
         if col.endswith('Times'):
             split_df1 = split_df1.astype('float')
             split_df2 = split_df2.astype('float')

@@ -23,6 +23,9 @@ import shlex
 
 sys.path.insert(0, os.path.abspath(".."))
 
+# Breathe path
+sys.path.append( r"C:\Python27\Lib\site-packages\breathe" )
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -41,7 +44,11 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
+    'breathe',
 ]
+
+breathe_projects = { "fast-trips-cpp": r"doxygen\xml"}
+breathe_default_project = "fast-trips-cpp"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -120,7 +127,7 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -307,3 +314,5 @@ autodoc_member_order = 'groupwise'
 autoclass_content = "class" # classes should include both the class' and the __init__ method's docstring
 
 autosummary_generate = True
+
+numpydoc_show_class_members = False
