@@ -565,7 +565,8 @@ namespace fasttrips {
                 else {
                     printTimeDuration(trace_file, current_label_stop.label_);
                 }
-                trace_file << ", stop " << current_label_stop.stop_id_ << ") :======" << std::endl;
+                trace_file << ", stop " << current_label_stop.stop_id_ << ", len "
+                           << current_stop_state.size() << ") :======" << std::endl;
                 trace_file << "            ";
                 printStopStateHeader(trace_file, path_spec);
                 trace_file << std::endl;
@@ -798,7 +799,7 @@ namespace fasttrips {
 
         if (path_spec.trace_)
         {
-            trace_file << " -> Chose ";
+            trace_file << " -> Chose   ";
             printStopState(trace_file, start_state_id, ss, path_spec);
             trace_file << std::endl;
         }
@@ -816,6 +817,9 @@ namespace fasttrips {
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
                 printTime(trace_file, arrdep_time);
                 trace_file << "; last_trip=" << last_trip << std::endl;
+                trace_file << "            ";
+                printStopStateHeader(trace_file, path_spec);
+                trace_file << std::endl;
             }
             std::vector<ProbabilityStop> stop_cum_prob;
             double sum_exp = 0;
@@ -842,10 +846,19 @@ namespace fasttrips {
                 // probabilities will be filled in later - use cost for now
                 ProbabilityStop pb = { state.cost_, 0, state.stop_succpred_, stop_state_index };
                 stop_cum_prob.push_back(pb);
+
+                if (path_spec.trace_) {
+                    trace_file << "            ";
+                    printStopState(trace_file, current_stop_id, state, path_spec);
+                    trace_file << "  sum_exp = " << std::scientific << sum_exp << std::endl;
+                }
             }
 
             // dead end
             if (stop_cum_prob.size() == 0) {
+                return false;
+            }
+            if (sum_exp == 0) {
                 return false;
             }
 
@@ -862,7 +875,7 @@ namespace fasttrips {
                     stop_cum_prob[idx].prob_i_ = prob_i + stop_cum_prob[idx-1].prob_i_;
                 }
                 if (path_spec.trace_) {
-                    trace_file << std::setw( 6) << std::setfill(' ') << stop_cum_prob[idx].stop_id_ << " ";
+                    trace_file << std::setw( 6) << std::setfill(' ') << std::fixed << stop_cum_prob[idx].stop_id_ << " ";
                     trace_file << ": prob ";
                     trace_file << std::setw(10) << probability << " cum_prob ";
                     trace_file << std::setw( 6) << stop_cum_prob[idx].prob_i_ << std::endl;
@@ -955,6 +968,9 @@ namespace fasttrips {
             srand(path_spec.path_id_);
             while ((!path_found) && (attempts < PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS))
             {
+                if (path_spec.trace_) {
+                    trace_file << "hyperpathChoosePath() -- attempt " << attempts << std::endl;
+                }
                 path_found = hyperpathChoosePath(path_spec, trace_file, stop_states, taz_state, path_states, path_stops);
 
                 attempts += 1;
