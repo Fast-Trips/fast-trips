@@ -146,13 +146,6 @@ class Path:
         """
         return len(self.states) > 1
 
-    def experienced_arrival(self):
-        """
-        During simulation, did the passenger actually arrive?  (As opposed to getting bumped.)
-        Returns boolean.
-        """
-        return (self.experienced_destination_arrival != None)
-
     def reset_states(self):
         """
         Delete my states, something went wrong and it won't work out.

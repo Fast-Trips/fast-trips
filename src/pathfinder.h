@@ -260,12 +260,12 @@ namespace fasttrips {
                                   std::map<int, StopState>& path_states,
                                   std::vector<int>& path_stops) const;
 
-        double getScheduledDeparture(int trip_id, int stop_id, int sequence=-1) const;
+        double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
          */
-        void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips,  double time_window=30.0) const;
+        void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips) const;
 
         double calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
 

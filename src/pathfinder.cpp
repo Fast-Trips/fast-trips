@@ -124,6 +124,8 @@ namespace fasttrips {
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
             trace_file.open(ss.str().c_str(), (std::ios_base::out | std::ios_base::app));
             trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
+            trace_file << "outbound_  = " << path_spec.outbound_ << std::endl;
+            trace_file << "hyperpath_ = " << path_spec.hyperpath_ << std::endl;
         }
 
         StopStates      stop_states;
@@ -545,8 +547,10 @@ namespace fasttrips {
 
             // stop is already processed
             if (stop_done.find(current_label_stop.stop_id_) != stop_done.end()) continue;
+
             // no transfers to the stop
-            // TODO
+            // todo? continue if there are no transfers to/from the stop?
+
             // process this stop now - just once
             stop_done.insert(current_label_stop.stop_id_);
 
@@ -877,7 +881,7 @@ namespace fasttrips {
 
             // revise the first link possibly -- let's not waste time
             if (path_spec.outbound_ && path_states.size()==1) {
-                float dep_time = getScheduledDeparture(next_ss.deparr_mode_, current_stop_id);
+                float dep_time = getScheduledDeparture(next_ss.deparr_mode_, current_stop_id, next_ss.seq_);
                 path_states[start_state_id].deparr_time_ = dep_time - path_states[start_state_id].link_time_;
             }
 
@@ -996,7 +1000,6 @@ namespace fasttrips {
 
     /**
      * Returns the departure time for the transit vehicle from the given stop/seq for the given trip.
-     * TODO: make sequence mandatory
      * Returns -1 on failure.
      */
     double PathFinder::getScheduledDeparture(int trip_id, int stop_id, int sequence) const
@@ -1019,7 +1022,7 @@ namespace fasttrips {
      * If outbound, then we're searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint.
      * If inbound,  then we're searching forwards,  so this returns trips that depart at the stop time after timepoint.
      */
-    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips, double time_window) const
+    void PathFinder::getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips) const
     {
         // are there any trips for this stop?
         std::map<int, std::vector<TripStopTime> >::const_iterator mapiter = stop_trip_times_.find(stop_id);
@@ -1028,9 +1031,9 @@ namespace fasttrips {
         }
         for (std::vector<TripStopTime>::const_iterator it  = mapiter->second.begin();
                                                        it != mapiter->second.end();   ++it) {
-            if (outbound && (it->arrive_time_ < timepoint) && (it->arrive_time_ > timepoint-time_window)) {
+            if (outbound && (it->arrive_time_ < timepoint) && (it->arrive_time_ > timepoint-time_window_)) {
                 return_trips.push_back(*it);
-            } else if (!outbound && (it->depart_time_ > timepoint) && (it->depart_time_ < timepoint+time_window)) {
+            } else if (!outbound && (it->depart_time_ > timepoint) && (it->depart_time_ < timepoint+time_window_)) {
                 return_trips.push_back(*it);
             }
         }
