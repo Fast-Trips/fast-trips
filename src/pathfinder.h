@@ -129,6 +129,16 @@ namespace fasttrips {
      */
     typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
 
+    /** A single path consists of a map of stop id to StopState, plus the order of the stops are given
+     *  a list of stop ids.
+     */
+    typedef struct {
+        std::map<int, StopState>    states_;    ///< Stop states will be in here, indexed by stop ID.
+        std::vector<int>            stops_;     ///< stop IDs. They are in origin to destination order
+                                                ///< for outbound trips, and destination to origin
+                                                ///< order for inbound trips.
+    } Path;
+
     /**
     * This is the class that does all the work.  Setup the network supply first.
     */
@@ -240,8 +250,7 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   const StopStates& stop_states,
                                   const std::vector<StopState>& taz_state,
-                                  std::map<int, StopState>& path_states,
-                                  std::vector<int>& path_stops) const;
+                                  Path& path) const;
         /**
          * Given a vector of fasttrips::ProbabilityStop instances,
          * randomly selects one based on the cumulative probability
@@ -257,8 +266,7 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   const StopStates& stop_states,
                                   const std::vector<StopState>& taz_state,
-                                  std::map<int, StopState>& path_states,
-                                  std::vector<int>& path_stops) const;
+                                  Path& path) const;
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
         /**
@@ -268,6 +276,8 @@ namespace fasttrips {
         void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips) const;
 
         double calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
+
+        void printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
 
         void printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const;
         void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const;
@@ -350,15 +360,9 @@ namespace fasttrips {
          * PathFinder::finalTazState, and PathFinder::getFoundPath
          *
          * @param path_spec     The specifications of that path to find
-         * @param path_states   This is really a return structure.  If a path is found,
-         *                      the stop states will be in here, indexed by stop ID.
-         * @param path_stops    This is also a return structure.  If a path is found,
-         *                      the stop IDs will be in here.  They are in origin to
-         *                      destination order for outbound trips, and destination to
-         *                      origin order for inbound trips.
+         * @param path          This is really a return fasttrips::Path
          */
-        void findPath(PathSpecification         path_spec,
-                      std::map<int, StopState>& path_states,
-                      std::vector<int>&         path_stops) const;
+        void findPath(PathSpecification path_spec,
+                      Path              &path) const;
     };
 }

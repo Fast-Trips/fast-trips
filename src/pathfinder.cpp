@@ -111,8 +111,7 @@ namespace fasttrips {
     }
 
     void PathFinder::findPath(PathSpecification path_spec,
-                              std::map<int, StopState>& path_states,
-                              std::vector<int>&         path_stops) const
+                              Path& path) const
     {
         // for now we'll just trace
         // if (!path_spec.trace_) { return; }
@@ -138,7 +137,7 @@ namespace fasttrips {
         std::vector<StopState> taz_state;
         finalizeTazState(path_spec, trace_file, stop_states, taz_state);
 
-        getFoundPath(path_spec, trace_file, stop_states, taz_state, path_states, path_stops);
+        getFoundPath(path_spec, trace_file, stop_states, taz_state, path);
 
         trace_file.close();
     }
@@ -757,8 +756,7 @@ namespace fasttrips {
         std::ofstream& trace_file,
         const StopStates& stop_states,
         const std::vector<StopState>& taz_state,
-        std::map<int, StopState>& path_states,
-        std::vector<int>& path_stops) const
+        Path& path) const
     {
         int    start_state_id   = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor       = path_spec.outbound_ ? 1 : -1;
@@ -794,8 +792,8 @@ namespace fasttrips {
 
         size_t chosen_index = chooseState(path_spec, trace_file, access_cum_prob);
         StopState ss = taz_state[chosen_index];
-        path_stops.push_back(start_state_id);
-        path_states[start_state_id] = ss;
+        path.stops_.push_back(start_state_id);
+        path.states_[start_state_id] = ss;
 
         if (path_spec.trace_)
         {
@@ -893,14 +891,14 @@ namespace fasttrips {
             }
 
             // revise the first link possibly -- let's not waste time
-            if (path_spec.outbound_ && path_states.size()==1) {
+            if (path_spec.outbound_ && path.states_.size()==1) {
                 float dep_time = getScheduledDeparture(next_ss.deparr_mode_, current_stop_id, next_ss.seq_);
-                path_states[start_state_id].deparr_time_ = dep_time - path_states[start_state_id].link_time_;
+                path.states_[start_state_id].deparr_time_ = dep_time - path.states_[start_state_id].link_time_;
             }
 
             // record the choice
-            path_stops.push_back(current_stop_id);
-            path_states[current_stop_id] = next_ss;
+            path.stops_.push_back(current_stop_id);
+            path.states_[current_stop_id] = next_ss;
 
             // move on to the next
             current_stop_id     = next_ss.stop_succpred_;
@@ -952,8 +950,7 @@ namespace fasttrips {
         std::ofstream& trace_file,
         const StopStates& stop_states,
         const std::vector<StopState>& taz_state,
-        std::map<int, StopState>& path_states,
-        std::vector<int>& path_stops) const
+        Path& path) const
     {
         // no taz states -> no path found
         if (taz_state.size() == 0) { return false; }
@@ -971,13 +968,13 @@ namespace fasttrips {
                 if (path_spec.trace_) {
                     trace_file << "hyperpathChoosePath() -- attempt " << attempts << std::endl;
                 }
-                path_found = hyperpathChoosePath(path_spec, trace_file, stop_states, taz_state, path_states, path_stops);
+                path_found = hyperpathChoosePath(path_spec, trace_file, stop_states, taz_state, path);
 
                 attempts += 1;
                 if (!path_found)
                 {
-                    path_states.clear();
-                    path_stops.clear();
+                    path.states_.clear();
+                    path.stops_.clear();
                 }
             }
         }
@@ -988,29 +985,22 @@ namespace fasttrips {
             int final_state_type = path_spec.outbound_ ? PathFinder::MODE_EGRESS : PathFinder::MODE_ACCESS;
 
             StopState ss = taz_state.front(); // there's only one
-            path_states[end_taz_id] = ss;
-            path_stops.push_back(end_taz_id);
+            path.states_[end_taz_id] = ss;
+            path.stops_.push_back(end_taz_id);
 
             while (ss.deparr_mode_ != final_state_type)
             {
                 int stop_id = ss.stop_succpred_;
                 StopStates::const_iterator ssi = stop_states.find(stop_id);
                 ss          = ssi->second.front();
-                path_states[stop_id] = ss;
-                path_stops.push_back(stop_id);
+                path.states_[stop_id] = ss;
+                path.stops_.push_back(stop_id);
             }
         }
         if (path_spec.trace_)
         {
             trace_file << "Final path" << std::endl;
-            printStopStateHeader(trace_file, path_spec);
-            trace_file << std::endl;
-            for (std::vector<int>::const_iterator stop_id_iter  = path_stops.begin();
-                                                  stop_id_iter != path_stops.end(); ++stop_id_iter)
-            {
-                printStopState(trace_file, *stop_id_iter, path_states[*stop_id_iter], path_spec);
-                trace_file << std::endl;
-            }
+            printPath(trace_file, path_spec, path);
         }
     }
 
@@ -1073,6 +1063,19 @@ namespace fasttrips {
             return PathFinder::MAX_COST;
         }
         return -1.0/PathFinder::DISPERSION_PARAMETER*log(nonwalk_label);
+    }
+
+    void PathFinder::printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const
+    {
+        printStopStateHeader(ostr, path_spec);
+        ostr << std::endl;
+        for (std::vector<int>::const_iterator stop_id_iter  = path.stops_.begin();
+                                              stop_id_iter != path.stops_.end(); ++stop_id_iter)
+        {
+            std::map<int, StopState>::const_iterator psi = path.states_.find(*stop_id_iter);
+            printStopState(ostr, *stop_id_iter, psi->second, path_spec);
+            ostr << std::endl;
+        }
     }
 
     void PathFinder::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const
