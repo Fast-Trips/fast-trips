@@ -60,7 +60,7 @@ class Path:
     STATE_IDX_SEQ_SUCCPRED  = 5  #: sequence for successor/predecessor
     STATE_IDX_LINKTIME      = 6  #: :py:class:`datetime.timedelta` instance
     STATE_IDX_COST          = 7  #: cost float, for hyperpath/stochastic assignment
-    STATE_IDX_ARRIVAL       = 8  #: arrival time, a :py:class:`datetime.datetime` instance, for hyperpath/stochastic assignment
+    STATE_IDX_ARRDEP        = 8  #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
 
     STATE_MODE_ACCESS   = "Access"
     STATE_MODE_EGRESS   = "Egress"
@@ -115,24 +115,8 @@ class Path:
         #: this is in reverse order (egress to access)
         self.states = collections.OrderedDict()
 
-    @staticmethod
-    def calculate_tripcost(passengers_df):
-        """
-        Given a :py:class:`pandas.DataFrame` instance with each row representing a link in the passenger's trip,
-        adds a new colum, `travelCost`.
-        """
-        passengers_df['travelCost'] = 0.0
-        # time-based
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_ACCESS  ,'travelCost'] += Path.WALK_ACCESS_TIME_WEIGHT   * (passengers_df.linktime/numpy.timedelta64(1,'m'))
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRANSFER,'travelCost'] += Path.WALK_TRANSFER_TIME_WEIGHT * (passengers_df.linktime/numpy.timedelta64(1,'m'))
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_EGRESS  ,'travelCost'] += Path.WALK_EGRESS_TIME_WEIGHT   * (passengers_df.linktime/numpy.timedelta64(1,'m'))
-
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.IN_VEHICLE_TIME_WEIGHT    * ((passengers_df.alight_time-passengers_df.board_time)/numpy.timedelta64(1,'m'))
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.WAIT_TIME_WEIGHT          * ((passengers_df.board_time -passengers_df.A_time    )/numpy.timedelta64(1,'m'))
-
-        # flat
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP    ,'travelCost'] += Path.FARE_PER_BOARDING         * 60.0/Path.VALUE_OF_TIME
-        passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRANSFER,'travelCost'] += Path.TRANSFER_PENALTY
+        #: Final path cost, will be filled in during path finding
+        self.cost   = 0.0
 
     def goes_somewhere(self):
         """
@@ -192,7 +176,7 @@ class Path:
              str(state[Path.STATE_IDX_SUCCPRED]),
              str(state[Path.STATE_IDX_LINKTIME]),
              str(state[Path.STATE_IDX_COST]) if type(state[Path.STATE_IDX_COST])==datetime.timedelta else "%.4f" % state[Path.STATE_IDX_COST],
-             state[Path.STATE_IDX_ARRIVAL].strftime("%H.%M:%S"))
+             state[Path.STATE_IDX_ARRDEP].strftime("%H.%M:%S"))
 
     def __str__(self):
         """

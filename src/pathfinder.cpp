@@ -114,7 +114,8 @@ namespace fasttrips {
     }
 
     void PathFinder::findPath(PathSpecification path_spec,
-                              Path& path) const
+                              Path& path,
+                              PathInfo          &path_info) const
     {
         // for now we'll just trace
         // if (!path_spec.trace_) { return; }
@@ -144,7 +145,7 @@ namespace fasttrips {
         std::vector<StopState> taz_state;
         finalizeTazState(path_spec, trace_file, stop_states, taz_state);
 
-        getFoundPath(path_spec, trace_file, stop_states, taz_state, path);
+        getFoundPath(path_spec, trace_file, stop_states, taz_state, path, path_info);
 
         trace_file.close();
     }
@@ -971,7 +972,7 @@ namespace fasttrips {
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
                 if (prev_mode == PathFinder::MODE_EGRESS) {
-                    path.states_[prev_stop_id].arrdep_time_ = next_ss.arrdep_time_;
+                    path.states_[prev_stop_id].arrdep_time_ = next_ss.deparr_time_;
                     path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ + path.states_[prev_stop_id].link_time_;
                 }
             }
@@ -1179,7 +1180,8 @@ namespace fasttrips {
         std::ofstream& trace_file,
         const StopStates& stop_states,
         const std::vector<StopState>& taz_state,
-        Path& path) const
+        Path& path,
+        PathInfo& path_info) const
     {
         // no taz states -> no path found
         if (taz_state.size() == 0) { return false; }
@@ -1259,16 +1261,21 @@ namespace fasttrips {
 
             // choose path
             path = choosePath(path_spec, trace_file, paths, cum_prob);
+            path_info = paths[path];
         }
         else
         {
-            // outbound: egress to access and back
-            // inbound:  acess  to egress and back
+            // outbound: origin to destination
+            // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? PathFinder::MODE_EGRESS : PathFinder::MODE_ACCESS;
 
             StopState ss = taz_state.front(); // there's only one
             path.states_[end_taz_id] = ss;
             path.stops_.push_back(end_taz_id);
+
+            int prev_prev_stop_id = -1;
+            int prev_stop_id = end_taz_id;
+            int prev_mode    = ss.deparr_mode_;
 
             while (ss.deparr_mode_ != final_state_type)
             {
@@ -1277,7 +1284,69 @@ namespace fasttrips {
                 ss          = ssi->second.front();
                 path.states_[stop_id] = ss;
                 path.stops_.push_back(stop_id);
+
+                if (path_spec.outbound_)
+                {
+                    // Leave origin as late as possible
+                    if (prev_mode == PathFinder::MODE_ACCESS) {
+                        path.states_[prev_stop_id].arrdep_time_ = ss.deparr_time_;
+                        path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ - path.states_[prev_stop_id].link_time_;
+                        // no wait time for the trip
+                        path.states_[stop_id].link_time_ = path.states_[stop_id].arrdep_time_ - path.states_[stop_id].deparr_time_;
+                    }
+                    // *Fix trip time*
+                    else if (isTrip(path.states_[stop_id].deparr_mode_)) {
+                        // link time is arrival time - previous arrival time
+                        path.states_[stop_id].link_time_ = path.states_[stop_id].arrdep_time_ - path.states_[prev_stop_id].arrdep_time_;
+                    }
+                    // *Fix transfer times*
+                    else if (path.states_[stop_id].deparr_mode_ == PathFinder::MODE_TRANSFER) {
+                        path.states_[stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_;   // start transferring immediately
+                        path.states_[stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_ + path.states_[stop_id].link_time_;
+                    }
+                    // Egress: don't wait, just walk. Get to destination as early as possible
+                    else if (ss.deparr_mode_ == PathFinder::MODE_EGRESS) {
+                        path.states_[stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
+                        path.states_[stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_ + path.states_[stop_id].link_time_;
+                    }
+                }
+                // INBOUND: We are choosing links in REVERSE chronological order
+                else
+                {
+                    // Leave origin as late as possible
+                    if (path.states_[stop_id].deparr_mode_ == PathFinder::MODE_ACCESS) {
+                        path.states_[stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
+                        path.states_[stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_ - path.states_[stop_id].link_time_;
+                        // no wait time for the trip
+                        path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - path.states_[prev_stop_id].arrdep_time_;
+                    }
+                    // *Trip* - fix transfer and next trip if applicable
+                    else if (isTrip(path.states_[stop_id].deparr_mode_)) {
+                        // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
+                        // and we can update the transfer and the trip with the real wait
+                        if (prev_mode == PathFinder::MODE_TRANSFER) {
+                            // move transfer time so we do it right after arriving
+                            path.states_[prev_stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_; // depart right away
+                            path.states_[prev_stop_id].deparr_time_ = path.states_[stop_id].deparr_time_ + path.states_[prev_stop_id].link_time_; // arrive after walk
+                            // give the wait time to the previous trip
+                            path.states_[prev_prev_stop_id].link_time_ = path.states_[prev_prev_stop_id].deparr_time_ - path.states_[prev_stop_id].deparr_time_;
+                        }
+                        // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
+                        else if (isTrip(prev_mode)) {
+                            path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - path.states_[stop_id].deparr_time_;
+                        }
+                    }
+                    // Egress: don't wait, just walk. Get to destination as early as possible
+                    if (prev_mode == PathFinder::MODE_EGRESS) {
+                        path.states_[prev_stop_id].arrdep_time_ = ss.deparr_time_;
+                        path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ + path.states_[prev_stop_id].link_time_;
+                    }
+                }
+                prev_prev_stop_id = prev_stop_id;
+                prev_stop_id = stop_id;
+                prev_mode    = ss.deparr_mode_;
             }
+            calculatePathCost(path_spec, trace_file, path, path_info);
         }
         if (path_spec.trace_)
         {

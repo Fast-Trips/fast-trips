@@ -83,7 +83,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PASSENGER_IDS             = [22267]
+    TRACE_PASSENGER_IDS             = [11,215]
 
     #: Number of processes to use for path finding (via :py:mod:`multiprocessing`)
     #: Set to 1 to run everything in this process
@@ -319,10 +319,11 @@ class Assignment:
                         trace_passenger = True
 
                     # do the work
-                    (asgn_iters, return_states) = Assignment.find_trip_based_path(FT, passenger, passenger.path,
+                    (cost, return_states) = Assignment.find_trip_based_path(FT, passenger, passenger.path,
                                                                                   Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                                                   trace=trace_passenger)
                     passenger.path.states = return_states
+                    passenger.path.cost   = cost
 
                     if passenger.path.path_found():
                         num_paths_found_now += 1
@@ -353,11 +354,10 @@ class Assignment:
                     else:
                         passenger_id    = result[0]
                         path_id         = result[1]
-                        asgn_iters      = result[2]
-                        return_states   = result[3]
 
                         # find passenger with path_id and set return
-                        FT.passengers[path_id].path.states = return_states
+                        FT.passengers[path_id].path.cost   = result[2]
+                        FT.passengers[path_id].path.states = result[3]
                         if FT.passengers[path_id].path.path_found():
                             num_paths_found_now += 1
 
@@ -407,7 +407,7 @@ class Assignment:
         Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
         or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
 
-        Returns (number of label iterations, return_states).
+        Returns (path cost, return_states).
 
         :param FT: fasttrips data
         :type FT: a :py:class:`FastTrips` instance
@@ -424,9 +424,10 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles) = _fasttrips.find_path(passenger.passenger_id , path.path_id, hyperpath, path.origin_taz_id, path.destination_taz_id,
-                             1 if path.outbound() else 0, float(path.pref_time_min),
-                             1 if trace else 0)
+        (ret_ints, ret_doubles, path_cost) = \
+            _fasttrips.find_path(passenger.passenger_id, path.path_id, hyperpath, path.origin_taz_id, path.destination_taz_id,
+                                 1 if path.outbound() else 0, float(path.pref_time_min),
+                                 1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
 
         # Put the results into an ordered dict statelist
@@ -466,7 +467,7 @@ class Assignment:
                               datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
                               ]
-        return (0, return_states)
+        return (path_cost, return_states)
 
     @staticmethod
     def print_passenger_paths(passengers_df, output_dir):
@@ -499,7 +500,8 @@ class Assignment:
              'B_time_str'           :'endTime',
              'arrival_time_str'     :'arrivalTimes',
              'board_time_str'       :'boardingTimes',
-             'alight_time_str'      :'alightingTimes'
+             'alight_time_str'      :'alightingTimes',
+             'cost'                 :'travelCost',
              }, inplace=True)
 
         # recode/reformat
@@ -576,6 +578,7 @@ class Assignment:
         `A_time`         datetime64[ns]  the time the passenger arrives at `A_id`
         `B_time`         datetime64[ns]  the time the passenger arrives at `B_id`
         `linktime`      timedelta64[ns]  the time spent on the link
+        `cost`                  float64  the cost of the entire path
         ==============  ===============  =====================================================================================================
 
         Additionally, this method writes out the dataframe to a csv at :py:attr:`Assignment.PASSENGERS_CSV` in the given `output_dir`
@@ -594,14 +597,13 @@ class Assignment:
             #  b stop3                                  trip2    a stop4
             #  a stop4                                 Egress   dest_taz
             #
-            # e.g. (preferred arrival = 404 = 06:44:00)
-            #    stop:          label    departure   dep_mode  successor linktime
-            #      29: 0:24:29.200000     06:19:30     Access    23855.0 0:11:16.200000
-            # 23855.0: 0:13:13            06:30:47   21649852    38145.0 0:06:51
-            # 38145.0: 0:06:22            06:37:38   Transfer      38650 0:00:42
-            #   38650: 0:05:40            06:38:20   25009729    76730.0 0:03:51.400000
-            # 76730.0: 0:01:48.600000     06:42:11     Egress         18 0:01:48.600000
-            #
+            #  stop:         label  dep_time    dep_mode   successor  seq  suc       linktime             cost  arr_time
+            #   460:  0:20:49.4000  17:41:10      Access        3514   -1   -1   0:03:08.4000     0:03:08.4000  17:44:18
+            #  3514:  0:17:41.0000  17:44:18     5131292        4313   30   40   0:06:40.0000     0:12:21.8000  17:50:59
+            #  4313:  0:05:19.2000  17:50:59    Transfer        5728   -1   -1   0:00:19.2000     0:00:19.2000  17:51:18
+            #  5728:  0:04:60.0000  17:57:00     5154302        5726   16   17   0:07:33.8000     0:03:02.4000  17:58:51
+            #  5726:  0:01:57.6000  17:58:51      Egress         231   -1   -1   0:01:57.6000     0:01:57.6000  18:00:49
+
             # INBOUND passengers have states like this
             #   stop:          label      arrival   arr_mode predecessor linktime
             # dest_taz                                 Egress    a stop4
@@ -610,19 +612,21 @@ class Assignment:
             #  a stop2                                  trip1    b stop1
             #  b stop1                                 Access   orig_taz
             #
-            # e.g. (preferred departure = 447 = 07:27:00)
-            #    stop:          label      arrival   arr_mode predecessor linktime
-            #    1586: 0:49:06            08:16:06     Egress    73054.0 0:06:27
-            # 73054.0: 0:42:39            08:09:39   24201511    69021.0 0:13:11.600000
-            # 69021.0: 0:29:27.400000     07:56:27   Transfer      68007 0:00:26.400000
-            #   68007: 0:29:01            07:56:01   25539006    64065.0 0:28:11.200000
-            # 64065.0: 0:00:49.800000     07:27:49     Access       3793 0:00:49.800000
+            #  stop:         label  arr_time    arr_mode predecessor  seq pred       linktime             cost  dep_time
+            #    15:  0:36:38.4000  17:30:38      Egress        3772   -1   -1   0:02:38.4000     0:02:38.4000  17:28:00
+            #  3772:  0:34:00.0000  17:28:00     5123368        6516   22   14   0:24:17.2000     0:24:17.2000  17:05:50
+            #  6516:  0:09:42.8000  17:03:42    Transfer        4766   -1   -1   0:00:16.8000     0:00:16.8000  17:03:25
+            #  4766:  0:09:26.0000  17:03:25     5138749        5671    7    3   0:05:30.0000     0:05:33.2000  16:57:55
+            #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
             prev_linkmode = None
+            prev_state_id = None
             if len(passenger.path.states) > 1:
                 state_list = passenger.path.states.keys()
                 if not passenger.path.outbound(): state_list = list(reversed(state_list))
 
-                for state_id in state_list:
+                for state_index in range(len(state_list)):
+                    state_id        = state_list[state_index]
+
                     state           = passenger.path.states[state_id]
                     linkmode        = state[Path.STATE_IDX_DEPARRMODE]
                     trip_id         = None
@@ -630,13 +634,14 @@ class Assignment:
                         trip_id     = linkmode
                         linkmode    = Path.STATE_MODE_TRIP
 
-                    a_id            = state_id
-                    b_id            = state[Path.STATE_IDX_SUCCPRED]
-                    a_seq           = state[Path.STATE_IDX_SEQ]
-                    b_seq           = state[Path.STATE_IDX_SEQ_SUCCPRED]
-                    a_time          = state[Path.STATE_IDX_DEPARR]
-                    b_time          = a_time + state[Path.STATE_IDX_LINKTIME]
-                    if not passenger.path.outbound():
+                    if passenger.path.outbound():
+                        a_id        = state_id
+                        b_id        = state[Path.STATE_IDX_SUCCPRED]
+                        a_seq       = state[Path.STATE_IDX_SEQ]
+                        b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
+                        b_time      = state[Path.STATE_IDX_ARRDEP]
+                        a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+                    else:
                         a_id        = state[Path.STATE_IDX_SUCCPRED]
                         b_id        = state_id
                         a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
@@ -658,7 +663,8 @@ class Assignment:
                                a_seq,
                                a_time,
                                a_time,
-                               datetime.timedelta()
+                               datetime.timedelta(),
+                               passenger.path.cost,
                               ]
                         mylist.append(row)
 
@@ -674,10 +680,14 @@ class Assignment:
                            b_seq,
                            a_time,
                            b_time,
-                           state[Path.STATE_IDX_LINKTIME]]
+                           state[Path.STATE_IDX_LINKTIME],
+                           passenger.path.cost,
+                           ]
                     mylist.append(row)
 
                     prev_linkmode = linkmode
+                    prev_state_id = state_id
+
         df =  pandas.DataFrame(mylist,
                                columns=['passenger_id', 'path_id',
                                         'pathdir',  # for debugging
@@ -686,7 +696,7 @@ class Assignment:
                                         'A_id','B_id',
                                         'A_seq','B_seq',
                                         'A_time', 'B_time',
-                                        'linktime'])
+                                        'linktime', 'cost'])
         FastTripsLogger.debug("Setup passengers dataframe:\n%s" % str(df.dtypes))
         df.to_csv(os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration), index=False)
         FastTripsLogger.info("Wrote passengers dataframe to %s" % os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration))
@@ -767,7 +777,7 @@ class Assignment:
 
         # veh_trips_df.set_index(['trip_id','stop_seq','stop_id'],verify_integrity=True,inplace=True)
         # FastTripsLogger.debug("veh_trips_df types = \n%s" % str(veh_trips_df.dtypes))
-        FastTripsLogger.debug("veh_trips_df: \n%s" % veh_trips_df.head(20).to_string(formatters=
+        FastTripsLogger.debug("veh_trips_df: \n%s" % veh_trips_df.loc[veh_trips_df.trip_id==5127716].to_string(formatters=
             {'arrive_time'          :Assignment.datetime64_formatter,
              'depart_time'          :Assignment.datetime64_formatter,
              'waitqueue_start_time' :Assignment.datetime64_formatter}))
@@ -803,82 +813,11 @@ class Assignment:
         FastTripsLogger.debug("       Have %d pasenger trips" % len(passenger_trips))
 
         ######################################################################################################
-        FastTripsLogger.info("Step 2. Some trips (outbound) were found by searching backwards, so they wait *after arriving*.")
-        FastTripsLogger.info("        -> They should just move on and wait at the next stop (if there is one)")
-
-        # Get trip board/alight time back to the passengers table
-        passengers_df = pandas.merge(left=passengers_df, right=passenger_trips[['passenger_id','path_id','trip_id','board_time','alight_time']],
-                                     on=['passenger_id','path_id','trip_id'], how='left')
-        passengers_df = pandas.merge(left      =passengers_df, right      =passengers_df[['board_time','alight_time']].shift(1),
-                                     left_index=True,          right_index=True,
-                                     how       ='left',        suffixes   =('','_prev'))
-        # For trips: if B > alight_time, don't wait at B! Just leave!
-        passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
-                          (passengers_df.B_time   >passengers_df.alight_time), 'linktime'] -= passengers_df.B_time-passengers_df.alight_time
-        passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
-                          (passengers_df.B_time   >passengers_df.alight_time), 'B_time'  ]  = passengers_df.alight_time
-        # For transfer links and egress links, move up in time since the passenger arrived earlier
-        passengers_df.loc[((passengers_df.linkmode==Path.STATE_MODE_TRANSFER      )| \
-                           (passengers_df.linkmode==Path.STATE_MODE_EGRESS        ))& \
-                           (passengers_df.A_time   >passengers_df.alight_time_prev), 'B_time'] -= passengers_df.A_time-passengers_df.alight_time_prev
-        passengers_df.loc[((passengers_df.linkmode==Path.STATE_MODE_TRANSFER      )| \
-                           (passengers_df.linkmode==Path.STATE_MODE_EGRESS        ))& \
-                           (passengers_df.A_time > passengers_df.alight_time_prev ), 'A_time'] -= passengers_df.A_time-passengers_df.alight_time_prev
-
-        # Sometimes stochastic assignment results in transfers that are too early -- fix
-        if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
-            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRANSFER      )& \
-                              (passengers_df.A_time   <passengers_df.alight_time_prev), 'B_time'] = passengers_df.alight_time_prev+passengers_df.linktime
-            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRANSFER      )& \
-                              (passengers_df.A_time   <passengers_df.alight_time_prev), 'A_time'] = passengers_df.alight_time_prev
-
-        # Now subsequent trip arrival times can move up also
-        passengers_df = pandas.merge(left      =passengers_df, right      =passengers_df[['B_time','linkmode']].shift(1),
-                                     left_index=True,          right_index=True,
-                                     how       ='left',        suffixes   =('','_prev'))
-        passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
-                          (passengers_df.A_time   >passengers_df.B_time_prev), 'linktime'] += passengers_df.A_time-passengers_df.B_time_prev
-        passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
-                          (passengers_df.A_time   >passengers_df.B_time_prev), 'A_time'  ]  = passengers_df.B_time_prev
-
-        # Sometimes stochastic assignment results in trips arrivals that are too early -- fix
-        if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
-            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
-                              (passengers_df.A_time   <passengers_df.B_time_prev), 'linktime'] = passengers_df.B_time-passengers_df.B_time_prev
-            passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_TRIP     )& \
-                              (passengers_df.A_time   <passengers_df.B_time_prev), 'A_time'  ] = passengers_df.B_time_prev
-
-        ######################################################################################################
-        FastTripsLogger.info("Step 3. Some trips leave too early and wait at the *first* stop.")
-        FastTripsLogger.info("        -> Assume they have perfect prediction and wait to leave.")
-
-        # For trips: If first trip (right after access), if A < board time, get there later!
-        passengers_df.loc[(passengers_df.linkmode     ==Path.STATE_MODE_TRIP  ) & \
-                          (passengers_df.linkmode_prev==Path.STATE_MODE_ACCESS) & \
-                          (passengers_df.A_time        <passengers_df.board_time), 'linktime'] -= passengers_df.board_time-passengers_df.A_time
-        passengers_df.loc[(passengers_df.linkmode     ==Path.STATE_MODE_TRIP  ) & \
-                          (passengers_df.linkmode_prev==Path.STATE_MODE_ACCESS) & \
-                          (passengers_df.A_time        <passengers_df.board_time), 'A_time'  ]  = passengers_df.board_time
-        passengers_df = pandas.merge(left      =passengers_df, right      =passengers_df[['A_time']].shift(-1),
-                                     left_index=True,          right_index=True,
-                                     how       ='left',        suffixes   =('','_next'))
-        # For access links: Scoot my times later
-        passengers_df.loc[(passengers_df.linkmode    ==Path.STATE_MODE_ACCESS)& \
-                          (passengers_df.B_time       <passengers_df.A_time_next), 'A_time'] += passengers_df.A_time_next-passengers_df.B_time
-        passengers_df.loc[(passengers_df.linkmode    ==Path.STATE_MODE_ACCESS)& \
-                          (passengers_df.B_time       <passengers_df.A_time_next), 'B_time']  = passengers_df.A_time_next
-
-
-        # passenger_trips is all wrong now -- redo
-        passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
-        # FastTripsLogger.debug("Passenger Trips: \n%s" % str(passenger_trips.head()))
-
-        ######################################################################################################
         bump_iter = 0
         Assignment.bumped_passenger_ids.clear()
         Assignment.bumped_path_ids.clear()
         while True: # loop for capacity constraint
-            FastTripsLogger.info("Step 4. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
+            FastTripsLogger.info("Step 2. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
 
             # Group to boards by counting path_ids for a (trip_id, A_id as stop_id)
             passenger_trips_boards = passenger_trips[['path_id','trip_id','A_id','A_seq']].groupby(['trip_id','A_id','A_seq']).count()
@@ -924,7 +863,7 @@ class Assignment:
 
             else:
                 ######################################################################################################
-                FastTripsLogger.info("Step 5. Capacity constraints on transit vehicles.")
+                FastTripsLogger.info("Step 3. Capacity constraints on transit vehicles.")
                 if bump_iter == 0:
                     FastTripsLogger.info("        Bumping one at a time? %s" % ("true" if Assignment.BUMP_ONE_AT_A_TIME else "false"))
                 # This needs to run at this point because the arrival times for the passengers are accurate here
@@ -1065,15 +1004,11 @@ class Assignment:
                 {'A_time'       :Assignment.datetime64_formatter}))
 
         ######################################################################################################
-        FastTripsLogger.info("Step 6. Add up travel costs")
-        Path.calculate_tripcost(passengers_df)
-
-        ######################################################################################################
-        FastTripsLogger.info("Step 7. Convert times to strings (minutes past midnight) for joining")
+        FastTripsLogger.info("Step 4. Convert times to strings (minutes past midnight) for joining")
 
         ######         TODO: this is really catering to output format; an alternative might be more appropriate
         passenger_trips.loc[:,  'board_time_str'] = passenger_trips.board_time.apply(Assignment.datetime64_min_formatter)
-        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips.A_time.apply(Assignment.datetime64_min_formatter)
+        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips.arrival_time.apply(Assignment.datetime64_min_formatter)
         passenger_trips.loc[:, 'alight_time_str'] = passenger_trips.alight_time.apply(Assignment.datetime64_min_formatter)
         assert(len(passenger_trips) == passenger_trips_len)
 
@@ -1091,7 +1026,7 @@ class Assignment:
              'B_id'         :'last',   # destination
              'A_time'       :'first',  # start time
              'B_time'       :'last',   # end time
-             'travelCost'   :'sum',    # total travel cost
+             'cost'         :'first',  # total travel cost is calculated for the whole path
             })
 
         # Put them together and return
@@ -1212,8 +1147,8 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, outpu
             trace_passenger = True
 
         try:
-            (asgn_iters, return_states) = Assignment.find_trip_based_path(worker_FT, passenger, path, hyperpath, trace=trace_passenger)
-            done_queue.put( (passenger.passenger_id, path.path_id, asgn_iters, return_states) )
+            (cost, return_states) = Assignment.find_trip_based_path(worker_FT, passenger, path, hyperpath, trace=trace_passenger)
+            done_queue.put( (passenger.passenger_id, path.path_id, cost, return_states) )
         except:
             FastTripsLogger.exception('Exception')
             # call it a day

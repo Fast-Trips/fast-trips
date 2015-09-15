@@ -79,6 +79,12 @@ namespace fasttrips {
      *
      * The StopState is basically the state at this stop with details of the link after (for outbound) or before
      * (inbound) the stop in the found path.
+     *
+     * NOTE: for trip states, deparr_time_ and arrdep_time_ are both for the *vehicle* because the passenger
+     * times can be inferred from the surrounding states.
+     *
+     * In particular, for outbound trips, the deparr_time_ for trip states is not necessarily the person departure time.
+     * For inbound trips, the arrdep_time_ for trip states is not necessarily the person departure time.
      */
     typedef struct {
         double  label_;                 ///< The label for this stop
@@ -91,7 +97,7 @@ namespace fasttrips {
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
         double  cost_;                  ///< Cost
-        double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound transit vehicles
+        double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
     } StopState;
 
     /**
@@ -141,11 +147,11 @@ namespace fasttrips {
 
     /** In stochastic path finding, this is the information we'll collect about the path. */
     typedef struct {
-        int     count_;                         ///< Number of times this path was generated
+        int     count_;                         ///< Number of times this path was generated (for stochastic)
         double  cost_;                          ///< Cost of this path
         bool    capacity_problem_;              ///< Does this path have a capacity problem?
-        double  probability_;                   ///< Probability of this stop
-        int     prob_i_;                        ///< Cumulative probability * 1000000
+        double  probability_;                   ///< Probability of this stop          (for stochastic)
+        int     prob_i_;                        ///< Cumulative probability * RAND_MAX (for stochastic)
     } PathInfo;
 
     /// Comparator to for Path instances so we can put them in a map as keys.
@@ -315,11 +321,12 @@ namespace fasttrips {
                                const Path& path,
                                PathInfo& path_info) const;
 
-        bool getFoundPath(const PathSpecification& path_spec,
-                                  std::ofstream& trace_file,
-                                  const StopStates& stop_states,
-                                  const std::vector<StopState>& taz_state,
-                                  Path& path) const;
+        bool getFoundPath(const PathSpecification&      path_spec,
+                          std::ofstream&                trace_file,
+                          const StopStates&             stop_states,
+                          const std::vector<StopState>& taz_state,
+                          Path&                         path,
+                          PathInfo&                     path_info) const;
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
         /**
@@ -417,8 +424,10 @@ namespace fasttrips {
          *
          * @param path_spec     The specifications of that path to find
          * @param path          This is really a return fasttrips::Path
+         * @param path_info     Also for returng information (e.g. about the Path cost)
          */
         void findPath(PathSpecification path_spec,
-                      Path              &path) const;
+                      Path              &path,
+                      PathInfo          &path_info) const;
     };
 }
