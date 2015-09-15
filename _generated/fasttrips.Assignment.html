@@ -310,7 +310,7 @@
 <dd><p>Perform trip-based path search.</p>
 <p>Will do so either backwards (destination to origin) if <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.direction" title="fasttrips.Path.direction"><code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code></a> is <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.DIR_OUTBOUND" title="fasttrips.Path.DIR_OUTBOUND"><code class="xref py py-attr docutils literal"><span class="pre">Path.DIR_OUTBOUND</span></code></a>
 or forwards (origin to destination) if <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.direction" title="fasttrips.Path.direction"><code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code></a> is <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.DIR_INBOUND" title="fasttrips.Path.DIR_INBOUND"><code class="xref py py-attr docutils literal"><span class="pre">Path.DIR_INBOUND</span></code></a>.</p>
-<p>Returns (number of label iterations, return_states).</p>
+<p>Returns (path cost, return_states).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -471,6 +471,10 @@ access, followed by trips with transfers in between, and ending in an egress fol
 <tr class="row-even"><td><cite>linktime</cite></td>
 <td>timedelta64[ns]</td>
 <td>the time spent on the link</td>
+</tr>
+<tr class="row-odd"><td><cite>cost</cite></td>
+<td>float64</td>
+<td>the cost of the entire path</td>
 </tr>
 </tbody>
 </table>
@@ -640,13 +644,13 @@ paths but are not loaded to the network.</p>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.TODAY">
-<code class="descname">TODAY</code><em class="property"> = datetime.date(2015, 9, 1)</em><a class="headerlink" href="#fasttrips.Assignment.TODAY" title="Permalink to this definition">¶</a></dt>
+<code class="descname">TODAY</code><em class="property"> = datetime.date(2015, 9, 15)</em><a class="headerlink" href="#fasttrips.Assignment.TODAY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use this as the date</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.TRACE_PASSENGER_IDS">
-<code class="descname">TRACE_PASSENGER_IDS</code><em class="property"> = [22267]</em><a class="headerlink" href="#fasttrips.Assignment.TRACE_PASSENGER_IDS" title="Permalink to this definition">¶</a></dt>
+<code class="descname">TRACE_PASSENGER_IDS</code><em class="property"> = [11, 215]</em><a class="headerlink" href="#fasttrips.Assignment.TRACE_PASSENGER_IDS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trace these passengers</p>
 </dd></dl>
 

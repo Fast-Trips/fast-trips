@@ -141,6 +141,12 @@
 <dd><p>The pathfinding algorithm uses this to find the lowest label stops. </p>
 </dd></dl>
 
+<dl class="type">
+<dt id="_CPPv2N9fasttrips7PathSetE">
+<span id="fasttrips::PathSet"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a01a6f9a235d6d0c94d8c09a10f8dd4bb"></span><em class="property">typedef </em>std::map&lt;<a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a>, <em class="property">struct</em> <a class="reference internal" href="#_CPPv29fasttrips" title="fasttrips">fasttrips</a>::<a class="reference internal" href="#_CPPv2N9fasttrips11PathCompareE" title="fasttrips::PathCompare">PathCompare</a>&gt; <code class="descname">PathSet</code><a class="headerlink" href="#_CPPv2N9fasttrips7PathSetE" title="Permalink to this definition">¶</a></dt>
+<dd><p>A set of paths consists of paths mapping to information about them (for chooseing one) </p>
+</dd></dl>
+
 </div>
 <dl class="class">
 <dt id="_CPPv2N9fasttrips9LabelStopE">
@@ -172,6 +178,41 @@
 <dl class="function">
 <dt id="_CPPv2N9fasttrips16LabelStopCompareclERK9LabelStopRK9LabelStop">
 <span id="fasttrips::LabelStopCompare::call-operator__LabelStopCR.LabelStopCR"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop_compare_1a4a10a49e39ba9235b5bf19768df81f97"></span>bool <code class="descname">operator()</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>cs1</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>cs2</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips16LabelStopCompareclERK9LabelStopRK9LabelStop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips4PathE">
+<span id="fasttrips::Path"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path"></span><em class="property">struct </em><code class="descname">Path</code><a class="headerlink" href="#_CPPv2N9fasttrips4PathE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>A single path consists of a map of stop id to <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a>, plus the order of the stops are given a list of stop ids. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips4Path7states_E">
+<span id="fasttrips::Path::states___std::map:i.StopState:"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_1aa27ccc57a9389a971e5a6bfdb7b5ff75"></span>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; <code class="descname">states_</code><a class="headerlink" href="#_CPPv2N9fasttrips4Path7states_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop states will be in here, indexed by stop ID. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips4Path6stops_E">
+<span id="fasttrips::Path::stops___std::vector:i:"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_1a681cd22e49a443b571e3259b8b3ea232"></span>std::vector&lt;int&gt; <code class="descname">stops_</code><a class="headerlink" href="#_CPPv2N9fasttrips4Path6stops_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>stop IDs. They are in origin to destination order for outbound trips, and destination to origin order for inbound trips. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips11PathCompareE">
+<span id="fasttrips::PathCompare"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_compare"></span><em class="property">struct </em><code class="descname">PathCompare</code><a class="headerlink" href="#_CPPv2N9fasttrips11PathCompareE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Comparator to for <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path"><span>Path</span></a> instances so we can put them in a map as keys. TODO: doc more? </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv2N9fasttrips11PathCompareclERK4PathRK4Path">
+<span id="fasttrips::PathCompare::call-operator__PathCR.PathCR"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_compare_1af504ed3814388d2ca6f98b6b5db14263"></span>bool <code class="descname">operator()</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path1</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path2</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips11PathCompareclERK4PathRK4Path" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -252,18 +293,18 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationRNSt3mapIi9StopStateEERNSt6vectorIiEE">
-<span id="fasttrips::PathFinder::findPath__PathSpecification.std::map:i.StopState:R.std::vector:i:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a320cb67c2f7c86ed56f07911621873de"></span>void <code class="descname">findPath</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> <em>path_spec</em>, std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>path_states</em>, std::vector&lt;int&gt; &amp;<em>path_stops</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationRNSt3mapIi9StopStateEERNSt6vectorIiEE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationR4PathR8PathInfo">
+<span id="fasttrips::PathFinder::findPath__PathSpecification.PathR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a71faa426b9753f6af3af1c6bd84963ad"></span>void <code class="descname">findPath</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> <em>path_spec</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationR4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the path! This method is the <em>WHOLE POINT</em> of our existence!</p>
-<p>See <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af55d21017634e74d46512ce08a493cf9"><span>PathFinder::initializeStopStates</span></a>, <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a1f67902ba7cb263e51b4ba181d6aa339"><span>PathFinder::labelStops</span></a>, PathFinder::finalTazState, and <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a3e25b504ebb60cd4a00de02931175b78"><span>PathFinder::getFoundPath</span></a></p>
+<p>See <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af55d21017634e74d46512ce08a493cf9"><span>PathFinder::initializeStopStates</span></a>, <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a1f67902ba7cb263e51b4ba181d6aa339"><span>PathFinder::labelStops</span></a>, PathFinder::finalTazState, and <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a3fbecb251f15a362f2c61bc95e4a4ea7"><span>PathFinder::getFoundPath</span></a></p>
 <p><dl class="docutils">
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">path_spec</span></code> - <p>The specifications of that path to find </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">path_states</span></code> - <p>This is really a return structure. If a path is found, the stop states will be in here, indexed by stop ID. </p>
+<li><code class="first docutils literal"><span class="pre">path</span></code> - <p>This is really a return <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path"><span>fasttrips::Path</span></a> </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">path_stops</span></code> - <p>This is also a return structure. If a path is found, the stop IDs will be in here. They are in origin to destination order for outbound trips, and destination to origin order for inbound trips. </p>
+<li><code class="first docutils literal"><span class="pre">path_info</span></code> - <p>Also for returng information (e.g. about the <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path"><span>Path</span></a> cost) </p>
 </li>
 </ul>
 </dd>
@@ -366,14 +407,21 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder19hyperpathChoosePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEERNSt3mapIi9StopStateEERNSt6vectorIiEE">
-<span id="fasttrips::PathFinder::hyperpathChoosePath__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:CR.std::map:i.StopState:R.std::vector:i:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1aecf802424572b954c4029cbb69d7fa5c"></span>bool <code class="descname">hyperpathChoosePath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em>, std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>path_states</em>, std::vector&lt;int&gt; &amp;<em>path_stops</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19hyperpathChoosePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEERNSt3mapIi9StopStateEERNSt6vectorIiEE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given all the labeled stops and taz, traces back and chooses a specific path. We do this by setting up probabilities for each option and then choosing via <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af7619390e2dca39340e635c45c23fa73"><span>PathFinder::chooseState</span></a>.</p>
+<dt id="_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4Path">
+<span id="fasttrips::PathFinder::hyperpathGeneratePath__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:CR.PathR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a570bd130272071a139c6c5a162b7f614"></span>bool <code class="descname">hyperpathGeneratePath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4Path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given all the labeled stops and taz, traces back and generates a specific path. We do this by setting up probabilities for each option and then choosing via <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af7619390e2dca39340e635c45c23fa73"><span>PathFinder::chooseState</span></a>.</p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>success </dd>
 </dl>
 </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder10choosePathERK17PathSpecificationRNSt8ofstreamER7PathSeti">
+<span id="fasttrips::PathFinder::choosePath__PathSpecificationCR.std::ofstreamR.PathSetR.i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1af1624e2b9e7f13b4a89c859f9ad5b8ba"></span><a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> <code class="descname">choosePath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips7PathSetE" title="fasttrips::PathSet">PathSet</a> &amp;<em>paths</em>, int <em>max_prob_i</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder10choosePathERK17PathSpecificationRNSt8ofstreamER7PathSeti" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a set of paths, randomly selects one based on the cumulative probability (<a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path_info_1a82d96af739574d7adce247c3aca6d1d0"><span>fasttrips::PathInfo.prob_i_</span></a>)</p>
+<p>Returns a reference to that path, which is stored in paths. </p>
 </dd></dl>
 
 <dl class="function">
@@ -388,8 +436,15 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEERNSt3mapIi9StopStateEERNSt6vectorIiEE">
-<span id="fasttrips::PathFinder::getFoundPath__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:CR.std::map:i.StopState:R.std::vector:i:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a3e25b504ebb60cd4a00de02931175b78"></span>bool <code class="descname">getFoundPath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em>, std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>path_states</em>, std::vector&lt;int&gt; &amp;<em>path_stops</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEERNSt3mapIi9StopStateEERNSt6vectorIiEE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder17calculatePathCostERK17PathSpecificationRNSt8ofstreamERK4PathR8PathInfo">
+<span id="fasttrips::PathFinder::calculatePathCost__PathSpecificationCR.std::ofstreamR.PathCR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a2563b51d30280c1bb214966da4e903fb"></span>void <code class="descname">calculatePathCost</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17calculatePathCostERK17PathSpecificationRNSt8ofstreamERK4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the cost for the entire given path, and checks for capacity issues. Sets the results into the given <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path_info"><span>fasttrips::PathInfo</span></a> instance.</p>
+<p>TODO: Test calculating this in python? Or other ways of making it more flexible without compiling... For now, the magic numbers are just in here... </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4PathR8PathInfo">
+<span id="fasttrips::PathFinder::getFoundPath__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:CR.PathR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a3fbecb251f15a362f2c61bc95e4a4ea7"></span>bool <code class="descname">getFoundPath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -408,6 +463,16 @@
 <dl class="function">
 <dt id="_CPPv2N9fasttrips10PathFinder21calculateNonwalkLabelERKNSt6vectorI9StopStateEE">
 <span id="fasttrips::PathFinder::calculateNonwalkLabel__std::vector:StopState:CR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a6ab3062c6777516360227f83852941e6"></span>double <code class="descname">calculateNonwalkLabel</code><span class="sig-paren">(</span><em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>current_stop_state</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder21calculateNonwalkLabelERKNSt6vectorI9StopStateEE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder9printPathERNSt7ostreamERK17PathSpecificationRK4Path">
+<span id="fasttrips::PathFinder::printPath__osR.PathSpecificationCR.PathCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a50cba5e5a787cb76cb68d959f57fbd91"></span>void <code class="descname">printPath</code><span class="sig-paren">(</span>std::ostream &amp;<em>ostr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder9printPathERNSt7ostreamERK17PathSpecificationRK4Path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder15printPathCompatERNSt7ostreamERK17PathSpecificationRK4Path">
+<span id="fasttrips::PathFinder::printPathCompat__osR.PathSpecificationCR.PathCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a6502f4fcc0048b7c27ef5e5d10b5e0e5"></span>void <code class="descname">printPathCompat</code><span class="sig-paren">(</span>std::ostream &amp;<em>ostr</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder15printPathCompatERNSt7ostreamERK17PathSpecificationRK4Path" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -433,6 +498,11 @@
 <dl class="function">
 <dt id="_CPPv2N9fasttrips10PathFinder9printModeERNSt7ostreamERKi">
 <span id="fasttrips::PathFinder::printMode__osR.iCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1aa4d82703cf1ed06221f987ab89cf8605"></span>void <code class="descname">printMode</code><span class="sig-paren">(</span>std::ostream &amp;<em>ostr</em>, <em class="property">const</em> int &amp;<em>mode</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder9printModeERNSt7ostreamERKi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder6isTripERKi">
+<span id="fasttrips::PathFinder::isTrip__iCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a27aa7ef2d3b49398d677a0624fc80a13"></span>bool <code class="descname">isTrip</code><span class="sig-paren">(</span><em class="property">const</em> int &amp;<em>mode</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder6isTripERKi" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -502,6 +572,45 @@
 </dd></dl>
 
 <dl class="class">
+<dt id="_CPPv2N9fasttrips8PathInfoE">
+<span id="fasttrips::PathInfo"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_info"></span><em class="property">struct </em><code class="descname">PathInfo</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfoE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>In stochastic path finding, this is the information we&#8217;ll collect about the path. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8PathInfo6count_E">
+<span id="fasttrips::PathInfo::count___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_info_1a71b115b41ff83e7497fc14ad5e2b8386"></span>int <code class="descname">count_</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfo6count_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of times this path was generated (for stochastic) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8PathInfo5cost_E">
+<span id="fasttrips::PathInfo::cost___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_info_1a69d2fe6e06ab628f42956d640c2d8710"></span>double <code class="descname">cost_</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfo5cost_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cost of this path. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8PathInfo17capacity_problem_E">
+<span id="fasttrips::PathInfo::capacity_problem___b"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_info_1a0a02f01442b982942636f9fbdcef3768"></span>bool <code class="descname">capacity_problem_</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfo17capacity_problem_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does this path have a capacity problem? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8PathInfo12probability_E">
+<span id="fasttrips::PathInfo::probability___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_info_1a1ba4274659a6dcfaefa80128cc37f13b"></span>double <code class="descname">probability_</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfo12probability_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Probability of this stop (for stochastic) </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8PathInfo7prob_i_E">
+<span id="fasttrips::PathInfo::prob_i___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_info_1a82d96af739574d7adce247c3aca6d1d0"></span>int <code class="descname">prob_i_</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfo7prob_i_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cumulative probability * RAND_MAX (for stochastic) </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
 <dt id="_CPPv2N9fasttrips17PathSpecificationE">
 <span id="fasttrips::PathSpecification"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification"></span><em class="property">struct </em><code class="descname">PathSpecification</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecificationE" title="Permalink to this definition">¶</a></dt>
 <dd><em>#include &lt;pathfinder.h&gt;</em><p>The definition of the path we&#8217;re trying to find. </p>
@@ -561,7 +670,7 @@
 <dl class="class">
 <dt id="_CPPv2N9fasttrips15ProbabilityStopE">
 <span id="fasttrips::ProbabilityStop"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_probability_stop"></span><em class="property">struct </em><code class="descname">ProbabilityStop</code><a class="headerlink" href="#_CPPv2N9fasttrips15ProbabilityStopE" title="Permalink to this definition">¶</a></dt>
-<dd><em>#include &lt;pathfinder.h&gt;</em><p>Structure used in <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1aecf802424572b954c4029cbb69d7fa5c"><span>PathFinder::hyperpathChoosePath</span></a>. </p>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Structure used in PathFinder::hyperpathChoosePath. </p>
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
@@ -595,7 +704,9 @@
 <dt id="_CPPv2N9fasttrips9StopStateE">
 <span id="fasttrips::StopState"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state"></span><em class="property">struct </em><code class="descname">StopState</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopStateE" title="Permalink to this definition">¶</a></dt>
 <dd><em>#include &lt;pathfinder.h&gt;</em><p>The pathfinding algorithm is a labeling algorithm which associates each stop with a state, encapsulated here. See StopStates for more. If the sought path is outbound, then the preferred time is an arrival time at the destination, so the labeling algorithm starts at the destination and works backwards. If the sought path is inbound, then the preferred time is a departure time from the origin, so the labeling algorithm starts at the origin and works forwards. Thus, the attributes here have different meanings if the path sought is outbound versus inbound, and the convention is outbound/inbound fo the variable names.</p>
-<p>The <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a> is basically the state at this stop with details of the link after (for outbound) or before (inbound) the stop in the found path. </p>
+<p>The <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a> is basically the state at this stop with details of the link after (for outbound) or before (inbound) the stop in the found path.</p>
+<p>NOTE: for trip states, deparr_time_ and arrdep_time_ are both for the <em>vehicle</em> because the passenger times can be inferred from the surrounding states.</p>
+<p>In particular, for outbound trips, the deparr_time_ for trip states is not necessarily the person departure time. For inbound trips, the arrdep_time_ for trip states is not necessarily the person departure time. </p>
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
@@ -637,7 +748,7 @@
 <dl class="member">
 <dt id="_CPPv2N9fasttrips9StopState10link_time_E">
 <span id="fasttrips::StopState::link_time___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1aae44f9aab54be9e57329a75f7dfb42a9"></span>double <code class="descname">link_time_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState10link_time_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Link time. </p>
+<dd><p>Link time. For trips, includes wait time. Just walk time for others. </p>
 </dd></dl>
 
 <dl class="member">

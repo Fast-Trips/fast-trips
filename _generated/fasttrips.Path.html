@@ -143,8 +143,8 @@ through a set of stops.</p>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(passenger_record)</td>
 <td>Constructor from dictionary mapping attribute to value.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_tripcost</span></code>(passengers_df)</td>
-<td>Given a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance with each row representing a link in the passenger&#8217;s trip, adds a new colum, <cite>travelCost</cite>.</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Path.calculate_tripcost</span></code></td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">Path.experienced_arrival</span></code></td>
 <td></td>
@@ -212,8 +212,8 @@ through a set of stops.</p>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SCHEDULE_DELAY_WEIGHT</span></code></td>
 <td>Path configuration: Weight of schedule delay (0 - no penalty)</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_ARRIVAL</span></code></td>
-<td>arrival time, a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance, for hyperpath/stochastic assignment</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Path.STATE_IDX_ARRIVAL</span></code></td>
+<td></td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_COST</span></code></td>
 <td>cost float, for hyperpath/stochastic assignment</td>
@@ -265,13 +265,6 @@ through a set of stops.</p>
 </tr>
 </tbody>
 </table>
-<dl class="staticmethod">
-<dt id="fasttrips.Path.calculate_tripcost">
-<em class="property">static </em><code class="descname">calculate_tripcost</code><span class="sig-paren">(</span><em>passengers_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Path.html#Path.calculate_tripcost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Path.calculate_tripcost" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance with each row representing a link in the passenger&#8217;s trip,
-adds a new colum, <cite>travelCost</cite>.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="fasttrips.Path.goes_somewhere">
 <code class="descname">goes_somewhere</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Path.html#Path.goes_somewhere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Path.goes_somewhere" title="Permalink to this definition">¶</a></dt>
@@ -405,9 +398,9 @@ adds a new colum, <cite>travelCost</cite>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Path.STATE_IDX_ARRIVAL">
-<code class="descname">STATE_IDX_ARRIVAL</code><em class="property"> = 8</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_ARRIVAL" title="Permalink to this definition">¶</a></dt>
-<dd><p>arrival time, a <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance, for hyperpath/stochastic assignment</p>
+<dt id="fasttrips.Path.STATE_IDX_ARRDEP">
+<code class="descname">STATE_IDX_ARRDEP</code><em class="property"> = 8</em><a class="headerlink" href="#fasttrips.Path.STATE_IDX_ARRDEP" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Arrival if outbound/backwards, departure if inbound/forwards.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -512,6 +505,12 @@ adds a new colum, <cite>travelCost</cite>.</p>
 <dt id="fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT">
 <code class="descname">WALK_TRANSFER_TIME_WEIGHT</code><em class="property"> = 3.93</em><a class="headerlink" href="#fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Path configuration: Weight of transfer walking time</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Path.cost">
+<code class="descname">cost</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Path.cost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Final path cost, will be filled in during path finding</p>
 </dd></dl>
 
 <dl class="attribute">
