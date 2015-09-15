@@ -82,6 +82,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
                                 stop_indexes, stop_times, num_stop_ind,
                                 xfer_indexes, xfer_data, num_xfer_ind);
 
+    if (proc_num <= 1) {
+        std::cout << "RAND_MAX = " << RAND_MAX << std::endl;
+    }
     Py_RETURN_NONE;
 }
 

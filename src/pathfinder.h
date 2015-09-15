@@ -89,9 +89,9 @@ namespace fasttrips {
         int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
-        double  link_time_;             ///< Link time
+        double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
         double  cost_;                  ///< Cost
-        double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
+        double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound transit vehicles
     } StopState;
 
     /**
@@ -138,6 +138,40 @@ namespace fasttrips {
                                                 ///< for outbound trips, and destination to origin
                                                 ///< order for inbound trips.
     } Path;
+
+    /** In stochastic path finding, this is the information we'll collect about the path. */
+    typedef struct {
+        int     count_;                         ///< Number of times this path was generated
+        double  cost_;                          ///< Cost of this path
+        bool    capacity_problem_;              ///< Does this path have a capacity problem?
+        double  probability_;                   ///< Probability of this stop
+        int     prob_i_;                        ///< Cumulative probability * 1000000
+    } PathInfo;
+
+    /// Comparator to for Path instances so we can put them in a map as keys.
+    /// TODO: doc more?
+    struct PathCompare {
+        // less than
+        bool operator()(const Path &path1, const Path &path2) const {
+            if (path1.stops_.size() < path2.stops_.size()) { return true; }
+            if (path1.stops_.size() > path2.stops_.size()) { return false; }
+            // if number of stops matches, check the stop ids and deparr_mode_
+            for (int ind=0; ind<path1.stops_.size(); ++ind) {
+                if (path1.stops_[ind] < path2.stops_[ind]) { return true; }
+                if (path1.stops_[ind] > path2.stops_[ind]) { return false; }
+                int stop_id = path1.stops_[ind];
+                std::map<int, StopState>::const_iterator ssi1 = path1.states_.find(stop_id);
+                std::map<int, StopState>::const_iterator ssi2 = path2.states_.find(stop_id);
+                if (ssi1->second.deparr_mode_ < ssi2->second.deparr_mode_) { return true; }
+                if (ssi1->second.deparr_mode_ > ssi2->second.deparr_mode_) { return false; }
+            }
+            return false;
+        }
+    };
+
+    /** A set of paths consists of paths mapping to information about them (for chooseing one)
+     */
+    typedef std::map<Path, PathInfo, struct fasttrips::PathCompare> PathSet;
 
     /**
     * This is the class that does all the work.  Setup the network supply first.
@@ -240,17 +274,28 @@ namespace fasttrips {
                                   std::vector<StopState>& taz_state) const;
 
         /**
-         * Given all the labeled stops and taz, traces back and chooses a
+         * Given all the labeled stops and taz, traces back and generates a
          * specific path.  We do this by setting up probabilities for each
          * option and then choosing via PathFinder::chooseState.
          *
          * @return success
          */
-        bool hyperpathChoosePath(const PathSpecification& path_spec,
+        bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   const StopStates& stop_states,
                                   const std::vector<StopState>& taz_state,
                                   Path& path) const;
+
+        /**
+         * Given a set of paths, randomly selects one based on the cumulative
+         * probability (fasttrips::PathInfo.prob_i_)
+         *
+         * Returns a reference to that path, which is stored in paths.
+         */
+        Path choosePath(const PathSpecification& path_spec,
+                        std::ofstream& trace_file,
+                        PathSet& paths,
+                        int max_prob_i) const;
         /**
          * Given a vector of fasttrips::ProbabilityStop instances,
          * randomly selects one based on the cumulative probability
@@ -261,6 +306,14 @@ namespace fasttrips {
         size_t chooseState(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   const std::vector<ProbabilityStop>& prob_stops) const;
+
+        /** Calculates the cost for the entire given path, and checks for capacity issues.
+         *  Sets the results into the given fasttrips::PathInfo instance.
+         */
+        void calculatePathCost(const PathSpecification& path_spec,
+                               std::ofstream& trace_file,
+                               const Path& path,
+                               PathInfo& path_info) const;
 
         bool getFoundPath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
@@ -278,6 +331,7 @@ namespace fasttrips {
         double calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
 
         void printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
+        void printPathCompat(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
 
         void printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const;
         void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const;
@@ -288,12 +342,14 @@ namespace fasttrips {
 
         void printMode(std::ostream& ostr, const int& mode) const;
 
+        bool isTrip(const int& mode) const;
+
     public:
         const static int MODE_ACCESS    = -100;
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
-        const static int MAX_HYPERPATH_ASSIGN_ATTEMPTS = 1001; // er....
+        const static int MAX_HYPERPATH_ASSIGN_ATTEMPTS = 1000; // er....
         const static double DISPERSION_PARAMETER;
         const static double MAX_COST;
         const static double MAX_TIME;

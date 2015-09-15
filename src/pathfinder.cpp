@@ -5,6 +5,7 @@
 #include <ios>
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include <math.h>
 #include <algorithm>
 
@@ -14,7 +15,9 @@ const char kPathSeparator =
 #else
                             '/';
 #endif
- 
+
+#define SSTR( x ) dynamic_cast< std::ostringstream & >( std::ostringstream() << std::dec << x ).str()
+
 namespace fasttrips {
 
     const double PathFinder::DISPERSION_PARAMETER = 1.0;
@@ -121,10 +124,14 @@ namespace fasttrips {
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
+            // append because this will happen across iterations
             trace_file.open(ss.str().c_str(), (std::ios_base::out | std::ios_base::app));
             trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
-            trace_file << "outbound_  = " << path_spec.outbound_ << std::endl;
-            trace_file << "hyperpath_ = " << path_spec.hyperpath_ << std::endl;
+            trace_file << "outbound_        = " << path_spec.outbound_ << std::endl;
+            trace_file << "hyperpath_       = " << path_spec.hyperpath_ << std::endl;
+            trace_file << "preferred_time_  = ";
+            printTime(trace_file, path_spec.preferred_time_);
+            trace_file << " (" << path_spec.preferred_time_ << ")" << std::endl;
         }
 
         StopStates      stop_states;
@@ -751,7 +758,7 @@ namespace fasttrips {
     }
 
 
-    bool PathFinder::hyperpathChoosePath(
+    bool PathFinder::hyperpathGeneratePath(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         const StopStates& stop_states,
@@ -771,7 +778,7 @@ namespace fasttrips {
             double probability = exp(-1.0*PathFinder::DISPERSION_PARAMETER*taz_state[state_index].cost_) /
                                  exp(-1.0*PathFinder::DISPERSION_PARAMETER*taz_label);
             // why?  :p
-            int prob_i = static_cast<int>(1000.0*probability);
+            int prob_i = static_cast<int>(RAND_MAX*probability);
             // too small to consider
             if (prob_i < cost_cutoff) { continue; }
             if (access_cum_prob.size() == 0) {
@@ -786,7 +793,8 @@ namespace fasttrips {
                 printMode(trace_file, taz_state[state_index].deparr_mode_);
                 trace_file << ": prob ";
                 trace_file << std::setw(10) << probability << " cum_prob ";
-                trace_file << std::setw( 6) << access_cum_prob.back().prob_i_ << std::endl;
+                trace_file << std::setw( 6) << access_cum_prob.back().prob_i_;
+                trace_file << "; index " << access_cum_prob.back().index_ << std::endl;
             }
         }
 
@@ -797,7 +805,7 @@ namespace fasttrips {
 
         if (path_spec.trace_)
         {
-            trace_file << " -> Chose   ";
+            trace_file << " -> Chose access/egress ";
             printStopState(trace_file, start_state_id, ss, path_spec);
             trace_file << std::endl;
         }
@@ -806,7 +814,9 @@ namespace fasttrips {
         // outbound: arrival time
         //  inbound: departure time
         double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
-        int     last_trip       = ss.deparr_mode_;
+        int     prev_mode       = ss.deparr_mode_;
+        int     prev_stop_id    = start_state_id;
+        int     prev_prev_stop_id = -1;
         while (true)
         {
             // setup probabilities
@@ -814,7 +824,7 @@ namespace fasttrips {
                 trace_file << "current_stop=" << current_stop_id;
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
                 printTime(trace_file, arrdep_time);
-                trace_file << "; last_trip=" << last_trip << std::endl;
+                trace_file << "; prev_mode=" << prev_mode << std::endl;
                 trace_file << "            ";
                 printStopStateHeader(trace_file, path_spec);
                 trace_file << std::endl;
@@ -829,10 +839,10 @@ namespace fasttrips {
                 // no double walk
                 if (path_spec.outbound_ &&
                     ((state.deparr_mode_ == PathFinder::MODE_EGRESS) || (state.deparr_mode_ == PathFinder::MODE_TRANSFER)) &&
-                    ((         last_trip == PathFinder::MODE_ACCESS) || (         last_trip == PathFinder::MODE_TRANSFER))) { continue; }
+                    ((         prev_mode == PathFinder::MODE_ACCESS) || (         prev_mode == PathFinder::MODE_TRANSFER))) { continue; }
                 if (!path_spec.outbound_ &&
                     ((state.deparr_mode_ == PathFinder::MODE_ACCESS) || (state.deparr_mode_ == PathFinder::MODE_TRANSFER)) &&
-                    ((         last_trip == PathFinder::MODE_EGRESS) || (         last_trip == PathFinder::MODE_TRANSFER))) { continue; }
+                    ((         prev_mode == PathFinder::MODE_EGRESS) || (         prev_mode == PathFinder::MODE_TRANSFER))) { continue; }
 
                 // outbound: we cannot depart before we arrive
                 if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }
@@ -865,7 +875,7 @@ namespace fasttrips {
                 double probability = exp(-1.0*PathFinder::DISPERSION_PARAMETER*stop_cum_prob[idx].probability_) / sum_exp;
 
                 // why?  :p
-                int prob_i = static_cast<int>(1000.0*probability);
+                int prob_i = static_cast<int>(RAND_MAX*probability);
                 stop_cum_prob[idx].probability_ = probability;
                 if (idx == 0) {
                     stop_cum_prob[idx].prob_i_ = prob_i;
@@ -885,32 +895,105 @@ namespace fasttrips {
             StopState next_ss   = ssi->second[chosen_index];
 
             if (path_spec.trace_) {
-                trace_file << " -> Chose ";
+                trace_file << " -> Chose stop link ";
                 printStopState(trace_file, current_stop_id, next_ss, path_spec);
                 trace_file << std::endl;
             }
 
-            // revise the first link possibly -- let's not waste time
-            if (path_spec.outbound_ && path.states_.size()==1) {
-                float dep_time = getScheduledDeparture(next_ss.deparr_mode_, current_stop_id, next_ss.seq_);
-                path.states_[start_state_id].deparr_time_ = dep_time - path.states_[start_state_id].link_time_;
+            // UPDATES to states
+            // Hyperpaths have some uncertainty built in which we need to rectify as we go through and choose
+            // concrete path states.
+
+            // OUTBOUND: We are choosing links in chronological order.
+            if (path_spec.outbound_)
+            {
+                // Leave origin as late as possible
+                if (prev_mode == PathFinder::MODE_ACCESS) {
+                    double dep_time = getScheduledDeparture(next_ss.deparr_mode_, current_stop_id, next_ss.seq_);
+                    // set departure time for the access link to perfectly catch the vehicle
+                    // todo: what if there is a wait queue?
+                    path.states_[prev_stop_id].arrdep_time_ = dep_time;
+                    path.states_[prev_stop_id].deparr_time_ = dep_time - path.states_[start_state_id].link_time_;
+                    // no wait time for the trip
+                    next_ss.link_time_ = next_ss.arrdep_time_ - next_ss.deparr_time_;
+                }
+                // *Fix trip time*
+                else if (isTrip(next_ss.deparr_mode_)) {
+                    // link time is arrival time - previous arrival time
+                    next_ss.link_time_ = next_ss.arrdep_time_ - arrdep_time;
+                }
+                // *Fix transfer times*
+                else if (next_ss.deparr_mode_ == PathFinder::MODE_TRANSFER) {
+                    next_ss.deparr_time_ = path.states_[prev_stop_id].arrdep_time_;   // start transferring immediately
+                    next_ss.arrdep_time_ = next_ss.deparr_time_ + next_ss.link_time_;
+                }
+                // Egress: don't wait, just walk. Get to destination as early as possible
+                else if (next_ss.deparr_mode_ == PathFinder::MODE_EGRESS) {
+                    next_ss.deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
+                    next_ss.arrdep_time_ = next_ss.deparr_time_ + next_ss.link_time_;
+                }
             }
+            // INBOUND: We are choosing links in REVERSE chronological order
+            else
+            {
+                // Leave origin as late as possible
+                if (next_ss.deparr_mode_ == PathFinder::MODE_ACCESS) {
+                    double dep_time = getScheduledDeparture(path.states_[prev_stop_id].deparr_mode_, current_stop_id, path.states_[prev_stop_id].seq_succpred_);
+                    // set arrival time for the access link to perfectly catch the vehicle
+                    // todo: what if there is a wait queue?
+                    next_ss.deparr_time_ = dep_time;
+                    next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
+                    // no wait time for the trip
+                    path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - path.states_[prev_stop_id].arrdep_time_;
+                }
+                // *Fix trip time*: we are choosing in reverse so pretend the wait time is zero for now to
+                // accurately evaluate possible transfers in next choice.
+                else if (isTrip(next_ss.deparr_mode_)) {
+                    next_ss.link_time_ = next_ss.deparr_time_ - next_ss.arrdep_time_;
+                    // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
+                    // and we can update the transfer and the trip with the real wait
+                    if (prev_mode == PathFinder::MODE_TRANSFER) {
+                        // move transfer time so we do it right after arriving
+                        path.states_[prev_stop_id].arrdep_time_ = next_ss.deparr_time_; // depart right away
+                        path.states_[prev_stop_id].deparr_time_ = next_ss.deparr_time_ + path.states_[prev_stop_id].link_time_; // arrive after walk
+                        // give the wait time to the previous trip
+                        path.states_[prev_prev_stop_id].link_time_ = path.states_[prev_prev_stop_id].deparr_time_ - path.states_[prev_stop_id].deparr_time_;
+                    }
+                    // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
+                    else if (isTrip(prev_mode)) {
+                        path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - next_ss.deparr_time_;
+                    }
+                }
+                // *Fix transfer depart/arrive times*: transfer as late as possible to preserve options for earlier trip
+                else if (next_ss.deparr_mode_ == PathFinder::MODE_TRANSFER) {
+                    next_ss.deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
+                    next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
+                }
+                // Egress: don't wait, just walk. Get to destination as early as possible
+                if (prev_mode == PathFinder::MODE_EGRESS) {
+                    path.states_[prev_stop_id].arrdep_time_ = next_ss.arrdep_time_;
+                    path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ + path.states_[prev_stop_id].link_time_;
+                }
+            }
+
 
             // record the choice
             path.stops_.push_back(current_stop_id);
             path.states_[current_stop_id] = next_ss;
 
             // move on to the next
+            prev_prev_stop_id   = prev_stop_id;
+            prev_stop_id        = current_stop_id;
             current_stop_id     = next_ss.stop_succpred_;
-            last_trip           = next_ss.deparr_mode_;
+            prev_mode           = next_ss.deparr_mode_;
 
-            // update arrdep_time
-            if (next_ss.deparr_mode_ == PathFinder::MODE_TRANSFER) {
-                // outbound: arrival time   = arrival time + link time
-                //  inbound:  departure time = departure time - link time
-                arrdep_time = arrdep_time + (next_ss.link_time_*dir_factor);
-            } else {
-                arrdep_time = next_ss.arrdep_time_;
+            // update arrival / departure time
+            arrdep_time = next_ss.arrdep_time_;
+
+            if (path_spec.trace_) {
+                trace_file << " ->    Updated link ";
+                printStopState(trace_file, prev_stop_id, path.states_[prev_stop_id], path_spec);
+                trace_file << std::endl;
             }
 
             // are we done?
@@ -923,6 +1006,26 @@ namespace fasttrips {
         return true;
     }
 
+    Path PathFinder::choosePath(const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        PathSet& paths,
+        int max_prob_i) const
+    {
+        int random_num = rand();
+        if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
+
+        // mod it by max prob
+        random_num = random_num % max_prob_i;
+        if (path_spec.trace_) { trace_file << random_num << std::endl; }
+
+        for (PathSet::const_iterator psi = paths.begin(); psi != paths.end(); ++psi)
+        {
+            if (psi->second.prob_i_==0) { continue; }
+            if (random_num <= psi->second.prob_i_) { return psi->first; }
+        }
+        // shouldn't get here
+        printf("PathFinder::choosePath() This should never happen!\n");
+    }
 
     size_t PathFinder::chooseState(
         const PathSpecification& path_spec,
@@ -938,10 +1041,136 @@ namespace fasttrips {
 
         for (size_t ind = 0; ind < prob_stops.size(); ++ind)
         {
-            if (random_num < prob_stops[ind].prob_i_) { return prob_stops[ind].index_; }
+            if (prob_stops[ind].prob_i_==0) { continue; }
+            if (random_num <= prob_stops[ind].prob_i_) { return prob_stops[ind].index_; }
         }
         // shouldn't get here
         printf("PathFinder::chooseState() This should never happen!\n");
+    }
+
+    /** TODO: Test calculating this in python?  Or other ways of making it more flexible without compiling...
+     *  For now, the magic numbers are just in here...
+     */
+    void PathFinder::calculatePathCost(const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        const Path& path,
+        PathInfo& path_info) const
+    {
+        // no stops - nothing to do
+        if (path.stops_.size()==0) { return; }
+
+        double num_transfers        = 0;
+        double in_vehicle_min       = 0;
+        double initial_wait_min     = 0;
+        double transfer_wait_min    = 0;
+        double transfer_walk_min    = 0;
+        double access_walk_min      = 0;
+        double egress_walk_min      = 0;
+        double preference_delay     = 0; // arrival/departure time compared to preferred
+        double fare                 = 0;
+
+        double orig_departure_time  = 0;
+        double dest_arrival_time    = 0;
+
+        bool   first_trip           = true;
+        double dir_factor           = path_spec.outbound_ ? 1.0 : -1.0;
+
+        // TODO: This is TEMPORARY
+        const double IN_VEHICLE_TIME_WEIGHT     =  1.00;
+        const double WAIT_TIME_WEIGHT           =  1.77;
+        const double WALK_ACCESS_TIME_WEIGHT    =  3.93;
+        const double WALK_EGRESS_TIME_WEIGHT    =  3.93;
+        const double WALK_TRANSFER_TIME_WEIGHT  =  3.93;
+        const double TRANSFER_PENALTY           = 47.73;
+        const double SCHEDULE_DELAY_WEIGHT      =  0.00;
+        const double FARE_PER_BOARDING          =  1.00;
+        const double VALUE_OF_TIME              = 999.0; // dollars per hour
+
+        // iterate through the states in chronological order
+        int start_ind = path_spec.outbound_ ? 0 : path.stops_.size()-1;
+        int end_ind   = path_spec.outbound_ ? path.stops_.size() : -1;
+        int inc       = path_spec.outbound_ ? 1 : -1;
+        for (int index = start_ind; index != end_ind; index += inc)
+        {
+            int stop_id = path.stops_[index];
+            std::map<int, StopState>::const_iterator psi = path.states_.find(stop_id);
+
+            // ============= access =============
+            if (psi->second.deparr_mode_ == PathFinder::MODE_ACCESS)
+            {
+                access_walk_min     = psi->second.link_time_;
+                orig_departure_time = (path_spec.outbound_ ? psi->second.deparr_time_ : psi->second.deparr_time_ - access_walk_min);
+            }
+            // ============= egress =============
+            else if (psi->second.deparr_mode_ == PathFinder::MODE_EGRESS)
+            {
+                egress_walk_min     = psi->second.link_time_;
+                dest_arrival_time   = (path_spec.outbound_ ? psi->second.deparr_time_ + egress_walk_min : psi->second.deparr_time_);
+            }
+            // ============= transfer =============
+            else if (psi->second.deparr_mode_ == PathFinder::MODE_TRANSFER)
+            {
+                transfer_walk_min  += psi->second.link_time_;
+            }
+            // ============= trip =============
+            else
+            {
+                double trip_ivt_min = (psi->second.arrdep_time_ - psi->second.deparr_time_)*dir_factor;
+                double wait_min     = psi->second.link_time_ - trip_ivt_min;
+                if (first_trip) {
+                    initial_wait_min = wait_min;
+                    first_trip      = false;
+                } else {
+                    transfer_wait_min += wait_min;
+                    num_transfers   += true;
+                }
+                in_vehicle_min      += trip_ivt_min;
+
+                fare += FARE_PER_BOARDING;
+            }
+        }
+        // TODO: remove this stuff?!  It's just here to match FAST-TrIPs
+        // orig_departure_time =  trunc(100.0*orig_departure_time)/100.0;
+
+        if (path_spec.outbound_) {
+            // outbound: preferred arrival
+            preference_delay = path_spec.preferred_time_ - dest_arrival_time;
+            // TODO: wrong but matches FAST-TrIPs
+            preference_delay = 0.0;
+        } else {
+            preference_delay = orig_departure_time - path_spec.preferred_time_;
+        }
+
+        path_info.cost_ = (IN_VEHICLE_TIME_WEIGHT*in_vehicle_min                ) +
+                          (WAIT_TIME_WEIGHT*(initial_wait_min+transfer_wait_min)) +
+                          (WALK_ACCESS_TIME_WEIGHT*access_walk_min              ) +
+                          (WALK_EGRESS_TIME_WEIGHT*egress_walk_min              ) +
+                          (WALK_TRANSFER_TIME_WEIGHT*transfer_walk_min          ) +
+                          (TRANSFER_PENALTY*num_transfers                       ) +
+                          (SCHEDULE_DELAY_WEIGHT*preference_delay               ) +
+                          (60.0*fare/VALUE_OF_TIME                              );
+
+        if (path_spec.trace_) {
+            trace_file << "calculatePathCost:" << std::endl;
+            printPath(trace_file, path_spec, path);
+            trace_file << std::endl;
+            trace_file << "     origin departure time: ";
+            printTime(trace_file, orig_departure_time);
+            trace_file << " (" << orig_departure_time << ")" << std::endl;
+            trace_file << "  destination arrival time: ";
+            printTime(trace_file, dest_arrival_time);
+            trace_file << " (" << dest_arrival_time << ")" << std::endl;
+            trace_file << "            in vehicle min: " << in_vehicle_min    << std::endl;
+            trace_file << "          initial wait min: " << initial_wait_min  << std::endl;
+            trace_file << "         transfer wait min: " << transfer_wait_min << std::endl;
+            trace_file << "           access walk min: " << access_walk_min   << std::endl;
+            trace_file << "           egress walk min: " << egress_walk_min   << std::endl;
+            trace_file << "         transfer walk min: " << transfer_walk_min << std::endl;
+            trace_file << "             num transfers: " << num_transfers     << std::endl;
+            trace_file << "           preferred delay: " << preference_delay  << std::endl;
+            trace_file << "                      fare: " << fare              << std::endl;
+            trace_file << "            ---> path cost: " << path_info.cost_   << std::endl;
+        }
     }
 
     // Return success
@@ -959,24 +1188,77 @@ namespace fasttrips {
 
         if (path_spec.hyperpath_)
         {
-            bool path_found = false;
-            int  attempts   = 0;
+            // find a bunch!
+            PathSet paths;
             // random seed
             srand(path_spec.path_id_);
-            while ((!path_found) && (attempts < PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS))
+            // find a *set of Paths*
+            for (int attempts = 1; attempts <= PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS; ++attempts)
             {
-                if (path_spec.trace_) {
-                    trace_file << "hyperpathChoosePath() -- attempt " << attempts << std::endl;
-                }
-                path_found = hyperpathChoosePath(path_spec, trace_file, stop_states, taz_state, path);
+                Path new_path;
+                bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, taz_state, new_path);
 
-                attempts += 1;
-                if (!path_found)
-                {
-                    path.states_.clear();
-                    path.stops_.clear();
+                if (path_found) {
+                    if (path_spec.trace_) {
+                        trace_file << "----> Found path " << attempts << " ";
+                        printPathCompat(trace_file, path_spec, new_path);
+                        trace_file << std::endl;
+                        printPath(trace_file, path_spec, new_path);
+                        trace_file << std::endl;
+                    }
+                    // do we already have this?  if so, increment
+                    PathSet::iterator paths_iter = paths.find(new_path);
+                    if (paths_iter != paths.end()) {
+                        paths_iter->second.count_ += 1;
+                    } else {
+                        PathInfo pi = { 1, 0, false, 0, 0 };  // count is 1
+                        paths[new_path] = pi;
+                    }
+                    if (path_spec.trace_) { trace_file << "paths size = " << paths.size() << std::endl; }
                 }
             }
+            // calculate the costs for those paths and the logsum
+            double logsum = 0;
+            for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
+            {
+                calculatePathCost(path_spec, trace_file, paths_iter->first, paths_iter->second);
+                if (paths_iter->second.cost_ > 0)
+                {
+                    logsum += exp(-1.0*PathFinder::DISPERSION_PARAMETER*paths_iter->second.cost_);
+                }
+            }
+            if (logsum == 0) { return false; } // fail
+
+            // for integerized probability*1000000
+            int cum_prob    = 0;
+            int cost_cutoff = 1;
+            // calculate the probabilities for those paths
+            for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
+            {
+                paths_iter->second.probability_ = exp(-1.0*PathFinder::DISPERSION_PARAMETER*paths_iter->second.cost_)/logsum;
+                // why?  :p
+                int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
+                // too small to consider
+                if (prob_i < cost_cutoff) { continue; }
+                cum_prob += prob_i;
+                paths_iter->second.prob_i_ = cum_prob;
+
+                if (path_spec.trace_)
+                {
+                    trace_file << "-> probability " << std::setfill(' ') << std::setw(8) << paths_iter->second.probability_;
+                    trace_file << "; prob_i " << std::setw(8) << paths_iter->second.prob_i_;
+                    trace_file << "; count " << std::setw(4) << paths_iter->second.count_;
+                    trace_file << "; cost " << std::setw(8) << paths_iter->second.cost_;
+                    trace_file << "; cap bad? " << std::setw(2) << paths_iter->second.capacity_problem_;
+                    trace_file << "   ";
+                    printPathCompat(trace_file, path_spec, paths_iter->first);
+                    trace_file << std::endl;
+                }
+            }
+            if (cum_prob == 0) { return false; } // fail
+
+            // choose path
+            path = choosePath(path_spec, trace_file, paths, cum_prob);
         }
         else
         {
@@ -1078,6 +1360,37 @@ namespace fasttrips {
         }
     }
 
+    void PathFinder::printPathCompat(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const
+    {
+        if (path.stops_.size() == 0)
+        {
+            ostr << "no_path";
+            return;
+        }
+        // board stops, trips, alight stops
+        std::string board_stops, trips, alight_stops;
+        int start_ind = path_spec.outbound_ ? 0 : path.stops_.size()-1;
+        int end_ind   = path_spec.outbound_ ? path.stops_.size() : -1;
+        int inc       = path_spec.outbound_ ? 1 : -1;
+        for (int index = start_ind; index != end_ind; index += inc)
+        {
+            int stop_id = path.stops_[index];
+            std::map<int, StopState>::const_iterator psi = path.states_.find(stop_id);
+            // only want trips
+            if (psi->second.deparr_mode_ == PathFinder::MODE_ACCESS  ) { continue; }
+            if (psi->second.deparr_mode_ == PathFinder::MODE_EGRESS  ) { continue; }
+            if (psi->second.deparr_mode_ == PathFinder::MODE_TRANSFER) { continue; }
+            if ( board_stops.length() > 0) {  board_stops += ","; }
+            if (       trips.length() > 0) {        trips += ","; }
+            if (alight_stops.length() > 0) { alight_stops += ","; }
+            board_stops  += "s" + (path_spec.outbound_ ? SSTR(stop_id) : SSTR(psi->second.stop_succpred_));
+            trips        += "t" + SSTR(psi->second.deparr_mode_);
+            alight_stops += "s" + (path_spec.outbound_ ? SSTR(psi->second.stop_succpred_) : SSTR(stop_id));
+        }
+        ostr << " " << board_stops << " " << trips << " " << alight_stops;
+    }
+
+
     void PathFinder::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const
     {
         ostr << std::setw( 8) << std::setfill(' ') << std::right << "stop" << ": ";
@@ -1172,6 +1485,14 @@ namespace fasttrips {
         } else {
             ostr << std::setw(10) << std::setfill(' ') << mode;
         }
+    }
+
+    bool PathFinder::isTrip(const int& mode) const
+    {
+        if (mode == PathFinder::MODE_ACCESS  ) { return false; }
+        if (mode == PathFinder::MODE_EGRESS  ) { return false; }
+        if (mode == PathFinder::MODE_TRANSFER) { return false; }
+        return true;
     }
 
 }
