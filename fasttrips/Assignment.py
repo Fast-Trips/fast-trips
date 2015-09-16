@@ -57,7 +57,7 @@ class Assignment:
     #: Configuration: Path time-window. This is the time in which the paths are generated.
     #: E.g. with a typical 30 min window, any path within 30 min of the
     #: departure time will be checked.
-    PATH_TIME_WINDOW                = datetime.timedelta(minutes = 30)
+    TIME_WINDOW                     = datetime.timedelta(minutes = 30)
 
     #: Configuration: Create skims flag. This is specific to the travel demand models
     #: (not working in this version)
@@ -74,7 +74,11 @@ class Assignment:
     #: Route choice configuration: Dispersion parameter in the logit function.
     #: Higher values result in less stochasticity. Must be nonnegative. 
     #: If unknown use a value between 0.5 and 1
-    DISPERSION_PARAMETER            = 1.0
+    STOCH_DISPERSION                = 1.0
+
+    #: Route choice configuration: How many stochastic paths will we generate
+    #: (not necessarily unique) to define a path choice set?
+    STOCH_PATHSET_SIZE              = 1000
 
     #: Route choice configuration: Use vehicle capacity constraints
     CAPACITY_CONSTRAINT             = False
@@ -198,6 +202,11 @@ class Assignment:
                                                    Stop.TRANSFERS_COLUMN_TO_STOP]].as_matrix().astype('int32'),
                                      transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
                                                    Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'))
+
+        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
+                                         Assignment.BUMP_BUFFER.total_seconds()/60.0,
+                                         Assignment.STOCH_PATHSET_SIZE,
+                                         Assignment.STOCH_DISPERSION)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):

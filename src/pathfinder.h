@@ -185,17 +185,26 @@ namespace fasttrips {
     class PathFinder
     {
     protected:
+        /** @name Path finding parameters */
+        ///@{
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a>
+        double TIME_WINDOW_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">fasttrips.Assignment.BUMP_BUFFER</a>
+        double BUMP_BUFFER_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a>
+        int STOCH_PATHSET_SIZE_; // er....
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
+        double STOCH_DISPERSION_;
+        ///@}
+
         /// directory in which to write trace files
         std::string output_dir_;
 
         /// for multi-processing
         int process_num_;
-
-        /// time window
-        double time_window_;
-
-        /// bump buffer
-        double bump_buffer_;
 
         // ================ Network supply ================
         /// TAZ information: taz id -> stop id -> costs
@@ -356,13 +365,19 @@ namespace fasttrips {
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
-        const static int MAX_HYPERPATH_ASSIGN_ATTEMPTS = 1000; // er....
-        const static double DISPERSION_PARAMETER;
         const static double MAX_COST;
         const static double MAX_TIME;
 
         /// PathFinder constructor.
         PathFinder();
+
+        /**
+         * Setup the path finding parameters.
+         */
+        void initializeParameters(double     time_window,
+                                  double     bump_buffer,
+                                  int        stoch_pathset_size,
+                                  double     stoch_dispersion);
 
         /**
          * Setup the network supply.  This should happen once, before any pathfinding.

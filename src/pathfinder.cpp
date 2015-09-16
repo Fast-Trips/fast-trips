@@ -20,15 +20,26 @@ const char kPathSeparator =
 
 namespace fasttrips {
 
-    const double PathFinder::DISPERSION_PARAMETER = 1.0;
     const double PathFinder::MAX_COST = 999999;
     const double PathFinder::MAX_TIME = 999.999;
 
     /**
      * This doesn't really do anything.
      */
-    PathFinder::PathFinder() : process_num_(-1), time_window_(30.0), bump_buffer_(5.0)
+    PathFinder::PathFinder() : process_num_(-1), TIME_WINDOW_(-1), BUMP_BUFFER_(-1), STOCH_PATHSET_SIZE_(-1), STOCH_DISPERSION_(-1)
     {
+    }
+
+    void PathFinder::initializeParameters(
+        double     time_window,
+        double     bump_buffer,
+        int        stoch_pathset_size,
+        double     stoch_dispersion)
+    {
+        TIME_WINDOW_        = time_window;
+        BUMP_BUFFER_        = bump_buffer;
+        STOCH_PATHSET_SIZE_ = stoch_pathset_size;
+        STOCH_DISPERSION_   = stoch_dispersion;
     }
 
     void PathFinder::initializeSupply(
@@ -267,9 +278,9 @@ namespace fasttrips {
                 if (possible_xfer_iter != stop_states.end())
                 {
                     old_label       = possible_xfer_iter->second.back().label_;
-                    new_label       = exp(-1.0*PathFinder::DISPERSION_PARAMETER*old_label) +
-                                      exp(-1.0*PathFinder::DISPERSION_PARAMETER*cost);
-                    new_label       = std::max(0.01, -1.0/PathFinder::DISPERSION_PARAMETER*log(new_label));
+                    new_label       = exp(-1.0*STOCH_DISPERSION_*old_label) +
+                                      exp(-1.0*STOCH_DISPERSION_*cost);
+                    new_label       = std::max(0.01, -1.0/STOCH_DISPERSION_*log(new_label));
                 }
                 if ((new_label < PathFinder::MAX_COST) && (new_label > 0.0)) { use_new_state = true; }
 
@@ -291,11 +302,11 @@ namespace fasttrips {
                         // time a bumped passenger started waiting
                         float latest_time = bwi->second;
                         // we can't come in time
-                        if (deparr_time - time_window_ > latest_time) { continue; }
+                        if (deparr_time - TIME_WINDOW_ > latest_time) { continue; }
                         // leave earlier -- to get in line 5 minutes before bump wait time
                         // (confused... We don't resimulate previous bumping passenger so why does this make sense?)
-                        new_label       = new_label + (current_stop_state[0].deparr_time_ - latest_time) + bump_buffer_;
-                        deparr_time     = latest_time - transfer_time - bump_buffer_;
+                        new_label       = new_label + (current_stop_state[0].deparr_time_ - latest_time) + BUMP_BUFFER_;
+                        deparr_time     = latest_time - transfer_time - BUMP_BUFFER_;
                     }
                 }
                 if (possible_xfer_iter != stop_states.end())
@@ -459,9 +470,9 @@ namespace fasttrips {
                     new_label       = cost;
                     if (possible_stop_state_iter != stop_states.end()) {
                         old_label = possible_stop_state_iter->second.back().label_;
-                        new_label = double(exp(-1.0*PathFinder::DISPERSION_PARAMETER*old_label) +
-                                          exp(-1.0*PathFinder::DISPERSION_PARAMETER*cost));
-                        new_label = std::max(0.01, -1.0/PathFinder::DISPERSION_PARAMETER*log(new_label));
+                        new_label = double(exp(-1.0*STOCH_DISPERSION_*old_label) +
+                                          exp(-1.0*STOCH_DISPERSION_*cost));
+                        new_label = std::max(0.01, -1.0/STOCH_DISPERSION_*log(new_label));
                     }
                     if ((new_label < PathFinder::MAX_COST) && (new_label > 0)) { use_new_state = true; }
                 }
@@ -686,9 +697,9 @@ namespace fasttrips {
                 if (taz_state.size() > 0)
                 {
                     old_label = taz_state.back().label_;
-                    new_label = exp(-1.0*PathFinder::DISPERSION_PARAMETER*old_label) +
-                                exp(-1.0*PathFinder::DISPERSION_PARAMETER*new_label);
-                    new_label = std::max(0.01, -1.0/PathFinder::DISPERSION_PARAMETER*log(new_label));
+                    new_label = exp(-1.0*STOCH_DISPERSION_*old_label) +
+                                exp(-1.0*STOCH_DISPERSION_*new_label);
+                    new_label = std::max(0.01, -1.0/STOCH_DISPERSION_*log(new_label));
                 }
                 if ((new_label < PathFinder::MAX_COST) && (new_label > 0)) { use_new_state = true; }
             }
@@ -713,10 +724,10 @@ namespace fasttrips {
                         // time a bumped passenger started waiting
                         float latest_time = bwi->second;
                         // we can't come in time
-                        if (deparr_time - time_window_ > latest_time) { continue; }
+                        if (deparr_time - TIME_WINDOW_ > latest_time) { continue; }
                         // leave earlier -- to get in line 5 minutes before bump wait time
-                        new_label   = new_label + (current_stop_state[0].deparr_time_ - latest_time) + bump_buffer_;
-                        deparr_time = latest_time - access_time - bump_buffer_;
+                        new_label   = new_label + (current_stop_state[0].deparr_time_ - latest_time) + BUMP_BUFFER_;
+                        deparr_time = latest_time - access_time - BUMP_BUFFER_;
                     }
                 }
 
@@ -776,8 +787,8 @@ namespace fasttrips {
         std::vector<ProbabilityStop> access_cum_prob; // access/egress cumulative probabilities
         for (size_t state_index = 0; state_index < taz_state.size(); ++state_index)
         {
-            double probability = exp(-1.0*PathFinder::DISPERSION_PARAMETER*taz_state[state_index].cost_) /
-                                 exp(-1.0*PathFinder::DISPERSION_PARAMETER*taz_label);
+            double probability = exp(-1.0*STOCH_DISPERSION_*taz_state[state_index].cost_) /
+                                 exp(-1.0*STOCH_DISPERSION_*taz_label);
             // why?  :p
             int prob_i = static_cast<int>(RAND_MAX*probability);
             // too small to consider
@@ -851,7 +862,7 @@ namespace fasttrips {
                 if (!path_spec.outbound_ && state.deparr_time_ > arrdep_time) { continue; }
 
                 // calculating denominator
-                sum_exp += exp(-1.0*PathFinder::DISPERSION_PARAMETER*state.cost_);
+                sum_exp += exp(-1.0*STOCH_DISPERSION_*state.cost_);
                 // probabilities will be filled in later - use cost for now
                 ProbabilityStop pb = { state.cost_, 0, state.stop_succpred_, stop_state_index };
                 stop_cum_prob.push_back(pb);
@@ -873,7 +884,7 @@ namespace fasttrips {
 
             // denom found - cum prob time
             for (size_t idx = 0; idx < stop_cum_prob.size(); ++idx) {
-                double probability = exp(-1.0*PathFinder::DISPERSION_PARAMETER*stop_cum_prob[idx].probability_) / sum_exp;
+                double probability = exp(-1.0*STOCH_DISPERSION_*stop_cum_prob[idx].probability_) / sum_exp;
 
                 // why?  :p
                 int prob_i = static_cast<int>(RAND_MAX*probability);
@@ -1195,7 +1206,7 @@ namespace fasttrips {
             // random seed
             srand(path_spec.path_id_);
             // find a *set of Paths*
-            for (int attempts = 1; attempts <= PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS; ++attempts)
+            for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
                 Path new_path;
                 bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, taz_state, new_path);
@@ -1226,7 +1237,7 @@ namespace fasttrips {
                 calculatePathCost(path_spec, trace_file, paths_iter->first, paths_iter->second);
                 if (paths_iter->second.cost_ > 0)
                 {
-                    logsum += exp(-1.0*PathFinder::DISPERSION_PARAMETER*paths_iter->second.cost_);
+                    logsum += exp(-1.0*STOCH_DISPERSION_*paths_iter->second.cost_);
                 }
             }
             if (logsum == 0) { return false; } // fail
@@ -1237,7 +1248,7 @@ namespace fasttrips {
             // calculate the probabilities for those paths
             for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*PathFinder::DISPERSION_PARAMETER*paths_iter->second.cost_)/logsum;
+                paths_iter->second.probability_ = exp(-1.0*STOCH_DISPERSION_*paths_iter->second.cost_)/logsum;
                 // why?  :p
                 int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
                 // too small to consider
@@ -1388,9 +1399,9 @@ namespace fasttrips {
         }
         for (std::vector<TripStopTime>::const_iterator it  = mapiter->second.begin();
                                                        it != mapiter->second.end();   ++it) {
-            if (outbound && (it->arrive_time_ < timepoint) && (it->arrive_time_ > timepoint-time_window_)) {
+            if (outbound && (it->arrive_time_ < timepoint) && (it->arrive_time_ > timepoint-TIME_WINDOW_)) {
                 return_trips.push_back(*it);
-            } else if (!outbound && (it->depart_time_ > timepoint) && (it->depart_time_ < timepoint+time_window_)) {
+            } else if (!outbound && (it->depart_time_ > timepoint) && (it->depart_time_ < timepoint+TIME_WINDOW_)) {
                 return_trips.push_back(*it);
             }
         }
@@ -1406,14 +1417,14 @@ namespace fasttrips {
                 (it->deparr_mode_ != PathFinder::MODE_TRANSFER) &&
                 (it->deparr_mode_ != PathFinder::MODE_ACCESS  ))
             {
-                nonwalk_label += exp(-1.0*PathFinder::DISPERSION_PARAMETER*it->cost_);
+                nonwalk_label += exp(-1.0*STOCH_DISPERSION_*it->cost_);
             }
         }
 
         if (nonwalk_label == 0.0) {
             return PathFinder::MAX_COST;
         }
-        return -1.0/PathFinder::DISPERSION_PARAMETER*log(nonwalk_label);
+        return -1.0/STOCH_DISPERSION_*log(nonwalk_label);
     }
 
     void PathFinder::printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const

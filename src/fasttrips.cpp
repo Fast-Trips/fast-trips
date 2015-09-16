@@ -13,6 +13,21 @@ static PyObject *pyError;
 fasttrips::PathFinder pathfinder;
 
 static PyObject *
+_fasttrips_initialize_parameters(PyObject *self, PyObject *args)
+{
+    double     time_window;
+    double     bump_buffer;
+    int        stoch_pathset_size;
+    double     stoch_dispersion;
+    if (!PyArg_ParseTuple(args, "ddid", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion)) {
+        return NULL;
+    }
+    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion);
+    Py_RETURN_NONE;
+
+}
+
+static PyObject *
 _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
@@ -165,9 +180,10 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef fasttripsMethods[] = {
-    {"initialize_supply",   _fasttrips_initialize_supply, METH_VARARGS, "Initialize network supply" },
-    {"set_bump_wait",       _fasttrips_set_bump_wait,     METH_VARARGS, "Update bump wait"          },
-    {"find_path",           _fasttrips_find_path,         METH_VARARGS, "Find trip-based path"      },
+    {"initialize_parameters",   _fasttrips_initialize_parameters, METH_VARARGS, "Initialize path finding parameters" },
+    {"initialize_supply",       _fasttrips_initialize_supply,     METH_VARARGS, "Initialize network supply" },
+    {"set_bump_wait",           _fasttrips_set_bump_wait,         METH_VARARGS, "Update bump wait"          },
+    {"find_path",               _fasttrips_find_path,             METH_VARARGS, "Find trip-based path"      },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
