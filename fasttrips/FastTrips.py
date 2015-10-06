@@ -110,7 +110,7 @@ class FastTrips:
         # Read Stops (gtfs-required) and transfers
         self.stops = Stop(input_dir, self.gtfs_schedule)
 
-        # Read trips, vehicles and stoptimes
+        # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(input_dir, self.gtfs_schedule, Assignment.TODAY)
 
         # transfer_stops = 0

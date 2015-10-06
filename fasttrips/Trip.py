@@ -27,7 +27,8 @@ class Trip:
     and stop time information in :py:attr:`Trip.stop_times_df`, another instance of
     :py:class:`pandas.DataFrame`.
 
-    Also stores Vehicle information in :py:attr:`Trips.vehicles_df`.
+    Also stores Vehicle information in :py:attr:`Trips.vehicles_df` and
+    Service Calendar information in :py:attr:`Trips.service_df`
     """
 
     #: File with fasttrips trip information (this extends the
@@ -69,6 +70,15 @@ class Trip:
     VEHICLES_COLUMN_WHEELCHAIR_CAPACITY     = 'wheelchair_capacity'
     #: fasttrips Vehicles column name: Bicycle Capacity
     VEHICLES_COLUMN_BICYCLE_CAPACITY        = 'bicycle_capacity'
+
+    #: fasttrips Service column name: Start Date string in 'YYYYMMDD' format
+    SERVICE_COLUMN_START_DATE_STR           = 'start_date_str'
+    #: fasttrips Service column name: Start Date as datetime.date
+    SERVICE_COLUMN_START_DATE               = 'start_date'
+    #: fasttrips Service column name: End Date string in 'YYYYMMDD' format
+    SERVICE_COLUMN_END_DATE_STR             = 'end_date_str'
+    #: fasttrips Service column name: End Date as datetime.date
+    SERVICE_COLUMN_END_DATE                 = 'end_date'
 
     #: File with fasttrips stop time information (this extends the
     #: `gtfs stop times <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/stop_times.md>`_ file).
@@ -189,6 +199,33 @@ class Trip:
         FastTripsLogger.debug("=========== VEHICLES ===========\n" + str(self.vehicles_df.head()))
         FastTripsLogger.debug("\n"+str(self.vehicles_df.index.dtype)+"\n"+str(self.vehicles_df.dtypes))
         FastTripsLogger.info("Read %7d vehicles" % len(self.vehicles_df))
+
+        service_dicts = []
+        for gtfs_service in gtfs_schedule.GetServicePeriodList():
+            service_dict = {}
+            service_tuple = gtfs_service.GetCalendarFieldValuesTuple()
+            for fieldnum in range(len(gtfs_service._FIELD_NAMES)):
+                # all required
+                fieldname = gtfs_service._FIELD_NAMES[fieldnum]
+                service_dict[fieldname] = service_tuple[fieldnum]
+            service_dicts.append(service_dict)
+        self.service_df = pandas.DataFrame(data=service_dicts)
+
+        # Rename SERVICE_COLUMN_START_DATE to SERVICE_COLUMN_START_DATE_STR
+        self.service_df[Trip.SERVICE_COLUMN_START_DATE_STR] = self.service_df[Trip.SERVICE_COLUMN_START_DATE]
+        self.service_df[Trip.SERVICE_COLUMN_END_DATE_STR  ] = self.service_df[Trip.SERVICE_COLUMN_END_DATE  ]
+
+        # Convert to datetime
+        self.service_df[Trip.SERVICE_COLUMN_START_DATE] = \
+            self.service_df[Trip.SERVICE_COLUMN_START_DATE_STR].map(lambda x: \
+            datetime.datetime.combine(datetime.datetime.strptime(x, '%Y%M%d').date(), datetime.time(minute=0)))
+        self.service_df[Trip.SERVICE_COLUMN_END_DATE] = \
+            self.service_df[Trip.SERVICE_COLUMN_END_DATE_STR].map(lambda x: \
+            datetime.datetime.combine(datetime.datetime.strptime(x, '%Y%M%d').date(), datetime.time(hour=23, minute=59, second=59, microsecond=999999)))
+
+        FastTripsLogger.debug("=========== SERVICE PERIODS ===========\n" + str(self.service_df.head()))
+        FastTripsLogger.debug("\n"+str(self.service_df.index.dtype)+"\n"+str(self.service_df.dtypes))
+        FastTripsLogger.info("Read %7d service periods" % len(self.service_df))
 
         self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
 
