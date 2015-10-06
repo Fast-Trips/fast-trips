@@ -23,7 +23,8 @@ class Route(object):
 
     One instance represents all of the Routes.
 
-    Stores route information in :py:attr:`Route.routes_df`, an instance of :py:class:`pandas.DataFrame`.
+    Stores route information in :py:attr:`Route.routes_df` and agency information in
+    :py:attr:`Route.agencies_df`. Each are instances of :py:class:`pandas.DataFrame`.
     """
 
     #: File with fasttrips routes information (this extends the
@@ -74,3 +75,17 @@ class Route(object):
         FastTripsLogger.debug("=========== ROUTES ===========\n" + str(self.routes_df.head()))
         FastTripsLogger.debug("\n"+str(self.routes_df.dtypes))
         FastTripsLogger.info("Read %7d routes" % len(self.routes_df))
+
+
+        agency_dicts = []
+        for gtfs_agency in gtfs_schedule.GetAgencyList():
+            agency_dict = {}
+            for fieldname in gtfs_agency._FIELD_NAMES:
+                if fieldname in gtfs_agency.__dict__:
+                    agency_dict[fieldname] = gtfs_agency.__dict__[fieldname]
+            agency_dicts.append(agency_dict)
+        self.agencies_df = pandas.DataFrame(data=agency_dicts)
+
+        FastTripsLogger.debug("=========== AGENCIES ===========\n" + str(self.agencies_df.head()))
+        FastTripsLogger.debug("\n"+str(self.agencies_df.dtypes))
+        FastTripsLogger.info("Read %7d agencies" % len(self.agencies_df))
