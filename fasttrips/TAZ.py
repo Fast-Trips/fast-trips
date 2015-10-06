@@ -102,6 +102,28 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_INDIRECTNESS         = 'indirectness'
 
 
+    #: File with fasttrips Park and Ride information.
+    #: See `pnr specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/pnr.md>`_.
+    INPUT_PNR_FILE                           = 'pnr.txt'
+    #: fasttrips PNR column name: Lot ID
+    PNR_COLUMN_LOT_ID                        = 'lot_id'
+    #: fasttrips PNR column name: Lot Latitude (WGS 84)
+    PNR_COLUMN_LOT_LATITUDE                  = 'lot_lat'
+    #: fasttrips PNR column name: Lot Longitude (WGS 84)
+    PNR_COLUMN_LOT_LONGITUDE                 = 'lot_long'
+    #: fasttrips PNR column name: Name of the Lot
+    PNR_COLUMN_NAME                          = 'name'
+    #: fasttrips PNR column name: Capacity (number of parking spaces)
+    PNR_COLUMN_CAPACITY                      = 'capacity'
+    #: fasttrips PNR column name: Overflow Capacity (hide and ride)
+    PNR_COLUMN_OVERFLOW_CAPACITY             = 'overflow_capacity'
+    #: fasttrips PNR column name: Hourly Cost in cents.  Integer.
+    PNR_COLUMN_HOURLY_COST                   = 'hourly_cost'
+    #: fasttrips PNR column name: Maximum Daily Cost in cents.  Integer.
+    PNR_COLUMN_MAXIMUM_COST                  = 'max_cost'
+    #: fasttrips PNR column name: Type
+    PNR_COLUMN_TYPE                          = 'type'
+
     def __init__(self, input_dir, today):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
@@ -181,3 +203,19 @@ class TAZ:
         FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
+
+        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_PNR_FILE)):
+            self.pnr_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_PNR_FILE))
+            # verify required columns are present
+            pnr_cols = list(self.pnr_df.columns.values)
+            assert(TAZ.PNR_COLUMN_LOT_ID            in pnr_cols)
+            assert(TAZ.PNR_COLUMN_LOT_LATITUDE      in pnr_cols)
+            assert(TAZ.PNR_COLUMN_LOT_LONGITUDE     in pnr_cols)
+
+        else:
+            self.pnr_df = pandas.DataFrame()
+
+        FastTripsLogger.debug("=========== PNRS ===========\n" + str(self.pnr_df.head()))
+        FastTripsLogger.debug("\n"+str(self.pnr_df.dtypes))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.pnr_df), "PNRs", TAZ.INPUT_PNR_FILE))
