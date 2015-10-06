@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os
+import datetime, os
 import pandas
 
 from .Logger import FastTripsLogger
@@ -41,7 +41,43 @@ class Route(object):
     #: fasttrips Routes column name: Proof of Payment
     ROUTES_COLUMN_PROOF_OF_PAYMENT          = "proof_of_payment"
 
-    def __init__(self, input_dir, gtfs_schedule):
+    #: File with fasttrips fare attributes information (this *subsitutes rather than extends* the
+    #: `gtfs fare_attributes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md>`_ file).
+    #: See `fare_attributes_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md>`_.
+    INPUT_FARE_ATTRIBUTES_FILE              = "fare_attributes_ft.txt"
+    # fasttrips Fare attributes column name: Fare Class
+    FARE_ATTR_COLUMN_FARE_CLASS             = "fare_class"
+    # fasttrips Fare attributes column name: Price
+    FARE_ATTR_COLUMN_PRICE                  = "price"
+    # fasttrips Fare attributes column name: Currency Type
+    FARE_ATTR_COLUMN_CURRENCY_TYPE          = "currency_type"
+    # fasttrips Fare attributes column name: Payment Method
+    FARE_ATTR_COLUMN_PAYMENT_METHOD         = "payment_method"
+    # fasttrips Fare attributes column name: Transfers (number permitted on this fare)
+    FARE_ATTR_COLUMN_TRANSFERS              = "transfers"
+
+    #: File with fasttrips fare rules information (this extends the
+    #: `gtfs fare_rules <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md>`_ file).
+    #: See `fare_rules_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md>`_.
+    INPUT_FARE_RULES_FILE                   = "fare_rules_ft.txt"
+    #: fasttrips Fare rules column name: Fare ID
+    FARE_RULES_COLUMN_FARE_ID               = "fare_id"
+    #: fasttrips Fare rules column name: Fare ID
+    FARE_RULES_COLUMN_FARE_CLASS            = "fare_class"
+    #: fasttrips Fare rules column name: Start time for the fare. 'HH:MM:SS' string
+    FARE_RULES_COLUMN_START_TIME_STR        = "start_time_str"
+    #: fasttrips Fare rules column name: Start time for the fare. Minutes after midnight
+    FARE_RULES_COLUMN_START_TIME_MIN        = "start_time_min"
+    #: fasttrips Fare rules column name: Start time for the fare. A DateTime
+    FARE_RULES_COLUMN_START_TIME            = "start_time"
+    #: fasttrips Fare rules column name: End time for the fare rule. 'HH:MM:SS' string
+    FARE_RULES_COLUMN_END_TIME_STR          = "end_time_str"
+    #: fasttrips Fare rules column name: End time for the fare rule. Minutes after midnight
+    FARE_RULES_COLUMN_END_TIME_MIN          = "end_time_min"
+    #: fasttrips Fare rules column name: End time for the fare rule. A DateTime.
+    FARE_RULES_COLUMN_END_TIME              = "end_time"
+
+    def __init__(self, input_dir, gtfs_schedule, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips routes data from the input file in *input_dir*.
@@ -89,3 +125,87 @@ class Route(object):
         FastTripsLogger.debug("=========== AGENCIES ===========\n" + str(self.agencies_df.head()))
         FastTripsLogger.debug("\n"+str(self.agencies_df.dtypes))
         FastTripsLogger.info("Read %7d agencies" % len(self.agencies_df))
+
+        fare_attr_dicts = []
+        fare_rule_dicts = []
+        for gtfs_fare_attr in gtfs_schedule.GetFareAttributeList():
+            fare_attr_dict = {}
+            for fieldname in gtfs_fare_attr._FIELD_NAMES:
+                if fieldname in gtfs_fare_attr.__dict__:
+                    fare_attr_dict[fieldname] = gtfs_fare_attr.__dict__[fieldname]
+            fare_attr_dicts.append(fare_attr_dict)
+
+            for gtfs_fare_rule in gtfs_fare_attr.GetFareRuleList():
+                fare_rule_dict = {}
+                for fieldname in gtfs_fare_rule._FIELD_NAMES:
+                    if fieldname in gtfs_fare_rule.__dict__:
+                        fare_rule_dict[fieldname] = gtfs_fare_rule.__dict__[fieldname]
+                fare_rule_dicts.append(fare_rule_dict)
+
+        self.fare_attrs_df = pandas.DataFrame(data=fare_attr_dicts)
+
+        FastTripsLogger.debug("=========== FARE ATTRIBUTES ===========\n" + str(self.fare_attrs_df.head()))
+        FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
+        FastTripsLogger.info("Read %7d fare attributes" % len(self.fare_attrs_df))
+
+        # subsitute fasttrips fare attributes
+        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE)):
+            self.fare_attrs_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE))
+            # verify required columns are present
+            fare_attrs_cols = list(self.fare_attrs_df.columns.values)
+            assert(Route.FARE_ATTR_COLUMN_FARE_CLASS        in fare_attrs_cols)
+            assert(Route.FARE_ATTR_COLUMN_PRICE             in fare_attrs_cols)
+            assert(Route.FARE_ATTR_COLUMN_CURRENCY_TYPE     in fare_attrs_cols)
+            assert(Route.FARE_ATTR_COLUMN_PAYMENT_METHOD    in fare_attrs_cols)
+            assert(Route.FARE_ATTR_COLUMN_TRANSFERS         in fare_attrs_cols)
+
+            FastTripsLogger.debug("===> REPLACED BY FARE ATTRIBUTES FT\n" + str(self.fare_attrs_df.head()))
+            FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
+            FastTripsLogger.info("Read %7d fare attributes (ft)" % len(self.fare_attrs_df))
+
+            #: fares are by fare_class rather than by fare_id
+            self.fare_by_class = True
+        else:
+            self.fare_by_class = False
+
+        # Fare rules
+        self.fare_rules_df = pandas.DataFrame(data=fare_rule_dicts)
+
+        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE)):
+            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE))
+            # verify required columns are present
+            fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
+            assert(Route.FARE_RULES_COLUMN_FARE_ID      in fare_rules_ft_cols)
+            assert(Route.FARE_RULES_COLUMN_FARE_CLASS   in fare_rules_ft_cols)
+            assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
+            assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
+
+            # string version - we already have
+            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_STR] = fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME]
+            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME_STR  ] = fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME]
+
+            # datetime version
+            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_STR].map(lambda x: \
+                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME_STR].map(lambda x: \
+                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+
+            # float version
+            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_MIN] = \
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: \
+                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME_MIN] = \
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: \
+                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+
+            # join to fare rules dataframe
+            self.fare_rules_df = pandas.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
+                                              how='left',
+                                              on=Route.FARE_RULES_COLUMN_FARE_ID)
+
+
+        FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head()))
+        FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
+        FastTripsLogger.info("Read %7d fare rules" % len(self.fare_rules_df))

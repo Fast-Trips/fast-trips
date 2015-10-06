@@ -105,7 +105,7 @@ class FastTrips:
         # Optional: Transfers, Shapes, Calendar Dates...
 
         # Read routes, agencies
-        self.routes = Route(input_dir, self.gtfs_schedule)
+        self.routes = Route(input_dir, self.gtfs_schedule, Assignment.TODAY)
 
         # Read Stops (gtfs-required) and transfers
         self.stops = Stop(input_dir, self.gtfs_schedule)
