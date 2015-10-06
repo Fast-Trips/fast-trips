@@ -111,7 +111,7 @@ class Stop:
         self.stops_df = pandas.DataFrame(data=stop_dicts)
 
         # Read the fast-trips supplemental stops data file
-        stops_ft_df = pandas.read_csv(os.path.join(input_dir, "..", Stop.INPUT_STOPS_FILE))
+        stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE))
         # verify required columns are present
         stops_ft_cols = list(stops_ft_df.columns.values)
         assert(Stop.STOPS_COLUMN_ID             in stops_ft_cols)
@@ -139,7 +139,7 @@ class Stop:
         self.transfers_df = pandas.DataFrame(data=transfer_dicts)
 
         # Read the fast-trips supplemental transfers data file
-        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, "..", Stop.INPUT_TRANSFERS_FILE))
+        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_TRANSFERS_FILE))
         # verify required columns are present
         transfer_ft_cols = list(transfers_ft_df.columns.values)
         assert(Stop.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)

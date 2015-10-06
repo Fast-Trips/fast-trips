@@ -59,7 +59,7 @@ class Route(object):
         self.routes_df = pandas.DataFrame(data=route_dicts)
 
         # Read the fast-trips supplemental routes data file
-        routes_ft_df = pandas.read_csv(os.path.join(input_dir, "..", Route.INPUT_ROUTES_FILE))
+        routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE))
         # verify required columns are present
         routes_ft_cols = list(routes_ft_df.columns.values)
         assert(Route.ROUTES_COLUMN_ID           in routes_ft_cols)

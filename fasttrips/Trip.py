@@ -173,7 +173,7 @@ class Trip:
         self.trips_df = pandas.DataFrame(data=trip_dicts)
 
         # Read the fast-trips supplemental trips data file
-        trips_ft_df = pandas.read_csv(os.path.join(input_dir, "..", Trip.INPUT_TRIPS_FILE),
+        trips_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_TRIPS_FILE),
                                       dtype={Trip.TRIPS_COLUMN_ID:object})
         # verify required columns are present
         trips_ft_cols = list(trips_ft_df.columns.values)
@@ -191,7 +191,7 @@ class Trip:
         FastTripsLogger.debug("\n"+str(self.trips_df.index.dtype)+"\n"+str(self.trips_df.dtypes))
         FastTripsLogger.info("Read %7d trips" % len(self.trips_df))
 
-        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, "..", Trip.INPUT_VEHICLES_FILE))
+        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE))
         # verify the required columns are present
         vehicle_ft_cols = list(self.vehicles_df.columns.values)
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
@@ -230,7 +230,7 @@ class Trip:
         self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
 
         # Read the fast-trips supplemental stop times data file
-        stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, "..", Trip.INPUT_STOPTIMES_FILE),
+        stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE),
                                       dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
                                              Trip.STOPTIMES_COLUMN_STOP_ID:object})
         # verify required columns are present

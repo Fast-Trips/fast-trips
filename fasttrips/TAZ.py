@@ -107,7 +107,7 @@ class TAZ:
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
         #: Walk access links table
-        self.walk_access_df = pandas.read_csv(os.path.join(input_dir, "..", TAZ.INPUT_WALK_ACCESS_FILE))
+        self.walk_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_WALK_ACCESS_FILE))
         # verify required columns are present
         walk_access_cols = list(self.walk_access_df.columns.values)
         assert(TAZ.WALK_ACCESS_COLUMN_TAZ      in walk_access_cols)
@@ -131,7 +131,7 @@ class TAZ:
         FastTripsLogger.info("Read %7d walk access links" % len(self.walk_access_df))
 
         #: Drive access links table
-        self.drive_access_df = pandas.read_csv(os.path.join(input_dir, "..", TAZ.INPUT_DRIVE_ACCESS_FILE))
+        self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE))
         # verify required columns are present
         drive_access_cols = list(self.drive_access_df.columns.values)
         assert(TAZ.DRIVE_ACCESS_COLUMN_TAZ              in drive_access_cols)
