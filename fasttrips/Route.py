@@ -19,59 +19,58 @@ from .Logger import FastTripsLogger
 
 class Route(object):
     """
-    Route class.  Documentation forthcoming.
+    Route class.
+
+    One instance represents all of the Routes.
+
+    Stores route information in :py:attr:`Route.routes_df`, an instance of :py:class:`pandas.DataFrame`.
     """
 
-    #: File with routes.
-    #: TODO document format
-    INPUT_ROUTES_FILE = "ft_input_routes.dat"
+    #: File with fasttrips routes information (this extends the
+    #: `gtfs routes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/routes.md>`_ file).
+    #: See `routes_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/routes_ft.md>`_.
+    INPUT_ROUTES_FILE                       = "routes_ft.txt"
+    #: gtfs Routes column name: Unique identifier
+    ROUTES_COLUMN_ID                        = "route_id"
+    #: fasttrips Routes column name: Mode
+    ROUTES_COLUMN_MODE                      = "mode"
 
-    def __init__(self, route_record):
+    #: fasttrips Routes column name: Fare Class
+    ROUTES_COLUMN_FARE_CLASS                = "fare_class"
+    #: fasttrips Routes column name: Proof of Payment
+    ROUTES_COLUMN_PROOF_OF_PAYMENT          = "proof_of_payment"
+
+    def __init__(self, input_dir, gtfs_schedule):
         """
-        Constructor from dictionary mapping attribute to value.
+        Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
+        fast-trips routes data from the input file in *input_dir*.
         """
-        #: ID that uniquely identifies a route
-        self.route_id           = route_record['routeId'        ]
-        #: Short name of the route
-        self.short_name         = route_record['routeShortName' ]
-        #: Full name of the route
-        self.long_name          = route_record['routeLongName'  ]
+        pandas.set_option('display.width', 1000)
 
-        #: Service type:
-        #: 0 - Tram, streetcar, light rail
-        #: 1 - Subway, metro
-        #: 2 - Rail
-        #: 3 - Bus
-        #: 4 - Ferry
-        #: 5 - Cable car
-        #: 6 - Gondola, suspended cable car
-        self.service_type       = route_record['routeType']
-        assert self.service_type in [0,1,2,3,4,5,6]
+        # Combine all gtfs Route objects to a single pandas DataFrame
+        route_dicts = []
+        for gtfs_route in gtfs_schedule.GetRouteList():
+            route_dict = {}
+            for fieldname in gtfs_route._FIELD_NAMES:
+                if fieldname in gtfs_route.__dict__:
+                    route_dict[fieldname] = gtfs_route.__dict__[fieldname]
+            route_dicts.append(route_dict)
+        self.routes_df = pandas.DataFrame(data=route_dicts)
 
-        #: These are the :py:class:`fasttrips.Trip` instances that run on this route.
-        #: This a :py:class:`dict` mapping the *trip_id* to a :py:class:`fasttrips.Trip` instance
-        self.trips              = {}
+        # Read the fast-trips supplemental routes data file
+        routes_ft_df = pandas.read_csv(os.path.join(input_dir, "..", Route.INPUT_ROUTES_FILE))
+        # verify required columns are present
+        routes_ft_cols = list(routes_ft_df.columns.values)
+        assert(Route.ROUTES_COLUMN_ID           in routes_ft_cols)
+        assert(Route.ROUTES_COLUMN_MODE         in routes_ft_cols)
 
-    def add_trip(self, trip):
-        """
-        Add the given trip to my trip list
-        """
-        self.trips[trip.trip_id] = trip
+        # Join to the routes dataframe
+        self.routes_df = pandas.merge(left=self.routes_df, right=routes_ft_df,
+                                      how='left',
+                                      on=Route.ROUTES_COLUMN_ID)
 
-    @staticmethod
-    def read_routes(input_dir):
-        """
-        Read the stops from the input file in *input_dir*.
-        """
-        routes_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE), sep="\t")
-        FastTripsLogger.debug("=========== ROUTES ===========\n" + str(routes_df.head()))
-        FastTripsLogger.debug("\n"+str(routes_df.dtypes))
+        self.routes_df.set_index(Route.ROUTES_COLUMN_ID, inplace=True, verify_integrity=True)
 
-        route_id_to_route = {}
-        route_records = routes_df.to_dict(orient='records')
-        for route_record in route_records:
-            route = Route(route_record)
-            route_id_to_route[route.route_id] = route
-
-        FastTripsLogger.info("Read %7d routes" % len(route_id_to_route))
-        return route_id_to_route
+        FastTripsLogger.debug("=========== ROUTES ===========\n" + str(self.routes_df.head()))
+        FastTripsLogger.debug("\n"+str(self.routes_df.dtypes))
+        FastTripsLogger.info("Read %7d routes" % len(self.routes_df))
