@@ -150,9 +150,11 @@ class Stop:
         assert(Stop.TRANSFERS_COLUMN_TO_ROUTE            in transfer_ft_cols)
         assert(Stop.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE in transfer_ft_cols)
 
-        # join to the transfers dataframe
+        # join to the transfers dataframe -- need to use the transfers_ft as the primary because
+        # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),
+        # and we don't want to drop them
         self.transfers_df = pandas.merge(left=self.transfers_df, right=transfers_ft_df,
-                                         how='left',
+                                         how='right',
                                          on=[Stop.TRANSFERS_COLUMN_FROM_STOP,
                                              Stop.TRANSFERS_COLUMN_TO_STOP])
 
