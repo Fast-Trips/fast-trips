@@ -26,6 +26,8 @@ class Trip:
     Stores Trip information in :py:attr:`Trip.trips_df`, an instance of :py:class:`pandas.DataFrame`
     and stop time information in :py:attr:`Trip.stop_times_df`, another instance of
     :py:class:`pandas.DataFrame`.
+
+    Also stores Vehicle information in :py:attr:`Trips.vehicles_df`.
     """
 
     #: File with fasttrips trip information (this extends the
@@ -41,6 +43,32 @@ class Trip:
 
     #: fasttrips Trips column name: Vehicle Name
     TRIPS_COLUMN_VEHICLE_NAME               = 'vehicle_name'
+
+    #: File with fasttrips vehicles information.
+    #: See `vehicles_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/vehicles_ft.md>`_.
+    INPUT_VEHICLES_FILE                     = 'vehicles_ft.txt'
+    #: fasttrips Vehicles column name: Vehicle name (identifier)
+    VEHICLES_COLUMN_VEHICLE_NAME            = 'vehicle_name'
+    #: fasttrips Vehicles column name: Vehicle Description
+    VEHICLES_COLUMN_VEHICLE_DESCRIPTION     = 'vehicle_description'
+    #: fasttrips Vehicles column name: Seated Capacity
+    VEHICLES_COLUMN_SEATED_CAPACITY         = 'seated_capacity'
+    #: fasttrips Vehicles column name: Standing Capacity
+    VEHICLES_COLUMN_STANDING_CAPACITY       = 'standing_capacity'
+    #: fasttrips Vehicles column name: Number of Doors
+    VEHICLES_COLUMN_NUMBER_OF_DOORS         = 'number_of_doors'
+    #: fasttrips Vehicles column name: Maximum Speed (mph)
+    VEHICLES_COLUMN_MAXIMUM_SPEED           = 'max_speed'
+    #: fasttrips Vehicles column name: Vehicle Length (feet)
+    VEHICLES_COLUMN_VEHICLE_LENGTH          = 'vehicle_length'
+    #: fasttrips Vehicles column name: Platform Height (inches)
+    VEHICLES_COLUMN_PLATFORM_HEIGHT         = 'platform_height'
+    #: fasttrips Vehicles column name: Propulsion Type
+    VEHICLES_COLUMN_PROPULSION_TYPE         = 'propulsion_type'
+    #: fasttrips Vehicles column name: Wheelchair Capacity (overrides trip)
+    VEHICLES_COLUMN_WHEELCHAIR_CAPACITY     = 'wheelchair_capacity'
+    #: fasttrips Vehicles column name: Bicycle Capacity
+    VEHICLES_COLUMN_BICYCLE_CAPACITY        = 'bicycle_capacity'
 
     #: File with fasttrips stop time information (this extends the
     #: `gtfs stop times <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/stop_times.md>`_ file).
@@ -82,11 +110,7 @@ class Trip:
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
 
-    STOPS_IDX_STOP_ID           = 0  #: For accessing parts of :py:attr:`Trip.stops`
-    STOPS_IDX_ARRIVAL_TIME      = 1  #: For accessing parts of :py:attr:`Trip.stops`
-    STOPS_IDX_DEPARTURE_TIME    = 2  #: For accessing parts of :py:attr:`Trip.stops`
-
-    def __init__(self, input_dir, gtfs_schedule, route_id_to_route, stops, today):
+    def __init__(self, input_dir, gtfs_schedule, today):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
@@ -153,12 +177,18 @@ class Trip:
 
         self.trips_df.set_index(Trip.TRIPS_COLUMN_ID, inplace=True, verify_integrity=True)
 
-        # TODO check this
-        # assert self.service_type in [0,1,2,3,4,5,6]
-
         FastTripsLogger.debug("=========== TRIPS ===========\n" + str(self.trips_df.head()))
         FastTripsLogger.debug("\n"+str(self.trips_df.index.dtype)+"\n"+str(self.trips_df.dtypes))
         FastTripsLogger.info("Read %7d trips" % len(self.trips_df))
+
+        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, "..", Trip.INPUT_VEHICLES_FILE))
+        # verify the required columns are present
+        vehicle_ft_cols = list(self.vehicles_df.columns.values)
+        assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
+
+        FastTripsLogger.debug("=========== VEHICLES ===========\n" + str(self.vehicles_df.head()))
+        FastTripsLogger.debug("\n"+str(self.vehicles_df.index.dtype)+"\n"+str(self.vehicles_df.dtypes))
+        FastTripsLogger.info("Read %7d vehicles" % len(self.vehicles_df))
 
         self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
 
