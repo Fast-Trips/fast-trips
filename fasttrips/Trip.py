@@ -189,7 +189,8 @@ class Trip:
 
         FastTripsLogger.debug("=========== TRIPS ===========\n" + str(self.trips_df.head()))
         FastTripsLogger.debug("\n"+str(self.trips_df.index.dtype)+"\n"+str(self.trips_df.dtypes))
-        FastTripsLogger.info("Read %7d trips" % len(self.trips_df))
+        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
+                             (len(self.trips_df), "trips", "trips.txt", self.INPUT_TRIPS_FILE))
 
         self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE))
         # verify the required columns are present
@@ -198,7 +199,8 @@ class Trip:
 
         FastTripsLogger.debug("=========== VEHICLES ===========\n" + str(self.vehicles_df.head()))
         FastTripsLogger.debug("\n"+str(self.vehicles_df.index.dtype)+"\n"+str(self.vehicles_df.dtypes))
-        FastTripsLogger.info("Read %7d vehicles" % len(self.vehicles_df))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.vehicles_df), "vehicles", self.INPUT_VEHICLES_FILE))
 
         service_dicts = []
         for gtfs_service in gtfs_schedule.GetServicePeriodList():
@@ -225,7 +227,8 @@ class Trip:
 
         FastTripsLogger.debug("=========== SERVICE PERIODS ===========\n" + str(self.service_df.head()))
         FastTripsLogger.debug("\n"+str(self.service_df.index.dtype)+"\n"+str(self.service_df.dtypes))
-        FastTripsLogger.info("Read %7d service periods" % len(self.service_df))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.service_df), "service periods", "calendar.txt"))
 
         self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
 
@@ -271,6 +274,8 @@ class Trip:
         self.stop_times_df.set_index([Trip.STOPTIMES_COLUMN_TRIP_ID,
                                      Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True, verify_integrity=True)
         FastTripsLogger.debug("Final\n" + str(self.stop_times_df.head()) + "\n" +str(self.stop_times_df.dtypes) )
+        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
+                             (len(self.stop_times_df), "stop times", "stop_times.txt", Trip.INPUT_STOPTIMES_FILE))
 
         # tell the stops to update accordingly
         # stops.add_trips(self.stop_times_df)

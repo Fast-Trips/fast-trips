@@ -128,7 +128,8 @@ class TAZ:
             self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
         FastTripsLogger.debug("Final\n"+str(self.walk_access_df.dtypes))
-        FastTripsLogger.info("Read %7d walk access links" % len(self.walk_access_df))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.walk_access_df), "walk access", TAZ.INPUT_WALK_ACCESS_FILE))
 
         #: Drive access links table
         self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE))
@@ -178,4 +179,5 @@ class TAZ:
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
 
         FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
-        FastTripsLogger.info("Read %7d drive access links" % len(self.drive_access_df))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))

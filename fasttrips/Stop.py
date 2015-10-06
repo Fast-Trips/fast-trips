@@ -126,7 +126,8 @@ class Stop:
 
         FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
         FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
-        FastTripsLogger.info("Read %7d stops" % len(self.stops_df))
+        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
+                             (len(self.stops_df), "stops", "stops.txt", Stop.INPUT_STOPS_FILE))
 
         # Combine all gtfs Transfer objects to a single pandas DataFrame
         transfer_dicts = []
@@ -165,7 +166,8 @@ class Stop:
             self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
         FastTripsLogger.debug("Final\n"+str(self.transfers_df.dtypes))
-        FastTripsLogger.info("Read %7d transfers" % len(self.transfers_df))
+        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
+                             (len(self.transfers_df), "transfers", "transfers.txt", Stop.INPUT_TRANSFERS_FILE))
 
         #: Trips table.
         self.trip_times_df      = None

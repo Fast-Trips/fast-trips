@@ -25,6 +25,9 @@ class Route(object):
 
     Stores route information in :py:attr:`Route.routes_df` and agency information in
     :py:attr:`Route.agencies_df`. Each are instances of :py:class:`pandas.DataFrame`.
+
+    Fare information is in :py:attr:`Route.fare_attrs_df`, :py:attr:`Route.fare_rules_df` and
+    :py:attr:`Route.fare_transfer_rules_df`.
     """
 
     #: File with fasttrips routes information (this extends the
@@ -77,6 +80,18 @@ class Route(object):
     #: fasttrips Fare rules column name: End time for the fare rule. A DateTime.
     FARE_RULES_COLUMN_END_TIME              = "end_time"
 
+    #: File with fasttrips fare transfer rules information.
+    #: See `fare_transfer_rules specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules.md>`_.
+    INPUT_FARE_TRANSFER_RULES_FILE              = "fare_transfer_rules.txt"
+    #: fasttrips Fare transfer rules column name: From Fare Class
+    FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS  = "from_fare_class"
+    #: fasttrips Fare transfer rules column name: To Fare Class
+    FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS    = "to_fare_class"
+    #: fasttrips Fare transfer rules column name: Is flat fee?
+    FARE_TRANSFER_RULES_COLUMN_IS_FLAT_FEE      = "is_flat_fee"
+    #: fasttrips Fare transfer rules column name: Transfer Rule
+    FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE    = "transfer_rule"
+
     def __init__(self, input_dir, gtfs_schedule, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
@@ -110,7 +125,8 @@ class Route(object):
 
         FastTripsLogger.debug("=========== ROUTES ===========\n" + str(self.routes_df.head()))
         FastTripsLogger.debug("\n"+str(self.routes_df.dtypes))
-        FastTripsLogger.info("Read %7d routes" % len(self.routes_df))
+        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
+                             (len(self.routes_df), "routes", "routes.txt", Route.INPUT_ROUTES_FILE))
 
 
         agency_dicts = []
@@ -124,7 +140,8 @@ class Route(object):
 
         FastTripsLogger.debug("=========== AGENCIES ===========\n" + str(self.agencies_df.head()))
         FastTripsLogger.debug("\n"+str(self.agencies_df.dtypes))
-        FastTripsLogger.info("Read %7d agencies" % len(self.agencies_df))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.agencies_df), "agencies", "agency.txt"))
 
         fare_attr_dicts = []
         fare_rule_dicts = []
@@ -146,7 +163,8 @@ class Route(object):
 
         FastTripsLogger.debug("=========== FARE ATTRIBUTES ===========\n" + str(self.fare_attrs_df.head()))
         FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
-        FastTripsLogger.info("Read %7d fare attributes" % len(self.fare_attrs_df))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.fare_attrs_df), "fare attributes", "fare_attributes.txt"))
 
         # subsitute fasttrips fare attributes
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE)):
@@ -161,7 +179,8 @@ class Route(object):
 
             FastTripsLogger.debug("===> REPLACED BY FARE ATTRIBUTES FT\n" + str(self.fare_attrs_df.head()))
             FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
-            FastTripsLogger.info("Read %7d fare attributes (ft)" % len(self.fare_attrs_df))
+            FastTripsLogger.info("Read %7d %15s from %25s" %
+                                 (len(self.fare_attrs_df), "fare attributes", Route.INPUT_FARE_ATTRIBUTES_FILE))
 
             #: fares are by fare_class rather than by fare_id
             self.fare_by_class = True
@@ -208,4 +227,21 @@ class Route(object):
 
         FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head()))
         FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
-        FastTripsLogger.info("Read %7d fare rules" % len(self.fare_rules_df))
+        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
+                             (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_RULES_FILE))
+
+        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE)):
+            self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE))
+            # verify required columns are present
+            fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS   in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_IS_FLAT_FEE     in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE   in fare_transfer_rules_cols)
+
+            FastTripsLogger.debug("=========== FARE TRANSFER RULES ===========\n" + str(self.fare_transfer_rules_df.head()))
+            FastTripsLogger.debug("\n"+str(self.fare_transfer_rules_df.dtypes))
+            FastTripsLogger.info("Read %7d %15s from %25s" %
+                                 (len(self.fare_transfer_rules_df), "fare xfer rules", Route.INPUT_FARE_TRANSFER_RULES_FILE))
+        else:
+            self.fare_transfer_rules_df = None
