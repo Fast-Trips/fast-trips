@@ -121,12 +121,10 @@ class FastTrips:
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(input_dir, Assignment.TODAY)
 
-        # todo: need demand file
-        return
-
         if read_demand:
+            FastTripsLogger.info("-------- Reading demand --------")
             # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger.read_demand(input_dir)
+            self.passengers = Passenger(input_dir)
         else:
             self.passengers = None
 
