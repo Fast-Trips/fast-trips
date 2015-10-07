@@ -119,7 +119,7 @@ class FastTrips:
         # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(input_dir, Assignment.TODAY)
+        self.tazs = TAZ(input_dir, Assignment.TODAY, self.stops)
 
         if read_demand:
             FastTripsLogger.info("-------- Reading demand --------")

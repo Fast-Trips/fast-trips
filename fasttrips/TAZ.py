@@ -16,6 +16,8 @@ import collections,datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
+from .Stop   import Stop
+from .Util   import Util
 
 class TAZ:
     """
@@ -31,9 +33,9 @@ class TAZ:
     #: See `walk_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/walk_access.md>`_.
     INPUT_WALK_ACCESS_FILE                  = "walk_access.txt"
 
-    #: Walk access links column name: TAZ Identifier
+    #: Walk access links column name: TAZ Identifier. String.
     WALK_ACCESS_COLUMN_TAZ                  = 'taz'
-    #: Walk access links column name: Stop Identifier
+    #: Walk access links column name: Stop Identifier. String.
     WALK_ACCESS_COLUMN_STOP                 = 'stop_id'
     #: Walk access links column name: Walk Distance
     WALK_ACCESS_COLUMN_DIST                 = 'dist'
@@ -49,6 +51,12 @@ class TAZ:
     #: fasttrips Walk access links column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.
     WALK_ACCESS_COLUMN_INDIRECTNESS         = 'indirectness'
 
+    # ========== Added by fasttrips =======================================================
+    #: Walk access links column name: TAZ Numerical Identifier. Int.
+    WALK_ACCESS_COLUMN_TAZ_NUM              = 'taz_num'
+    #: Walk access links column name: Stop Numerical Identifier. Int.
+    WALK_ACCESS_COLUMN_STOP_NUM             = 'stop_id_num'
+
     #: Walk access links column name: Link walk time.  This is a TimeDelta
     WALK_ACCESS_COLUMN_TIME                 = 'time'
     #: Walk access links column name: Link walk time in minutes.  This is float.
@@ -63,9 +71,9 @@ class TAZ:
     #: See `drive_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access.md>`_.
     INPUT_DRIVE_ACCESS_FILE                  = "drive_access.txt"
 
-    #: Drive access links column name: TAZ Identifier
-    DRIVE_ACCESS_COLUMN_TAZ                  = 'taz'
-    #: Drive access links column name: Stop Identifier
+    #: Drive access links column name: TAZ Identifier. String.
+    DRIVE_ACCESS_COLUMN_TAZ                  = WALK_ACCESS_COLUMN_TAZ
+    #: Drive access links column name: Stop Identifier. String.
     DRIVE_ACCESS_COLUMN_LOT_ID               = 'lot_id'
     #: Drive access links column name: Direction (Access or Egress)
     DRIVE_ACCESS_COLUMN_DIRECTION            = 'direction'
@@ -101,17 +109,20 @@ class TAZ:
     #: fasttrips Drive access links column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.
     DRIVE_ACCESS_COLUMN_INDIRECTNESS         = 'indirectness'
 
+    # ========== Added by fasttrips =======================================================
+    #: fasttrips Drive access links column name: TAZ Numerical Identifier. Int.
+    DRIVE_ACCESS_COLUMN_TAZ_NUM              = WALK_ACCESS_COLUMN_TAZ_NUM
 
     #: File with fasttrips Park and Ride information.
     #: See `pnr specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/pnr.md>`_.
     INPUT_PNR_FILE                           = 'pnr.txt'
-    #: fasttrips PNR column name: Lot ID
+    #: fasttrips PNR column name: Lot ID. String.
     PNR_COLUMN_LOT_ID                        = 'lot_id'
     #: fasttrips PNR column name: Lot Latitude (WGS 84)
     PNR_COLUMN_LOT_LATITUDE                  = 'lot_lat'
     #: fasttrips PNR column name: Lot Longitude (WGS 84)
     PNR_COLUMN_LOT_LONGITUDE                 = 'lot_long'
-    #: fasttrips PNR column name: Name of the Lot
+    #: fasttrips PNR column name: Name of the Lot. String.
     PNR_COLUMN_NAME                          = 'name'
     #: fasttrips PNR column name: Capacity (number of parking spaces)
     PNR_COLUMN_CAPACITY                      = 'capacity'
@@ -124,12 +135,14 @@ class TAZ:
     #: fasttrips PNR column name: Type
     PNR_COLUMN_TYPE                          = 'type'
 
-    def __init__(self, input_dir, today):
+    def __init__(self, input_dir, today, stops):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
-        #: Walk access links table
-        self.walk_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_WALK_ACCESS_FILE))
+        #: Walk access links table. Make sure TAZ ID and stop ID are read as strings.
+        self.walk_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_WALK_ACCESS_FILE),
+                                              dtype={TAZ.WALK_ACCESS_COLUMN_TAZ :object,
+                                                     TAZ.WALK_ACCESS_COLUMN_STOP:object})
         # verify required columns are present
         walk_access_cols = list(self.walk_access_df.columns.values)
         assert(TAZ.WALK_ACCESS_COLUMN_TAZ      in walk_access_cols)
@@ -140,8 +153,9 @@ class TAZ:
         FastTripsLogger.debug("=========== WALK ACCESS ===========\n" + str(self.walk_access_df.head()))
         FastTripsLogger.debug("As read\n"+str(self.walk_access_df.dtypes))
 
-        self.walk_access_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ,
-                                       TAZ.WALK_ACCESS_COLUMN_STOP], inplace=True, verify_integrity=True)
+        # skipping index setting for now -- it's annoying for joins
+        # self.walk_access_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ,
+        #                                TAZ.WALK_ACCESS_COLUMN_STOP], inplace=True, verify_integrity=True)
 
         # TODO: remove?
         self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0;
@@ -153,8 +167,10 @@ class TAZ:
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.walk_access_df), "walk access", TAZ.INPUT_WALK_ACCESS_FILE))
 
-        #: Drive access links table
-        self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE))
+        #: Drive access links table. Make sure TAZ ID and lot ID are read as strings.
+        self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE),
+                                               dtype={TAZ.DRIVE_ACCESS_COLUMN_TAZ   :object,
+                                                      TAZ.DRIVE_ACCESS_COLUMN_LOT_ID:object})
         # verify required columns are present
         drive_access_cols = list(self.drive_access_df.columns.values)
         assert(TAZ.DRIVE_ACCESS_COLUMN_TAZ              in drive_access_cols)
@@ -170,9 +186,10 @@ class TAZ:
         FastTripsLogger.debug("=========== DRIVE ACCESS ===========\n" + str(self.drive_access_df.head()))
         FastTripsLogger.debug("As read\n"+str(self.drive_access_df.dtypes))
 
-        self.drive_access_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ,
-                                        TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
-                                        TAZ.DRIVE_ACCESS_COLUMN_DIRECTION], inplace=True, verify_integrity=True)
+        # skipping index setting for now -- it's annoying for joins
+        # self.drive_access_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ,
+        #                                 TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
+        #                                 TAZ.DRIVE_ACCESS_COLUMN_DIRECTION], inplace=True, verify_integrity=True)
 
         self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME]
 
@@ -204,8 +221,26 @@ class TAZ:
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
 
+        # TAZ IDs are strings.  Create a unique numeric TAZ id.
+        self.taz_id_df = Util.add_numeric_column(pandas.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
+                                                                self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
+                                                 id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
+                                                 numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
+        FastTripsLogger.debug("TAZ ID to number correspondence\n" + str(self.taz_id_df.head()))
+        # Add it back to walk and drive access tables
+        self.walk_access_df  = pandas.merge(left=self.walk_access_df,  right=self.taz_id_df, how='left')
+        self.drive_access_df = pandas.merge(left=self.drive_access_df, right=self.taz_id_df, how='left')
+
+        # Add numeric stop ID to walk access links
+        self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
+                                                         id_colname=TAZ.WALK_ACCESS_COLUMN_STOP,
+                                                         numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_STOP_NUM)
+        print self.walk_access_df
+
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_PNR_FILE)):
-            self.pnr_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_PNR_FILE))
+            #: PNR table. Make sure TAZ ID and lot ID are read as strings.
+            self.pnr_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_PNR_FILE),
+                                          dtype={TAZ.PNR_COLUMN_LOT_ID:object})
             # verify required columns are present
             pnr_cols = list(self.pnr_df.columns.values)
             assert(TAZ.PNR_COLUMN_LOT_ID            in pnr_cols)

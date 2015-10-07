@@ -93,7 +93,7 @@ class Assignment:
     #: Set to 1 to run everything in this process
     #: Set to less than 1 to use the result of :py:func:`multiprocessing.cpu_count`
     #: Set to positive integer greater than 1 to set a fixed number of processes
-    NUMBER_OF_PROCESSES             = 14
+    NUMBER_OF_PROCESSES             = 1
 
     #: Extra time so passengers don't get bumped (?)
     BUMP_BUFFER                     = datetime.timedelta(minutes = 5)
@@ -172,13 +172,15 @@ class Assignment:
         """
         FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
         # make a copy to convert the 2-column MultiIndex to a 2D array easily
-        access_links_df = FT.tazs.access_links_df.reset_index()
+        walk_access_df = FT.tazs.walk_access_df.reset_index()
         # create access and egress cost
-        access_links_df[TAZ.ACCLINKS_COLUMN_ACC_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
-        access_links_df[TAZ.ACCLINKS_COLUMN_EGR_COST] = access_links_df[TAZ.ACCLINKS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
+        # todo: fix
+        walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0
+        walk_access_df[TAZ.WALK_ACCESS_COLUMN_ACC_COST] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
+        walk_access_df[TAZ.WALK_ACCESS_COLUMN_EGR_COST] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
 
-        FastTripsLogger.debug("\n" + str(access_links_df.head()))
-        FastTripsLogger.debug("\n" + str(access_links_df.tail()))
+        FastTripsLogger.debug("\n" + str(walk_access_df.head()))
+        FastTripsLogger.debug("\n" + str(walk_access_df.tail()))
 
         # make a copy for index flattening
         stop_times_df = FT.trips.stop_times_df.reset_index()
@@ -188,11 +190,11 @@ class Assignment:
         transfers_df[Stop.TRANSFERS_COLUMN_COST] = transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
 
         _fasttrips.initialize_supply(output_dir, process_number,
-                                     access_links_df[[TAZ.ACCLINKS_COLUMN_TAZ,
-                                                      TAZ.ACCLINKS_COLUMN_STOP    ]].as_matrix().astype('int32'),
-                                     access_links_df[[TAZ.ACCLINKS_COLUMN_TIME_MIN,
-                                                      TAZ.ACCLINKS_COLUMN_ACC_COST,
-                                                      TAZ.ACCLINKS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
+                                     walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
+                                                     TAZ.WALK_ACCESS_COLUMN_STOP_NUM]].as_matrix().astype('int32'),
+                                     walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TIME_MIN,
+                                                     TAZ.WALK_ACCESS_COLUMN_ACC_COST,
+                                                     TAZ.WALK_ACCESS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                     Trip.STOPTIMES_COLUMN_SEQUENCE,
                                                     Trip.STOPTIMES_COLUMN_STOP_ID]].as_matrix().astype('int32'),
@@ -233,7 +235,7 @@ class Assignment:
                 (num_paths_found, passengers_df) = Assignment.read_assignment_results(output_dir, iteration)
 
             else:
-                num_paths_found = Assignment.generate_paths(FT, output_dir, iteration)
+                num_paths_found    = Assignment.generate_paths(FT, output_dir, iteration)
                 passengers_df      = Assignment.setup_passengers(FT, output_dir, iteration)
 
             veh_trips_df       = Assignment.setup_trips(FT)
@@ -279,7 +281,7 @@ class Assignment:
         todo_queue          = None
         done_queue          = None
 
-        est_paths_to_find   = len(FT.passengers)
+        est_paths_to_find   = len(FT.passengers.trip_list_df)
         if iteration > 1:
             est_paths_to_find = len(Assignment.bumped_path_ids) + len(Assignment.reassign_nonlast_paths)
 

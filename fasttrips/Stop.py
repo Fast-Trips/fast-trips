@@ -17,6 +17,7 @@ import pandas
 
 from .Logger import FastTripsLogger
 from .Trip import Trip
+from .Util import Util
 
 class Stop:
     """
@@ -34,13 +35,13 @@ class Stop:
     #: See `stops_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/stops_ft.md>`_.
     INPUT_STOPS_FILE                        = "stops_ft.txt"
     #: gtfs Stops column name: Unique identifier (object)
-    STOPS_COLUMN_ID                         = 'stop_id'
+    STOPS_COLUMN_STOP_ID                    = 'stop_id'
     #: gtfs Stops column name: Stop name (string)
-    STOPS_COLUMN_NAME                       = 'stop_name'
+    STOPS_COLUMN_STOP_NAME                  = 'stop_name'
     #: gtfs Stops column name: Latitude
-    STOPS_COLUMN_LATITUDE                   = 'stop_lat'
+    STOPS_COLUMN_STOP_LATITUDE              = 'stop_lat'
     #: gtfs Stops column name: Longitude
-    STOPS_COLUMN_LONGITUDE                  = 'stop_lon'
+    STOPS_COLUMN_STOP_LONGITUDE             = 'stop_lon'
 
     #: fasttrips Stops column name: Shelter
     STOPS_COLUMN_SHELTER                    = 'shelter'
@@ -58,6 +59,10 @@ class Stop:
     STOPS_COLUMN_LEVEL                      = 'level'
     #: fasttrips Stops column name: Off-Board Payment
     STOPS_COLUMN_OFF_BOARD_PAYMENT          = 'off_board_payment'
+
+    # ========== Added by fasttrips =======================================================
+    #: fasttrips Stops column name: Stop Numerical Identifier. Int.
+    STOPS_COLUMN_STOP_ID_NUM                = 'stop_id_num'
 
     #: File with fasttrips transfer information (this extends the
     #: `gtfs transfers <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers.md>`_ file).
@@ -110,19 +115,28 @@ class Stop:
             stop_dicts.append(stop_dict)
         self.stops_df = pandas.DataFrame(data=stop_dicts)
 
-        # Read the fast-trips supplemental stops data file
-        stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE))
+        # Read the fast-trips supplemental stops data file. Make sure stop ID is read as a string.
+        stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE),
+                                      dtype={Stop.STOPS_COLUMN_STOP_ID:object})
         # verify required columns are present
         stops_ft_cols = list(stops_ft_df.columns.values)
-        assert(Stop.STOPS_COLUMN_ID             in stops_ft_cols)
+        assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
 
         # if more than one column, join to the stops dataframe
         if len(stops_ft_cols) > 1:
             self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
                                          how='left',
-                                         on=Stop.STOPS_COLUMN_ID)
+                                         on=Stop.STOPS_COLUMN_STOP_ID)
 
-        self.stops_df.set_index(Stop.STOPS_COLUMN_ID, inplace=True, verify_integrity=True)
+        # skipping index setting for now -- it's annoying for joins
+        # self.stops_df.set_index(Stop.STOPS_COLUMN_STOP_ID, inplace=True, verify_integrity=True)
+
+        # Stop IDs are strings. Create a unique numeric stop ID.
+        self.stop_id_df = Util.add_numeric_column(self.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
+                                                  id_colname=Stop.STOPS_COLUMN_STOP_ID,
+                                                  numeric_newcolname=Stop.STOPS_COLUMN_STOP_ID_NUM)
+        FastTripsLogger.debug("stop ID to number correspondence\n" + str(self.stop_id_df.head()))
+        self.stops_df = pandas.merge(left=self.stops_df, right=self.stop_id_df, how='left')
 
         FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
         FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
@@ -173,6 +187,21 @@ class Stop:
 
         #: Trips table.
         self.trip_times_df      = None
+
+    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
+        adds the numeric stop id as a column named *numeric_newcolname* and returns it.
+        """
+        # add the numeric stop id column
+        return_df = pandas.merge(left=input_df, right=self.stop_id_df,
+                                 how='left',
+                                 left_on=id_colname,
+                                 right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # rename it as requested
+        return_df.rename(columns={Stop.STOPS_COLUMN_STOP_ID_NUM:numeric_newcolname}, inplace=True)
+        return return_df
+
 
     def add_trips(self, stop_times_df):
         """
