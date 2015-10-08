@@ -45,12 +45,4 @@ if __name__ == "__main__":
     else:
         fasttrips.Assignment.CAPACITY_CONSTRAINT = True
 
-    sys.exit()
-    ft.run_assignment(os.path.join(OUTPUT_DIR, subdir))
-
-    # Original output files are in input_dir
-    for output_file in ["ft_output_passengerPaths.dat",
-                        "ft_output_passengerTimes.dat",
-                        "ft_output_loadProfile.dat"]:
-        compare_output.compare_file(os.path.join(OUTPUT_DIR, subdir),
-                                    os.path.join(INPUT_DIR,  subdir), output_file)
+    ft.run_assignment(full_output_dir)

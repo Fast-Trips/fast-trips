@@ -235,7 +235,10 @@ class TAZ:
         self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_STOP,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_STOP_NUM)
-        print self.walk_access_df
+
+        # add PNRs IDs to stop ID list
+        stops.add_pnrs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
+                                TAZ.DRIVE_ACCESS_COLUMN_LOT_ID)
 
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_PNR_FILE)):
             #: PNR table. Make sure TAZ ID and lot ID are read as strings.

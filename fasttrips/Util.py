@@ -30,6 +30,8 @@ class Util:
 
         Returns the dataframe with the new column.
         """
+        assert(len(input_df.columns) == 1)
+
         # drop duplicates - this is an ID and drop the index since it's not useful
         return_df = input_df.drop_duplicates().reset_index(drop=True)
         # create numerical version

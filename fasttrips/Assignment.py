@@ -195,13 +195,13 @@ class Assignment:
                                      walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TIME_MIN,
                                                      TAZ.WALK_ACCESS_COLUMN_ACC_COST,
                                                      TAZ.WALK_ACCESS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
-                                     stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                    Trip.STOPTIMES_COLUMN_SEQUENCE,
-                                                    Trip.STOPTIMES_COLUMN_STOP_ID]].as_matrix().astype('int32'),
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
                                                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
-                                     transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                                   Stop.TRANSFERS_COLUMN_TO_STOP]].as_matrix().astype('int32'),
+                                     transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                   Stop.TRANSFERS_COLUMN_TO_STOP_NUM]].as_matrix().astype('int32'),
                                      transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
                                                    Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'))
 
@@ -312,7 +312,10 @@ class Assignment:
             # process tasks or send tasks to workers for processing
             num_paths_found_prev  = 0
             num_paths_found_now   = 0
-            for path_id,passenger in FT.passengers.iteritems():
+            passenger_cols        = list(FT.passengers.trip_list_df.columns.values)
+            for passenger_tuple in FT.passengers.trip_list_df.itertuples(index=False):
+                print passenger_tuple
+                print dict(zip(passenger_cols, passenger_tuple))
                 passenger_id = passenger.passenger_id
 
                 if not passenger.path.goes_somewhere(): continue

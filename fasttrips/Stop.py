@@ -92,6 +92,12 @@ class Stop:
      #: fasttrips Transfers column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.
     TRANSFERS_COLUMN_INDIRECTNESS           = 'indirectness'
 
+    # ========== Added by fasttrips =======================================================
+    #: fasttrips Stops column name: Origin Stop Numerical Identifier. Int.
+    TRANSFERS_COLUMN_FROM_STOP_NUM          = 'from_stop_id_num'
+    #: fasttrips Stops column name: Destination Stop Numerical Identifier. Int.
+    TRANSFERS_COLUMN_TO_STOP_NUM            = 'to_stop_id_num'
+
     #: TODO: remove these?
     #: Transfers column name: Link walk time.  This is a TimeDelta.
     TRANSFERS_COLUMN_TIME       = 'time'
@@ -136,7 +142,15 @@ class Stop:
                                                   id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                                   numeric_newcolname=Stop.STOPS_COLUMN_STOP_ID_NUM)
         FastTripsLogger.debug("stop ID to number correspondence\n" + str(self.stop_id_df.head()))
-        self.stops_df = pandas.merge(left=self.stops_df, right=self.stop_id_df, how='left')
+        FastTripsLogger.debug(str(self.stop_id_df.dtypes))
+
+        #: Note the max stop ID num in :py:attr:`Stop.max_stop_id_num`.
+        self.max_stop_id_num = self.stop_id_df[Stop.STOPS_COLUMN_STOP_ID_NUM].max()
+        FastTripsLogger.debug("max stop ID number: %d" % self.max_stop_id_num)
+
+        self.stops_df = self.add_numeric_stop_id(self.stops_df,
+                                                 id_colname=Stop.STOPS_COLUMN_STOP_ID,
+                                                 numeric_newcolname=Stop.STOPS_COLUMN_STOP_ID_NUM)
 
         FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
         FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
@@ -181,12 +195,51 @@ class Stop:
         self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
             self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
-        FastTripsLogger.debug("Final\n"+str(self.transfers_df.dtypes))
+        FastTripsLogger.debug("Final\n"+str(self.transfers_df.head()))
+        FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
+
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.transfers_df), "transfers", "transfers.txt", Stop.INPUT_TRANSFERS_FILE))
 
         #: Trips table.
         self.trip_times_df      = None
+
+    def add_pnrs_to_stops(self, pnr_df, id_colname):
+        """
+        PNR lots are like stops.  Add the PNRs to our stop list and their numbering in the
+        :py:attr:`Stop.stop_id_df`.
+
+        Pass in a dataframe with JUST an ID column.
+
+        This method will also update the :py:attr:`Stop.transfers_df` with Stop IDs since this is
+        now possible since PNRs needed to be numbered for this to work.
+        """
+        assert(len(pnr_df.columns) == 1)
+
+        # make sure the PNR IDs are unique from Stop IDs
+        pnrs_unique_df  = pnr_df.drop_duplicates().reset_index(drop=True)
+        join_pnrs_stops = pandas.merge(left=pnrs_unique_df, right=self.stop_id_df,
+                                       how="left",
+                                       left_on=id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # there should be only NaNs since PNR lot IDs need to be unique from Stop IDs
+        assert(pandas.isnull(join_pnrs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_pnrs_stops))
+
+        # number them starting at self.max_stop_id_num
+        pnrs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = pnrs_unique_df.index + self.max_stop_id_num + 1
+
+        # rename pnr lot id to stop id
+        pnrs_unique_df.rename(columns={id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
+
+        # append to stop ids
+        self.stop_id_df = pandas.concat([self.stop_id_df, pnrs_unique_df], axis=0)
+
+        # Add the numeric stop ids to transfers
+        self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
+                                                     id_colname=Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                                     numeric_newcolname=Stop.TRANSFERS_COLUMN_FROM_STOP_NUM)
+        self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
+                                                     id_colname=Stop.TRANSFERS_COLUMN_TO_STOP,
+                                                     numeric_newcolname=Stop.TRANSFERS_COLUMN_TO_STOP_NUM)
 
     def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname):
         """
@@ -198,8 +251,18 @@ class Stop:
                                  how='left',
                                  left_on=id_colname,
                                  right_on=Stop.STOPS_COLUMN_STOP_ID)
-        # rename it as requested
-        return_df.rename(columns={Stop.STOPS_COLUMN_STOP_ID_NUM:numeric_newcolname}, inplace=True)
+
+        # make sure all stop ids were mapped to numbers
+        assert(pandas.isnull(return_df[Stop.STOPS_COLUMN_STOP_ID_NUM]).sum() == 0)
+
+        # remove the redundant stop id column if necessary
+        if id_colname != Stop.STOPS_COLUMN_STOP_ID:
+            return_df.drop(Stop.STOPS_COLUMN_STOP_ID, axis=1, inplace=True)
+
+        # rename it as requested (if necessary)
+        if numeric_newcolname != Stop.STOPS_COLUMN_STOP_ID_NUM:
+            return_df.rename(columns={Stop.STOPS_COLUMN_STOP_ID_NUM:numeric_newcolname}, inplace=True)
+
         return return_df
 
 

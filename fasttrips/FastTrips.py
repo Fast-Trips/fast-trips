@@ -111,7 +111,7 @@ class FastTrips:
         self.stops = Stop(input_dir, self.gtfs_schedule)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(input_dir, self.gtfs_schedule, Assignment.TODAY)
+        self.trips = Trip(input_dir, self.gtfs_schedule, Assignment.TODAY, self.stops)
 
         # transfer_stops = 0
         # for stop_id,stop in self.stops.iteritems():
