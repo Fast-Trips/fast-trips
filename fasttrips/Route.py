@@ -16,6 +16,7 @@ import datetime, os
 import pandas
 
 from .Logger import FastTripsLogger
+from .Util   import Util
 
 class Route(object):
     """
@@ -68,14 +69,10 @@ class Route(object):
     #: fasttrips Fare rules column name: Fare ID
     FARE_RULES_COLUMN_FARE_CLASS            = "fare_class"
     #: fasttrips Fare rules column name: Start time for the fare. 'HH:MM:SS' string
-    FARE_RULES_COLUMN_START_TIME_STR        = "start_time_str"
-    #: fasttrips Fare rules column name: Start time for the fare. Minutes after midnight
     FARE_RULES_COLUMN_START_TIME_MIN        = "start_time_min"
     #: fasttrips Fare rules column name: Start time for the fare. A DateTime
     FARE_RULES_COLUMN_START_TIME            = "start_time"
     #: fasttrips Fare rules column name: End time for the fare rule. 'HH:MM:SS' string
-    FARE_RULES_COLUMN_END_TIME_STR          = "end_time_str"
-    #: fasttrips Fare rules column name: End time for the fare rule. Minutes after midnight
     FARE_RULES_COLUMN_END_TIME_MIN          = "end_time_min"
     #: fasttrips Fare rules column name: End time for the fare rule. A DateTime.
     FARE_RULES_COLUMN_END_TIME              = "end_time"
@@ -199,16 +196,12 @@ class Route(object):
             assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
 
-            # string version - we already have
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_STR] = fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME]
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME_STR  ] = fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME]
-
             # datetime version
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_STR].map(lambda x: \
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: \
                     datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME_STR].map(lambda x: \
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: \
                     datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
 
             # float version
@@ -225,7 +218,9 @@ class Route(object):
                                               on=Route.FARE_RULES_COLUMN_FARE_ID)
 
 
-        FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head()))
+        FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head().to_string(formatters=\
+                              {Route.FARE_RULES_COLUMN_START_TIME:Util.datetime64_formatter,
+                               Route.FARE_RULES_COLUMN_END_TIME  :Util.datetime64_formatter})))
         FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_RULES_FILE))

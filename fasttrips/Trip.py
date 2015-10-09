@@ -42,6 +42,8 @@ class Trip:
     TRIPS_COLUMN_ROUTE_ID                   = 'route_id'
     #: gtfs Trips column name: Service unique identifier.
     TRIPS_COLUMN_SERVICE_ID                 = 'service_id'
+    #: gtfs Trip column name: Direction binary identifier.
+    TRIPS_COLUMN_DIRECTION_ID               = 'direction_id'
 
     #: fasttrips Trips column name: Vehicle Name
     TRIPS_COLUMN_VEHICLE_NAME               = 'vehicle_name'
@@ -54,7 +56,7 @@ class Trip:
     #: See `vehicles_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/vehicles_ft.md>`_.
     INPUT_VEHICLES_FILE                     = 'vehicles_ft.txt'
     #: fasttrips Vehicles column name: Vehicle name (identifier)
-    VEHICLES_COLUMN_VEHICLE_NAME            = 'vehicle_name'
+    VEHICLES_COLUMN_VEHICLE_NAME            = TRIPS_COLUMN_VEHICLE_NAME
     #: fasttrips Vehicles column name: Vehicle Description
     VEHICLES_COLUMN_VEHICLE_DESCRIPTION     = 'vehicle_description'
     #: fasttrips Vehicles column name: Seated Capacity
@@ -98,14 +100,10 @@ class Trip:
     #: Starts at 1 and is sequential
     STOPTIMES_COLUMN_STOP_SEQUENCE          = 'stop_sequence'
 
-    #: gtfs Stop times column name: Arrival time string.  e.g. '07:23:05' or '14:08:30'.
-    STOPTIMES_COLUMN_ARRIVAL_TIME_STR       = 'arrival_time_str'
     #: Stop times column name: Arrival time.  This is a float, minutes after midnight.
     STOPTIMES_COLUMN_ARRIVAL_TIME_MIN       = 'arrival_time_min'
     #: gtfs Stop times column name: Arrival time.  This is a DateTime.
     STOPTIMES_COLUMN_ARRIVAL_TIME           = 'arrival_time'
-    #: Stop times column name: Departure time string. e.g. '07:23:05' or '14:08:30'.
-    STOPTIMES_COLUMN_DEPARTURE_TIME_STR     = 'departure_time_str'
     #: Stop times column name: Departure time. This is a float, minutes after midnight.
     STOPTIMES_COLUMN_DEPARTURE_TIME_MIN     = 'departure_time_min'
     #: gtfs Stop times column name: Departure time. This is a DateTime.
@@ -124,7 +122,7 @@ class Trip:
 
     # ========== Added by fasttrips =======================================================
     #: fasttrips Trips column name: Trip Numerical Identifier. Int.
-    STOPTIMES_COLUMN_TRIP_ID_NUM                = 'trip_id_num'
+    STOPTIMES_COLUMN_TRIP_ID_NUM                = TRIPS_COLUMN_TRIP_ID_NUM
     #: fasttrips Trips column name: Stop Numerical Identifier. Int.
     STOPTIMES_COLUMN_STOP_ID_NUM                = 'stop_id_num'
 
@@ -136,6 +134,17 @@ class Trip:
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
         """
+        # Read vehicles first
+        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE))
+        # verify the required columns are present
+        vehicle_ft_cols = list(self.vehicles_df.columns.values)
+        assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
+
+        FastTripsLogger.debug("=========== VEHICLES ===========\n" + str(self.vehicles_df.head()))
+        FastTripsLogger.debug("\n"+str(self.vehicles_df.index.dtype)+"\n"+str(self.vehicles_df.dtypes))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.vehicles_df), "vehicles", self.INPUT_VEHICLES_FILE))
+
         # Combine all gtfs Trip objects to a single pandas DataFrame
         trip_dicts      = []
         stop_time_dicts = []
@@ -206,20 +215,13 @@ class Trip:
         FastTripsLogger.debug("trip ID to number correspondence\n" + str(self.trip_id_df.head()))
         self.trips_df = pandas.merge(left=self.trips_df, right=self.trip_id_df, how='left')
 
+        # Merge vehicles
+        self.trips_df = pandas.merge(left=self.trips_df, right=self.vehicles_df, how='left')
+
         FastTripsLogger.debug("=========== TRIPS ===========\n" + str(self.trips_df.head()))
         FastTripsLogger.debug("\n"+str(self.trips_df.index.dtype)+"\n"+str(self.trips_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.trips_df), "trips", "trips.txt", self.INPUT_TRIPS_FILE))
-
-        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE))
-        # verify the required columns are present
-        vehicle_ft_cols = list(self.vehicles_df.columns.values)
-        assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
-
-        FastTripsLogger.debug("=========== VEHICLES ===========\n" + str(self.vehicles_df.head()))
-        FastTripsLogger.debug("\n"+str(self.vehicles_df.index.dtype)+"\n"+str(self.vehicles_df.dtypes))
-        FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.vehicles_df), "vehicles", self.INPUT_VEHICLES_FILE))
 
         service_dicts = []
         for gtfs_service in gtfs_schedule.GetServicePeriodList():
@@ -270,10 +272,6 @@ class Trip:
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(self.stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))
 
-        # string version - we already have
-        self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_STR]   = self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]
-        self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_STR] = self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]
-
         # datetime version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: \
@@ -302,8 +300,12 @@ class Trip:
                                                       id_colname=Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                       numeric_newcolname=Trip.STOPTIMES_COLUMN_TRIP_ID_NUM)
 
+        self.stop_times_df = Util.remove_null_columns(self.stop_times_df)
 
-        FastTripsLogger.debug("Final\n" + str(self.stop_times_df.head()) + "\n" +str(self.stop_times_df.dtypes) )
+        FastTripsLogger.debug("Final\n" + str(self.stop_times_df.head().to_string(formatters=\
+                              {Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Util.datetime64_formatter,
+                               Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Util.datetime64_formatter})) + \
+                              "\n" +str(self.stop_times_df.dtypes) )
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.stop_times_df), "stop times", "stop_times.txt", Trip.INPUT_STOPTIMES_FILE))
 
@@ -315,24 +317,10 @@ class Trip:
         Passing a :py:class:`pandas.DataFrame` with a trip ID column called *id_colname*,
         adds the numeric trip id as a column named *numeric_newcolname* and returns it.
         """
-        # add the numeric stop id column
-        return_df = pandas.merge(left=input_df, right=self.trip_id_df,
-                                 how='left',
-                                 left_on=id_colname,
-                                 right_on=Trip.TRIPS_COLUMN_TRIP_ID)
-
-        # make sure all stop ids were mapped to numbers
-        assert(pandas.isnull(return_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]).sum() == 0)
-
-        # remove the redundant trip id column if necessary
-        if id_colname != Trip.TRIPS_COLUMN_TRIP_ID:
-            return_df.drop(Trip.TRIPS_COLUMN_TRIP_ID, axis=1, inplace=True)
-
-        # rename it as requested (if necessary)
-        if numeric_newcolname != Trip.TRIPS_COLUMN_TRIP_ID_NUM:
-            return_df.rename(columns={Trip.TRIPS_COLUMN_TRIP_ID_NUM:numeric_newcolname}, inplace=True)
-
-        return return_df
+        return Util.add_numeric_id(input_df, id_colname, numeric_newcolname,
+                                   mapping_df=self.trip_id_df,
+                                   mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
+                                   mapping_numeric_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
 
     def get_stop_times(self, trip_id):
         """
@@ -368,7 +356,7 @@ class Trip:
         # no boards nor alights -> 0
         trips_df.loc[(trips_df.boards==0)&(trips_df.alights==0), 'dwell_time'] = 0
         # tram, streetcar, light rail -> 30 --- this seems arbitrary
-        trips_df.loc[trips_df.service_type==0, 'dwell_time']                   = 30
+        # trips_df.loc[trips_df.service_type==0, 'dwell_time']                   = 30
 
         # drop our intermediate columns
         trips_df.drop(['boardsx4','alightsx2'], axis=1, inplace=True)
@@ -387,20 +375,34 @@ class Trip:
 
         Returns :py:class:`pandas.DataFrame` with `headway` column added.
         """
-        stop_group = trips_df[['stop_id','routeId','direction','depart_time','trip_id','stop_seq']].groupby(['stop_id','routeId','direction'])
+        # what if direction_id isn't specified
+        stop_group = trips_df[[Trip.STOPTIMES_COLUMN_STOP_ID,
+                               Trip.TRIPS_COLUMN_ROUTE_ID,
+                               Trip.TRIPS_COLUMN_DIRECTION_ID,
+                               Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+                               Trip.STOPTIMES_COLUMN_TRIP_ID,
+                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]].groupby([Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                                             Trip.TRIPS_COLUMN_ROUTE_ID,
+                                                                             Trip.TRIPS_COLUMN_DIRECTION_ID])
 
-        stop_group_df = stop_group.apply(lambda x: x.sort('depart_time'))
+        stop_group_df = stop_group.apply(lambda x: x.sort(Trip.STOPTIMES_COLUMN_DEPARTURE_TIME))
         # set headway, in minutes
         stop_group_shift_df = stop_group_df.shift()
-        stop_group_df['headway'] = (stop_group_df['depart_time'] - stop_group_shift_df['depart_time'])/numpy.timedelta64(1,'m')
+        stop_group_df['headway'] = (stop_group_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - stop_group_shift_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME])/numpy.timedelta64(1,'m')
         # zero out the first in each group
-        stop_group_df.loc[(stop_group_df.stop_id  !=stop_group_shift_df.stop_id  )|
-                          (stop_group_df.routeId  !=stop_group_shift_df.routeId  )|
-                          (stop_group_df.direction!=stop_group_shift_df.direction), 'headway'] = Trip.DEFAULT_HEADWAY
+        stop_group_df.loc[(stop_group_df.stop_id     !=stop_group_shift_df.stop_id     )|
+                          (stop_group_df.route_id    !=stop_group_shift_df.route_id    )|
+                          (stop_group_df.direction_id!=stop_group_shift_df.direction_id), 'headway'] = Trip.DEFAULT_HEADWAY
         # print stop_group_df
 
         trips_df_len = len(trips_df)
-        trips_df = pandas.merge(left=trips_df, right=stop_group_df[['trip_id','stop_id','stop_seq','headway']],
-                                on=['trip_id','stop_id','stop_seq'])
+        trips_df = pandas.merge(left  = trips_df,
+                                right = stop_group_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                       Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                       'headway']],
+                                on    = [Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                         Trip.STOPTIMES_COLUMN_STOP_ID,
+                                         Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])
         assert(len(trips_df)==trips_df_len)
         return trips_df

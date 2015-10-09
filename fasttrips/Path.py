@@ -15,7 +15,8 @@ __license__   = """
 import collections,datetime,string
 import numpy,pandas
 
-from .Logger import FastTripsLogger
+from .Logger    import FastTripsLogger
+from .Passenger import Passenger
 
 class Path:
     """
@@ -71,42 +72,24 @@ class Path:
 
     BUMP_EXPERIENCED_COST = 999999
 
-    PATH_ID_COUNTER = 0
-
-    def __init__(self, passenger_record):
+    def __init__(self, trip_list_dict):
         """
         Constructor from dictionary mapping attribute to value.
         """
-        #: path id - unique for this passenger/path
-        self.path_id            = Path.PATH_ID_COUNTER
-        Path.PATH_ID_COUNTER    += 1 # increment it
+        self.__dict__.update(trip_list_dict)
 
-        #: identifier for origin TAZ
-        self.origin_taz_id      = passenger_record['OrigTAZ'    ]
-
-        #: identifier for destination TAZ
-        self.destination_taz_id = passenger_record['DestTAZ'    ]
-
-        #: *Note*: This isn't used for anything, but it gets passed straight through to output.
-        self.mode               = passenger_record['mode'       ]
-
-        #: Demand time period (e.g. AM, PM, OP)
-        #: *Note*: Currently this is not used for anything.
-        self.time_period        = passenger_record['timePeriod' ]
-
-        #: Should be one of :py:attr:`Path.DIR_OUTBOUND` or
-        #: :py:attr:`Path.DIR_INBOUND`
-        self.direction          = passenger_record['direction'  ]
-        assert(self.direction in [Path.DIR_OUTBOUND, Path.DIR_INBOUND])
-
-        #: Preferred arrival time if
-        #: :py:attr:`Path.direction` == :py:attr:`Path.DIR_OUTBOUND` or
-        #: preferred departure time if
-        #: :py:attr:`Path.direction` == :py:attr:`Path.DIR_INBOUND`
-        #: This is an instance of :py:class:`datetime.time`
-        self.pref_time_min      = passenger_record['PAT'        ]
-        self.preferred_time     = datetime.time(hour = int(self.pref_time_min/60.0),
-                                                minute = self.pref_time_min % 60)
+        #: Direction is one of :py:attr:`Path.DIR_OUTBOUND` or :py:attr:`Path.DIR_INBOUND`
+        #: Preferred time is a datetime.time object
+        if trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "arrival":
+            self.direction     = Path.DIR_OUTBOUND
+            self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].to_datetime().time()
+            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN]
+        elif trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "departure":
+            self.direction     = Path.DIR_INBOUND
+            self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].to_datetime().time()
+            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN]
+        else:
+            raise Exception("Don't understand trip_list %s: %s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(trip_list_dict)))
 
         #: This will include the stops and their related states
         #: Ordered dictionary: origin_taz_id -> state,
@@ -122,7 +105,7 @@ class Path:
         """
         Does this path go somewhere?  Does the destination differ from the origin?
         """
-        return (self.origin_taz_id != self.destination_taz_id)
+        return (self.__dict__[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID] != self.__dict__[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID])
 
     def path_found(self):
         """
@@ -184,7 +167,11 @@ class Path:
 
         Note: If inbound trip, then the states are in reverse order (egress to access)
         """
-        return Path.states_to_str(self.states, self.direction)
+        ret_str = "Dict vars:\n"
+        for k,v in self.__dict__.iteritems():
+            ret_str += "%30s => %-30s   %s\n" % (str(k), str(v), str(type(v)))
+        ret_str += Path.states_to_str(self.states, self.direction)
+        return ret_str
 
     @staticmethod
     def states_to_str(states, direction=DIR_OUTBOUND):
@@ -212,9 +199,9 @@ class Path:
         passenger_trips = passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP].copy()
         # convert to strings for appending
         passenger_trips['board_stop_str' ] = passenger_trips.A_id.apply(lambda x:'s%d' % x)
-        passenger_trips['board_trip_str' ] = passenger_trips.trip_id.apply(lambda x:'t%d' % x)
+        passenger_trips['board_trip_str' ] = passenger_trips.trip_id_num.apply(lambda x:'t%d' % x)
         passenger_trips['alight_stop_str'] = passenger_trips.B_id.apply(lambda x:'s%d' % x)
-        ptrip_group     = passenger_trips.groupby(['passenger_id','path_id'])
+        ptrip_group     = passenger_trips.groupby(['person_id','trip_list_id_num'])
         # these are Series
         board_stops_str = ptrip_group.board_stop_str.apply(lambda x:','.join(x))
         board_trips_str = ptrip_group.board_trip_str.apply(lambda x:','.join(x))
@@ -225,11 +212,11 @@ class Path:
                                        (passengers_df.linkmode==Path.STATE_MODE_TRANSFER)| \
                                        (passengers_df.linkmode==Path.STATE_MODE_EGRESS  )].copy()
         walk_links['linktime_str'] = walk_links.linktime.apply(lambda x: "%.2f" % (x/numpy.timedelta64(1,'m')))
-        walklink_group = walk_links[['passenger_id','path_id','linktime_str']].groupby(['passenger_id','path_id'])
+        walklink_group = walk_links[['person_id','trip_list_id_num','linktime_str']].groupby(['person_id','trip_list_id_num'])
         walktimes_str  = walklink_group.linktime_str.apply(lambda x:','.join(x))
 
-        # aggregate to one line per passenger_id, path_id
-        print_passengers_df = passengers_df[['passenger_id','path_id','pathmode','A_id','B_id','A_time']].groupby(['passenger_id','path_id']).agg(
+        # aggregate to one line per person_id, trip_list_id
+        print_passengers_df = passengers_df[['person_id','trip_list_id_num','pathmode','A_id','B_id','A_time']].groupby(['person_id','trip_list_id_num']).agg(
            {'pathmode'      :'first',   # path mode
             'A_id'          :'first',   # origin
             'B_id'          :'last',    # destination
@@ -245,8 +232,7 @@ class Path:
 
         print_passengers_df.reset_index(inplace=True)
         print_passengers_df.rename(columns=
-           {'passenger_id'      :'passengerId',
-            'pathmode'          :'mode',
+           {'pathmode'          :'mode',
             'A_id'              :'originTaz',
             'B_id'              :'destinationTaz',
             'A_time'            :'startTime_time',
@@ -261,7 +247,7 @@ class Path:
                          pandas.to_datetime(x).minute + \
                          pandas.to_datetime(x).second/60.0))
 
-        print_passengers_df = print_passengers_df[['passengerId','mode','originTaz','destinationTaz','startTime',
+        print_passengers_df = print_passengers_df[['person_id','mode','originTaz','destinationTaz','startTime',
                                                    'boardingStops','boardingTrips','alightingStops','walkingTimes']]
 
         print_passengers_df.to_csv(paths_out, sep="\t", index=False)

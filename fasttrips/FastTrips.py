@@ -35,7 +35,8 @@ class FastTrips:
     #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    def __init__(self, input_dir, output_dir, read_demand=True, log_to_console=True, logname_append="", appendLog=False):
+    def __init__(self, input_dir, output_dir, validate_gtfs=True, read_demand=True,
+                 log_to_console=True, logname_append="", appendLog=False):
         """
         Constructor.
 
@@ -46,6 +47,8 @@ class FastTrips:
         :type input_dir:       string
         :param output_dir:     Location to write output and log files.
         :type output_dir:      string
+        :param validate_gtfs:  Validate the gtfs schedule?
+        :type validate_gtfs:   bool
         :param read_demand:    Read passenger demand?  For parallelization, workers don't need to
                                read demand since the main process will tell them what to do.
         :type read_demand:     bool
@@ -86,9 +89,9 @@ class FastTrips:
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
                      logToConsole=log_to_console, append=appendLog)
 
-        self.read_input_files(input_dir, read_demand)
+        self.read_input_files(input_dir, validate_gtfs, read_demand)
 
-    def read_input_files(self, input_dir, read_demand):
+    def read_input_files(self, input_dir, validate_gtfs, read_demand):
         """
         Reads in the input files files from *input_dir* and initializes the relevant data structures.
         """
@@ -97,9 +100,10 @@ class FastTrips:
         loader             = transitfeed.Loader(input_dir)
         self.gtfs_schedule = loader.Load()
 
-        # Validate the GTFS
-        FastTripsLogger.info("Validating GTFS schedule")
-        self.gtfs_schedule.Validate()
+        if validate_gtfs:
+            # Validate the GTFS
+            FastTripsLogger.info("Validating GTFS schedule")
+            self.gtfs_schedule.Validate()
 
         # Required: Trips, Routes, Stops, Stop Times, Agency, Calendar
         # Optional: Transfers, Shapes, Calendar Dates...
@@ -124,7 +128,7 @@ class FastTrips:
         if read_demand:
             FastTripsLogger.info("-------- Reading demand --------")
             # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger(input_dir)
+            self.passengers = Passenger(input_dir, Assignment.TODAY, self.tazs)
         else:
             self.passengers = None
 

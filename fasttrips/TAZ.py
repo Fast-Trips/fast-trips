@@ -85,14 +85,10 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN      = 'travel_time_min'
     #: Drive access links column name: Driving time in minutes between TAZ and lot (TimeDelta)
     DRIVE_ACCESS_COLUMN_TRAVEL_TIME          = 'travel_time'
-    #: Drive access links column name: Start time (open time for lot?) 'HH:MM:SS' string
-    DRIVE_ACCESS_COLUMN_START_TIME_STR       = 'start_time_str'
     #: Drive access links column name: Start time (open time for lot?), minutes after midnight
     DRIVE_ACCESS_COLUMN_START_TIME_MIN       = 'start_time_min'
     #: Drive access links column name: Start time (open time for lot?). A DateTime instance
     DRIVE_ACCESS_COLUMN_START_TIME           = 'start_time'
-    #: Drive access links column name: End time (open time for lot?) 'HH:MM:SS' string
-    DRIVE_ACCESS_COLUMN_END_TIME_STR         = 'end_time_str'
     #: Drive access links column name: End time (open time for lot?), minutes after midnight
     DRIVE_ACCESS_COLUMN_END_TIME_MIN         = 'end_time_min'
     #: Drive access links column name: End time (open time for lot?). A DateTime instance
@@ -193,16 +189,12 @@ class TAZ:
 
         self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME]
 
-        # string version - we already have
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_STR] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME]
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_STR  ] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME]
-
         # datetime version
         self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_STR].map(lambda x: \
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
                 datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
         self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_STR].map(lambda x: \
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
                 datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
 
         # float version
@@ -257,3 +249,13 @@ class TAZ:
         FastTripsLogger.debug("\n"+str(self.pnr_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.pnr_df), "PNRs", TAZ.INPUT_PNR_FILE))
+
+    def add_numeric_TAZ_id(self, input_df, id_colname, numeric_newcolname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a TAZ ID column called *id_colname*,
+        adds the numeric TAZ id as a column named *numeric_newcolname* and returns it.
+        """
+        return Util.add_numeric_id(input_df, id_colname, numeric_newcolname,
+                                   mapping_df=self.taz_id_df,
+                                   mapping_id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
+                                   mapping_numeric_colname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
