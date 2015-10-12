@@ -217,6 +217,10 @@ namespace fasttrips {
         /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
         std::map<int, std::vector<TripStopTime> > stop_trip_times_;
 
+        // ================ ID numbers to ID strings ===============
+        std::map<int, std::string> trip_num_to_str_;
+        std::map<int, std::string> stop_num_to_str_;
+
         /**
          * From simulation: When there are capacity limitations on a vehicle and passengers cannot
          * board a vehicle, this is the time the bumped passengers arrive at a stop and wait for a

@@ -56,22 +56,36 @@ class Util:
         *mapping_df* is defines the mapping from an ID (*mapping_id_colname*) 
         to a numeric ID (*mapping_numeric_colname*).
         """
+        input_cols = list(input_df.columns.values)
         # add the numeric stop id column
         return_df = pandas.merge(left=input_df, right=mapping_df,
                                  how='left',
                                  left_on=id_colname,
-                                 right_on=mapping_id_colname)
+                                 right_on=mapping_id_colname,
+                                 suffixes=("","_mapping"))
+
+        # print "RETURN_DF=================="
+        # print return_df.head()
 
         # make sure all ids were mapped to numbers
         assert(pandas.isnull(return_df[mapping_numeric_colname]).sum() == 0)
 
         # remove the redundant id column if necessary (it's redundant)
         if id_colname != mapping_id_colname:
-            return_df.drop(mapping_id_colname, axis=1, inplace=True)
+            if mapping_id_colname in input_cols:
+                return_df.drop("%s_mapping" % mapping_id_colname, axis=1, inplace=True)
+            else:
+                return_df.drop(mapping_id_colname, axis=1, inplace=True)
 
         # rename it as requested (if necessary)
         if numeric_newcolname != mapping_numeric_colname:
-            return_df.rename(columns={mapping_numeric_colname:numeric_newcolname}, inplace=True)
+            if mapping_numeric_colname in input_cols:
+                return_df.rename(columns={"%s_mapping" % mapping_numeric_colname:numeric_newcolname}, inplace=True)
+            else:
+                return_df.rename(columns={mapping_numeric_colname:numeric_newcolname}, inplace=True)
+
+        # print "FINAL RETURN_DF=================="
+        # print return_df.head()
 
         return return_df
 

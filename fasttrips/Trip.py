@@ -78,6 +78,10 @@ class Trip:
     #: fasttrips Vehicles column name: Bicycle Capacity
     VEHICLES_COLUMN_BICYCLE_CAPACITY        = 'bicycle_capacity'
 
+    # ========== Added by fasttrips =======================================================
+    #: fasttrips Trips column name: Vehicle Total (Seated + Standing) Capacity
+    VEHICLES_COLUMN_TOTAL_CAPACITY          = 'capacity'
+
     #: fasttrips Service column name: Start Date string in 'YYYYMMDD' format
     SERVICE_COLUMN_START_DATE_STR           = 'start_date_str'
     #: fasttrips Service column name: Start Date as datetime.date
@@ -126,10 +130,13 @@ class Trip:
     #: fasttrips Trips column name: Stop Numerical Identifier. Int.
     STOPTIMES_COLUMN_STOP_ID_NUM                = 'stop_id_num'
 
+    #: File with trip ID, trip ID number correspondence
+    OUTPUT_TRIP_ID_NUM_FILE                     = 'ft_output_trip_id.txt'
+
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
 
-    def __init__(self, input_dir, gtfs_schedule, today, stops):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
@@ -139,6 +146,15 @@ class Trip:
         # verify the required columns are present
         vehicle_ft_cols = list(self.vehicles_df.columns.values)
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
+
+        if (Trip.VEHICLES_COLUMN_SEATED_CAPACITY   in vehicle_ft_cols and
+            Trip.VEHICLES_COLUMN_STANDING_CAPACITY in vehicle_ft_cols):
+            self.vehicles_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY] = \
+                self.vehicles_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY] + \
+                self.vehicles_df[Trip.VEHICLES_COLUMN_STANDING_CAPACITY]
+            self.capacity_configured = True
+        else:
+            self.capacity_configured = False
 
         FastTripsLogger.debug("=========== VEHICLES ===========\n" + str(self.vehicles_df.head()))
         FastTripsLogger.debug("\n"+str(self.vehicles_df.index.dtype)+"\n"+str(self.vehicles_df.dtypes))
@@ -212,7 +228,10 @@ class Trip:
         self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID]],
                                                   id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                                   numeric_newcolname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
-        FastTripsLogger.debug("trip ID to number correspondence\n" + str(self.trip_id_df.head()))
+        self.trip_id_df.to_csv(os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE),
+                               columns=[Trip.TRIPS_COLUMN_TRIP_ID_NUM, Trip.TRIPS_COLUMN_TRIP_ID],
+                               sep=" ", index=False)
+        FastTripsLogger.debug("Trip ID to number correspondence\n" + str(self.trip_id_df.head()))
         self.trips_df = pandas.merge(left=self.trips_df, right=self.trip_id_df, how='left')
 
         # Merge vehicles
@@ -309,8 +328,11 @@ class Trip:
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.stop_times_df), "stop times", "stop_times.txt", Trip.INPUT_STOPTIMES_FILE))
 
-        # tell the stops to update accordingly
-        # stops.add_trips(self.stop_times_df)
+    def has_capacity_configured(self):
+        """
+        Returns true if seated capacity and standing capacity are columns included in the vehicles input.
+        """
+        return self.capacity_configured
 
     def add_numeric_trip_id(self, input_df, id_colname, numeric_newcolname):
         """

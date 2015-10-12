@@ -106,11 +106,17 @@ class Stop:
     #: Transfers column name: Link generic cost.  Float.
     TRANSFERS_COLUMN_COST       = 'cost'
 
-    def __init__(self, input_dir, gtfs_schedule):
+    #: File with stop ID, stop ID number correspondence
+    OUTPUT_STOP_ID_NUM_FILE                   = 'ft_output_stop_id.txt'
+
+    def __init__(self, input_dir, output_dir, gtfs_schedule):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
         """
+        # keep this for later
+        self.output_dir = output_dir
+
         # Combine all gtfs Stop objects to a single pandas DataFrame
         stop_dicts = []
         for gtfs_stop in gtfs_schedule.GetStopList():
@@ -141,7 +147,7 @@ class Stop:
         self.stop_id_df = Util.add_numeric_column(self.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
                                                   id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                                   numeric_newcolname=Stop.STOPS_COLUMN_STOP_ID_NUM)
-        FastTripsLogger.debug("stop ID to number correspondence\n" + str(self.stop_id_df.head()))
+        FastTripsLogger.debug("Stop ID to number correspondence\n" + str(self.stop_id_df.head()))
         FastTripsLogger.debug(str(self.stop_id_df.dtypes))
 
         #: Note the max stop ID num in :py:attr:`Stop.max_stop_id_num`.
@@ -204,12 +210,12 @@ class Stop:
         #: Trips table.
         self.trip_times_df      = None
 
-    def add_pnrs_to_stops(self, pnr_df, id_colname):
+    def add_pnrs_tazs_to_stops(self, pnr_df, pnr_id_colname, taz_df, taz_id_colname):
         """
-        PNR lots are like stops.  Add the PNRs to our stop list and their numbering in the
+        PNR lots and TAZs are like stops.  Add the PNRs and TAZs to our stop list and their numbering in the
         :py:attr:`Stop.stop_id_df`.
 
-        Pass in a dataframe with JUST an ID column.
+        Pass in dataframes with JUST an ID column.
 
         This method will also update the :py:attr:`Stop.transfers_df` with Stop IDs since this is
         now possible since PNRs needed to be numbered for this to work.
@@ -220,7 +226,7 @@ class Stop:
         pnrs_unique_df  = pnr_df.drop_duplicates().reset_index(drop=True)
         join_pnrs_stops = pandas.merge(left=pnrs_unique_df, right=self.stop_id_df,
                                        how="left",
-                                       left_on=id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
+                                       left_on=pnr_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
         # there should be only NaNs since PNR lot IDs need to be unique from Stop IDs
         assert(pandas.isnull(join_pnrs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_pnrs_stops))
 
@@ -228,10 +234,33 @@ class Stop:
         pnrs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = pnrs_unique_df.index + self.max_stop_id_num + 1
 
         # rename pnr lot id to stop id
-        pnrs_unique_df.rename(columns={id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
+        pnrs_unique_df.rename(columns={pnr_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
 
-        # append to stop ids
+        # append pnrs to stop ids
         self.stop_id_df = pandas.concat([self.stop_id_df, pnrs_unique_df], axis=0)
+
+        self.max_pnr_id_num = self.stop_id_df[Stop.STOPS_COLUMN_STOP_ID_NUM].max()
+
+        ##############################################################################################
+        assert(len(taz_df.columns) == 1)
+
+        # make sure the TAZ IDs are unique from Stop IDs
+        tazs_unique_df  = taz_df.drop_duplicates().reset_index(drop=True)
+        join_tazs_stops = pandas.merge(left=tazs_unique_df,     right=self.stop_id_df,
+                                       how="left",
+                                       left_on=taz_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # there should be only NaNs since TAZ IDs need to be unique from Stop IDs
+        assert(pandas.isnull(join_tazs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_tazs_stops))
+
+        # number them starting at self.max_stop_id_num
+        tazs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = tazs_unique_df.index + self.max_pnr_id_num + 1
+
+        # rename TAZ id to stop id
+        tazs_unique_df.rename(columns={taz_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
+
+        # append pnrs to stop ids
+        self.stop_id_df = pandas.concat([self.stop_id_df, tazs_unique_df], axis=0)
+        ##############################################################################################
 
         # Add the numeric stop ids to transfers
         self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
@@ -240,6 +269,11 @@ class Stop:
         self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
                                                      id_colname=Stop.TRANSFERS_COLUMN_TO_STOP,
                                                      numeric_newcolname=Stop.TRANSFERS_COLUMN_TO_STOP_NUM)
+
+        # write the stop id numbering file
+        self.stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
+                               columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID],
+                               sep=" ", index=False)
 
     def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname):
         """

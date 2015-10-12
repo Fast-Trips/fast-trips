@@ -73,7 +73,7 @@ class Passenger:
     #: Trip list column: Departure Time. Float, minutes after midnight.
     TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN           = 'arrival_time_min'
 
-    def __init__(self, input_dir, today, tazs):
+    def __init__(self, input_dir, today, stops):
         """
         Constructor from dictionary mapping attribute to value.
         """
@@ -136,16 +136,15 @@ class Passenger:
                                          how='left',
                                          on=Passenger.PERSONS_COLUMN_HOUSEHOLD_ID)
 
-
-        self.trip_list_df = tazs.add_numeric_TAZ_id(self.trip_list_df,
+        # add TAZ numeric ids (stored in the stop mapping)
+        self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
             id_colname        =Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID,
             numeric_newcolname=Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM)
-        self.trip_list_df = tazs.add_numeric_TAZ_id(self.trip_list_df,
+        self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
             id_colname        =Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID,
             numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM)
 
-        print self.trip_list_df
-        print self.trip_list_df.dtypes
+        FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
 
         #: Maps trip list ID num to :py:class:`Path` instance
         self.id_to_path = collections.OrderedDict()
@@ -160,4 +159,5 @@ class Passenger:
         """
         Retrieves a stored path for the given trip_list_id
         """
+        # print self.id_to_path
         return self.id_to_path[trip_list_id]

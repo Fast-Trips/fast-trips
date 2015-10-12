@@ -213,24 +213,25 @@ class TAZ:
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
 
-        # TAZ IDs are strings.  Create a unique numeric TAZ id.
-        self.taz_id_df = Util.add_numeric_column(pandas.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
-                                                                self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
-                                                 id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
-                                                 numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
-        FastTripsLogger.debug("TAZ ID to number correspondence\n" + str(self.taz_id_df.head()))
-        # Add it back to walk and drive access tables
-        self.walk_access_df  = pandas.merge(left=self.walk_access_df,  right=self.taz_id_df, how='left')
-        self.drive_access_df = pandas.merge(left=self.drive_access_df, right=self.taz_id_df, how='left')
-
         # Add numeric stop ID to walk access links
         self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_STOP,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_STOP_NUM)
 
-        # add PNRs IDs to stop ID list
-        stops.add_pnrs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
-                                TAZ.DRIVE_ACCESS_COLUMN_LOT_ID)
+        # add PNRs IDs and TAZ IDs to stop ID list
+        stops.add_pnrs_tazs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
+                                     TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
+                                     pandas.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
+                                                    self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
+                                     TAZ.WALK_ACCESS_COLUMN_TAZ)
+
+        # Add TAZ stop ID to walk and drive access links
+        self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
+                                                         id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
+                                                         numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
+        self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
+                                                         id_colname=TAZ.DRIVE_ACCESS_COLUMN_TAZ,
+                                                         numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM)
 
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_PNR_FILE)):
             #: PNR table. Make sure TAZ ID and lot ID are read as strings.
@@ -250,12 +251,3 @@ class TAZ:
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.pnr_df), "PNRs", TAZ.INPUT_PNR_FILE))
 
-    def add_numeric_TAZ_id(self, input_df, id_colname, numeric_newcolname):
-        """
-        Passing a :py:class:`pandas.DataFrame` with a TAZ ID column called *id_colname*,
-        adds the numeric TAZ id as a column named *numeric_newcolname* and returns it.
-        """
-        return Util.add_numeric_id(input_df, id_colname, numeric_newcolname,
-                                   mapping_df=self.taz_id_df,
-                                   mapping_id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
-                                   mapping_numeric_colname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)

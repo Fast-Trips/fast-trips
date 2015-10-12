@@ -101,6 +101,40 @@ namespace fasttrips {
                        xfer_data[2*i], xfer_data[2*i+1]);
             }
         }
+
+        // stops and trips have been renumbered by fasttrips.  Read string IDs for printing to be less confusing.
+        std::string string_num_id, string_id;
+        int num_id;
+
+        // Trip num -> id
+        std::ifstream trip_id_file;
+        std::ostringstream ss_trip;
+        ss_trip << output_dir_ << kPathSeparator << "ft_output_trip_id.txt";
+        trip_id_file.open(ss_trip.str().c_str(), std::ios_base::in);
+        trip_id_file >> string_num_id >> string_id;
+        if (process_num <= 1) { printf("Reading %s: [%s] [%s]\n", ss_trip.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
+        while (trip_id_file >> num_id >> string_id) {
+            if (false && (process_num <= 1) && (num_id < 5)) {
+                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+            }
+            trip_num_to_str_[num_id] = string_id;
+        }
+        trip_id_file.close();
+
+        // Stop num -> id
+        std::ifstream stop_id_file;
+        std::ostringstream ss_stop;
+        ss_stop << output_dir_ << kPathSeparator << "ft_output_stop_id.txt";
+        stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
+        stop_id_file >> string_num_id >> string_id;
+        if (process_num <= 1) { printf("Reading %s: [%s] [%s]\n", ss_stop.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
+        while (stop_id_file >> num_id >> string_id) {
+            if (false && (process_num <= 1) && (num_id < 5)) {
+                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+            }
+            stop_num_to_str_[num_id] = string_id;
+        }
+        stop_id_file.close();
     }
 
     void PathFinder::setBumpWait(int*       bw_index,
@@ -1487,7 +1521,7 @@ namespace fasttrips {
 
     void PathFinder::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const
     {
-        ostr << std::setw( 8) << std::setfill(' ') << std::right << stop_id << ": ";
+        ostr << std::setw( 8) << std::setfill(' ') << std::right << stop_num_to_str_.find(stop_id)->second << ": ";
         if (path_spec.hyperpath_) {
             // label is a cost
             ostr << std::setw(13) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.label_;
@@ -1500,7 +1534,7 @@ namespace fasttrips {
         ostr << "  ";
         printMode(ostr, ss.deparr_mode_);
         ostr << "  ";
-        ostr << std::setw(10) << std::setfill(' ') << ss.stop_succpred_;
+        ostr << std::setw(10) << std::setfill(' ') << stop_num_to_str_.find(ss.stop_succpred_)->second;
         ostr << "  ";
         ostr << std::setw(3) << std::setfill(' ') << ss.seq_;
         ostr << "  ";
@@ -1563,7 +1597,8 @@ namespace fasttrips {
         } else if (mode == PathFinder::MODE_TRANSFER) {
             ostr << std::setw(10) << std::setfill(' ') << "Transfer";
         } else {
-            ostr << std::setw(10) << std::setfill(' ') << mode;
+            // trip
+            ostr << std::setw(10) << std::setfill(' ') << trip_num_to_str_.find(mode)->second;
         }
     }
 

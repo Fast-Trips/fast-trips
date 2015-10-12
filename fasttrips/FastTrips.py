@@ -89,15 +89,15 @@ class FastTrips:
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
                      logToConsole=log_to_console, append=appendLog)
 
-        self.read_input_files(input_dir, validate_gtfs, read_demand)
+        self.read_input_files(validate_gtfs, read_demand)
 
-    def read_input_files(self, input_dir, validate_gtfs, read_demand):
+    def read_input_files(self, validate_gtfs, read_demand):
         """
         Reads in the input files files from *input_dir* and initializes the relevant data structures.
         """
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        loader             = transitfeed.Loader(input_dir)
+        loader             = transitfeed.Loader(self.input_dir)
         self.gtfs_schedule = loader.Load()
 
         if validate_gtfs:
@@ -109,13 +109,13 @@ class FastTrips:
         # Optional: Transfers, Shapes, Calendar Dates...
 
         # Read routes, agencies
-        self.routes = Route(input_dir, self.gtfs_schedule, Assignment.TODAY)
+        self.routes = Route(self.input_dir, self.gtfs_schedule, Assignment.TODAY)
 
         # Read Stops (gtfs-required) and transfers
-        self.stops = Stop(input_dir, self.gtfs_schedule)
+        self.stops = Stop(self.input_dir, self.output_dir, self.gtfs_schedule)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(input_dir, self.gtfs_schedule, Assignment.TODAY, self.stops)
+        self.trips = Trip(self.input_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY, self.stops)
 
         # transfer_stops = 0
         # for stop_id,stop in self.stops.iteritems():
@@ -123,12 +123,12 @@ class FastTrips:
         # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(input_dir, Assignment.TODAY, self.stops)
+        self.tazs = TAZ(self.input_dir, Assignment.TODAY, self.stops)
 
         if read_demand:
             FastTripsLogger.info("-------- Reading demand --------")
             # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger(input_dir, Assignment.TODAY, self.tazs)
+            self.passengers = Passenger(self.input_dir, Assignment.TODAY, self.stops)
         else:
             self.passengers = None
 
