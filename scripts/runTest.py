@@ -3,28 +3,36 @@ import argparse, os, pandas, re, sys
 
 USAGE = r"""
 
-  python runTest.py num_passengers asgn_type iters capacity input_dir output_dir
+  python runTest.py asgn_type iters capacity input_dir output_dir
 
   Where asgn_type is one of 'deterministic' or 'stochastic'
 
-  Use capacity=0 to leave it unmodified in trips and configure no capacity constraint.
+  Use capacity='yes', 'true', 't', or 1 to enable a capacity constraint.
 
+  e.g.
+
+  python scripts\runTest.py deterministic 2 true "C:\Users\lzorn\Box Sync\SHRP C-10\7-Test Case Development\test_net_export_20151005" Examples\test_net_20151005
 """
+
 if __name__ == "__main__":
 
+    def str2bool(v):
+        #susendberg's function
+        return v.lower() in ("yes", "true", "t", "1")
+
     parser = argparse.ArgumentParser(usage=USAGE)
-    parser.add_argument("num_passengers", type=int,
-                        help="Number of passengers to assign and simuluate")
+    parser.register('type','bool',str2bool)
     parser.add_argument("asgn_type",      choices=['deterministic','stochastic'])
     parser.add_argument("iters",          type=int)
-    parser.add_argument("capacity",       type=int)
+    parser.add_argument("capacity",       type='bool')
     parser.add_argument("input_dir",      type=str)
     parser.add_argument("output_dir",     type=str)
 
     args = parser.parse_args(sys.argv[1:])
 
-    test_dir = "pax%d_%s_iter%d_%s" % (args.num_passengers, args.asgn_type, args.iters,
-                                       "cap%d" % args.capacity if args.capacity > 0 else "nocap")
+    print args.capacity
+    test_dir = "%s_iter%d_%s" % (args.asgn_type, args.iters,
+                                 "cap" if args.capacity else "nocap")
 
     full_output_dir = os.path.join(args.output_dir, test_dir)
     if not os.path.exists(full_output_dir):
