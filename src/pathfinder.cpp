@@ -401,7 +401,7 @@ namespace fasttrips {
         getTripsWithinTime(current_label_stop.stop_id_, path_spec.outbound_, latest_dep_earliest_arr, relevant_trips);
         for (std::vector<TripStopTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
 
-            if (path_spec.trace_) {
+            if (false && path_spec.trace_) {
                 trace_file << "valid trips: " << it->trip_id_ << " " << it->seq_ << " ";
                 printTime(trace_file, path_spec.outbound_ ? it->arrive_time_ : it->depart_time_);
                 trace_file << std::endl;
@@ -617,7 +617,7 @@ namespace fasttrips {
                 else {
                     printTimeDuration(trace_file, current_label_stop.label_);
                 }
-                trace_file << ", stop " << current_label_stop.stop_id_ << ", len "
+                trace_file << ", stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second << ", len "
                            << current_stop_state.size() << ") :======" << std::endl;
                 trace_file << "            ";
                 printStopStateHeader(trace_file, path_spec);
