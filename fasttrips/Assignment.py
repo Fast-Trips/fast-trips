@@ -130,6 +130,7 @@ class Assignment:
     SIM_COL_PAX_BOARD_TIME              = 'board_time'
     SIM_COL_PAX_ALIGHT_TIME             = 'alight_time'
     SIM_COL_PAX_ARRIVE_TIME             = 'pax_arrive_time'
+    SIM_COL_PAX_ARRIVE_TIME_MIN         = 'pax_arrive_time_min'
     SIM_COL_PAX_LINK_TIME               = 'linktime'
 
     def __init__(self):
@@ -198,7 +199,7 @@ class Assignment:
         _fasttrips.set_bump_wait(bump_wait_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                 bump_wait_df['A_time_min'].values.astype('float64'))
+                                 bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN].values.astype('float64'))
 
 
     @staticmethod
@@ -744,8 +745,10 @@ class Assignment:
         FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
 
         passenger_trips = pandas.merge(left    =passenger_trips,
-                                       right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                       right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                              Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                              Trip.STOPTIMES_COLUMN_STOP_ID,
                                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]],
                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq'],
@@ -756,13 +759,15 @@ class Assignment:
         passenger_trips = pandas.merge(left    =passenger_trips,
                                        right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                              Trip.STOPTIMES_COLUMN_STOP_ID,
                                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'B_id','B_seq'],
                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                  Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                                       how     ='left')
+                                       how     ='left',
+                                       suffixes=("_A","_B"))
 
         passenger_trips.rename(columns=
            {Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Assignment.SIM_COL_PAX_BOARD_TIME,      # transit vehicle depart time (at A) = board time for pax
@@ -771,10 +776,10 @@ class Assignment:
             }, inplace=True)
 
         # redundant with A_id, B_id, A_seq, B_seq
-        passenger_trips.drop(['%s_x' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                              '%s_y' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                              '%s_x' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                              '%s_y' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
+        passenger_trips.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                              '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
         FastTripsLogger.debug("       Have %d pasenger trips" % len(passenger_trips))
 
         # FastTripsLogger.debug("passenger_trips\n%s" % \
@@ -874,7 +879,11 @@ class Assignment:
             assert(len(veh_loaded_df)==veh_trips_df_len)
             # print veh_trips_df.loc[5123368]
             veh_loaded_df.reset_index(inplace=True)
-            # print veh_loaded_df.loc[veh_loaded_df.onboard>0]
+
+            FastTripsLogger.debug("veh_trips_loaded with onboard>0: (showing head)\n" + \
+                                  veh_loaded_df.loc[veh_loaded_df.onboard>0].head().to_string(formatters=\
+                   {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
+                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter}))
 
             if not Assignment.CAPACITY_CONSTRAINT or not FT.trips.has_capacity_configured():
                 # No need to loop
@@ -918,13 +927,13 @@ class Assignment:
 
                 FastTripsLogger.info("        Need to bump %d passengers from %d stops" % (bump_stops_df.overcap.sum(), len(bump_stops_df)))
 
-                FastTripsLogger.debug("passenger_trips\n%s" % \
-                               (passenger_trips.to_string(formatters=\
-                               {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_min_formatter,
-                                Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_min_formatter,
-                                Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_min_formatter,
-                                'B_time'                            :Util.datetime64_min_formatter,
-                                Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter})))
+                # FastTripsLogger.debug("passenger_trips\n%s" % \
+                #                (passenger_trips.to_string(formatters=\
+                #                {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_min_formatter,
+                #                 Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_min_formatter,
+                #                 Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_min_formatter,
+                #                 'B_time'                            :Util.datetime64_min_formatter,
+                #                 Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter})))
 
                 # who boards at those stops?
                 bumped_pax_boards = pandas.merge(left    =passenger_trips[[ \
@@ -934,7 +943,9 @@ class Assignment:
                                                             Assignment.SIM_COL_PAX_ARRIVE_TIME]],
                                                  left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq'],
                                                  right   =bump_stops_df.reset_index()[[ \
+                                                            Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                             Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                            Trip.STOPTIMES_COLUMN_STOP_ID,
                                                             Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                             Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
@@ -1013,7 +1024,9 @@ class Assignment:
                 passenger_trips     = Assignment.get_passenger_trips(passengers_df, veh_trips_df)
                 passenger_trips_len = len(passenger_trips)
 
-                new_bump_wait = bumped_pax_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                new_bump_wait = bumped_pax_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                   Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                   Trip.STOPTIMES_COLUMN_STOP_ID,
                                                    'A_id','A_seq',
                                                    Assignment.SIM_COL_PAX_ARRIVE_TIME]].groupby([\
                                                      Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']).first()
@@ -1050,7 +1063,8 @@ class Assignment:
                 FastTripsLogger.info("        -> complete loop iter %d" % bump_iter)
 
         if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
-            Assignment.bump_wait_df['A_time_min'] = Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME].map(lambda x: (60.0*x.hour) + x.minute + (x.second/60.0))
+            Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN] = \
+                Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME].map(lambda x: (60.0*x.hour) + x.minute + (x.second/60.0))
 
         FastTripsLogger.debug("Bumped passenger ids: %s" % str(Assignment.bumped_person_ids))
         FastTripsLogger.debug("Bumped path ids: %s" % str(Assignment.bumped_trip_list_nums))
