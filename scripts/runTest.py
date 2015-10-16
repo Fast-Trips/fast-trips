@@ -30,7 +30,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args(sys.argv[1:])
 
-    print args.capacity
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
+
     test_dir = "%s_iter%d_%s" % (args.asgn_type, args.iters,
                                  "cap" if args.capacity else "nocap")
 

@@ -42,6 +42,28 @@ namespace fasttrips {
         STOCH_DISPERSION_   = stoch_dispersion;
     }
 
+    void PathFinder::initializeCostCoefficients(
+        double  in_vehicle_time_weight,
+        double  wait_time_weight,
+        double  walk_access_time_weight,
+        double  walk_egress_time_weight,
+        double  walk_transfer_time_weight,
+        double  transfer_penalty,
+        double  schedule_delay_weight,
+        double  fare_per_boarding,
+        double  value_of_time)
+    {
+        IN_VEHICLE_TIME_WEIGHT_     = in_vehicle_time_weight;
+        WAIT_TIME_WEIGHT_           = wait_time_weight;
+        WALK_ACCESS_TIME_WEIGHT_    = walk_access_time_weight;
+        WALK_EGRESS_TIME_WEIGHT_    = walk_egress_time_weight;
+        WALK_TRANSFER_TIME_WEIGHT_  = walk_transfer_time_weight;
+        TRANSFER_PENALTY_           = transfer_penalty;
+        SCHEDULE_DELAY_WEIGHT_      = schedule_delay_weight;
+        FARE_PER_BOARDING_          = fare_per_boarding;
+        VALUE_OF_TIME_              = value_of_time;
+    }
+
     void PathFinder::initializeSupply(
         const char* output_dir,
         int         process_num,
@@ -487,17 +509,17 @@ namespace fasttrips {
                 if (path_spec.hyperpath_) {
                     // TODO: genericize??
                     if ((current_mode == PathFinder::MODE_ACCESS) || (current_mode == PathFinder::MODE_EGRESS)) {
-                        cost = current_label_stop.label_  +
-                               in_vehicle_time            +
-                               0.00                       +        // wait
-                               0.00                       +        // FARE/VALUE OF TIME
-                               0.00;                               // TRANSFER PENALTY
+                        cost = current_label_stop.label_                +
+                               in_vehicle_time*IN_VEHICLE_TIME_WEIGHT_  +
+                               0.00                                     + // wait
+                               0.00                                     + // FARE/VALUE OF TIME
+                               0.00;                                      // TRANSFER PENALTY
                     } else {
-                        cost = current_label_stop.label_  +
-                               in_vehicle_time            +
-                               wait_time*1.77             +        // wait
-                               0.00                       +        // FARE/VALUE OF TIME
-                               (double)47.73;                       // TRANSFER PENALTY
+                        cost = current_label_stop.label_                +
+                               in_vehicle_time*IN_VEHICLE_TIME_WEIGHT_  +
+                               wait_time*WAIT_TIME_WEIGHT_              + // wait
+                               0.00                                     + // FARE/VALUE OF TIME
+                               TRANSFER_PENALTY_;                         // TRANSFER PENALTY
                     }
 
                     double old_label = PathFinder::MAX_COST;
@@ -867,7 +889,7 @@ namespace fasttrips {
         {
             // setup probabilities
             if (path_spec.trace_) {
-                trace_file << "current_stop=" << current_stop_id;
+                trace_file << "current_stop=" << stop_num_to_str_.find(current_stop_id)->second;
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
                 printTime(trace_file, arrdep_time);
                 trace_file << "; prev_mode=" << prev_mode << std::endl;
@@ -1121,17 +1143,6 @@ namespace fasttrips {
         bool   first_trip           = true;
         double dir_factor           = path_spec.outbound_ ? 1.0 : -1.0;
 
-        // TODO: This is TEMPORARY
-        const double IN_VEHICLE_TIME_WEIGHT     =  1.00;
-        const double WAIT_TIME_WEIGHT           =  1.77;
-        const double WALK_ACCESS_TIME_WEIGHT    =  3.93;
-        const double WALK_EGRESS_TIME_WEIGHT    =  3.93;
-        const double WALK_TRANSFER_TIME_WEIGHT  =  3.93;
-        const double TRANSFER_PENALTY           = 47.73;
-        const double SCHEDULE_DELAY_WEIGHT      =  0.00;
-        const double FARE_PER_BOARDING          =  1.00;
-        const double VALUE_OF_TIME              = 999.0; // dollars per hour
-
         // iterate through the states in chronological order
         int start_ind = path_spec.outbound_ ? 0 : path.stops_.size()-1;
         int end_ind   = path_spec.outbound_ ? path.stops_.size() : -1;
@@ -1172,7 +1183,7 @@ namespace fasttrips {
                 }
                 in_vehicle_min      += trip_ivt_min;
 
-                fare += FARE_PER_BOARDING;
+                fare += FARE_PER_BOARDING_;
             }
         }
         // TODO: remove this stuff?!  It's just here to match FAST-TrIPs
@@ -1187,14 +1198,14 @@ namespace fasttrips {
             preference_delay = orig_departure_time - path_spec.preferred_time_;
         }
 
-        path_info.cost_ = (IN_VEHICLE_TIME_WEIGHT*in_vehicle_min                ) +
-                          (WAIT_TIME_WEIGHT*(initial_wait_min+transfer_wait_min)) +
-                          (WALK_ACCESS_TIME_WEIGHT*access_walk_min              ) +
-                          (WALK_EGRESS_TIME_WEIGHT*egress_walk_min              ) +
-                          (WALK_TRANSFER_TIME_WEIGHT*transfer_walk_min          ) +
-                          (TRANSFER_PENALTY*num_transfers                       ) +
-                          (SCHEDULE_DELAY_WEIGHT*preference_delay               ) +
-                          (60.0*fare/VALUE_OF_TIME                              );
+        path_info.cost_ = (IN_VEHICLE_TIME_WEIGHT_*in_vehicle_min                ) +
+                          (WAIT_TIME_WEIGHT_*(initial_wait_min+transfer_wait_min)) +
+                          (WALK_ACCESS_TIME_WEIGHT_*access_walk_min              ) +
+                          (WALK_EGRESS_TIME_WEIGHT_*egress_walk_min              ) +
+                          (WALK_TRANSFER_TIME_WEIGHT_*transfer_walk_min          ) +
+                          (TRANSFER_PENALTY_*num_transfers                       ) +
+                          (SCHEDULE_DELAY_WEIGHT_*preference_delay               ) +
+                          (60.0*fare/VALUE_OF_TIME_                              );
 
         if (path_spec.trace_) {
             trace_file << "calculatePathCost:" << std::endl;

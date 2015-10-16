@@ -200,6 +200,36 @@ namespace fasttrips {
         double STOCH_DISPERSION_;
         ///@}
 
+        /** @name Cost parameters */
+        ///@{
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.IN_VEHICLE_TIME_WEIGHT">fasttrips.Path.IN_VEHICLE_TIME_WEIGHT</a>
+        double IN_VEHICLE_TIME_WEIGHT_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WAIT_TIME_WEIGHT">fasttrips.Path.WAIT_TIME_WEIGHT</a>
+        double WAIT_TIME_WEIGHT_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_ACCESS_TIME_WEIGHT">fasttrips.Path.WALK_ACCESS_TIME_WEIGHT</a>
+        double WALK_ACCESS_TIME_WEIGHT_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_EGRESS_TIME_WEIGHT">fasttrips.Path.WALK_EGRESS_TIME_WEIGHT</a>
+        double WALK_EGRESS_TIME_WEIGHT_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT">fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT</a>
+        double WALK_TRANSFER_TIME_WEIGHT_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.TRANSFER_PENALTY">fasttrips.Path.TRANSFER_PENALTY</a>
+        double TRANSFER_PENALTY_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.SCHEDULE_DELAY_WEIGHT">fasttrips.Path.SCHEDULE_DELAY_WEIGHT</a>
+        double SCHEDULE_DELAY_WEIGHT_;
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.FARE_PER_BOARDING">fasttrips.Path.FARE_PER_BOARDING</a>
+        double FARE_PER_BOARDING_;  // dollars per hour
+
+        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.VALUE_OF_TIME">fasttrips.Path.VALUE_OF_TIME</a>
+        double VALUE_OF_TIME_;
+        ///@}
+
         /// directory in which to write trace files
         std::string output_dir_;
 
@@ -383,6 +413,18 @@ namespace fasttrips {
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion);
 
+        /**
+         * Setup the cost coefficients.
+         */
+        void initializeCostCoefficients(double  in_vehicle_time_weight,
+                                        double  wait_time_weight,
+                                        double  walk_access_time_weight,
+                                        double  walk_egress_time_weight,
+                                        double  walk_transfer_time_weight,
+                                        double  transfer_penalty,
+                                        double  schedule_delay_weight,
+                                        double  fare_per_boarding,
+                                        double  value_of_time);
         /**
          * Setup the network supply.  This should happen once, before any pathfinding.
          *

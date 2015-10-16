@@ -88,7 +88,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PERSON_IDS                = ['paperboy','marge']
+    TRACE_PERSON_IDS                = ['frogger']
 
     #: Number of processes to use for path finding (via :py:mod:`multiprocessing`)
     #: Set to 1 to run everything in this process
@@ -168,7 +168,10 @@ class Assignment:
 
         # transfers copy for index flattening, cost
         transfers_df = FT.stops.transfers_df.reset_index()
-        transfers_df[Stop.TRANSFERS_COLUMN_COST] = transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
+        if len(transfers_df) > 0:
+            transfers_df[Stop.TRANSFERS_COLUMN_COST] = transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
+        else:
+            transfers_df[Stop.TRANSFERS_COLUMN_COST] = 0
 
         _fasttrips.initialize_supply(output_dir, process_number,
                                      walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
@@ -190,6 +193,16 @@ class Assignment:
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION)
+
+        _fasttrips.initialize_costcoeffs(Path.IN_VEHICLE_TIME_WEIGHT,
+                                         Path.WAIT_TIME_WEIGHT,
+                                         Path.WALK_ACCESS_TIME_WEIGHT,
+                                         Path.WALK_EGRESS_TIME_WEIGHT,
+                                         Path.WALK_TRANSFER_TIME_WEIGHT,
+                                         Path.TRANSFER_PENALTY,
+                                         Path.SCHEDULE_DELAY_WEIGHT,
+                                         Path.FARE_PER_BOARDING,
+                                         Path.VALUE_OF_TIME)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):
@@ -274,6 +287,8 @@ class Assignment:
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
             num_processes   = multiprocessing.cpu_count()
+        if num_processes > est_paths_to_find:
+            num_processes = est_paths_to_find
 
         # this is probalby time consuming... put in a try block
         try:

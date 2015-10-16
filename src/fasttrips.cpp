@@ -28,6 +28,43 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
 }
 
 static PyObject *
+_fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
+{
+    double in_vehicle_time_weight;
+    double wait_time_weight;
+    double walk_access_time_weight;
+    double walk_egress_time_weight;
+    double walk_transfer_time_weight;
+    double transfer_penalty;
+    double schedule_delay_weight;
+    double fare_per_boarding;
+    double value_of_time;
+    if (!PyArg_ParseTuple(args, "ddddddddd",
+            &in_vehicle_time_weight,
+            &wait_time_weight,
+            &walk_access_time_weight,
+            &walk_egress_time_weight,
+            &walk_transfer_time_weight,
+            &transfer_penalty,
+            &schedule_delay_weight,
+            &fare_per_boarding,
+            &value_of_time)) {
+        return NULL;
+    }
+    pathfinder.initializeCostCoefficients(in_vehicle_time_weight,
+                                          wait_time_weight,
+                                          walk_access_time_weight,
+                                          walk_egress_time_weight,
+                                          walk_transfer_time_weight,
+                                          transfer_penalty,
+                                          schedule_delay_weight,
+                                          fare_per_boarding,
+                                          value_of_time);
+    Py_RETURN_NONE;
+
+}
+
+static PyObject *
 _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
@@ -181,6 +218,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 
 static PyMethodDef fasttripsMethods[] = {
     {"initialize_parameters",   _fasttrips_initialize_parameters, METH_VARARGS, "Initialize path finding parameters" },
+    {"initialize_costcoeffs",   _fasttrips_initialize_costcoeffs, METH_VARARGS, "Initialize cost coefficients"       },
     {"initialize_supply",       _fasttrips_initialize_supply,     METH_VARARGS, "Initialize network supply" },
     {"set_bump_wait",           _fasttrips_set_bump_wait,         METH_VARARGS, "Update bump wait"          },
     {"find_path",               _fasttrips_find_path,             METH_VARARGS, "Find trip-based path"      },
