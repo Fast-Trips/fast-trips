@@ -423,13 +423,13 @@ namespace fasttrips {
         for (std::vector<TripStopTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
 
             if (false && path_spec.trace_) {
-                trace_file << "valid trips: " << it->trip_id_ << " " << it->seq_ << " ";
+                trace_file << "valid trips: " << trip_num_to_str_.find(it->trip_id_)->second << " " << it->seq_ << " ";
                 printTime(trace_file, path_spec.outbound_ ? it->arrive_time_ : it->depart_time_);
                 trace_file << std::endl;
             }
 
             // trip is already processed
-            if (trips_done.find(it->trip_id_) != trips_done.end()) continue;
+            // if (trips_done.find(it->trip_id_) != trips_done.end()) continue;
 
             // trip arrival time (outbound) / trip departure time (inbound)
             double arrdep_time = path_spec.outbound_ ? it->arrive_time_ : it->depart_time_;
@@ -910,6 +910,8 @@ namespace fasttrips {
                 if (!path_spec.outbound_ &&
                     ((state.deparr_mode_ == PathFinder::MODE_ACCESS) || (state.deparr_mode_ == PathFinder::MODE_TRANSFER)) &&
                     ((         prev_mode == PathFinder::MODE_EGRESS) || (         prev_mode == PathFinder::MODE_TRANSFER))) { continue; }
+                // don't double on the same trip ID - that's already covered by a single trip
+                if (state.deparr_mode_ == prev_mode) { continue; }
 
                 // outbound: we cannot depart before we arrive
                 if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }
