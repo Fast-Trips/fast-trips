@@ -1443,9 +1443,9 @@ namespace fasttrips {
         }
         for (std::vector<TripStopTime>::const_iterator it  = mapiter->second.begin();
                                                        it != mapiter->second.end();   ++it) {
-            if (outbound && (it->arrive_time_ < timepoint) && (it->arrive_time_ > timepoint-TIME_WINDOW_)) {
+            if (outbound && (it->arrive_time_ <= timepoint) && (it->arrive_time_ > timepoint-TIME_WINDOW_)) {
                 return_trips.push_back(*it);
-            } else if (!outbound && (it->depart_time_ > timepoint) && (it->depart_time_ < timepoint+TIME_WINDOW_)) {
+            } else if (!outbound && (it->depart_time_ >= timepoint) && (it->depart_time_ < timepoint+TIME_WINDOW_)) {
                 return_trips.push_back(*it);
             }
         }
