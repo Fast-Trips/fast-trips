@@ -164,54 +164,61 @@ class TAZ:
                              (len(self.walk_access_df), "walk access", TAZ.INPUT_WALK_ACCESS_FILE))
 
         #: Drive access links table. Make sure TAZ ID and lot ID are read as strings.
-        self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE),
-                                               dtype={TAZ.DRIVE_ACCESS_COLUMN_TAZ   :object,
-                                                      TAZ.DRIVE_ACCESS_COLUMN_LOT_ID:object})
-        # verify required columns are present
-        drive_access_cols = list(self.drive_access_df.columns.values)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_TAZ              in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_LOT_ID           in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_DIRECTION        in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_DISTANCE         in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_COST             in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME      in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_START_TIME       in drive_access_cols)
-        assert(TAZ.DRIVE_ACCESS_COLUMN_END_TIME         in drive_access_cols)
+        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE)):
+            self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE),
+                                                   dtype={TAZ.DRIVE_ACCESS_COLUMN_TAZ   :object,
+                                                          TAZ.DRIVE_ACCESS_COLUMN_LOT_ID:object})
 
-        # printing this before setting index
-        FastTripsLogger.debug("=========== DRIVE ACCESS ===========\n" + str(self.drive_access_df.head()))
-        FastTripsLogger.debug("As read\n"+str(self.drive_access_df.dtypes))
+            # verify required columns are present
+            drive_access_cols = list(self.drive_access_df.columns.values)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_TAZ              in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_LOT_ID           in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_DIRECTION        in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_DISTANCE         in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_COST             in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME      in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_START_TIME       in drive_access_cols)
+            assert(TAZ.DRIVE_ACCESS_COLUMN_END_TIME         in drive_access_cols)
 
-        # skipping index setting for now -- it's annoying for joins
-        # self.drive_access_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ,
-        #                                 TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
-        #                                 TAZ.DRIVE_ACCESS_COLUMN_DIRECTION], inplace=True, verify_integrity=True)
+            # printing this before setting index
+            FastTripsLogger.debug("=========== DRIVE ACCESS ===========\n" + str(self.drive_access_df.head()))
+            FastTripsLogger.debug("As read\n"+str(self.drive_access_df.dtypes))
 
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME]
+            # skipping index setting for now -- it's annoying for joins
+            # self.drive_access_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ,
+            #                                 TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
+            #                                 TAZ.DRIVE_ACCESS_COLUMN_DIRECTION], inplace=True, verify_integrity=True)
 
-        # datetime version
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
-                datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
-                datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME]
 
-        # float version
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + x.time().second/60.0 )
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + x.time().second/60.0 )
+            # datetime version
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
+                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
+                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
 
-        # convert time column from number to timedelta
-        self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME] = \
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
+            # float version
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
+                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
+                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
-        FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
-        FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
+            # convert time column from number to timedelta
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
+
+            FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
+            FastTripsLogger.info("Read %7d %15s from %25s" %
+                                 (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
+            self.has_drive_access = True
+        else:
+            self.has_drive_access = False
+            self.drive_access_df  = pandas.DataFrame(columns=[TAZ.DRIVE_ACCESS_COLUMN_TAZ, TAZ.DRIVE_ACCESS_COLUMN_LOT_ID])
+            FastTripsLogger.debug("=========== NO DRIVE ACCESS ===========\n")
 
         # Add numeric stop ID to walk access links
         self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
@@ -229,9 +236,11 @@ class TAZ:
         self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
-        self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
-                                                         id_colname=TAZ.DRIVE_ACCESS_COLUMN_TAZ,
-                                                         numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM)
+
+        if self.has_drive_access:
+            self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
+                                                             id_colname=TAZ.DRIVE_ACCESS_COLUMN_TAZ,
+                                                             numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM)
 
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_PNR_FILE)):
             #: PNR table. Make sure TAZ ID and lot ID are read as strings.
