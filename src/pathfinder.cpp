@@ -243,8 +243,7 @@ namespace fasttrips {
 
             double cost;
             if (path_spec.hyperpath_) {
-                // todo: why the 1+
-                cost = 1.0 + (path_spec.outbound_ ? link_iter->second.egress_cost_ : link_iter->second.access_cost_);
+                cost = (path_spec.outbound_ ? link_iter->second.egress_cost_ : link_iter->second.access_cost_);
             } else {
                 cost = link_iter->second.time_;
             }
