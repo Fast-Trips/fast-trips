@@ -75,7 +75,7 @@ if errorlevel 9009 (
 
 if "%1" == "html" (
     echo.Running doxygen for C++ extension documentation.
-    doxygen doxygen.conf
+    "C:\Program Files\doxygen\bin\doxygen" doxygen.conf
 	%SPHINXBUILD% -E -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	echo.
