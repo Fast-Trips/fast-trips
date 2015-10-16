@@ -171,7 +171,15 @@ class Stop:
                 if fieldname in gtfs_transfer.__dict__:
                     transfer_dict[fieldname] = gtfs_transfer.__dict__[fieldname]
             transfer_dicts.append(transfer_dict)
-        self.transfers_df = pandas.DataFrame(data=transfer_dicts)
+        if len(transfer_dicts) > 0:
+            self.transfers_df = pandas.DataFrame(data=transfer_dicts)
+        else:
+            self.transfers_df = pandas.DataFrame(columns=[Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                                          Stop.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                          Stop.TRANSFERS_COLUMN_TO_STOP,
+                                                          Stop.TRANSFERS_COLUMN_TO_STOP_NUM,
+                                                          Stop.TRANSFERS_COLUMN_TIME,
+                                                          Stop.TRANSFERS_COLUMN_TIME_MIN])
 
         # Read the fast-trips supplemental transfers data file
         transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_TRANSFERS_FILE))
@@ -187,19 +195,21 @@ class Stop:
         # join to the transfers dataframe -- need to use the transfers_ft as the primary because
         # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),
         # and we don't want to drop them
-        self.transfers_df = pandas.merge(left=self.transfers_df, right=transfers_ft_df,
-                                         how='right',
-                                         on=[Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                             Stop.TRANSFERS_COLUMN_TO_STOP])
+        if len(transfers_ft_df) > 0:
+            self.transfers_df = pandas.merge(left=self.transfers_df, right=transfers_ft_df,
+                                             how='right',
+                                             on=[Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                                 Stop.TRANSFERS_COLUMN_TO_STOP])
 
         FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
 
         # TODO: this is to be consistent with original implementation. Remove?
-        self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Stop.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0;
-        # convert time column from float to timedelta
-        self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
-            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
+        if len(self.transfers_df) > 0:
+            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Stop.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0;
+            # convert time column from float to timedelta
+            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
+                self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
         FastTripsLogger.debug("Final\n"+str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
@@ -263,12 +273,13 @@ class Stop:
         ##############################################################################################
 
         # Add the numeric stop ids to transfers
-        self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
-                                                     id_colname=Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                                     numeric_newcolname=Stop.TRANSFERS_COLUMN_FROM_STOP_NUM)
-        self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
-                                                     id_colname=Stop.TRANSFERS_COLUMN_TO_STOP,
-                                                     numeric_newcolname=Stop.TRANSFERS_COLUMN_TO_STOP_NUM)
+        if len(self.transfers_df) > 0:
+            self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
+                                                         id_colname=Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                                         numeric_newcolname=Stop.TRANSFERS_COLUMN_FROM_STOP_NUM)
+            self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
+                                                         id_colname=Stop.TRANSFERS_COLUMN_TO_STOP,
+                                                         numeric_newcolname=Stop.TRANSFERS_COLUMN_TO_STOP_NUM)
 
         # write the stop id numbering file
         self.stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
