@@ -24,10 +24,10 @@ class Path:
     through a set of stops.
     """
     #: Path configuration: Weight of in-vehicle time
-    IN_VEHICLE_TIME_WEIGHT          = 1.0
+    IN_VEHICLE_TIME_WEIGHT          = 0.1 # 1.0
 
     #: Path configuration: Weight of waiting time
-    WAIT_TIME_WEIGHT                = 1.77
+    WAIT_TIME_WEIGHT                = 0.2 # 1.77
 
     #: Path configuration: Weight of access walk time
     WALK_ACCESS_TIME_WEIGHT         = 3.93
@@ -39,7 +39,7 @@ class Path:
     WALK_TRANSFER_TIME_WEIGHT       = 3.93
 
     #: Path configuration: Weight transfer penalty (minutes)
-    TRANSFER_PENALTY                = 47.73
+    TRANSFER_PENALTY                = 0.0 # 47.73
 
     #: Path configuration: Weight of schedule delay (0 - no penalty)
     SCHEDULE_DELAY_WEIGHT           = 0.0
