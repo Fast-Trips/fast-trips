@@ -742,8 +742,7 @@ namespace fasttrips {
                 }
                 nonwalk_label = calculateNonwalkLabel(current_stop_state);
 
-                // todo: this should be - (access_time*dir_factor), right??
-                deparr_time = earliest_dep_latest_arr - access_time;
+                deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
 
                 new_cost        = nonwalk_label + (path_spec.outbound_ ? link_iter->second.access_cost_ : link_iter->second.egress_cost_);
                 double old_label= PathFinder::MAX_COST;
