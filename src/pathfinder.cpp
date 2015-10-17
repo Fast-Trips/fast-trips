@@ -1577,6 +1577,7 @@ namespace fasttrips {
         secpart = secpart*60.0;
         // double intpart, fracpart;
         // fracpart = modf(secpart, &intpart);
+        ostr << std::right;
         ostr << std::setw( 2) << std::setfill(' ') << std::right << hours << ":"; // hours
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)      << ":"; // minutes
         int width = 5;
@@ -1595,6 +1596,7 @@ namespace fasttrips {
         secpart = modf(timemin, &minpart); // split into minutes and seconds
         minpart = minpart - hour*60.0;
         secpart = secpart*60.0;
+        ostr << std::right;
         ostr << std::setw( 2) << std::setfill('0') << hour                       << ":"; // hour
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)  << ":"; // minutes
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(secpart);

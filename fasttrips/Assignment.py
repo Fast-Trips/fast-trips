@@ -88,7 +88,7 @@ class Assignment:
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PERSON_IDS                = ['frogger']
+    TRACE_PERSON_IDS                = ['frogger','lisa']
 
     #: Number of processes to use for path finding (via :py:mod:`multiprocessing`)
     #: Set to 1 to run everything in this process
