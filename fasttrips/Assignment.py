@@ -145,7 +145,7 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration(input_dir):
+    def read_configuration(input_network_dir, input_demand_dir):
         """
         Read the configuration parameters.
         """
@@ -175,7 +175,9 @@ class Assignment:
                       'schedule_delay_weight'           :0.0,
                       'fare_per_boarding'               :0.0,
                       'value_of_time'                   :999})
-        parser.read(os.path.join(input_dir, Assignment.CONFIGURATION_FILE))
+        parser.read(os.path.join(input_network_dir, Assignment.CONFIGURATION_FILE))
+        if input_demand_dir and os.path.exists(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE)):
+            parser.read(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE))
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
         Assignment.ASSIGNMENT_TYPE               = parser.get       ('fasttrips','pathfinding_type')
@@ -404,8 +406,8 @@ class Assignment:
                 for process_idx in range(1, 1+num_processes):
                     FastTripsLogger.info("Starting worker process %2d" % process_idx)
                     process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                                                                args=(iteration, process_idx, FT.input_network_dir, FT.output_dir,
-                                                                      todo_queue, done_queue,
+                                                                args=(iteration, process_idx, FT.input_network_dir, FT.input_demand_dir,
+                                                                      FT.output_dir, todo_queue, done_queue,
                                                                       Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                                       Assignment.bump_wait_df)))
                     process_list[-1].start()
@@ -1150,7 +1152,7 @@ class Assignment:
                 {Assignment.SIM_COL_PAX_ARRIVE_TIME :Util.datetime64_formatter}))
 
         ######################################################################################################
-        FastTripsLogger.info("Step 4. Convert times to strings (minutes past midnight) for joining")
+        FastTripsLogger.info("Step 4. Convert times to strings")
 
         ######         TODO: this is really catering to output format; an alternative might be more appropriate
         passenger_trips.loc[:,  'board_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_BOARD_TIME ].apply(Util.datetime64_formatter)
@@ -1247,7 +1249,8 @@ class Assignment:
                               index=False)
         load_file.close()
 
-def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):
+def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, input_demand_dir,
+                                         output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):
     """
     Process worker function.  Processes all the paths in queue.
 
@@ -1263,7 +1266,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
     # data and ends up meaning it takes a *really long time* to start the new process ~ 2 minutes per process.
     # Simply reading the input files again is faster.  No need to read the demand tho.
     from .FastTrips import FastTrips
-    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=None, output_dir=output_dir, validate_gtfs=False, read_demand=False,
+    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=input_demand_dir, output_dir=output_dir, validate_gtfs=False, read_demand=False,
                           log_to_console=False, logname_append=worker_str, appendLog=True if iteration > 1 else False)
 
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))

@@ -91,7 +91,7 @@ class FastTrips:
         self.gtfs_schedule   = None
 
         # Read the configuration
-        Assignment.read_configuration(self.input_network_dir)
+        Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
 
         # setup logging
         setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),

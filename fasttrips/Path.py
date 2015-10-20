@@ -237,6 +237,7 @@ class Path:
                                             walktimes_str], axis=1)
 
         print_passengers_df.reset_index(inplace=True)
+        print_passengers_df.sort(columns=['trip_list_id_num'], inplace=True)
 
         print_passengers_df.rename(columns=
            {'pathmode'          :'mode',
@@ -268,8 +269,8 @@ class Path:
         """
         # reset columns
         print_pax_exp_df = pax_exp_df.reset_index()
+        print_pax_exp_df.sort(columns=['trip_list_id_num'], inplace=True)
 
-        print_pax_exp_df.reset_index(inplace=True)
         print_pax_exp_df['A_time_str'] = print_pax_exp_df['A_time'].apply(Util.datetime64_formatter)
         print_pax_exp_df['B_time_str'] = print_pax_exp_df['B_time'].apply(Util.datetime64_formatter)
 
@@ -288,6 +289,7 @@ class Path:
 
         # reorder
         print_pax_exp_df = print_pax_exp_df[[
+            'trip_list_id_num',
             'person_id',
             'mode',
             'originTaz',
