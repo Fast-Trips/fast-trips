@@ -339,10 +339,10 @@ class Trip:
         Passing a :py:class:`pandas.DataFrame` with a trip ID column called *id_colname*,
         adds the numeric trip id as a column named *numeric_newcolname* and returns it.
         """
-        return Util.add_numeric_id(input_df, id_colname, numeric_newcolname,
+        return Util.add_new_id(input_df, id_colname, numeric_newcolname,
                                    mapping_df=self.trip_id_df,
                                    mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
-                                   mapping_numeric_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
+                                   mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
 
     def get_stop_times(self, trip_id):
         """

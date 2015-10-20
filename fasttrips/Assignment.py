@@ -342,7 +342,7 @@ class Assignment:
             veh_trips_df       = Assignment.setup_trips(FT)
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Assignment.print_passenger_paths(passengers_df, output_dir)
+                Path.write_paths(passengers_df, output_dir)
 
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
@@ -590,15 +590,6 @@ class Assignment:
         return (path_cost, return_states)
 
     @staticmethod
-    def print_passenger_paths(passengers_df, output_dir):
-        """
-        Print the passenger paths.
-        """
-        paths_out = open(os.path.join(output_dir, "ft_output_passengerPaths.dat"), 'w')
-        Path.write_paths(passengers_df, paths_out)
-        paths_out.close()
-
-    @staticmethod
     def print_passenger_times(pax_exp_df, output_dir):
         """
         Print the passenger times.
@@ -622,9 +613,6 @@ class Assignment:
              'alight_time_str'      :'alightingTimes',
              'cost'                 :'travelCost',
              }, inplace=True)
-
-        # recode/reformat
-        print_pax_exp_df[['originTaz','destinationTaz']] = print_pax_exp_df[['originTaz','destinationTaz']].astype(int)
 
         # reorder
         print_pax_exp_df = print_pax_exp_df[[
@@ -692,9 +680,12 @@ class Assignment:
         `linkmode`               object  the mode of the link, one of :py:attr:`Path.STATE_MODE_ACCESS`, :py:attr:`Path.STATE_MODE_EGRESS`,
                                          :py:attr:`Path.STATE_MODE_TRANSFER` or :py:attr:`Path.STATE_MODE_TRIP`.  Paths will always start with
                                          access, followed by trips with transfers in between, and ending in an egress following the last trip.
+        `trip_id`                object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `trip_id_num`           float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `A_id`                    int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
-        `B_id`                    int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
+        `A_id`                   object  the stop ID at the start of the link, or TAZ ID for access links
+        `A_id_num`                int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
+        `B_id`                   object  the stop ID at the end of the link, or a TAZ ID for access links
+        `B_id_num`                int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
         `A_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
         `B_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
         `A_time`         datetime64[ns]  the time the passenger arrives at `A_id`
@@ -757,15 +748,15 @@ class Assignment:
                         linkmode    = Path.STATE_MODE_TRIP
 
                     if path.outbound():
-                        a_id        = state_id
-                        b_id        = state[Path.STATE_IDX_SUCCPRED]
+                        a_id_num    = state_id
+                        b_id_num    = state[Path.STATE_IDX_SUCCPRED]
                         a_seq       = state[Path.STATE_IDX_SEQ]
                         b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
                         b_time      = state[Path.STATE_IDX_ARRDEP]
                         a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
                     else:
-                        a_id        = state[Path.STATE_IDX_SUCCPRED]
-                        b_id        = state_id
+                        a_id_num    = state[Path.STATE_IDX_SUCCPRED]
+                        b_id_num    = state_id
                         a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
                         b_seq       = state[Path.STATE_IDX_SEQ]
                         b_time      = state[Path.STATE_IDX_DEPARR]
@@ -779,8 +770,8 @@ class Assignment:
                                path.mode,
                                Path.STATE_MODE_TRANSFER,
                                None,
-                               a_id,
-                               a_id,
+                               a_id_num,
+                               a_id_num,
                                a_seq,
                                a_seq,
                                a_time,
@@ -796,8 +787,8 @@ class Assignment:
                            path.mode,
                            linkmode,
                            trip_id,
-                           a_id,
-                           b_id,
+                           a_id_num,
+                           b_id_num,
                            a_seq,
                            b_seq,
                            a_time,
@@ -816,10 +807,20 @@ class Assignment:
                                         'pathdir',  # for debugging
                                         'pathmode', # for output
                                         'linkmode', 'trip_id_num',
-                                        'A_id','B_id',
+                                        'A_id_num','B_id_num',
                                         'A_seq','B_seq',
                                         'A_time', 'B_time',
                                         'linktime', 'cost'])
+
+        # get A_id and B_id and trip_id
+        df = Util.add_new_id(  input_df=df,                          id_colname='A_id_num',                            newid_colname='A_id',
+                             mapping_df=FT.stops.stop_id_df, mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        df = Util.add_new_id(  input_df=df,                          id_colname='B_id_num',                            newid_colname='B_id',
+                             mapping_df=FT.stops.stop_id_df, mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        # get trip_id
+        df = Util.add_new_id(  input_df=df,                          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
+                             mapping_df=FT.trips.trip_id_df, mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
+
         FastTripsLogger.debug("Setup passengers dataframe:\n%s" % str(df.dtypes))
         df.to_csv(os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration), index=False)
         FastTripsLogger.info("Wrote passengers dataframe to %s" % os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration))
@@ -1200,6 +1201,7 @@ class Assignment:
         passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ARRIVE_TIME].apply(Util.datetime64_min_formatter)
         passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ALIGHT_TIME].apply(Util.datetime64_min_formatter)
         assert(len(passenger_trips) == passenger_trips_len)
+        print passenger_trips.head()
 
         # Aggregate (by joining) across each passenger + path
         ptrip_group = passenger_trips.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,

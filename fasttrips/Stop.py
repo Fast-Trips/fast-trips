@@ -291,10 +291,10 @@ class Stop:
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
         adds the numeric stop id as a column named *numeric_newcolname* and returns it.
         """
-        return Util.add_numeric_id(input_df, id_colname, numeric_newcolname,
+        return Util.add_new_id(input_df, id_colname, numeric_newcolname,
                                    mapping_df=self.stop_id_df,
                                    mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID,
-                                   mapping_numeric_colname=Stop.STOPS_COLUMN_STOP_ID_NUM)
+                                   mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID_NUM)
 
 
     def add_trips(self, stop_times_df):

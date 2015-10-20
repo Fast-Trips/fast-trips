@@ -47,17 +47,17 @@ class Util:
         return return_df
 
     @staticmethod
-    def add_numeric_id(input_df, id_colname, numeric_newcolname,
-                       mapping_df, mapping_id_colname, mapping_numeric_colname):
+    def add_new_id(input_df,   id_colname,         newid_colname,
+                   mapping_df, mapping_id_colname, mapping_newid_colname):
         """
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
-        adds the numeric id as a column named *numeric_newcolname* and returns it.
+        adds the numeric id as a column named *newid_colname* and returns it.
 
         *mapping_df* is defines the mapping from an ID (*mapping_id_colname*) 
-        to a numeric ID (*mapping_numeric_colname*).
+        to a numeric ID (*mapping_newid_colname*).
         """
         input_cols = list(input_df.columns.values)
-        # add the numeric stop id column
+        # add the new id column
         return_df = pandas.merge(left=input_df, right=mapping_df,
                                  how='left',
                                  left_on=id_colname,
@@ -68,7 +68,7 @@ class Util:
         # print return_df.head()
 
         # make sure all ids were mapped to numbers
-        assert(pandas.isnull(return_df[mapping_numeric_colname]).sum() == 0)
+        assert(pandas.isnull(return_df[mapping_newid_colname]).sum() == pandas.isnull(input_df[id_colname]).sum())
 
         # remove the redundant id column if necessary (it's redundant)
         if id_colname != mapping_id_colname:
@@ -78,11 +78,11 @@ class Util:
                 return_df.drop(mapping_id_colname, axis=1, inplace=True)
 
         # rename it as requested (if necessary)
-        if numeric_newcolname != mapping_numeric_colname:
-            if mapping_numeric_colname in input_cols:
-                return_df.rename(columns={"%s_mapping" % mapping_numeric_colname:numeric_newcolname}, inplace=True)
+        if newid_colname != mapping_newid_colname:
+            if mapping_newid_colname in input_cols:
+                return_df.rename(columns={"%s_mapping" % mapping_newid_colname:newid_colname}, inplace=True)
             else:
-                return_df.rename(columns={mapping_numeric_colname:numeric_newcolname}, inplace=True)
+                return_df.rename(columns={mapping_newid_colname:newid_colname}, inplace=True)
 
         # print "FINAL RETURN_DF=================="
         # print return_df.head()

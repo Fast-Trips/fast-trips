@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,string
+import collections,datetime,os,string
 import numpy,pandas
 
 from .Logger    import FastTripsLogger
@@ -23,6 +23,9 @@ class Path:
     Represents a path for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`
     through a set of stops.
     """
+    #: Paths output file
+    PATHS_OUTPUT_FILE               = 'ft_output_passengerPaths.txt'
+
     #: Path configuration: Weight of in-vehicle time
     IN_VEHICLE_TIME_WEIGHT          = None
 
@@ -185,7 +188,7 @@ class Path:
         return readable_str
 
     @staticmethod
-    def write_paths(passengers_df, paths_out):
+    def write_paths(passengers_df, output_dir):
         """
         Write the assigned paths to the given output file.
 
@@ -197,15 +200,14 @@ class Path:
         """
         # get trip information -- board stops, board trips and alight stops
         passenger_trips = passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP].copy()
-        # convert to strings for appending
-        passenger_trips['board_stop_str' ] = passenger_trips.A_id.apply(lambda x:'s%d' % x)
-        passenger_trips['board_trip_str' ] = passenger_trips.trip_id_num.apply(lambda x:'t%d' % x)
-        passenger_trips['alight_stop_str'] = passenger_trips.B_id.apply(lambda x:'s%d' % x)
         ptrip_group     = passenger_trips.groupby(['person_id','trip_list_id_num'])
         # these are Series
-        board_stops_str = ptrip_group.board_stop_str.apply(lambda x:','.join(x))
-        board_trips_str = ptrip_group.board_trip_str.apply(lambda x:','.join(x))
-        alight_stops_str= ptrip_group.alight_stop_str.apply(lambda x:','.join(x))
+        board_stops_str = ptrip_group.A_id.apply(lambda x:','.join(x))
+        board_trips_str = ptrip_group.trip_id.apply(lambda x:','.join(x))
+        alight_stops_str= ptrip_group.B_id.apply(lambda x:','.join(x))
+        board_stops_str.name  = 'board_stop_str'
+        board_trips_str.name  = 'board_trip_str'
+        alight_stops_str.name = 'alight_stop_str'
 
         # get walking times
         walk_links = passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_ACCESS  )| \
@@ -231,6 +233,7 @@ class Path:
                                             walktimes_str], axis=1)
 
         print_passengers_df.reset_index(inplace=True)
+
         print_passengers_df.rename(columns=
            {'pathmode'          :'mode',
             'A_id'              :'originTaz',
@@ -240,17 +243,16 @@ class Path:
             'board_trip_str'    :'boardingTrips',
             'alight_stop_str'   :'alightingStops',
             'linktime_str'      :'walkingTimes'}, inplace=True)
-        print_passengers_df[['originTaz','destinationTaz']] = print_passengers_df[['originTaz','destinationTaz']].astype(int)
 
         print_passengers_df['startTime'] = print_passengers_df['startTime_time'].apply(lambda x: '%.2f' % \
                         (pandas.to_datetime(x).hour*60.0 + \
                          pandas.to_datetime(x).minute + \
                          pandas.to_datetime(x).second/60.0))
 
-        print_passengers_df = print_passengers_df[['person_id','mode','originTaz','destinationTaz','startTime',
+        print_passengers_df = print_passengers_df[['trip_list_id_num','person_id','mode','originTaz','destinationTaz','startTime',
                                                    'boardingStops','boardingTrips','alightingStops','walkingTimes']]
 
-        print_passengers_df.to_csv(paths_out, sep="\t", index=False)
+        print_passengers_df.to_csv(os.path.join(output_dir, Path.PATHS_OUTPUT_FILE), sep="\t", index=False)
         # passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes
 
 

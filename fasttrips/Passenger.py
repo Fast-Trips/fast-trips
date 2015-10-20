@@ -77,28 +77,11 @@ class Passenger:
         """
         Constructor from dictionary mapping attribute to value.
         """
-        self.households_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_HOUSEHOLDS_FILE))
-        household_cols      = list(self.households_df.columns.values)
 
-        FastTripsLogger.debug("=========== HOUSEHOLDS ===========\n" + str(self.households_df.head()))
-        FastTripsLogger.debug("\n"+str(self.households_df.index.dtype)+"\n"+str(self.households_df.dtypes))
-        FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.households_df), "households", Passenger.INPUT_HOUSEHOLDS_FILE))
-
-        self.persons_df     = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE))
-        self.persons_id_df  = Util.add_numeric_column(self.persons_df[[Passenger.PERSONS_COLUMN_PERSON_ID]],
-                                                      id_colname=Passenger.PERSONS_COLUMN_PERSON_ID,
-                                                      numeric_newcolname=Passenger.PERSONS_COLUMN_PERSON_ID_NUM)
-        self.persons_df     = pandas.merge(left=self.persons_df, right=self.persons_id_df,
-                                           how="left")
-        persons_cols        = list(self.persons_df.columns.values)
-
-        FastTripsLogger.debug("=========== PERSONS ===========\n" + str(self.persons_df.head()))
-        FastTripsLogger.debug("\n"+str(self.persons_df.index.dtype)+"\n"+str(self.persons_df.dtypes))
-        FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.persons_df), "persons", Passenger.INPUT_PERSONS_FILE))
-
-        self.trip_list_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE))
+        self.trip_list_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE),
+                                             dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
+                                                    Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :object,
+                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object})
         trip_list_cols     = list(self.trip_list_df.columns.values)
 
         assert(Passenger.TRIP_LIST_COLUMN_PERSON_ID          in trip_list_cols)
