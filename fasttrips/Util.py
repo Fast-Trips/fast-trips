@@ -108,14 +108,14 @@ class Util:
     @staticmethod
     def datetime64_formatter(x):
         """
-        Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM.SS`
+        Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM:SS`
         """
-        return pandas.to_datetime(x).strftime('%H:%M.%S')
+        return pandas.to_datetime(x).strftime('%H:%M:%S')
 
     @staticmethod
     def datetime64_min_formatter(x):
         """
-        Formatter to convert :py:class:`numpy.datetime64` to minutes after minutes
+        Formatter to convert :py:class:`numpy.datetime64` to minutes after midnight
         (with two decimal places)
         """
         return '%.2f' % (pandas.to_datetime(x).hour*60.0 + \

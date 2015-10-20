@@ -349,7 +349,7 @@ class Assignment:
                 (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT, passengers_df, veh_trips_df)
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Assignment.print_passenger_times(pax_exp_df, output_dir)
+                Path.write_path_times(pax_exp_df, output_dir)
 
             # capacity gap stuff
             num_bumped_passengers = num_paths_found - num_passengers_arrived
@@ -443,7 +443,7 @@ class Assignment:
                         trace_person = True
 
                     # do the work
-                    (cost, return_states) = Assignment.find_trip_based_path(FT, trip_path,
+                    (cost, return_states) = Assignment.find_trip_based_path(iteration, FT, trip_path,
                                                                             Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                                             trace=trace_person)
                     trip_path.states = return_states
@@ -522,7 +522,7 @@ class Assignment:
 
 
     @staticmethod
-    def find_trip_based_path(FT, path, hyperpath, trace):
+    def find_trip_based_path(iteration, FT, path, hyperpath, trace):
         """
         Perform trip-based path search.
 
@@ -531,21 +531,23 @@ class Assignment:
 
         Returns (path cost, return_states).
 
-        :param FT: fasttrips data
-        :type FT: a :py:class:`FastTrips` instance
-        :param path: the path to fill in
-        :type path: a :py:class:`Path` instance
+        :param iteration: The pathfinding iteration we're on
+        :type  iteration: int
+        :param FT:        fasttrips data
+        :type  FT:        a :py:class:`FastTrips` instance
+        :param path:      the path to fill in
+        :type  path:      a :py:class:`Path` instance
         :param hyperpath: pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
                           search algorithm will be use.
-        :type hyperpath: boolean
-        :param trace: pass True if this path should be traced to the debug log
-        :type trace: boolean
+        :type  hyperpath: boolean
+        :param trace:     pass True if this path should be traced to the debug log
+        :type  trace:     boolean
 
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
         (ret_ints, ret_doubles, path_cost) = \
-            _fasttrips.find_path(path.person_id_num, path.trip_list_id_num, hyperpath, path.o_taz_num, path.d_taz_num,
+            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath, path.o_taz_num, path.d_taz_num,
                                  1 if path.outbound() else 0, float(path.pref_time_min),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
@@ -588,49 +590,6 @@ class Assignment:
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
                               ]
         return (path_cost, return_states)
-
-    @staticmethod
-    def print_passenger_times(pax_exp_df, output_dir):
-        """
-        Print the passenger times.
-        """
-        # reset columns
-        print_pax_exp_df = pax_exp_df.reset_index()
-
-        print_pax_exp_df.reset_index(inplace=True)
-        print_pax_exp_df['A_time_str'] = print_pax_exp_df['A_time'].apply(Util.datetime64_min_formatter)
-        print_pax_exp_df['B_time_str'] = print_pax_exp_df['B_time'].apply(Util.datetime64_min_formatter)
-
-        # rename columns
-        print_pax_exp_df.rename(columns=
-            {'pathmode'             :'mode',
-             'A_id'                 :'originTaz',
-             'B_id'                 :'destinationTaz',
-             'A_time_str'           :'startTime',
-             'B_time_str'           :'endTime',
-             'arrival_time_str'     :'arrivalTimes',
-             'board_time_str'       :'boardingTimes',
-             'alight_time_str'      :'alightingTimes',
-             'cost'                 :'travelCost',
-             }, inplace=True)
-
-        # reorder
-        print_pax_exp_df = print_pax_exp_df[[
-            'person_id',
-            'mode',
-            'originTaz',
-            'destinationTaz',
-            'startTime',
-            'endTime',
-            'arrivalTimes',
-            'boardingTimes',
-            'alightingTimes',
-            'travelCost']]
-
-        times_out = open(os.path.join(output_dir, "ft_output_passengerTimes.dat"), 'w')
-        print_pax_exp_df.to_csv(times_out,
-                                sep="\t", float_format="%.2f", index=False)
-        times_out.close()
 
     @staticmethod
     def read_assignment_results(output_dir, iteration):
@@ -866,13 +825,11 @@ class Assignment:
         FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
 
         passenger_trips = pandas.merge(left    =passenger_trips,
-                                       right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                              Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                       right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                              Trip.STOPTIMES_COLUMN_STOP_ID,
                                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]],
-                                       left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq'],
+                                       left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq'],
                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                  Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
@@ -880,10 +837,9 @@ class Assignment:
         passenger_trips = pandas.merge(left    =passenger_trips,
                                        right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                              Trip.STOPTIMES_COLUMN_STOP_ID,
                                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
-                                       left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'B_id','B_seq'],
+                                       left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq'],
                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                  Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
@@ -901,7 +857,7 @@ class Assignment:
                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                               '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
-        FastTripsLogger.debug("       Have %d pasenger trips" % len(passenger_trips))
+        FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
 
         # FastTripsLogger.debug("passenger_trips\n%s" % \
         #                (passenger_trips.to_string(formatters=\
@@ -1197,11 +1153,10 @@ class Assignment:
         FastTripsLogger.info("Step 4. Convert times to strings (minutes past midnight) for joining")
 
         ######         TODO: this is really catering to output format; an alternative might be more appropriate
-        passenger_trips.loc[:,  'board_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_BOARD_TIME ].apply(Util.datetime64_min_formatter)
-        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ARRIVE_TIME].apply(Util.datetime64_min_formatter)
-        passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ALIGHT_TIME].apply(Util.datetime64_min_formatter)
+        passenger_trips.loc[:,  'board_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_BOARD_TIME ].apply(Util.datetime64_formatter)
+        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ARRIVE_TIME].apply(Util.datetime64_formatter)
+        passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ALIGHT_TIME].apply(Util.datetime64_formatter)
         assert(len(passenger_trips) == passenger_trips_len)
-        print passenger_trips.head()
 
         # Aggregate (by joining) across each passenger + path
         ptrip_group = passenger_trips.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -1336,7 +1291,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
             trace_person = True
 
         try:
-            (cost, return_states) = Assignment.find_trip_based_path(worker_FT, path, hyperpath, trace=trace_person)
+            (cost, return_states) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
             done_queue.put( (path.trip_list_id_num, cost, return_states) )
         except:
             FastTripsLogger.exception('Exception')

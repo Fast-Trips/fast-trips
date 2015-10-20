@@ -17,6 +17,7 @@ import numpy,pandas
 
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
+from .Util      import Util
 
 class Path:
     """
@@ -25,6 +26,9 @@ class Path:
     """
     #: Paths output file
     PATHS_OUTPUT_FILE               = 'ft_output_passengerPaths.txt'
+
+    #: Path times output file
+    PATH_TIMES_OUTPUT_FILE          = 'ft_output_passengerTimes.txt'
 
     #: Path configuration: Weight of in-vehicle time
     IN_VEHICLE_TIME_WEIGHT          = None
@@ -193,9 +197,9 @@ class Path:
         Write the assigned paths to the given output file.
 
         :param passengers_df: Passenger paths assignment results
-        :type passengers_df: :py:class:`pandas.DataFrame` instance
-        :param paths_out: Output file, opened for writing
-        :type paths_out: :py:class:`file` instance
+        :type  passengers_df: :py:class:`pandas.DataFrame` instance
+        :param output_dir:    Output directory
+        :type  output_dir:    string
 
         """
         # get trip information -- board stops, board trips and alight stops
@@ -244,10 +248,7 @@ class Path:
             'alight_stop_str'   :'alightingStops',
             'linktime_str'      :'walkingTimes'}, inplace=True)
 
-        print_passengers_df['startTime'] = print_passengers_df['startTime_time'].apply(lambda x: '%.2f' % \
-                        (pandas.to_datetime(x).hour*60.0 + \
-                         pandas.to_datetime(x).minute + \
-                         pandas.to_datetime(x).second/60.0))
+        print_passengers_df['startTime'] = print_passengers_df['startTime_time'].apply(Util.datetime64_formatter)
 
         print_passengers_df = print_passengers_df[['trip_list_id_num','person_id','mode','originTaz','destinationTaz','startTime',
                                                    'boardingStops','boardingTrips','alightingStops','walkingTimes']]
@@ -255,6 +256,52 @@ class Path:
         print_passengers_df.to_csv(os.path.join(output_dir, Path.PATHS_OUTPUT_FILE), sep="\t", index=False)
         # passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes
 
+    @staticmethod
+    def write_path_times(pax_exp_df, output_dir):
+        """
+        Write the assigned path times to the given output file.
+
+        :param pax_exp_df:   Passenger experienced paths (simulation results)
+        :type  pax_exp_df:   :py:class:`pandas.DataFrame` instance
+        :param output_dir:   Output directory
+        :type  output_dir:   string
+        """
+        # reset columns
+        print_pax_exp_df = pax_exp_df.reset_index()
+
+        print_pax_exp_df.reset_index(inplace=True)
+        print_pax_exp_df['A_time_str'] = print_pax_exp_df['A_time'].apply(Util.datetime64_formatter)
+        print_pax_exp_df['B_time_str'] = print_pax_exp_df['B_time'].apply(Util.datetime64_formatter)
+
+        # rename columns
+        print_pax_exp_df.rename(columns=
+            {'pathmode'             :'mode',
+             'A_id'                 :'originTaz',
+             'B_id'                 :'destinationTaz',
+             'A_time_str'           :'startTime',
+             'B_time_str'           :'endTime',
+             'arrival_time_str'     :'arrivalTimes',
+             'board_time_str'       :'boardingTimes',
+             'alight_time_str'      :'alightingTimes',
+             'cost'                 :'travelCost',
+             }, inplace=True)
+
+        # reorder
+        print_pax_exp_df = print_pax_exp_df[[
+            'person_id',
+            'mode',
+            'originTaz',
+            'destinationTaz',
+            'startTime',
+            'endTime',
+            'arrivalTimes',
+            'boardingTimes',
+            'alightingTimes',
+            'travelCost']]
+
+        times_out = open(os.path.join(output_dir, Path.PATH_TIMES_OUTPUT_FILE), 'w')
+        print_pax_exp_df.to_csv(times_out,
+                                sep="\t", float_format="%.2f", index=False)
 
     @staticmethod
     def path_str_header():
