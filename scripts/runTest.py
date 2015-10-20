@@ -34,8 +34,9 @@ if __name__ == "__main__":
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
 
-    test_dir = "%s_iter%d_%s" % (args.asgn_type, args.iters,
-                                 "cap" if args.capacity else "nocap")
+    test_dir = "%s%s_iter%d_%s" % ("" if args.input_network_dir == args.input_demand_dir else "%s_" % os.path.basename(args.input_demand_dir),
+                                   args.asgn_type, args.iters,
+                                  "cap" if args.capacity else "nocap")
 
     full_output_dir = os.path.join(args.output_dir, test_dir)
     if not os.path.exists(full_output_dir):
