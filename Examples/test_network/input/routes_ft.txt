@@ -1,0 +1,7 @@
+route_id,mode,fare_class,proof_of_ payment
+A_EB,local_bus,bus_local_fare_class,FALSE
+A_WB,local_bus,bus_local_fare_class,FALSE
+B_EB,rapid_bus,bus_express_fare_class,FALSE
+B_WB,rapid_bus,bus_express_fare_class,FALSE
+C_NB,heavy_rail,rail_fare_class,TRUE
+C_SB,heavy_rail,rail_fare_class,TRUE

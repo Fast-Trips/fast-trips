@@ -3,7 +3,7 @@
 *.swp
 *.so
 
-Examples/*
+Examples/*/output
 
 # Distribution / packaging
 build/
