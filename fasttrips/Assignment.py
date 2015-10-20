@@ -330,7 +330,7 @@ class Assignment:
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
-            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY or \
+            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY and \
                os.path.exists(os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration)):
                 FastTripsLogger.info("Simulation only")
                 (num_paths_found, passengers_df) = Assignment.read_assignment_results(output_dir, iteration)
