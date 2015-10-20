@@ -149,7 +149,7 @@ class Assignment:
         """
         Read the configuration parameters.
         """
-        parser = ConfigParser.SafeConfigParser(
+        parser = ConfigParser.RawConfigParser(
             defaults={'iterations'                      :1,
                       'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
                       'simulation'                      :True,
@@ -164,7 +164,17 @@ class Assignment:
                       'trace_person_ids'                :'None',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
-                      'bump_one_at_a_time'              :True})
+                      'bump_one_at_a_time'              :True,
+                      # pathfinding
+                      'in_vehicle_time_weight'          :1.0,
+                      'wait_time_weight'                :1.77,
+                      'walk_access_time_weight'         :3.93,
+                      'walk_egress_time_weight'         :3.93,
+                      'walk_transfer_time_weight'       :3.93,
+                      'transfer_penalty'                :47.73,
+                      'schedule_delay_weight'           :0.0,
+                      'fare_per_boarding'               :0.0,
+                      'value_of_time'                   :999})
         parser.read(os.path.join(input_dir, Assignment.CONFIGURATION_FILE))
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
@@ -190,6 +200,17 @@ class Assignment:
                                          minutes = parser.getfloat  ('fasttrips','bump_buffer'))
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
+        # pathfinding
+        Path.IN_VEHICLE_TIME_WEIGHT              = parser.getfloat('pathfinding','in_vehicle_time_weight')
+        Path.WAIT_TIME_WEIGHT                    = parser.getfloat('pathfinding','wait_time_weight')
+        Path.WALK_ACCESS_TIME_WEIGHT             = parser.getfloat('pathfinding','walk_access_time_weight')
+        Path.WALK_EGRESS_TIME_WEIGHT             = parser.getfloat('pathfinding','walk_egress_time_weight')
+        Path.WALK_TRANSFER_TIME_WEIGHT           = parser.getfloat('pathfinding','walk_transfer_time_weight')
+        Path.TRANSFER_PENALTY                    = parser.getfloat('pathfinding','transfer_penalty')
+        Path.SCHEDULE_DELAY_WEIGHT               = parser.getfloat('pathfinding','schedule_delay_weight')
+        Path.FARE_PER_BOARDING                   = parser.getfloat('pathfinding','fare_per_boarding')
+        Path.VALUE_OF_TIME                       = parser.getfloat('pathfinding','value_of_time')
+
     @staticmethod
     def write_configuration(output_dir):
         """
@@ -212,6 +233,18 @@ class Assignment:
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
         parser.set('fasttrips','bump_one_at_a_time',            'True' if Assignment.BUMP_ONE_AT_A_TIME else 'False')
+
+        #pathfinding
+        parser.add_section('pathfinding')
+        parser.set('pathfinding','in_vehicle_time_weight',      '%f' % Path.IN_VEHICLE_TIME_WEIGHT)
+        parser.set('pathfinding','wait_time_weight',            '%f' % Path.WAIT_TIME_WEIGHT)
+        parser.set('pathfinding','walk_access_time_weight',     '%f' % Path.WALK_ACCESS_TIME_WEIGHT)
+        parser.set('pathfinding','walk_egress_time_weight',     '%f' % Path.WALK_EGRESS_TIME_WEIGHT)
+        parser.set('pathfinding','walk_transfer_time_weight',   '%f' % Path.WALK_TRANSFER_TIME_WEIGHT)
+        parser.set('pathfinding','transfer_penalty',            '%f' % Path.TRANSFER_PENALTY)
+        parser.set('pathfinding','schedule_delay_weight',       '%f' % Path.SCHEDULE_DELAY_WEIGHT)
+        parser.set('pathfinding','fare_per_boarding',           '%f' % Path.FARE_PER_BOARDING)
+        parser.set('pathfinding','value_of_time',               '%f' % Path.VALUE_OF_TIME)
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)

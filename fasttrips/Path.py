@@ -24,31 +24,31 @@ class Path:
     through a set of stops.
     """
     #: Path configuration: Weight of in-vehicle time
-    IN_VEHICLE_TIME_WEIGHT          = 0.1 # 1.0
+    IN_VEHICLE_TIME_WEIGHT          = None
 
     #: Path configuration: Weight of waiting time
-    WAIT_TIME_WEIGHT                = 0.2 # 1.77
+    WAIT_TIME_WEIGHT                = None
 
     #: Path configuration: Weight of access walk time
-    WALK_ACCESS_TIME_WEIGHT         = 3.93
+    WALK_ACCESS_TIME_WEIGHT         = None
 
     #: Path configuration: Weight of egress walk time
-    WALK_EGRESS_TIME_WEIGHT         = 3.93
+    WALK_EGRESS_TIME_WEIGHT         = None
 
     #: Path configuration: Weight of transfer walking time
-    WALK_TRANSFER_TIME_WEIGHT       = 3.93
+    WALK_TRANSFER_TIME_WEIGHT       = None
 
     #: Path configuration: Weight transfer penalty (minutes)
-    TRANSFER_PENALTY                = 0.0 # 47.73
+    TRANSFER_PENALTY                = None
 
     #: Path configuration: Weight of schedule delay (0 - no penalty)
-    SCHEDULE_DELAY_WEIGHT           = 0.0
+    SCHEDULE_DELAY_WEIGHT           = None
 
     #: Path configuration: Fare in dollars per boarding (with no transfer credit)
-    FARE_PER_BOARDING               = 0.0
+    FARE_PER_BOARDING               = None
 
     #: Path configuration: Value of time (dollars per hour)
-    VALUE_OF_TIME                   = 999
+    VALUE_OF_TIME                   = None
 
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times

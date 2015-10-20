@@ -13,3 +13,15 @@ trace_person_ids              = ['paperboy','marge']
 number_of_processes           = 2
 bump_buffer                   = 5
 bump_one_at_a_time            = True
+
+# pathfinding configuration
+[pathfinding]
+in_vehicle_time_weight        = 1.0
+wait_time_weight              = 1.77
+walk_access_time_weight       = 3.93
+walk_egress_time_weight       = 3.93
+walk_transfer_time_weight     = 3.93
+transfer_penalty              = 47.73
+schedule_delay_weight         = 0
+fare_per_boarding             = 0
+value_of_time                 = 999
