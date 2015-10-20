@@ -193,9 +193,10 @@ namespace fasttrips {
             ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
             // append because this will happen across iterations
-            trace_file.open(ss.str().c_str(), (std::ios_base::out | std::ios_base::app));
+            trace_file.open(ss.str().c_str(), (std::ios_base::out | (path_spec.iteration_ == 1 ? 0 : std::ios_base::app)));
             trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
-            trace_file << "outbound_        = " << path_spec.outbound_ << std::endl;
+            trace_file << "iteration_       = " << path_spec.iteration_ << std::endl;
+            trace_file << "outbound_        = " << path_spec.outbound_  << std::endl;
             trace_file << "hyperpath_       = " << path_spec.hyperpath_ << std::endl;
             trace_file << "preferred_time_  = ";
             printTime(trace_file, path_spec.preferred_time_);
@@ -272,6 +273,11 @@ namespace fasttrips {
         return true;
     }
 
+    /**
+     * Part of the labeling loop. Assuming the *current_label_stop* was just pulled off the
+     * *label_stop_queue*, this method will iterate through transfers to (for outbound) or
+     * from (for inbound) the current stop and update the next stop given the current stop state.
+     **/
     void PathFinder::updateStopStatesForTransfers(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,

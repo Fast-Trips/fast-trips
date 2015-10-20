@@ -173,7 +173,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
     int   hyperpath_i, outbound_i, trace_i;
-    if (!PyArg_ParseTuple(args, "iiiiiidi", &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
+    if (!PyArg_ParseTuple(args, "iiiiiiidi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
                           &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
                           &outbound_i, &path_spec.preferred_time_, &trace_i)) {
         return NULL;
