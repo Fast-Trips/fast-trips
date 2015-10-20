@@ -96,11 +96,11 @@ class FastTrips:
 
     def read_input_files(self, validate_gtfs, read_demand):
         """
-        Reads in the input files files from *input_dir* and initializes the relevant data structures.
+        Reads in the input files files from *input_network_dir* and initializes the relevant data structures.
         """
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        loader             = transitfeed.Loader(self.input_dir)
+        loader             = transitfeed.Loader(self.input_network_dir)
         self.gtfs_schedule = loader.Load()
 
         if validate_gtfs:
@@ -112,13 +112,13 @@ class FastTrips:
         # Optional: Transfers, Shapes, Calendar Dates...
 
         # Read routes, agencies
-        self.routes = Route(self.input_dir, self.gtfs_schedule, Assignment.TODAY)
+        self.routes = Route(self.input_network_dir, self.gtfs_schedule, Assignment.TODAY)
 
         # Read Stops (gtfs-required) and transfers
-        self.stops = Stop(self.input_dir, self.output_dir, self.gtfs_schedule)
+        self.stops = Stop(self.input_network_dir, self.output_dir, self.gtfs_schedule)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(self.input_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY, self.stops)
+        self.trips = Trip(self.input_network_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY, self.stops)
 
         # transfer_stops = 0
         # for stop_id,stop in self.stops.iteritems():
@@ -126,12 +126,12 @@ class FastTrips:
         # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(self.input_dir, Assignment.TODAY, self.stops)
+        self.tazs = TAZ(self.input_network_dir, Assignment.TODAY, self.stops)
 
         if read_demand:
             FastTripsLogger.info("-------- Reading demand --------")
             # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger(self.input_dir, Assignment.TODAY, self.stops)
+            self.passengers = Passenger(self.input_demand_dir, Assignment.TODAY, self.stops)
         else:
             self.passengers = None
 

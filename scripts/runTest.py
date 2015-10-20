@@ -3,7 +3,7 @@ import argparse, os, pandas, re, sys
 
 USAGE = r"""
 
-  python runTest.py asgn_type iters capacity input_dir output_dir
+  python runTest.py asgn_type iters capacity input_network_dir input_demand_dir output_dir
 
   Where asgn_type is one of 'deterministic' or 'stochastic'
 
@@ -22,11 +22,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(usage=USAGE)
     parser.register('type','bool',str2bool)
-    parser.add_argument("asgn_type",      choices=['deterministic','stochastic'])
-    parser.add_argument("iters",          type=int)
-    parser.add_argument("capacity",       type='bool')
-    parser.add_argument("input_dir",      type=str)
-    parser.add_argument("output_dir",     type=str)
+    parser.add_argument("asgn_type",         choices=['deterministic','stochastic'])
+    parser.add_argument("iters",             type=int)
+    parser.add_argument("capacity",          type='bool')
+    parser.add_argument("input_network_dir", type=str)
+    parser.add_argument("input_demand_dir",  type=str)
+    parser.add_argument("output_dir",        type=str)
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
         print "Creating full output dir [%s]" % full_output_dir
         os.mkdir(full_output_dir)
 
-    ft = fasttrips.FastTrips(args.input_dir, full_output_dir)
+    ft = fasttrips.FastTrips(args.input_network_dir, args.input_demand_dir, full_output_dir)
 
     if args.asgn_type == "deterministic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN

@@ -404,7 +404,7 @@ class Assignment:
                 for process_idx in range(1, 1+num_processes):
                     FastTripsLogger.info("Starting worker process %2d" % process_idx)
                     process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                                                                args=(iteration, process_idx, FT.input_dir, FT.output_dir,
+                                                                args=(iteration, process_idx, FT.input_network_dir, FT.output_dir,
                                                                       todo_queue, done_queue,
                                                                       Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                                       Assignment.bump_wait_df)))
@@ -1290,7 +1290,7 @@ class Assignment:
                               index=False)
         load_file.close()
 
-def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):
+def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):
     """
     Process worker function.  Processes all the paths in queue.
 
@@ -1306,7 +1306,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_dir, outpu
     # data and ends up meaning it takes a *really long time* to start the new process ~ 2 minutes per process.
     # Simply reading the input files again is faster.  No need to read the demand tho.
     from .FastTrips import FastTrips
-    worker_FT = FastTrips(input_dir=input_dir, output_dir=output_dir, validate_gtfs=False, read_demand=False,
+    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=None, output_dir=output_dir, validate_gtfs=False, read_demand=False,
                           log_to_console=False, logname_append=worker_str, appendLog=True if iteration > 1 else False)
 
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))
