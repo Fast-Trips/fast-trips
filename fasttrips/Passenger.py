@@ -101,10 +101,43 @@ class Passenger:
         self.trip_list_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE))
         trip_list_cols     = list(self.trip_list_df.columns.values)
 
+        assert(Passenger.TRIP_LIST_COLUMN_PERSON_ID          in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID      in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID in trip_list_cols)
+
         FastTripsLogger.debug("=========== TRIP LIST ===========\n" + str(self.trip_list_df.head()))
         FastTripsLogger.debug("\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.trip_list_df), "person trips", Passenger.INPUT_TRIP_LIST_FILE))
+
+        non_null_person_ids = pandas.notnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]).sum()
+        # Make null person ids 'None'
+        self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].fillna(value='', inplace=True)
+        if non_null_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
+
+            self.persons_df     = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE))
+            self.persons_id_df  = Util.add_numeric_column(self.persons_df[[Passenger.PERSONS_COLUMN_PERSON_ID]],
+                                                          id_colname=Passenger.PERSONS_COLUMN_PERSON_ID,
+                                                          numeric_newcolname=Passenger.PERSONS_COLUMN_PERSON_ID_NUM)
+            self.persons_df     = pandas.merge(left=self.persons_df, right=self.persons_id_df,
+                                               how="left")
+            persons_cols        = list(self.persons_df.columns.values)
+
+            FastTripsLogger.debug("=========== PERSONS ===========\n" + str(self.persons_df.head()))
+            FastTripsLogger.debug("\n"+str(self.persons_df.index.dtype)+"\n"+str(self.persons_df.dtypes))
+            FastTripsLogger.info("Read %7d %15s from %25s" %
+                                 (len(self.persons_df), "persons", Passenger.INPUT_PERSONS_FILE))
+
+            self.households_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_HOUSEHOLDS_FILE))
+            household_cols      = list(self.households_df.columns.values)
+
+            FastTripsLogger.debug("=========== HOUSEHOLDS ===========\n" + str(self.households_df.head()))
+            FastTripsLogger.debug("\n"+str(self.households_df.index.dtype)+"\n"+str(self.households_df.dtypes))
+            FastTripsLogger.info("Read %7d %15s from %25s" %
+                                 (len(self.households_df), "households", Passenger.INPUT_HOUSEHOLDS_FILE))
+        else:
+            self.persons_df     = pandas.DataFrame()
+            self.households_df  = pandas.DataFrame()
 
         # Create unique numeric index
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = self.trip_list_df.index + 1
@@ -127,14 +160,18 @@ class Passenger:
 
         # TODO: validate fields?
 
-        # Join trips to persons
-        self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.persons_df,
-                                         how='left',
-                                         on=Passenger.TRIP_LIST_COLUMN_PERSON_ID)
-        # And then to households
-        self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.households_df,
-                                         how='left',
-                                         on=Passenger.PERSONS_COLUMN_HOUSEHOLD_ID)
+        if len(self.persons_df) > 0:
+            # Join trips to persons
+            self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.persons_df,
+                                             how='left',
+                                             on=Passenger.TRIP_LIST_COLUMN_PERSON_ID)
+            # And then to households
+            self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.households_df,
+                                             how='left',
+                                             on=Passenger.PERSONS_COLUMN_HOUSEHOLD_ID)
+        else:
+            # Give each passenger a unique person ID num
+            self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM] = self.trip_list_df.index + 1
 
         # add TAZ numeric ids (stored in the stop mapping)
         self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
@@ -145,6 +182,7 @@ class Passenger:
             numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM)
 
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
+        FastTripsLogger.debug("\n"+str(self.trip_list_df.head()))
 
         #: Maps trip list ID num to :py:class:`Path` instance
         self.id_to_path = collections.OrderedDict()
