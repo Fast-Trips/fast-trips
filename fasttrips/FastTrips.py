@@ -40,7 +40,7 @@ class FastTrips:
         """
         Constructor.
 
-        Reads input files from *input_dir*.
+        Reads configuration and input files from *input_dir*.
         Writes output files to *output_dir*, including log files.
 
         :param input_dir:      Location of csv files to read
@@ -83,6 +83,9 @@ class FastTrips:
 
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
         self.gtfs_schedule   = None
+
+        # Read the configuration
+        Assignment.read_configuration(self.input_dir)
 
         # setup logging
         setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),

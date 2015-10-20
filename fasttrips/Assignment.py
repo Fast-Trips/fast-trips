@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import Queue
+import ConfigParser,Queue
 import collections,datetime,math,multiprocessing,os,random,sys,traceback
 import numpy,pandas
 import _fasttrips
@@ -30,11 +30,16 @@ class Assignment:
     Assignment class.  Documentation forthcoming.
 
     """
+    #: Configuration file for fasttrips
+    CONFIGURATION_FILE              = 'config_ft.txt'
+    #: Output copy of the configuration file in case anything got overridden
+    #: (Hmm naming conventions are a bit awkward here)
+    CONFIGURATION_OUTPUT_FILE       = 'ft_output_config.txt'
 
     #: Configuration: Maximum number of iterations to remove capacity violations. When
     #: the transit system is not crowded or when capacity constraint is
     #: relaxed the model will terminate after the first iteration
-    ITERATION_FLAG                  = 1
+    ITERATION_FLAG                  = None
 
     ASSIGNMENT_TYPE_SIM_ONLY        = 'Simulation Only'
     ASSIGNMENT_TYPE_DET_ASGN        = 'Deterministic Assignment'
@@ -43,61 +48,61 @@ class Assignment:
     #: 'Simulation Only' - No Assignment (only simulation, given paths in the input)
     #: 'Deterministic Assignment'
     #: 'Stochastic Assignment'
-    ASSIGNMENT_TYPE                 = ASSIGNMENT_TYPE_DET_ASGN
+    ASSIGNMENT_TYPE                 = None
 
-    #: Configuration: Simulation flag. It should be on for iterative assignment. In a one shot
+    #: Configuration: Simulation flag. It should be True for iterative assignment. In a one shot
     #: assignment with simulation flag off, the passengers are assigned to
-    #: paths but are not loaded to the network.
-    SIMULATION_FLAG                 = True
+    #: paths but are not loaded to the network.  Boolean.
+    SIMULATION_FLAG                 = None
 
     #: Configuration: Passenger trajectory output flag. Passengers' path and time will be
     #: reported if this flag is on. Note that the simulation flag should be on for
-    #: passengers' time.
-    OUTPUT_PASSENGER_TRAJECTORIES   = True
+    #: passengers' time.  Boolean.
+    OUTPUT_PASSENGER_TRAJECTORIES   = None
 
     #: Configuration: Path time-window. This is the time in which the paths are generated.
     #: E.g. with a typical 30 min window, any path within 30 min of the
-    #: departure time will be checked.
-    TIME_WINDOW                     = datetime.timedelta(minutes = 30)
+    #: departure time will be checked.  A :py:class:`datetime.timedelta` instance.
+    TIME_WINDOW                     = None
 
     #: Configuration: Create skims flag. This is specific to the travel demand models
-    #: (not working in this version)
-    CREATE_SKIMS                    = False
+    #: (not working in this version). Boolean.
+    CREATE_SKIMS                    = None
 
     #: Configuration: Beginning of the time period for which the skim is required.
-    #: (in minutes from start of day)
-    SKIM_START_TIME                 = 300
+    #:  (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
+    SKIM_START_TIME                 = None
 
     #: Configuration: End of the time period for which the skim is required
-    #: (minutes from start of day)
-    SKIM_END_TIME                   = 600
+    #: (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
+    SKIM_END_TIME                   = None
 
     #: Route choice configuration: Dispersion parameter in the logit function.
     #: Higher values result in less stochasticity. Must be nonnegative. 
-    #: If unknown use a value between 0.5 and 1
-    STOCH_DISPERSION                = 1.0
+    #: If unknown use a value between 0.5 and 1. Float.
+    STOCH_DISPERSION                = None
 
     #: Route choice configuration: How many stochastic paths will we generate
-    #: (not necessarily unique) to define a path choice set?
-    STOCH_PATHSET_SIZE              = 1000
+    #: (not necessarily unique) to define a path choice set?  Int.
+    STOCH_PATHSET_SIZE              = None
 
-    #: Route choice configuration: Use vehicle capacity constraints
-    CAPACITY_CONSTRAINT             = False
+    #: Route choice configuration: Use vehicle capacity constraints. Boolean.
+    CAPACITY_CONSTRAINT             = None
 
     #: Use this as the date
     TODAY                           = datetime.date.today()
 
     #: Trace these passengers
-    TRACE_PERSON_IDS                = ['frogger','lisa']
+    TRACE_PERSON_IDS                = None
 
     #: Number of processes to use for path finding (via :py:mod:`multiprocessing`)
     #: Set to 1 to run everything in this process
     #: Set to less than 1 to use the result of :py:func:`multiprocessing.cpu_count`
     #: Set to positive integer greater than 1 to set a fixed number of processes
-    NUMBER_OF_PROCESSES             = 2
+    NUMBER_OF_PROCESSES             = None
 
-    #: Extra time so passengers don't get bumped (?)
-    BUMP_BUFFER                     = datetime.timedelta(minutes = 5)
+    #: Extra time so passengers don't get bumped (?). A :py:class:`datetime.timedelta` instance.
+    BUMP_BUFFER                     = None
 
     #: This is the only simulation state that exists across iterations
     #: It's a dictionary of (trip_id, stop_id) -> earliest time a bumped passenger started waiting
@@ -120,8 +125,8 @@ class Assignment:
     #: crowded vehicles, then bumping her frees up space on other vehicles and so some other bumping
     #: may not be necessary.  Thus, the more accurate (but slower) method is to bump passengers from
     #: each (trip,stop) at a time, in order of the full vehicle arrival time, and then recalculate
-    #: loads, and iterate until we have no capacity issues.
-    BUMP_ONE_AT_A_TIME              = True
+    #: loads, and iterate until we have no capacity issues.  Boolean.
+    BUMP_ONE_AT_A_TIME              = None
 
     #: assignment results - Passenger table
     PASSENGERS_CSV                  = r"passengers_df_iter%d.csv"
@@ -140,11 +145,77 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration():
+    def read_configuration(input_dir):
         """
-        Read the configuration parameters and override the above
+        Read the configuration parameters.
         """
-        raise Exception("Not implemented")
+        parser = ConfigParser.SafeConfigParser(
+            defaults={'iterations'                      :1,
+                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
+                      'simulation'                      :True,
+                      'output_passenger_trajectories'   :True,
+                      'time_window'                     :30,
+                      'create_skims'                    :False,
+                      'skim_start_time'                 :'5:00',
+                      'skim_end_time'                   :'10:00',
+                      'stochastic_dispersion'           :1.0,
+                      'stochastic_pathset_size'         :1000,
+                      'capacity_constraint'             :False,
+                      'trace_person_ids'                :'None',
+                      'number_of_processes'             :0,
+                      'bump_buffer'                     :5,
+                      'bump_one_at_a_time'              :True})
+        parser.read(os.path.join(input_dir, Assignment.CONFIGURATION_FILE))
+
+        Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
+        Assignment.ASSIGNMENT_TYPE               = parser.get       ('fasttrips','pathfinding_type')
+        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
+                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
+                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
+        Assignment.SIMULATION_FLAG               = parser.getboolean('fasttrips','simulation')
+        Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
+        Assignment.TIME_WINDOW = datetime.timedelta(
+                                         minutes = parser.getfloat  ('fasttrips','time_window'))
+        Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
+        Assignment.SKIM_START_TIME = datetime.datetime.strptime(
+                                                   parser.get       ('fasttrips','skim_start_time'),'%H:%M')
+        Assignment.SKIM_END_TIME   = datetime.datetime.strptime(
+                                                   parser.get       ('fasttrips','skim_end_time'),'%H:%M')
+        Assignment.STOCH_DISPERSION              = parser.getfloat  ('fasttrips','stochastic_dispersion')
+        Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('fasttrips','stochastic_pathset_size')
+        Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
+        Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
+        Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
+        Assignment.BUMP_BUFFER = datetime.timedelta(
+                                         minutes = parser.getfloat  ('fasttrips','bump_buffer'))
+        Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
+
+    @staticmethod
+    def write_configuration(output_dir):
+        """
+        Write the configuration parameters to function as a record with the output.
+        """
+        parser = ConfigParser.SafeConfigParser()
+        parser.add_section('fasttrips')
+        parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
+        parser.set('fasttrips','pathfinding_type',              Assignment.ASSIGNMENT_TYPE)
+        parser.set('fasttrips','simulation',                    'True' if Assignment.ASSIGNMENT_TYPE else 'False')
+        parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
+        parser.set('fasttrips','time_window',                   '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
+        parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
+        parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
+        parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
+        parser.set('fasttrips','stochastic_dispersion',         '%f' % Assignment.STOCH_DISPERSION)
+        parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
+        parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
+        parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
+        parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
+        parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
+        parser.set('fasttrips','bump_one_at_a_time',            'True' if Assignment.BUMP_ONE_AT_A_TIME else 'False')
+
+        output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
+        parser.write(output_file)
+        output_file.close()
 
     @staticmethod
     def initialize_fasttrips_extension(process_number, output_dir, FT):
@@ -220,6 +291,7 @@ class Assignment:
         """
         Finds the paths for the passengers.
         """
+        Assignment.write_configuration(output_dir)
 
         Assignment.bump_wait = {}
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
