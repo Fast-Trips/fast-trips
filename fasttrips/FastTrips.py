@@ -35,30 +35,33 @@ class FastTrips:
     #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    def __init__(self, input_dir, output_dir, validate_gtfs=True, read_demand=True,
+    def __init__(self, input_network_dir, input_demand_dir, output_dir,
+                 validate_gtfs=True, read_demand=True,
                  log_to_console=True, logname_append="", appendLog=False):
         """
         Constructor.
 
-        Reads configuration and input files from *input_dir*.
+        Reads configuration and input files from *input_network_dir*.
         Writes output files to *output_dir*, including log files.
 
-        :param input_dir:      Location of csv files to read
-        :type input_dir:       string
-        :param output_dir:     Location to write output and log files.
-        :type output_dir:      string
-        :param validate_gtfs:  Validate the gtfs schedule?
-        :type validate_gtfs:   bool
-        :param read_demand:    Read passenger demand?  For parallelization, workers don't need to
-                               read demand since the main process will tell them what to do.
-        :type read_demand:     bool
-        :param log_to_console: Log info to console as well as info log?
-        :type log_to_console:  bool
-        :param logname_append: Modifier for info and debug log filenames.  So workers can write their own logs.
-        :type logname_append:  string
-        :param appendLog:      Append to info and debug logs?  When FastTrips assignment iterations (to
-                               handle capacity bumps), we'd like to append rather than overwrite.
-        :type appendLog:       bool
+        :param input_network_dir: Location of network csv files to read
+        :type input_network_dir:  string
+        :param input_demand_dir:  Location of demand csv files to read
+        :type input_demand_dir:   string
+        :param output_dir:        Location to write output and log files.
+        :type output_dir:         string
+        :param validate_gtfs:     Validate the gtfs schedule?
+        :type validate_gtfs:      bool
+        :param read_demand:       Read passenger demand?  For parallelization, workers don't need to
+                                  read demand since the main process will tell them what to do.
+        :type read_demand:        bool
+        :param log_to_console:    Log info to console as well as info log?
+        :type log_to_console:     bool
+        :param logname_append:    Modifier for info and debug log filenames.  So workers can write their own logs.
+        :type logname_append:     string
+        :param appendLog:         Append to info and debug logs?  When FastTrips assignment iterations (to
+                                  handle capacity bumps), we'd like to append rather than overwrite.
+        :type appendLog:          bool
         """
         #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
         self.passengers      = None
@@ -75,8 +78,11 @@ class FastTrips:
         #: :py:class:`dict` with :py:attr:`fasttrips.Trip.trip_id` key and :py:class:`fasttrips.Trip` value
         self.trips           = None
 
-        #: string representing directory with input data
-        self.input_dir       = input_dir
+        #: string representing directory with input network data
+        self.input_network_dir       = input_network_dir
+
+        #: string representing directory with input demand data
+        self.input_demand_dir       = input_demand_dir
 
         #: string representing directory in which to write our output
         self.output_dir      = output_dir
@@ -85,7 +91,7 @@ class FastTrips:
         self.gtfs_schedule   = None
 
         # Read the configuration
-        Assignment.read_configuration(self.input_dir)
+        Assignment.read_configuration(self.input_network_dir)
 
         # setup logging
         setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
