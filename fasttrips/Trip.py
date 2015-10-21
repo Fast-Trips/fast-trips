@@ -136,7 +136,7 @@ class Trip:
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops, routes):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
@@ -264,6 +264,13 @@ class Trip:
         self.service_df[Trip.SERVICE_COLUMN_END_DATE] = \
             self.service_df[Trip.SERVICE_COLUMN_END_DATE_STR].map(lambda x: \
             datetime.datetime.combine(datetime.datetime.strptime(x, '%Y%M%d').date(), datetime.time(hour=23, minute=59, second=59, microsecond=999999)))
+
+        # Join with routes
+        self.trips_df = pandas.merge(left=self.trips_df, right=routes.routes_df,
+                                     how='left',
+                                     on=Trip.TRIPS_COLUMN_ROUTE_ID)
+        FastTripsLogger.debug("Final\n"+str(self.trips_df.head()))
+        FastTripsLogger.debug("\n"+str(self.trips_df.dtypes))
 
         FastTripsLogger.debug("=========== SERVICE PERIODS ===========\n" + str(self.service_df.head()))
         FastTripsLogger.debug("\n"+str(self.service_df.index.dtype)+"\n"+str(self.service_df.dtypes))

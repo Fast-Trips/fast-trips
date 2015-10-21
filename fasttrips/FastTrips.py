@@ -118,13 +118,13 @@ class FastTrips:
         # Optional: Transfers, Shapes, Calendar Dates...
 
         # Read routes, agencies
-        self.routes = Route(self.input_network_dir, self.gtfs_schedule, Assignment.TODAY)
+        self.routes = Route(self.input_network_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY)
 
         # Read Stops (gtfs-required) and transfers
         self.stops = Stop(self.input_network_dir, self.output_dir, self.gtfs_schedule)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(self.input_network_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY, self.stops)
+        self.trips = Trip(self.input_network_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY, self.stops, self.routes)
 
         # transfer_stops = 0
         # for stop_id,stop in self.stops.iteritems():
@@ -132,7 +132,7 @@ class FastTrips:
         # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(self.input_network_dir, Assignment.TODAY, self.stops)
+        self.tazs = TAZ(self.input_network_dir, Assignment.TODAY, self.stops, self.routes)
 
         if read_demand:
             FastTripsLogger.info("-------- Reading demand --------")

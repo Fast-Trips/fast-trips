@@ -36,7 +36,7 @@ class Route(object):
     #: See `routes_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/routes_ft.md>`_.
     INPUT_ROUTES_FILE                       = "routes_ft.txt"
     #: gtfs Routes column name: Unique identifier
-    ROUTES_COLUMN_ID                        = "route_id"
+    ROUTES_COLUMN_ROUTE_ID                  = "route_id"
     #: fasttrips Routes column name: Mode
     ROUTES_COLUMN_MODE                      = "mode"
 
@@ -44,6 +44,14 @@ class Route(object):
     ROUTES_COLUMN_FARE_CLASS                = "fare_class"
     #: fasttrips Routes column name: Proof of Payment
     ROUTES_COLUMN_PROOF_OF_PAYMENT          = "proof_of_payment"
+
+    # ========== Added by fasttrips =======================================================
+    #: fasttrips Routes column name: Mode number
+    ROUTES_COLUMN_ROUTE_ID_NUM              = "route_id_num"
+    #: fasttrips Routes column name: Mode number
+    ROUTES_COLUMN_MODE_NUM                  = "mode_num"
+    #: Route mode numbers start from here
+    ROUTES_MODE_NUM_START                   = 101
 
     #: File with fasttrips fare attributes information (this *subsitutes rather than extends* the
     #: `gtfs fare_attributes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md>`_ file).
@@ -89,12 +97,37 @@ class Route(object):
     #: fasttrips Fare transfer rules column name: Transfer Rule
     FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE    = "transfer_rule"
 
-    def __init__(self, input_dir, gtfs_schedule, today):
+    #: File with route ID, route ID number correspondence
+    OUTPUT_ROUTE_ID_NUM_FILE                    = "ft_output_route_id.txt"
+    #: File with mode, mode number correspondence
+    OUTPUT_MODE_NUM_FILE                        = "ft_output_mode_id.txt"
+
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips routes data from the input file in *input_dir*.
         """
+        self.output_dir = output_dir
         pandas.set_option('display.width', 1000)
+
+        #: Mode numbering. See `routes_ft specification for
+        #: modes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/routes_ft.md>`_.
+        self.modes_df = pandas.DataFrame(data=[
+            "local_bus",
+            "premium_bus",
+            "rapid_bus",
+            "light_rail",
+            "heavy_rail",
+            "commuter_rail",
+            "inter_regional_rail",
+            "high_speed_rail",
+            "street_car",
+            "ferry",
+            "cable_car",
+            "open_shuttle",
+            "employer_shuttle",
+            ], columns=[Route.ROUTES_COLUMN_MODE])
+        self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.ROUTES_MODE_NUM_START
 
         # Combine all gtfs Route objects to a single pandas DataFrame
         route_dicts = []
@@ -107,18 +140,35 @@ class Route(object):
         self.routes_df = pandas.DataFrame(data=route_dicts)
 
         # Read the fast-trips supplemental routes data file
-        routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE))
+        routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE),
+                                       dtype={Route.ROUTES_COLUMN_ROUTE_ID:object})
         # verify required columns are present
         routes_ft_cols = list(routes_ft_df.columns.values)
-        assert(Route.ROUTES_COLUMN_ID           in routes_ft_cols)
+        assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
         assert(Route.ROUTES_COLUMN_MODE         in routes_ft_cols)
 
         # Join to the routes dataframe
         self.routes_df = pandas.merge(left=self.routes_df, right=routes_ft_df,
                                       how='left',
-                                      on=Route.ROUTES_COLUMN_ID)
+                                      on=Route.ROUTES_COLUMN_ROUTE_ID)
 
-        self.routes_df.set_index(Route.ROUTES_COLUMN_ID, inplace=True, verify_integrity=True)
+        # Join to mode numbering
+        self.routes_df = Util.add_new_id(self.routes_df, Route.ROUTES_COLUMN_MODE, Route.ROUTES_COLUMN_MODE_NUM,
+                                         self.modes_df,  Route.ROUTES_COLUMN_MODE, Route.ROUTES_COLUMN_MODE_NUM)
+
+        # Route IDs are strings.  Create a unique numeric route ID.
+        self.route_id_df = Util.add_numeric_column(self.routes_df[[Route.ROUTES_COLUMN_ROUTE_ID]],
+                                                   id_colname=Route.ROUTES_COLUMN_ROUTE_ID,
+                                                   numeric_newcolname=Route.ROUTES_COLUMN_ROUTE_ID_NUM)
+        FastTripsLogger.debug("Route ID to number correspondence\n" + str(self.route_id_df.head()))
+        FastTripsLogger.debug(str(self.route_id_df.dtypes))
+        self.route_id_df.to_csv(os.path.join(output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
+                                columns=[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID],
+                                sep=" ", index=False)
+
+        self.routes_df = self.add_numeric_route_id(self.routes_df,
+                                                   id_colname=Route.ROUTES_COLUMN_ROUTE_ID,
+                                                   numeric_newcolname=Route.ROUTES_COLUMN_ROUTE_ID_NUM)
 
         FastTripsLogger.debug("=========== ROUTES ===========\n" + str(self.routes_df.head()))
         FastTripsLogger.debug("\n"+str(self.routes_df.dtypes))
@@ -240,3 +290,24 @@ class Route(object):
                                  (len(self.fare_transfer_rules_df), "fare xfer rules", Route.INPUT_FARE_TRANSFER_RULES_FILE))
         else:
             self.fare_transfer_rules_df = None
+
+    def add_numeric_route_id(self, input_df, id_colname, numeric_newcolname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a route ID column called *id_colname*,
+        adds the numeric route id as a column named *numeric_newcolname* and returns it.
+        """
+        return Util.add_new_id(input_df, id_colname, numeric_newcolname,
+                               mapping_df=self.route_id_df,
+                               mapping_id_colname=Route.ROUTES_COLUMN_ROUTE_ID,
+                               mapping_newid_colname=Route.ROUTES_COLUMN_ROUTE_ID_NUM)
+
+    def add_access_modes(self, access_modes_df):
+        """
+        Adds access and egress modes to the mode list
+        Writes out mapping to disk
+        """
+        self.modes_df = pandas.concat([self.modes_df,
+                                      access_modes_df], axis=0)
+        self.modes_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE),
+                             columns=[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE],
+                             sep=" ", index=False)
