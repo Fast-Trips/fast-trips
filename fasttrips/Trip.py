@@ -136,7 +136,7 @@ class Trip:
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops, routes):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process, stops, routes):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
@@ -228,10 +228,13 @@ class Trip:
         self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID]],
                                                   id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                                   numeric_newcolname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
-        self.trip_id_df.to_csv(os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE),
-                               columns=[Trip.TRIPS_COLUMN_TRIP_ID_NUM, Trip.TRIPS_COLUMN_TRIP_ID],
-                               sep=" ", index=False)
         FastTripsLogger.debug("Trip ID to number correspondence\n" + str(self.trip_id_df.head()))
+        if not is_child_process:
+            self.trip_id_df.to_csv(os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE),
+                                   columns=[Trip.TRIPS_COLUMN_TRIP_ID_NUM, Trip.TRIPS_COLUMN_TRIP_ID],
+                                   sep=" ", index=False)
+            FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE))
+
         self.trips_df = pandas.merge(left=self.trips_df, right=self.trip_id_df, how='left')
 
         # Merge vehicles

@@ -36,8 +36,7 @@ class FastTrips:
     DEBUG_LOG = "ft_debug%s.log"
 
     def __init__(self, input_network_dir, input_demand_dir, output_dir,
-                 validate_gtfs=True, read_demand=True,
-                 log_to_console=True, logname_append="", appendLog=False):
+                 is_child_process=False, logname_append="", appendLog=False):
         """
         Constructor.
 
@@ -50,13 +49,8 @@ class FastTrips:
         :type input_demand_dir:   string
         :param output_dir:        Location to write output and log files.
         :type output_dir:         string
-        :param validate_gtfs:     Validate the gtfs schedule?
-        :type validate_gtfs:      bool
-        :param read_demand:       Read passenger demand?  For parallelization, workers don't need to
-                                  read demand since the main process will tell them what to do.
-        :type read_demand:        bool
-        :param log_to_console:    Log info to console as well as info log?
-        :type log_to_console:     bool
+        :param is_child_process:  Is this FastTrips instance for a child process?
+        :type  is_child_process:  bool
         :param logname_append:    Modifier for info and debug log filenames.  So workers can write their own logs.
         :type logname_append:     string
         :param appendLog:         Append to info and debug logs?  When FastTrips assignment iterations (to
@@ -79,28 +73,31 @@ class FastTrips:
         self.trips           = None
 
         #: string representing directory with input network data
-        self.input_network_dir       = input_network_dir
+        self.input_network_dir  = input_network_dir
 
         #: string representing directory with input demand data
-        self.input_demand_dir       = input_demand_dir
+        self.input_demand_dir   = input_demand_dir
 
         #: string representing directory in which to write our output
-        self.output_dir      = output_dir
+        self.output_dir         = output_dir
+
+        #: is this instance for a child process?
+        self.is_child_process   = is_child_process
 
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
-        self.gtfs_schedule   = None
+        self.gtfs_schedule      = None
 
         # Read the configuration
         Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
 
         # setup logging
-        setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
+        setupLogging(None if is_child_process else os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
-                     logToConsole=log_to_console, append=appendLog)
+                     logToConsole=False if is_child_process else True, append=appendLog)
 
-        self.read_input_files(validate_gtfs, read_demand)
+        self.read_input_files()
 
-    def read_input_files(self, validate_gtfs, read_demand):
+    def read_input_files(self):
         """
         Reads in the input files files from *input_network_dir* and initializes the relevant data structures.
         """
@@ -109,7 +106,7 @@ class FastTrips:
         loader             = transitfeed.Loader(self.input_network_dir)
         self.gtfs_schedule = loader.Load()
 
-        if validate_gtfs:
+        if not self.is_child_process:
             # Validate the GTFS
             FastTripsLogger.info("Validating GTFS schedule")
             self.gtfs_schedule.Validate()
@@ -118,13 +115,17 @@ class FastTrips:
         # Optional: Transfers, Shapes, Calendar Dates...
 
         # Read routes, agencies
-        self.routes = Route(self.input_network_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY)
+        self.routes = Route(self.input_network_dir, self.output_dir,
+                            self.gtfs_schedule, Assignment.TODAY, self.is_child_process)
 
         # Read Stops (gtfs-required) and transfers
-        self.stops = Stop(self.input_network_dir, self.output_dir, self.gtfs_schedule)
+        self.stops = Stop(self.input_network_dir, self.output_dir,
+                          self.gtfs_schedule, self.is_child_process)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(self.input_network_dir, self.output_dir, self.gtfs_schedule, Assignment.TODAY, self.stops, self.routes)
+        self.trips = Trip(self.input_network_dir, self.output_dir,
+                          self.gtfs_schedule, Assignment.TODAY, self.is_child_process,
+                          self.stops, self.routes)
 
         # transfer_stops = 0
         # for stop_id,stop in self.stops.iteritems():
@@ -134,7 +135,7 @@ class FastTrips:
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(self.input_network_dir, Assignment.TODAY, self.stops, self.routes)
 
-        if read_demand:
+        if not self.is_child_process:
             FastTripsLogger.info("-------- Reading demand --------")
             # Read the demand int passenger_id -> passenger instance
             self.passengers = Passenger(self.input_demand_dir, Assignment.TODAY, self.stops)

@@ -1266,8 +1266,8 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
     # data and ends up meaning it takes a *really long time* to start the new process ~ 2 minutes per process.
     # Simply reading the input files again is faster.  No need to read the demand tho.
     from .FastTrips import FastTrips
-    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=input_demand_dir, output_dir=output_dir, validate_gtfs=False, read_demand=False,
-                          log_to_console=False, logname_append=worker_str, appendLog=True if iteration > 1 else False)
+    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=input_demand_dir, output_dir=output_dir, 
+                          is_child_process=True, logname_append=worker_str, appendLog=True if iteration > 1 else False)
 
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))
 

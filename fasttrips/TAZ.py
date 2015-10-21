@@ -136,18 +136,20 @@ class TAZ:
     #: mode number
     MODE_COLUMN_MODE_NUM                     = 'mode_num'
 
+    #: access and egress modes
+    ACCESS_EGRESS_MODES = ["walk","bike_own","bike_share","PNR","KNR"]
+
     def __init__(self, input_dir, today, stops, routes):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
-        self.access_modes_df = pandas.DataFrame(data=[
-            "walk",
-            "bike_own",
-            "bike_share",
-            "PNR",
-            "KNR"], columns=[TAZ.MODE_COLUMN_MODE])
-        self.access_modes_df[TAZ.MODE_COLUMN_MODE_NUM] = self.access_modes_df.index + 1
-        routes.add_access_modes(self.access_modes_df)
+        self.access_modes_df = pandas.DataFrame(data=TAZ.ACCESS_EGRESS_MODES, columns=[TAZ.MODE_COLUMN_MODE])
+        self.access_modes_df[TAZ.MODE_COLUMN_MODE] = self.access_modes_df[TAZ.MODE_COLUMN_MODE].apply(lambda x:'%s_access' % x)
+
+        self.egress_modes_df = pandas.DataFrame(data=TAZ.ACCESS_EGRESS_MODES, columns=[TAZ.MODE_COLUMN_MODE])
+        self.egress_modes_df[TAZ.MODE_COLUMN_MODE] = self.egress_modes_df[TAZ.MODE_COLUMN_MODE].apply(lambda x:'%s_egress' % x)
+
+        routes.add_access_egress_modes(self.access_modes_df, self.egress_modes_df)
 
         #: Walk access links table. Make sure TAZ ID and stop ID are read as strings.
         self.walk_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_WALK_ACCESS_FILE),
