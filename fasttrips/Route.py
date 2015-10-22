@@ -59,11 +59,11 @@ class Route(object):
     #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: Route
     MODE_TYPE_ROUTE                         = "route"
     #: Access mode numbers start from here
-    MODE_NUM_START_ACCESS                   = None
+    MODE_NUM_START_ACCESS                   = 101
     #: Egress mode numbers start from here
-    MODE_NUM_START_EGRESS                   = None
+    MODE_NUM_START_EGRESS                   = 201
     #: Route mode numbers start from here
-    MODE_NUM_START_ROUTE                    = None
+    MODE_NUM_START_ROUTE                    = 301
 
     #: File with fasttrips fare attributes information (this *subsitutes rather than extends* the
     #: `gtfs fare_attributes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md>`_ file).
@@ -140,7 +140,6 @@ class Route(object):
             "open_shuttle",
             "employer_shuttle",
             ], columns=[Route.ROUTES_COLUMN_MODE])
-        Route.MODE_NUM_START_ROUTE = 1
         self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.MODE_NUM_START_ROUTE
 
         # Combine all gtfs Route objects to a single pandas DataFrame
@@ -327,14 +326,10 @@ class Route(object):
         egress_modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_EGRESS
         self.modes_df[  Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_ROUTE
 
-        Route.MODE_NUM_START_ACCESS = len(self.modes_df) + Route.MODE_NUM_START_ROUTE
-        Route.MODE_NUM_START_EGRESS = len(self.modes_df) + len(access_modes_df) + 1
-
         self.modes_df = pandas.concat([self.modes_df,
                                       access_modes_df,
                                       egress_modes_df], axis=0)
         self.modes_df.reset_index(inplace=True)
-        self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.MODE_NUM_START_ROUTE
 
         # parent process only: write intermediate files
         if not self.is_child_process:

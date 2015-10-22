@@ -138,15 +138,44 @@ class TAZ:
 
     #: access and egress modes
     ACCESS_EGRESS_MODES = ["walk","bike_own","bike_share","PNR","KNR"]
-
+    #: Access mode: Walk
+    MODE_ACCESS_WALK                         = 101
+    #: Access mode: Bike (own)
+    MODE_ACCESS_BIKE_OWN                     = 102
+    #: Access mode: Bike (share)
+    MODE_ACCESS_BIKE_SHARE                   = 103
+    #: Access mode: Drive to PNR
+    MODE_ACCESS_PNR                          = 104
+    #: Access mode: Drive to KNR
+    MODE_ACCESS_KNR                          = 105
+    #: Egress mode: Walk
+    MODE_EGRESS_WALK                         = 201
+    #: Egress mode: Bike (own)
+    MODE_EGRESS_BIKE_OWN                     = 202
+    #: Egress mode: Bike (share)
+    MODE_EGRESS_BIKE_SHARE                   = 203
+    #: Egress mode: Drive to PNR
+    MODE_EGRESS_PNR                          = 204
+    #: Egress mode: Drive to KNR
+    MODE_EGRESS_KNR                          = 205
+    #: Access mode number list, in order of ACCESS_EGRESS_MODES
+    ACCESS_MODE_NUMS = [MODE_ACCESS_WALK,
+                        MODE_ACCESS_BIKE_OWN, MODE_ACCESS_BIKE_SHARE,
+                        MODE_ACCESS_PNR,      MODE_ACCESS_KNR]
+    #: Egress mode number list, in order of ACCESS_EGRESS_MODES
+    EGRESS_MODE_NUMS = [MODE_EGRESS_WALK,
+                        MODE_EGRESS_BIKE_OWN, MODE_EGRESS_BIKE_SHARE,
+                        MODE_EGRESS_PNR,      MODE_EGRESS_KNR]
     def __init__(self, input_dir, today, stops, routes):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
-        self.access_modes_df = pandas.DataFrame(data=TAZ.ACCESS_EGRESS_MODES, columns=[TAZ.MODE_COLUMN_MODE])
+        self.access_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
+                                                      TAZ.MODE_COLUMN_MODE_NUM:TAZ.ACCESS_MODE_NUMS })
         self.access_modes_df[TAZ.MODE_COLUMN_MODE] = self.access_modes_df[TAZ.MODE_COLUMN_MODE].apply(lambda x:'%s_access' % x)
 
-        self.egress_modes_df = pandas.DataFrame(data=TAZ.ACCESS_EGRESS_MODES, columns=[TAZ.MODE_COLUMN_MODE])
+        self.egress_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
+                                                      TAZ.MODE_COLUMN_MODE_NUM:TAZ.EGRESS_MODE_NUMS })
         self.egress_modes_df[TAZ.MODE_COLUMN_MODE] = self.egress_modes_df[TAZ.MODE_COLUMN_MODE].apply(lambda x:'%s_egress' % x)
 
         routes.add_access_egress_modes(self.access_modes_df, self.egress_modes_df)
