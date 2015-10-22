@@ -64,6 +64,73 @@ namespace fasttrips {
         VALUE_OF_TIME_              = value_of_time;
     }
 
+    void PathFinder::readIdMappingFiles()
+    {
+        // stops and trips have been renumbered by fasttrips.  Read string IDs for printing to be less confusing.
+        std::string string_num_id, string_id;
+        int num_id;
+
+        // Trip num -> id
+        std::ifstream trip_id_file;
+        std::ostringstream ss_trip;
+        ss_trip << output_dir_ << kPathSeparator << "ft_output_trip_id.txt";
+        trip_id_file.open(ss_trip.str().c_str(), std::ios_base::in);
+        trip_id_file >> string_num_id >> string_id;
+        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_trip.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
+        while (trip_id_file >> num_id >> string_id) {
+            if (false && (process_num_ <= 1) && (num_id < 5)) {
+                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+            }
+            trip_num_to_str_[num_id] = string_id;
+        }
+        trip_id_file.close();
+
+        // Stop num -> id
+        std::ifstream stop_id_file;
+        std::ostringstream ss_stop;
+        ss_stop << output_dir_ << kPathSeparator << "ft_output_stop_id.txt";
+        stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
+        stop_id_file >> string_num_id >> string_id;
+        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_stop.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
+        while (stop_id_file >> num_id >> string_id) {
+            if (false && (process_num_ <= 1) && (num_id < 5)) {
+                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+            }
+            stop_num_to_str_[num_id] = string_id;
+        }
+        stop_id_file.close();
+
+        // Route num -> id
+        std::ifstream route_id_file;
+        std::ostringstream ss_route;
+        ss_route << output_dir_ << kPathSeparator << "ft_output_route_id.txt";
+        route_id_file.open(ss_route.str().c_str(), std::ios_base::in);
+        route_id_file >> string_num_id >> string_id;
+        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_route.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
+        while (route_id_file >> num_id >> string_id) {
+            if (false && (process_num_ <= 1) && (num_id < 5)) {
+                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+            }
+            route_num_to_str_[num_id] = string_id;
+        }
+        route_id_file.close();
+
+        // Mode num -> id
+        std::ifstream mode_id_file;
+        std::ostringstream ss_mode;
+        ss_mode << output_dir_ << kPathSeparator << "ft_output_mode_id.txt";
+        mode_id_file.open(ss_mode.str().c_str(), std::ios_base::in);
+        mode_id_file >> string_num_id >> string_id;
+        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_mode.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
+        while (mode_id_file >> num_id >> string_id) {
+            if (false && (process_num_ <= 1) && (num_id < 5)) {
+                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+            }
+            mode_num_to_str_[num_id] = string_id;
+        }
+        mode_id_file.close();
+    }
+
     void PathFinder::initializeSupply(
         const char* output_dir,
         int         process_num,
@@ -75,10 +142,13 @@ namespace fasttrips {
         int         num_stoptimes,
         int*        xfer_index,
         double*     xfer_data,
-        int         num_xfers)
+        int         num_xfers,
+        int*        trip_data,
+        int         num_trips)
     {
         output_dir_  = output_dir;
         process_num_ = process_num;
+        readIdMappingFiles();
 
         for(int i=0; i<num_tazlinks; ++i) {
             TazStopCost tsc = {
@@ -124,39 +194,17 @@ namespace fasttrips {
             }
         }
 
-        // stops and trips have been renumbered by fasttrips.  Read string IDs for printing to be less confusing.
-        std::string string_num_id, string_id;
-        int num_id;
-
-        // Trip num -> id
-        std::ifstream trip_id_file;
-        std::ostringstream ss_trip;
-        ss_trip << output_dir_ << kPathSeparator << "ft_output_trip_id.txt";
-        trip_id_file.open(ss_trip.str().c_str(), std::ios_base::in);
-        trip_id_file >> string_num_id >> string_id;
-        if (process_num <= 1) { printf("Reading %s: [%s] [%s]\n", ss_trip.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
-        while (trip_id_file >> num_id >> string_id) {
-            if (false && (process_num <= 1) && (num_id < 5)) {
-                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
+        // trips
+        for (int i=0; i<num_trips; ++i) {
+            TripInfo ti = { trip_data[3*i+1], trip_data[3*i+2] };
+            trip_info_[trip_data[3*i]] = ti;
+            if (false && (process_num <= 1) && ((i<5) || (i>num_trips-5))) {
+                printf("trips[%s] = %s, %s\n",
+                       trip_num_to_str_.find(trip_data[3*i])->second.c_str(),
+                       mode_num_to_str_.find(ti.mode_)->second.c_str(),
+                       route_num_to_str_.find(ti.route_id_)->second.c_str());
             }
-            trip_num_to_str_[num_id] = string_id;
         }
-        trip_id_file.close();
-
-        // Stop num -> id
-        std::ifstream stop_id_file;
-        std::ostringstream ss_stop;
-        ss_stop << output_dir_ << kPathSeparator << "ft_output_stop_id.txt";
-        stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
-        stop_id_file >> string_num_id >> string_id;
-        if (process_num <= 1) { printf("Reading %s: [%s] [%s]\n", ss_stop.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
-        while (stop_id_file >> num_id >> string_id) {
-            if (false && (process_num <= 1) && (num_id < 5)) {
-                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
-            }
-            stop_num_to_str_[num_id] = string_id;
-        }
-        stop_id_file.close();
     }
 
     void PathFinder::setBumpWait(int*       bw_index,

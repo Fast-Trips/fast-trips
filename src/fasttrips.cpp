@@ -70,9 +70,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     const char* output_dir;
     int proc_num;
-    PyObject *input1, *input2, *input3, *input4, *input5, *input6;
-    if (!PyArg_ParseTuple(args, "siOOOOOO", &output_dir, &proc_num, &input1, &input2,
-                          &input3, &input4, &input5, &input6)) {
+    PyObject *input1, *input2, *input3, *input4, *input5, *input6, *input7;
+    if (!PyArg_ParseTuple(args, "siOOOOOOO", &output_dir, &proc_num, &input1, &input2,
+                          &input3, &input4, &input5, &input6, &input7)) {
         return NULL;
     }
 
@@ -128,11 +128,19 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // these better be the same length
     assert(num_xfer_ind == num_xfer_data);
 
+    // trips data: trip id number, route id number
+    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input7, NPY_INT32, 2, 2);
+    if (pyo == NULL) return NULL;
+    int* trip_data     = (int*)PyArray_DATA(pyo);
+    int num_trip_data  = PyArray_DIMS(pyo)[0];
+    assert(3 == PyArray_DIMS(pyo)[1]);
+
     // keep them
     pathfinder.initializeSupply(output_dir, proc_num,
                                 acc_indexes, costs, num_indexes,
                                 stop_indexes, stop_times, num_stop_ind,
-                                xfer_indexes, xfer_data, num_xfer_ind);
+                                xfer_indexes, xfer_data, num_xfer_ind,
+                                trip_data, num_trip_data);
 
     if (proc_num <= 1) {
         std::cout << "RAND_MAX = " << RAND_MAX << std::endl;

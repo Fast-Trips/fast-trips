@@ -269,9 +269,6 @@ class Assignment:
         FastTripsLogger.debug("\n" + str(walk_access_df.head()))
         FastTripsLogger.debug("\n" + str(walk_access_df.tail()))
 
-        # make a copy for index flattening
-        stop_times_df = FT.trips.stop_times_df.reset_index()
-
         # transfers copy for index flattening, cost
         transfers_df = FT.stops.transfers_df.reset_index()
         if len(transfers_df) > 0:
@@ -285,15 +282,18 @@ class Assignment:
                                      walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TIME_MIN,
                                                      TAZ.WALK_ACCESS_COLUMN_ACC_COST,
                                                      TAZ.WALK_ACCESS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
-                                     stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                     stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
+                                     FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                             Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                             Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
+                                     FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
                                      transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP_NUM,
                                                    Stop.TRANSFERS_COLUMN_TO_STOP_NUM]].as_matrix().astype('int32'),
                                      transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
-                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'))
+                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'),
+                                     FT.trips.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID_NUM,
+                                                        Trip.TRIPS_COLUMN_MODE_NUM,
+                                                        Trip.TRIPS_COLUMN_ROUTE_ID_NUM]].as_matrix().astype('int32'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,

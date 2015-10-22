@@ -31,6 +31,12 @@ namespace fasttrips {
         double  cost_;          ///< general cost units
     } TransferCost;
 
+    /// Supply data: Transit trip data, indexed by trip ID
+    typedef struct {
+        int     mode_;
+        int     route_id_;
+    } TripInfo;
+
     /// Supply data: Transit vehicle schedules
     typedef struct {
         int     trip_id_;
@@ -68,6 +74,9 @@ namespace fasttrips {
         bool    outbound_;              ///< If true, the preferred time is for arrival, otherwise it's departure
         double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
         bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
+        // unsigned char access_mode_;     ///< Access mode
+        // unsigned char transit_mode_;    ///< Transit mode
+        // unsigned char egress_mode_;     ///< Egress mode
     } PathSpecification;
 
     /**
@@ -243,6 +252,8 @@ namespace fasttrips {
         /// Transfer information: stop id -> stop id -> costs
         std::map<int, std::map<int, TransferCost> > transfer_links_o_d_;
         std::map<int, std::map<int, TransferCost> > transfer_links_d_o_;
+        /// Trip information: trip id -> Trip Info
+        std::map<int, TripInfo> trip_info_;
         /// Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
         std::map<int, std::vector<TripStopTime> > trip_stop_times_;
         /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
@@ -251,6 +262,8 @@ namespace fasttrips {
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
         std::map<int, std::string> stop_num_to_str_;
+        std::map<int, std::string> route_num_to_str_;
+        std::map<int, std::string> mode_num_to_str_;
 
         /**
          * From simulation: When there are capacity limitations on a vehicle and passengers cannot
@@ -261,6 +274,12 @@ namespace fasttrips {
          * would-be passenger.
          */
         std::map<TripStop, double, struct TripStopCompare> bump_wait_;
+
+        /**
+         * Read the intermediate files mapping integer IDs to strings
+         * for modes, stops, trips, and routes.
+         **/
+        void readIdMappingFiles();
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -448,6 +467,8 @@ namespace fasttrips {
          *                          PathFinder::transfer_links_d_o_, this array contains time
          *                          and cost for transfers.
          * @param num_xfers         The number of transfers described in the previous two arrays.
+         * @param trip_data         For transit vehicle trips, trip ID, mode and route ID numbers.
+         * @param num_trips         The number of trips described in the previous two arrays.
          */
         void initializeSupply(const char*   output_dir,
                               int           process_num,
@@ -459,7 +480,9 @@ namespace fasttrips {
                               int           num_stoptimes,
                               int*          xfer_index,
                               double*       xfer_data,
-                              int           num_xfers);
+                              int           num_xfers,
+                              int*          trip_data,
+                              int           num_trips);
 
         /**
          * Setup the information for bumped passengers.

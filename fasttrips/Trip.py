@@ -16,6 +16,7 @@ import collections,datetime,os,sys
 import numpy,pandas
 
 from .Logger import FastTripsLogger
+from .Route  import Route
 from .Util   import Util
 
 class Trip:
@@ -51,6 +52,10 @@ class Trip:
     # ========== Added by fasttrips =======================================================
     #: fasttrips Trips column name: Trip Numerical Identifier. Int.
     TRIPS_COLUMN_TRIP_ID_NUM                = 'trip_id_num'
+    #: fasttrips Trips column name: Route Numerical Identifier. Int.
+    TRIPS_COLUMN_ROUTE_ID_NUM               = Route.ROUTES_COLUMN_ROUTE_ID_NUM
+    #: fasttrips Trips column name: Mode Numerical Identifier. Int.
+    TRIPS_COLUMN_MODE_NUM                   = Route.ROUTES_COLUMN_MODE_NUM
 
     #: File with fasttrips vehicles information.
     #: See `vehicles_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/vehicles_ft.md>`_.
