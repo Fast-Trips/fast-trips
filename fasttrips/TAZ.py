@@ -16,6 +16,7 @@ import collections,datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
+from .Route  import Route
 from .Stop   import Stop
 from .Util   import Util
 
@@ -136,7 +137,7 @@ class TAZ:
     #: mode number
     MODE_COLUMN_MODE_NUM                     = 'mode_num'
 
-    #: access and egress modes
+    #: access and egress modes.  First is default.
     ACCESS_EGRESS_MODES = ["walk","bike_own","bike_share","PNR","KNR"]
     #: Access mode: Walk
     MODE_ACCESS_WALK                         = 101
@@ -172,11 +173,13 @@ class TAZ:
         """
         self.access_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
                                                       TAZ.MODE_COLUMN_MODE_NUM:TAZ.ACCESS_MODE_NUMS })
-        self.access_modes_df[TAZ.MODE_COLUMN_MODE] = self.access_modes_df[TAZ.MODE_COLUMN_MODE].apply(lambda x:'%s_access' % x)
+        self.access_modes_df[TAZ.MODE_COLUMN_MODE] = self.access_modes_df[TAZ.MODE_COLUMN_MODE]\
+            .apply(lambda x:'%s_%s' % (x, Route.MODE_TYPE_ACCESS))
 
         self.egress_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
                                                       TAZ.MODE_COLUMN_MODE_NUM:TAZ.EGRESS_MODE_NUMS })
-        self.egress_modes_df[TAZ.MODE_COLUMN_MODE] = self.egress_modes_df[TAZ.MODE_COLUMN_MODE].apply(lambda x:'%s_egress' % x)
+        self.egress_modes_df[TAZ.MODE_COLUMN_MODE] = self.egress_modes_df[TAZ.MODE_COLUMN_MODE]\
+            .apply(lambda x:'%s_%s' % (x, Route.MODE_TYPE_EGRESS))
 
         routes.add_access_egress_modes(self.access_modes_df, self.egress_modes_df)
 

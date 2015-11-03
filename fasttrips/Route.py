@@ -123,25 +123,6 @@ class Route(object):
         self.is_child_process   = is_child_process
         pandas.set_option('display.width', 1000)
 
-        #: Mode numbering. See `routes_ft specification for
-        #: modes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/routes_ft.md>`_.
-        self.modes_df = pandas.DataFrame(data=[
-            "local_bus",
-            "premium_bus",
-            "rapid_bus",
-            "light_rail",
-            "heavy_rail",
-            "commuter_rail",
-            "inter_regional_rail",
-            "high_speed_rail",
-            "street_car",
-            "ferry",
-            "cable_car",
-            "open_shuttle",
-            "employer_shuttle",
-            ], columns=[Route.ROUTES_COLUMN_MODE])
-        self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.MODE_NUM_START_ROUTE
-
         # Combine all gtfs Route objects to a single pandas DataFrame
         route_dicts = []
         for gtfs_route in gtfs_schedule.GetRouteList():
@@ -154,7 +135,8 @@ class Route(object):
 
         # Read the fast-trips supplemental routes data file
         routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE),
-                                       dtype={Route.ROUTES_COLUMN_ROUTE_ID:object})
+                                       dtype={Route.ROUTES_COLUMN_ROUTE_ID:object,
+                                              Route.ROUTES_COLUMN_MODE    :object})
         # verify required columns are present
         routes_ft_cols = list(routes_ft_df.columns.values)
         assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
@@ -164,6 +146,9 @@ class Route(object):
         self.routes_df = pandas.merge(left=self.routes_df, right=routes_ft_df,
                                       how='left',
                                       on=Route.ROUTES_COLUMN_ROUTE_ID)
+        # Get the mode list
+        self.modes_df = self.routes_df[[Route.ROUTES_COLUMN_MODE]].drop_duplicates().reset_index()
+        self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.MODE_NUM_START_ROUTE
 
         # Join to mode numbering
         self.routes_df = Util.add_new_id(self.routes_df, Route.ROUTES_COLUMN_MODE, Route.ROUTES_COLUMN_MODE_NUM,
