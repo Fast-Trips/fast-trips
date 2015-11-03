@@ -16,6 +16,7 @@ import collections,datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
+from .Route  import Route
 from .TAZ    import TAZ
 from .Util   import Util
 
@@ -72,6 +73,15 @@ class Passenger:
     TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN         = 'departure_time_min'
     #: Trip list column: Departure Time. Float, minutes after midnight.
     TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN           = 'arrival_time_min'
+    #: Trip list column: Transit Mode
+    TRIP_LIST_COLUMN_TRANSIT_MODE               = "transit_mode"
+    #: Trip list column: Access Mode
+    TRIP_LIST_COLUMN_ACCESS_MODE                = "access_mode"
+    #: Trip list column: Egress Mode
+    TRIP_LIST_COLUMN_EGRESS_MODE                = "egress_mode"
+
+    #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
+    MODE_GENERIC_TRANSIT                        = "transit"
 
     def __init__(self, input_dir, today, stops):
         """
@@ -163,6 +173,46 @@ class Passenger:
         self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
             id_colname        =Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID,
             numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM)
+
+        # figure out modes:
+        if Passenger.TRIP_LIST_COLUMN_MODE not in trip_list_cols:
+            # default to generic walk-transit-walk
+            self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE] = Passenger.MODE_GENERIC_TRANSIT
+            self.trip_list_df['mode_dash_count'] = 0
+
+        else:
+            # count the dashes in the mode
+            self.trip_list_df['mode_dash_count'] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
+                .map(lambda x: x.count('-'))
+
+        # The only modes allowed are access-transit-egress or MODE_GENERIC_TRANSIT
+        bad_mode_df = self.trip_list_df.loc[((self.trip_list_df['mode_dash_count']!=2)&
+                                             ((self.trip_list_df['mode_dash_count']!=0)|
+                                              (self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]!=Passenger.MODE_GENERIC_TRANSIT)))]
+        if len(bad_mode_df) > 0:
+            FastTripsLogger.fatal("Could not understand column '%s' in the following: \n%s" %
+                                  (Passenger.TRIP_LIST_COLUMN_MODE,
+                                   bad_mode_df[[Passenger.TRIP_LIST_COLUMN_MODE,'mode_dash_count']].to_string()))
+            sys.exit(2)
+
+        # Take care of the transit generic
+        self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==0,
+                              Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = Passenger.MODE_GENERIC_TRANSIT
+        self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==0,
+                              Passenger.TRIP_LIST_COLUMN_ACCESS_MODE ] = "%s_%s" % (TAZ.ACCESS_EGRESS_MODES[0], Route.MODE_TYPE_ACCESS)
+        self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==0,
+                              Passenger.TRIP_LIST_COLUMN_EGRESS_MODE ] = "%s_%s" % (TAZ.ACCESS_EGRESS_MODES[0], Route.MODE_TYPE_EGRESS)
+
+        # Take care of the access-transit-egress
+        self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==2,
+                              Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
+            .map(lambda x: "%s_%s" % (x[:x.find('-')], Route.MODE_TYPE_ACCESS))
+        self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==2,
+                              Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
+            .map(lambda x: x[x.find('-')+1:x.rfind('-')])
+        self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==2,
+                              Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
+            .map(lambda x: "%s_%s" % (x[x.rfind('-')+1:], Route.MODE_TYPE_EGRESS))
 
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.debug("\n"+str(self.trip_list_df.head()))
