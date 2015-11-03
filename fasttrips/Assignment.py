@@ -174,7 +174,8 @@ class Assignment:
                       'transfer_penalty'                :47.73,
                       'schedule_delay_weight'           :0.0,
                       'fare_per_boarding'               :0.0,
-                      'value_of_time'                   :999})
+                      'value_of_time'                   :999,
+                      'demand_mode_to_supply_modes'     :[]})
         parser.read(os.path.join(input_network_dir, Assignment.CONFIGURATION_FILE))
         if input_demand_dir and os.path.exists(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE)):
             parser.read(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE))
@@ -213,6 +214,10 @@ class Assignment:
         Path.FARE_PER_BOARDING                   = parser.getfloat('pathfinding','fare_per_boarding')
         Path.VALUE_OF_TIME                       = parser.getfloat('pathfinding','value_of_time')
 
+        demand_mode_to_supply_mode_items    = eval(parser.get     ('pathfinding','demand_mode_to_supply_modes'))
+        Path.DEMAND_MODE_TO_SUPPLY_MODES    = collections.OrderedDict(demand_mode_to_supply_mode_items)
+        # TODO: validate the demand modes and supply modes are covered?
+
     @staticmethod
     def write_configuration(output_dir):
         """
@@ -247,6 +252,7 @@ class Assignment:
         parser.set('pathfinding','schedule_delay_weight',       '%f' % Path.SCHEDULE_DELAY_WEIGHT)
         parser.set('pathfinding','fare_per_boarding',           '%f' % Path.FARE_PER_BOARDING)
         parser.set('pathfinding','value_of_time',               '%f' % Path.VALUE_OF_TIME)
+        parser.set('pathfinding','demand_mode_to_supply_modes', '%s' % str(Path.DEMAND_MODE_TO_SUPPLY_MODES.items()))
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)

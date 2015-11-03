@@ -1,2 +1,7 @@
 [fasttrips]
 trace_person_ids              = ['paperboy','marge']
+
+[pathfinding]
+demand_mode_to_supply_modes   = [
+    ('commuter_rail',   ['local_bus','rapid_bus','heavy_rail']),
+    ('local_bus',       ['local_bus'])]
