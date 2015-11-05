@@ -322,3 +322,13 @@ class Route(object):
                                  columns=[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE],
                                  sep=" ", index=False)
             FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE))
+
+    def add_numeric_mode_id(self, input_df, id_colname, numeric_newcolname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a mode ID column called *id_colname*,
+        adds the numeric mode id as a column named *numeric_newcolname* and returns it.
+        """
+        return Util.add_new_id(input_df, id_colname, numeric_newcolname,
+                               mapping_df=self.modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]],
+                               mapping_id_colname=Route.ROUTES_COLUMN_MODE,
+                               mapping_newid_colname=Route.ROUTES_COLUMN_MODE_NUM)

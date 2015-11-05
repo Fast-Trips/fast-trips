@@ -68,7 +68,11 @@ class Util:
         # print return_df.head()
 
         # make sure all ids were mapped to numbers
-        assert(pandas.isnull(return_df[mapping_newid_colname]).sum() == pandas.isnull(input_df[id_colname]).sum())
+        if pandas.isnull(return_df[mapping_newid_colname]).sum() != pandas.isnull(input_df[id_colname]).sum():
+            FastTripsLogger.fatal("Util.add_new_id failed to map all ids to numbers")
+            FastTripsLogger.fatal("pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname, pandas.isnull(return_df[mapping_newid_colname]).sum()))
+            FastTripsLogger.fatal("pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
+            raise
 
         # remove the redundant id column if necessary (it's redundant)
         if id_colname != mapping_id_colname:

@@ -75,15 +75,23 @@ class Passenger:
     TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN           = 'arrival_time_min'
     #: Trip list column: Transit Mode
     TRIP_LIST_COLUMN_TRANSIT_MODE               = "transit_mode"
+    #: Trip list column: Numeric Transit Mode
+    TRIP_LIST_COLUMN_TRANSIT_MODE_NUM           = "transit_mode_num"
     #: Trip list column: Access Mode
     TRIP_LIST_COLUMN_ACCESS_MODE                = "access_mode"
+    #: Trip list column: Numeric Access Mode
+    TRIP_LIST_COLUMN_ACCESS_MODE_NUM            = "access_mode_num"
     #: Trip list column: Egress Mode
     TRIP_LIST_COLUMN_EGRESS_MODE                = "egress_mode"
+    #: Trip list column: Numeric Egress Mode
+    TRIP_LIST_COLUMN_EGRESS_MODE_NUM            = "egress_mode_num"
 
     #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
     MODE_GENERIC_TRANSIT                        = "transit"
+    #: Generic transit - Numeric mode number
+    MODE_GENERIC_TRANSIT_NUM                    = 1000
 
-    def __init__(self, input_dir, today, stops):
+    def __init__(self, input_dir, today, stops, routes):
         """
         Constructor from dictionary mapping attribute to value.
         """
@@ -214,8 +222,23 @@ class Passenger:
                               Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
             .map(lambda x: "%s_%s" % (x[x.rfind('-')+1:], Route.MODE_TYPE_EGRESS))
 
+        # We're done with mode_dash_count, thanks for your service
+        self.trip_list_df.drop('mode_dash_count', axis=1, inplace=True) # replace with cumsum
+
+        # Get numeric version of modes - access and egress are straightforward
+        self.trip_list_df = routes.add_numeric_mode_id(input_df           = self.trip_list_df,
+                                                       id_colname         = Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+                                                       numeric_newcolname = Passenger.TRIP_LIST_COLUMN_ACCESS_MODE_NUM)
+        self.trip_list_df = routes.add_numeric_mode_id(input_df           = self.trip_list_df,
+                                                       id_colname         = Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+                                                       numeric_newcolname = Passenger.TRIP_LIST_COLUMN_EGRESS_MODE_NUM)
+
+        # TODO: get numeric version of DEMAND mode (See Path.DEMAND_MODE_TO_SUPPLY_MODES)
+
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
-        FastTripsLogger.debug("\n"+str(self.trip_list_df.head()))
+        FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string(formatters=
+            {Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME:Util.datetime64_formatter,
+             Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME  :Util.datetime64_formatter}))
 
         #: Maps trip list ID num to :py:class:`Path` instance
         self.id_to_path = collections.OrderedDict()
