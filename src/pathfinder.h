@@ -102,6 +102,7 @@ namespace fasttrips {
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
                                         ///< One of PathFinder::MODE_ACCESS, PathFinder::MODE_EGRESS,
                                         ///< PathFinder::MODE_TRANSFER, or a trip ID
+        int     trip_id_;               ///< Trip ID if deparr_mode_ is a transit mode (-1 if not trip)
         int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
@@ -418,6 +419,7 @@ namespace fasttrips {
         const static int MODE_ACCESS    = -100;
         const static int MODE_EGRESS    = -101;
         const static int MODE_TRANSFER  = -102;
+        const static int MODE_TRIP      = -103;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
         const static double MAX_COST;
         const static double MAX_TIME;

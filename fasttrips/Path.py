@@ -62,13 +62,14 @@ class Path:
 
     STATE_IDX_LABEL         = 0  #: :py:class:`datetime.timedelta` instance
     STATE_IDX_DEPARR        = 1  #: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.
-    STATE_IDX_DEPARRMODE    = 2  #: string or trip identifier.
-    STATE_IDX_SUCCPRED      = 3  #: stop identifier or TAZ identifier
-    STATE_IDX_SEQ           = 4  #: sequence (for trip)
-    STATE_IDX_SEQ_SUCCPRED  = 5  #: sequence for successor/predecessor
-    STATE_IDX_LINKTIME      = 6  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_COST          = 7  #: cost float, for hyperpath/stochastic assignment
-    STATE_IDX_ARRDEP        = 8  #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
+    STATE_IDX_DEPARRMODE    = 2  #: mode id
+    STATE_IDX_TRIP          = 3  #: trip id
+    STATE_IDX_SUCCPRED      = 4  #: stop identifier or TAZ identifier
+    STATE_IDX_SEQ           = 5  #: sequence (for trip)
+    STATE_IDX_SEQ_SUCCPRED  = 6  #: sequence for successor/predecessor
+    STATE_IDX_LINKTIME      = 7  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_COST          = 8  #: cost float, for hyperpath/stochastic assignment
+    STATE_IDX_ARRDEP        = 9  #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
 
     STATE_MODE_ACCESS   = "Access"
     STATE_MODE_EGRESS   = "Egress"

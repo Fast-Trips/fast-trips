@@ -301,6 +301,7 @@ namespace fasttrips {
                 cost,                                                                       // label
                 deparr_time,                                                                // departure/arrival time
                 path_spec.outbound_ ? PathFinder::MODE_EGRESS : PathFinder::MODE_ACCESS,    // departure/arrival mode
+                -1,                                                                         // trip id
                 start_taz_id,                                                               // successor/predecessor
                 -1,                                                                         // sequence
                 -1,                                                                         // sequence succ/pred
@@ -339,6 +340,7 @@ namespace fasttrips {
         // current_stop_state is a vector
         std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
         int current_mode = current_stop_state[0].deparr_mode_;      // why index 0?
+        int current_trip = current_stop_state[0].trip_id_;
 
         // no transfer to/from access or egress
         if (current_mode == PathFinder::MODE_EGRESS) return;
@@ -404,7 +406,7 @@ namespace fasttrips {
                 // curious... this only applies to OUTBOUND
                 if (path_spec.outbound_)
                 {
-                    TripStop ts = { current_mode, current_stop_state[0].seq_, current_label_stop.stop_id_ };
+                    TripStop ts = { current_trip, current_stop_state[0].seq_, current_label_stop.stop_id_ };
                     std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
                     if (bwi != bump_wait_.end())
                     {
@@ -436,6 +438,7 @@ namespace fasttrips {
                     new_label,                      // label
                     deparr_time,                    // departure/arrival time
                     PathFinder::MODE_TRANSFER,      // departure/arrival mode
+                    -1,                             // trip id
                     current_label_stop.stop_id_,    // successor/predecessor
                     -1,                             // sequence
                     -1,                             // sequence succ/pred
@@ -496,7 +499,7 @@ namespace fasttrips {
                 if (path_spec.outbound_) {
                     // if outbound, this trip loop is possible trips *before* the current trip
                     // checking that we get here in time for the current trip
-                    check_for_bump_wait.trip_id_ = current_stop_state[0].deparr_mode_;
+                    check_for_bump_wait.trip_id_ = current_stop_state[0].trip_id_;
                     check_for_bump_wait.seq_     = current_stop_state[0].seq_;
                     check_for_bump_wait.stop_id_ = current_label_stop.stop_id_;
                     //  arrive from the loop trip
@@ -522,7 +525,7 @@ namespace fasttrips {
                         trace_file << " for potential trip " << it->trip_id_ << std::endl;
                     }
                     if ((arrive_time + 0.01 >= latest_time) &&
-                        (current_stop_state[0].deparr_mode_ != it->trip_id_)) {
+                        (current_stop_state[0].trip_id_ != it->trip_id_)) {
                         if (path_spec.trace_) { trace_file << "Continuing" << std::endl; }
                         continue;
                     }
@@ -600,6 +603,7 @@ namespace fasttrips {
                             StopState rej_ss = {
                                 new_label,                      // label
                                 deparr_time,                    // departure/arrival time
+                                MODE_TRIP,                      // departure/arrivale mode
                                 possible_board_alight.trip_id_, // trip id
                                 current_label_stop.stop_id_,    // successor/predecessor
                                 possible_board_alight.seq_,     // sequence
@@ -623,6 +627,7 @@ namespace fasttrips {
                     StopState ss = {
                         new_label,                      // label
                         deparr_time,                    // departure/arrival time
+                        MODE_TRIP,                      // departure/arrival mode
                         possible_board_alight.trip_id_, // trip id
                         current_label_stop.stop_id_,    // successor/predecessor
                         possible_board_alight.seq_,     // sequence
@@ -859,6 +864,7 @@ namespace fasttrips {
                     new_label,                                                                  // label
                     deparr_time,                                                                // departure/arrival time
                     path_spec.outbound_ ? PathFinder::MODE_ACCESS : PathFinder::MODE_EGRESS,    // departure/arrival mode
+                    -1,                                                                         // trip id
                     stop_id,                                                                    // successor/predecessor
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
@@ -1576,6 +1582,7 @@ namespace fasttrips {
         ostr << std::setw(13) << "label";
         ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
         ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
+        ostr << std::setw(10) << "trip_id";
         ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
         ostr << std::setw( 5) << "seq";
         ostr << std::setw( 5) << (path_spec.outbound_ ? "suc" : "pred");
@@ -1598,6 +1605,13 @@ namespace fasttrips {
         printTime(ostr, ss.deparr_time_);
         ostr << "  ";
         printMode(ostr, ss.deparr_mode_);
+        ostr << "  ";
+        std::map<int, std::string>::const_iterator it = trip_num_to_str_.find(ss.trip_id_);
+        if (it == trip_num_to_str_.end()) {
+            ostr << std::setw(8) << std::setfill(' ') << ss.trip_id_;
+        } else {
+            ostr << std::setw(8) << std::setfill(' ') << it->second;
+        }
         ostr << "  ";
         ostr << std::setw(10) << std::setfill(' ') << stop_num_to_str_.find(ss.stop_succpred_)->second;
         ostr << "  ";
@@ -1663,9 +1677,11 @@ namespace fasttrips {
             ostr << std::setw(10) << std::setfill(' ') << "Egress";
         } else if (mode == PathFinder::MODE_TRANSFER) {
             ostr << std::setw(10) << std::setfill(' ') << "Transfer";
+        } else if (mode == PathFinder::MODE_TRIP) {
+            ostr << std::setw(10) << std::setfill(' ') << "Trip";
         } else {
             // trip
-            ostr << std::setw(10) << std::setfill(' ') << trip_num_to_str_.find(mode)->second;
+            ostr << std::setw(10) << std::setfill(' ') << "???";
         }
     }
 

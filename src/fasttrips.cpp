@@ -197,7 +197,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     // package for returning.  We'll separate ints and doubles.
     npy_intp dims_int[2];
     dims_int[0] = path.stops_.size();
-    dims_int[1] = 5; // stop_id, deparr_mode_, stop_succpred_, seq_, seq_succpred_
+    dims_int[1] = 6; // stop_id, deparr_mode_, trip_id_, stop_succpred_, seq_, seq_succpred_
     PyArrayObject *ret_int = (PyArrayObject *)PyArray_SimpleNew(2, dims_int, NPY_INT32);
 
     npy_intp dims_double[2];
@@ -209,9 +209,10 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
         int stop_id = path.stops_[ind];
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 0) = stop_id;
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 1) = path.states_[stop_id].deparr_mode_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path.states_[stop_id].stop_succpred_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 3) = path.states_[stop_id].seq_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path.states_[stop_id].seq_succpred_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path.states_[stop_id].trip_id_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 3) = path.states_[stop_id].stop_succpred_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path.states_[stop_id].seq_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 5) = path.states_[stop_id].seq_succpred_;
 
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = path.states_[stop_id].label_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path.states_[stop_id].deparr_time_;

@@ -566,21 +566,25 @@ class Assignment:
 
         for index in range(ret_ints.shape[0]):
             mode = ret_ints[index,1]
+            # todo
             if mode == -100:
                 mode = Path.STATE_MODE_ACCESS
             elif mode == -101:
                 mode = Path.STATE_MODE_EGRESS
             elif mode == -102:
                 mode = Path.STATE_MODE_TRANSFER
+            elif mode == -103:
+                mode = Passenger.MODE_GENERIC_TRANSIT_NUM
 
             if hyperpath:
                 return_states[ret_ints[index, 0]] = [
                               ret_doubles[index,0],                                         # label,
                               midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
                               mode,                                                         # departure/arrival mode
-                              ret_ints[index,2],                                            # successor/predecessor
-                              ret_ints[index,3],                                            # sequence
-                              ret_ints[index,4],                                            # sequence succ/pred
+                              ret_ints[index,2],                                            # trip id
+                              ret_ints[index,3],                                            # successor/predecessor
+                              ret_ints[index,4],                                            # sequence
+                              ret_ints[index,5],                                            # sequence succ/pred
                               datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
                               ret_doubles[index,3],                                         # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
@@ -590,9 +594,10 @@ class Assignment:
                               datetime.timedelta(minutes=ret_doubles[index,0]),              # label,
                               midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
                               mode,                                                         # departure/arrival mode
-                              ret_ints[index,2],                                            # successor/predecessor
-                              ret_ints[index,3],                                            # sequence
-                              ret_ints[index,4],                                            # sequence succ/pred
+                              ret_ints[index,2],                                            # trip id
+                              ret_ints[index,3],                                            # successor/predecessor
+                              ret_ints[index,4],                                            # sequence
+                              ret_ints[index,5],                                            # sequence succ/pred
                               datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
                               datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
@@ -711,7 +716,7 @@ class Assignment:
                     linkmode        = state[Path.STATE_IDX_DEPARRMODE]
                     trip_id         = None
                     if linkmode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
-                        trip_id     = linkmode
+                        trip_id     = state[Path.STATE_IDX_TRIP]
                         linkmode    = Path.STATE_MODE_TRIP
 
                     if path.outbound():
