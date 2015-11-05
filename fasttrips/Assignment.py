@@ -175,7 +175,7 @@ class Assignment:
                       'schedule_delay_weight'           :0.0,
                       'fare_per_boarding'               :0.0,
                       'value_of_time'                   :999,
-                      'demand_mode_to_supply_modes'     :[]})
+                      'demand_mode_to_supply_modes'     :'[]'})
         parser.read(os.path.join(input_network_dir, Assignment.CONFIGURATION_FILE))
         if input_demand_dir and os.path.exists(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE)):
             parser.read(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE))
