@@ -16,12 +16,17 @@ bump_one_at_a_time            = True
 
 # pathfinding configuration
 [pathfinding]
-in_vehicle_time_weight        = 1.0
-wait_time_weight              = 1.77
-walk_access_time_weight       = 3.93
-walk_egress_time_weight       = 3.93
-walk_transfer_time_weight     = 3.93
-transfer_penalty              = 47.73
-schedule_delay_weight         = 0
-fare_per_boarding             = 0
-value_of_time                 = 999
+# user class name => demand mode => supply mode => weights
+weights                       = {
+    "all": [
+       ((ALL,ALL,ALL), {
+            "schedule_delay"            :00.0,
+            "access_time"               :03.93,
+            "in_vehicle_time"           :01.0,
+            "wait_time"                 :01.77,
+            "transfer_penalty"          :47.73,
+            "egress_time"               :03.94,
+        })
+    ]}
+# fare_per_boarding             = 0
+# value_of_time                 = 999

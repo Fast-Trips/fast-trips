@@ -1,7 +1,102 @@
 [fasttrips]
+number_of_processes           = 1
 trace_person_ids              = ['paperboy','marge']
 
 [pathfinding]
-demand_mode_to_supply_modes   = [
-    ('commuter_rail',   ['local_bus','rapid_bus','heavy_rail']),
-    ('local_bus',       ['local_bus'])]
+user_class_function           = user_class
+#
+#   { dictionary of user_class_name => [ list of
+#       ((demand access mode, demand transit mode, demand egress mode), demand_mode_weights) ]
+#
+#   where demand_mode_weights is either:
+#           a dictionary of supply_mode =>
+#              { "supply_mode":"transit"|"access"|"egress",
+#                 weight_name => weight_value for that supply mode }
+#           OR
+#              {  weight_name => weight_value } to apply to any supply mode
+#
+#
+# If a demand mode match is found (that's not ALL) and supply modes are specified,
+# then the supply modes specified are the only supply modes allowed for that demand mode.
+#
+# So below, the "local_bus" demand mode means only the "local_bus" supply mode is allowed.
+#
+weights                       = {
+    "real": [
+        ((ALL,"commuter_rail",ALL), {
+            "local_bus": {
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :03.00,
+                "wait_time"             :03.77,
+                "transfer_penalty"      :37.73,
+            },
+            "rapid_bus": {
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :04.00,
+                "wait_time"             :04.77,
+                "transfer_penalty"      :47.73,
+            },
+            "heavy_rail":{
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :01.00,
+                "wait_time"             :01.77,
+                "transfer_penalty"      :17.73,
+            }
+        }),
+        ((ALL,"local_bus",ALL), {
+            "local_bus": {
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :05.00,
+                "wait_time"             :05.77,
+                "transfer_penalty"      :57.73,
+            }
+        }),
+        (("walk",ALL,ALL), {
+            "access_time"               :02.5
+        }),
+        ((ALL,ALL,"walk"), {
+            "egress_time"               :02.7
+        }),
+        ((ALL,ALL,ALL), {
+            "schedule_delay"            :00.1,
+            "walk_transfer_time"        :03.93,
+        })
+    ],
+    # everything is great if you're not real!
+    "not_real": [
+        ((ALL,"commuter_rail",ALL), {
+            "local_bus": {
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :00.30,
+                "wait_time"             :00.37,
+                "transfer_penalty"      :03.77,
+            },
+            "rapid_bus": {
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :00.40,
+                "wait_time"             :00.47,
+                "transfer_penalty"      :04.77,
+            },
+            "heavy_rail":{
+                "supply_mode"           :"transit",
+                "in_vehicle_time"       :00.10,
+                "wait_time"             :00.17,
+                "transfer_penalty"      :01.77,
+            }
+        }),
+        ((ALL,"local_bus",ALL), {
+            "in_vehicle_time"           :00.50,
+            "wait_time"                 :00.57,
+            "transfer_penalty"          :05.77,
+        }),
+        (("walk",ALL,ALL), {
+            "access_time"               :00.25
+        }),
+        ((ALL,ALL,"walk"), {
+            "egress_time"               :00.27
+        }),
+        ((ALL,ALL,ALL), {
+            "schedule_delay"            :00.0,
+            "walk_transfer_time"        :00.39,
+        })
+    ]}

@@ -32,6 +32,9 @@ class Assignment:
     """
     #: Configuration file for fasttrips
     CONFIGURATION_FILE              = 'config_ft.txt'
+    #: Configuration functions
+    CONFIGURATION_FUNCTIONS_FILE    = 'config_ft.py'
+
     #: Output copy of the configuration file in case anything got overridden
     #: (Hmm naming conventions are a bit awkward here)
     CONFIGURATION_OUTPUT_FILE       = 'ft_output_config.txt'
@@ -149,6 +152,17 @@ class Assignment:
         """
         Read the configuration parameters.
         """
+        #: ALL is a keyword in the weights configuration since it's more intuitive looking than "None"
+        ALL = None
+
+        # Functions are defined in here -- read this and eval it
+        func_file = os.path.join(input_demand_dir, Assignment.CONFIGURATION_FUNCTIONS_FILE)
+        if os.path.exists(func_file):
+            my_globals = {}
+            FastTripsLogger.info("Reading %s" % func_file)
+            execfile(func_file, my_globals, Path.CONFIGURED_FUNCTIONS)
+            FastTripsLogger.info("Path.CONFIGURED_FUNCTIONS = %s" % str(Path.CONFIGURED_FUNCTIONS))
+
         parser = ConfigParser.RawConfigParser(
             defaults={'iterations'                      :1,
                       'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
@@ -166,16 +180,8 @@ class Assignment:
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :True,
                       # pathfinding
-                      'in_vehicle_time_weight'          :1.0,
-                      'wait_time_weight'                :1.77,
-                      'walk_access_time_weight'         :3.93,
-                      'walk_egress_time_weight'         :3.93,
-                      'walk_transfer_time_weight'       :3.93,
-                      'transfer_penalty'                :47.73,
-                      'schedule_delay_weight'           :0.0,
-                      'fare_per_boarding'               :0.0,
-                      'value_of_time'                   :999,
-                      'demand_mode_to_supply_modes'     :'[]'})
+                      'user_class_function'             :'generic_user_class'
+                     })
         parser.read(os.path.join(input_network_dir, Assignment.CONFIGURATION_FILE))
         if input_demand_dir and os.path.exists(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE)):
             parser.read(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE))
@@ -204,19 +210,13 @@ class Assignment:
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
         # pathfinding
-        Path.IN_VEHICLE_TIME_WEIGHT              = parser.getfloat('pathfinding','in_vehicle_time_weight')
-        Path.WAIT_TIME_WEIGHT                    = parser.getfloat('pathfinding','wait_time_weight')
-        Path.WALK_ACCESS_TIME_WEIGHT             = parser.getfloat('pathfinding','walk_access_time_weight')
-        Path.WALK_EGRESS_TIME_WEIGHT             = parser.getfloat('pathfinding','walk_egress_time_weight')
-        Path.WALK_TRANSFER_TIME_WEIGHT           = parser.getfloat('pathfinding','walk_transfer_time_weight')
-        Path.TRANSFER_PENALTY                    = parser.getfloat('pathfinding','transfer_penalty')
-        Path.SCHEDULE_DELAY_WEIGHT               = parser.getfloat('pathfinding','schedule_delay_weight')
-        Path.FARE_PER_BOARDING                   = parser.getfloat('pathfinding','fare_per_boarding')
-        Path.VALUE_OF_TIME                       = parser.getfloat('pathfinding','value_of_time')
+        Path.USER_CLASS_FUNCTION                 = parser.get     ('pathfinding','user_class_function')
+        if Path.USER_CLASS_FUNCTION not in Path.CONFIGURED_FUNCTIONS:
+            FastTripsLogger.fatal("User class function [%s] not defined.  Please check your function file [%s]" % (Path.USER_CLASS_FUNCTION, func_file))
+            raise
 
-        demand_mode_to_supply_mode_items    = eval(parser.get     ('pathfinding','demand_mode_to_supply_modes'))
-        Path.DEMAND_MODE_TO_SUPPLY_MODES    = collections.OrderedDict(demand_mode_to_supply_mode_items)
-        # TODO: validate the demand modes and supply modes are covered?
+        Path.WEIGHTS                        = eval(parser.get     ('pathfinding','weights'))
+        FastTripsLogger.debug("Weights =\n%s" % str(Path.WEIGHTS))
 
     @staticmethod
     def write_configuration(output_dir):
@@ -243,16 +243,8 @@ class Assignment:
 
         #pathfinding
         parser.add_section('pathfinding')
-        parser.set('pathfinding','in_vehicle_time_weight',      '%f' % Path.IN_VEHICLE_TIME_WEIGHT)
-        parser.set('pathfinding','wait_time_weight',            '%f' % Path.WAIT_TIME_WEIGHT)
-        parser.set('pathfinding','walk_access_time_weight',     '%f' % Path.WALK_ACCESS_TIME_WEIGHT)
-        parser.set('pathfinding','walk_egress_time_weight',     '%f' % Path.WALK_EGRESS_TIME_WEIGHT)
-        parser.set('pathfinding','walk_transfer_time_weight',   '%f' % Path.WALK_TRANSFER_TIME_WEIGHT)
-        parser.set('pathfinding','transfer_penalty',            '%f' % Path.TRANSFER_PENALTY)
-        parser.set('pathfinding','schedule_delay_weight',       '%f' % Path.SCHEDULE_DELAY_WEIGHT)
-        parser.set('pathfinding','fare_per_boarding',           '%f' % Path.FARE_PER_BOARDING)
-        parser.set('pathfinding','value_of_time',               '%f' % Path.VALUE_OF_TIME)
-        parser.set('pathfinding','demand_mode_to_supply_modes', '%s' % str(Path.DEMAND_MODE_TO_SUPPLY_MODES.items()))
+        parser.set('pathfinding','user_class_function',         '%s' % Path.USER_CLASS_FUNCTION)
+        parser.set('pathfinding','weights',                     '%s' % str(Path.WEIGHTS))
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)

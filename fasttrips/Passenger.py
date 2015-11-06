@@ -91,6 +91,9 @@ class Passenger:
     #: Generic transit - Numeric mode number
     MODE_GENERIC_TRANSIT_NUM                    = 1000
 
+    #: Trip list column: User class. String.
+    TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
+
     def __init__(self, input_dir, today, stops, routes):
         """
         Constructor from dictionary mapping attribute to value.
@@ -234,6 +237,8 @@ class Passenger:
                                                        numeric_newcolname = Passenger.TRIP_LIST_COLUMN_EGRESS_MODE_NUM)
 
         # TODO: get numeric version of DEMAND mode (See Path.DEMAND_MODE_TO_SUPPLY_MODES)
+        from .Path import Path
+        Path.set_user_class(self.trip_list_df, Passenger.TRIP_LIST_COLUMN_USER_CLASS)
 
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string(formatters=

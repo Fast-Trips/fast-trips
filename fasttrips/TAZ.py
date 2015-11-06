@@ -232,11 +232,6 @@ class TAZ:
             FastTripsLogger.debug("=========== DRIVE ACCESS ===========\n" + str(self.drive_access_df.head()))
             FastTripsLogger.debug("As read\n"+str(self.drive_access_df.dtypes))
 
-            # skipping index setting for now -- it's annoying for joins
-            # self.drive_access_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ,
-            #                                 TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
-            #                                 TAZ.DRIVE_ACCESS_COLUMN_DIRECTION], inplace=True, verify_integrity=True)
-
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME]
 
             # datetime version
@@ -258,6 +253,13 @@ class TAZ:
             # convert time column from number to timedelta
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
+
+            # We're going to join this with stops to get drive-to-stop
+            # First, figure out unique lots
+            self.lot_ids_df = self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]].drop_duplicates()
+            FastTripsLogger.debug("Lot IDs = \n%s" % self.lot_ids_df.to_string())
+
+            # drive_access = self.drive_access_df.loc[self.drive_access_df[]]
 
             FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
             FastTripsLogger.info("Read %7d %15s from %25s" %

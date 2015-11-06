@@ -19,6 +19,10 @@ from .Logger    import FastTripsLogger
 from .Passenger import Passenger
 from .Util      import Util
 
+#: Default user class: just one class called "all"
+def generic_user_class(row_series):
+    return "all"
+
 class Path:
     """
     Represents a path for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`
@@ -30,32 +34,25 @@ class Path:
     #: Path times output file
     PATH_TIMES_OUTPUT_FILE          = 'ft_output_passengerTimes.txt'
 
-    #: Path configuration: Weight of in-vehicle time
-    IN_VEHICLE_TIME_WEIGHT          = None
+    #: Configured functions, indexed by name
+    CONFIGURED_FUNCTIONS            = { 'generic_user_class':generic_user_class }
 
-    #: Path configuration: Weight of waiting time
-    WAIT_TIME_WEIGHT                = None
+    #: Path configuration: Name of the function that defines user class
+    USER_CLASS_FUNCTION             = None
 
-    #: Path configuration: Weight of access walk time
-    WALK_ACCESS_TIME_WEIGHT         = None
+    #: Path weights.
+    WEIGHTS                         = None
 
-    #: Path configuration: Weight of egress walk time
-    WALK_EGRESS_TIME_WEIGHT         = None
-
-    #: Path configuration: Weight of transfer walking time
-    WALK_TRANSFER_TIME_WEIGHT       = None
-
-    #: Path configuration: Weight transfer penalty (minutes)
-    TRANSFER_PENALTY                = None
-
-    #: Path configuration: Weight of schedule delay (0 - no penalty)
-    SCHEDULE_DELAY_WEIGHT           = None
-
-    #: Path configuration: Fare in dollars per boarding (with no transfer credit)
-    FARE_PER_BOARDING               = None
-
-    #: Path configuration: Value of time (dollars per hour)
-    VALUE_OF_TIME                   = None
+    #: todo: these will get removed in favor of WEIGHTS above
+    IN_VEHICLE_TIME_WEIGHT          = 1.0
+    WAIT_TIME_WEIGHT                = 1.77
+    WALK_ACCESS_TIME_WEIGHT         = 3.93
+    WALK_EGRESS_TIME_WEIGHT         = 3.93
+    WALK_TRANSFER_TIME_WEIGHT       = 3.93
+    TRANSFER_PENALTY                = 47.73
+    SCHEDULE_DELAY_WEIGHT           = 0
+    FARE_PER_BOARDING               = 0
+    VALUE_OF_TIME                   = 999
 
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
@@ -138,6 +135,13 @@ class Path:
         Quick accessor to see if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`.
         """
         return self.direction == Path.DIR_OUTBOUND
+
+    @staticmethod
+    def set_user_class(trip_list_df, new_colname):
+        """
+        Adds a column called user_class by applying the configured user class function.
+        """
+        trip_list_df[new_colname] = trip_list_df.apply(Path.CONFIGURED_FUNCTIONS[Path.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
     def state_str_header(state, direction=DIR_OUTBOUND):

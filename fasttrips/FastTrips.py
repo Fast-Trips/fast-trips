@@ -87,13 +87,13 @@ class FastTrips:
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
         self.gtfs_schedule      = None
 
-        # Read the configuration
-        Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
-
         # setup logging
         setupLogging(None if is_child_process else os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
                      logToConsole=False if is_child_process else True, append=appendLog)
+
+        # Read the configuration
+        Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
 
         self.read_input_files()
 
@@ -126,11 +126,6 @@ class FastTrips:
         self.trips = Trip(self.input_network_dir, self.output_dir,
                           self.gtfs_schedule, Assignment.TODAY, self.is_child_process,
                           self.stops, self.routes)
-
-        # transfer_stops = 0
-        # for stop_id,stop in self.stops.iteritems():
-        #     if stop.is_transfer(): transfer_stops += 1
-        # FastTripsLogger.info("Found %6d transfer stops" % transfer_stops)
 
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(self.input_network_dir, Assignment.TODAY, self.stops, self.routes)

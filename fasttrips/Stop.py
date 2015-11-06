@@ -212,7 +212,7 @@ class Stop:
             self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
                 self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
-        FastTripsLogger.debug("Final\n"+str(self.transfers_df.head()))
+        FastTripsLogger.debug("Final\n"+str(self.transfers_df))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
 
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
