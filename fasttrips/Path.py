@@ -40,8 +40,23 @@ class Path:
     #: Path configuration: Name of the function that defines user class
     USER_CLASS_FUNCTION             = None
 
-    #: Path weights.
-    WEIGHTS                         = None
+    #: File with weights file.  Space delimited table.
+    WEIGHTS_FILE                    = 'pathweight_ft.txt'
+    #: Path weights
+    WEIGHTS_DF                      = None
+
+    #: Weights column: User Class
+    WEIGHTS_COLUMN_USER_CLASS       = "user_class"
+    #: Weights column: Demand Mode Type
+    WEIGHTS_COLUMN_DEMAND_MODE_TYPE = "demand_mode_type"
+    #: Weights column: Demand Mode Type
+    WEIGHTS_COLUMN_DEMAND_MODE      = "demand_mode"
+    #: Weights column: Supply Mode
+    WEIGHTS_COLUMN_SUPPLY_MODE      = "supply_mode"
+    #: Weights column: Weight Name
+    WEIGHTS_COLUMN_WEIGHT_NAME      = "weight_name"
+    #: Weights column: Weight Value
+    WEIGHTS_COLUMN_WEIGHT_VALUE     = "weight_value"
 
     #: todo: these will get removed in favor of WEIGHTS above
     IN_VEHICLE_TIME_WEIGHT          = 1.0
@@ -142,6 +157,40 @@ class Path:
         Adds a column called user_class by applying the configured user class function.
         """
         trip_list_df[new_colname] = trip_list_df.apply(Path.CONFIGURED_FUNCTIONS[Path.USER_CLASS_FUNCTION], axis=1)
+
+    @staticmethod
+    def verify_weight_config(modes_df):
+        """
+        Verify that we have complete weight configurations for the user classes and modes in the given DataFrame
+        """
+        # First, verify required columns are found
+        weight_cols     = list(Path.WEIGHTS_DF.columns.values)
+        assert(Path.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
+        assert(Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE in weight_cols)
+        assert(Path.WEIGHTS_COLUMN_DEMAND_MODE      in weight_cols)
+        assert(Path.WEIGHTS_COLUMN_SUPPLY_MODE      in weight_cols)
+        assert(Path.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
+        assert(Path.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
+
+        print modes_df
+
+        # join
+        weight_check = pandas.merge(left=modes_df,
+                                    right=Path.WEIGHTS_DF,
+                                    on=[Path.WEIGHTS_COLUMN_USER_CLASS,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE],
+                                    how='left')
+        print weight_check
+        #: misc, initial, wait, time_min
+        #: misc, transfer, walk, time_min
+        #: misc, transfer, wait, time_min
+        #:                 walk_access, time_min
+        #:                 walk_egress, time_min
+        #: transit,                     in_vehicle_time_min
+        #: transit,                     wait_time_min
+        #: transit                      transfer_penalty
+        # sys.exit()
 
     @staticmethod
     def state_str_header(state, direction=DIR_OUTBOUND):

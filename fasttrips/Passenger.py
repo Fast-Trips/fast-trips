@@ -210,35 +210,47 @@ class Passenger:
         self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==0,
                               Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = Passenger.MODE_GENERIC_TRANSIT
         self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==0,
-                              Passenger.TRIP_LIST_COLUMN_ACCESS_MODE ] = "%s_%s" % (TAZ.ACCESS_EGRESS_MODES[0], Route.MODE_TYPE_ACCESS)
+                              Passenger.TRIP_LIST_COLUMN_ACCESS_MODE ] = "%s" % TAZ.ACCESS_EGRESS_MODES[0]
         self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==0,
-                              Passenger.TRIP_LIST_COLUMN_EGRESS_MODE ] = "%s_%s" % (TAZ.ACCESS_EGRESS_MODES[0], Route.MODE_TYPE_EGRESS)
+                              Passenger.TRIP_LIST_COLUMN_EGRESS_MODE ] = "%s" % TAZ.ACCESS_EGRESS_MODES[0]
 
         # Take care of the access-transit-egress
         self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==2,
                               Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
-            .map(lambda x: "%s_%s" % (x[:x.find('-')], Route.MODE_TYPE_ACCESS))
+            .map(lambda x: "%s" % x[:x.find('-')])
         self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==2,
                               Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
             .map(lambda x: x[x.find('-')+1:x.rfind('-')])
         self.trip_list_df.loc[self.trip_list_df['mode_dash_count']==2,
                               Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = self.trip_list_df[Passenger.TRIP_LIST_COLUMN_MODE]\
-            .map(lambda x: "%s_%s" % (x[x.rfind('-')+1:], Route.MODE_TYPE_EGRESS))
+            .map(lambda x: "%s" % x[x.rfind('-')+1:])
 
         # We're done with mode_dash_count, thanks for your service
         self.trip_list_df.drop('mode_dash_count', axis=1, inplace=True) # replace with cumsum
 
-        # Get numeric version of modes - access and egress are straightforward
-        self.trip_list_df = routes.add_numeric_mode_id(input_df           = self.trip_list_df,
-                                                       id_colname         = Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
-                                                       numeric_newcolname = Passenger.TRIP_LIST_COLUMN_ACCESS_MODE_NUM)
-        self.trip_list_df = routes.add_numeric_mode_id(input_df           = self.trip_list_df,
-                                                       id_colname         = Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
-                                                       numeric_newcolname = Passenger.TRIP_LIST_COLUMN_EGRESS_MODE_NUM)
-
-        # TODO: get numeric version of DEMAND mode (See Path.DEMAND_MODE_TO_SUPPLY_MODES)
+        # Set the user class for each trip
         from .Path import Path
         Path.set_user_class(self.trip_list_df, Passenger.TRIP_LIST_COLUMN_USER_CLASS)
+
+        # Verify that Path has all the configuration for these user classes + transit modes + access modes + egress modes
+        # => Figure out unique user class + mode combinations
+        self.modes_df = self.trip_list_df[[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                           Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
+                                           Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+                                           Passenger.TRIP_LIST_COLUMN_EGRESS_MODE]].set_index(Passenger.TRIP_LIST_COLUMN_USER_CLASS)
+        # stack - so before we have three columns: transit_mode, access_mode, egress_mode
+        # after, we have two columns: demand_mode_type and the value, demand_mode
+        self.modes_df               = self.modes_df.stack().to_frame()
+        self.modes_df.index.names   = [Passenger.TRIP_LIST_COLUMN_USER_CLASS, Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]
+        self.modes_df.columns       = [Path.WEIGHTS_COLUMN_DEMAND_MODE]
+        self.modes_df.reset_index(inplace=True)
+        self.modes_df.drop_duplicates(inplace=True)
+        # fix demand_mode_type since transit_mode is just transit, etc
+        self.modes_df[Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE] = self.modes_df[Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE].apply(lambda x: x[:-5])
+        FastTripsLogger.debug("Demand mode types by class: \n%s" % str(self.modes_df))
+
+        # Make sure we have all the weights required for these user_class/mode combinations
+        Path.verify_weight_config(self.modes_df)
 
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string(formatters=

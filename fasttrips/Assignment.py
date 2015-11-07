@@ -152,8 +152,7 @@ class Assignment:
         """
         Read the configuration parameters.
         """
-        #: ALL is a keyword in the weights configuration since it's more intuitive looking than "None"
-        ALL = None
+        pandas.set_option('display.width', 1000)
 
         # Functions are defined in here -- read this and eval it
         func_file = os.path.join(input_demand_dir, Assignment.CONFIGURATION_FUNCTIONS_FILE)
@@ -215,8 +214,14 @@ class Assignment:
             FastTripsLogger.fatal("User class function [%s] not defined.  Please check your function file [%s]" % (Path.USER_CLASS_FUNCTION, func_file))
             raise
 
-        Path.WEIGHTS                        = eval(parser.get     ('pathfinding','weights'))
-        FastTripsLogger.debug("Weights =\n%s" % str(Path.WEIGHTS))
+        weights_file = os.path.join(input_demand_dir, Path.WEIGHTS_FILE)
+        if not os.path.exists(weights_file):
+            FastTripsLogger.fatal("No path weights file %s" % weights_file)
+            sys.exit(2)
+
+        Path.WEIGHTS_DF = pandas.read_fwf(weights_file)
+        FastTripsLogger.debug("Weights =\n%s" % str(Path.WEIGHTS_DF))
+        FastTripsLogger.debug("Weight types = \n%s" % str(Path.WEIGHTS_DF.dtypes))
 
     @staticmethod
     def write_configuration(output_dir):
@@ -244,7 +249,6 @@ class Assignment:
         #pathfinding
         parser.add_section('pathfinding')
         parser.set('pathfinding','user_class_function',         '%s' % Path.USER_CLASS_FUNCTION)
-        parser.set('pathfinding','weights',                     '%s' % str(Path.WEIGHTS))
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)

@@ -13,20 +13,3 @@ trace_person_ids              = ['bunnies']
 number_of_processes           = 2
 bump_buffer                   = 5
 bump_one_at_a_time            = True
-
-# pathfinding configuration
-[pathfinding]
-# user class name => demand mode => supply mode => weights
-weights                       = {
-    "all": [
-       ((ALL,ALL,ALL), {
-            "schedule_delay"            :00.0,
-            "access_time"               :03.93,
-            "in_vehicle_time"           :01.0,
-            "wait_time"                 :01.77,
-            "transfer_penalty"          :47.73,
-            "egress_time"               :03.94,
-        })
-    ]}
-# fare_per_boarding             = 0
-# value_of_time                 = 999
