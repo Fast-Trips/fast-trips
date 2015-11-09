@@ -182,6 +182,7 @@ class Path:
                                         Path.WEIGHTS_COLUMN_DEMAND_MODE],
                                     how='left')
         print weight_check
+
         #: misc, initial, wait, time_min
         #: misc, transfer, walk, time_min
         #: misc, transfer, wait, time_min

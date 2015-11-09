@@ -1,2 +1,5 @@
 [fasttrips]
 trace_person_ids              = ['tracey']
+
+[pathfinding]
+user_class_function           = generic_user_class
