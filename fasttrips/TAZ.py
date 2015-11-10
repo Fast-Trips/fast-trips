@@ -31,8 +31,8 @@ class TAZ:
     """
 
     #: File with fasttrips walk access information.
-    #: See `walk_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/walk_access.md>`_.
-    INPUT_WALK_ACCESS_FILE                  = "walk_access.txt"
+    #: See `walk_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/walk_access_ft.md>`_.
+    INPUT_WALK_ACCESS_FILE                  = "walk_access_ft.txt"
 
     #: Walk access links column name: TAZ Identifier. String.
     WALK_ACCESS_COLUMN_TAZ                  = 'taz'
@@ -69,8 +69,8 @@ class TAZ:
     WALK_ACCESS_COLUMN_EGR_COST             = 'egress_cost'
 
     #: File with fasttrips drive access information.
-    #: See `drive_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access.md>`_.
-    INPUT_DRIVE_ACCESS_FILE                  = "drive_access.txt"
+    #: See `drive_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access_ft.md>`_.
+    INPUT_DRIVE_ACCESS_FILE                  = "drive_access_ft.txt"
 
     #: Drive access links column name: TAZ Identifier. String.
     DRIVE_ACCESS_COLUMN_TAZ                  = WALK_ACCESS_COLUMN_TAZ
@@ -110,27 +110,27 @@ class TAZ:
     #: fasttrips Drive access links column name: TAZ Numerical Identifier. Int.
     DRIVE_ACCESS_COLUMN_TAZ_NUM              = WALK_ACCESS_COLUMN_TAZ_NUM
 
-    #: File with fasttrips Park and Ride information.
-    #: See `pnr specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/pnr.md>`_.
-    INPUT_PNR_FILE                           = 'pnr.txt'
-    #: fasttrips PNR column name: Lot ID. String.
-    PNR_COLUMN_LOT_ID                        = 'lot_id'
-    #: fasttrips PNR column name: Lot Latitude (WGS 84)
-    PNR_COLUMN_LOT_LATITUDE                  = 'lot_lat'
-    #: fasttrips PNR column name: Lot Longitude (WGS 84)
-    PNR_COLUMN_LOT_LONGITUDE                 = 'lot_long'
-    #: fasttrips PNR column name: Name of the Lot. String.
-    PNR_COLUMN_NAME                          = 'name'
-    #: fasttrips PNR column name: Capacity (number of parking spaces)
-    PNR_COLUMN_CAPACITY                      = 'capacity'
-    #: fasttrips PNR column name: Overflow Capacity (hide and ride)
-    PNR_COLUMN_OVERFLOW_CAPACITY             = 'overflow_capacity'
-    #: fasttrips PNR column name: Hourly Cost in cents.  Integer.
-    PNR_COLUMN_HOURLY_COST                   = 'hourly_cost'
-    #: fasttrips PNR column name: Maximum Daily Cost in cents.  Integer.
-    PNR_COLUMN_MAXIMUM_COST                  = 'max_cost'
-    #: fasttrips PNR column name: Type
-    PNR_COLUMN_TYPE                          = 'type'
+    #: File with fasttrips drive access points information.
+    #: See `Drive access points specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access_points_ft.md>`_.
+    INPUT_DAP_FILE                           = 'drive_access_points_ft.txt'
+    #: fasttrips DAP column name: Lot ID. String.
+    DAP_COLUMN_LOT_ID                        = 'lot_id'
+    #: fasttrips DAP column name: Lot Latitude (WGS 84)
+    DAP_COLUMN_LOT_LATITUDE                  = 'lot_lat'
+    #: fasttrips DAP column name: Lot Longitude (WGS 84)
+    DAP_COLUMN_LOT_LONGITUDE                 = 'lot_long'
+    #: fasttrips DAP column name: Name of the Lot. String.
+    DAP_COLUMN_NAME                          = 'name'
+    #: fasttrips DAP column name: Capacity (number of parking spaces)
+    DAP_COLUMN_CAPACITY                      = 'capacity'
+    #: fasttrips DAP column name: Overflow Capacity (hide and ride)
+    DAP_COLUMN_OVERFLOW_CAPACITY             = 'overflow_capacity'
+    #: fasttrips DAP column name: Hourly Cost in cents.  Integer.
+    DAP_COLUMN_HOURLY_COST                   = 'hourly_cost'
+    #: fasttrips DAP column name: Maximum Daily Cost in cents.  Integer.
+    DAP_COLUMN_MAXIMUM_COST                  = 'max_cost'
+    #: fasttrips DAP column name: Type
+    DAP_COLUMN_TYPE                          = 'type'
 
     #: mode column
     MODE_COLUMN_MODE                         = 'mode'
@@ -275,8 +275,8 @@ class TAZ:
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_STOP,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_STOP_NUM)
 
-        # add PNRs IDs and TAZ IDs to stop ID list
-        stops.add_pnrs_tazs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
+        # add DAPs IDs and TAZ IDs to stop ID list
+        stops.add_daps_tazs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
                                      TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                      pandas.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
                                                     self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
@@ -292,21 +292,21 @@ class TAZ:
                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_TAZ,
                                                              numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM)
 
-        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_PNR_FILE)):
-            #: PNR table. Make sure TAZ ID and lot ID are read as strings.
-            self.pnr_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_PNR_FILE),
-                                          dtype={TAZ.PNR_COLUMN_LOT_ID:object})
+        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DAP_FILE)):
+            #: DAP table. Make sure TAZ ID and lot ID are read as strings.
+            self.dap_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DAP_FILE),
+                                          dtype={TAZ.DAP_COLUMN_LOT_ID:object})
             # verify required columns are present
-            pnr_cols = list(self.pnr_df.columns.values)
-            assert(TAZ.PNR_COLUMN_LOT_ID            in pnr_cols)
-            assert(TAZ.PNR_COLUMN_LOT_LATITUDE      in pnr_cols)
-            assert(TAZ.PNR_COLUMN_LOT_LONGITUDE     in pnr_cols)
+            dap_cols = list(self.dap_df.columns.values)
+            assert(TAZ.DAP_COLUMN_LOT_ID            in dap_cols)
+            assert(TAZ.DAP_COLUMN_LOT_LATITUDE      in dap_cols)
+            assert(TAZ.DAP_COLUMN_LOT_LONGITUDE     in dap_cols)
 
         else:
-            self.pnr_df = pandas.DataFrame()
+            self.dap_df = pandas.DataFrame()
 
-        FastTripsLogger.debug("=========== PNRS ===========\n" + str(self.pnr_df.head()))
-        FastTripsLogger.debug("\n"+str(self.pnr_df.dtypes))
+        FastTripsLogger.debug("=========== DAPS ===========\n" + str(self.dap_df.head()))
+        FastTripsLogger.debug("\n"+str(self.dap_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.pnr_df), "PNRs", TAZ.INPUT_PNR_FILE))
+                             (len(self.dap_df), "DAPs", TAZ.INPUT_DAP_FILE))
 

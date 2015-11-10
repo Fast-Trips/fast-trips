@@ -98,8 +98,8 @@ class Route(object):
     FARE_RULES_COLUMN_END_TIME              = "end_time"
 
     #: File with fasttrips fare transfer rules information.
-    #: See `fare_transfer_rules specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules.md>`_.
-    INPUT_FARE_TRANSFER_RULES_FILE              = "fare_transfer_rules.txt"
+    #: See `fare_transfer_rules specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md>`_.
+    INPUT_FARE_TRANSFER_RULES_FILE              = "fare_transfer_rules_ft.txt"
     #: fasttrips Fare transfer rules column name: From Fare Class
     FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS  = "from_fare_class"
     #: fasttrips Fare transfer rules column name: To Fare Class
@@ -121,7 +121,6 @@ class Route(object):
         """
         self.output_dir         = output_dir
         self.is_child_process   = is_child_process
-        pandas.set_option('display.width', 1000)
 
         # Combine all gtfs Route objects to a single pandas DataFrame
         route_dicts = []

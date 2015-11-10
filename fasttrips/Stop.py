@@ -221,36 +221,37 @@ class Stop:
         #: Trips table.
         self.trip_times_df      = None
 
-    def add_pnrs_tazs_to_stops(self, pnr_df, pnr_id_colname, taz_df, taz_id_colname):
+    def add_daps_tazs_to_stops(self, dap_df, dap_id_colname, taz_df, taz_id_colname):
         """
-        PNR lots and TAZs are like stops.  Add the PNRs and TAZs to our stop list and their numbering in the
+        Drive access points (PNR lots, KNR lots, etc) and TAZs are like stops.
+        Add the DAPs and TAZs to our stop list and their numbering in the
         :py:attr:`Stop.stop_id_df`.
 
         Pass in dataframes with JUST an ID column.
 
         This method will also update the :py:attr:`Stop.transfers_df` with Stop IDs since this is
-        now possible since PNRs needed to be numbered for this to work.
+        now possible since DAPs needed to be numbered for this to work.
         """
-        assert(len(pnr_df.columns) == 1)
+        assert(len(dap_df.columns) == 1)
 
-        # make sure the PNR IDs are unique from Stop IDs
-        pnrs_unique_df  = pnr_df.drop_duplicates().reset_index(drop=True)
-        join_pnrs_stops = pandas.merge(left=pnrs_unique_df, right=self.stop_id_df,
+        # make sure the DAP IDs are unique from Stop IDs
+        daps_unique_df  = dap_df.drop_duplicates().reset_index(drop=True)
+        join_daps_stops = pandas.merge(left=daps_unique_df, right=self.stop_id_df,
                                        how="left",
-                                       left_on=pnr_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
-        # there should be only NaNs since PNR lot IDs need to be unique from Stop IDs
-        assert(pandas.isnull(join_pnrs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_pnrs_stops))
+                                       left_on=dap_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # there should be only NaNs since DAP lot IDs need to be unique from Stop IDs
+        assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
 
         # number them starting at self.max_stop_id_num
-        pnrs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = pnrs_unique_df.index + self.max_stop_id_num + 1
+        daps_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = daps_unique_df.index + self.max_stop_id_num + 1
 
-        # rename pnr lot id to stop id
-        pnrs_unique_df.rename(columns={pnr_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
+        # rename DAP lot id to stop id
+        daps_unique_df.rename(columns={dap_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
 
-        # append pnrs to stop ids
-        self.stop_id_df = pandas.concat([self.stop_id_df, pnrs_unique_df], axis=0)
+        # append daps to stop ids
+        self.stop_id_df = pandas.concat([self.stop_id_df, daps_unique_df], axis=0)
 
-        self.max_pnr_id_num = self.stop_id_df[Stop.STOPS_COLUMN_STOP_ID_NUM].max()
+        self.max_dap_id_num = self.stop_id_df[Stop.STOPS_COLUMN_STOP_ID_NUM].max()
 
         ##############################################################################################
         assert(len(taz_df.columns) == 1)
@@ -264,12 +265,12 @@ class Stop:
         assert(pandas.isnull(join_tazs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_tazs_stops))
 
         # number them starting at self.max_stop_id_num
-        tazs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = tazs_unique_df.index + self.max_pnr_id_num + 1
+        tazs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = tazs_unique_df.index + self.max_dap_id_num + 1
 
         # rename TAZ id to stop id
         tazs_unique_df.rename(columns={taz_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
 
-        # append pnrs to stop ids
+        # append daps to stop ids
         self.stop_id_df = pandas.concat([self.stop_id_df, tazs_unique_df], axis=0)
         ##############################################################################################
 
