@@ -1,7 +1,4 @@
 route_id,route_short_name,route_long_name,route_type
-A_EB,Bus_EB_Loc,Local Bus - EB,3
-A_WB,Bus_WB_Loc,Local Bus - WB,3
-B_EB,Bus_EB_Exp,Express Bus - EB,3
-B_WB,Bus_WB_Exp,Express Bus - WB,3
-C_NB,Rail_NB,Rail - NB,2
-C_SB,Rail_SB,Rail - SB,2
+A,Bus_A_Loc,Local Bus - A,3
+B,Bus_B_Exp,Express Bus- B,3
+C,Rail_C,Rail - C Line,2

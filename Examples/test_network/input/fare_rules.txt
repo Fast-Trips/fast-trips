@@ -1,7 +1,5 @@
 fare_id,route_id
-bus_local_fare_id,A_EB
-bus_local_fare_id,A_WB
-bus_express_fare_id,B_EB
-bus_express_fare_id,B_WB
-rail_fare_id,C_NB
-rail_fare_id,C_SB
+bus_local_fare_id,A
+bus_express_fare_id,B
+rail_fare_id,C
+
