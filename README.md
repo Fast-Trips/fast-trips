@@ -13,7 +13,7 @@ Follow the steps below to setup up fast-trips:
 *  To build, in the fast-trips directory `<fast-trips-dir>`, run the following in a command prompt:  `python setup.py build_ext --inplace`.
 
 ### Test Sample Input
-Sample input for a variety of scenarios has been provided in `<fast-trips-dir>\Examples\test_network`. `input` contains the supply-side/network inputs required for fast-trips. More information about network inputs can be found in the [GTFS-Plus Data Standards Repository][network-standard-url]. `input` also contains two seperate scenarios with sample demand for fast-trips and [documentation][/Examples/test_network/demand_reg/Readme.md]. Similar to network data standards, there also exists a [Demand Data Standards Repository][demand-standard-url]. `output` will contain output files from running fast-trips with the sample input data provided.
+Sample input for a variety of scenarios has been provided in `<fast-trips-dir>\Examples\test_network`. `input` contains the supply-side/network inputs required for fast-trips. More information about network inputs can be found in the [GTFS-Plus Data Standards Repository][network-standard-url]. `input` also contains two seperate scenarios with sample demand for fast-trips and [documentation](/Examples/test_network/demand_reg/Readme.md). Similar to network data standards, there also exists a [Demand Data Standards Repository][demand-standard-url]. `output` will contain output files from running fast-trips with the sample input data provided.
 
 Run fast-trips on sample input using the following steps:
 *  Add `<fast-trips-dir>` to the `PYTHONPATH` environment variable in *Advanced system settings*.
