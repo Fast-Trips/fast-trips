@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,os,string
+import collections,datetime,os,string,sys
 import numpy,pandas
 
 from .Logger    import FastTripsLogger
@@ -161,8 +161,12 @@ class Path:
     @staticmethod
     def verify_weight_config(modes_df):
         """
-        Verify that we have complete weight configurations for the user classes and modes in the given DataFrame
+        Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.
+
+        The parameter mode_df is a dataframe with the user_class, demand_mode_type and demand_mode combinations
+        found in the demand file.
         """
+        error_str = ""
         # First, verify required columns are found
         weight_cols     = list(Path.WEIGHTS_DF.columns.values)
         assert(Path.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
@@ -172,26 +176,50 @@ class Path:
         assert(Path.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
         assert(Path.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
 
-        print modes_df
-
-        # join
+        # Join - make sure that all demand combinations (user class, demand mode type and demand mode) are configured
         weight_check = pandas.merge(left=modes_df,
                                     right=Path.WEIGHTS_DF,
                                     on=[Path.WEIGHTS_COLUMN_USER_CLASS,
                                         Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                         Path.WEIGHTS_COLUMN_DEMAND_MODE],
                                     how='left')
-        print weight_check
+        FastTripsLogger.debug("demand_modes x weights: \n%s" % weight_check.to_string())
 
-        #: misc, initial, wait, time_min
-        #: misc, transfer, walk, time_min
-        #: misc, transfer, wait, time_min
-        #:                 walk_access, time_min
-        #:                 walk_egress, time_min
-        #: transit,                     in_vehicle_time_min
-        #: transit,                     wait_time_min
-        #: transit                      transfer_penalty
-        # sys.exit()
+        # If something is missing, complain
+        if pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_SUPPLY_MODE]).sum() > 0:
+            error_str += "\nThe following user_class, demand_mode_type, demand_mode combinations exist in the demand file but are missing from the weight configuration:\n"
+            error_str += weight_check.loc[pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_SUPPLY_MODE])].to_string()
+            error_str += "\n"
+
+        # demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait
+        user_classes = modes_df[[Path.WEIGHTS_COLUMN_USER_CLASS]].drop_duplicates().reset_index()
+        implicit_df = pandas.DataFrame({ Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer', 'transfer', 'access'  ],
+                                         Path.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer', 'transfer', 'initial' ],
+                                         Path.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'walk'    , 'wait'    , 'wait'    ] })
+        user_classes['key'] = 1
+        implicit_df['key'] = 1
+        implicit_df = pandas.merge(left=user_classes, right=implicit_df, on='key')
+        implicit_df.drop(['index','key'], axis=1, inplace=True)
+        # print implicit_df
+
+        weight_check = pandas.merge(left=implicit_df, right=Path.WEIGHTS_DF,
+                                    on=[Path.WEIGHTS_COLUMN_USER_CLASS,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE,
+                                        Path.WEIGHTS_COLUMN_SUPPLY_MODE],
+                                    how='left')
+        FastTripsLogger.debug("implicit demand_modes x weights: \n%s" % weight_check.to_string())
+
+        if pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_WEIGHT_NAME]).sum() > 0:
+            error_str += "\nThe following user_class, demand_mode_type, demand_mode, supply_mode combinations exist in the demand file but are missing from the weight configuration:\n"
+            error_str += weight_check.loc[pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
+            error_str += "\n\n"
+
+
+        if len(error_str) > 0:
+            FastTripsLogger.fatal(error_str)
+            sys.exit(2)
+
 
     @staticmethod
     def state_str_header(state, direction=DIR_OUTBOUND):

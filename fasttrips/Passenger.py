@@ -87,6 +87,7 @@ class Passenger:
     TRIP_LIST_COLUMN_EGRESS_MODE_NUM            = "egress_mode_num"
 
     #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
+    #: TODO: get rid of this?  Maybe user should always specify.
     MODE_GENERIC_TRANSIT                        = "transit"
     #: Generic transit - Numeric mode number
     MODE_GENERIC_TRANSIT_NUM                    = 1000
