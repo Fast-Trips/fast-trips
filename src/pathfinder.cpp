@@ -118,7 +118,7 @@ namespace fasttrips {
         // Mode num -> id
         std::ifstream mode_id_file;
         std::ostringstream ss_mode;
-        ss_mode << output_dir_ << kPathSeparator << "ft_output_mode_id.txt";
+        ss_mode << output_dir_ << kPathSeparator << "ft_output_supply_mode_id.txt";
         mode_id_file.open(ss_mode.str().c_str(), std::ios_base::in);
         mode_id_file >> string_num_id >> string_id;
         if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_mode.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
