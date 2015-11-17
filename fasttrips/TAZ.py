@@ -76,7 +76,7 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_TAZ                  = WALK_ACCESS_COLUMN_TAZ
     #: Drive access links column name: Stop Identifier. String.
     DRIVE_ACCESS_COLUMN_LOT_ID               = 'lot_id'
-    #: Drive access links column name: Direction (Access or Egress)
+    #: Drive access links column name: Direction ('access' or 'egress')
     DRIVE_ACCESS_COLUMN_DIRECTION            = 'direction'
     #: Drive access links column name: Drive distance
     DRIVE_ACCESS_COLUMN_DISTANCE             = 'dist'
@@ -255,11 +255,21 @@ class TAZ:
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
 
             # We're going to join this with stops to get drive-to-stop
-            # First, figure out unique lots
-            self.lot_ids_df = self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]].drop_duplicates()
-            FastTripsLogger.debug("Lot IDs = \n%s" % self.lot_ids_df.to_string())
+            drive_access = self.drive_access_df.loc[self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DIRECTION] == 'access']
+            drive_egress = self.drive_access_df.loc[self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DIRECTION] == 'egress']
 
-            # drive_access = self.drive_access_df.loc[self.drive_access_df[]]
+            # join with transfers
+            drive_access = pandas.merge(left=drive_access,
+                                        right=stops.transfers_df,
+                                        left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
+                                        right_on=Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                        how='left')
+            drive_egress = pandas.merge(left=drive_egress,
+                                        right=stops.transfers_df,
+                                        left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
+                                        right_on=Stop.TRANSFERS_COLUMN_TO_STOP,
+                                        how='left')
+            self.drive_access_df = pandas.concat([drive_access, drive_egress], axis=0)
 
             FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
             FastTripsLogger.info("Read %7d %15s from %25s" %
