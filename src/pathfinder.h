@@ -9,6 +9,7 @@
 #include <queue>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #if __APPLE__
 #include <tr1/unordered_set>
@@ -17,6 +18,33 @@
 #endif
 
 namespace fasttrips {
+
+    enum DemandModeType { ACCESS, EGRESS, TRANSIT, TRANSFER };
+
+    /// Weight lookup
+    typedef struct {
+        std::string     user_class_;
+        DemandModeType  demand_mode_type_;
+        std::string     demand_mode_;
+    } UserClassMode;
+
+    /// Comparator to enable the fasttrips::WeightLookup to use UserClassMode as a lookup
+    struct UserClassModeCompare {
+        // less than
+        bool operator()(const UserClassMode &ucm1, const UserClassMode &ucm2) const {
+            if (ucm1.user_class_       < ucm2.user_class_      ) { return true;  }
+            if (ucm1.user_class_       > ucm2.user_class_      ) { return false; }
+            if (ucm1.demand_mode_type_ < ucm2.demand_mode_type_) { return true;  }
+            if (ucm1.demand_mode_type_ > ucm2.demand_mode_type_) { return false; }
+            if (ucm1.demand_mode_      < ucm2.demand_mode_     ) { return true;  }
+            if (ucm1.demand_mode_      > ucm2.demand_mode_     ) { return false; }
+            return false;
+        }
+    };
+
+    typedef std::map<std::string, double> NamedWeights;
+    typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
+    typedef std::map< UserClassMode, SupplyModeToNamedWeights, struct fasttrips::UserClassModeCompare > WeightLookup;
 
     /// Supply data: access/egress time and cost between TAZ and stops
     typedef struct {
@@ -242,11 +270,15 @@ namespace fasttrips {
         double VALUE_OF_TIME_;
         ///@}
 
+
         /// directory in which to write trace files
         std::string output_dir_;
 
         /// for multi-processing
         int process_num_;
+
+        /// (User class, demand_mode_type, demand_mode) -> supply_mode -> weight_map
+        WeightLookup weight_lookup_;
 
         // ================ Network supply ================
         /// TAZ information: taz id -> stop id -> costs

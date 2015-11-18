@@ -129,6 +129,46 @@ namespace fasttrips {
             mode_num_to_str_[num_id] = string_id;
         }
         mode_id_file.close();
+
+        // Weights
+        std::ifstream weights_file;
+        std::ostringstream ss_weights;
+        ss_weights << output_dir_ << kPathSeparator << "ft_output_weights.txt";
+        weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
+        std::string user_class, demand_mode_type, demand_mode, weight_name, supply_mode_str, weight_val_str;
+        int supply_mode_num;
+        double weight_value;
+        weights_file >> user_class >> demand_mode_type >> demand_mode >> supply_mode_str >> weight_name >> weight_val_str;
+        if (process_num_ <= 1) {
+            printf("Reading %s: [%s] [%s] [%s] [%s] [%s] [%s]\n",
+                   ss_weights.str().c_str(), user_class.c_str(), demand_mode_type.c_str(), demand_mode.c_str(),
+                   supply_mode_str.c_str(), weight_name.c_str(), weight_val_str.c_str());
+        }
+        while (weights_file >> user_class >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
+            UserClassMode ucm = { user_class, fasttrips::ACCESS, demand_mode };
+            if      (demand_mode_type == "access"  ) { ucm.demand_mode_type_ = fasttrips::ACCESS;  }
+            else if (demand_mode_type == "egress"  ) { ucm.demand_mode_type_ = fasttrips::EGRESS;  }
+            else if (demand_mode_type == "transit" ) { ucm.demand_mode_type_ = fasttrips::TRANSIT; }
+            else if (demand_mode_type == "transfer") { ucm.demand_mode_type_ = fasttrips::TRANSFER;}
+            else {
+                printf("Do not understand demand_mode_type [%s] in %s", demand_mode_type.c_str(), ss_weights.str().c_str());
+                exit(2);
+            }
+
+            WeightLookup::iterator wl_iter = weight_lookup_.find(ucm);
+            if (wl_iter == weight_lookup_.end()) {
+                SupplyModeToNamedWeights smtnw;
+                weight_lookup_[ucm] = smtnw;
+            }
+
+            SupplyModeToNamedWeights::iterator smtnw_iter = weight_lookup_[ucm].find(supply_mode_num);
+            if (smtnw_iter == weight_lookup_[ucm].end()) {
+                NamedWeights nw;
+                weight_lookup_[ucm][supply_mode_num] = nw;
+            }
+
+            weight_lookup_[ucm][supply_mode_num][weight_name] = weight_value;
+        }
     }
 
     void PathFinder::initializeSupply(

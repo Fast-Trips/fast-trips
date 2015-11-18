@@ -133,7 +133,7 @@ class FastTrips:
         if not self.is_child_process:
             FastTripsLogger.info("-------- Reading demand --------")
             # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger(self.input_demand_dir, Assignment.TODAY, self.stops, self.routes)
+            self.passengers = Passenger(self.input_demand_dir, self.output_dir, Assignment.TODAY, self.stops, self.routes)
         else:
             self.passengers = None
 

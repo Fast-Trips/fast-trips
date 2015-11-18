@@ -63,6 +63,10 @@ class Path:
     #: Weights column: Supply Mode number
     WEIGHTS_COLUMN_SUPPLY_MODE_NUM  = "supply_mode_num"
 
+    #: File with weights for c++
+    OUTPUT_WEIGHTS_FILE             = "ft_output_weights.txt"
+
+
     #: todo: these will get removed in favor of WEIGHTS above
     IN_VEHICLE_TIME_WEIGHT          = 1.0
     WAIT_TIME_WEIGHT                = 1.77
@@ -164,7 +168,7 @@ class Path:
         trip_list_df[new_colname] = trip_list_df.apply(Path.CONFIGURED_FUNCTIONS[Path.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
-    def verify_weight_config(modes_df, routes):
+    def verify_weight_config(modes_df, output_dir, routes):
         """
         Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.
 
@@ -230,6 +234,14 @@ class Path:
                                                     id_colname=Path.WEIGHTS_COLUMN_SUPPLY_MODE,
                                                     numeric_newcolname=Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM)
         FastTripsLogger.debug("Path weights: \n%s" % Path.WEIGHTS_DF)
+        Path.WEIGHTS_DF.to_csv(os.path.join(output_dir,Path.OUTPUT_WEIGHTS_FILE),
+                               columns=[Path.WEIGHTS_COLUMN_USER_CLASS,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE,
+                                        Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                                        Path.WEIGHTS_COLUMN_WEIGHT_NAME,
+                                        Path.WEIGHTS_COLUMN_WEIGHT_VALUE],
+                               sep=" ", index=False)
 
 
     @staticmethod
