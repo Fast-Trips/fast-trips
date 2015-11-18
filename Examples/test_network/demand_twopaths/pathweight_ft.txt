@@ -1,7 +1,5 @@
 user_class demand_mode_type demand_mode    supply_mode  weight_name         weight_value
-real       transfer         transfer       walk         time_min            2.4
-real       transfer         transfer       wait         time_min            2.5
-real       access           initial        wait         time_min            2.3
+real       transfer         transfer       transfer     walk_time_min       2.4
 real       access           walk           walk_access  time_min            2.5
 real       access           PNR            PNR_access   time_min            1.5
 real       egress           walk           walk_egress  time_min            2.7
@@ -17,9 +15,7 @@ real       transit          commuter_rail  rapid_bus    transfer_penalty    47.7
 real       transit          commuter_rail  heavy_rail   in_vehicle_time_min 1.0
 real       transit          commuter_rail  heavy_rail   wait_time_min       1.77
 real       transit          commuter_rail  heavy_rail   transfer_penalty    17.73
-not_real   transfer         transfer       walk         time_min            0.24
-not_real   transfer         transfer       wait         time_min            0.25
-not_real   access           initial        wait         time_min            0.23
+not_real   transfer         transfer       transfer     walk_time_min       0.24
 not_real   access           walk           walk_access  time_min            0.25
 not_real   access           PNR            PNR_access   time_min            0.15
 not_real   egress           walk           walk_egress  time_min            0.27

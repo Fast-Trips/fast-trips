@@ -251,7 +251,7 @@ class Passenger:
         FastTripsLogger.debug("Demand mode types by class: \n%s" % str(self.modes_df))
 
         # Make sure we have all the weights required for these user_class/mode combinations
-        Path.verify_weight_config(self.modes_df)
+        Path.verify_weight_config(self.modes_df, routes)
 
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string(formatters=

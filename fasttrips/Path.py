@@ -17,6 +17,7 @@ import numpy,pandas
 
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
+from .Route     import Route
 from .Util      import Util
 
 #: Default user class: just one class called "all"
@@ -57,6 +58,10 @@ class Path:
     WEIGHTS_COLUMN_WEIGHT_NAME      = "weight_name"
     #: Weights column: Weight Value
     WEIGHTS_COLUMN_WEIGHT_VALUE     = "weight_value"
+
+    # ========== Added by fasttrips =======================================================
+    #: Weights column: Supply Mode number
+    WEIGHTS_COLUMN_SUPPLY_MODE_NUM  = "supply_mode_num"
 
     #: todo: these will get removed in favor of WEIGHTS above
     IN_VEHICLE_TIME_WEIGHT          = 1.0
@@ -159,7 +164,7 @@ class Path:
         trip_list_df[new_colname] = trip_list_df.apply(Path.CONFIGURED_FUNCTIONS[Path.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
-    def verify_weight_config(modes_df):
+    def verify_weight_config(modes_df, routes):
         """
         Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.
 
@@ -193,9 +198,9 @@ class Path:
 
         # demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait
         user_classes = modes_df[[Path.WEIGHTS_COLUMN_USER_CLASS]].drop_duplicates().reset_index()
-        implicit_df = pandas.DataFrame({ Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer', 'transfer', 'access'  ],
-                                         Path.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer', 'transfer', 'initial' ],
-                                         Path.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'walk'    , 'wait'    , 'wait'    ] })
+        implicit_df = pandas.DataFrame({ Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer'],
+                                         Path.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer'],
+                                         Path.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'transfer'] })
         user_classes['key'] = 1
         implicit_df['key'] = 1
         implicit_df = pandas.merge(left=user_classes, right=implicit_df, on='key')
@@ -219,6 +224,12 @@ class Path:
         if len(error_str) > 0:
             FastTripsLogger.fatal(error_str)
             sys.exit(2)
+
+        # add mode numbers to weights DF for relevant rows
+        Path.WEIGHTS_DF = routes.add_numeric_mode_id(Path.WEIGHTS_DF,
+                                                    id_colname=Path.WEIGHTS_COLUMN_SUPPLY_MODE,
+                                                    numeric_newcolname=Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM)
+        FastTripsLogger.debug("Path weights: \n%s" % Path.WEIGHTS_DF)
 
 
     @staticmethod

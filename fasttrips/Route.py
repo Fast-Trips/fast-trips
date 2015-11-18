@@ -52,12 +52,14 @@ class Route(object):
     ROUTES_COLUMN_MODE_NUM                  = "mode_num"
     #: fasttrips Routes column name: Mode type
     ROUTES_COLUMN_MODE_TYPE                 = "mode_type"
-    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: Access
+    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: access
     MODE_TYPE_ACCESS                        = "access"
-    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: Egress
+    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: egress
     MODE_TYPE_EGRESS                        = "egress"
-    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: Route
-    MODE_TYPE_ROUTE                         = "route"
+    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: transit
+    MODE_TYPE_TRANSIT                       = "transit"
+    #: Value for :py:attr:`Route.ROUTES_COLUMN_MODE_TYPE` column: transfer
+    MODE_TYPE_TRANSFER                      = "transfer"
     #: Access mode numbers start from here
     MODE_NUM_START_ACCESS                   = 101
     #: Egress mode numbers start from here
@@ -148,6 +150,7 @@ class Route(object):
         # Get the mode list
         self.modes_df = self.routes_df[[Route.ROUTES_COLUMN_MODE]].drop_duplicates().reset_index()
         self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.MODE_NUM_START_ROUTE
+        self.modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_TRANSIT
 
         # Join to mode numbering
         self.routes_df = Util.add_new_id(self.routes_df, Route.ROUTES_COLUMN_MODE, Route.ROUTES_COLUMN_MODE_NUM,
@@ -308,9 +311,12 @@ class Route(object):
         """
         access_modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_ACCESS
         egress_modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_EGRESS
-        self.modes_df[  Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_ROUTE
+        implicit_modes_df = pandas.DataFrame({Route.ROUTES_COLUMN_MODE_TYPE: [Route.MODE_TYPE_TRANSFER],
+                                              Route.ROUTES_COLUMN_MODE:      [Route.MODE_TYPE_TRANSFER],
+                                              Route.ROUTES_COLUMN_MODE_NUM:  [                       1]})
 
-        self.modes_df = pandas.concat([self.modes_df,
+        self.modes_df = pandas.concat([implicit_modes_df,
+                                      self.modes_df,
                                       access_modes_df,
                                       egress_modes_df], axis=0)
         self.modes_df.reset_index(inplace=True)
