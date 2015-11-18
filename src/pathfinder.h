@@ -74,9 +74,10 @@ namespace fasttrips {
         bool    outbound_;              ///< If true, the preferred time is for arrival, otherwise it's departure
         double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
         bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
-        // unsigned char access_mode_;     ///< Access mode
-        // unsigned char transit_mode_;    ///< Transit mode
-        // unsigned char egress_mode_;     ///< Egress mode
+        std::string user_class_;        ///< User class string
+        std::string access_mode_;       ///< Access demand mode
+        std::string transit_mode_;      ///< Transit demand mode
+        std::string egress_mode_;       ///< Egress demand mode
     } PathSpecification;
 
     /**

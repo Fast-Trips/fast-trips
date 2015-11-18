@@ -551,7 +551,9 @@ class Assignment:
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
         (ret_ints, ret_doubles, path_cost) = \
-            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath, path.o_taz_num, path.d_taz_num,
+            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath,
+                                 path.user_class, path.access_mode, path.transit_mode, path.egress_mode,
+                                 path.o_taz_num, path.d_taz_num,
                                  1 if path.outbound() else 0, float(path.pref_time_min),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")

@@ -249,6 +249,10 @@ namespace fasttrips {
             trace_file << "preferred_time_  = ";
             printTime(trace_file, path_spec.preferred_time_);
             trace_file << " (" << path_spec.preferred_time_ << ")" << std::endl;
+            trace_file << "user_class_      = " << path_spec.user_class_   << std::endl;
+            trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
+            trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
+            trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
         }
 
         StopStates      stop_states;
