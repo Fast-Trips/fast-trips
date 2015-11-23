@@ -65,8 +65,13 @@ class TAZ:
 
     #: Walk acess cost column name: Link generic cost for accessing stop from TAZ. Float.
     WALK_ACCESS_COLUMN_ACC_COST             = 'access_cost'
-    #: Egress cost column name: Link generic cost for egressing to TAZ from stop. Float.
+    #: Walk acess cost column name: Link generic cost for egressing to TAZ from stop. Float.
     WALK_ACCESS_COLUMN_EGR_COST             = 'egress_cost'
+
+    #: Walk access links column name: Supply mode. String.
+    WALK_ACCESS_COLUMN_SUPPLY_MODE          = 'supply_mode'
+    #: Walk access links column name: Supply mode number. Int.
+    WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM      = 'supply_mode_num'
 
     #: File with fasttrips drive access information.
     #: See `drive_access specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access_ft.md>`_.
@@ -82,8 +87,6 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_DISTANCE             = 'dist'
     #: Drive access links column name: Drive cost in cents (integer)
     DRIVE_ACCESS_COLUMN_COST                 = 'cost'
-    #: Drive access links column name: Driving time in minutes between TAZ and lot (float)
-    DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN      = 'travel_time_min'
     #: Drive access links column name: Driving time in minutes between TAZ and lot (TimeDelta)
     DRIVE_ACCESS_COLUMN_TRAVEL_TIME          = 'travel_time'
     #: Drive access links column name: Start time (open time for lot?), minutes after midnight
@@ -107,24 +110,43 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_INDIRECTNESS         = 'indirectness'
 
     # ========== Added by fasttrips =======================================================
+    #: fasttrips These are the original attributes but renamed to be clear they are the drive component (as opposed to the walk)
+    DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE       = 'drive_dist'
+    DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME    = 'drive_travel_time'
+    #: Drive access links column name: Driving time in minutes between TAZ and lot (float)
+    DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN= 'drive_travel_time_min'
     #: fasttrips Drive access links column name: TAZ Numerical Identifier. Int.
     DRIVE_ACCESS_COLUMN_TAZ_NUM              = WALK_ACCESS_COLUMN_TAZ_NUM
+    #: fasttrips Drive access links column name: Stop Numerical Identifier. Int.
+    DRIVE_ACCESS_COLUMN_STOP                 = WALK_ACCESS_COLUMN_STOP
+    #: fasttrips Drive access links column name: Stop Numerical Identifier. Int.
+    DRIVE_ACCESS_COLUMN_STOP_NUM             = WALK_ACCESS_COLUMN_STOP_NUM
+    #: fasttrips Drive access links column name: Walk distance from lot to transit. Miles. Float.
+    DRIVE_ACCESS_COLUMN_WALK_DISTANCE        = 'walk_dist'
+    #: fasttrips Drive access links column name: Walk time from lot to transit. TimeDelta.
+    DRIVE_ACCESS_COLUMN_WALK_TIME            = 'walk_time'
+    #: fasttrips Drive access links column name: Walk time from lot to transit. Int.
+    DRIVE_ACCESS_COLUMN_WALK_TIME_MIN        = 'walk_time_min'
+    #: fasttrips Drive access links column name: Supply mode. String.
+    DRIVE_ACCESS_COLUMN_SUPPLY_MODE          = WALK_ACCESS_COLUMN_SUPPLY_MODE
+    #: Drive access links column name: Supply mode number. Int.
+    DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM      = WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM
 
     #: File with fasttrips drive access points information.
     #: See `Drive access points specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access_points_ft.md>`_.
     INPUT_DAP_FILE                           = 'drive_access_points_ft.txt'
     #: fasttrips DAP column name: Lot ID. String.
-    DAP_COLUMN_LOT_ID                        = 'lot_id'
+    DAP_COLUMN_LOT_ID                        = DRIVE_ACCESS_COLUMN_LOT_ID
     #: fasttrips DAP column name: Lot Latitude (WGS 84)
     DAP_COLUMN_LOT_LATITUDE                  = 'lot_lat'
     #: fasttrips DAP column name: Lot Longitude (WGS 84)
     DAP_COLUMN_LOT_LONGITUDE                 = 'lot_long'
     #: fasttrips DAP column name: Name of the Lot. String.
     DAP_COLUMN_NAME                          = 'name'
+    #: fasttrips DAP column name: Drop-Off.  Boolean.
+    DAP_COLUMN_DROP_OFF                      = 'drop_off'
     #: fasttrips DAP column name: Capacity (number of parking spaces)
     DAP_COLUMN_CAPACITY                      = 'capacity'
-    #: fasttrips DAP column name: Overflow Capacity (hide and ride)
-    DAP_COLUMN_OVERFLOW_CAPACITY             = 'overflow_capacity'
     #: fasttrips DAP column name: Hourly Cost in cents.  Integer.
     DAP_COLUMN_HOURLY_COST                   = 'hourly_cost'
     #: fasttrips DAP column name: Maximum Daily Cost in cents.  Integer.
@@ -167,7 +189,13 @@ class TAZ:
     EGRESS_MODE_NUMS = [MODE_EGRESS_WALK,
                         MODE_EGRESS_BIKE_OWN, MODE_EGRESS_BIKE_SHARE,
                         MODE_EGRESS_PNR,      MODE_EGRESS_KNR]
-    def __init__(self, input_dir, today, stops, routes):
+
+    #: File with access/egress links for C++ extension
+    #: It's easier to pass it via a file rather than through the
+    #: initialize_fasttrips_extension() because of the strings involved, I think.
+    OUTPUT_ACCESS_EGRESS_FILE               = "ft_output_access_egress.txt"
+
+    def __init__(self, input_dir, output_dir, today, stops, routes):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
@@ -197,11 +225,7 @@ class TAZ:
         FastTripsLogger.debug("=========== WALK ACCESS ===========\n" + str(self.walk_access_df.head()))
         FastTripsLogger.debug("As read\n"+str(self.walk_access_df.dtypes))
 
-        # skipping index setting for now -- it's annoying for joins
-        # self.walk_access_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ,
-        #                                TAZ.WALK_ACCESS_COLUMN_STOP], inplace=True, verify_integrity=True)
-
-        # TODO: remove?
+        # TODO: remove?  Or put walk speed some place?
         self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0;
         # convert time column from float to timedelta
         self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME] = \
@@ -210,6 +234,31 @@ class TAZ:
         FastTripsLogger.debug("Final\n"+str(self.walk_access_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.walk_access_df), "walk access", TAZ.INPUT_WALK_ACCESS_FILE))
+
+        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DAP_FILE)):
+            #: DAP table. Make sure TAZ ID and lot ID are read as strings.
+            self.dap_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DAP_FILE),
+                                          dtype={TAZ.DAP_COLUMN_LOT_ID:object})
+            # verify required columns are present
+            dap_cols = list(self.dap_df.columns.values)
+            assert(TAZ.DAP_COLUMN_LOT_ID            in dap_cols)
+            assert(TAZ.DAP_COLUMN_LOT_LATITUDE      in dap_cols)
+            assert(TAZ.DAP_COLUMN_LOT_LONGITUDE     in dap_cols)
+
+            # default capacity = 0
+            if TAZ.DAP_COLUMN_CAPACITY not in dap_cols:
+                self.dap_df[TAZ.DAP_COLUMN_CAPACITY] = 0
+            # default drop-off = True
+            if TAZ.DAP_COLUMN_DROP_OFF not in dap_cols:
+                self.dap_df[TAZ.DAP_COLUMN_DROP_OFF] = True
+
+        else:
+            self.dap_df = pandas.DataFrame()
+
+        FastTripsLogger.debug("=========== DAPS ===========\n" + str(self.dap_df.head()))
+        FastTripsLogger.debug("\n"+str(self.dap_df.dtypes))
+        FastTripsLogger.info("Read %7d %15s from %25s" %
+                             (len(self.dap_df), "DAPs", TAZ.INPUT_DAP_FILE))
 
         #: Drive access links table. Make sure TAZ ID and lot ID are read as strings.
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE)):
@@ -230,11 +279,18 @@ class TAZ:
 
             # printing this before setting index
             FastTripsLogger.debug("=========== DRIVE ACCESS ===========\n" + str(self.drive_access_df.head()))
-            FastTripsLogger.debug("As read\n"+str(self.drive_access_df.dtypes))
+            FastTripsLogger.debug("As read\n"+str(self.drive_access_df.dtypes))            # Rename dist to drive_dist
 
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME]
+            # the distance and times here are for DRIVING
+            self.drive_access_df.rename(
+                columns = {TAZ.DRIVE_ACCESS_COLUMN_DISTANCE       : TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE,
+                           TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME    : TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME},
+                inplace=True)
 
-            # datetime version
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME]
+
+            # lot open/close time: datetime version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
                     datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
@@ -242,7 +298,7 @@ class TAZ:
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
                     datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
 
-            # float version
+            # lot open/close time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
                     60*x.time().hour + x.time().minute + x.time().second/60.0 )
@@ -251,8 +307,23 @@ class TAZ:
                     60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
             # convert time column from number to timedelta
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME] = \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN].map(lambda x: datetime.timedelta(minutes=float(x)))
+
+            # need PNRs and KNRs - get them from the dap
+            knr_dap_df = self.dap_df.loc[self.dap_df[TAZ.DAP_COLUMN_DROP_OFF]==True].copy()
+            pnr_dap_df = self.dap_df.loc[self.dap_df[TAZ.DAP_COLUMN_CAPACITY] > 0  ].copy()
+            knr_dap_df['dap_type'] = 'KNR'
+            pnr_dap_df['dap_type'] = 'PNR'
+            self.drive_access_df = pandas.merge(left=self.drive_access_df,
+                                                right=pandas.concat([knr_dap_df,pnr_dap_df], axis=0),
+                                                on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
+                                                how='left')
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE] = \
+                self.drive_access_df['dap_type'] + '_' + \
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DIRECTION]
+            # done with this
+            self.drive_access_df.drop(['dap_type'], axis=1, inplace=True)
 
             # We're going to join this with stops to get drive-to-stop
             drive_access = self.drive_access_df.loc[self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DIRECTION] == 'access']
@@ -264,12 +335,32 @@ class TAZ:
                                         left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                         right_on=Stop.TRANSFERS_COLUMN_FROM_STOP,
                                         how='left')
+            drive_access[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_access[Stop.TRANSFERS_COLUMN_TO_STOP]
             drive_egress = pandas.merge(left=drive_egress,
                                         right=stops.transfers_df,
                                         left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                         right_on=Stop.TRANSFERS_COLUMN_TO_STOP,
                                         how='left')
+            drive_egress[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_egress[Stop.TRANSFERS_COLUMN_FROM_STOP]
             self.drive_access_df = pandas.concat([drive_access, drive_egress], axis=0)
+
+            # drop redundant columns
+            # TODO: assuming min_transfer_type and transfer_type from GTFS aren't relevant here, since
+            # the time and dist are what matter.
+            # Assuming schedule_precedence doesn't make sense in the drive access/egress context
+            self.drive_access_df.drop([Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                       Stop.TRANSFERS_COLUMN_TO_STOP,
+                                       Stop.TRANSFERS_COLUMN_TRANSFER_TYPE,
+                                       Stop.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,
+                                       Stop.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE], axis=1, inplace=True)
+
+            # rename walk attributes to be clear
+            self.drive_access_df.rename(
+                columns={
+                    Stop.TRANSFERS_COLUMN_DISTANCE:TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE,
+                    Stop.TRANSFERS_COLUMN_TIME    :TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME,
+                    Stop.TRANSFERS_COLUMN_TIME_MIN:TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN},
+                inplace=True)
 
             FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
             FastTripsLogger.info("Read %7d %15s from %25s" %
@@ -280,11 +371,6 @@ class TAZ:
             self.drive_access_df  = pandas.DataFrame(columns=[TAZ.DRIVE_ACCESS_COLUMN_TAZ, TAZ.DRIVE_ACCESS_COLUMN_LOT_ID])
             FastTripsLogger.debug("=========== NO DRIVE ACCESS ===========\n")
 
-        # Add numeric stop ID to walk access links
-        self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
-                                                         id_colname=TAZ.WALK_ACCESS_COLUMN_STOP,
-                                                         numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_STOP_NUM)
-
         # add DAPs IDs and TAZ IDs to stop ID list
         stops.add_daps_tazs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
                                      TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
@@ -292,31 +378,112 @@ class TAZ:
                                                     self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
                                      TAZ.WALK_ACCESS_COLUMN_TAZ)
 
+
+        # Add numeric stop ID to walk access links
+        self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
+                                                         id_colname=TAZ.WALK_ACCESS_COLUMN_STOP,
+                                                         numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_STOP_NUM)
         # Add TAZ stop ID to walk and drive access links
         self.walk_access_df  = stops.add_numeric_stop_id(self.walk_access_df,
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
 
+        # These are bi-directional - use as access and copy for egress
+        # This should probably be done in TAZ...
+        walk_egress_df = self.walk_access_df.copy()
+        walk_egress_df     [TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE] = "walk_%s" % Route.MODE_TYPE_EGRESS
+        self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE] = "walk_%s" % Route.MODE_TYPE_ACCESS
+        self.walk_access_df = pandas.concat([self.walk_access_df, walk_egress_df], axis=0)
+
+        self.walk_access_df = routes.add_numeric_mode_id(self.walk_access_df,
+                                                         id_colname=TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE,
+                                                         numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM)
+
         if self.has_drive_access:
+            self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
+                                                             id_colname=TAZ.DRIVE_ACCESS_COLUMN_STOP,
+                                                             numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM)
             self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_TAZ,
                                                              numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM)
+            self.drive_access_df = routes.add_numeric_mode_id(self.drive_access_df,
+                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,
+                                                              numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM)
+        # write this to communicate to extension
+        self.write_access_egress_for_extension(output_dir)
 
-        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DAP_FILE)):
-            #: DAP table. Make sure TAZ ID and lot ID are read as strings.
-            self.dap_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DAP_FILE),
-                                          dtype={TAZ.DAP_COLUMN_LOT_ID:object})
-            # verify required columns are present
-            dap_cols = list(self.dap_df.columns.values)
-            assert(TAZ.DAP_COLUMN_LOT_ID            in dap_cols)
-            assert(TAZ.DAP_COLUMN_LOT_LATITUDE      in dap_cols)
-            assert(TAZ.DAP_COLUMN_LOT_LONGITUDE     in dap_cols)
+    def write_access_egress_for_extension(self, output_dir):
+        """
+        Write the access and egress links to a single output file for the C++ extension to read.
+        It's in this form because I'm not sure how to pass the strings to C++ in
+        Assignment.initialize_fasttrips_extension so I know that's inconsistent, but it's a
+        time sink to investigate, so I'll leave this for now
 
-        else:
-            self.dap_df = pandas.DataFrame()
+        .. todo:: clean this up?
 
-        FastTripsLogger.debug("=========== DAPS ===========\n" + str(self.dap_df.head()))
-        FastTripsLogger.debug("\n"+str(self.dap_df.dtypes))
-        FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.dap_df), "DAPs", TAZ.INPUT_DAP_FILE))
+        """
+        # ========== Walk access/egres =================================================
+        print "walk_access columns"
+        for col in list(self.walk_access_df.columns): print "  %s" % col
 
+        # start with all walk columns
+        walk_df = self.walk_access_df.copy()
+        # drop the redundant columns
+        walk_df.drop([TAZ.WALK_ACCESS_COLUMN_TAZ,         # use numerical version
+                      TAZ.WALK_ACCESS_COLUMN_STOP,        # use numerical version
+                      TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE, # use numerical version
+                      TAZ.WALK_ACCESS_COLUMN_TIME,        # use numerical version
+                     ], axis=1, inplace=True)
+
+        # the index is TAZ num, supply mode num, and stop num
+        walk_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
+                           TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                           TAZ.WALK_ACCESS_COLUMN_STOP_NUM], inplace=True)
+        # this will make it so beyond taz num, supply mode num, and stop num
+        # the remaining columns collapse to variable name, variable value
+        walk_df = walk_df.stack()
+        print walk_df
+
+        # ========== Drive access/egres =================================================
+        drive_df = self.drive_access_df.copy()
+        print "drive_access columns"
+        for col in list(self.drive_access_df.columns): print "  %s" % col
+
+        # drop some of the attributes
+        drive_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ,               # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_STOP,              # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,       # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME, # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_START_TIME,        # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_END_TIME,          # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME,         # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_DIRECTION,         # redundant with supply mode
+                       TAZ.DAP_COLUMN_DROP_OFF,                   # redundant with supply mode
+                       TAZ.DAP_COLUMN_LOT_LATITUDE,               # probably not useful
+                       TAZ.DAP_COLUMN_LOT_LONGITUDE,              # probably not useful
+                       TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,            # probably not useful
+                      ], axis=1, inplace=True)
+
+        # the index is TAZ num, supply mode num, and stop num
+        drive_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
+                            TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                            TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM], inplace=True)
+        # this will make it so beyond taz num, supply mode num, and stop num
+        # the remaining columns collapse to variable name, variable value
+        drive_df = drive_df.stack()
+
+        # put walk and drive together
+        access_df = pandas.concat([walk_df, drive_df], axis=0).to_frame()
+        access_df.reset_index(inplace=True)
+        # rename from these default column names
+        access_df.rename(columns={"level_3":"attr_name", 0:"attr_value"}, inplace=True)
+        # make attr_value a float instead of an object
+        access_df["attr_value"] = access_df["attr_value"].astype(float)
+        print access_df
+        print access_df.dtypes
+
+        FastTripsLogger.debug("\n" + str(access_df.head()))
+        FastTripsLogger.debug("\n" + str(access_df.tail()))
+
+        access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
+                         sep=" ", index=False)

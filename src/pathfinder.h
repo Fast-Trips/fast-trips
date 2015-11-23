@@ -42,9 +42,16 @@ namespace fasttrips {
         }
     };
 
+    // This is a lot of naming but it does make iterator construction easier
     typedef std::map<std::string, double> NamedWeights;
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
     typedef std::map< UserClassMode, SupplyModeToNamedWeights, struct fasttrips::UserClassModeCompare > WeightLookup;
+
+    /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
+    typedef std::map<std::string, double> Attributes;
+    typedef std::map<int, Attributes> StopToAttr;
+    typedef std::map<int, StopToAttr> SupplyStopToAttr;
+    typedef std::map<int, SupplyStopToAttr> TAZSupplyStopToAttr;
 
     /// Supply data: access/egress time and cost between TAZ and stops
     typedef struct {
@@ -281,8 +288,9 @@ namespace fasttrips {
         WeightLookup weight_lookup_;
 
         // ================ Network supply ================
-        /// TAZ information: taz id -> stop id -> costs
-        std::map<int, std::map<int, TazStopCost> > taz_access_links_;
+        /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
+        TAZSupplyStopToAttr taz_access_links_;
+
         /// Transfer information: stop id -> stop id -> costs
         std::map<int, std::map<int, TransferCost> > transfer_links_o_d_;
         std::map<int, std::map<int, TransferCost> > transfer_links_d_o_;
@@ -485,11 +493,6 @@ namespace fasttrips {
          *
          * @param output_dir        The directory in which to output trace files (if any)
          * @param process_num       The process number for this instance
-         * @param taz_access_index  For populating PathFinder::taz_access_links_, this array contains
-         *                          TAZ IDs and stop IDs
-         * @param taz_access_cost   For populating PathFinder::taz_access_links_, this array contains
-         *                          times, access costs, and egress costs.
-         * @param num_tazlinks      The number of TAZ-stop links described by the previous two arrays
          * @param stoptime_index    For populating PathFinder::trip_stop_times_, this array contains
          *                          trip IDs, sequence numbers and stop IDs
          * @param stoptime_times    For populating PathFinder::trip_stop_times_, this array contains
@@ -507,9 +510,6 @@ namespace fasttrips {
          */
         void initializeSupply(const char*   output_dir,
                               int           process_num,
-                              int*          taz_access_index,
-                              double*       taz_access_cost,
-                              int           num_tazlinks,
                               int*          stoptime_index,
                               double*       stoptime_times,
                               int           num_stoptimes,

@@ -260,16 +260,6 @@ class Assignment:
         Initialize the C++ fasttrips extension by passing it the network supply.
         """
         FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
-        # make a copy to convert the 2-column MultiIndex to a 2D array easily
-        walk_access_df = FT.tazs.walk_access_df.reset_index()
-        # create access and egress cost
-        # todo: fix
-        walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0
-        walk_access_df[TAZ.WALK_ACCESS_COLUMN_ACC_COST] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
-        walk_access_df[TAZ.WALK_ACCESS_COLUMN_EGR_COST] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
-
-        FastTripsLogger.debug("\n" + str(walk_access_df.head()))
-        FastTripsLogger.debug("\n" + str(walk_access_df.tail()))
 
         # transfers copy for index flattening, cost
         transfers_df = FT.stops.transfers_df.reset_index()
@@ -279,11 +269,6 @@ class Assignment:
             transfers_df[Stop.TRANSFERS_COLUMN_COST] = 0
 
         _fasttrips.initialize_supply(output_dir, process_number,
-                                     walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
-                                                     TAZ.WALK_ACCESS_COLUMN_STOP_NUM]].as_matrix().astype('int32'),
-                                     walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TIME_MIN,
-                                                     TAZ.WALK_ACCESS_COLUMN_ACC_COST,
-                                                     TAZ.WALK_ACCESS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),

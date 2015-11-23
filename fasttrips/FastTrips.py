@@ -128,7 +128,7 @@ class FastTrips:
                           self.stops, self.routes)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(self.input_network_dir, Assignment.TODAY, self.stops, self.routes)
+        self.tazs = TAZ(self.input_network_dir, self.output_dir, Assignment.TODAY, self.stops, self.routes)
 
         if not self.is_child_process:
             FastTripsLogger.info("-------- Reading demand --------")

@@ -68,10 +68,14 @@ class Stop:
     #: `gtfs transfers <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers.md>`_ file).
     #: See `transfers_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers_ft.md>`_.
     INPUT_TRANSFERS_FILE                    = "transfers_ft.txt"
-    #: fasttrips Transfers column name: Origin stop identifier
+    #: gtfs Transfers column name: Origin stop identifier
     TRANSFERS_COLUMN_FROM_STOP              = 'from_stop_id'
-    #: fasttrips Transfers column name: Destination stop identifier
+    #: gtfs Transfers column name: Destination stop identifier
     TRANSFERS_COLUMN_TO_STOP                = 'to_stop_id'
+    #: gtfs Transfers column name: Transfer Type
+    TRANSFERS_COLUMN_TRANSFER_TYPE          = 'transfer_type'
+    #: gtfs Transfers column name: Destination stop identifier
+    TRANSFERS_COLUMN_MIN_TRANSFER_TIME      = 'min_transfer_time'
     #: fasttrips Transfers column name: Link walk distance, in miles. This is a float.
     TRANSFERS_COLUMN_DISTANCE               = 'dist'
     #: fasttrips Transfers column name: Origin route identifier

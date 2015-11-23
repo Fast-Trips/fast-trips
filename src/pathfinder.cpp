@@ -130,13 +130,43 @@ namespace fasttrips {
         }
         mode_id_file.close();
 
+        // Taz Access and Egress links (various supply modes)
+        std::ifstream acceggr_file;
+        std::ostringstream ss_accegr;
+        ss_accegr << output_dir_ << kPathSeparator << "ft_output_access_egress.txt";
+        acceggr_file.open(ss_accegr.str().c_str(), std::ios_base::in);
+        std::string string_taz_num, string_attr, string_attr_val;
+        acceggr_file >> string_taz_num >> string_num_id >> string_id >> string_attr >> string_attr_val;
+        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s] [%s] [%s] [%s]\n", ss_accegr.str().c_str(),
+                                        string_taz_num.c_str(), string_num_id.c_str(), string_id.c_str(),
+                                        string_attr.c_str(), string_attr_val.c_str()); }
+        int taz_num, supply_mode_num;
+        double attr_val;
+        while (acceggr_file >> taz_num >> supply_mode_num >> num_id >> string_attr >> attr_val) {
+            TAZSupplyStopToAttr::iterator it_tss2a = taz_access_links_.find(taz_num);
+            if (it_tss2a == taz_access_links_.end()) {
+                SupplyStopToAttr ss2a;
+                taz_access_links_[taz_num] = ss2a;
+            }
+            SupplyStopToAttr::iterator it_ss2a = taz_access_links_[taz_num].find(supply_mode_num);
+            if (it_ss2a == taz_access_links_[taz_num].end()) {
+                StopToAttr s2a;
+                taz_access_links_[taz_num][supply_mode_num] = s2a;
+            }
+            StopToAttr::iterator it_s2a = taz_access_links_[taz_num][supply_mode_num].find(num_id);
+            if (it_s2a == taz_access_links_[taz_num][supply_mode_num].end()) {
+                Attributes attrs;
+                taz_access_links_[taz_num][supply_mode_num][num_id] = attrs;
+            }
+            taz_access_links_[taz_num][supply_mode_num][num_id][string_attr] = attr_val;
+        }
+
         // Weights
         std::ifstream weights_file;
         std::ostringstream ss_weights;
         ss_weights << output_dir_ << kPathSeparator << "ft_output_weights.txt";
         weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
         std::string user_class, demand_mode_type, demand_mode, weight_name, supply_mode_str, weight_val_str;
-        int supply_mode_num;
         double weight_value;
         weights_file >> user_class >> demand_mode_type >> demand_mode >> supply_mode_str >> weight_name >> weight_val_str;
         if (process_num_ <= 1) {
@@ -174,9 +204,6 @@ namespace fasttrips {
     void PathFinder::initializeSupply(
         const char* output_dir,
         int         process_num,
-        int*        taz_access_index,
-        double*     taz_access_cost,
-        int         num_tazlinks,
         int*        stoptime_index,
         double*     stoptime_times,
         int         num_stoptimes,
@@ -189,21 +216,6 @@ namespace fasttrips {
         output_dir_  = output_dir;
         process_num_ = process_num;
         readIdMappingFiles();
-
-        for(int i=0; i<num_tazlinks; ++i) {
-            TazStopCost tsc = {
-                taz_access_cost[3*i],
-                taz_access_cost[3*i+1],
-                taz_access_cost[3*i+2]
-            };
-            taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]] = tsc;
-            if (false && (process_num_<= 1) && ((i<5) || (i>num_tazlinks-5))) {
-                printf("access_links[%4d][%4d]=%f, %f, %f\n", taz_access_index[2*i], taz_access_index[2*i+1],
-                       taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]].time_,
-                       taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]].access_cost_,
-                       taz_access_links_[taz_access_index[2*i]][taz_access_index[2*i+1]].egress_cost_);
-            }
-        }
 
         for (int i=0; i<num_stoptimes; ++i) {
             TripStopTime stt = {
@@ -319,26 +331,39 @@ namespace fasttrips {
         int     start_taz_id = path_spec.outbound_ ? path_spec.destination_taz_id_ : path_spec.origin_taz_id_;
         double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
 
-        // are there any egress/access links?
-        std::map<int, std::map<int, TazStopCost> >::const_iterator start_links = taz_access_links_.find(start_taz_id);
-        if (start_links == taz_access_links_.end()) {
+        // are there any egress/access links for this TAZ?
+        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(start_taz_id);
+        if (iter_tss2a == taz_access_links_.end()) {
             return false;
         }
-        std::map<int, TazStopCost>::const_iterator link_iter;
-        for (link_iter  = start_links->second.begin();
-             link_iter != start_links->second.end(); ++link_iter)
+
+        // are there any egress/access links for the supply modes that are ok?
+        // TODO: loop through real ones - don't hardcode walk
+        int supply_mode_num = path_spec.outbound_ ? 201 : 101;
+        SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
+        if (iter_ss2a == iter_tss2a->second.end()) {
+            return false;
+        }
+
+        StopToAttr::const_iterator link_iter;
+        for (link_iter  = iter_ss2a->second.begin();
+             link_iter != iter_ss2a->second.end(); ++link_iter)
         {
             int stop_id = link_iter->first;
+            const Attributes& link_attr = link_iter->second;
+            double attr_time = link_attr.find("time_min")->second;
+            double acc_cost = attr_time*WALK_ACCESS_TIME_WEIGHT_;
+            double egr_cost = attr_time*WALK_EGRESS_TIME_WEIGHT_;
 
             // outbound: departure time = destination - access
             // inbound:  arrival time   = origin      + access
-            double deparr_time = path_spec.preferred_time_ - (link_iter->second.time_*dir_factor);
+            double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
 
             double cost;
             if (path_spec.hyperpath_) {
-                cost = (path_spec.outbound_ ? link_iter->second.egress_cost_ : link_iter->second.access_cost_);
+                cost = (path_spec.outbound_ ? egr_cost : acc_cost);
             } else {
-                cost = link_iter->second.time_;
+                cost = attr_time;
             }
 
             StopState ss = {
@@ -349,7 +374,7 @@ namespace fasttrips {
                 start_taz_id,                                                               // successor/predecessor
                 -1,                                                                         // sequence
                 -1,                                                                         // sequence succ/pred
-                link_iter->second.time_,                                                    // link time
+                attr_time,                                                                  // link time
                 cost,                                                                       // cost
                 PathFinder::MAX_DATETIME };                                                 // arrival/departure time
             stop_states[stop_id].push_back(ss);
@@ -808,17 +833,28 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links?
-        std::map<int, std::map<int, TazStopCost> >::const_iterator end_links = taz_access_links_.find(end_taz_id);
-        if (end_links == taz_access_links_.end()) {
+        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
+        if (iter_tss2a == taz_access_links_.end()) {
             return false;
         }
 
-        std::map<int, TazStopCost>::const_iterator link_iter;
-        for (link_iter  = end_links->second.begin();
-             link_iter != end_links->second.end(); ++link_iter)
+        // are there any egress/access links for the supply modes that are ok?
+        // TODO: loop through real ones - don't hardcode walk
+        int supply_mode_num = path_spec.outbound_ ? 101 : 201;
+        SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
+        if (iter_ss2a == iter_tss2a->second.end()) {
+            return false;
+        }
+
+        StopToAttr::const_iterator link_iter;
+        for (link_iter  = iter_ss2a->second.begin();
+             link_iter != iter_ss2a->second.end(); ++link_iter)
         {
             int     stop_id                 = link_iter->first;
-            double  access_time             = link_iter->second.time_;
+            const Attributes& link_attr     = link_iter->second;
+
+            double  access_time             = link_attr.find("time_min")->second;
+            double  link_cost               = path_spec.outbound_ ? access_time*WALK_ACCESS_TIME_WEIGHT_ : access_time*WALK_EGRESS_TIME_WEIGHT_;
 
             double  earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
             double  nonwalk_label           = PathFinder::MAX_COST;
@@ -847,7 +883,7 @@ namespace fasttrips {
 
                 deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
 
-                new_cost        = nonwalk_label + (path_spec.outbound_ ? link_iter->second.access_cost_ : link_iter->second.egress_cost_);
+                new_cost        = nonwalk_label + link_cost;
                 double old_label= PathFinder::MAX_COST;
                 new_label       = new_cost;
 
@@ -869,7 +905,7 @@ namespace fasttrips {
                 if (current_stop_state.front().deparr_mode_ == PathFinder::MODE_TRANSFER) { continue; }
                 if (current_stop_state.front().deparr_mode_ == PathFinder::MODE_EGRESS  ) { continue; }
                 if (current_stop_state.front().deparr_mode_ == PathFinder::MODE_ACCESS  ) { continue; }
-                new_cost  = (path_spec.outbound_ ? link_iter->second.time_ : link_iter->second.time_);
+                new_cost  = access_time;
                 new_label = current_stop_state.front().label_ + new_cost;
 
                 // capacity check
