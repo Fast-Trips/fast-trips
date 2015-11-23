@@ -19,7 +19,12 @@
 
 namespace fasttrips {
 
-    enum DemandModeType { ACCESS, EGRESS, TRANSIT, TRANSFER };
+    enum DemandModeType {
+        MODE_ACCESS   = -100,
+        MODE_EGRESS   = -101,
+        MODE_TRANSFER = -102,
+        MODE_TRANSIT  = -103,
+    };
 
     /// Weight lookup
     typedef struct {
@@ -136,8 +141,8 @@ namespace fasttrips {
         double  label_;                 ///< The label for this stop
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
-                                        ///< One of PathFinder::MODE_ACCESS, PathFinder::MODE_EGRESS,
-                                        ///< PathFinder::MODE_TRANSFER, or a trip ID
+                                        ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
+                                        ///< fasttrips::MODE_TRANSFER, or a trip ID
         int     trip_id_;               ///< Trip ID if deparr_mode_ is a transit mode (-1 if not trip)
         int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
@@ -305,7 +310,7 @@ namespace fasttrips {
         std::map<int, std::string> trip_num_to_str_;
         std::map<int, std::string> stop_num_to_str_;
         std::map<int, std::string> route_num_to_str_;
-        std::map<int, std::string> mode_num_to_str_;
+        std::map<int, std::string> mode_num_to_str_; // supply modes
 
         /**
          * From simulation: When there are capacity limitations on a vehicle and passengers cannot
@@ -457,10 +462,6 @@ namespace fasttrips {
         bool isTrip(const int& mode) const;
 
     public:
-        const static int MODE_ACCESS    = -100;
-        const static int MODE_EGRESS    = -101;
-        const static int MODE_TRANSFER  = -102;
-        const static int MODE_TRIP      = -103;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
         const static double MAX_COST;
         const static double MAX_TIME;
