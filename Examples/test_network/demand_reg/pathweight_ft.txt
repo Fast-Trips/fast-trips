@@ -1,12 +1,13 @@
 user_class demand_mode_type demand_mode    supply_mode  weight_name         weight_value
+all        transfer         transfer       transfer     walk_time_min       3.93
 all        access           walk           walk_access  time_min            3.93
 all        egress           walk           walk_egress  time_min            3.93
-all        misc             initial        wait         time_min            1.77
-all        misc             transfer       walk         time_min            3.93
-all        misc             transfer       wait         time_min            1.77
 all        transit          transit        local_bus    in_vehicle_time_min 1.0
+all        transit          transit        local_bus    wait_time_min       1.77
 all        transit          transit        local_bus    transfer_penalty    47.73
 all        transit          transit        rapid_bus    in_vehicle_time_min 1.0
+all        transit          transit        rapid_bus    wait_time_min       1.77
 all        transit          transit        rapid_bus    transfer_penalty    47.73
 all        transit          transit        heavy_rail   in_vehicle_time_min 1.0
+all        transit          transit        heavy_rail   wait_time_min       1.77
 all        transit          transit        heavy_rail   transfer_penalty    47.73
