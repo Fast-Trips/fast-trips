@@ -42,4 +42,4 @@ bart,Z2,Z3,PNR-local_bus-walk,personal_business,17:01:00,17:20:00,departure,10.0
 paperboy,Z1,Z5,walk-commuter_rail-walk,meal,16:25:00,16:30:00,arrival,25.50,
 marge,Z2,Z3,PNR-local_bus-walk,personal_business,17:01:00,17:20:00,departure,10.01,
 paperboy,Z1,Z5,walk-commuter_rail-walk,meal,16:25:00,16:30:00,arrival,25.50,
-marge,Z2,Z3,PNR-local_bus-walk,personal_business,17:01:00,17:20:00,departure,10.01,
+marge,Z3,Z2,walk-local_bus-PNR,personal_business,17:01:00,17:20:00,departure,10.01,

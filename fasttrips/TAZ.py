@@ -449,6 +449,10 @@ class TAZ:
         print "drive_access columns"
         for col in list(self.drive_access_df.columns): print "  %s" % col
 
+        # TEMP
+        drive_df['time_min'] = drive_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] + \
+                               drive_df[TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN]
+
         # drop some of the attributes
         drive_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ,               # use numerical version
                        TAZ.DRIVE_ACCESS_COLUMN_STOP,              # use numerical version

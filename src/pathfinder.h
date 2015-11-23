@@ -142,8 +142,9 @@ namespace fasttrips {
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
                                         ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
-                                        ///< fasttrips::MODE_TRANSFER, or a trip ID
-        int     trip_id_;               ///< Trip ID if deparr_mode_ is a transit mode (-1 if not trip)
+                                        ///< fasttrips::MODE_TRANSFER, or fasttrips::MODE_TRANSIT
+        int     trip_id_;               ///< Trip ID if deparr_mode_ is fasttrips::MODE_TRANSIT,
+                                        ///< or the supply_mode_num for access, egress
         int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop

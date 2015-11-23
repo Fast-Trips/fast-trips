@@ -19,6 +19,7 @@ not_real   transfer         transfer       transfer     walk_time_min       0.24
 not_real   access           walk           walk_access  time_min            0.25
 not_real   access           PNR            PNR_access   time_min            0.15
 not_real   egress           walk           walk_egress  time_min            0.27
+not_real   egress           PNR            PNR_egress   time_min            0.15
 not_real   transit          local_bus      local_bus    in_vehicle_time_min 0.5
 not_real   transit          local_bus      local_bus    wait_time_min       0.577
 not_real   transit          local_bus      local_bus    transfer_penalty    5.773
