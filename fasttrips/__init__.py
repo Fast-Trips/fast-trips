@@ -21,6 +21,7 @@ from .Path import Path
 from .Route import Route
 from .Stop import Stop
 from .TAZ import TAZ
+from .Transfer import Transfer
 from .Trip import Trip
 
 __all__ = [

@@ -22,6 +22,7 @@ from .Passenger import Passenger
 from .Route import Route
 from .Stop import Stop
 from .TAZ import TAZ
+from .Transfer import Transfer
 from .Trip import Trip
 
 class FastTrips:
@@ -118,9 +119,12 @@ class FastTrips:
         self.routes = Route(self.input_network_dir, self.output_dir,
                             self.gtfs_schedule, Assignment.TODAY, self.is_child_process)
 
-        # Read Stops (gtfs-required) and transfers
+        # Read Stops (gtfs-required)
         self.stops = Stop(self.input_network_dir, self.output_dir,
                           self.gtfs_schedule, self.is_child_process)
+
+        # Read Transfers
+        self.transfers = Transfer(self.input_network_dir, self.gtfs_schedule)
 
         # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(self.input_network_dir, self.output_dir,
@@ -129,7 +133,7 @@ class FastTrips:
 
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(self.input_network_dir, self.output_dir, Assignment.TODAY,
-                        self.stops, self.routes, self.is_child_process)
+                        self.stops, self.transfers, self.routes, self.is_child_process)
 
         if not self.is_child_process:
             FastTripsLogger.info("-------- Reading demand --------")

@@ -22,6 +22,7 @@ from .Passenger import Passenger
 from .Path      import Path
 from .Stop      import Stop
 from .TAZ       import TAZ
+from .Transfer  import Transfer
 from .Trip      import Trip
 from .Util      import Util
 
@@ -262,11 +263,11 @@ class Assignment:
         FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
 
         # transfers copy for index flattening, cost
-        transfers_df = FT.stops.transfers_df.reset_index()
+        transfers_df = FT.transfers.transfers_df.reset_index()
         if len(transfers_df) > 0:
-            transfers_df[Stop.TRANSFERS_COLUMN_COST] = transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
+            transfers_df[Transfer.TRANSFERS_COLUMN_COST] = transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
         else:
-            transfers_df[Stop.TRANSFERS_COLUMN_COST] = 0
+            transfers_df[Transfer.TRANSFERS_COLUMN_COST] = 0
 
         _fasttrips.initialize_supply(output_dir, process_number,
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
@@ -274,10 +275,10 @@ class Assignment:
                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
                                                              Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
-                                     transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                   Stop.TRANSFERS_COLUMN_TO_STOP_NUM]].as_matrix().astype('int32'),
-                                     transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
-                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'),
+                                     transfers_df[[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                   Transfer.TRANSFERS_COLUMN_TO_STOP_NUM]].as_matrix().astype('int32'),
+                                     transfers_df[[Transfer.TRANSFERS_COLUMN_TIME_MIN,
+                                                   Transfer.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'),
                                      FT.trips.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID_NUM,
                                                         Trip.TRIPS_COLUMN_MODE_NUM,
                                                         Trip.TRIPS_COLUMN_ROUTE_ID_NUM]].as_matrix().astype('int32'))

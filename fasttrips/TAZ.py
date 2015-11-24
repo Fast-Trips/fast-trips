@@ -15,10 +15,11 @@ __license__   = """
 import collections,datetime,os,sys
 import pandas
 
-from .Logger import FastTripsLogger
-from .Route  import Route
-from .Stop   import Stop
-from .Util   import Util
+from .Logger   import FastTripsLogger
+from .Route    import Route
+from .Stop     import Stop
+from .Transfer import Transfer
+from .Util     import Util
 
 class TAZ:
     """
@@ -198,7 +199,7 @@ class TAZ:
     #: initialize_fasttrips_extension() because of the strings involved, I think.
     OUTPUT_ACCESS_EGRESS_FILE               = "ft_output_access_egress.txt"
 
-    def __init__(self, input_dir, output_dir, today, stops, routes, is_child_process):
+    def __init__(self, input_dir, output_dir, today, stops, transfers, routes, is_child_process):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
@@ -334,35 +335,35 @@ class TAZ:
 
             # join with transfers
             drive_access = pandas.merge(left=drive_access,
-                                        right=stops.transfers_df,
+                                        right=transfers.transfers_df,
                                         left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
-                                        right_on=Stop.TRANSFERS_COLUMN_FROM_STOP,
+                                        right_on=Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                         how='left')
-            drive_access[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_access[Stop.TRANSFERS_COLUMN_TO_STOP]
+            drive_access[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_access[Transfer.TRANSFERS_COLUMN_TO_STOP]
             drive_egress = pandas.merge(left=drive_egress,
-                                        right=stops.transfers_df,
+                                        right=transfers.transfers_df,
                                         left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
-                                        right_on=Stop.TRANSFERS_COLUMN_TO_STOP,
+                                        right_on=Transfer.TRANSFERS_COLUMN_TO_STOP,
                                         how='left')
-            drive_egress[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_egress[Stop.TRANSFERS_COLUMN_FROM_STOP]
+            drive_egress[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_egress[Transfer.TRANSFERS_COLUMN_FROM_STOP]
             self.drive_access_df = pandas.concat([drive_access, drive_egress], axis=0)
 
             # drop redundant columns
             # TODO: assuming min_transfer_type and transfer_type from GTFS aren't relevant here, since
             # the time and dist are what matter.
             # Assuming schedule_precedence doesn't make sense in the drive access/egress context
-            self.drive_access_df.drop([Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                       Stop.TRANSFERS_COLUMN_TO_STOP,
-                                       Stop.TRANSFERS_COLUMN_TRANSFER_TYPE,
-                                       Stop.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,
-                                       Stop.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE], axis=1, inplace=True)
+            self.drive_access_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP,
+                                       Transfer.TRANSFERS_COLUMN_TO_STOP,
+                                       Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE,
+                                       Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,
+                                       Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE], axis=1, inplace=True)
 
             # rename walk attributes to be clear
             self.drive_access_df.rename(
                 columns={
-                    Stop.TRANSFERS_COLUMN_DISTANCE:TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE,
-                    Stop.TRANSFERS_COLUMN_TIME    :TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME,
-                    Stop.TRANSFERS_COLUMN_TIME_MIN:TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN},
+                    Transfer.TRANSFERS_COLUMN_DISTANCE:TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE,
+                    Transfer.TRANSFERS_COLUMN_TIME    :TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME,
+                    Transfer.TRANSFERS_COLUMN_TIME_MIN:TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN},
                 inplace=True)
 
             FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
@@ -380,6 +381,8 @@ class TAZ:
                                      pandas.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
                                                     self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
                                      TAZ.WALK_ACCESS_COLUMN_TAZ)
+        # transfers can add stop numeric IDs now that DAPs are available
+        transfers.add_numeric_stop_id(stops)
 
 
         # Add numeric stop ID to walk access links
