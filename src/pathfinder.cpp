@@ -1216,7 +1216,7 @@ namespace fasttrips {
             {
                 // Leave origin as late as possible
                 if (prev_mode == MODE_ACCESS) {
-                    double dep_time = getScheduledDeparture(next_ss.deparr_mode_, current_stop_id, next_ss.seq_);
+                    double dep_time = getScheduledDeparture(next_ss.trip_id_, current_stop_id, next_ss.seq_);
                     // set departure time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
                     path.states_[prev_stop_id].arrdep_time_ = dep_time;
@@ -1245,7 +1245,7 @@ namespace fasttrips {
             {
                 // Leave origin as late as possible
                 if (next_ss.deparr_mode_ == MODE_ACCESS) {
-                    double dep_time = getScheduledDeparture(path.states_[prev_stop_id].deparr_mode_, current_stop_id, path.states_[prev_stop_id].seq_succpred_);
+                    double dep_time = getScheduledDeparture(path.states_[prev_stop_id].trip_id_, current_stop_id, path.states_[prev_stop_id].seq_succpred_);
                     // set arrival time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
                     next_ss.deparr_time_ = dep_time;
