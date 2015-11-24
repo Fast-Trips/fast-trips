@@ -24,7 +24,10 @@ class TAZ:
     """
     TAZ class.
 
-    One instance represents all of the Transportation Analysis Zones as well as their access links.
+    One instance represents all of the Transportation Analysis Zones
+    as well as their access links and egress links.
+
+    .. todo:: This is really about the access and egress links; perhaps it should be renamed?
 
     Stores access link information in :py:attr:`TAZ.walk_access`, and :py:attr:`TAZ.drive_access`,
     both instances of :py:class:`pandas.DataFrame`.
@@ -195,7 +198,7 @@ class TAZ:
     #: initialize_fasttrips_extension() because of the strings involved, I think.
     OUTPUT_ACCESS_EGRESS_FILE               = "ft_output_access_egress.txt"
 
-    def __init__(self, input_dir, output_dir, today, stops, routes):
+    def __init__(self, input_dir, output_dir, today, stops, routes, is_child_process):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
@@ -409,8 +412,9 @@ class TAZ:
             self.drive_access_df = routes.add_numeric_mode_id(self.drive_access_df,
                                                               id_colname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,
                                                               numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM)
-        # write this to communicate to extension
-        self.write_access_egress_for_extension(output_dir)
+        if not is_child_process:
+            # write this to communicate to extension
+            self.write_access_egress_for_extension(output_dir)
 
     def write_access_egress_for_extension(self, output_dir):
         """
