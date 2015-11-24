@@ -32,18 +32,14 @@ _fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
 {
     double in_vehicle_time_weight;
     double wait_time_weight;
-    double walk_access_time_weight;
-    double walk_egress_time_weight;
     double walk_transfer_time_weight;
     double transfer_penalty;
     double schedule_delay_weight;
     double fare_per_boarding;
     double value_of_time;
-    if (!PyArg_ParseTuple(args, "ddddddddd",
+    if (!PyArg_ParseTuple(args, "ddddddd",
             &in_vehicle_time_weight,
             &wait_time_weight,
-            &walk_access_time_weight,
-            &walk_egress_time_weight,
             &walk_transfer_time_weight,
             &transfer_penalty,
             &schedule_delay_weight,
@@ -53,8 +49,6 @@ _fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
     }
     pathfinder.initializeCostCoefficients(in_vehicle_time_weight,
                                           wait_time_weight,
-                                          walk_access_time_weight,
-                                          walk_egress_time_weight,
                                           walk_transfer_time_weight,
                                           transfer_penalty,
                                           schedule_delay_weight,

@@ -289,8 +289,6 @@ class Assignment:
 
         _fasttrips.initialize_costcoeffs(Path.IN_VEHICLE_TIME_WEIGHT,
                                          Path.WAIT_TIME_WEIGHT,
-                                         Path.WALK_ACCESS_TIME_WEIGHT,
-                                         Path.WALK_EGRESS_TIME_WEIGHT,
                                          Path.WALK_TRANSFER_TIME_WEIGHT,
                                          Path.TRANSFER_PENALTY,
                                          Path.SCHEDULE_DELAY_WEIGHT,

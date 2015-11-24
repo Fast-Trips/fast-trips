@@ -261,12 +261,6 @@ namespace fasttrips {
         /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WAIT_TIME_WEIGHT">fasttrips.Path.WAIT_TIME_WEIGHT</a>
         double WAIT_TIME_WEIGHT_;
 
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_ACCESS_TIME_WEIGHT">fasttrips.Path.WALK_ACCESS_TIME_WEIGHT</a>
-        double WALK_ACCESS_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_EGRESS_TIME_WEIGHT">fasttrips.Path.WALK_EGRESS_TIME_WEIGHT</a>
-        double WALK_EGRESS_TIME_WEIGHT_;
-
         /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT">fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT</a>
         double WALK_TRANSFER_TIME_WEIGHT_;
 
@@ -328,6 +322,15 @@ namespace fasttrips {
          * for modes, stops, trips, and routes.
          **/
         void readIdMappingFiles();
+
+        /**
+         * Tally the link cost, which is the sum of the weighted attributes.
+         * @return the cost.
+         */
+        double PathFinder::tallyLinkCost(const PathSpecification& path_spec,
+                                         std::ofstream& trace_file,
+                                         const NamedWeights& weights,
+                                         const Attributes& attributes) const;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -483,8 +486,6 @@ namespace fasttrips {
          */
         void initializeCostCoefficients(double  in_vehicle_time_weight,
                                         double  wait_time_weight,
-                                        double  walk_access_time_weight,
-                                        double  walk_egress_time_weight,
                                         double  walk_transfer_time_weight,
                                         double  transfer_penalty,
                                         double  schedule_delay_weight,

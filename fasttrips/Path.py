@@ -70,8 +70,6 @@ class Path:
     #: todo: these will get removed in favor of WEIGHTS above
     IN_VEHICLE_TIME_WEIGHT          = 1.0
     WAIT_TIME_WEIGHT                = 1.77
-    WALK_ACCESS_TIME_WEIGHT         = 3.93
-    WALK_EGRESS_TIME_WEIGHT         = 3.93
     WALK_TRANSFER_TIME_WEIGHT       = 3.93
     TRANSFER_PENALTY                = 47.73
     SCHEDULE_DELAY_WEIGHT           = 0

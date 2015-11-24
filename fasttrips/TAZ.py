@@ -423,8 +423,8 @@ class TAZ:
 
         """
         # ========== Walk access/egres =================================================
-        print "walk_access columns"
-        for col in list(self.walk_access_df.columns): print "  %s" % col
+        # print "walk_access columns"
+        # for col in list(self.walk_access_df.columns): print "  %s" % col
 
         # start with all walk columns
         walk_df = self.walk_access_df.copy()
@@ -442,12 +442,12 @@ class TAZ:
         # this will make it so beyond taz num, supply mode num, and stop num
         # the remaining columns collapse to variable name, variable value
         walk_df = walk_df.stack()
-        print walk_df
+        # print walk_df
 
         # ========== Drive access/egres =================================================
         drive_df = self.drive_access_df.copy()
-        print "drive_access columns"
-        for col in list(self.drive_access_df.columns): print "  %s" % col
+        # print "drive_access columns"
+        # for col in list(self.drive_access_df.columns): print "  %s" % col
 
         # TEMP
         drive_df['time_min'] = drive_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] + \
@@ -483,11 +483,10 @@ class TAZ:
         access_df.rename(columns={"level_3":"attr_name", 0:"attr_value"}, inplace=True)
         # make attr_value a float instead of an object
         access_df["attr_value"] = access_df["attr_value"].astype(float)
-        print access_df
-        print access_df.dtypes
 
         FastTripsLogger.debug("\n" + str(access_df.head()))
         FastTripsLogger.debug("\n" + str(access_df.tail()))
 
         access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
                          sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE))
