@@ -32,15 +32,13 @@ _fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
 {
     double in_vehicle_time_weight;
     double wait_time_weight;
-    double walk_transfer_time_weight;
     double transfer_penalty;
     double schedule_delay_weight;
     double fare_per_boarding;
     double value_of_time;
-    if (!PyArg_ParseTuple(args, "ddddddd",
+    if (!PyArg_ParseTuple(args, "dddddd",
             &in_vehicle_time_weight,
             &wait_time_weight,
-            &walk_transfer_time_weight,
             &transfer_penalty,
             &schedule_delay_weight,
             &fare_per_boarding,
@@ -49,7 +47,6 @@ _fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
     }
     pathfinder.initializeCostCoefficients(in_vehicle_time_weight,
                                           wait_time_weight,
-                                          walk_transfer_time_weight,
                                           transfer_penalty,
                                           schedule_delay_weight,
                                           fare_per_boarding,
@@ -65,8 +62,8 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     const char* output_dir;
     int proc_num;
     PyObject *input3, *input4, *input5, *input6, *input7;
-    if (!PyArg_ParseTuple(args, "siOOOOO", &output_dir, &proc_num,
-                          &input3, &input4, &input5, &input6, &input7)) {
+    if (!PyArg_ParseTuple(args, "siOOO", &output_dir, &proc_num,
+                          &input3, &input4, &input7)) {
         return NULL;
     }
 
@@ -87,23 +84,6 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // these better be the same length
     assert(num_stop_ind == num_stop_times);
 
-    // stop transfers index: from stop id, to stop id
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input5, NPY_INT32, 2, 2);
-    if (pyo == NULL) return NULL;
-    int* xfer_indexes   = (int*)PyArray_DATA(pyo);
-    int num_xfer_ind    = PyArray_DIMS(pyo)[0];
-    assert(2 == PyArray_DIMS(pyo)[1]);
-
-    // stop transfers data: time, cost
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input6, NPY_DOUBLE, 2, 2);
-    if (pyo == NULL) return NULL;
-    double* xfer_data  = (double*)PyArray_DATA(pyo);
-    int num_xfer_data  = PyArray_DIMS(pyo)[0];
-    assert(2 == PyArray_DIMS(pyo)[1]);
-
-    // these better be the same length
-    assert(num_xfer_ind == num_xfer_data);
-
     // trips data: trip id number, route id number
     pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input7, NPY_INT32, 2, 2);
     if (pyo == NULL) return NULL;
@@ -114,7 +94,6 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // keep them
     pathfinder.initializeSupply(output_dir, proc_num,
                                 stop_indexes, stop_times, num_stop_ind,
-                                xfer_indexes, xfer_data, num_xfer_ind,
                                 trip_data, num_trip_data);
 
     if (proc_num <= 1) {

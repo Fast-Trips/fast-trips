@@ -45,7 +45,6 @@ namespace fasttrips {
     void PathFinder::initializeCostCoefficients(
         double  in_vehicle_time_weight,
         double  wait_time_weight,
-        double  walk_transfer_time_weight,
         double  transfer_penalty,
         double  schedule_delay_weight,
         double  fare_per_boarding,
@@ -53,7 +52,6 @@ namespace fasttrips {
     {
         IN_VEHICLE_TIME_WEIGHT_     = in_vehicle_time_weight;
         WAIT_TIME_WEIGHT_           = wait_time_weight;
-        WALK_TRANSFER_TIME_WEIGHT_  = walk_transfer_time_weight;
         TRANSFER_PENALTY_           = transfer_penalty;
         SCHEDULE_DELAY_WEIGHT_      = schedule_delay_weight;
         FARE_PER_BOARDING_          = fare_per_boarding;
@@ -123,6 +121,7 @@ namespace fasttrips {
                 printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
             }
             mode_num_to_str_[num_id] = string_id;
+            if (string_id == "transfer") { transfer_supply_mode_ = num_id; }
         }
         mode_id_file.close();
 
@@ -155,6 +154,45 @@ namespace fasttrips {
                 taz_access_links_[taz_num][supply_mode_num][num_id] = attrs;
             }
             taz_access_links_[taz_num][supply_mode_num][num_id][string_attr] = attr_val;
+        }
+
+        // Transfer links
+        std::ifstream transfer_file;
+        std::ostringstream ss_transfer;
+        ss_transfer << output_dir_ << kPathSeparator << "ft_intermediate_transfers.txt";
+        transfer_file.open(ss_transfer.str().c_str(), std::ios_base::in);
+        std::string string_from_stop, string_to_stop;
+        transfer_file >> string_from_stop >> string_to_stop >> string_attr >> string_attr_val;
+        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s] [%s] [%s]\n", ss_transfer.str().c_str(),
+                                        string_from_stop.c_str(), string_to_stop.c_str(), string_attr.c_str(),
+                                        string_attr_val.c_str()); }
+        int from_stop_id, to_stop_id;
+        while (transfer_file >> from_stop_id >> to_stop_id >> string_attr >> attr_val) {
+            // o -> d -> attrs
+            StopStopToAttr::const_iterator iter_ss2a = transfer_links_o_d_.find(from_stop_id);
+            if (iter_ss2a == transfer_links_o_d_.end()) {
+                StopToAttr s2a;
+                transfer_links_o_d_[from_stop_id] = s2a;
+            }
+            StopToAttr::const_iterator iter_s2a = transfer_links_o_d_[from_stop_id].find(to_stop_id);
+            if (iter_s2a == transfer_links_o_d_[from_stop_id].end()) {
+                Attributes a;
+                transfer_links_o_d_[from_stop_id][to_stop_id] = a;
+            }
+            transfer_links_o_d_[from_stop_id][to_stop_id][string_attr] = attr_val;
+
+            // d -> o -> attrs
+            iter_ss2a = transfer_links_d_o_.find(to_stop_id);
+            if (iter_ss2a == transfer_links_d_o_.end()) {
+                StopToAttr s2a;
+                transfer_links_d_o_[to_stop_id] = s2a;
+            }
+            iter_s2a = transfer_links_d_o_[to_stop_id].find(from_stop_id);
+            if (iter_s2a == transfer_links_d_o_[to_stop_id].end()) {
+                Attributes a;
+                transfer_links_d_o_[to_stop_id][from_stop_id] = a;
+            }
+            transfer_links_d_o_[to_stop_id][from_stop_id][string_attr] = attr_val;
         }
 
         // Weights
@@ -208,9 +246,6 @@ namespace fasttrips {
         int*        stoptime_index,
         double*     stoptime_times,
         int         num_stoptimes,
-        int*        xfer_index,
-        double*     xfer_data,
-        int         num_xfers,
         int*        trip_data,
         int         num_trips)
     {
@@ -234,16 +269,6 @@ namespace fasttrips {
             if (false && (process_num <= 1) && ((i<5) || (i>num_stoptimes-5))) {
                 printf("stoptimes[%4d][%4d][%4d]=%f, %f\n", stoptime_index[3*i], stoptime_index[3*i+1], stoptime_index[3*i+2],
                        stoptime_times[2*i], stoptime_times[2*i+1]);
-            }
-        }
-
-        for (int i=0; i<num_xfers; ++i) {
-            TransferCost tc = { xfer_data[2*i], xfer_data[2*i+1] };
-            transfer_links_o_d_[xfer_index[2*i]][xfer_index[2*i+1]] = tc;  // o -> d
-            transfer_links_d_o_[xfer_index[2*i+1]][xfer_index[2*i]] = tc;  // d -> o
-            if (false && (process_num <= 1) && ((i<5) || (i>num_stoptimes-5))) {
-                printf("xfers[%4d][%4d]=%f, %f\n", xfer_index[2*i], xfer_index[2*i+1],
-                       xfer_data[2*i], xfer_data[2*i+1]);
             }
         }
 
@@ -327,6 +352,7 @@ namespace fasttrips {
     }
 
     double PathFinder::tallyLinkCost(
+        const int supply_mode_num,
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         const NamedWeights& weights,
@@ -335,8 +361,8 @@ namespace fasttrips {
         // iterate through the weights
         double cost = 0;
         if (path_spec.trace_) {
-            trace_file << "Link cost =       ";
-            trace_file << std::setw(26) << std::setfill(' ') << "weight" << " x attribute" <<std::endl;
+            trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << mode_num_to_str_.find(supply_mode_num)->second;
+            trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
         }
 
         NamedWeights::const_iterator iter_weights;
@@ -355,13 +381,14 @@ namespace fasttrips {
 
             cost += iter_weights->second * iter_attr->second;
             if (path_spec.trace_) {
-                trace_file << std::setw(26) << std::setfill(' ') << iter_weights->first << ":  + ";
+                trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
                 trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
                 trace_file << " x " << iter_attr->second << std::endl;
             }
         }
         if (path_spec.trace_) {
-            trace_file << std::setw(26) << std::setfill(' ') << "final cost" << ": " << cost << std::endl;
+            trace_file << std::setw(26) << std::setfill(' ') << "final cost" << ":  = ";
+            trace_file << std::setw(13) << std::setprecision(4) << std::fixed << cost << std::endl;
         }
         return cost;
     }
@@ -429,7 +456,7 @@ namespace fasttrips {
 
                 double cost;
                 if (path_spec.hyperpath_) {
-                    cost = tallyLinkCost(path_spec, trace_file, iter_s2w->second, link_iter->second);
+                    cost = tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_iter->second);
                 } else {
                     cost = attr_time;
                 }
@@ -495,7 +522,7 @@ namespace fasttrips {
             if (path_spec.trace_) { trace_file << "  nonwalk label:    " << nonwalk_label << std::endl; }
         }
         // are there relevant transfers?
-        std::map<int, std::map<int, TransferCost> >::const_iterator transfer_map_it;
+        StopStopToAttr::const_iterator transfer_map_it;
         bool found_transfers = false;
         if (path_spec.outbound_) {
             // if outbound, going backwards, so transfer TO this current stop
@@ -507,12 +534,20 @@ namespace fasttrips {
             found_transfers = (transfer_map_it != transfer_links_o_d_.end());
         }
         if (!found_transfers) { return; }
-        for (std::map<int, TransferCost>::const_iterator transfer_it = transfer_map_it->second.begin();
+
+        // Lookup transfer weights
+        UserClassMode ucm = { path_spec.user_class_, MODE_TRANSFER, "transfer"};
+        WeightLookup::const_iterator iter_wl = weight_lookup_.find(ucm);
+        if (iter_wl == weight_lookup_.end()) { return; }
+        SupplyModeToNamedWeights::const_iterator iter_sm2nw = iter_wl->second.find(transfer_supply_mode_);
+        if (iter_sm2nw == iter_wl->second.end()) { return; }
+        const NamedWeights& transfer_weights = iter_sm2nw->second;
+
+        for (StopToAttr::const_iterator transfer_it = transfer_map_it->second.begin();
              transfer_it != transfer_map_it->second.end(); ++transfer_it)
         {
             int     xfer_stop_id    = transfer_it->first;
-            double  transfer_time   = transfer_it->second.time_;
-            double  transfer_cost   = transfer_it->second.cost_;
+            double  transfer_time   = transfer_it->second.find("time_min")->second;
             // outbound: departure time = latest departure - transfer
             //  inbound: arrival time   = earliest arrival + transfer
             double  deparr_time     = latest_dep_earliest_arr - (transfer_time*dir_factor);
@@ -523,7 +558,7 @@ namespace fasttrips {
             // stochastic/hyperpath: cost update
             if (path_spec.hyperpath_)
             {
-                cost                = nonwalk_label + transfer_cost;
+                cost                = nonwalk_label + tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, transfer_weights, transfer_it->second);
                 double old_label    = PathFinder::MAX_COST;
                 new_label           = cost;
                 if (possible_xfer_iter != stop_states.end())
@@ -980,7 +1015,7 @@ namespace fasttrips {
 
                     deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
 
-                    double link_cost= tallyLinkCost(path_spec, trace_file, iter_s2w->second, link_iter->second);
+                    double link_cost= tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_iter->second);
                     new_cost        = nonwalk_label + link_cost;
                     double old_label= PathFinder::MAX_COST;
                     new_label       = new_cost;
@@ -1370,7 +1405,6 @@ namespace fasttrips {
         double in_vehicle_min       = 0;
         double initial_wait_min     = 0;
         double transfer_wait_min    = 0;
-        double transfer_walk_min    = 0;
         double preference_delay     = 0; // arrival/departure time compared to preferred
         double fare                 = 0;
 
@@ -1401,7 +1435,7 @@ namespace fasttrips {
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_ACCESS, path_spec.access_mode_ };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(stop_state.trip_id_)->second;
                 const Attributes&   attributes    = taz_access_links_.find(path_spec.origin_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
-                path_info.cost_                  += tallyLinkCost(path_spec, trace_file, named_weights, attributes);
+                path_info.cost_                  += tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
             }
             // ============= egress =============
             else if (stop_state.deparr_mode_ == MODE_EGRESS)
@@ -1412,13 +1446,19 @@ namespace fasttrips {
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_EGRESS, path_spec.egress_mode_ };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(stop_state.trip_id_)->second;
                 const Attributes&   attributes    = taz_access_links_.find(path_spec.destination_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
-                path_info.cost_                  += tallyLinkCost(path_spec, trace_file, named_weights, attributes);
+                path_info.cost_                  += tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
 
             }
             // ============= transfer =============
             else if (stop_state.deparr_mode_ == MODE_TRANSFER)
             {
-                transfer_walk_min  += stop_state.link_time_;
+                int orig_stop                     = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
+                int dest_stop                     = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
+
+                UserClassMode ucm                 = { path_spec.user_class_, MODE_TRANSFER, "transfer" };
+                const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(transfer_supply_mode_)->second;
+                const Attributes&   attributes    = transfer_links_o_d_.find(orig_stop)->second.find(dest_stop)->second;
+                path_info.cost_                  += tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, named_weights, attributes);
             }
             // ============= trip =============
             else
@@ -1451,7 +1491,6 @@ namespace fasttrips {
 
         path_info.cost_+= (IN_VEHICLE_TIME_WEIGHT_*in_vehicle_min                ) +
                           (WAIT_TIME_WEIGHT_*(initial_wait_min+transfer_wait_min)) +
-                          (WALK_TRANSFER_TIME_WEIGHT_*transfer_walk_min          ) +
                           (TRANSFER_PENALTY_*num_transfers                       ) +
                           (SCHEDULE_DELAY_WEIGHT_*preference_delay               ) +
                           (60.0*fare/VALUE_OF_TIME_                              );
@@ -1469,7 +1508,6 @@ namespace fasttrips {
             trace_file << "            in vehicle min: " << in_vehicle_min    << std::endl;
             trace_file << "          initial wait min: " << initial_wait_min  << std::endl;
             trace_file << "         transfer wait min: " << transfer_wait_min << std::endl;
-            trace_file << "         transfer walk min: " << transfer_walk_min << std::endl;
             trace_file << "             num transfers: " << num_transfers     << std::endl;
             trace_file << "           preferred delay: " << preference_delay  << std::endl;
             trace_file << "                      fare: " << fare              << std::endl;

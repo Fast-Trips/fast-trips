@@ -426,7 +426,7 @@ class TAZ:
         Assignment.initialize_fasttrips_extension so I know that's inconsistent, but it's a
         time sink to investigate, so I'll leave this for now
 
-        .. todo:: clean this up?
+        .. todo:: clean this up?  Rename intermediate files (they're not really output)
 
         """
         # ========== Walk access/egres =================================================

@@ -262,23 +262,12 @@ class Assignment:
         """
         FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
 
-        # transfers copy for index flattening, cost
-        transfers_df = FT.transfers.transfers_df.reset_index()
-        if len(transfers_df) > 0:
-            transfers_df[Transfer.TRANSFERS_COLUMN_COST] = transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
-        else:
-            transfers_df[Transfer.TRANSFERS_COLUMN_COST] = 0
-
         _fasttrips.initialize_supply(output_dir, process_number,
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
                                                              Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
-                                     transfers_df[[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                   Transfer.TRANSFERS_COLUMN_TO_STOP_NUM]].as_matrix().astype('int32'),
-                                     transfers_df[[Transfer.TRANSFERS_COLUMN_TIME_MIN,
-                                                   Transfer.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'),
                                      FT.trips.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID_NUM,
                                                         Trip.TRIPS_COLUMN_MODE_NUM,
                                                         Trip.TRIPS_COLUMN_ROUTE_ID_NUM]].as_matrix().astype('int32'))
@@ -290,7 +279,6 @@ class Assignment:
 
         _fasttrips.initialize_costcoeffs(Path.IN_VEHICLE_TIME_WEIGHT,
                                          Path.WAIT_TIME_WEIGHT,
-                                         Path.WALK_TRANSFER_TIME_WEIGHT,
                                          Path.TRANSFER_PENALTY,
                                          Path.SCHEDULE_DELAY_WEIGHT,
                                          Path.FARE_PER_BOARDING,

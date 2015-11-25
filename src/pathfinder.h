@@ -58,6 +58,10 @@ namespace fasttrips {
     typedef std::map<int, StopToAttr> SupplyStopToAttr;
     typedef std::map<int, SupplyStopToAttr> TAZSupplyStopToAttr;
 
+    // Transfer information: stop id -> stop id -> attribute map
+    typedef std::map<int, StopToAttr> StopStopToAttr;
+
+
     /// Supply data: access/egress time and cost between TAZ and stops
     typedef struct {
         double  time_;          ///< in minutes
@@ -261,9 +265,6 @@ namespace fasttrips {
         /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WAIT_TIME_WEIGHT">fasttrips.Path.WAIT_TIME_WEIGHT</a>
         double WAIT_TIME_WEIGHT_;
 
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT">fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT</a>
-        double WALK_TRANSFER_TIME_WEIGHT_;
-
         /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.TRANSFER_PENALTY">fasttrips.Path.TRANSFER_PENALTY</a>
         double TRANSFER_PENALTY_;
 
@@ -291,9 +292,9 @@ namespace fasttrips {
         /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
         TAZSupplyStopToAttr taz_access_links_;
 
-        /// Transfer information: stop id -> stop id -> costs
-        std::map<int, std::map<int, TransferCost> > transfer_links_o_d_;
-        std::map<int, std::map<int, TransferCost> > transfer_links_d_o_;
+        /// Transfer information: stop id -> stop id -> attributes
+        StopStopToAttr transfer_links_o_d_;
+        StopStopToAttr transfer_links_d_o_;
         /// Trip information: trip id -> Trip Info
         std::map<int, TripInfo> trip_info_;
         /// Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
@@ -306,6 +307,7 @@ namespace fasttrips {
         std::map<int, std::string> stop_num_to_str_;
         std::map<int, std::string> route_num_to_str_;
         std::map<int, std::string> mode_num_to_str_; // supply modes
+        int transfer_supply_mode_;
 
         /**
          * From simulation: When there are capacity limitations on a vehicle and passengers cannot
@@ -327,7 +329,8 @@ namespace fasttrips {
          * Tally the link cost, which is the sum of the weighted attributes.
          * @return the cost.
          */
-        double PathFinder::tallyLinkCost(const PathSpecification& path_spec,
+        double PathFinder::tallyLinkCost(const int supply_mode_num,
+                                         const PathSpecification& path_spec,
                                          std::ofstream& trace_file,
                                          const NamedWeights& weights,
                                          const Attributes& attributes) const;
@@ -486,7 +489,6 @@ namespace fasttrips {
          */
         void initializeCostCoefficients(double  in_vehicle_time_weight,
                                         double  wait_time_weight,
-                                        double  walk_transfer_time_weight,
                                         double  transfer_penalty,
                                         double  schedule_delay_weight,
                                         double  fare_per_boarding,
@@ -501,13 +503,6 @@ namespace fasttrips {
          * @param stoptime_times    For populating PathFinder::trip_stop_times_, this array contains
          *                          transit vehicle arrival times and departure times at a stop.
          * @param num_stoptimes     The number of stop times described in the previous two arrays.
-         * @param xfer_index        For populating PathFinder::transfer_links_o_d_ and
-         *                          PathFinder::transfer_links_d_o_, this array contains the origin
-         *                          stop ID and the destination stop ID for transfers.
-         * @param xfer_data         For populating PathFinder::transfer_links_o_d_ and
-         *                          PathFinder::transfer_links_d_o_, this array contains time
-         *                          and cost for transfers.
-         * @param num_xfers         The number of transfers described in the previous two arrays.
          * @param trip_data         For transit vehicle trips, trip ID, mode and route ID numbers.
          * @param num_trips         The number of trips described in the previous two arrays.
          */
@@ -516,9 +511,6 @@ namespace fasttrips {
                               int*          stoptime_index,
                               double*       stoptime_times,
                               int           num_stoptimes,
-                              int*          xfer_index,
-                              double*       xfer_data,
-                              int           num_xfers,
                               int*          trip_data,
                               int           num_trips);
 

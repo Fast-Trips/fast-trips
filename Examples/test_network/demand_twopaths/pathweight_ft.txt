@@ -1,5 +1,6 @@
 user_class demand_mode_type demand_mode    supply_mode  weight_name           weight_value
 real       transfer         transfer       transfer     walk_time_min         2.4
+real       transfer         transfer       transfer     elevation_gain        24
 real       access           walk           walk_access  time_min              2.5
 real       access           PNR            PNR_access   walk_time_min         2.5
 real       access           PNR            PNR_access   drive_travel_time_min 1.5
@@ -17,6 +18,7 @@ real       transit          commuter_rail  heavy_rail   in_vehicle_time_min   1.
 real       transit          commuter_rail  heavy_rail   wait_time_min         1.77
 real       transit          commuter_rail  heavy_rail   transfer_penalty      17.73
 not_real   transfer         transfer       transfer     walk_time_min         0.24
+real       transfer         transfer       transfer     elevation_gain        2.4
 not_real   access           walk           walk_access  time_min              0.25
 not_real   access           PNR            PNR_access   walk_time_min         0.25
 not_real   access           PNR            PNR_access   drive_travel_time_min 0.15

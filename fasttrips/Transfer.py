@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os
+import datetime,os,sys
 import pandas
 
 from .Logger import FastTripsLogger
@@ -37,7 +37,7 @@ class Transfer:
     TRANSFERS_COLUMN_TO_STOP                = 'to_stop_id'
     #: gtfs Transfers column name: Transfer Type
     TRANSFERS_COLUMN_TRANSFER_TYPE          = 'transfer_type'
-    #: gtfs Transfers column name: Destination stop identifier
+    #: gtfs Transfers column name: Minimum transfer time for transfer_type=2.  Float, seconds.
     TRANSFERS_COLUMN_MIN_TRANSFER_TIME      = 'min_transfer_time'
     #: fasttrips Transfers column name: Link walk distance, in miles. This is a float.
     TRANSFERS_COLUMN_DISTANCE               = 'dist'
@@ -64,20 +64,31 @@ class Transfer:
     TRANSFERS_COLUMN_FROM_STOP_NUM          = 'from_stop_id_num'
     #: fasttrips Stops column name: Destination Stop Numerical Identifier. Int.
     TRANSFERS_COLUMN_TO_STOP_NUM            = 'to_stop_id_num'
+    #: gtfs Transfers column name: Minimum transfer time for transfer_type=2.  Float, min.
+    TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN  = 'min_transfer_time_min'
 
-    #: TODO: remove these?
     #: Transfers column name: Link walk time.  This is a TimeDelta.
+    #:
+    #: .. todo:: Remove these?  Maybe weights should be distance based?  Walk speed is configured how?
+    #:
     TRANSFERS_COLUMN_TIME       = 'time'
     #: Transfers column name: Link walk time in minutes.  This is a float.
     TRANSFERS_COLUMN_TIME_MIN   = 'time_min'
     #: Transfers column name: Link generic cost.  Float.
-    TRANSFERS_COLUMN_COST       = 'cost'
 
-    def __init__(self, input_dir, gtfs_schedule):
+    #: File with transfer links for C++ extension
+    #: It's easier to pass it via file rather than through the
+    #: initialize_fasttrips_extension() because of the strings involved
+    OUTPUT_TRANSFERS_FILE       = "ft_intermediate_transfers.txt"
+
+    def __init__(self, input_dir, output_dir, gtfs_schedule, is_child_process):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips transfers data from the input files in *input_dir*.
         """
+        self.output_dir       = output_dir
+        self.is_child_process = is_child_process
+
         # Combine all gtfs Transfer objects to a single pandas DataFrame
         transfer_dicts = []
         for gtfs_transfer in gtfs_schedule.GetTransferList():
@@ -88,6 +99,18 @@ class Transfer:
             transfer_dicts.append(transfer_dict)
         if len(transfer_dicts) > 0:
             self.transfers_df = pandas.DataFrame(data=transfer_dicts)
+
+            # these are strings - empty string should mean 0 min transfer time
+            self.transfers_df.replace(to_replace={Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME:{"":"0"}},
+                                      inplace=True)
+            # make it numerical
+            self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = \
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME].astype(float)
+
+            # make it zero if transfer_type != 2, since that's the only time it applies
+            self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
+                                  Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
+
         else:
             self.transfers_df = pandas.DataFrame(columns=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                                           Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
@@ -116,12 +139,27 @@ class Transfer:
                                              on=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                                  Transfer.TRANSFERS_COLUMN_TO_STOP])
 
+            # fill in NAN
+            self.transfers_df.fillna(value={Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME:0,
+                                            Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE:0},
+                                     inplace=True)
+
         FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
 
         # TODO: this is to be consistent with original implementation. Remove?
         if len(self.transfers_df) > 0:
-            self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0;
+            self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN] = \
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME]/60.0
+
+            # transfer time is based on distance
+            self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] = \
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0
+
+            self.transfers_df.loc[\
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] < self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN], \
+                Transfer.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN]
+
             # convert time column from float to timedelta
             self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME] = \
                 self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
@@ -145,3 +183,40 @@ class Transfer:
             self.transfers_df = stops.add_numeric_stop_id(self.transfers_df,
                                                          id_colname=Transfer.TRANSFERS_COLUMN_TO_STOP,
                                                          numeric_newcolname=Transfer.TRANSFERS_COLUMN_TO_STOP_NUM)
+            # We're ready to write it
+            if not self.is_child_process:
+                self.write_transfers_for_extension()
+
+    def write_transfers_for_extension(self):
+        """
+        """
+        transfers_df = self.transfers_df.copy()
+
+        # drop transfer_type==3 => that means no transfer possible
+        # https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers.md
+        transfers_df = transfers_df.loc[transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 3]
+
+        # drop some of the attributes
+        transfers_df.drop([Transfer.TRANSFERS_COLUMN_TIME,                # use numerical version
+                           Transfer.TRANSFERS_COLUMN_FROM_STOP,           # use numerical version
+                           Transfer.TRANSFERS_COLUMN_TO_STOP,             # use numerical version
+                           Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,   # minute version is sufficient
+                           Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE, # don't know what to do with this
+                           Transfer.TRANSFERS_COLUMN_FROM_ROUTE,          # TODO?
+                           Transfer.TRANSFERS_COLUMN_TO_ROUTE             # TODO?
+                          ], axis=1, inplace=True)
+
+        # transfers time_min is really walk_time_min
+        transfers_df["walk_time_min"] = transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN]
+
+        # the index is from stop id num, to stop id num
+        transfers_df.set_index([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                Transfer.TRANSFERS_COLUMN_TO_STOP_NUM], inplace=True)
+        # this will make it so beyond from stop num and to stop num,
+        # the remaining columns collapse to variable name, variable value
+        transfers_df = transfers_df.stack().reset_index()
+        transfers_df.rename(columns={"level_2":"attr_name", 0:"attr_value"}, inplace=True)
+
+        transfers_df.to_csv(os.path.join(self.output_dir, Transfer.OUTPUT_TRANSFERS_FILE),
+                            sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Transfer.OUTPUT_TRANSFERS_FILE))

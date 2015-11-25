@@ -124,7 +124,8 @@ class FastTrips:
                           self.gtfs_schedule, self.is_child_process)
 
         # Read Transfers
-        self.transfers = Transfer(self.input_network_dir, self.gtfs_schedule)
+        self.transfers = Transfer(self.input_network_dir, self.output_dir,
+                                  self.gtfs_schedule, self.is_child_process)
 
         # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(self.input_network_dir, self.output_dir,
