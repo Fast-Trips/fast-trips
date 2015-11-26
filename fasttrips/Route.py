@@ -37,6 +37,12 @@ class Route(object):
     INPUT_ROUTES_FILE                       = "routes_ft.txt"
     #: gtfs Routes column name: Unique identifier
     ROUTES_COLUMN_ROUTE_ID                  = "route_id"
+    #: gtfs Routes column name: Short name
+    ROUTES_COLUMN_ROUTE_SHORT_NAME          = "route_short_name"
+    #: gtfs Routes column name: Long name
+    ROUTES_COLUMN_ROUTE_LONG_NAME           = "route_long_name"
+    #: gtfs Routes column name: Route type
+    ROUTES_COLUMN_ROUTE_TYPE                = "route_type"
     #: fasttrips Routes column name: Mode
     ROUTES_COLUMN_MODE                      = "mode"
 
@@ -148,7 +154,7 @@ class Route(object):
                                       how='left',
                                       on=Route.ROUTES_COLUMN_ROUTE_ID)
         # Get the mode list
-        self.modes_df = self.routes_df[[Route.ROUTES_COLUMN_MODE]].drop_duplicates().reset_index()
+        self.modes_df = self.routes_df[[Route.ROUTES_COLUMN_MODE]].drop_duplicates().reset_index(drop=True)
         self.modes_df[Route.ROUTES_COLUMN_MODE_NUM] = self.modes_df.index + Route.MODE_NUM_START_ROUTE
         self.modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_TRANSIT
 

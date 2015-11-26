@@ -66,6 +66,7 @@ namespace fasttrips {
         readModeIds();
         readAccessLinks();
         readTransferLinks();
+        readTripInfo();
         readWeights();
     }
 
@@ -275,6 +276,47 @@ namespace fasttrips {
         transfer_file.close();
     }
 
+    void PathFinder::readTripInfo() {
+        std::ifstream tripinfo_file;
+        std::ostringstream ss_tripinfo;
+        ss_tripinfo << output_dir_ << kPathSeparator << "ft_intermediate_trip_info.txt";
+        tripinfo_file.open(ss_tripinfo.str().c_str(), std::ios_base::in);
+
+        std::string string_trip_id_num, attr_name, string_attr_value;
+        int trip_id_num;
+        double attr_value;
+
+        tripinfo_file >> string_trip_id_num >> attr_name >> string_attr_value;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_tripinfo.str() << ": ";
+            std::cout << "[" << string_trip_id_num       << "] ";
+            std::cout << "[" << attr_name                << "] ";
+            std::cout << "[" << string_attr_value        << "] ";
+        }
+        int attrs_read = 0;
+        while (tripinfo_file >> trip_id_num >> attr_name >> attr_value) {
+            std::map<int, TripInfo>::const_iterator iter_ti = trip_info_.find(trip_id_num);
+            if (iter_ti == trip_info_.end()) {
+                TripInfo ti;
+                trip_info_[trip_id_num] = ti;
+            }
+
+            // these are special
+            if (attr_name == "mode_num") {
+                trip_info_[trip_id_num].mode_ = int(attr_value);
+            } else if (attr_name == "route_id_num") {
+                trip_info_[trip_id_num].route_id_ = int(attr_value);
+            } else {
+                trip_info_[trip_id_num].trip_attr_[attr_name] = attr_value;
+            }
+            attrs_read++;
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << attrs_read << " lines" << std::endl;
+        }
+        tripinfo_file.close();
+    }
+
     void PathFinder::readWeights() {
         // Weights
         std::ifstream weights_file;
@@ -334,9 +376,7 @@ namespace fasttrips {
         int         process_num,
         int*        stoptime_index,
         double*     stoptime_times,
-        int         num_stoptimes,
-        int*        trip_data,
-        int         num_trips)
+        int         num_stoptimes)
     {
         output_dir_  = output_dir;
         process_num_ = process_num;
@@ -358,18 +398,6 @@ namespace fasttrips {
             if (false && (process_num <= 1) && ((i<5) || (i>num_stoptimes-5))) {
                 printf("stoptimes[%4d][%4d][%4d]=%f, %f\n", stoptime_index[3*i], stoptime_index[3*i+1], stoptime_index[3*i+2],
                        stoptime_times[2*i], stoptime_times[2*i+1]);
-            }
-        }
-
-        // trips
-        for (int i=0; i<num_trips; ++i) {
-            TripInfo ti = { trip_data[3*i+1], trip_data[3*i+2] };
-            trip_info_[trip_data[3*i]] = ti;
-            if (false && (process_num <= 1) && ((i<5) || (i>num_trips-5))) {
-                printf("trips[%s] = %s, %s\n",
-                       trip_num_to_str_.find(trip_data[3*i])->second.c_str(),
-                       mode_num_to_str_.find(ti.mode_)->second.c_str(),
-                       route_num_to_str_.find(ti.route_id_)->second.c_str());
             }
         }
     }
@@ -426,9 +454,6 @@ namespace fasttrips {
         LabelStopQueue  label_stop_queue;
         // todo: handle failure
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
-        if (path_spec.trace_) {
-            trace_file << "initializeStopStates returned " << success << std::endl;
-        }
 
         labelStops(path_spec, trace_file, stop_states, label_stop_queue);
 

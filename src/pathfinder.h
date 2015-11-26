@@ -79,8 +79,9 @@ namespace fasttrips {
 
     /// Supply data: Transit trip data, indexed by trip ID
     typedef struct {
-        int     mode_;
-        int     route_id_;
+        int        mode_;
+        int        route_id_;
+        Attributes trip_attr_;
     } TripInfo;
 
     /// Supply data: Transit vehicle schedules
@@ -332,6 +333,7 @@ namespace fasttrips {
         void readModeIds();
         void readAccessLinks();
         void readTransferLinks();
+        void readTripInfo();
         void readWeights();
 
         /**
@@ -512,16 +514,12 @@ namespace fasttrips {
          * @param stoptime_times    For populating PathFinder::trip_stop_times_, this array contains
          *                          transit vehicle arrival times and departure times at a stop.
          * @param num_stoptimes     The number of stop times described in the previous two arrays.
-         * @param trip_data         For transit vehicle trips, trip ID, mode and route ID numbers.
-         * @param num_trips         The number of trips described in the previous two arrays.
          */
         void initializeSupply(const char*   output_dir,
                               int           process_num,
                               int*          stoptime_index,
                               double*       stoptime_times,
-                              int           num_stoptimes,
-                              int*          trip_data,
-                              int           num_trips);
+                              int           num_stoptimes);
 
         /**
          * Setup the information for bumped passengers.

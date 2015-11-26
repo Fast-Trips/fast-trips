@@ -189,6 +189,8 @@ class Transfer:
 
     def write_transfers_for_extension(self):
         """
+        This writes to an intermediate file a formatted file for the C++ extension.
+        Since there are strings involved, it's easier than passing it to the extension.
         """
         transfers_df = self.transfers_df.copy()
 

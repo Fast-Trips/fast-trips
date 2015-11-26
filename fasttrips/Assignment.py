@@ -267,10 +267,7 @@ class Assignment:
                                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
-                                     FT.trips.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-                                                        Trip.TRIPS_COLUMN_MODE_NUM,
-                                                        Trip.TRIPS_COLUMN_ROUTE_ID_NUM]].as_matrix().astype('int32'))
+                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,

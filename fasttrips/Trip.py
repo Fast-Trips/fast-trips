@@ -45,6 +45,8 @@ class Trip:
     TRIPS_COLUMN_SERVICE_ID                 = 'service_id'
     #: gtfs Trip column name: Direction binary identifier.
     TRIPS_COLUMN_DIRECTION_ID               = 'direction_id'
+    #: gtfs Trip column name: Shape ID
+    TRIPS_COLUMN_SHAPE_ID                   = 'shape_id'
 
     #: fasttrips Trips column name: Vehicle Name
     TRIPS_COLUMN_VEHICLE_NAME               = 'vehicle_name'
@@ -137,6 +139,8 @@ class Trip:
 
     #: File with trip ID, trip ID number correspondence
     OUTPUT_TRIP_ID_NUM_FILE                     = 'ft_intermediate_trip_id.txt'
+    #: File with trip information
+    OUTPUT_TRIPINFO_FILE                        = 'ft_intermediate_trip_info.txt'
 
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
@@ -146,6 +150,8 @@ class Trip:
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
         """
+        self.output_dir = output_dir
+
         # Read vehicles first
         self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE))
         # verify the required columns are present
@@ -226,8 +232,6 @@ class Trip:
                                       how='left',
                                       on=Trip.TRIPS_COLUMN_TRIP_ID)
 
-        # skipping index setting for now -- it's annoying for joins
-        # self.trips_df.set_index(Trip.TRIPS_COLUMN_TRIP_ID, inplace=True, verify_integrity=True)
 
         # Trip IDs are strings. Create a unique numeric trip ID.
         self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID]],
@@ -343,6 +347,9 @@ class Trip:
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.stop_times_df), "stop times", "stop_times.txt", Trip.INPUT_STOPTIMES_FILE))
 
+        if not is_child_process:
+            self.write_trips_for_extension()
+
     def has_capacity_configured(self):
         """
         Returns true if seated capacity and standing capacity are columns included in the vehicles input.
@@ -381,6 +388,47 @@ class Trip:
             if row[Trip.STOPTIMES_COLUMN_STOP_ID] == stop_id:
                 return row[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]
         raise Exception("get_scheduled_departure: stop %s not find for trip %s" % (str(stop_id), str(trip_id)))
+
+    def write_trips_for_extension(self):
+        """
+        This writes to an intermediate file a formatted file for the C++ extension.
+        Since there are strings involved, it's easier than passing it to the extension.
+        """
+        trips_df = self.trips_df.copy()
+
+        # drop some of the attributes
+        drop_fields = [Trip.TRIPS_COLUMN_TRIP_ID,             # use numerical version
+                       Trip.TRIPS_COLUMN_ROUTE_ID,            # use numerical version
+                       Trip.TRIPS_COLUMN_SERVICE_ID,          # I don't think this is useful
+                       Trip.TRIPS_COLUMN_DIRECTION_ID,        # I don't think this is useful
+                       Trip.TRIPS_COLUMN_VEHICLE_NAME,        # could pass numerical version
+                       Trip.TRIPS_COLUMN_SHAPE_ID,            # I don't think this is useful
+                       Route.ROUTES_COLUMN_MODE_TYPE,         # I don't think this is useful -- should be transit
+                       Route.ROUTES_COLUMN_ROUTE_SHORT_NAME,  # I don't think this is useful
+                       Route.ROUTES_COLUMN_ROUTE_LONG_NAME,   # I don't think this is useful
+                       Route.ROUTES_COLUMN_ROUTE_TYPE,        # I don't think this is useful
+                       Route.ROUTES_COLUMN_MODE,              # use numerical version
+                       Route.ROUTES_COLUMN_FARE_CLASS,        # text
+                       Route.ROUTES_COLUMN_PROOF_OF_PAYMENT,  # text
+                       ]
+        # we can only drop fields that are in the dataframe
+        trip_fields = list(trips_df.columns.values)
+        valid_drop_fields = []
+        for field in drop_fields:
+            if field in trip_fields: valid_drop_fields.append(field)
+
+        trips_df.drop(drop_fields, axis=1, inplace=1)
+
+        # the index is the trip_id_num
+        trips_df.set_index(Trip.TRIPS_COLUMN_TRIP_ID_NUM, inplace=True)
+        # this will make it so beyond trip id num
+        # the remaining columns collapse to variable name, variable value
+        trips_df = trips_df.stack().reset_index()
+        trips_df.rename(columns={"level_1":"attr_name", 0:"attr_value"}, inplace=True)
+
+        trips_df.to_csv(os.path.join(self.output_dir, Trip.OUTPUT_TRIPINFO_FILE),
+                        sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Trip.OUTPUT_TRIPINFO_FILE))
 
     @staticmethod
     def calculate_dwell_times(trips_df):
