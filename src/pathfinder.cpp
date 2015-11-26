@@ -303,7 +303,7 @@ namespace fasttrips {
 
             // these are special
             if (attr_name == "mode_num") {
-                trip_info_[trip_id_num].mode_ = int(attr_value);
+                trip_info_[trip_id_num].supply_mode_num_ = int(attr_value);
             } else if (attr_name == "route_id_num") {
                 trip_info_[trip_id_num].route_id_ = int(attr_value);
             } else {
@@ -759,6 +759,13 @@ namespace fasttrips {
     {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
+        // for weight lookup
+        UserClassMode ucm = { path_spec.user_class_, MODE_TRANSIT, path_spec.transit_mode_};
+        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucm);
+        if (iter_weights == weight_lookup_.end()) {
+            return;
+        }
+
         // current_stop_state is a vector
         std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
         int current_mode = current_stop_state[0].deparr_mode_;      // why index 0?
@@ -767,6 +774,17 @@ namespace fasttrips {
         std::vector<TripStopTime> relevant_trips;
         getTripsWithinTime(current_label_stop.stop_id_, path_spec.outbound_, latest_dep_earliest_arr, relevant_trips);
         for (std::vector<TripStopTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
+
+            // the trip info for this trip
+            const TripInfo& trip_info = trip_info_.find(it->trip_id_)->second;
+
+            // get the weights applicable for this trip
+            SupplyModeToNamedWeights::const_iterator iter_sm2nw = iter_weights->second.find(trip_info.supply_mode_num_);
+            if (iter_sm2nw == iter_weights->second.end()) {
+                // this supply mode isn't allowed for the userclass/demand mode
+                continue;
+            }
+            const NamedWeights& named_weights = iter_sm2nw->second;
 
             if (false && path_spec.trace_) {
                 trace_file << "valid trips: " << trip_num_to_str_.find(it->trip_id_)->second << " " << it->seq_ << " ";
@@ -852,20 +870,21 @@ namespace fasttrips {
 
                 // stochastic/hyperpath: cost update
                 if (path_spec.hyperpath_) {
-                    // TODO: genericize??
+                    // start with trip info attributes
+                    Attributes link_attr = trip_info.trip_attr_;
+                    link_attr["in_vehicle_time_min"] = in_vehicle_time;
+
+                    // these are special -- set them
                     if ((current_mode == MODE_ACCESS) || (current_mode == MODE_EGRESS)) {
-                        cost = current_label_stop.label_                +
-                               in_vehicle_time*IN_VEHICLE_TIME_WEIGHT_  +
-                               0.00                                     + // wait
-                               0.00                                     + // FARE/VALUE OF TIME
-                               0.00;                                      // TRANSFER PENALTY
+                        link_attr["wait_time_min"   ] = wait_time;
+                        link_attr["transfer_penalty"] = 1.0;
                     } else {
-                        cost = current_label_stop.label_                +
-                               in_vehicle_time*IN_VEHICLE_TIME_WEIGHT_  +
-                               wait_time*WAIT_TIME_WEIGHT_              + // wait
-                               0.00                                     + // FARE/VALUE OF TIME
-                               TRANSFER_PENALTY_;                         // TRANSFER PENALTY
+                        link_attr["wait_time_min"   ] = 0.0;
+                        link_attr["transfer_penalty"] = 0.0;
                     }
+
+                    cost = current_label_stop.label_ +
+                           tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
 
                     double old_label = PathFinder::MAX_COST;
                     new_label       = cost;
@@ -1014,7 +1033,7 @@ namespace fasttrips {
 
             if (path_spec.trace_) {
                 trace_file << "  current mode:     " << std::left;
-                printMode(trace_file, current_mode);
+                printMode(trace_file, current_mode, current_stop_state[0].trip_id_);
                 trace_file << std::endl;
                 trace_file << (path_spec.outbound_ ? "  latest_departure: " : "  earliest_arrival: ");
                 printTime(trace_file, latest_dep_earliest_arr);
@@ -1244,7 +1263,7 @@ namespace fasttrips {
             }
             if (path_spec.trace_) {
                 trace_file << std::setw( 6) << std::setfill(' ') << access_cum_prob.back().stop_id_ << " ";
-                printMode(trace_file, taz_state[state_index].deparr_mode_);
+                printMode(trace_file, taz_state[state_index].deparr_mode_, taz_state[state_index].trip_id_);
                 trace_file << ": prob ";
                 trace_file << std::setw(10) << probability << " cum_prob ";
                 trace_file << std::setw( 6) << access_cum_prob.back().prob_i_;
@@ -1579,6 +1598,7 @@ namespace fasttrips {
             {
                 double trip_ivt_min = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
                 double wait_min     = stop_state.link_time_ - trip_ivt_min;
+
                 if (first_trip) {
                     initial_wait_min = wait_min;
                     first_trip      = false;
@@ -1943,7 +1963,7 @@ namespace fasttrips {
         ostr << "  ";
         printTime(ostr, ss.deparr_time_);
         ostr << "  ";
-        printMode(ostr, ss.deparr_mode_);
+        printMode(ostr, ss.deparr_mode_, ss.trip_id_);
         ostr << "  ";
         if (ss.deparr_mode_ == MODE_TRANSIT) {
             ostr << std::setw(12) << std::setfill(' ') << trip_num_to_str_.find(ss.trip_id_)->second;
@@ -2009,7 +2029,7 @@ namespace fasttrips {
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(secpart);
     }
 
-    void PathFinder::printMode(std::ostream& ostr, const int& mode) const
+    void PathFinder::printMode(std::ostream& ostr, const int& mode, const int& trip_id) const
     {
         if (mode == MODE_ACCESS) {
             ostr << std::setw(10) << std::setfill(' ') << "Access";
@@ -2018,7 +2038,9 @@ namespace fasttrips {
         } else if (mode == MODE_TRANSFER) {
             ostr << std::setw(10) << std::setfill(' ') << "Transfer";
         } else if (mode == MODE_TRANSIT) {
-            ostr << std::setw(10) << std::setfill(' ') << "Transit";
+            // show the supply mode
+            int supply_mode_num = trip_info_.find(trip_id)->second.supply_mode_num_;
+            ostr << std::setw(10) << std::setfill(' ') << mode_num_to_str_.find(supply_mode_num)->second;
         } else {
             // trip
             ostr << std::setw(10) << std::setfill(' ') << "???";

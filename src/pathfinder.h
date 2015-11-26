@@ -79,7 +79,7 @@ namespace fasttrips {
 
     /// Supply data: Transit trip data, indexed by trip ID
     typedef struct {
-        int        mode_;
+        int        supply_mode_num_;
         int        route_id_;
         Attributes trip_attr_;
     } TripInfo;
@@ -475,7 +475,7 @@ namespace fasttrips {
 
         void printTime(std::ostream& ostr, const double& timemin) const;
 
-        void printMode(std::ostream& ostr, const int& mode) const;
+        void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
 
         bool isTrip(const int& mode) const;
 
