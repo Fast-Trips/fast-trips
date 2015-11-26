@@ -64,7 +64,7 @@ class Path:
     WEIGHTS_COLUMN_SUPPLY_MODE_NUM  = "supply_mode_num"
 
     #: File with weights for c++
-    OUTPUT_WEIGHTS_FILE             = "ft_output_weights.txt"
+    OUTPUT_WEIGHTS_FILE             = "ft_intermediate_weights.txt"
 
 
     #: todo: these will get removed in favor of WEIGHTS above

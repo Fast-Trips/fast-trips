@@ -58,86 +58,145 @@ namespace fasttrips {
         VALUE_OF_TIME_              = value_of_time;
     }
 
-    void PathFinder::readIdMappingFiles()
+    void PathFinder::readIntermediateFiles()
     {
-        // stops and trips have been renumbered by fasttrips.  Read string IDs for printing to be less confusing.
-        std::string string_num_id, string_id;
-        int num_id;
+        readTripIds();
+        readStopIds();
+        readRouteIds();
+        readModeIds();
+        readAccessLinks();
+        readTransferLinks();
+        readWeights();
+    }
 
+    void PathFinder::readTripIds() {
+        // Trips have been renumbered by fasttrips.  Read string IDs.
         // Trip num -> id
         std::ifstream trip_id_file;
         std::ostringstream ss_trip;
-        ss_trip << output_dir_ << kPathSeparator << "ft_output_trip_id.txt";
+        ss_trip << output_dir_ << kPathSeparator << "ft_intermediate_trip_id.txt";
         trip_id_file.open(ss_trip.str().c_str(), std::ios_base::in);
-        trip_id_file >> string_num_id >> string_id;
-        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_trip.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
-        while (trip_id_file >> num_id >> string_id) {
-            if (false && (process_num_ <= 1) && (num_id < 5)) {
-                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
-            }
-            trip_num_to_str_[num_id] = string_id;
+
+        std::string string_trip_id_num, string_trip_id;
+        int trip_id_num;
+
+        trip_id_file >> string_trip_id_num >> string_trip_id;
+        if (process_num_ <= 1) { 
+            std::cout << "Reading " << ss_trip.str() << ": ";
+            std::cout << "[" << string_trip_id_num   << "] ";
+            std::cout << "[" << string_trip_id       << "] ";
+        }
+        while (trip_id_file >> trip_id_num >> string_trip_id) {
+            trip_num_to_str_[trip_id_num] = string_trip_id;
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << trip_num_to_str_.size() << " lines" << std::endl;
         }
         trip_id_file.close();
+    }
 
+    void PathFinder::readStopIds() {
+        // Stops have been renumbered by fasttrips.  Read string IDs.
         // Stop num -> id
         std::ifstream stop_id_file;
         std::ostringstream ss_stop;
-        ss_stop << output_dir_ << kPathSeparator << "ft_output_stop_id.txt";
+        ss_stop << output_dir_ << kPathSeparator << "ft_intermediate_stop_id.txt";
         stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
-        stop_id_file >> string_num_id >> string_id;
-        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_stop.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
-        while (stop_id_file >> num_id >> string_id) {
-            if (false && (process_num_ <= 1) && (num_id < 5)) {
-                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
-            }
-            stop_num_to_str_[num_id] = string_id;
+
+        std::string string_stop_id_num, string_stop_id;
+        int stop_id_num;
+
+        stop_id_file >> string_stop_id_num >> string_stop_id;
+        if (process_num_ <= 1) { 
+            std::cout << "Reading " << ss_stop.str() << ": ";
+            std::cout << "[" << string_stop_id_num   << "] ";
+            std::cout << "[" << string_stop_id       << "] ";
+        }
+        while (stop_id_file >> stop_id_num >> string_stop_id) {
+            stop_num_to_str_[stop_id_num] = string_stop_id;
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << stop_num_to_str_.size() << " lines" << std::endl;
         }
         stop_id_file.close();
+    }
 
+    void PathFinder::readRouteIds() {
+        // Routes have been renumbered by fasttrips. Read string IDs.
         // Route num -> id
         std::ifstream route_id_file;
         std::ostringstream ss_route;
-        ss_route << output_dir_ << kPathSeparator << "ft_output_route_id.txt";
+        ss_route << output_dir_ << kPathSeparator << "ft_intermediate_route_id.txt";
         route_id_file.open(ss_route.str().c_str(), std::ios_base::in);
-        route_id_file >> string_num_id >> string_id;
-        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_route.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
-        while (route_id_file >> num_id >> string_id) {
-            if (false && (process_num_ <= 1) && (num_id < 5)) {
-                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
-            }
-            route_num_to_str_[num_id] = string_id;
+
+        std::string string_route_id_num, string_route_id;
+        int route_id_num;
+
+        route_id_file >> string_route_id_num >> string_route_id;
+        if (process_num_ <= 1) { 
+            std::cout << "Reading " << ss_route.str() << ": ";
+            std::cout << "[" << string_route_id_num   << "] ";
+            std::cout << "[" << string_route_id       << "] ";
+        }
+        while (route_id_file >> route_id_num >> string_route_id) {
+            route_num_to_str_[route_id_num] = string_route_id;
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << route_num_to_str_.size() << " lines" << std::endl;
         }
         route_id_file.close();
+    }
 
-        // Mode num -> id
+    void PathFinder::readModeIds() {
+        // Supply modes have been renumbered by fasttrips. Read string IDs.
+        // Supply mode num -> id
         std::ifstream mode_id_file;
         std::ostringstream ss_mode;
-        ss_mode << output_dir_ << kPathSeparator << "ft_output_supply_mode_id.txt";
+        ss_mode << output_dir_ << kPathSeparator << "ft_intermediate_supply_mode_id.txt";
         mode_id_file.open(ss_mode.str().c_str(), std::ios_base::in);
-        mode_id_file >> string_num_id >> string_id;
-        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s]\n", ss_mode.str().c_str(), string_num_id.c_str(), string_id.c_str()); }
-        while (mode_id_file >> num_id >> string_id) {
-            if (false && (process_num_ <= 1) && (num_id < 5)) {
-                printf("num_id=[%d] string2=[%s]\n", num_id, string_id.c_str());
-            }
-            mode_num_to_str_[num_id] = string_id;
-            if (string_id == "transfer") { transfer_supply_mode_ = num_id; }
+
+        std::string string_mode_num, string_mode;
+        int mode_num;
+
+        mode_id_file >> string_mode_num >> string_mode;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_mode.str() << ": ";
+            std::cout << "[" << string_mode_num      << "] ";
+            std::cout << "[" << string_mode          << "] ";
+        }
+        while (mode_id_file >> mode_num >> string_mode) {
+            mode_num_to_str_[mode_num] = string_mode;
+            if (string_mode == "transfer") { transfer_supply_mode_ = mode_num; }
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << mode_num_to_str_.size() << " lines" << std::endl;
         }
         mode_id_file.close();
+    }
 
+    void PathFinder::readAccessLinks() {
         // Taz Access and Egress links (various supply modes)
         std::ifstream acceggr_file;
         std::ostringstream ss_accegr;
-        ss_accegr << output_dir_ << kPathSeparator << "ft_output_access_egress.txt";
+        ss_accegr << output_dir_ << kPathSeparator << "ft_intermediate_access_egress.txt";
         acceggr_file.open(ss_accegr.str().c_str(), std::ios_base::in);
-        std::string string_taz_num, string_attr, string_attr_val;
-        acceggr_file >> string_taz_num >> string_num_id >> string_id >> string_attr >> string_attr_val;
-        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s] [%s] [%s] [%s]\n", ss_accegr.str().c_str(),
-                                        string_taz_num.c_str(), string_num_id.c_str(), string_id.c_str(),
-                                        string_attr.c_str(), string_attr_val.c_str()); }
-        int taz_num, supply_mode_num;
-        double attr_val;
-        while (acceggr_file >> taz_num >> supply_mode_num >> num_id >> string_attr >> attr_val) {
+
+
+        std::string string_taz_num, string_supply_mode_num, string_stop_id_num, attr_name, string_attr_value;
+        int taz_num, supply_mode_num, stop_id_num;
+        double attr_value;
+
+        acceggr_file >> string_taz_num >> string_supply_mode_num >> string_stop_id_num >> attr_name >> string_attr_value;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_accegr.str() << ": ";
+            std::cout << "[" << string_taz_num         << "] ";
+            std::cout << "[" << string_supply_mode_num << "] ";
+            std::cout << "[" << string_stop_id_num     << "] ";
+            std::cout << "[" << attr_name              << "] ";
+            std::cout << "[" << string_attr_value      << "] ";
+        }
+        int attrs_read = 0;
+        while (acceggr_file >> taz_num >> supply_mode_num >> stop_id_num >> attr_name >> attr_value) {
             TAZSupplyStopToAttr::iterator it_tss2a = taz_access_links_.find(taz_num);
             if (it_tss2a == taz_access_links_.end()) {
                 SupplyStopToAttr ss2a;
@@ -148,66 +207,96 @@ namespace fasttrips {
                 StopToAttr s2a;
                 taz_access_links_[taz_num][supply_mode_num] = s2a;
             }
-            StopToAttr::iterator it_s2a = taz_access_links_[taz_num][supply_mode_num].find(num_id);
+            StopToAttr::iterator it_s2a = taz_access_links_[taz_num][supply_mode_num].find(stop_id_num);
             if (it_s2a == taz_access_links_[taz_num][supply_mode_num].end()) {
                 Attributes attrs;
-                taz_access_links_[taz_num][supply_mode_num][num_id] = attrs;
+                taz_access_links_[taz_num][supply_mode_num][stop_id_num] = attrs;
             }
-            taz_access_links_[taz_num][supply_mode_num][num_id][string_attr] = attr_val;
+            taz_access_links_[taz_num][supply_mode_num][stop_id_num][attr_name] = attr_value;
+            attrs_read++;
         }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << attrs_read << " lines" << std::endl;
+        }
+        acceggr_file.close();
+    }
 
+    void PathFinder::readTransferLinks() {
         // Transfer links
         std::ifstream transfer_file;
         std::ostringstream ss_transfer;
         ss_transfer << output_dir_ << kPathSeparator << "ft_intermediate_transfers.txt";
         transfer_file.open(ss_transfer.str().c_str(), std::ios_base::in);
-        std::string string_from_stop, string_to_stop;
-        transfer_file >> string_from_stop >> string_to_stop >> string_attr >> string_attr_val;
-        if (process_num_ <= 1) { printf("Reading %s: [%s] [%s] [%s] [%s]\n", ss_transfer.str().c_str(),
-                                        string_from_stop.c_str(), string_to_stop.c_str(), string_attr.c_str(),
-                                        string_attr_val.c_str()); }
-        int from_stop_id, to_stop_id;
-        while (transfer_file >> from_stop_id >> to_stop_id >> string_attr >> attr_val) {
+
+        std::string string_from_stop_id_num, string_to_stop_id_num, attr_name, string_attr_value;
+        int from_stop_id_num, to_stop_id_num;
+        double attr_value;
+
+        transfer_file >> string_from_stop_id_num >> string_to_stop_id_num >> attr_name >> string_attr_value;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_transfer.str() << ": ";
+            std::cout << "[" << string_from_stop_id_num  << "] ";
+            std::cout << "[" << string_to_stop_id_num    << "] ";
+            std::cout << "[" << attr_name                << "] ";
+            std::cout << "[" << string_attr_value        << "] ";
+        }
+        int attrs_read = 0;
+        while (transfer_file >> from_stop_id_num >> to_stop_id_num >> attr_name >> attr_value) {
             // o -> d -> attrs
-            StopStopToAttr::const_iterator iter_ss2a = transfer_links_o_d_.find(from_stop_id);
+            StopStopToAttr::const_iterator iter_ss2a = transfer_links_o_d_.find(from_stop_id_num);
             if (iter_ss2a == transfer_links_o_d_.end()) {
                 StopToAttr s2a;
-                transfer_links_o_d_[from_stop_id] = s2a;
+                transfer_links_o_d_[from_stop_id_num] = s2a;
             }
-            StopToAttr::const_iterator iter_s2a = transfer_links_o_d_[from_stop_id].find(to_stop_id);
-            if (iter_s2a == transfer_links_o_d_[from_stop_id].end()) {
+            StopToAttr::const_iterator iter_s2a = transfer_links_o_d_[from_stop_id_num].find(to_stop_id_num);
+            if (iter_s2a == transfer_links_o_d_[from_stop_id_num].end()) {
                 Attributes a;
-                transfer_links_o_d_[from_stop_id][to_stop_id] = a;
+                transfer_links_o_d_[from_stop_id_num][to_stop_id_num] = a;
             }
-            transfer_links_o_d_[from_stop_id][to_stop_id][string_attr] = attr_val;
+            transfer_links_o_d_[from_stop_id_num][to_stop_id_num][attr_name] = attr_value;
 
             // d -> o -> attrs
-            iter_ss2a = transfer_links_d_o_.find(to_stop_id);
+            iter_ss2a = transfer_links_d_o_.find(to_stop_id_num);
             if (iter_ss2a == transfer_links_d_o_.end()) {
                 StopToAttr s2a;
-                transfer_links_d_o_[to_stop_id] = s2a;
+                transfer_links_d_o_[to_stop_id_num] = s2a;
             }
-            iter_s2a = transfer_links_d_o_[to_stop_id].find(from_stop_id);
-            if (iter_s2a == transfer_links_d_o_[to_stop_id].end()) {
+            iter_s2a = transfer_links_d_o_[to_stop_id_num].find(from_stop_id_num);
+            if (iter_s2a == transfer_links_d_o_[to_stop_id_num].end()) {
                 Attributes a;
-                transfer_links_d_o_[to_stop_id][from_stop_id] = a;
+                transfer_links_d_o_[to_stop_id_num][from_stop_id_num] = a;
             }
-            transfer_links_d_o_[to_stop_id][from_stop_id][string_attr] = attr_val;
+            transfer_links_d_o_[to_stop_id_num][from_stop_id_num][attr_name] = attr_value;
+            attrs_read++;
         }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << attrs_read << " lines" << std::endl;
+        }
+        transfer_file.close();
+    }
 
+    void PathFinder::readWeights() {
         // Weights
         std::ifstream weights_file;
         std::ostringstream ss_weights;
-        ss_weights << output_dir_ << kPathSeparator << "ft_output_weights.txt";
+        ss_weights << output_dir_ << kPathSeparator << "ft_intermediate_weights.txt";
         weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
-        std::string user_class, demand_mode_type, demand_mode, weight_name, supply_mode_str, weight_val_str;
+
+        std::string user_class, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value;
+        int supply_mode_num;
         double weight_value;
-        weights_file >> user_class >> demand_mode_type >> demand_mode >> supply_mode_str >> weight_name >> weight_val_str;
+
+        weights_file >> user_class >> demand_mode_type >> demand_mode >> string_supply_mode_num >> weight_name >> string_weight_value;
         if (process_num_ <= 1) {
-            printf("Reading %s: [%s] [%s] [%s] [%s] [%s] [%s]\n",
-                   ss_weights.str().c_str(), user_class.c_str(), demand_mode_type.c_str(), demand_mode.c_str(),
-                   supply_mode_str.c_str(), weight_name.c_str(), weight_val_str.c_str());
+            std::cout << "Reading " << ss_weights.str() << ": ";
+            std::cout << "[" << user_class              << "] ";
+            std::cout << "[" << demand_mode_type        << "] ";
+            std::cout << "[" << demand_mode             << "] ";
+            std::cout << "[" << string_supply_mode_num  << "] ";
+            std::cout << "[" << weight_name             << "] ";
+            std::cout << "[" << string_weight_value     << "] ";
         }
+        int weights_read = 0;
         while (weights_file >> user_class >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
             UserClassMode ucm = { user_class, fasttrips::MODE_ACCESS, demand_mode };
             if      (demand_mode_type == "access"  ) { ucm.demand_mode_type_ = MODE_ACCESS;  }
@@ -215,7 +304,7 @@ namespace fasttrips {
             else if (demand_mode_type == "transit" ) { ucm.demand_mode_type_ = MODE_TRANSIT; }
             else if (demand_mode_type == "transfer") { ucm.demand_mode_type_ = MODE_TRANSFER;}
             else {
-                printf("Do not understand demand_mode_type [%s] in %s", demand_mode_type.c_str(), ss_weights.str().c_str());
+                std::cerr << "Do not understand demand_mode_type [" << demand_mode_type << "] in " << ss_weights.str() << std::endl;
                 exit(2);
             }
 
@@ -232,12 +321,12 @@ namespace fasttrips {
             }
 
             weight_lookup_[ucm][supply_mode_num][weight_name] = weight_value;
-            /*
-             * printf("weight_lookup[%s,%d,%s][%d][%s]=%f\n",
-             *       ucm.user_class_.c_str(), ucm.demand_mode_type_, ucm.demand_mode_.c_str(),
-             *      supply_mode_num, weight_name.c_str(), weight_value);
-             */
+            weights_read++;
         }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << weights_read << " lines" << std::endl;
+        }
+        weights_file.close();
     }
 
     void PathFinder::initializeSupply(
@@ -251,7 +340,7 @@ namespace fasttrips {
     {
         output_dir_  = output_dir;
         process_num_ = process_num;
-        readIdMappingFiles();
+        readIntermediateFiles();
 
         for (int i=0; i<num_stoptimes; ++i) {
             TripStopTime stt = {

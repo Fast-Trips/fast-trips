@@ -136,7 +136,7 @@ class Trip:
     STOPTIMES_COLUMN_STOP_ID_NUM                = 'stop_id_num'
 
     #: File with trip ID, trip ID number correspondence
-    OUTPUT_TRIP_ID_NUM_FILE                     = 'ft_output_trip_id.txt'
+    OUTPUT_TRIP_ID_NUM_FILE                     = 'ft_intermediate_trip_id.txt'
 
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60

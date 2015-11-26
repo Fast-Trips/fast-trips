@@ -64,7 +64,7 @@ class Stop:
 
 
     #: File with stop ID, stop ID number correspondence
-    OUTPUT_STOP_ID_NUM_FILE                   = 'ft_output_stop_id.txt'
+    OUTPUT_STOP_ID_NUM_FILE                   = 'ft_intermediate_stop_id.txt'
 
     def __init__(self, input_dir, output_dir, gtfs_schedule, is_child_process):
         """

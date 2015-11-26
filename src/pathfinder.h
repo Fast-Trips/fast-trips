@@ -15,6 +15,8 @@
 #include <tr1/unordered_set>
 #elif _WIN32
 #include <unordered_set>
+// suppress warning C4503: decorated name length exceeded, name was truncated
+#pragma warning(disable:4503)
 #endif
 
 namespace fasttrips {
@@ -323,7 +325,14 @@ namespace fasttrips {
          * Read the intermediate files mapping integer IDs to strings
          * for modes, stops, trips, and routes.
          **/
-        void readIdMappingFiles();
+        void readIntermediateFiles();
+        void readTripIds();
+        void readStopIds();
+        void readRouteIds();
+        void readModeIds();
+        void readAccessLinks();
+        void readTransferLinks();
+        void readWeights();
 
         /**
          * Tally the link cost, which is the sum of the weighted attributes.

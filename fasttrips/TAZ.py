@@ -197,7 +197,7 @@ class TAZ:
     #: File with access/egress links for C++ extension
     #: It's easier to pass it via a file rather than through the
     #: initialize_fasttrips_extension() because of the strings involved, I think.
-    OUTPUT_ACCESS_EGRESS_FILE               = "ft_output_access_egress.txt"
+    OUTPUT_ACCESS_EGRESS_FILE               = "ft_intermediate_access_egress.txt"
 
     def __init__(self, input_dir, output_dir, today, stops, transfers, routes, is_child_process):
         """

@@ -112,9 +112,9 @@ class Route(object):
     FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE    = "transfer_rule"
 
     #: File with route ID, route ID number correspondence
-    OUTPUT_ROUTE_ID_NUM_FILE                    = "ft_output_route_id.txt"
+    OUTPUT_ROUTE_ID_NUM_FILE                    = "ft_intermediate_route_id.txt"
     #: File with mode, mode number correspondence
-    OUTPUT_MODE_NUM_FILE                        = "ft_output_supply_mode_id.txt"
+    OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
     def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process):
         """
