@@ -274,10 +274,6 @@ class Assignment:
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION)
 
-        _fasttrips.initialize_costcoeffs(Path.SCHEDULE_DELAY_WEIGHT,
-                                         Path.FARE_PER_BOARDING,
-                                         Path.VALUE_OF_TIME)
-
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):
         """

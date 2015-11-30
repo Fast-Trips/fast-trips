@@ -66,12 +66,6 @@ class Path:
     #: File with weights for c++
     OUTPUT_WEIGHTS_FILE             = "ft_intermediate_weights.txt"
 
-
-    #: todo: these will get removed in favor of WEIGHTS above
-    SCHEDULE_DELAY_WEIGHT           = 0
-    FARE_PER_BOARDING               = 0
-    VALUE_OF_TIME                   = 999
-
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 

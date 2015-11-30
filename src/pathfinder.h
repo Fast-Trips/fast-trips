@@ -260,19 +260,6 @@ namespace fasttrips {
         double STOCH_DISPERSION_;
         ///@}
 
-        /** @name Cost parameters */
-        ///@{
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.SCHEDULE_DELAY_WEIGHT">fasttrips.Path.SCHEDULE_DELAY_WEIGHT</a>
-        double SCHEDULE_DELAY_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.FARE_PER_BOARDING">fasttrips.Path.FARE_PER_BOARDING</a>
-        double FARE_PER_BOARDING_;  // dollars per hour
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.VALUE_OF_TIME">fasttrips.Path.VALUE_OF_TIME</a>
-        double VALUE_OF_TIME_;
-        ///@}
-
-
         /// directory in which to write trace files
         std::string output_dir_;
 
@@ -486,12 +473,6 @@ namespace fasttrips {
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion);
 
-        /**
-         * Setup the cost coefficients.
-         */
-        void initializeCostCoefficients(double  schedule_delay_weight,
-                                        double  fare_per_boarding,
-                                        double  value_of_time);
         /**
          * Setup the network supply.  This should happen once, before any pathfinding.
          *

@@ -42,16 +42,6 @@ namespace fasttrips {
         STOCH_DISPERSION_   = stoch_dispersion;
     }
 
-    void PathFinder::initializeCostCoefficients(
-        double  schedule_delay_weight,
-        double  fare_per_boarding,
-        double  value_of_time)
-    {
-        SCHEDULE_DELAY_WEIGHT_      = schedule_delay_weight;
-        FARE_PER_BOARDING_          = fare_per_boarding;
-        VALUE_OF_TIME_              = value_of_time;
-    }
-
     void PathFinder::readIntermediateFiles()
     {
         readTripIds();
@@ -483,8 +473,9 @@ namespace fasttrips {
                 // error out??
                 if (path_spec.trace_) {
                     trace_file << " => NO ATTRIBUTE CALLED " << iter_weights->first << std::endl;
-                    continue;
                 }
+                std::cerr << " => NO ATTRIBUTE CALLED " << iter_weights->first << std::endl;
+                continue;
             }
 
             cost += iter_weights->second * iter_attr->second;
@@ -555,16 +546,18 @@ namespace fasttrips {
                  link_iter != iter_ss2a->second.end(); ++link_iter)
             {
                 int stop_id = link_iter->first;
-                const Attributes& link_attr = link_iter->second;
+                Attributes link_attr = link_iter->second;
                 double attr_time = link_attr.find("time_min")->second;
 
                 // outbound: departure time = destination - access
                 // inbound:  arrival time   = origin      + access
                 double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
+                // we start out with no delay
+                link_attr["preferred_delay_min"] = 0.0;
 
                 double cost;
                 if (path_spec.hyperpath_) {
-                    cost = tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_iter->second);
+                    cost = tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_attr);
                 } else {
                     cost = attr_time;
                 }
@@ -991,7 +984,7 @@ namespace fasttrips {
             // current_stop_state is a vector
             std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
 
-             if (path_spec.trace_) {
+            if (path_spec.trace_) {
                 trace_file << "Pulling from label_stop_queue (iteration " << label_iterations << ", label ";
                 if (path_spec.hyperpath_) {
                     trace_file << std::setprecision(4) << current_label_stop.label_;
@@ -1111,7 +1104,8 @@ namespace fasttrips {
             {
 
                 int     stop_id                 = link_iter->first;
-                const Attributes& link_attr     = link_iter->second;
+                Attributes link_attr            = link_iter->second;
+                link_attr["preferred_delay_min"]= 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
 
@@ -1142,7 +1136,7 @@ namespace fasttrips {
 
                     deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
 
-                    double link_cost= tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_iter->second);
+                    double link_cost= tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_attr);
                     new_cost        = nonwalk_label + link_cost;
                     double old_label= PathFinder::MAX_COST;
                     new_label       = new_cost;
@@ -1536,12 +1530,6 @@ namespace fasttrips {
             trace_file << std::endl;
         }
 
-        double preference_delay     = 0; // arrival/departure time compared to preferred
-        double fare                 = 0;
-
-        double orig_departure_time  = 0;
-        double dest_arrival_time    = 0;
-
         bool   first_trip           = true;
         double dir_factor           = path_spec.outbound_ ? 1.0 : -1.0;
 
@@ -1559,24 +1547,32 @@ namespace fasttrips {
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
             {
-                orig_departure_time = (path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.deparr_time_ - stop_state.link_time_);
+                // inbound: preferred time is origin departure time
+                double orig_departure_time        = (path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.deparr_time_ - stop_state.link_time_);
+                double preference_delay           = (path_spec.outbound_ ? 0 : orig_departure_time - path_spec.preferred_time_);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id);
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_ACCESS, path_spec.access_mode_ };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(stop_state.trip_id_)->second;
-                const Attributes&   attributes    = taz_access_links_.find(path_spec.origin_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
+                Attributes          attributes    = taz_access_links_.find(path_spec.origin_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
+                attributes["preferred_delay_min"] = preference_delay;
+
                 stop_state.cost_                  = tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
                 path_info.cost_                  += stop_state.cost_;
             }
             // ============= egress =============
             else if (stop_state.deparr_mode_ == MODE_EGRESS)
             {
-                dest_arrival_time   = (path_spec.outbound_ ? stop_state.deparr_time_ + stop_state.link_time_ : stop_state.deparr_time_);
+                // outbound: preferred time is destination arrival time
+                double dest_arrival_time          = (path_spec.outbound_ ? stop_state.deparr_time_ + stop_state.link_time_ : stop_state.deparr_time_);
+                double preference_delay           = (path_spec.outbound_ ? path_spec.preferred_time_ - dest_arrival_time : 0);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_EGRESS, path_spec.egress_mode_ };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(stop_state.trip_id_)->second;
-                const Attributes&   attributes    = taz_access_links_.find(path_spec.destination_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
+                Attributes          attributes    = taz_access_links_.find(path_spec.destination_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
+                attributes["preferred_delay_min"] = preference_delay;
+
                 stop_state.cost_                  = tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
                 path_info.cost_                  += stop_state.cost_;
 
@@ -1616,37 +1612,13 @@ namespace fasttrips {
                 stop_state.cost_                  = tallyLinkCost(supply_mode_num, path_spec, trace_file, named_weights, link_attr);
                 path_info.cost_                  += stop_state.cost_;
 
-                fare += FARE_PER_BOARDING_;
                 first_trip = false;
             }
         }
-        // TODO: remove this stuff?!  It's just here to match FAST-TrIPs
-        // orig_departure_time =  trunc(100.0*orig_departure_time)/100.0;
-
-        if (path_spec.outbound_) {
-            // outbound: preferred arrival
-            preference_delay = path_spec.preferred_time_ - dest_arrival_time;
-            // TODO: wrong but matches FAST-TrIPs
-            preference_delay = 0.0;
-        } else {
-            preference_delay = orig_departure_time - path_spec.preferred_time_;
-        }
-
-        path_info.cost_+= (SCHEDULE_DELAY_WEIGHT_*preference_delay               ) +
-                          (60.0*fare/VALUE_OF_TIME_                              );
 
         if (path_spec.trace_) {
             printPath(trace_file, path_spec, path);
             trace_file << std::endl;
-            trace_file << "     origin departure time: ";
-            printTime(trace_file, orig_departure_time);
-            trace_file << " (" << orig_departure_time << ")" << std::endl;
-            trace_file << "  destination arrival time: ";
-            printTime(trace_file, dest_arrival_time);
-            trace_file << " (" << dest_arrival_time << ")" << std::endl;
-            trace_file << "           preferred delay: " << preference_delay  << std::endl;
-            trace_file << "                      fare: " << fare              << std::endl;
-            trace_file << "            ---> path cost: " << path_info.cost_   << std::endl;
         }
     }
 
