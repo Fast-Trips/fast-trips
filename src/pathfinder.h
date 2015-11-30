@@ -235,7 +235,7 @@ namespace fasttrips {
         }
     };
 
-    /** A set of paths consists of paths mapping to information about them (for chooseing one)
+    /** A set of paths consists of paths mapping to information about them (for choosing one)
      */
     typedef std::map<Path, PathInfo, struct fasttrips::PathCompare> PathSet;
 
@@ -262,15 +262,6 @@ namespace fasttrips {
 
         /** @name Cost parameters */
         ///@{
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.IN_VEHICLE_TIME_WEIGHT">fasttrips.Path.IN_VEHICLE_TIME_WEIGHT</a>
-        double IN_VEHICLE_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WAIT_TIME_WEIGHT">fasttrips.Path.WAIT_TIME_WEIGHT</a>
-        double WAIT_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.TRANSFER_PENALTY">fasttrips.Path.TRANSFER_PENALTY</a>
-        double TRANSFER_PENALTY_;
-
         /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.SCHEDULE_DELAY_WEIGHT">fasttrips.Path.SCHEDULE_DELAY_WEIGHT</a>
         double SCHEDULE_DELAY_WEIGHT_;
 
@@ -446,7 +437,7 @@ namespace fasttrips {
          */
         void calculatePathCost(const PathSpecification& path_spec,
                                std::ofstream& trace_file,
-                               const Path& path,
+                               Path& path,
                                PathInfo& path_info) const;
 
         bool getFoundPath(const PathSpecification&      path_spec,
@@ -498,10 +489,7 @@ namespace fasttrips {
         /**
          * Setup the cost coefficients.
          */
-        void initializeCostCoefficients(double  in_vehicle_time_weight,
-                                        double  wait_time_weight,
-                                        double  transfer_penalty,
-                                        double  schedule_delay_weight,
+        void initializeCostCoefficients(double  schedule_delay_weight,
                                         double  fare_per_boarding,
                                         double  value_of_time);
         /**

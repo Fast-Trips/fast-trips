@@ -274,10 +274,7 @@ class Assignment:
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION)
 
-        _fasttrips.initialize_costcoeffs(Path.IN_VEHICLE_TIME_WEIGHT,
-                                         Path.WAIT_TIME_WEIGHT,
-                                         Path.TRANSFER_PENALTY,
-                                         Path.SCHEDULE_DELAY_WEIGHT,
+        _fasttrips.initialize_costcoeffs(Path.SCHEDULE_DELAY_WEIGHT,
                                          Path.FARE_PER_BOARDING,
                                          Path.VALUE_OF_TIME)
 

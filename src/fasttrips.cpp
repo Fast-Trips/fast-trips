@@ -30,25 +30,16 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
 static PyObject *
 _fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
 {
-    double in_vehicle_time_weight;
-    double wait_time_weight;
-    double transfer_penalty;
     double schedule_delay_weight;
     double fare_per_boarding;
     double value_of_time;
-    if (!PyArg_ParseTuple(args, "dddddd",
-            &in_vehicle_time_weight,
-            &wait_time_weight,
-            &transfer_penalty,
+    if (!PyArg_ParseTuple(args, "ddd",
             &schedule_delay_weight,
             &fare_per_boarding,
             &value_of_time)) {
         return NULL;
     }
-    pathfinder.initializeCostCoefficients(in_vehicle_time_weight,
-                                          wait_time_weight,
-                                          transfer_penalty,
-                                          schedule_delay_weight,
+    pathfinder.initializeCostCoefficients(schedule_delay_weight,
                                           fare_per_boarding,
                                           value_of_time);
     Py_RETURN_NONE;

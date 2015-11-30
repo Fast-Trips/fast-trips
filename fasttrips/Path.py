@@ -68,9 +68,6 @@ class Path:
 
 
     #: todo: these will get removed in favor of WEIGHTS above
-    IN_VEHICLE_TIME_WEIGHT          = 1.0
-    WAIT_TIME_WEIGHT                = 1.77
-    TRANSFER_PENALTY                = 47.73
     SCHEDULE_DELAY_WEIGHT           = 0
     FARE_PER_BOARDING               = 0
     VALUE_OF_TIME                   = 999

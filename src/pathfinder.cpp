@@ -43,16 +43,10 @@ namespace fasttrips {
     }
 
     void PathFinder::initializeCostCoefficients(
-        double  in_vehicle_time_weight,
-        double  wait_time_weight,
-        double  transfer_penalty,
         double  schedule_delay_weight,
         double  fare_per_boarding,
         double  value_of_time)
     {
-        IN_VEHICLE_TIME_WEIGHT_     = in_vehicle_time_weight;
-        WAIT_TIME_WEIGHT_           = wait_time_weight;
-        TRANSFER_PENALTY_           = transfer_penalty;
         SCHEDULE_DELAY_WEIGHT_      = schedule_delay_weight;
         FARE_PER_BOARDING_          = fare_per_boarding;
         VALUE_OF_TIME_              = value_of_time;
@@ -1523,21 +1517,25 @@ namespace fasttrips {
         printf("PathFinder::chooseState() This should never happen!\n");
     }
 
-    /** TODO: Test calculating this in python?  Or other ways of making it more flexible without compiling...
-     *  For now, the magic numbers are just in here...
+    /**
+     * Calculate the path cost now that we know all the links.  This may result in different
+     * costs than the original costs.  This updates the path's StopState.cost_ attributes
+     * as well as the PathInfo.cost_ attribute.
      */
     void PathFinder::calculatePathCost(const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        const Path& path,
+        Path& path,
         PathInfo& path_info) const
     {
         // no stops - nothing to do
         if (path.stops_.size()==0) { return; }
 
-        double num_transfers        = 0;
-        double in_vehicle_min       = 0;
-        double initial_wait_min     = 0;
-        double transfer_wait_min    = 0;
+        if (path_spec.trace_) {
+            trace_file << "calculatePathCost:" << std::endl;
+            printPath(trace_file, path_spec, path);
+            trace_file << std::endl;
+        }
+
         double preference_delay     = 0; // arrival/departure time compared to preferred
         double fare                 = 0;
 
@@ -1556,8 +1554,7 @@ namespace fasttrips {
         for (int index = start_ind; index != end_ind; index += inc)
         {
             int stop_id = path.stops_[index];
-            std::map<int, StopState>::const_iterator psi = path.states_.find(stop_id);
-            const StopState& stop_state = psi->second;
+            StopState& stop_state = path.states_[stop_id];
 
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
@@ -1568,7 +1565,8 @@ namespace fasttrips {
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_ACCESS, path_spec.access_mode_ };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(stop_state.trip_id_)->second;
                 const Attributes&   attributes    = taz_access_links_.find(path_spec.origin_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
-                path_info.cost_                  += tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
+                stop_state.cost_                  = tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
+                path_info.cost_                  += stop_state.cost_;
             }
             // ============= egress =============
             else if (stop_state.deparr_mode_ == MODE_EGRESS)
@@ -1579,7 +1577,8 @@ namespace fasttrips {
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_EGRESS, path_spec.egress_mode_ };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(stop_state.trip_id_)->second;
                 const Attributes&   attributes    = taz_access_links_.find(path_spec.destination_taz_id_)->second.find(stop_state.trip_id_)->second.find(transit_stop)->second;
-                path_info.cost_                  += tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
+                stop_state.cost_                  = tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, named_weights, attributes);
+                path_info.cost_                  += stop_state.cost_;
 
             }
             // ============= transfer =============
@@ -1591,24 +1590,34 @@ namespace fasttrips {
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_TRANSFER, "transfer" };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(transfer_supply_mode_)->second;
                 const Attributes&   attributes    = transfer_links_o_d_.find(orig_stop)->second.find(dest_stop)->second;
-                path_info.cost_                  += tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, named_weights, attributes);
+                stop_state.cost_                  = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, named_weights, attributes);
+                path_info.cost_                  += stop_state.cost_;
             }
             // ============= trip =============
             else
             {
-                double trip_ivt_min = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
-                double wait_min     = stop_state.link_time_ - trip_ivt_min;
+                double trip_ivt_min               = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
+                double wait_min                   = stop_state.link_time_ - trip_ivt_min;
+
+                UserClassMode ucm                 = { path_spec.user_class_, MODE_TRANSIT, path_spec.transit_mode_ };
+                const TripInfo& trip_info         = trip_info_.find(stop_state.trip_id_)->second;
+                int supply_mode_num               = trip_info.supply_mode_num_;
+                const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(supply_mode_num)->second;
+                Attributes link_attr              = trip_info.trip_attr_;
+                link_attr["in_vehicle_time_min"]  = trip_ivt_min;
+                link_attr["wait_time_min"]        = wait_min;
 
                 if (first_trip) {
-                    initial_wait_min = wait_min;
-                    first_trip      = false;
+                    link_attr["transfer_penalty"] = 0.0;
                 } else {
-                    transfer_wait_min += wait_min;
-                    num_transfers   += true;
+                    link_attr["transfer_penalty"] = 1.0;
                 }
-                in_vehicle_min      += trip_ivt_min;
+
+                stop_state.cost_                  = tallyLinkCost(supply_mode_num, path_spec, trace_file, named_weights, link_attr);
+                path_info.cost_                  += stop_state.cost_;
 
                 fare += FARE_PER_BOARDING_;
+                first_trip = false;
             }
         }
         // TODO: remove this stuff?!  It's just here to match FAST-TrIPs
@@ -1623,14 +1632,10 @@ namespace fasttrips {
             preference_delay = orig_departure_time - path_spec.preferred_time_;
         }
 
-        path_info.cost_+= (IN_VEHICLE_TIME_WEIGHT_*in_vehicle_min                ) +
-                          (WAIT_TIME_WEIGHT_*(initial_wait_min+transfer_wait_min)) +
-                          (TRANSFER_PENALTY_*num_transfers                       ) +
-                          (SCHEDULE_DELAY_WEIGHT_*preference_delay               ) +
+        path_info.cost_+= (SCHEDULE_DELAY_WEIGHT_*preference_delay               ) +
                           (60.0*fare/VALUE_OF_TIME_                              );
 
         if (path_spec.trace_) {
-            trace_file << "calculatePathCost:" << std::endl;
             printPath(trace_file, path_spec, path);
             trace_file << std::endl;
             trace_file << "     origin departure time: ";
@@ -1639,10 +1644,6 @@ namespace fasttrips {
             trace_file << "  destination arrival time: ";
             printTime(trace_file, dest_arrival_time);
             trace_file << " (" << dest_arrival_time << ")" << std::endl;
-            trace_file << "            in vehicle min: " << in_vehicle_min    << std::endl;
-            trace_file << "          initial wait min: " << initial_wait_min  << std::endl;
-            trace_file << "         transfer wait min: " << transfer_wait_min << std::endl;
-            trace_file << "             num transfers: " << num_transfers     << std::endl;
             trace_file << "           preferred delay: " << preference_delay  << std::endl;
             trace_file << "                      fare: " << fare              << std::endl;
             trace_file << "            ---> path cost: " << path_info.cost_   << std::endl;
@@ -1666,7 +1667,7 @@ namespace fasttrips {
         if (path_spec.hyperpath_)
         {
             // find a bunch!
-            PathSet paths;
+            PathSet paths, paths_updated_cost;
             // random seed
             srand(path_spec.path_id_);
             // find a *set of Paths*
@@ -1698,10 +1699,15 @@ namespace fasttrips {
             double logsum = 0;
             for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
             {
-                calculatePathCost(path_spec, trace_file, paths_iter->first, paths_iter->second);
-                if (paths_iter->second.cost_ > 0)
+                // updated cost version
+                Path     path_updated     = paths_iter->first;
+                PathInfo pathinfo_updated = paths_iter->second;
+                calculatePathCost(path_spec, trace_file, path_updated, pathinfo_updated);
+                // save it into the new map
+                paths_updated_cost[path_updated] = pathinfo_updated;
+                if (pathinfo_updated.cost_ > 0)
                 {
-                    logsum += exp(-1.0*STOCH_DISPERSION_*paths_iter->second.cost_);
+                    logsum += exp(-1.0*STOCH_DISPERSION_*pathinfo_updated.cost_);
                 }
             }
             if (logsum == 0) { return false; } // fail
@@ -1710,7 +1716,7 @@ namespace fasttrips {
             int cum_prob    = 0;
             int cost_cutoff = 1;
             // calculate the probabilities for those paths
-            for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
+            for (PathSet::iterator paths_iter = paths_updated_cost.begin(); paths_iter != paths_updated_cost.end(); ++paths_iter)
             {
                 paths_iter->second.probability_ = exp(-1.0*STOCH_DISPERSION_*paths_iter->second.cost_)/logsum;
                 // why?  :p
@@ -1735,8 +1741,8 @@ namespace fasttrips {
             if (cum_prob == 0) { return false; } // fail
 
             // choose path
-            path = choosePath(path_spec, trace_file, paths, cum_prob);
-            path_info = paths[path];
+            path = choosePath(path_spec, trace_file, paths_updated_cost, cum_prob);
+            path_info = paths_updated_cost[path];
         }
         else
         {
