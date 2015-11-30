@@ -417,7 +417,7 @@ class Trip:
         for field in drop_fields:
             if field in trip_fields: valid_drop_fields.append(field)
 
-        trips_df.drop(drop_fields, axis=1, inplace=1)
+        trips_df.drop(valid_drop_fields, axis=1, inplace=1)
 
         # the index is the trip_id_num
         trips_df.set_index(Trip.TRIPS_COLUMN_TRIP_ID_NUM, inplace=True)

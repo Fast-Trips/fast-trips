@@ -436,11 +436,18 @@ class TAZ:
         # start with all walk columns
         walk_df = self.walk_access_df.copy()
         # drop the redundant columns
-        walk_df.drop([TAZ.WALK_ACCESS_COLUMN_TAZ,         # use numerical version
+        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,         # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_STOP,        # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE, # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_TIME,        # use numerical version
-                     ], axis=1, inplace=True)
+                     ]
+        # we can only drop fields that are in the dataframe
+        walk_fields = list(walk_df.columns.values)
+        valid_drop_fields = []
+        for field in drop_fields:
+            if field in walk_fields: valid_drop_fields.append(field)
+
+        walk_df.drop(valid_drop_fields, axis=1, inplace=True)
 
         # the index is TAZ num, supply mode num, and stop num
         walk_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
@@ -457,11 +464,16 @@ class TAZ:
         # for col in list(self.drive_access_df.columns): print "  %s" % col
 
         # TEMP
-        drive_df['time_min'] = drive_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] + \
-                               drive_df[TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN]
+        drive_fields = list(drive_df.columns.values)
+        if TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN in drive_fields and \
+           TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN in drive_fields:
+            drive_df['time_min'] = drive_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] + \
+                                   drive_df[TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN]
+        else:
+            drive_df['time_min'] = 0
 
         # drop some of the attributes
-        drive_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ,               # use numerical version
+        drop_fields = [TAZ.DRIVE_ACCESS_COLUMN_TAZ,               # use numerical version
                        TAZ.DRIVE_ACCESS_COLUMN_STOP,              # use numerical version
                        TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,       # use numerical version
                        TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME, # use numerical version
@@ -473,18 +485,26 @@ class TAZ:
                        TAZ.DAP_COLUMN_LOT_LATITUDE,               # probably not useful
                        TAZ.DAP_COLUMN_LOT_LONGITUDE,              # probably not useful
                        TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,            # probably not useful
-                      ], axis=1, inplace=True)
+                      ]
+        valid_drop_fields = []
+        for field in drop_fields:
+            if field in drive_fields: valid_drop_fields.append(field)
+        drive_df.drop(valid_drop_fields, axis=1, inplace=True)
 
         # the index is TAZ num, supply mode num, and stop num
-        drive_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
-                            TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                            TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM], inplace=True)
-        # this will make it so beyond taz num, supply mode num, and stop num
-        # the remaining columns collapse to variable name, variable value
-        drive_df = drive_df.stack()
+        if len(drive_df) > 0:
+            drive_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
+                                TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                                TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM], inplace=True)
+            # this will make it so beyond taz num, supply mode num, and stop num
+            # the remaining columns collapse to variable name, variable value
+            drive_df = drive_df.stack()
 
-        # put walk and drive together
-        access_df = pandas.concat([walk_df, drive_df], axis=0).to_frame()
+            # put walk and drive together
+            access_df = pandas.concat([walk_df, drive_df], axis=0).to_frame()
+        else:
+            access_df = walk_df.to_frame()
+
         access_df.reset_index(inplace=True)
         # rename from these default column names
         access_df.rename(columns={"level_3":"attr_name", 0:"attr_value"}, inplace=True)
