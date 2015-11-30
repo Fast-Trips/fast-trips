@@ -860,13 +860,12 @@ namespace fasttrips {
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
                     link_attr["in_vehicle_time_min"] = in_vehicle_time;
+                    link_attr["wait_time_min"      ] = wait_time;
 
                     // these are special -- set them
                     if ((current_mode == MODE_ACCESS) || (current_mode == MODE_EGRESS)) {
-                        link_attr["wait_time_min"   ] = wait_time;
                         link_attr["transfer_penalty"] = 1.0;
                     } else {
-                        link_attr["wait_time_min"   ] = 0.0;
                         link_attr["transfer_penalty"] = 0.0;
                     }
 
@@ -1021,6 +1020,9 @@ namespace fasttrips {
             if (path_spec.trace_) {
                 trace_file << "  current mode:     " << std::left;
                 printMode(trace_file, current_mode, current_stop_state[0].trip_id_);
+                if (current_mode == MODE_TRANSIT) {
+                    trace_file << " (" << trip_num_to_str_.find(current_stop_state[0].trip_id_)->second << ")";
+                }
                 trace_file << std::endl;
                 trace_file << (path_spec.outbound_ ? "  latest_departure: " : "  earliest_arrival: ");
                 printTime(trace_file, latest_dep_earliest_arr);
@@ -1276,6 +1278,7 @@ namespace fasttrips {
         //  inbound: departure time
         double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
         int     prev_mode       = ss.deparr_mode_;
+        int     prev_trip_id    = ss.trip_id_;
         int     prev_stop_id    = start_state_id;
         int     prev_prev_stop_id = -1;
         while (true)
@@ -1285,7 +1288,9 @@ namespace fasttrips {
                 trace_file << "current_stop=" << stop_num_to_str_.find(current_stop_id)->second;
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
                 printTime(trace_file, arrdep_time);
-                trace_file << "; prev_mode=" << prev_mode << std::endl;
+                trace_file << "; prev_mode=";
+                printMode(trace_file, prev_mode, prev_trip_id);
+                trace_file << std::endl;
                 trace_file << "            ";
                 printStopStateHeader(trace_file, path_spec);
                 trace_file << std::endl;
@@ -1305,7 +1310,7 @@ namespace fasttrips {
                     ((state.deparr_mode_ == MODE_ACCESS) || (state.deparr_mode_ == MODE_TRANSFER)) &&
                     ((         prev_mode == MODE_EGRESS) || (         prev_mode == MODE_TRANSFER))) { continue; }
                 // don't double on the same trip ID - that's already covered by a single trip
-                if (state.deparr_mode_ == prev_mode) { continue; }
+                if (state.deparr_mode_ == MODE_TRANSIT && state.trip_id_ == prev_trip_id) { continue; }
 
                 // outbound: we cannot depart before we arrive
                 if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }
@@ -1449,6 +1454,7 @@ namespace fasttrips {
             prev_stop_id        = current_stop_id;
             current_stop_id     = next_ss.stop_succpred_;
             prev_mode           = next_ss.deparr_mode_;
+            prev_trip_id        = next_ss.trip_id_;
 
             // update arrival / departure time
             arrdep_time = next_ss.arrdep_time_;
@@ -1906,7 +1912,7 @@ namespace fasttrips {
             if (       trips.length() > 0) {        trips += ","; }
             if (alight_stops.length() > 0) { alight_stops += ","; }
             board_stops  += "s" + (path_spec.outbound_ ? SSTR(stop_id) : SSTR(psi->second.stop_succpred_));
-            trips        += "t" + SSTR(psi->second.deparr_mode_);
+            trips        += "t" + SSTR(psi->second.trip_id_);
             alight_stops += "s" + (path_spec.outbound_ ? SSTR(psi->second.stop_succpred_) : SSTR(stop_id));
         }
         ostr << " " << board_stops << " " << trips << " " << alight_stops;

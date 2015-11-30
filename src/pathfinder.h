@@ -230,6 +230,8 @@ namespace fasttrips {
                 std::map<int, StopState>::const_iterator ssi2 = path2.states_.find(stop_id);
                 if (ssi1->second.deparr_mode_ < ssi2->second.deparr_mode_) { return true; }
                 if (ssi1->second.deparr_mode_ > ssi2->second.deparr_mode_) { return false; }
+                if (ssi1->second.trip_id_     < ssi2->second.trip_id_    ) { return true; }
+                if (ssi1->second.trip_id_     > ssi2->second.trip_id_    ) { return false; }
             }
             return false;
         }
