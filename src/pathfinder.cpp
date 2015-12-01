@@ -1175,12 +1175,12 @@ namespace fasttrips {
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         const StopStates& stop_states,
-        const std::vector<StopState>& taz_state,
         Path& path) const
     {
         int    start_state_id   = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor       = path_spec.outbound_ ? 1 : -1;
-
+        
+        const std::vector<StopState>& taz_state = stop_states.find(start_state_id)->second;
         double taz_label        = taz_state.back().label_;
         int    cost_cutoff      = 1;
 
@@ -1602,7 +1602,7 @@ namespace fasttrips {
             for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
                 Path new_path;
-                bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, taz_state, new_path);
+                bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, new_path);
 
                 if (path_found) {
                     if (path_spec.trace_) {
