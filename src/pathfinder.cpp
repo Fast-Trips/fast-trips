@@ -182,21 +182,6 @@ namespace fasttrips {
         }
         int attrs_read = 0;
         while (acceggr_file >> taz_num >> supply_mode_num >> stop_id_num >> attr_name >> attr_value) {
-            TAZSupplyStopToAttr::iterator it_tss2a = taz_access_links_.find(taz_num);
-            if (it_tss2a == taz_access_links_.end()) {
-                SupplyStopToAttr ss2a;
-                taz_access_links_[taz_num] = ss2a;
-            }
-            SupplyStopToAttr::iterator it_ss2a = taz_access_links_[taz_num].find(supply_mode_num);
-            if (it_ss2a == taz_access_links_[taz_num].end()) {
-                StopToAttr s2a;
-                taz_access_links_[taz_num][supply_mode_num] = s2a;
-            }
-            StopToAttr::iterator it_s2a = taz_access_links_[taz_num][supply_mode_num].find(stop_id_num);
-            if (it_s2a == taz_access_links_[taz_num][supply_mode_num].end()) {
-                Attributes attrs;
-                taz_access_links_[taz_num][supply_mode_num][stop_id_num] = attrs;
-            }
             taz_access_links_[taz_num][supply_mode_num][stop_id_num][attr_name] = attr_value;
             attrs_read++;
         }
@@ -228,29 +213,9 @@ namespace fasttrips {
         int attrs_read = 0;
         while (transfer_file >> from_stop_id_num >> to_stop_id_num >> attr_name >> attr_value) {
             // o -> d -> attrs
-            StopStopToAttr::const_iterator iter_ss2a = transfer_links_o_d_.find(from_stop_id_num);
-            if (iter_ss2a == transfer_links_o_d_.end()) {
-                StopToAttr s2a;
-                transfer_links_o_d_[from_stop_id_num] = s2a;
-            }
-            StopToAttr::const_iterator iter_s2a = transfer_links_o_d_[from_stop_id_num].find(to_stop_id_num);
-            if (iter_s2a == transfer_links_o_d_[from_stop_id_num].end()) {
-                Attributes a;
-                transfer_links_o_d_[from_stop_id_num][to_stop_id_num] = a;
-            }
             transfer_links_o_d_[from_stop_id_num][to_stop_id_num][attr_name] = attr_value;
 
             // d -> o -> attrs
-            iter_ss2a = transfer_links_d_o_.find(to_stop_id_num);
-            if (iter_ss2a == transfer_links_d_o_.end()) {
-                StopToAttr s2a;
-                transfer_links_d_o_[to_stop_id_num] = s2a;
-            }
-            iter_s2a = transfer_links_d_o_[to_stop_id_num].find(from_stop_id_num);
-            if (iter_s2a == transfer_links_d_o_[to_stop_id_num].end()) {
-                Attributes a;
-                transfer_links_d_o_[to_stop_id_num][from_stop_id_num] = a;
-            }
             transfer_links_d_o_[to_stop_id_num][from_stop_id_num][attr_name] = attr_value;
             attrs_read++;
         }
@@ -279,11 +244,6 @@ namespace fasttrips {
         }
         int attrs_read = 0;
         while (tripinfo_file >> trip_id_num >> attr_name >> attr_value) {
-            std::map<int, TripInfo>::const_iterator iter_ti = trip_info_.find(trip_id_num);
-            if (iter_ti == trip_info_.end()) {
-                TripInfo ti;
-                trip_info_[trip_id_num] = ti;
-            }
 
             // these are special
             if (attr_name == "mode_num") {
@@ -332,18 +292,6 @@ namespace fasttrips {
             else {
                 std::cerr << "Do not understand demand_mode_type [" << demand_mode_type << "] in " << ss_weights.str() << std::endl;
                 exit(2);
-            }
-
-            WeightLookup::iterator wl_iter = weight_lookup_.find(ucm);
-            if (wl_iter == weight_lookup_.end()) {
-                SupplyModeToNamedWeights smtnw;
-                weight_lookup_[ucm] = smtnw;
-            }
-
-            SupplyModeToNamedWeights::iterator smtnw_iter = weight_lookup_[ucm].find(supply_mode_num);
-            if (smtnw_iter == weight_lookup_[ucm].end()) {
-                NamedWeights nw;
-                weight_lookup_[ucm][supply_mode_num] = nw;
             }
 
             weight_lookup_[ucm][supply_mode_num][weight_name] = weight_value;
