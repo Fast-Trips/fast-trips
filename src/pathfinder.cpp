@@ -442,9 +442,9 @@ namespace fasttrips {
         labelStops(path_spec, trace_file, stop_states, label_stop_queue);
 
         std::vector<StopState> taz_state;
-        finalizeTazState(path_spec, trace_file, stop_states, taz_state);
+        finalizeTazState(path_spec, trace_file, stop_states);
 
-        getFoundPath(path_spec, trace_file, stop_states, taz_state, path, path_info);
+        getFoundPath(path_spec, trace_file, stop_states, path, path_info);
 
         trace_file.close();
     }
@@ -1054,11 +1054,13 @@ namespace fasttrips {
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        const StopStates& stop_states,
-        std::vector<StopState>& taz_state) const
+        StopStates& stop_states) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+        
+        // instantiate this
+        std::vector<StopState>& taz_state = stop_states[end_taz_id];
 
         // are there any egress/access links?
         TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
@@ -1633,14 +1635,14 @@ namespace fasttrips {
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         const StopStates& stop_states,
-        const std::vector<StopState>& taz_state,
         Path& path,
         PathInfo& path_info) const
     {
-        // no taz states -> no path found
-        if (taz_state.size() == 0) { return false; }
-
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+
+        // no taz states -> no path found
+        const std::vector<StopState>& taz_state = stop_states.find(end_taz_id)->second;
+        if (taz_state.size() == 0) { return false; }
 
         if (path_spec.hyperpath_)
         {

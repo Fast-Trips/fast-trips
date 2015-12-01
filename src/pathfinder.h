@@ -384,8 +384,7 @@ namespace fasttrips {
          */
         bool finalizeTazState(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
-                                  const StopStates& stop_states,
-                                  std::vector<StopState>& taz_state) const;
+                                  StopStates& stop_states) const;
 
         /**
          * Given all the labeled stops and taz, traces back and generates a
@@ -432,7 +431,6 @@ namespace fasttrips {
         bool getFoundPath(const PathSpecification&      path_spec,
                           std::ofstream&                trace_file,
                           const StopStates&             stop_states,
-                          const std::vector<StopState>& taz_state,
                           Path&                         path,
                           PathInfo&                     path_info) const;
 
