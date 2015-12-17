@@ -156,7 +156,9 @@ namespace fasttrips {
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
-        double  cost_;                  ///< Cost
+        double  link_cost_;             ///< Link cost.
+        double  cost_;                  ///< Cost from previous link(s) and this link together.
+        int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
     } StopState;
 
@@ -346,6 +348,7 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
+                                  int label_iteration,
                                   const LabelStop& current_label_stop,
                                   double latest_dep_earliest_arr) const;
 
@@ -359,6 +362,7 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
+                                  int label_iteration,
                                   const LabelStop& current_label_stop,
                                   double latest_dep_earliest_arr,
                                   std::tr1::unordered_set<int>& trips_done) const;
@@ -370,7 +374,7 @@ namespace fasttrips {
          *     * adding the stops accessible by transfer (PathFinder::updateStopStatesForTransfers)
          *     * adding the stops accessible by transit trip (PathFinder::updateStopStatesForTrips)
          */
-        void labelStops(const PathSpecification& path_spec,
+        int labelStops(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue) const;
@@ -383,8 +387,9 @@ namespace fasttrips {
          * @return sucess.
          */
         bool finalizeTazState(const PathSpecification& path_spec,
-                                  std::ofstream& trace_file,
-                                  StopStates& stop_states) const;
+                              std::ofstream& trace_file,
+                              StopStates& stop_states,
+                              int label_iteration) const;
 
         /**
          * Given all the labeled stops and taz, traces back and generates a

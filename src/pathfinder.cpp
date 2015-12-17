@@ -387,10 +387,10 @@ namespace fasttrips {
         // todo: handle failure
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
 
-        labelStops(path_spec, trace_file, stop_states, label_stop_queue);
+        int label_iteration = labelStops(path_spec, trace_file, stop_states, label_stop_queue);
 
         std::vector<StopState> taz_state;
-        finalizeTazState(path_spec, trace_file, stop_states);
+        finalizeTazState(path_spec, trace_file, stop_states, label_iteration);
 
         getFoundPath(path_spec, trace_file, stop_states, path, path_info);
 
@@ -519,7 +519,9 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     attr_time,                                                                  // link time
+                    cost,                                                                       // link cost
                     cost,                                                                       // cost
+                    0,                                                                          // iteration
                     PathFinder::MAX_DATETIME };                                                 // arrival/departure time
                 stop_states[stop_id].push_back(ss);
                 LabelStop ls = { cost, stop_id };
@@ -548,6 +550,7 @@ namespace fasttrips {
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
+        int label_iteration,
         const LabelStop& current_label_stop,
         double latest_dep_earliest_arr) const
     {
@@ -601,13 +604,14 @@ namespace fasttrips {
             //  inbound: arrival time   = earliest arrival + transfer
             double  deparr_time     = latest_dep_earliest_arr - (transfer_time*dir_factor);
             bool    use_new_state   = false;
-            double  cost, new_label;
+            double  link_cost, cost, new_label;
             StopStates::const_iterator possible_xfer_iter = stop_states.find(xfer_stop_id);
 
             // stochastic/hyperpath: cost update
             if (path_spec.hyperpath_)
             {
-                cost                = nonwalk_label + tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, transfer_weights, transfer_it->second);
+                link_cost           = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, transfer_weights, transfer_it->second);
+                cost                = nonwalk_label + link_cost;
                 double old_label    = PathFinder::MAX_COST;
                 new_label           = cost;
                 if (possible_xfer_iter != stop_states.end())
@@ -623,6 +627,7 @@ namespace fasttrips {
             // deterministic: cost is just additive
             else
             {
+                link_cost           = transfer_time;
                 cost                = transfer_time;
                 new_label           = current_label_stop.label_ + cost;
 
@@ -667,7 +672,9 @@ namespace fasttrips {
                     -1,                             // sequence
                     -1,                             // sequence succ/pred
                     transfer_time,                  // link time
+                    link_cost,                      // link cost
                     cost,                           // cost
+                    label_iteration,                // label iteration
                     PathFinder::MAX_DATETIME        // arrival/departure time
                 };
                 stop_states[xfer_stop_id].push_back(ss);
@@ -688,6 +695,7 @@ namespace fasttrips {
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
+        int label_iteration,
         const LabelStop& current_label_stop,
         double latest_dep_earliest_arr,
         std::tr1::unordered_set<int>& trips_done) const
@@ -801,7 +809,7 @@ namespace fasttrips {
                 double  deparr_time     = path_spec.outbound_ ? possible_board_alight.depart_time_ : possible_board_alight.arrive_time_;
                 double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
                 bool    use_new_state   = false;
-                double  cost, new_label;
+                double  link_cost, cost, new_label;
 
                 // stochastic/hyperpath: cost update
                 if (path_spec.hyperpath_) {
@@ -812,13 +820,14 @@ namespace fasttrips {
 
                     // these are special -- set them
                     if ((current_mode == MODE_ACCESS) || (current_mode == MODE_EGRESS)) {
-                        link_attr["transfer_penalty"] = 1.0;
-                    } else {
                         link_attr["transfer_penalty"] = 0.0;
+                    } else {
+                        link_attr["transfer_penalty"] = 1.0;
                     }
 
-                    cost = current_label_stop.label_ +
-                           tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
+
+                    link_cost = tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
+                    cost      = current_label_stop.label_ + link_cost;
 
                     double old_label = PathFinder::MAX_COST;
                     new_label       = cost;
@@ -832,7 +841,8 @@ namespace fasttrips {
                 }
                 // deterministic: cost is just additive
                 else {
-                    cost        = in_vehicle_time + wait_time;
+                    link_cost   = in_vehicle_time + wait_time;
+                    cost        = cost;
                     new_label   = current_label_stop.label_ + cost;
                     double old_label = PathFinder::MAX_TIME;
                     if (possible_stop_state_iter != stop_states.end()) {
@@ -851,7 +861,9 @@ namespace fasttrips {
                                 possible_board_alight.seq_,     // sequence
                                 it->seq_,                       // sequence succ/pred
                                 in_vehicle_time+wait_time,      // link time
+                                link_cost,                      // link cost
                                 cost,                           // cost
+                                label_iteration,                // label iteration
                                 arrdep_time                     // arrival/departure time
                             };
                             trace_file << " -trip     ";
@@ -875,7 +887,9 @@ namespace fasttrips {
                         possible_board_alight.seq_,     // sequence
                         it->seq_,                       // sequence succ/pred
                         in_vehicle_time+wait_time,      // link time
+                        link_cost,                      // link cost
                         cost,                           // cost
+                        label_iteration,                // label iteration
                         arrdep_time                     // arrival/departure time
                     };
                     stop_states[board_alight_stop].push_back(ss);
@@ -893,12 +907,12 @@ namespace fasttrips {
         }
     }
 
-    void PathFinder::labelStops(const PathSpecification& path_spec,
+    int PathFinder::labelStops(const PathSpecification& path_spec,
                                           std::ofstream& trace_file,
                                           StopStates& stop_states,
                                           LabelStopQueue& label_stop_queue) const
     {
-        int label_iterations = 0;
+        int label_iterations = 1;
         std::tr1::unordered_set<int> stop_done;
         std::tr1::unordered_set<int> trips_done;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
@@ -981,6 +995,7 @@ namespace fasttrips {
                                          trace_file,
                                          stop_states,
                                          label_stop_queue,
+                                         label_iterations,
                                          current_label_stop,
                                          latest_dep_earliest_arr);
 
@@ -988,6 +1003,7 @@ namespace fasttrips {
                                      trace_file,
                                      stop_states,
                                      label_stop_queue,
+                                     label_iterations,
                                      current_label_stop,
                                      latest_dep_earliest_arr,
                                      trips_done);
@@ -996,13 +1012,15 @@ namespace fasttrips {
             //  Done with this label iteration!
             label_iterations += 1;
         }
+        return label_iterations;
     }
 
 
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        StopStates& stop_states) const
+        StopStates& stop_states,
+        int label_iteration) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
@@ -1065,7 +1083,7 @@ namespace fasttrips {
                 double  nonwalk_label           = PathFinder::MAX_COST;
 
                 bool    use_new_state           = false;
-                double  deparr_time, new_label, new_cost;
+                double  deparr_time, new_label, link_cost, new_cost;
 
                 std::map<int, std::vector<StopState> >::const_iterator stop_states_iter = stop_states.find(stop_id);
                 if (stop_states_iter == stop_states.end()) { continue; }
@@ -1088,7 +1106,7 @@ namespace fasttrips {
 
                     deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
 
-                    double link_cost= tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_attr);
+                    link_cost       = tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_attr);
                     new_cost        = nonwalk_label + link_cost;
                     double old_label= PathFinder::MAX_COST;
                     new_label       = new_cost;
@@ -1111,7 +1129,8 @@ namespace fasttrips {
                     if (current_stop_state.front().deparr_mode_ == MODE_TRANSFER) { continue; }
                     if (current_stop_state.front().deparr_mode_ == MODE_EGRESS  ) { continue; }
                     if (current_stop_state.front().deparr_mode_ == MODE_ACCESS  ) { continue; }
-                    new_cost  = access_time;
+                    link_cost = access_time;
+                    new_cost  = new_cost;
                     new_label = current_stop_state.front().label_ + new_cost;
 
                     // capacity check
@@ -1155,7 +1174,9 @@ namespace fasttrips {
                         -1,                                                                         // sequence
                         -1,                                                                         // sequence succ/pred
                         access_time,                                                                // link time
+                        link_cost,                                                                  // link cost
                         new_cost,                                                                   // cost
+                        label_iteration,                                                            // label iteration
                         PathFinder::MAX_DATETIME                                                    // arrival/departure time
                     };
                     taz_state.push_back(ts);
@@ -1573,6 +1594,7 @@ namespace fasttrips {
         }
 
         if (path_spec.trace_) {
+            trace_file << " ==================================================> cost: " << path_info.cost_ << std::endl;
             printPath(trace_file, path_spec, path);
             trace_file << std::endl;
         }
@@ -1861,9 +1883,9 @@ namespace fasttrips {
             if ( board_stops.length() > 0) {  board_stops += ","; }
             if (       trips.length() > 0) {        trips += ","; }
             if (alight_stops.length() > 0) { alight_stops += ","; }
-            board_stops  += "s" + (path_spec.outbound_ ? SSTR(stop_id) : SSTR(psi->second.stop_succpred_));
-            trips        += "t" + SSTR(psi->second.trip_id_);
-            alight_stops += "s" + (path_spec.outbound_ ? SSTR(psi->second.stop_succpred_) : SSTR(stop_id));
+            board_stops  += (path_spec.outbound_ ? stop_num_to_str_.find(stop_id)->second : stop_num_to_str_.find(psi->second.stop_succpred_)->second);
+            trips        += trip_num_to_str_.find(psi->second.trip_id_)->second;
+            alight_stops += (path_spec.outbound_ ? stop_num_to_str_.find(psi->second.stop_succpred_)->second : stop_num_to_str_.find(stop_id)->second);
         }
         ostr << " " << board_stops << " " << trips << " " << alight_stops;
     }
@@ -1872,15 +1894,17 @@ namespace fasttrips {
     void PathFinder::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const
     {
         ostr << std::setw( 8) << std::setfill(' ') << std::right << "stop" << ": ";
-        ostr << std::setw(13) << "label";
+        ostr << std::setw(10) << "label";
         ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
         ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
         ostr << std::setw(14) << "trip_id";
         ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
         ostr << std::setw( 5) << "seq";
         ostr << std::setw( 5) << (path_spec.outbound_ ? "suc" : "pred");
-        ostr << std::setw(15) << "linktime";
-        ostr << std::setw(17) << "cost";
+        ostr << std::setw(12) << "linktime";
+        ostr << std::setw(14) << "linkcost";
+        ostr << std::setw(12) << "cost";
+        ostr << std::setw( 9) << "iter";
         ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
     }
 
@@ -1889,7 +1913,7 @@ namespace fasttrips {
         ostr << std::setw( 8) << std::setfill(' ') << std::right << stop_num_to_str_.find(stop_id)->second << ": ";
         if (path_spec.hyperpath_) {
             // label is a cost
-            ostr << std::setw(13) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.label_;
+            ostr << std::setw(10) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.label_;
         } else {
             // label is a time duration
             printTimeDuration(ostr, ss.label_);
@@ -1916,12 +1940,17 @@ namespace fasttrips {
         printTimeDuration(ostr, ss.link_time_);
         ostr << "  ";
         if (path_spec.hyperpath_) {
-            ostr << std::setw(15) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.cost_;
+            ostr << std::setw(12) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.link_cost_;
+            ostr << std::setw(12) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.cost_;
         } else {
             // cost is a time duration
             ostr << "  ";
+            printTimeDuration(ostr, ss.link_cost_);
+            ostr << "  ";
             printTimeDuration(ostr, ss.cost_);
         }
+        ostr << "  ";
+        ostr << std::setw(7) << std::setfill(' ') << ss.iteration_;
         ostr << "  ";
         printTime(ostr, ss.arrdep_time_);
     }
@@ -1941,9 +1970,9 @@ namespace fasttrips {
         ostr << std::right;
         ostr << std::setw( 2) << std::setfill(' ') << std::right << hours << ":"; // hours
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)      << ":"; // minutes
-        int width = 5;
-        if (secpart < 10) { ostr << "0"; width = 4; }
-        ostr << std::left << std::setw(width) << std::setprecision( 4) << std::fixed << std::setfill(' ') << secpart << std::right; // seconds
+        int width = 3;
+        if (secpart < 10) { ostr << "0"; width = 2; }
+        ostr << std::left << std::setw(width) << std::setprecision( 1) << std::fixed << std::setfill(' ') << secpart << std::right; // seconds
     }
 
     /*
