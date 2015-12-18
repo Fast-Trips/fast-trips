@@ -328,6 +328,13 @@ namespace fasttrips {
                                          const NamedWeights& weights,
                                          const Attributes& attributes) const;
 
+        void addStopState(const PathSpecification& path_spec,
+                          std::ofstream& trace_file,
+                          const int stop_id,
+                          const StopState& ss,
+                          StopStates& stop_states,
+                          LabelStopQueue& label_stop_queue) const;
+
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
          * from the start TAZ.
@@ -389,6 +396,7 @@ namespace fasttrips {
         bool finalizeTazState(const PathSpecification& path_spec,
                               std::ofstream& trace_file,
                               StopStates& stop_states,
+                              LabelStopQueue& label_stop_queue,
                               int label_iteration) const;
 
         /**
