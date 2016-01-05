@@ -1,0 +1,537 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<workbook source-platform='win' version='9.0' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <!-- build 9000.15.0506.1800                                -->
+  <preferences>
+    <preference name='ui.encoding.shelf.height' value='24' />
+    <preference name='ui.shelf.height' value='26' />
+  </preferences>
+  <datasources>
+    <datasource caption='fasttrips_labels_4' inline='true' name='textscan.42355.603923634262' version='9.0'>
+      <connection class='textscan' directory='C:/Users/lzorn/Documents/fast-trips-develop/Examples/test_network/output/demand_reg_deterministic_iter1_nocap' filename='fasttrips_labels_ids_4.csv' password='' server=''>
+        <relation join='left' type='join'>
+          <clause type='join'>
+            <expression op='='>
+              <expression op='[fasttrips_labels_4#csv].[node ID]'>
+              </expression>
+              <expression op='[fasttrips_labels_ids_4#csv].[stop_id]'>
+              </expression>
+            </expression>
+          </clause>
+          <relation name='fasttrips_labels_4#csv' table='[fasttrips_labels_4#csv]' type='table'>
+            <columns character-set='UTF-8' header='yes' locale='en_US' separator=','>
+              <column datatype='integer' name='label_iteration' ordinal='0' />
+              <column datatype='integer' name='link' ordinal='1' />
+              <column datatype='string' name='node ID' ordinal='2' />
+              <column datatype='real' name='time' ordinal='3' />
+              <column datatype='string' name='mode' ordinal='4' />
+              <column datatype='string' name='trip_id' ordinal='5' />
+              <column datatype='real' name='link_time' ordinal='6' />
+              <column datatype='real' name='link_cost' ordinal='7' />
+              <column datatype='real' name='cost' ordinal='8' />
+              <column datatype='string' name='AB' ordinal='9' />
+            </columns>
+          </relation>
+          <relation name='fasttrips_labels_ids_4#csv' table='[fasttrips_labels_ids_4#csv]' type='table'>
+            <columns character-set='UTF-8' header='yes' locale='en_US' separator=','>
+              <column datatype='string' name='stop_id' ordinal='0' />
+              <column datatype='integer' name='stop_id_label_iter' ordinal='1' />
+            </columns>
+          </relation>
+        </relation>
+        <metadata-records>
+          <metadata-record class='column'>
+            <remote-name>label_iteration</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[label_iteration]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>label_iteration</remote-alias>
+            <ordinal>0</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;sint64&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>link</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[link]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>link</remote-alias>
+            <ordinal>1</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;sint64&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>node ID</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[node ID]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>node ID</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+            <attributes>
+              <attribute datatype='string' name='DebugRemoteCollation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='DebugRemoteMetadata (compression)'>&quot;heap&quot;</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>4294967292</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (storagewidth)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;str&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>time</remote-name>
+            <remote-type>5</remote-type>
+            <local-name>[time]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>time</remote-alias>
+            <ordinal>3</ordinal>
+            <local-type>real</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;double&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>mode</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[mode]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>mode</remote-alias>
+            <ordinal>4</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+            <attributes>
+              <attribute datatype='string' name='DebugRemoteCollation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='DebugRemoteMetadata (compression)'>&quot;heap&quot;</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>4294967292</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (storagewidth)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;str&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>trip_id</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[trip_id]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>trip_id</remote-alias>
+            <ordinal>5</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+            <attributes>
+              <attribute datatype='string' name='DebugRemoteCollation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='DebugRemoteMetadata (compression)'>&quot;heap&quot;</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>4294967292</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (storagewidth)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;str&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>link_time</remote-name>
+            <remote-type>5</remote-type>
+            <local-name>[link_time]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>link_time</remote-alias>
+            <ordinal>6</ordinal>
+            <local-type>real</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;double&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>link_cost</remote-name>
+            <remote-type>5</remote-type>
+            <local-name>[link_cost]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>link_cost</remote-alias>
+            <ordinal>7</ordinal>
+            <local-type>real</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;double&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>cost</remote-name>
+            <remote-type>5</remote-type>
+            <local-name>[cost]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>cost</remote-alias>
+            <ordinal>8</ordinal>
+            <local-type>real</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;double&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>AB</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[AB]</local-name>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias>AB</remote-alias>
+            <ordinal>9</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+            <attributes>
+              <attribute datatype='string' name='DebugRemoteCollation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='DebugRemoteMetadata (compression)'>&quot;heap&quot;</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>4294967292</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (storagewidth)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;str&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='capability'>
+            <remote-name></remote-name>
+            <remote-type>0</remote-type>
+            <parent-name>[fasttrips_labels_4#csv]</parent-name>
+            <remote-alias></remote-alias>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='string' name='character-set'>&quot;UTF-8&quot;</attribute>
+              <attribute datatype='string' name='collation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='field-delimiter'>&quot;,&quot;</attribute>
+              <attribute datatype='string' name='header-row'>&quot;true&quot;</attribute>
+              <attribute datatype='string' name='locale'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='single-char'>&quot;&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>stop_id</remote-name>
+            <remote-type>129</remote-type>
+            <local-name>[stop_id]</local-name>
+            <parent-name>[fasttrips_labels_ids_4#csv]</parent-name>
+            <remote-alias>stop_id</remote-alias>
+            <ordinal>10</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <scale>1</scale>
+            <width>1073741823</width>
+            <contains-null>true</contains-null>
+            <collation flag='0' name='LEN_RUS' />
+            <attributes>
+              <attribute datatype='string' name='DebugRemoteCollation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='DebugRemoteMetadata (compression)'>&quot;heap&quot;</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>4294967292</attribute>
+              <attribute datatype='integer' name='DebugRemoteMetadata (storagewidth)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;str&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>stop_id_label_iter</remote-name>
+            <remote-type>20</remote-type>
+            <local-name>[stop_id_label_iter]</local-name>
+            <parent-name>[fasttrips_labels_ids_4#csv]</parent-name>
+            <remote-alias>stop_id_label_iter</remote-alias>
+            <ordinal>11</ordinal>
+            <local-type>integer</local-type>
+            <aggregation>Sum</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='integer' name='DebugRemoteMetadata (size)'>8</attribute>
+              <attribute datatype='string' name='DebugRemoteType'>&quot;sint64&quot;</attribute>
+            </attributes>
+          </metadata-record>
+          <metadata-record class='capability'>
+            <remote-name></remote-name>
+            <remote-type>0</remote-type>
+            <parent-name>[fasttrips_labels_ids_4#csv]</parent-name>
+            <remote-alias></remote-alias>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+            <attributes>
+              <attribute datatype='string' name='character-set'>&quot;UTF-8&quot;</attribute>
+              <attribute datatype='string' name='collation'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='field-delimiter'>&quot;,&quot;</attribute>
+              <attribute datatype='string' name='header-row'>&quot;true&quot;</attribute>
+              <attribute datatype='string' name='locale'>&quot;en_US&quot;</attribute>
+              <attribute datatype='string' name='single-char'>&quot;&quot;</attribute>
+            </attributes>
+          </metadata-record>
+        </metadata-records>
+      </connection>
+      <aliases enabled='yes' />
+      <column datatype='integer' name='[Number of Records]' role='measure' type='quantitative' user:auto-column='numrec'>
+        <calculation class='tableau' formula='1' />
+      </column>
+      <column caption='Cost' datatype='real' name='[cost]' role='measure' type='quantitative'>
+      </column>
+      <column caption='Label Iteration' datatype='integer' name='[label_iteration]' role='measure' type='quantitative'>
+      </column>
+      <column aggregation='Sum' caption='Link' datatype='integer' name='[link]' role='dimension' type='ordinal'>
+      </column>
+      <column caption='Link Cost' datatype='real' name='[link_cost]' role='measure' type='quantitative'>
+      </column>
+      <column caption='Link Time' datatype='real' name='[link_time]' role='measure' type='quantitative'>
+      </column>
+      <column caption='Mode' datatype='string' name='[mode]' role='dimension' type='nominal'>
+      </column>
+      <column caption='Stop Id' datatype='string' name='[stop_id]' role='dimension' type='nominal'>
+      </column>
+      <column caption='Stop Id Label Iter' datatype='integer' name='[stop_id_label_iter]' role='measure' type='quantitative'>
+      </column>
+      <column caption='Time' datatype='real' name='[time]' role='measure' type='quantitative'>
+      </column>
+      <column caption='Trip Id' datatype='string' name='[trip_id]' role='dimension' type='nominal'>
+      </column>
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
+      <semantic-values>
+        <semantic-value key='[Country].[Name]' value='&quot;United States&quot;' />
+      </semantic-values>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sheet 1'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='fasttrips_labels_4' name='textscan.42355.603923634262' />
+          </datasources>
+          <datasource-dependencies datasource='textscan.42355.603923634262'>
+            <column aggregation='Sum' caption='Link' datatype='integer' name='[link]' role='dimension' type='ordinal'>
+            </column>
+            <column caption='Link Cost' datatype='real' name='[link_cost]' role='measure' type='quantitative'>
+            </column>
+            <column caption='Mode' datatype='string' name='[mode]' role='dimension' type='nominal'>
+            </column>
+            <column-instance column='[link]' derivation='None' name='[none:link:ok]' pivot='key' type='ordinal' />
+            <column-instance column='[mode]' derivation='None' name='[none:mode:nk]' pivot='key' type='nominal' />
+            <column-instance column='[trip_id]' derivation='None' name='[none:trip_id:nk]' pivot='key' type='nominal' />
+            <column caption='Stop Id Label Iter' datatype='integer' name='[stop_id_label_iter]' role='measure' type='quantitative'>
+            </column>
+            <column-instance column='[link_cost]' derivation='Sum' name='[sum:link_cost:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[stop_id_label_iter]' derivation='Sum' name='[sum:stop_id_label_iter:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[time]' derivation='Sum' name='[sum:time:qk]' pivot='key' type='quantitative' />
+            <column caption='Time' datatype='real' name='[time]' role='measure' type='quantitative'>
+            </column>
+            <column caption='Trip Id' datatype='string' name='[trip_id]' role='dimension' type='nominal'>
+            </column>
+          </datasource-dependencies>
+          <aggregation value='false' />
+        </view>
+        <style>
+          <style-rule element='axis'>
+            <encoding attr='space' class='0' field='[textscan.42355.603923634262].[sum:time:qk]' field-type='quantitative' max='1000.0' min='900.0' range-type='fixed' scope='rows' type='space' />
+            <format attr='subtitle' class='0' field='[textscan.42355.603923634262].[sum:time:qk]' scope='rows' value='' />
+            <format attr='auto-subtitle' class='0' field='[textscan.42355.603923634262].[sum:time:qk]' scope='rows' value='true' />
+          </style-rule>
+        </style>
+        <panes>
+          <pane>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings>
+              <color column='[textscan.42355.603923634262].[none:mode:nk]' />
+              <size column='[textscan.42355.603923634262].[sum:link_cost:qk]' />
+              <text column='[textscan.42355.603923634262].[none:trip_id:nk]' />
+              <lod column='[textscan.42355.603923634262].[none:link:ok]' />
+              <lod column='[textscan.42355.603923634262].[none:mode:nk]' />
+              <lod column='[textscan.42355.603923634262].[none:trip_id:nk]' />
+            </encodings>
+            <style>
+              <style-rule element='mark'>
+                <format attr='mark-labels-show' value='true' />
+                <format attr='mark-labels-cull' value='true' />
+              </style-rule>
+            </style>
+          </pane>
+        </panes>
+        <rows>[textscan.42355.603923634262].[sum:time:qk]</rows>
+        <cols>[textscan.42355.603923634262].[sum:stop_id_label_iter:qk]</cols>
+      </table>
+    </worksheet>
+  </worksheets>
+  <windows>
+    <window class='schema' source-height='-1' />
+    <window auto-hidden='0' class='worksheet' maximized='1' name='Sheet 1'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+            <card pane-specification-id='0' param='[textscan.42355.603923634262].[none:mode:nk]' type='color' />
+            <card pane-specification-id='0' param='[textscan.42355.603923634262].[sum:link_cost:qk]' type='size' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+      <highlight>
+        <color-one-way>
+          <field>[textscan.42355.603923634262].[none:link:ok]</field>
+          <field>[textscan.42355.603923634262].[none:mode:nk]</field>
+          <field>[textscan.42355.603923634262].[none:stop_id:nk]</field>
+          <field>[textscan.42355.603923634262].[none:trip_id:nk]</field>
+        </color-one-way>
+      </highlight>
+    </window>
+  </windows>
+  <thumbnails>
+    <thumbnail height='192' name='Sheet 1' width='192'>
+      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
+      qOL/ASv68m4eMCibAAAAAElFTkSuQmCC
+    </thumbnail>
+  </thumbnails>
+</workbook>

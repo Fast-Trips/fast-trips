@@ -22,6 +22,7 @@ from .Passenger import Passenger
 from .Path      import Path
 from .Stop      import Stop
 from .TAZ       import TAZ
+from .Transfer  import Transfer
 from .Trip      import Trip
 from .Util      import Util
 
@@ -260,57 +261,18 @@ class Assignment:
         Initialize the C++ fasttrips extension by passing it the network supply.
         """
         FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
-        # make a copy to convert the 2-column MultiIndex to a 2D array easily
-        walk_access_df = FT.tazs.walk_access_df.reset_index()
-        # create access and egress cost
-        # todo: fix
-        walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0
-        walk_access_df[TAZ.WALK_ACCESS_COLUMN_ACC_COST] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN]*Path.WALK_ACCESS_TIME_WEIGHT
-        walk_access_df[TAZ.WALK_ACCESS_COLUMN_EGR_COST] = walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN]*Path.WALK_EGRESS_TIME_WEIGHT
-
-        FastTripsLogger.debug("\n" + str(walk_access_df.head()))
-        FastTripsLogger.debug("\n" + str(walk_access_df.tail()))
-
-        # transfers copy for index flattening, cost
-        transfers_df = FT.stops.transfers_df.reset_index()
-        if len(transfers_df) > 0:
-            transfers_df[Stop.TRANSFERS_COLUMN_COST] = transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN]*Path.WALK_TRANSFER_TIME_WEIGHT
-        else:
-            transfers_df[Stop.TRANSFERS_COLUMN_COST] = 0
 
         _fasttrips.initialize_supply(output_dir, process_number,
-                                     walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
-                                                     TAZ.WALK_ACCESS_COLUMN_STOP_NUM]].as_matrix().astype('int32'),
-                                     walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TIME_MIN,
-                                                     TAZ.WALK_ACCESS_COLUMN_ACC_COST,
-                                                     TAZ.WALK_ACCESS_COLUMN_EGR_COST]].as_matrix().astype('float64'),
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                      FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'),
-                                     transfers_df[[Stop.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                   Stop.TRANSFERS_COLUMN_TO_STOP_NUM]].as_matrix().astype('int32'),
-                                     transfers_df[[Stop.TRANSFERS_COLUMN_TIME_MIN,
-                                                   Stop.TRANSFERS_COLUMN_COST]].as_matrix().astype('float64'),
-                                     FT.trips.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-                                                        Trip.TRIPS_COLUMN_MODE_NUM,
-                                                        Trip.TRIPS_COLUMN_ROUTE_ID_NUM]].as_matrix().astype('int32'))
+                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION)
-
-        _fasttrips.initialize_costcoeffs(Path.IN_VEHICLE_TIME_WEIGHT,
-                                         Path.WAIT_TIME_WEIGHT,
-                                         Path.WALK_ACCESS_TIME_WEIGHT,
-                                         Path.WALK_EGRESS_TIME_WEIGHT,
-                                         Path.WALK_TRANSFER_TIME_WEIGHT,
-                                         Path.TRANSFER_PENALTY,
-                                         Path.SCHEDULE_DELAY_WEIGHT,
-                                         Path.FARE_PER_BOARDING,
-                                         Path.VALUE_OF_TIME)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):
@@ -551,7 +513,9 @@ class Assignment:
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
         (ret_ints, ret_doubles, path_cost) = \
-            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath, path.o_taz_num, path.d_taz_num,
+            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath,
+                                 path.user_class, path.access_mode, path.transit_mode, path.egress_mode,
+                                 path.o_taz_num, path.d_taz_num,
                                  1 if path.outbound() else 0, float(path.pref_time_min),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")

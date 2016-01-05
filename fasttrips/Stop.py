@@ -25,9 +25,7 @@ class Stop:
     
     One instance represents all of the Stops as well as their transfer links.
     
-    Stores stop information in :py:attr:`Stop.stops_df`, an instance of :py:class:`pandas.DataFrame`
-    and transfer link information in :py:attr:`Stop.transfers_df`, another instance of
-    :py:class:`pandas.DataFrame`.
+    Stores stop information in :py:attr:`Stop.stops_df`, an instance of :py:class:`pandas.DataFrame`,
     """
 
     #: File with fasttrips stop information (this extends the
@@ -64,50 +62,9 @@ class Stop:
     #: fasttrips Stops column name: Stop Numerical Identifier. Int.
     STOPS_COLUMN_STOP_ID_NUM                = 'stop_id_num'
 
-    #: File with fasttrips transfer information (this extends the
-    #: `gtfs transfers <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers.md>`_ file).
-    #: See `transfers_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers_ft.md>`_.
-    INPUT_TRANSFERS_FILE                    = "transfers_ft.txt"
-    #: fasttrips Transfers column name: Origin stop identifier
-    TRANSFERS_COLUMN_FROM_STOP              = 'from_stop_id'
-    #: fasttrips Transfers column name: Destination stop identifier
-    TRANSFERS_COLUMN_TO_STOP                = 'to_stop_id'
-    #: fasttrips Transfers column name: Link walk distance, in miles. This is a float.
-    TRANSFERS_COLUMN_DISTANCE               = 'dist'
-    #: fasttrips Transfers column name: Origin route identifier
-    TRANSFERS_COLUMN_FROM_ROUTE             = 'from_route_id'
-    #: fasttrips Transfers column name: Destination route identifier
-    TRANSFERS_COLUMN_TO_ROUTE               = 'to_route_id'
-    #: fasttrips Transfers column name: Schedule precedence
-    TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE    = 'schedule_precedence'
-
-     #: fasttrips Transfers column name: Elevation Gain, feet gained along link.  Integer.
-    TRANSFERS_COLUMN_ELEVATION_GAIN         = 'elevation_gain'
-     #: fasttrips Transfers column name: Population Density, people per square mile.  Float.
-    TRANSFERS_COLUMN_POPULATION_DENSITY     = 'population_density'
-     #: fasttrips Transfers column name: Retail Density, employees per square mile. Float.
-    TRANSFERS_COLUMN_RETAIL_DENSITY         = 'retail_density'
-     #: fasttrips Transfers column name: Auto Capacity, vehicles per hour per mile. Float.
-    TRANSFERS_COLUMN_AUTO_CAPACITY          = 'auto_capacity'
-     #: fasttrips Transfers column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.
-    TRANSFERS_COLUMN_INDIRECTNESS           = 'indirectness'
-
-    # ========== Added by fasttrips =======================================================
-    #: fasttrips Stops column name: Origin Stop Numerical Identifier. Int.
-    TRANSFERS_COLUMN_FROM_STOP_NUM          = 'from_stop_id_num'
-    #: fasttrips Stops column name: Destination Stop Numerical Identifier. Int.
-    TRANSFERS_COLUMN_TO_STOP_NUM            = 'to_stop_id_num'
-
-    #: TODO: remove these?
-    #: Transfers column name: Link walk time.  This is a TimeDelta.
-    TRANSFERS_COLUMN_TIME       = 'time'
-    #: Transfers column name: Link walk time in minutes.  This is a float.
-    TRANSFERS_COLUMN_TIME_MIN   = 'time_min'
-    #: Transfers column name: Link generic cost.  Float.
-    TRANSFERS_COLUMN_COST       = 'cost'
 
     #: File with stop ID, stop ID number correspondence
-    OUTPUT_STOP_ID_NUM_FILE                   = 'ft_output_stop_id.txt'
+    OUTPUT_STOP_ID_NUM_FILE                   = 'ft_intermediate_stop_id.txt'
 
     def __init__(self, input_dir, output_dir, gtfs_schedule, is_child_process):
         """
@@ -164,60 +121,6 @@ class Stop:
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.stops_df), "stops", "stops.txt", Stop.INPUT_STOPS_FILE))
 
-        # Combine all gtfs Transfer objects to a single pandas DataFrame
-        transfer_dicts = []
-        for gtfs_transfer in gtfs_schedule.GetTransferList():
-            transfer_dict = {}
-            for fieldname in gtfs_transfer._FIELD_NAMES:
-                if fieldname in gtfs_transfer.__dict__:
-                    transfer_dict[fieldname] = gtfs_transfer.__dict__[fieldname]
-            transfer_dicts.append(transfer_dict)
-        if len(transfer_dicts) > 0:
-            self.transfers_df = pandas.DataFrame(data=transfer_dicts)
-        else:
-            self.transfers_df = pandas.DataFrame(columns=[Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                                          Stop.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                          Stop.TRANSFERS_COLUMN_TO_STOP,
-                                                          Stop.TRANSFERS_COLUMN_TO_STOP_NUM,
-                                                          Stop.TRANSFERS_COLUMN_TIME,
-                                                          Stop.TRANSFERS_COLUMN_TIME_MIN])
-
-        # Read the fast-trips supplemental transfers data file
-        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_TRANSFERS_FILE))
-        # verify required columns are present
-        transfer_ft_cols = list(transfers_ft_df.columns.values)
-        assert(Stop.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)
-        assert(Stop.TRANSFERS_COLUMN_TO_STOP             in transfer_ft_cols)
-        assert(Stop.TRANSFERS_COLUMN_DISTANCE            in transfer_ft_cols)
-        assert(Stop.TRANSFERS_COLUMN_FROM_ROUTE          in transfer_ft_cols)
-        assert(Stop.TRANSFERS_COLUMN_TO_ROUTE            in transfer_ft_cols)
-        assert(Stop.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE in transfer_ft_cols)
-
-        # join to the transfers dataframe -- need to use the transfers_ft as the primary because
-        # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),
-        # and we don't want to drop them
-        if len(transfers_ft_df) > 0:
-            self.transfers_df = pandas.merge(left=self.transfers_df, right=transfers_ft_df,
-                                             how='right',
-                                             on=[Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                                 Stop.TRANSFERS_COLUMN_TO_STOP])
-
-        FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
-        FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
-
-        # TODO: this is to be consistent with original implementation. Remove?
-        if len(self.transfers_df) > 0:
-            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN] = self.transfers_df[Stop.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0;
-            # convert time column from float to timedelta
-            self.transfers_df[Stop.TRANSFERS_COLUMN_TIME] = \
-                self.transfers_df[Stop.TRANSFERS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
-
-        FastTripsLogger.debug("Final\n"+str(self.transfers_df))
-        FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
-
-        FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
-                             (len(self.transfers_df), "transfers", "transfers.txt", Stop.INPUT_TRANSFERS_FILE))
-
         #: Trips table.
         self.trip_times_df      = None
 
@@ -273,15 +176,6 @@ class Stop:
         # append daps to stop ids
         self.stop_id_df = pandas.concat([self.stop_id_df, tazs_unique_df], axis=0)
         ##############################################################################################
-
-        # Add the numeric stop ids to transfers
-        if len(self.transfers_df) > 0:
-            self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
-                                                         id_colname=Stop.TRANSFERS_COLUMN_FROM_STOP,
-                                                         numeric_newcolname=Stop.TRANSFERS_COLUMN_FROM_STOP_NUM)
-            self.transfers_df = self.add_numeric_stop_id(self.transfers_df,
-                                                         id_colname=Stop.TRANSFERS_COLUMN_TO_STOP,
-                                                         numeric_newcolname=Stop.TRANSFERS_COLUMN_TO_STOP_NUM)
 
         if not self.is_child_process:
             # write the stop id numbering file

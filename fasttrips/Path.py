@@ -12,11 +12,12 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,os,string
+import collections,datetime,os,string,sys
 import numpy,pandas
 
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
+from .Route     import Route
 from .Util      import Util
 
 #: Default user class: just one class called "all"
@@ -58,16 +59,12 @@ class Path:
     #: Weights column: Weight Value
     WEIGHTS_COLUMN_WEIGHT_VALUE     = "weight_value"
 
-    #: todo: these will get removed in favor of WEIGHTS above
-    IN_VEHICLE_TIME_WEIGHT          = 1.0
-    WAIT_TIME_WEIGHT                = 1.77
-    WALK_ACCESS_TIME_WEIGHT         = 3.93
-    WALK_EGRESS_TIME_WEIGHT         = 3.93
-    WALK_TRANSFER_TIME_WEIGHT       = 3.93
-    TRANSFER_PENALTY                = 47.73
-    SCHEDULE_DELAY_WEIGHT           = 0
-    FARE_PER_BOARDING               = 0
-    VALUE_OF_TIME                   = 999
+    # ========== Added by fasttrips =======================================================
+    #: Weights column: Supply Mode number
+    WEIGHTS_COLUMN_SUPPLY_MODE_NUM  = "supply_mode_num"
+
+    #: File with weights for c++
+    OUTPUT_WEIGHTS_FILE             = "ft_intermediate_weights.txt"
 
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
@@ -159,10 +156,14 @@ class Path:
         trip_list_df[new_colname] = trip_list_df.apply(Path.CONFIGURED_FUNCTIONS[Path.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
-    def verify_weight_config(modes_df):
+    def verify_weight_config(modes_df, output_dir, routes):
         """
-        Verify that we have complete weight configurations for the user classes and modes in the given DataFrame
+        Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.
+
+        The parameter mode_df is a dataframe with the user_class, demand_mode_type and demand_mode combinations
+        found in the demand file.
         """
+        error_str = ""
         # First, verify required columns are found
         weight_cols     = list(Path.WEIGHTS_DF.columns.values)
         assert(Path.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
@@ -172,26 +173,64 @@ class Path:
         assert(Path.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
         assert(Path.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
 
-        print modes_df
-
-        # join
+        # Join - make sure that all demand combinations (user class, demand mode type and demand mode) are configured
         weight_check = pandas.merge(left=modes_df,
                                     right=Path.WEIGHTS_DF,
                                     on=[Path.WEIGHTS_COLUMN_USER_CLASS,
                                         Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                         Path.WEIGHTS_COLUMN_DEMAND_MODE],
                                     how='left')
-        print weight_check
+        FastTripsLogger.debug("demand_modes x weights: \n%s" % weight_check.to_string())
 
-        #: misc, initial, wait, time_min
-        #: misc, transfer, walk, time_min
-        #: misc, transfer, wait, time_min
-        #:                 walk_access, time_min
-        #:                 walk_egress, time_min
-        #: transit,                     in_vehicle_time_min
-        #: transit,                     wait_time_min
-        #: transit                      transfer_penalty
-        # sys.exit()
+        # If something is missing, complain
+        if pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_SUPPLY_MODE]).sum() > 0:
+            error_str += "\nThe following user_class, demand_mode_type, demand_mode combinations exist in the demand file but are missing from the weight configuration:\n"
+            error_str += weight_check.loc[pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_SUPPLY_MODE])].to_string()
+            error_str += "\n"
+
+        # demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait
+        user_classes = modes_df[[Path.WEIGHTS_COLUMN_USER_CLASS]].drop_duplicates().reset_index()
+        implicit_df = pandas.DataFrame({ Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer'],
+                                         Path.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer'],
+                                         Path.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'transfer'] })
+        user_classes['key'] = 1
+        implicit_df['key'] = 1
+        implicit_df = pandas.merge(left=user_classes, right=implicit_df, on='key')
+        implicit_df.drop(['index','key'], axis=1, inplace=True)
+        # print implicit_df
+
+        weight_check = pandas.merge(left=implicit_df, right=Path.WEIGHTS_DF,
+                                    on=[Path.WEIGHTS_COLUMN_USER_CLASS,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE,
+                                        Path.WEIGHTS_COLUMN_SUPPLY_MODE],
+                                    how='left')
+        FastTripsLogger.debug("implicit demand_modes x weights: \n%s" % weight_check.to_string())
+
+        if pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_WEIGHT_NAME]).sum() > 0:
+            error_str += "\nThe following user_class, demand_mode_type, demand_mode, supply_mode combinations exist in the demand file but are missing from the weight configuration:\n"
+            error_str += weight_check.loc[pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
+            error_str += "\n\n"
+
+
+        if len(error_str) > 0:
+            FastTripsLogger.fatal(error_str)
+            sys.exit(2)
+
+        # add mode numbers to weights DF for relevant rows
+        Path.WEIGHTS_DF = routes.add_numeric_mode_id(Path.WEIGHTS_DF,
+                                                    id_colname=Path.WEIGHTS_COLUMN_SUPPLY_MODE,
+                                                    numeric_newcolname=Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM)
+        FastTripsLogger.debug("Path weights: \n%s" % Path.WEIGHTS_DF)
+        Path.WEIGHTS_DF.to_csv(os.path.join(output_dir,Path.OUTPUT_WEIGHTS_FILE),
+                               columns=[Path.WEIGHTS_COLUMN_USER_CLASS,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        Path.WEIGHTS_COLUMN_DEMAND_MODE,
+                                        Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                                        Path.WEIGHTS_COLUMN_WEIGHT_NAME,
+                                        Path.WEIGHTS_COLUMN_WEIGHT_VALUE],
+                               sep=" ", index=False)
+
 
     @staticmethod
     def state_str_header(state, direction=DIR_OUTBOUND):

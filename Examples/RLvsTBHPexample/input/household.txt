@@ -1,0 +1,2 @@
+hh_id,hh_vehicles,hh_income,hh_size,hh_workers,hh_presch,hh_grdsch,hh_hghsch,hh_elders
+zorn,0,666,3,2,0,0,0,0

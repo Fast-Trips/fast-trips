@@ -28,71 +28,16 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-_fasttrips_initialize_costcoeffs(PyObject *self, PyObject *args)
-{
-    double in_vehicle_time_weight;
-    double wait_time_weight;
-    double walk_access_time_weight;
-    double walk_egress_time_weight;
-    double walk_transfer_time_weight;
-    double transfer_penalty;
-    double schedule_delay_weight;
-    double fare_per_boarding;
-    double value_of_time;
-    if (!PyArg_ParseTuple(args, "ddddddddd",
-            &in_vehicle_time_weight,
-            &wait_time_weight,
-            &walk_access_time_weight,
-            &walk_egress_time_weight,
-            &walk_transfer_time_weight,
-            &transfer_penalty,
-            &schedule_delay_weight,
-            &fare_per_boarding,
-            &value_of_time)) {
-        return NULL;
-    }
-    pathfinder.initializeCostCoefficients(in_vehicle_time_weight,
-                                          wait_time_weight,
-                                          walk_access_time_weight,
-                                          walk_egress_time_weight,
-                                          walk_transfer_time_weight,
-                                          transfer_penalty,
-                                          schedule_delay_weight,
-                                          fare_per_boarding,
-                                          value_of_time);
-    Py_RETURN_NONE;
-
-}
-
-static PyObject *
 _fasttrips_initialize_supply(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
     const char* output_dir;
     int proc_num;
-    PyObject *input1, *input2, *input3, *input4, *input5, *input6, *input7;
-    if (!PyArg_ParseTuple(args, "siOOOOOOO", &output_dir, &proc_num, &input1, &input2,
-                          &input3, &input4, &input5, &input6, &input7)) {
+    PyObject *input3, *input4, *input5, *input6;
+    if (!PyArg_ParseTuple(args, "siOO", &output_dir, &proc_num,
+                          &input3, &input4)) {
         return NULL;
     }
-
-    // printf("_fasttrips_initialize_supply for output_dir %s proc num %d\n", output_dir, proc_num);
-    // access_links index: TAZ id, stop id
-    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input1, NPY_INT32, 2, 2);
-    if (pyo == NULL) return NULL;
-    int* acc_indexes= (int*)PyArray_DATA(pyo);
-    int num_indexes = PyArray_DIMS(pyo)[0];
-    assert(2 == PyArray_DIMS(pyo)[1]);
-
-    // access_links cost: time, access cost, egress cost
-    pyo             = (PyArrayObject*)PyArray_ContiguousFromObject(input2, NPY_DOUBLE, 2, 2);
-    if (pyo == NULL) return NULL;
-    double* costs   = (double*)PyArray_DATA(pyo);
-    int num_costs   = PyArray_DIMS(pyo)[0];
-    assert(3 == PyArray_DIMS(pyo)[1]);
-
-    // these better be the same length
-    assert(num_indexes == num_costs);
 
     // trip stop times index: trip id, sequence, stop id
     pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input3, NPY_INT32, 2, 2);
@@ -111,36 +56,9 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     // these better be the same length
     assert(num_stop_ind == num_stop_times);
 
-    // stop transfers index: from stop id, to stop id
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input5, NPY_INT32, 2, 2);
-    if (pyo == NULL) return NULL;
-    int* xfer_indexes   = (int*)PyArray_DATA(pyo);
-    int num_xfer_ind    = PyArray_DIMS(pyo)[0];
-    assert(2 == PyArray_DIMS(pyo)[1]);
-
-    // stop transfers data: time, cost
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input6, NPY_DOUBLE, 2, 2);
-    if (pyo == NULL) return NULL;
-    double* xfer_data  = (double*)PyArray_DATA(pyo);
-    int num_xfer_data  = PyArray_DIMS(pyo)[0];
-    assert(2 == PyArray_DIMS(pyo)[1]);
-
-    // these better be the same length
-    assert(num_xfer_ind == num_xfer_data);
-
-    // trips data: trip id number, route id number
-    pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input7, NPY_INT32, 2, 2);
-    if (pyo == NULL) return NULL;
-    int* trip_data     = (int*)PyArray_DATA(pyo);
-    int num_trip_data  = PyArray_DIMS(pyo)[0];
-    assert(3 == PyArray_DIMS(pyo)[1]);
-
     // keep them
     pathfinder.initializeSupply(output_dir, proc_num,
-                                acc_indexes, costs, num_indexes,
-                                stop_indexes, stop_times, num_stop_ind,
-                                xfer_indexes, xfer_data, num_xfer_ind,
-                                trip_data, num_trip_data);
+                                stop_indexes, stop_times, num_stop_ind);
 
     if (proc_num <= 1) {
         std::cout << "RAND_MAX = " << RAND_MAX << std::endl;
@@ -181,7 +99,9 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
     int   hyperpath_i, outbound_i, trace_i;
-    if (!PyArg_ParseTuple(args, "iiiiiiidi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
+    char *user_class, *access_mode, *transit_mode, *egress_mode;
+    if (!PyArg_ParseTuple(args, "iiiissssiiidi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
+                          &user_class, &access_mode, &transit_mode, &egress_mode,
                           &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
                           &outbound_i, &path_spec.preferred_time_, &trace_i)) {
         return NULL;
@@ -189,6 +109,10 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     path_spec.hyperpath_  = (hyperpath_i != 0);
     path_spec.outbound_   = (outbound_i  != 0);
     path_spec.trace_      = (trace_i     != 0);
+    path_spec.user_class_  = user_class;
+    path_spec.access_mode_ = access_mode;
+    path_spec.transit_mode_= transit_mode;
+    path_spec.egress_mode_ = egress_mode;
 
     fasttrips::Path path;
     fasttrips::PathInfo path_info = {0, 0, false, 0, 0};
@@ -227,7 +151,6 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 
 static PyMethodDef fasttripsMethods[] = {
     {"initialize_parameters",   _fasttrips_initialize_parameters, METH_VARARGS, "Initialize path finding parameters" },
-    {"initialize_costcoeffs",   _fasttrips_initialize_costcoeffs, METH_VARARGS, "Initialize cost coefficients"       },
     {"initialize_supply",       _fasttrips_initialize_supply,     METH_VARARGS, "Initialize network supply" },
     {"set_bump_wait",           _fasttrips_set_bump_wait,         METH_VARARGS, "Update bump wait"          },
     {"find_path",               _fasttrips_find_path,             METH_VARARGS, "Find trip-based path"      },

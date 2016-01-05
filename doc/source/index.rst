@@ -27,6 +27,7 @@ fast-trips Classes
    Path
    Route
    Stop
+   Transfer
    TAZ
    Trip
 

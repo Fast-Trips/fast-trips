@@ -87,6 +87,7 @@ class Passenger:
     TRIP_LIST_COLUMN_EGRESS_MODE_NUM            = "egress_mode_num"
 
     #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
+    #: TODO: get rid of this?  Maybe user should always specify.
     MODE_GENERIC_TRANSIT                        = "transit"
     #: Generic transit - Numeric mode number
     MODE_GENERIC_TRANSIT_NUM                    = 1000
@@ -94,7 +95,7 @@ class Passenger:
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
 
-    def __init__(self, input_dir, today, stops, routes):
+    def __init__(self, input_dir, output_dir, today, stops, routes):
         """
         Constructor from dictionary mapping attribute to value.
         """
@@ -250,7 +251,7 @@ class Passenger:
         FastTripsLogger.debug("Demand mode types by class: \n%s" % str(self.modes_df))
 
         # Make sure we have all the weights required for these user_class/mode combinations
-        Path.verify_weight_config(self.modes_df)
+        Path.verify_weight_config(self.modes_df, output_dir, routes)
 
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string(formatters=

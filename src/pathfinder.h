@@ -9,14 +9,60 @@
 #include <queue>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #if __APPLE__
 #include <tr1/unordered_set>
 #elif _WIN32
 #include <unordered_set>
+// suppress warning C4503: decorated name length exceeded, name was truncated
+#pragma warning(disable:4503)
 #endif
 
 namespace fasttrips {
+
+    enum DemandModeType {
+        MODE_ACCESS   = -100,
+        MODE_EGRESS   = -101,
+        MODE_TRANSFER = -102,
+        MODE_TRANSIT  = -103,
+    };
+
+    /// Weight lookup
+    typedef struct {
+        std::string     user_class_;
+        DemandModeType  demand_mode_type_;
+        std::string     demand_mode_;
+    } UserClassMode;
+
+    /// Comparator to enable the fasttrips::WeightLookup to use UserClassMode as a lookup
+    struct UserClassModeCompare {
+        // less than
+        bool operator()(const UserClassMode &ucm1, const UserClassMode &ucm2) const {
+            if (ucm1.user_class_       < ucm2.user_class_      ) { return true;  }
+            if (ucm1.user_class_       > ucm2.user_class_      ) { return false; }
+            if (ucm1.demand_mode_type_ < ucm2.demand_mode_type_) { return true;  }
+            if (ucm1.demand_mode_type_ > ucm2.demand_mode_type_) { return false; }
+            if (ucm1.demand_mode_      < ucm2.demand_mode_     ) { return true;  }
+            if (ucm1.demand_mode_      > ucm2.demand_mode_     ) { return false; }
+            return false;
+        }
+    };
+
+    // This is a lot of naming but it does make iterator construction easier
+    typedef std::map<std::string, double> NamedWeights;
+    typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
+    typedef std::map< UserClassMode, SupplyModeToNamedWeights, struct fasttrips::UserClassModeCompare > WeightLookup;
+
+    /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
+    typedef std::map<std::string, double> Attributes;
+    typedef std::map<int, Attributes> StopToAttr;
+    typedef std::map<int, StopToAttr> SupplyStopToAttr;
+    typedef std::map<int, SupplyStopToAttr> TAZSupplyStopToAttr;
+
+    // Transfer information: stop id -> stop id -> attribute map
+    typedef std::map<int, StopToAttr> StopStopToAttr;
+
 
     /// Supply data: access/egress time and cost between TAZ and stops
     typedef struct {
@@ -33,8 +79,9 @@ namespace fasttrips {
 
     /// Supply data: Transit trip data, indexed by trip ID
     typedef struct {
-        int     mode_;
-        int     route_id_;
+        int        supply_mode_num_;
+        int        route_id_;
+        Attributes trip_attr_;
     } TripInfo;
 
     /// Supply data: Transit vehicle schedules
@@ -74,9 +121,10 @@ namespace fasttrips {
         bool    outbound_;              ///< If true, the preferred time is for arrival, otherwise it's departure
         double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
         bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
-        // unsigned char access_mode_;     ///< Access mode
-        // unsigned char transit_mode_;    ///< Transit mode
-        // unsigned char egress_mode_;     ///< Egress mode
+        std::string user_class_;        ///< User class string
+        std::string access_mode_;       ///< Access demand mode
+        std::string transit_mode_;      ///< Transit demand mode
+        std::string egress_mode_;       ///< Egress demand mode
     } PathSpecification;
 
     /**
@@ -100,14 +148,17 @@ namespace fasttrips {
         double  label_;                 ///< The label for this stop
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
-                                        ///< One of PathFinder::MODE_ACCESS, PathFinder::MODE_EGRESS,
-                                        ///< PathFinder::MODE_TRANSFER, or a trip ID
-        int     trip_id_;               ///< Trip ID if deparr_mode_ is a transit mode (-1 if not trip)
+                                        ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
+                                        ///< fasttrips::MODE_TRANSFER, or fasttrips::MODE_TRANSIT
+        int     trip_id_;               ///< Trip ID if deparr_mode_ is fasttrips::MODE_TRANSIT,
+                                        ///< or the supply_mode_num for access, egress
         int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
-        double  cost_;                  ///< Cost
+        double  link_cost_;             ///< Link cost.
+        double  cost_;                  ///< Cost from previous link(s) and this link together.
+        int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
     } StopState;
 
@@ -181,12 +232,14 @@ namespace fasttrips {
                 std::map<int, StopState>::const_iterator ssi2 = path2.states_.find(stop_id);
                 if (ssi1->second.deparr_mode_ < ssi2->second.deparr_mode_) { return true; }
                 if (ssi1->second.deparr_mode_ > ssi2->second.deparr_mode_) { return false; }
+                if (ssi1->second.trip_id_     < ssi2->second.trip_id_    ) { return true; }
+                if (ssi1->second.trip_id_     > ssi2->second.trip_id_    ) { return false; }
             }
             return false;
         }
     };
 
-    /** A set of paths consists of paths mapping to information about them (for chooseing one)
+    /** A set of paths consists of paths mapping to information about them (for choosing one)
      */
     typedef std::map<Path, PathInfo, struct fasttrips::PathCompare> PathSet;
 
@@ -211,48 +264,22 @@ namespace fasttrips {
         double STOCH_DISPERSION_;
         ///@}
 
-        /** @name Cost parameters */
-        ///@{
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.IN_VEHICLE_TIME_WEIGHT">fasttrips.Path.IN_VEHICLE_TIME_WEIGHT</a>
-        double IN_VEHICLE_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WAIT_TIME_WEIGHT">fasttrips.Path.WAIT_TIME_WEIGHT</a>
-        double WAIT_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_ACCESS_TIME_WEIGHT">fasttrips.Path.WALK_ACCESS_TIME_WEIGHT</a>
-        double WALK_ACCESS_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_EGRESS_TIME_WEIGHT">fasttrips.Path.WALK_EGRESS_TIME_WEIGHT</a>
-        double WALK_EGRESS_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT">fasttrips.Path.WALK_TRANSFER_TIME_WEIGHT</a>
-        double WALK_TRANSFER_TIME_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.TRANSFER_PENALTY">fasttrips.Path.TRANSFER_PENALTY</a>
-        double TRANSFER_PENALTY_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.SCHEDULE_DELAY_WEIGHT">fasttrips.Path.SCHEDULE_DELAY_WEIGHT</a>
-        double SCHEDULE_DELAY_WEIGHT_;
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.FARE_PER_BOARDING">fasttrips.Path.FARE_PER_BOARDING</a>
-        double FARE_PER_BOARDING_;  // dollars per hour
-
-        /// See <a href="_generated/fasttrips.Path.html#fasttrips.Path.VALUE_OF_TIME">fasttrips.Path.VALUE_OF_TIME</a>
-        double VALUE_OF_TIME_;
-        ///@}
-
         /// directory in which to write trace files
         std::string output_dir_;
 
         /// for multi-processing
         int process_num_;
 
+        /// (User class, demand_mode_type, demand_mode) -> supply_mode -> weight_map
+        WeightLookup weight_lookup_;
+
         // ================ Network supply ================
-        /// TAZ information: taz id -> stop id -> costs
-        std::map<int, std::map<int, TazStopCost> > taz_access_links_;
-        /// Transfer information: stop id -> stop id -> costs
-        std::map<int, std::map<int, TransferCost> > transfer_links_o_d_;
-        std::map<int, std::map<int, TransferCost> > transfer_links_d_o_;
+        /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
+        TAZSupplyStopToAttr taz_access_links_;
+
+        /// Transfer information: stop id -> stop id -> attributes
+        StopStopToAttr transfer_links_o_d_;
+        StopStopToAttr transfer_links_d_o_;
         /// Trip information: trip id -> Trip Info
         std::map<int, TripInfo> trip_info_;
         /// Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
@@ -264,7 +291,8 @@ namespace fasttrips {
         std::map<int, std::string> trip_num_to_str_;
         std::map<int, std::string> stop_num_to_str_;
         std::map<int, std::string> route_num_to_str_;
-        std::map<int, std::string> mode_num_to_str_;
+        std::map<int, std::string> mode_num_to_str_; // supply modes
+        int transfer_supply_mode_;
 
         /**
          * From simulation: When there are capacity limitations on a vehicle and passengers cannot
@@ -280,7 +308,32 @@ namespace fasttrips {
          * Read the intermediate files mapping integer IDs to strings
          * for modes, stops, trips, and routes.
          **/
-        void readIdMappingFiles();
+        void readIntermediateFiles();
+        void readTripIds();
+        void readStopIds();
+        void readRouteIds();
+        void readModeIds();
+        void readAccessLinks();
+        void readTransferLinks();
+        void readTripInfo();
+        void readWeights();
+
+        /**
+         * Tally the link cost, which is the sum of the weighted attributes.
+         * @return the cost.
+         */
+        double PathFinder::tallyLinkCost(const int supply_mode_num,
+                                         const PathSpecification& path_spec,
+                                         std::ofstream& trace_file,
+                                         const NamedWeights& weights,
+                                         const Attributes& attributes) const;
+
+        void addStopState(const PathSpecification& path_spec,
+                          std::ofstream& trace_file,
+                          const int stop_id,
+                          const StopState& ss,
+                          StopStates& stop_states,
+                          LabelStopQueue& label_stop_queue) const;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -302,6 +355,7 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
+                                  int label_iteration,
                                   const LabelStop& current_label_stop,
                                   double latest_dep_earliest_arr) const;
 
@@ -315,6 +369,7 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
+                                  int label_iteration,
                                   const LabelStop& current_label_stop,
                                   double latest_dep_earliest_arr,
                                   std::tr1::unordered_set<int>& trips_done) const;
@@ -326,7 +381,7 @@ namespace fasttrips {
          *     * adding the stops accessible by transfer (PathFinder::updateStopStatesForTransfers)
          *     * adding the stops accessible by transit trip (PathFinder::updateStopStatesForTrips)
          */
-        void labelStops(const PathSpecification& path_spec,
+        int labelStops(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue) const;
@@ -339,9 +394,10 @@ namespace fasttrips {
          * @return sucess.
          */
         bool finalizeTazState(const PathSpecification& path_spec,
-                                  std::ofstream& trace_file,
-                                  const StopStates& stop_states,
-                                  std::vector<StopState>& taz_state) const;
+                              std::ofstream& trace_file,
+                              StopStates& stop_states,
+                              LabelStopQueue& label_stop_queue,
+                              int label_iteration) const;
 
         /**
          * Given all the labeled stops and taz, traces back and generates a
@@ -353,7 +409,6 @@ namespace fasttrips {
         bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   const StopStates& stop_states,
-                                  const std::vector<StopState>& taz_state,
                                   Path& path) const;
 
         /**
@@ -382,13 +437,12 @@ namespace fasttrips {
          */
         void calculatePathCost(const PathSpecification& path_spec,
                                std::ofstream& trace_file,
-                               const Path& path,
+                               Path& path,
                                PathInfo& path_info) const;
 
         bool getFoundPath(const PathSpecification&      path_spec,
                           std::ofstream&                trace_file,
                           const StopStates&             stop_states,
-                          const std::vector<StopState>& taz_state,
                           Path&                         path,
                           PathInfo&                     path_info) const;
 
@@ -411,15 +465,11 @@ namespace fasttrips {
 
         void printTime(std::ostream& ostr, const double& timemin) const;
 
-        void printMode(std::ostream& ostr, const int& mode) const;
+        void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
 
         bool isTrip(const int& mode) const;
 
     public:
-        const static int MODE_ACCESS    = -100;
-        const static int MODE_EGRESS    = -101;
-        const static int MODE_TRANSFER  = -102;
-        const static int MODE_TRIP      = -103;
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
         const static double MAX_COST;
         const static double MAX_TIME;
@@ -436,55 +486,21 @@ namespace fasttrips {
                                   double     stoch_dispersion);
 
         /**
-         * Setup the cost coefficients.
-         */
-        void initializeCostCoefficients(double  in_vehicle_time_weight,
-                                        double  wait_time_weight,
-                                        double  walk_access_time_weight,
-                                        double  walk_egress_time_weight,
-                                        double  walk_transfer_time_weight,
-                                        double  transfer_penalty,
-                                        double  schedule_delay_weight,
-                                        double  fare_per_boarding,
-                                        double  value_of_time);
-        /**
          * Setup the network supply.  This should happen once, before any pathfinding.
          *
          * @param output_dir        The directory in which to output trace files (if any)
          * @param process_num       The process number for this instance
-         * @param taz_access_index  For populating PathFinder::taz_access_links_, this array contains
-         *                          TAZ IDs and stop IDs
-         * @param taz_access_cost   For populating PathFinder::taz_access_links_, this array contains
-         *                          times, access costs, and egress costs.
-         * @param num_tazlinks      The number of TAZ-stop links described by the previous two arrays
          * @param stoptime_index    For populating PathFinder::trip_stop_times_, this array contains
          *                          trip IDs, sequence numbers and stop IDs
          * @param stoptime_times    For populating PathFinder::trip_stop_times_, this array contains
          *                          transit vehicle arrival times and departure times at a stop.
          * @param num_stoptimes     The number of stop times described in the previous two arrays.
-         * @param xfer_index        For populating PathFinder::transfer_links_o_d_ and
-         *                          PathFinder::transfer_links_d_o_, this array contains the origin
-         *                          stop ID and the destination stop ID for transfers.
-         * @param xfer_data         For populating PathFinder::transfer_links_o_d_ and
-         *                          PathFinder::transfer_links_d_o_, this array contains time
-         *                          and cost for transfers.
-         * @param num_xfers         The number of transfers described in the previous two arrays.
-         * @param trip_data         For transit vehicle trips, trip ID, mode and route ID numbers.
-         * @param num_trips         The number of trips described in the previous two arrays.
          */
         void initializeSupply(const char*   output_dir,
                               int           process_num,
-                              int*          taz_access_index,
-                              double*       taz_access_cost,
-                              int           num_tazlinks,
                               int*          stoptime_index,
                               double*       stoptime_times,
-                              int           num_stoptimes,
-                              int*          xfer_index,
-                              double*       xfer_data,
-                              int           num_xfers,
-                              int*          trip_data,
-                              int           num_trips);
+                              int           num_stoptimes);
 
         /**
          * Setup the information for bumped passengers.
