@@ -15,6 +15,7 @@ __license__   = """
 
 import numpy
 import pandas
+import datetime
 
 from .Logger import FastTripsLogger
 
@@ -135,3 +136,20 @@ class Util:
         minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
+    
+    @staticmethod
+    def read_time(x, end_of_day=False):
+        try:
+            if x=='' or x.lower()=='default':
+                x = '23:59:59' if end_of_day else '00:00:00'
+        except:
+            if pandas.isnull(x):
+                x = '23:59:59' if end_of_day else '00:00:00'
+        time_split = x.split(':')
+        hour = int(time_split[0])
+        day = datetime.datetime.today()
+        if hour >= 24: 
+            time_split[0] = '%02d' %(hour-24)
+            day += datetime.timedelta(days=1)
+        x = ':'.join(time_split)
+        return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())

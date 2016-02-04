@@ -149,11 +149,9 @@ class Passenger:
 
         # datetime version
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = \
-            self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: \
-                datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = \
-            self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: \
-                datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: Util.read_time(x))
 
         # float version
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = \
