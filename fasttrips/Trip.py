@@ -311,12 +311,6 @@ class Trip:
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))
 
         # datetime version
-#         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
-#             self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: \
-#                 datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
-#         self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = \
-#             self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
-#                 datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = \
