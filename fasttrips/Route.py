@@ -247,7 +247,8 @@ class Route(object):
         self.fare_rules_df = pandas.DataFrame(data=fare_rule_dicts)
 
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE)):
-            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE))
+            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE),
+                                               dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})
             # verify required columns are present
             fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
             assert(Route.FARE_RULES_COLUMN_FARE_ID      in fare_rules_ft_cols)
@@ -257,11 +258,9 @@ class Route(object):
 
             # datetime version
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: \
-                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: \
-                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: Util.read_time(x, True))
 
             # float version
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_MIN] = \

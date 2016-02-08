@@ -204,7 +204,7 @@ class Trip:
                 except:
                     pass
                 try:
-                    top_time_dict[Trip.STOPTIMES_COLUMN_DROP_OFF_TYPE]        = gtfs_stop_time.drop_off_type
+                    stop_time_dict[Trip.STOPTIMES_COLUMN_DROP_OFF_TYPE]        = gtfs_stop_time.drop_off_type
                 except:
                     pass
                 try:
@@ -312,11 +312,9 @@ class Trip:
 
         # datetime version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
-            self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: \
-                datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = \
-            self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
-                datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: Util.read_time(x))
 
         # float version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
