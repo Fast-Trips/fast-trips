@@ -813,6 +813,10 @@ namespace fasttrips {
             double arrdep_time = path_spec.outbound_ ? it->arrive_time_ : it->depart_time_;
             double wait_time = (latest_dep_earliest_arr - arrdep_time)*dir_factor;
             double arrive_time;
+            if (wait_time < 0) {
+                printf("wait_time < 0 -- this shouldn't happen!\n");
+                if (path_spec.trace_) { trace_file << "wait_time < 0 -- this shouldn't happen!" << std::endl; }
+            }
 
             // deterministic path-finding: check capacities
             if (!path_spec.hyperpath_) {
@@ -878,9 +882,21 @@ namespace fasttrips {
                 }
 
                 double  deparr_time     = path_spec.outbound_ ? possible_board_alight.depart_time_ : possible_board_alight.arrive_time_;
+                // the schedule crossed midnight
+                if (path_spec.outbound_ && arrdep_time < deparr_time) {
+                    deparr_time -= 24*60;
+                    if (path_spec.trace_) { trace_file << "trip crossed midnight; adjusting deparr_time" << std::endl; }
+                } else if (!path_spec.outbound_ && deparr_time < arrdep_time) {
+                    deparr_time += 24*60;
+                    if (path_spec.trace_) { trace_file << "trip crossed midnight; adjusting deparr_time" << std::endl; }
+                }
                 double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
                 bool    use_new_state   = false;
                 double  link_cost, cost, new_label;
+                if (in_vehicle_time < 0) {
+                    printf("in_vehicle_time < 0 -- this shouldn't happen\n");
+                    if (path_spec.trace_) { trace_file << "in_vehicle_time < 0 -- this shouldn't happen!" << std::endl; }
+                }
 
                 // stochastic/hyperpath: cost update
                 if (path_spec.hyperpath_) {

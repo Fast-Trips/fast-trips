@@ -417,6 +417,12 @@ class Trip:
 
         trips_df.drop(valid_drop_fields, axis=1, inplace=1)
 
+        # only pass on numeric columns -- for now, drop the rest
+        FastTripsLogger.debug("Dropping non-numeric trip info")
+        FastTripsLogger.debug(str(trips_df.head()))
+        trips_df = trips_df.select_dtypes(exclude=['object'])
+        FastTripsLogger.debug(str(trips_df.head()))
+
         # the index is the trip_id_num
         trips_df.set_index(Trip.TRIPS_COLUMN_TRIP_ID_NUM, inplace=True)
         # this will make it so beyond trip id num
