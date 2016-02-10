@@ -465,23 +465,37 @@ class Trip:
         Returns :py:class:`pandas.DataFrame` with `headway` column added.
         """
         # what if direction_id isn't specified
-        stop_group = trips_df[[Trip.STOPTIMES_COLUMN_STOP_ID,
-                               Trip.TRIPS_COLUMN_ROUTE_ID,
-                               Trip.TRIPS_COLUMN_DIRECTION_ID,
-                               Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
-                               Trip.STOPTIMES_COLUMN_TRIP_ID,
-                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]].groupby([Trip.STOPTIMES_COLUMN_STOP_ID,
-                                                                             Trip.TRIPS_COLUMN_ROUTE_ID,
-                                                                             Trip.TRIPS_COLUMN_DIRECTION_ID])
+        has_direction_id = Trip.TRIPS_COLUMN_DIRECTION_ID in trips_df.columns.values
+
+        if has_direction_id:
+            stop_group = trips_df[[Trip.STOPTIMES_COLUMN_STOP_ID,
+                                   Trip.TRIPS_COLUMN_ROUTE_ID,
+                                   Trip.TRIPS_COLUMN_DIRECTION_ID,
+                                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+                                   Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]].groupby([Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                                                 Trip.TRIPS_COLUMN_ROUTE_ID,
+                                                                                 Trip.TRIPS_COLUMN_DIRECTION_ID])
+        else:
+            stop_group = trips_df[[Trip.STOPTIMES_COLUMN_STOP_ID,
+                                   Trip.TRIPS_COLUMN_ROUTE_ID,
+                                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+                                   Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]].groupby([Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                                                 Trip.TRIPS_COLUMN_ROUTE_ID])
 
         stop_group_df = stop_group.apply(lambda x: x.sort(Trip.STOPTIMES_COLUMN_DEPARTURE_TIME))
         # set headway, in minutes
         stop_group_shift_df = stop_group_df.shift()
         stop_group_df['headway'] = (stop_group_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - stop_group_shift_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME])/numpy.timedelta64(1,'m')
         # zero out the first in each group
-        stop_group_df.loc[(stop_group_df.stop_id     !=stop_group_shift_df.stop_id     )|
-                          (stop_group_df.route_id    !=stop_group_shift_df.route_id    )|
-                          (stop_group_df.direction_id!=stop_group_shift_df.direction_id), 'headway'] = Trip.DEFAULT_HEADWAY
+        if has_direction_id:
+            stop_group_df.loc[(stop_group_df.stop_id     !=stop_group_shift_df.stop_id     )|
+                              (stop_group_df.route_id    !=stop_group_shift_df.route_id    )|
+                              (stop_group_df.direction_id!=stop_group_shift_df.direction_id), 'headway'] = Trip.DEFAULT_HEADWAY
+        else:
+            stop_group_df.loc[(stop_group_df.stop_id     !=stop_group_shift_df.stop_id     )|
+                              (stop_group_df.route_id    !=stop_group_shift_df.route_id    ), 'headway'] = Trip.DEFAULT_HEADWAY
         # print stop_group_df
 
         trips_df_len = len(trips_df)
