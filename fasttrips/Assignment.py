@@ -1202,17 +1202,21 @@ class Assignment:
         print_veh_trips_df['traveledDist']  = -1
         print_veh_trips_df['departureTime'] = print_veh_trips_df.departure_time.apply(Util.datetime64_min_formatter)
         # reorder
-        print_veh_trips_df = print_veh_trips_df[[Trip.TRIPS_COLUMN_ROUTE_ID,
-                                                 Trip.TRIPS_COLUMN_TRIP_ID,
-                                                 Trip.TRIPS_COLUMN_DIRECTION_ID,
-                                                 Trip.STOPTIMES_COLUMN_STOP_ID,
-                                                 'traveledDist',
-                                                 'departureTime',
-                                                 'headway',
-                                                 'dwell_time',
-                                                 'boards',
-                                                 'alights',
-                                                 'onboard']]
+        columns = [Trip.TRIPS_COLUMN_ROUTE_ID,
+                   Trip.TRIPS_COLUMN_TRIP_ID,
+                   Trip.TRIPS_COLUMN_DIRECTION_ID,
+                   Trip.STOPTIMES_COLUMN_STOP_ID,
+                   'traveledDist',
+                   'departureTime',
+                   'headway',
+                   'dwell_time',
+                   'boards',
+                   'alights',
+                   'onboard']
+        # this one may not be in their; direction_id is optional
+        if Trip.TRIPS_COLUMN_DIRECTION_ID not in print_veh_trips_df.columns.values:
+            columns.remove(Trip.TRIPS_COLUMN_DIRECTION_ID)
+        print_veh_trips_df = print_veh_trips_df[columns]
 
         load_file = open(os.path.join(output_dir, "ft_output_loadProfile.txt"), 'w')
         print_veh_trips_df.to_csv(load_file,
