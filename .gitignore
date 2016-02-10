@@ -9,3 +9,6 @@ Examples/*/output_bak
 
 # Distribution / packaging
 build/
+
+# test
+sfcta/

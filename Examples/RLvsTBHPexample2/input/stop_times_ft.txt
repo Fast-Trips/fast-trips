@@ -1,0 +1,8 @@
+trip_id,stop_id
+blue_t,S1
+blue_t,S2
+blue_t,S4
+green_t,S2
+green_t,S3
+purple_t,S3
+purple_t,S4

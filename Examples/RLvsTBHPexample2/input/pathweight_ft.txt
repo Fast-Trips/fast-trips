@@ -1,0 +1,9 @@
+user_class demand_mode_type demand_mode    supply_mode  weight_name         weight_value
+all        transfer         transfer       transfer     walk_time_min       0.0
+all        access           walk           walk_access  time_min            0.0
+all        access           walk           walk_access  preferred_delay_min 2.0
+all        egress           walk           walk_egress  time_min            0.0
+all        egress           walk           walk_egress  preferred_delay_min 2.0
+all        transit          local_bus      local_bus    in_vehicle_time_min 1.0
+all        transit          local_bus      local_bus    wait_time_min       2.0
+all        transit          local_bus      local_bus    transfer_penalty    0.0

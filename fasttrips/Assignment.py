@@ -354,6 +354,7 @@ class Assignment:
 
         info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
         if info_freq < 1: info_freq = 1
+        info_freq = 1 # DEBUG CRASH
 
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
@@ -519,6 +520,7 @@ class Assignment:
                                  1 if path.outbound() else 0, float(path.pref_time_min),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
+        FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (path.person_id, path.trip_list_id_num))
 
         # Put the results into an ordered dict statelist
         return_states = collections.OrderedDict()

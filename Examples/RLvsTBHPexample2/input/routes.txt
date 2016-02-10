@@ -1,0 +1,4 @@
+route_id,route_short_name,route_long_name,route_type
+blue,blue,blue line,3
+green,green,green line,3
+purple,purple,purple line,3
