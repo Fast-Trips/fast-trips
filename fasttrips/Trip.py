@@ -145,7 +145,7 @@ class Trip:
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process, stops, routes):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process, stops, routes, prepend_route_id_to_trip_id):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
@@ -234,12 +234,19 @@ class Trip:
 
 
         # Trip IDs are strings. Create a unique numeric trip ID.
-        self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID]],
+        self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID]],
                                                   id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                                   numeric_newcolname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
         FastTripsLogger.debug("Trip ID to number correspondence\n" + str(self.trip_id_df.head()))
         if not is_child_process:
-            self.trip_id_df.to_csv(os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE),
+            # prepend_route_id_to_trip_id
+            if prepend_route_id_to_trip_id:
+                trip_id_df = self.trip_id_df.rename(columns={Trip.TRIPS_COLUMN_TRIP_ID: 'trip_id_orig'})
+                trip_id_df[Trip.TRIPS_COLUMN_TRIP_ID] = trip_id_df[Trip.TRIPS_COLUMN_ROUTE_ID].map(str) + str("_") + trip_id_df['trip_id_orig']
+            else:
+                trip_id_df = self.trip_id_df
+
+            trip_id_df.to_csv(os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE),
                                    columns=[Trip.TRIPS_COLUMN_TRIP_ID_NUM, Trip.TRIPS_COLUMN_TRIP_ID],
                                    sep=" ", index=False)
             FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE))
@@ -344,6 +351,7 @@ class Trip:
                               "\n" +str(self.stop_times_df.dtypes) )
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.stop_times_df), "stop times", "stop_times.txt", Trip.INPUT_STOPTIMES_FILE))
+
 
         if not is_child_process:
             self.write_trips_for_extension()

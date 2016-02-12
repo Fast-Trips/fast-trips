@@ -130,7 +130,7 @@ class FastTrips:
         # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(self.input_network_dir, self.output_dir,
                           self.gtfs_schedule, Assignment.TODAY, self.is_child_process,
-                          self.stops, self.routes)
+                          self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(self.input_network_dir, self.output_dir, Assignment.TODAY,

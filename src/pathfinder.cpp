@@ -383,6 +383,8 @@ namespace fasttrips {
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
             trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
             trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
+            trace_file << "orig_taz_id_     = " << path_spec.origin_taz_id_      << std::endl;
+            trace_file << "dest_taz_id_     = " << path_spec.destination_taz_id_ << std::endl;
 
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
@@ -1977,7 +1979,7 @@ namespace fasttrips {
         ostr << std::setw(10) << "label";
         ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
         ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
-        ostr << std::setw(14) << "trip_id";
+        ostr << std::setw(22) << "trip_id";
         ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
         ostr << std::setw( 5) << "seq";
         ostr << std::setw( 5) << (path_spec.outbound_ ? "suc" : "pred");
@@ -2004,11 +2006,11 @@ namespace fasttrips {
         printMode(ostr, ss.deparr_mode_, ss.trip_id_);
         ostr << "  ";
         if (ss.deparr_mode_ == MODE_TRANSIT) {
-            ostr << std::setw(12) << std::setfill(' ') << trip_num_to_str_.find(ss.trip_id_)->second;
+            ostr << std::setw(20) << std::setfill(' ') << trip_num_to_str_.find(ss.trip_id_)->second;
         } else if (ss.deparr_mode_ == MODE_ACCESS || ss.deparr_mode_ == MODE_EGRESS) {
-            ostr << std::setw(12) << std::setfill(' ') << mode_num_to_str_.find(ss.trip_id_)->second;
+            ostr << std::setw(20) << std::setfill(' ') << mode_num_to_str_.find(ss.trip_id_)->second;
         } else {
-            ostr << std::setw(12) << std::setfill(' ') << ss.trip_id_;
+            ostr << std::setw(20) << std::setfill(' ') << ss.trip_id_;
         }
         ostr << "  ";
         ostr << std::setw(10) << std::setfill(' ') << stop_num_to_str_.find(ss.stop_succpred_)->second;

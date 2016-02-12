@@ -34,7 +34,8 @@ class Util:
 
         Returns the dataframe with the new column.
         """
-        assert(len(input_df.columns) == 1)
+        # Ok, we won't push one column, in case you'll make an ID out of two columns (e.g. PREPEND_ROUTE_ID_TO_TRIP_ID)
+        # assert(len(input_df.columns) == 1)
 
         # drop duplicates - this is an ID and drop the index since it's not useful
         return_df = input_df.drop_duplicates().reset_index(drop=True)

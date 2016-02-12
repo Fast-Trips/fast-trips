@@ -99,6 +99,10 @@ class Assignment:
     #: Trace these passengers
     TRACE_PERSON_IDS                = None
 
+    #: Prepend the route id to the trip id?  This is for readability in debugging, since
+    #: route IDs are typically more readable and trip ids are inscrutable
+    PREPEND_ROUTE_ID_TO_TRIP_ID     = False
+
     #: Number of processes to use for path finding (via :py:mod:`multiprocessing`)
     #: Set to 1 to run everything in this process
     #: Set to less than 1 to use the result of :py:func:`multiprocessing.cpu_count`
@@ -176,6 +180,7 @@ class Assignment:
                       'stochastic_pathset_size'         :1000,
                       'capacity_constraint'             :False,
                       'trace_person_ids'                :'None',
+                      'prepend_route_id_to_trip_id'     :False,
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :True,
@@ -204,6 +209,7 @@ class Assignment:
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('fasttrips','stochastic_pathset_size')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
+        Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
                                          minutes = parser.getfloat  ('fasttrips','bump_buffer'))
@@ -243,6 +249,7 @@ class Assignment:
         parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
+        parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
         parser.set('fasttrips','bump_one_at_a_time',            'True' if Assignment.BUMP_ONE_AT_A_TIME else 'False')
