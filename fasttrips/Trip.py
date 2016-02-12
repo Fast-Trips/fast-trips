@@ -234,14 +234,17 @@ class Trip:
 
 
         # Trip IDs are strings. Create a unique numeric trip ID.
-        self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID]],
+        self.trip_id_df = Util.add_numeric_column(self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID]],
                                                   id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                                   numeric_newcolname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
         FastTripsLogger.debug("Trip ID to number correspondence\n" + str(self.trip_id_df.head()))
         if not is_child_process:
             # prepend_route_id_to_trip_id
             if prepend_route_id_to_trip_id:
-                trip_id_df = self.trip_id_df.rename(columns={Trip.TRIPS_COLUMN_TRIP_ID: 'trip_id_orig'})
+                # get the route id back again
+                trip_id_df = pandas.merge(self.trip_id_df, self.trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID]],
+                                          how='left', on=Trip.TRIPS_COLUMN_TRIP_ID)
+                trip_id_df.rename(columns={Trip.TRIPS_COLUMN_TRIP_ID: 'trip_id_orig'}, inplace=True)
                 trip_id_df[Trip.TRIPS_COLUMN_TRIP_ID] = trip_id_df[Trip.TRIPS_COLUMN_ROUTE_ID].map(str) + str("_") + trip_id_df['trip_id_orig']
             else:
                 trip_id_df = self.trip_id_df
