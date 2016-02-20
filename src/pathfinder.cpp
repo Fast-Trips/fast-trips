@@ -705,12 +705,12 @@ namespace fasttrips {
                 if ((new_label < PathFinder::MAX_COST) && (new_label > 0.0)) { use_new_state = true; }
 
             }
-            // deterministic: cost is just additive
+            // deterministic: label = cost = total time, just additive
             else
             {
                 link_cost           = transfer_time;
-                cost                = transfer_time;
-                new_label           = current_label_stop.label_ + cost;
+                cost                = current_label_stop.label_ + link_cost;
+                new_label           = cost;
 
                 // check (departure mode, stop) if someone's waiting already
                 // curious... this only applies to OUTBOUND
@@ -928,11 +928,11 @@ namespace fasttrips {
                     }
                     if ((new_label < PathFinder::MAX_COST) && (new_label > 0)) { use_new_state = true; }
                 }
-                // deterministic: cost is just additive
+                // deterministic: label = cost = total time, just additive
                 else {
                     link_cost   = in_vehicle_time + wait_time;
-                    cost        = cost;
-                    new_label   = current_label_stop.label_ + cost;
+                    cost        = current_label_stop.label_ + link_cost;
+                    new_label   = cost;
                     double old_label = PathFinder::MAX_TIME;
                     if (possible_stop_state_iter != stop_states.end()) {
                         old_label = possible_stop_state_iter->second.front().label_;
