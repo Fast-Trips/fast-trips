@@ -333,7 +333,8 @@ namespace fasttrips {
                           const int stop_id,
                           const StopState& ss,
                           StopStates& stop_states,
-                          LabelStopQueue& label_stop_queue) const;
+                          LabelStopQueue& label_stop_queue,
+                          const std::tr1::unordered_set<int>* stop_done) const;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -357,7 +358,8 @@ namespace fasttrips {
                                   LabelStopQueue& label_stop_queue,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
-                                  double latest_dep_earliest_arr) const;
+                                  double latest_dep_earliest_arr,
+                                  const std::tr1::unordered_set<int>& stop_done) const;
 
         /**
          * Iterate through all the stops that are accessible by transit vehicle trip
@@ -372,7 +374,8 @@ namespace fasttrips {
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
                                   double latest_dep_earliest_arr,
-                                  std::tr1::unordered_set<int>& trips_done) const;
+                                  std::tr1::unordered_set<int>& trips_done,
+                                  const std::tr1::unordered_set<int>& stop_done) const;
 
         /**
          * Label stops by:

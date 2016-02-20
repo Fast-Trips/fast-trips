@@ -69,9 +69,11 @@ class Util:
         # print return_df.head()
 
         # make sure all ids were mapped to numbers
-        if pandas.isnull(return_df[mapping_newid_colname]).sum() != pandas.isnull(input_df[id_colname]).sum():
+        # first check if mapping_newid_colname was already in input_df; if it was, check needs to be performed on "_mapping" 
+        mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname    
+        if pandas.isnull(return_df[mapping_newid_colname_chk]).sum() != pandas.isnull(input_df[id_colname]).sum():
             FastTripsLogger.fatal("Util.add_new_id failed to map all ids to numbers")
-            FastTripsLogger.fatal("pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname, pandas.isnull(return_df[mapping_newid_colname]).sum()))
+            FastTripsLogger.fatal("pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
             FastTripsLogger.fatal("pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
             raise
 

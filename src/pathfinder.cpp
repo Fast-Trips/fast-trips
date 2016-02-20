@@ -461,8 +461,16 @@ namespace fasttrips {
         const int stop_id,
         const StopState& ss,
         StopStates& stop_states,
-        LabelStopQueue& label_stop_queue) const
+        LabelStopQueue& label_stop_queue,
+        const std::tr1::unordered_set<int>* stop_done=NULL) const
     {
+
+        // if the stop state is already considered done, that's a problem
+        if (stop_done && stop_done->find(stop_id) != stop_done->end()) {
+            if (path_spec.trace_) {
+                trace_file << "Problem: Adding stop state with done stop " << stop_num_to_str_.find(stop_id)->second << std::endl;
+            }
+        }
 
         // add it to stop_states
         stop_states[stop_id].push_back(ss);
@@ -633,7 +641,8 @@ namespace fasttrips {
         LabelStopQueue& label_stop_queue,
         int label_iteration,
         const LabelStop& current_label_stop,
-        double latest_dep_earliest_arr) const
+        double latest_dep_earliest_arr,
+        const std::tr1::unordered_set<int>& stop_done) const
     {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
@@ -705,12 +714,12 @@ namespace fasttrips {
                 if ((new_label < PathFinder::MAX_COST) && (new_label > 0.0)) { use_new_state = true; }
 
             }
-            // deterministic: cost is just additive
+            // deterministic: label = cost = total time, just additive
             else
             {
                 link_cost           = transfer_time;
-                cost                = transfer_time;
-                new_label           = current_label_stop.label_ + cost;
+                cost                = current_label_stop.label_ + link_cost;
+                new_label           = cost;
 
                 // check (departure mode, stop) if someone's waiting already
                 // curious... this only applies to OUTBOUND
@@ -758,7 +767,7 @@ namespace fasttrips {
                     label_iteration,                // label iteration
                     latest_dep_earliest_arr         // arrival/departure time
                 };
-                addStopState(path_spec, trace_file, xfer_stop_id, ss, stop_states, label_stop_queue);
+                addStopState(path_spec, trace_file, xfer_stop_id, ss, stop_states, label_stop_queue, &stop_done);
             }
         }
     }
@@ -771,7 +780,8 @@ namespace fasttrips {
         int label_iteration,
         const LabelStop& current_label_stop,
         double latest_dep_earliest_arr,
-        std::tr1::unordered_set<int>& trips_done) const
+        std::tr1::unordered_set<int>& trips_done,
+        const std::tr1::unordered_set<int>& stop_done) const
     {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
@@ -928,11 +938,11 @@ namespace fasttrips {
                     }
                     if ((new_label < PathFinder::MAX_COST) && (new_label > 0)) { use_new_state = true; }
                 }
-                // deterministic: cost is just additive
+                // deterministic: label = cost = total time, just additive
                 else {
                     link_cost   = in_vehicle_time + wait_time;
-                    cost        = cost;
-                    new_label   = current_label_stop.label_ + cost;
+                    cost        = current_label_stop.label_ + link_cost;
+                    new_label   = cost;
                     double old_label = PathFinder::MAX_TIME;
                     if (possible_stop_state_iter != stop_states.end()) {
                         old_label = possible_stop_state_iter->second.front().label_;
@@ -981,7 +991,7 @@ namespace fasttrips {
                         label_iteration,                // label iteration
                         arrdep_time                     // arrival/departure time
                     };
-                    addStopState(path_spec, trace_file, board_alight_stop, ss, stop_states, label_stop_queue);
+                    addStopState(path_spec, trace_file, board_alight_stop, ss, stop_states, label_stop_queue, &stop_done);
                 }
             }
             trips_done.insert(it->trip_id_);
@@ -1080,7 +1090,8 @@ namespace fasttrips {
                                          label_stop_queue,
                                          label_iterations,
                                          current_label_stop,
-                                         latest_dep_earliest_arr);
+                                         latest_dep_earliest_arr,
+                                         stop_done);
 
             updateStopStatesForTrips(path_spec,
                                      trace_file,
@@ -1089,7 +1100,8 @@ namespace fasttrips {
                                      label_iterations,
                                      current_label_stop,
                                      latest_dep_earliest_arr,
-                                     trips_done);
+                                     trips_done,
+                                     stop_done);
 
 
             //  Done with this label iteration!
