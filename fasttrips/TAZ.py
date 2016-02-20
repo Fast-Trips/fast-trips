@@ -296,11 +296,9 @@ class TAZ:
 
             # lot open/close time: datetime version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
-                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
-                    datetime.datetime.combine(today, datetime.datetime.strptime(x, '%H:%M:%S').time()))
+                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: Util.read_time(x))
 
             # lot open/close time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
