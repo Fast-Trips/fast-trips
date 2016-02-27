@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "LabelStopQueue.h"
 
 #if __APPLE__
 #include <tr1/unordered_set>
@@ -161,14 +162,6 @@ namespace fasttrips {
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
     } StopState;
 
-    /**
-     * Struct containing just a label and a stop id, this is stored in the fasttrips::LabelStopQueue
-     * (a priority queue) to find the lowest label stops.
-     */
-    typedef struct {
-        double  label_;                 ///< The label during path finding
-        int     stop_id_;               ///< Stop ID corresponding to this label
-    } LabelStop;
 
     /// Structure used in PathFinder::hyperpathChoosePath
     typedef struct {
@@ -177,16 +170,6 @@ namespace fasttrips {
         int     stop_id_;               ///< Stop ID
         size_t  index_;                 ///< Index into StopState vector (or taz state vector)
     } ProbabilityStop;
-
-    /// Comparator to enable the fasttrips::LabelStopQueue to return the lowest labeled stop.
-    struct LabelStopCompare {
-        bool operator()(const LabelStop &cs1, const LabelStop &cs2) const {
-            if (cs1.label_ > cs2.label_) { return true;  }
-            if (cs1.label_ < cs2.label_) { return false; }
-            // if they're equal go by the stop id
-            return (cs1.stop_id_ > cs2.stop_id_);
-        }
-    };
 
     /**
      * The path finding algorithm stores StopState data in this structure.
@@ -213,13 +196,7 @@ namespace fasttrips {
      */
      typedef std::map<int, HyperpathState> HyperpathStopStates;
 
-    /**
-     * The pathfinding algorithm uses this to find the lowest label stops. The LabelStopQueue will have the
-     *     latest departure time from a stop (outbound) and we want max, or
-     *   earliest arrival   time to   a stop (inbound ) and we want min
-     * Since it's a min priority queue, for outbound, we'll want to make it negative to get min
-     */
-    typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
+
 
     /** A single path consists of a map of stop id to StopState, plus the order of the stops are given
      *  a list of stop ids.
