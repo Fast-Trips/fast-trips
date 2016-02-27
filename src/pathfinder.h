@@ -201,6 +201,7 @@ namespace fasttrips {
     typedef struct {
       double latest_dep_earliest_arr_; ///< latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
       double hyperpath_cost_;          ///< hyperpath cost for this stop state
+      int    process_count_;           ///< increment this every time the stop is processed
     } HyperpathState;
 
     /**
@@ -386,7 +387,6 @@ namespace fasttrips {
                                   HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
-                                  double latest_dep_earliest_arr,
                                   const std::tr1::unordered_set<int>& stop_done,
                                   const std::tr1::unordered_set<int>& stop_processing) const;
 
@@ -403,7 +403,6 @@ namespace fasttrips {
                                   HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
-                                  double latest_dep_earliest_arr,
                                   std::tr1::unordered_set<int>& trips_done,
                                   const std::tr1::unordered_set<int>& stop_done,
                                   const std::tr1::unordered_set<int>& stop_processing) const;
