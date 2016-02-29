@@ -197,15 +197,10 @@ namespace fasttrips {
      */
     typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
 
-    /** A single path consists of a map of stop id to StopState, plus the order of the stops are given
-     *  a list of stop ids.
-     */
-    typedef struct {
-        std::map<int, StopState>    states_;    ///< Stop states will be in here, indexed by stop ID.
-        std::vector<int>            stops_;     ///< stop IDs. They are in origin to destination order
-                                                ///< for outbound trips, and destination to origin
-                                                ///< order for inbound trips.
-    } Path;
+    /** A single path consists of a vector of stop ID & stop states.  They are in origin to destination order for
+     *  outbound trips, and destination to origin order for inbound trips.
+     **/
+    typedef std::vector< std::pair<int, StopState> > Path;
 
     /** In stochastic path finding, this is the information we'll collect about the path. */
     typedef struct {
@@ -221,19 +216,16 @@ namespace fasttrips {
     struct PathCompare {
         // less than
         bool operator()(const Path &path1, const Path &path2) const {
-            if (path1.stops_.size() < path2.stops_.size()) { return true; }
-            if (path1.stops_.size() > path2.stops_.size()) { return false; }
+            if (path1.size() < path2.size()) { return true; }
+            if (path1.size() > path2.size()) { return false; }
             // if number of stops matches, check the stop ids and deparr_mode_
-            for (int ind=0; ind<path1.stops_.size(); ++ind) {
-                if (path1.stops_[ind] < path2.stops_[ind]) { return true; }
-                if (path1.stops_[ind] > path2.stops_[ind]) { return false; }
-                int stop_id = path1.stops_[ind];
-                std::map<int, StopState>::const_iterator ssi1 = path1.states_.find(stop_id);
-                std::map<int, StopState>::const_iterator ssi2 = path2.states_.find(stop_id);
-                if (ssi1->second.deparr_mode_ < ssi2->second.deparr_mode_) { return true; }
-                if (ssi1->second.deparr_mode_ > ssi2->second.deparr_mode_) { return false; }
-                if (ssi1->second.trip_id_     < ssi2->second.trip_id_    ) { return true; }
-                if (ssi1->second.trip_id_     > ssi2->second.trip_id_    ) { return false; }
+            for (int ind=0; ind<path1.size(); ++ind) {
+                if (path1[ind].first < path2[ind].first) { return true; }
+                if (path1[ind].first > path2[ind].first) { return false; }
+                if (path1[ind].second.deparr_mode_ < path2[ind].second.deparr_mode_) { return true; }
+                if (path1[ind].second.deparr_mode_ > path2[ind].second.deparr_mode_) { return false; }
+                if (path1[ind].second.trip_id_     < path2[ind].second.trip_id_    ) { return true; }
+                if (path1[ind].second.trip_id_     > path2[ind].second.trip_id_    ) { return false; }
             }
             return false;
         }
