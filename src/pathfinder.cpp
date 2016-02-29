@@ -1343,8 +1343,6 @@ namespace fasttrips {
         double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
         int     prev_mode       = ss.deparr_mode_;
         int     prev_trip_id    = ss.trip_id_;
-        int     prev_stop_id    = start_state_id;
-        int     prev_prev_stop_id = -1;
         while (true)
         {
             // setup probabilities
@@ -1489,7 +1487,7 @@ namespace fasttrips {
                         path.back().second.arrdep_time_ = next_ss.deparr_time_; // depart right away
                         path.back().second.deparr_time_ = next_ss.deparr_time_ + path.back().second.link_time_; // arrive after walk
                         // give the wait time to the previous trip
-                        path.back().second.link_time_ = path.back().second.deparr_time_ - path.back().second.deparr_time_;
+                        path[path.size()-2].second.link_time_ = path[path.size()-2].second.deparr_time_ - path.back().second.deparr_time_;
                     }
                     // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
                     else if (isTrip(prev_mode)) {
@@ -1513,8 +1511,6 @@ namespace fasttrips {
             path.push_back( std::make_pair(current_stop_id, next_ss) );
 
             // move on to the next
-            prev_prev_stop_id   = prev_stop_id;
-            prev_stop_id        = current_stop_id;
             current_stop_id     = next_ss.stop_succpred_;
             prev_mode           = next_ss.deparr_mode_;
             prev_trip_id        = next_ss.trip_id_;
@@ -1849,7 +1845,7 @@ namespace fasttrips {
                             path[prev_index].second.arrdep_time_ = path[curr_index].second.deparr_time_; // depart right away
                             path[prev_index].second.deparr_time_ = path[curr_index].second.deparr_time_ + path[prev_index].second.link_time_; // arrive after walk
                             // give the wait time to the previous trip
-                            path[prev_index].second.link_time_ = path[prev_index-1].second.deparr_time_ - path[prev_index].second.deparr_time_;
+                            path[prev_index-1].second.link_time_ = path[prev_index-1].second.deparr_time_ - path[prev_index].second.deparr_time_;
                         }
                         // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
                         else if (isTrip(path[prev_index].second.deparr_mode_)) {
