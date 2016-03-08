@@ -137,7 +137,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path[ind].second.seq_;
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 5) = path[ind].second.seq_succpred_;
 
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = path[ind].second.label_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = 0.0; // TODO: label
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path[ind].second.deparr_time_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path[ind].second.link_time_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[ind].second.cost_;
