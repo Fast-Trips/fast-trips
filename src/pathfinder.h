@@ -263,6 +263,13 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         double STOCH_DISPERSION_;
+
+        /// Minimum time required to transfer between two vehicles at the same stop
+        /// This comes up because in path labeling, we could label a bus that leaves at the same time another bus arrives
+        /// But during path enumeration, leaving at the same time didn't register as ok.  Need a small epsilon here, since transfers
+        /// are not actually instantaneous.
+        /// TODO: add to python?
+        double MIN_XFER_TIME_;
         ///@}
 
         /// directory in which to write trace files
@@ -335,10 +342,7 @@ namespace fasttrips {
                           const StopState& ss,
                           StopStates& stop_states,
                           LabelStopQueue& label_stop_queue,
-                          HyperpathStopStates& hyperpath_ss,
-                          const std::tr1::unordered_set<int>* stop_done,
-                          const std::tr1::unordered_set<int>* stop_processing,
-                          const LabelStop* current_label_stop) const;
+                          HyperpathStopStates& hyperpath_ss) const;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -363,9 +367,7 @@ namespace fasttrips {
                                   LabelStopQueue& label_stop_queue,
                                   HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
-                                  const LabelStop& current_label_stop,
-                                  const std::tr1::unordered_set<int>& stop_done,
-                                  const std::tr1::unordered_set<int>& stop_processing) const;
+                                  const LabelStop& current_label_stop) const;
 
         /**
          * Iterate through all the stops that are accessible by transit vehicle trip
@@ -380,9 +382,7 @@ namespace fasttrips {
                                   HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
-                                  std::tr1::unordered_set<int>& trips_done,
-                                  const std::tr1::unordered_set<int>& stop_done,
-                                  const std::tr1::unordered_set<int>& stop_processing) const;
+                                  std::tr1::unordered_set<int>& trips_done) const;
 
         /**
          * Label stops by:
