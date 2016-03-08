@@ -1750,6 +1750,18 @@ namespace fasttrips {
             }
             if (logsum == 0) { return false; } // fail
 
+            // debug -- print pet set to file
+            std::ofstream pathset_file;
+            std::ostringstream ss;
+            ss << output_dir_ << kPathSeparator;
+            ss << "ft_pathset";
+            if (process_num_ > 0) {
+                ss << "_worker" << std::setfill('0') << std::setw(2) <<  process_num_;
+            }
+            ss << ".txt";
+            // append
+            pathset_file.open(ss.str().c_str(), (std::ios_base::out | std::ios_base::app));
+
             // for integerized probability*1000000
             int cum_prob    = 0;
             int cost_cutoff = 1;
@@ -1775,7 +1787,18 @@ namespace fasttrips {
                     printPathCompat(trace_file, path_spec, paths_iter->first);
                     trace_file << std::endl;
                 }
+                // print path to pathset file
+                pathset_file << path_spec.iteration_ << " ";  // Iteration
+                pathset_file << path_spec.passenger_id_ << " ";         // The passenger ID
+                pathset_file << path_spec.path_id_ << " ";              // The path ID - uniquely identifies a passenger+path
+                pathset_file << std::setw(8) << std::fixed << std::setprecision(2) << paths_iter->second.cost_ << " ";
+                pathset_file << std::setw(8) << std::fixed << std::setprecision(6) << paths_iter->second.probability_ << " ";
+                printPathCompat(pathset_file, path_spec, paths_iter->first);
+                pathset_file << std::endl;
             }
+
+            pathset_file.close();
+
             if (cum_prob == 0) { return false; } // fail
 
             // choose path
