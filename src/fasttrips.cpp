@@ -120,29 +120,28 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 
     // package for returning.  We'll separate ints and doubles.
     npy_intp dims_int[2];
-    dims_int[0] = path.stops_.size();
+    dims_int[0] = path.size();
     dims_int[1] = 6; // stop_id, deparr_mode_, trip_id_, stop_succpred_, seq_, seq_succpred_
     PyArrayObject *ret_int = (PyArrayObject *)PyArray_SimpleNew(2, dims_int, NPY_INT32);
 
     npy_intp dims_double[2];
-    dims_double[0] = path.stops_.size();
+    dims_double[0] = path.size();
     dims_double[1] = 5; // label_, deparr_time_, link_time_, cost_, arrdep_time_
     PyArrayObject *ret_double = (PyArrayObject *)PyArray_SimpleNew(2, dims_double, NPY_DOUBLE);
 
     for (int ind = 0; ind < dims_int[0]; ++ind) {
-        int stop_id = path.stops_[ind];
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 0) = stop_id;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 1) = path.states_[stop_id].deparr_mode_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path.states_[stop_id].trip_id_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 3) = path.states_[stop_id].stop_succpred_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path.states_[stop_id].seq_;
-        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 5) = path.states_[stop_id].seq_succpred_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 0) = path[ind].first;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 1) = path[ind].second.deparr_mode_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path[ind].second.trip_id_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 3) = path[ind].second.stop_succpred_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path[ind].second.seq_;
+        *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 5) = path[ind].second.seq_succpred_;
 
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = 0.0; // TODO: label
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path.states_[stop_id].deparr_time_;
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path.states_[stop_id].link_time_;
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path.states_[stop_id].cost_;
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path.states_[stop_id].arrdep_time_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = path[ind].second.label_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path[ind].second.deparr_time_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path[ind].second.link_time_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[ind].second.cost_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[ind].second.arrdep_time_;
     }
 
     PyObject *returnobj = Py_BuildValue("(OOd)",ret_int,ret_double,path_info.cost_);

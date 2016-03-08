@@ -1385,8 +1385,7 @@ namespace fasttrips {
 
         size_t chosen_index = chooseState(path_spec, trace_file, access_cum_prob);
         StopState ss = taz_state[chosen_index];
-        path.stops_.push_back(start_state_id);
-        path.states_[start_state_id] = ss;
+        path.push_back( std::make_pair(start_state_id, ss) );
 
         if (path_spec.trace_)
         {
@@ -1401,8 +1400,6 @@ namespace fasttrips {
         double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
         int     prev_mode       = ss.deparr_mode_;
         int     prev_trip_id    = ss.trip_id_;
-        int     prev_stop_id    = start_state_id;
-        int     prev_prev_stop_id = -1;
         while (true)
         {
             // setup probabilities
@@ -1507,8 +1504,8 @@ namespace fasttrips {
                     double dep_time = getScheduledDeparture(next_ss.trip_id_, current_stop_id, next_ss.seq_);
                     // set departure time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
-                    path.states_[prev_stop_id].arrdep_time_ = dep_time;
-                    path.states_[prev_stop_id].deparr_time_ = dep_time - path.states_[start_state_id].link_time_;
+                    path.back().second.arrdep_time_ = dep_time;
+                    path.back().second.deparr_time_ = dep_time - path.front().second.link_time_;
                     // no wait time for the trip
                     next_ss.link_time_ = next_ss.arrdep_time_ - next_ss.deparr_time_;
                 }
@@ -1519,12 +1516,12 @@ namespace fasttrips {
                 }
                 // *Fix transfer times*
                 else if (next_ss.deparr_mode_ == MODE_TRANSFER) {
-                    next_ss.deparr_time_ = path.states_[prev_stop_id].arrdep_time_;   // start transferring immediately
+                    next_ss.deparr_time_ = path.back().second.arrdep_time_;   // start transferring immediately
                     next_ss.arrdep_time_ = next_ss.deparr_time_ + next_ss.link_time_;
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
                 else if (next_ss.deparr_mode_ == MODE_EGRESS) {
-                    next_ss.deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
+                    next_ss.deparr_time_ = path.back().second.arrdep_time_;
                     next_ss.arrdep_time_ = next_ss.deparr_time_ + next_ss.link_time_;
                 }
             }
@@ -1533,13 +1530,13 @@ namespace fasttrips {
             {
                 // Leave origin as late as possible
                 if (next_ss.deparr_mode_ == MODE_ACCESS) {
-                    double dep_time = getScheduledDeparture(path.states_[prev_stop_id].trip_id_, current_stop_id, path.states_[prev_stop_id].seq_succpred_);
+                    double dep_time = getScheduledDeparture(path.back().second.trip_id_, current_stop_id, path.back().second.seq_succpred_);
                     // set arrival time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
                     next_ss.deparr_time_ = dep_time;
                     next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
                     // no wait time for the trip
-                    path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - path.states_[prev_stop_id].arrdep_time_;
+                    path.back().second.link_time_ = path.back().second.deparr_time_ - path.back().second.arrdep_time_;
                 }
                 // *Fix trip time*: we are choosing in reverse so pretend the wait time is zero for now to
                 // accurately evaluate possible transfers in next choice.
@@ -1549,36 +1546,33 @@ namespace fasttrips {
                     // and we can update the transfer and the trip with the real wait
                     if (prev_mode == MODE_TRANSFER) {
                         // move transfer time so we do it right after arriving
-                        path.states_[prev_stop_id].arrdep_time_ = next_ss.deparr_time_; // depart right away
-                        path.states_[prev_stop_id].deparr_time_ = next_ss.deparr_time_ + path.states_[prev_stop_id].link_time_; // arrive after walk
+                        path.back().second.arrdep_time_ = next_ss.deparr_time_; // depart right away
+                        path.back().second.deparr_time_ = next_ss.deparr_time_ + path.back().second.link_time_; // arrive after walk
                         // give the wait time to the previous trip
-                        path.states_[prev_prev_stop_id].link_time_ = path.states_[prev_prev_stop_id].deparr_time_ - path.states_[prev_stop_id].deparr_time_;
+                        path[path.size()-2].second.link_time_ = path[path.size()-2].second.deparr_time_ - path.back().second.deparr_time_;
                     }
                     // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
                     else if (isTrip(prev_mode)) {
-                        path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - next_ss.deparr_time_;
+                        path.back().second.link_time_ = path.back().second.deparr_time_ - next_ss.deparr_time_;
                     }
                 }
                 // *Fix transfer depart/arrive times*: transfer as late as possible to preserve options for earlier trip
                 else if (next_ss.deparr_mode_ == MODE_TRANSFER) {
-                    next_ss.deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
+                    next_ss.deparr_time_ = path.back().second.arrdep_time_;
                     next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
                 if (prev_mode == MODE_EGRESS) {
-                    path.states_[prev_stop_id].arrdep_time_ = next_ss.deparr_time_;
-                    path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ + path.states_[prev_stop_id].link_time_;
+                    path.back().second.arrdep_time_ = next_ss.deparr_time_;
+                    path.back().second.deparr_time_ = path.back().second.arrdep_time_ + path.back().second.link_time_;
                 }
             }
 
 
             // record the choice
-            path.stops_.push_back(current_stop_id);
-            path.states_[current_stop_id] = next_ss;
+            path.push_back( std::make_pair(current_stop_id, next_ss) );
 
             // move on to the next
-            prev_prev_stop_id   = prev_stop_id;
-            prev_stop_id        = current_stop_id;
             current_stop_id     = next_ss.stop_succpred_;
             prev_mode           = next_ss.deparr_mode_;
             prev_trip_id        = next_ss.trip_id_;
@@ -1588,7 +1582,7 @@ namespace fasttrips {
 
             if (path_spec.trace_) {
                 trace_file << " ->    Updated link ";
-                printStopState(trace_file, prev_stop_id, path.states_[prev_stop_id], path_spec);
+                printStopState(trace_file, path.back().first, path.back().second, path_spec);
                 trace_file << std::endl;
             }
 
@@ -1655,7 +1649,7 @@ namespace fasttrips {
         PathInfo& path_info) const
     {
         // no stops - nothing to do
-        if (path.stops_.size()==0) { return; }
+        if (path.size()==0) { return; }
 
         if (path_spec.trace_) {
             trace_file << "calculatePathCost:" << std::endl;
@@ -1667,15 +1661,15 @@ namespace fasttrips {
         double dir_factor           = path_spec.outbound_ ? 1.0 : -1.0;
 
         // iterate through the states in chronological order
-        int start_ind = path_spec.outbound_ ? 0 : path.stops_.size()-1;
-        int end_ind   = path_spec.outbound_ ? path.stops_.size() : -1;
-        int inc       = path_spec.outbound_ ? 1 : -1;
+        int start_ind       = path_spec.outbound_ ? 0 : path.size()-1;
+        int end_ind         = path_spec.outbound_ ? path.size() : -1;
+        int inc             = path_spec.outbound_ ? 1 : -1;
 
-        path_info.cost_             = 0;
+        path_info.cost_     = 0;
         for (int index = start_ind; index != end_ind; index += inc)
         {
-            int stop_id = path.stops_[index];
-            StopState& stop_state = path.states_[stop_id];
+            int stop_id             = path[index].first;
+            StopState& stop_state   = path[index].second;
 
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
@@ -1823,6 +1817,18 @@ namespace fasttrips {
             }
             if (logsum == 0) { return false; } // fail
 
+            // debug -- print pet set to file
+            std::ofstream pathset_file;
+            std::ostringstream ss;
+            ss << output_dir_ << kPathSeparator;
+            ss << "ft_pathset";
+            if (process_num_ > 0) {
+                ss << "_worker" << std::setfill('0') << std::setw(2) <<  process_num_;
+            }
+            ss << ".txt";
+            // append
+            pathset_file.open(ss.str().c_str(), (std::ios_base::out | std::ios_base::app));
+
             // for integerized probability*1000000
             int cum_prob    = 0;
             int cost_cutoff = 1;
@@ -1848,7 +1854,18 @@ namespace fasttrips {
                     printPathCompat(trace_file, path_spec, paths_iter->first);
                     trace_file << std::endl;
                 }
+                // print path to pathset file
+                pathset_file << path_spec.iteration_ << " ";  // Iteration
+                pathset_file << path_spec.passenger_id_ << " ";         // The passenger ID
+                pathset_file << path_spec.path_id_ << " ";              // The path ID - uniquely identifies a passenger+path
+                pathset_file << std::setw(8) << std::fixed << std::setprecision(2) << paths_iter->second.cost_ << " ";
+                pathset_file << std::setw(8) << std::fixed << std::setprecision(6) << paths_iter->second.probability_ << " ";
+                printPathCompat(pathset_file, path_spec, paths_iter->first);
+                pathset_file << std::endl;
             }
+
+            pathset_file.close();
+
             if (cum_prob == 0) { return false; } // fail
 
             // choose path
@@ -1862,81 +1879,75 @@ namespace fasttrips {
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
 
             StopState ss = taz_state.front(); // there's only one
-            path.states_[end_taz_id] = ss;
-            path.stops_.push_back(end_taz_id);
-
-            int prev_prev_stop_id = -1;
-            int prev_stop_id = end_taz_id;
-            int prev_mode    = ss.deparr_mode_;
+            path.push_back( std::make_pair(end_taz_id, ss) );
 
             while (ss.deparr_mode_ != final_state_type)
             {
                 int stop_id = ss.stop_succpred_;
                 StopStates::const_iterator ssi = stop_states.find(stop_id);
                 ss          = ssi->second.front();
-                path.states_[stop_id] = ss;
-                path.stops_.push_back(stop_id);
+                path.push_back( std::make_pair(stop_id, ss));
+
+                int curr_index = path.size() - 1;
+                int prev_index = curr_index - 1;
 
                 if (path_spec.outbound_)
                 {
                     // Leave origin as late as possible
-                    if (prev_mode == MODE_ACCESS) {
-                        path.states_[prev_stop_id].arrdep_time_ = ss.deparr_time_;
-                        path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ - path.states_[prev_stop_id].link_time_;
+                    if (path[prev_index].second.deparr_mode_ == MODE_ACCESS) {
+                        path[prev_index].second.arrdep_time_ = ss.deparr_time_;
+                        path[prev_index].second.deparr_time_ = path[prev_index].second.arrdep_time_ - path[prev_index].second.link_time_;
                         // no wait time for the trip
-                        path.states_[stop_id].link_time_ = path.states_[stop_id].arrdep_time_ - path.states_[stop_id].deparr_time_;
+                        path[curr_index].second.link_time_   = path[curr_index].second.arrdep_time_ - path[curr_index].second.deparr_time_;
                     }
                     // *Fix trip time*
-                    else if (isTrip(path.states_[stop_id].deparr_mode_)) {
+                    else if (isTrip(path[curr_index].second.deparr_mode_)) {
                         // link time is arrival time - previous arrival time
-                        path.states_[stop_id].link_time_ = path.states_[stop_id].arrdep_time_ - path.states_[prev_stop_id].arrdep_time_;
+                        path[curr_index].second.link_time_ = path[curr_index].second.arrdep_time_ - path[prev_index].second.arrdep_time_;
                     }
                     // *Fix transfer times*
-                    else if (path.states_[stop_id].deparr_mode_ == MODE_TRANSFER) {
-                        path.states_[stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_;   // start transferring immediately
-                        path.states_[stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_ + path.states_[stop_id].link_time_;
+                    else if (path[curr_index].second.deparr_mode_ == MODE_TRANSFER) {
+                        path[curr_index].second.deparr_time_ = path[prev_index].second.arrdep_time_;   // start transferring immediately
+                        path[curr_index].second.arrdep_time_ = path[curr_index].second.deparr_time_ + path[curr_index].second.link_time_;
                     }
                     // Egress: don't wait, just walk. Get to destination as early as possible
                     else if (ss.deparr_mode_ == MODE_EGRESS) {
-                        path.states_[stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
-                        path.states_[stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_ + path.states_[stop_id].link_time_;
+                        path[curr_index].second.deparr_time_ = path[prev_index].second.arrdep_time_;
+                        path[curr_index].second.arrdep_time_ = path[curr_index].second.deparr_time_ + path[curr_index].second.link_time_;
                     }
                 }
                 // INBOUND: We are choosing links in REVERSE chronological order
                 else
                 {
                     // Leave origin as late as possible
-                    if (path.states_[stop_id].deparr_mode_ == MODE_ACCESS) {
-                        path.states_[stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_;
-                        path.states_[stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_ - path.states_[stop_id].link_time_;
+                    if (path[curr_index].second.deparr_mode_ == MODE_ACCESS) {
+                        path[curr_index].second.deparr_time_ = path[prev_index].second.arrdep_time_;
+                        path[curr_index].second.arrdep_time_ = path[curr_index].second.deparr_time_ - path[curr_index].second.link_time_;
                         // no wait time for the trip
-                        path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - path.states_[prev_stop_id].arrdep_time_;
+                        path[prev_index].second.link_time_   = path[prev_index].second.deparr_time_ - path[prev_index].second.arrdep_time_;
                     }
                     // *Trip* - fix transfer and next trip if applicable
-                    else if (isTrip(path.states_[stop_id].deparr_mode_)) {
+                    else if (isTrip(path[curr_index].second.deparr_mode_)) {
                         // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
                         // and we can update the transfer and the trip with the real wait
-                        if (prev_mode == MODE_TRANSFER) {
+                        if (path[prev_index].second.deparr_mode_ == MODE_TRANSFER) {
                             // move transfer time so we do it right after arriving
-                            path.states_[prev_stop_id].arrdep_time_ = path.states_[stop_id].deparr_time_; // depart right away
-                            path.states_[prev_stop_id].deparr_time_ = path.states_[stop_id].deparr_time_ + path.states_[prev_stop_id].link_time_; // arrive after walk
+                            path[prev_index].second.arrdep_time_ = path[curr_index].second.deparr_time_; // depart right away
+                            path[prev_index].second.deparr_time_ = path[curr_index].second.deparr_time_ + path[prev_index].second.link_time_; // arrive after walk
                             // give the wait time to the previous trip
-                            path.states_[prev_prev_stop_id].link_time_ = path.states_[prev_prev_stop_id].deparr_time_ - path.states_[prev_stop_id].deparr_time_;
+                            path[prev_index-1].second.link_time_ = path[prev_index-1].second.deparr_time_ - path[prev_index].second.deparr_time_;
                         }
                         // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
-                        else if (isTrip(prev_mode)) {
-                            path.states_[prev_stop_id].link_time_ = path.states_[prev_stop_id].deparr_time_ - path.states_[stop_id].deparr_time_;
+                        else if (isTrip(path[prev_index].second.deparr_mode_)) {
+                            path[prev_index].second.link_time_ = path[prev_index].second.deparr_time_ - path[curr_index].second.deparr_time_;
                         }
                     }
                     // Egress: don't wait, just walk. Get to destination as early as possible
-                    if (prev_mode == MODE_EGRESS) {
-                        path.states_[prev_stop_id].arrdep_time_ = ss.deparr_time_;
-                        path.states_[prev_stop_id].deparr_time_ = path.states_[prev_stop_id].arrdep_time_ + path.states_[prev_stop_id].link_time_;
+                    if (path[prev_index].second.deparr_mode_ == MODE_EGRESS) {
+                        path[prev_index].second.arrdep_time_ = ss.deparr_time_;
+                        path[prev_index].second.deparr_time_ = path[prev_index].second.arrdep_time_ + path[prev_index].second.link_time_;
                     }
                 }
-                prev_prev_stop_id = prev_stop_id;
-                prev_stop_id = stop_id;
-                prev_mode    = ss.deparr_mode_;
             }
             calculatePathCost(path_spec, trace_file, path, path_info);
         }
@@ -2012,41 +2023,38 @@ namespace fasttrips {
     {
         printStopStateHeader(ostr, path_spec);
         ostr << std::endl;
-        for (std::vector<int>::const_iterator stop_id_iter  = path.stops_.begin();
-                                              stop_id_iter != path.stops_.end(); ++stop_id_iter)
+        for (int index = 0; index < path.size(); ++index)
         {
-            std::map<int, StopState>::const_iterator psi = path.states_.find(*stop_id_iter);
-            printStopState(ostr, *stop_id_iter, psi->second, path_spec);
+            printStopState(ostr, path[index].first, path[index].second, path_spec);
             ostr << std::endl;
         }
     }
 
     void PathFinder::printPathCompat(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const
     {
-        if (path.stops_.size() == 0)
+        if (path.size() == 0)
         {
             ostr << "no_path";
             return;
         }
         // board stops, trips, alight stops
         std::string board_stops, trips, alight_stops;
-        int start_ind = path_spec.outbound_ ? 0 : path.stops_.size()-1;
-        int end_ind   = path_spec.outbound_ ? path.stops_.size() : -1;
+        int start_ind = path_spec.outbound_ ? 0 : path.size()-1;
+        int end_ind   = path_spec.outbound_ ? path.size() : -1;
         int inc       = path_spec.outbound_ ? 1 : -1;
         for (int index = start_ind; index != end_ind; index += inc)
         {
-            int stop_id = path.stops_[index];
-            std::map<int, StopState>::const_iterator psi = path.states_.find(stop_id);
+            int stop_id = path[index].first;
             // only want trips
-            if (psi->second.deparr_mode_ == MODE_ACCESS  ) { continue; }
-            if (psi->second.deparr_mode_ == MODE_EGRESS  ) { continue; }
-            if (psi->second.deparr_mode_ == MODE_TRANSFER) { continue; }
+            if (path[index].second.deparr_mode_ == MODE_ACCESS  ) { continue; }
+            if (path[index].second.deparr_mode_ == MODE_EGRESS  ) { continue; }
+            if (path[index].second.deparr_mode_ == MODE_TRANSFER) { continue; }
             if ( board_stops.length() > 0) {  board_stops += ","; }
             if (       trips.length() > 0) {        trips += ","; }
             if (alight_stops.length() > 0) { alight_stops += ","; }
-            board_stops  += (path_spec.outbound_ ? stop_num_to_str_.find(stop_id)->second : stop_num_to_str_.find(psi->second.stop_succpred_)->second);
-            trips        += trip_num_to_str_.find(psi->second.trip_id_)->second;
-            alight_stops += (path_spec.outbound_ ? stop_num_to_str_.find(psi->second.stop_succpred_)->second : stop_num_to_str_.find(stop_id)->second);
+            board_stops  += (path_spec.outbound_ ? stop_num_to_str_.find(stop_id)->second : stop_num_to_str_.find(path[index].second.stop_succpred_)->second);
+            trips        += trip_num_to_str_.find(path[index].second.trip_id_)->second;
+            alight_stops += (path_spec.outbound_ ? stop_num_to_str_.find(path[index].second.stop_succpred_)->second : stop_num_to_str_.find(stop_id)->second);
         }
         ostr << " " << board_stops << " " << trips << " " << alight_stops;
     }

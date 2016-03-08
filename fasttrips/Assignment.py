@@ -180,7 +180,7 @@ class Assignment:
                       'stochastic_pathset_size'         :1000,
                       'capacity_constraint'             :False,
                       'trace_person_ids'                :'None',
-                      'prepend_route_id_to_trip_id'     :False,
+                      'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :True,
