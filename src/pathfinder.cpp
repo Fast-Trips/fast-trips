@@ -540,6 +540,7 @@ namespace fasttrips {
                     hss.latest_dep_earliest_arr_ = ss.deparr_time_;
                     update_state = true;
                     trace_suffix += " (window)";
+                    ls.label_                    = hss.hyperpath_cost_;
                 }
 
                 // update stop cost if it's affected
