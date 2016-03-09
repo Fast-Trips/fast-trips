@@ -924,7 +924,7 @@ namespace fasttrips {
 
         // current_stop_state is a vector
         std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
-        int current_mode = current_stop_state[0].deparr_mode_;      // why index 0?
+        int current_mode = current_stop_state[0].deparr_mode_;      // why index 0 for hyperpath?-- should this be the latest_dep_earliest_arrival mode?
         double latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
         if (path_spec.hyperpath_) {
             latest_dep_earliest_arr = hyperpath_ss[current_label_stop.stop_id_].latest_dep_earliest_arr_;

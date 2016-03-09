@@ -5,5 +5,5 @@ all        access           walk           walk_access  preferred_delay_min 2.0
 all        egress           walk           walk_egress  time_min            0.0
 all        egress           walk           walk_egress  preferred_delay_min 2.0
 all        transit          local_bus      local_bus    in_vehicle_time_min 1.0
-all        transit          local_bus      local_bus    wait_time_min       2.0
+all        transit          local_bus      local_bus    wait_time_min       2.01
 all        transit          local_bus      local_bus    transfer_penalty    0.0
