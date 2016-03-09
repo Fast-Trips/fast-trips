@@ -44,7 +44,6 @@ namespace fasttrips {
         BUMP_BUFFER_        = bump_buffer;
         STOCH_PATHSET_SIZE_ = stoch_pathset_size;
         STOCH_DISPERSION_   = stoch_dispersion;
-        MIN_XFER_TIME_      = 1.0/(60.0*24.0);  // a second
     }
 
     void PathFinder::readIntermediateFiles()
@@ -508,7 +507,7 @@ namespace fasttrips {
             // Just set if it's new
             // However, if it's bigger than MAX_COST, that's problematic 
             if (hyperpath_ss.find(stop_id) == hyperpath_ss.end()) {
-                HyperpathState hss =  { ss.deparr_time_, ss.cost_, 0 };
+                HyperpathState hss =  { ss.deparr_time_, ss.trip_id_, ss.cost_, 0 };
                 hyperpath_ss[stop_id] = hss;
 
                 stop_states[stop_id].push_back(ss);
@@ -538,9 +537,10 @@ namespace fasttrips {
                 if (( path_spec.outbound_ && (ss.deparr_time_ > hss.latest_dep_earliest_arr_)) ||
                     (!path_spec.outbound_ && (ss.deparr_time_ < hss.latest_dep_earliest_arr_))) {
                     hss.latest_dep_earliest_arr_ = ss.deparr_time_;
-                    update_state = true;
-                    trace_suffix += " (window)";
+                    hss.lder_trip_id_            = ss.trip_id_;
+                    update_state                 = true;
                     ls.label_                    = hss.hyperpath_cost_;
+                    trace_suffix                += " (window)";
                 }
 
                 // update stop cost if it's affected
@@ -932,8 +932,12 @@ namespace fasttrips {
 
         // Update by trips
         std::vector<TripStopTime> relevant_trips;
-        getTripsWithinTime(current_label_stop.stop_id_, path_spec.outbound_, latest_dep_earliest_arr - dir_factor*MIN_XFER_TIME_, relevant_trips);
+        getTripsWithinTime(current_label_stop.stop_id_, path_spec.outbound_, latest_dep_earliest_arr, relevant_trips);
         for (std::vector<TripStopTime>::const_iterator it=relevant_trips.begin(); it != relevant_trips.end(); ++it) {
+
+            // don't include the trip that's determining the time boundary -- we don't want to just use that again
+            // otherwise it is likely to end up the best one and then we'll end up having no other option but to choose two links in a row from the same trip
+            if (path_spec.hyperpath_ && hyperpath_ss[current_label_stop.stop_id_].lder_trip_id_ == it->trip_id_) { continue; }
 
             // the trip info for this trip
             const TripInfo& trip_info = trip_info_.find(it->trip_id_)->second;
@@ -1434,6 +1438,13 @@ namespace fasttrips {
                     ((         prev_mode == MODE_EGRESS) || (         prev_mode == MODE_TRANSFER))) { continue; }
                 // don't double on the same trip ID - that's already covered by a single trip
                 if (state.deparr_mode_ == MODE_TRANSIT && state.trip_id_ == prev_trip_id) { continue; }
+
+
+                if (path_spec.trace_) {
+                    trace_file << "            ";
+                    printStopState(trace_file, current_stop_id, state, path_spec);
+                    trace_file << "  ugh " << std::scientific << state.deparr_time_ - arrdep_time << std::endl;
+                }
 
                 // outbound: we cannot depart before we arrive
                 if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }

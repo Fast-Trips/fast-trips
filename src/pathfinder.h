@@ -183,6 +183,7 @@ namespace fasttrips {
     **/
     typedef struct {
       double latest_dep_earliest_arr_; ///< latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
+      int    lder_trip_id_;            ///< trip for the latest departure/earliest arrival
       double hyperpath_cost_;          ///< hyperpath cost for this stop state
       int    process_count_;           ///< increment this every time the stop is processed
     } HyperpathState;
@@ -255,13 +256,6 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         double STOCH_DISPERSION_;
-
-        /// Minimum time required to transfer between two vehicles at the same stop
-        /// This comes up because in path labeling, we could label a bus that leaves at the same time another bus arrives
-        /// But during path enumeration, leaving at the same time didn't register as ok.  Need a small epsilon here, since transfers
-        /// are not actually instantaneous.
-        /// TODO: add to python?
-        double MIN_XFER_TIME_;
         ///@}
 
         /// directory in which to write trace files
