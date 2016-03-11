@@ -74,6 +74,8 @@ class Util:
         if pandas.isnull(return_df[mapping_newid_colname_chk]).sum() != pandas.isnull(input_df[id_colname]).sum():
             FastTripsLogger.fatal("Util.add_new_id failed to map all ids to numbers")
             FastTripsLogger.fatal("pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
+            FastTripsLogger.fatal("return_df.loc[pandas.isnull(return_df[%s])].head() = \n%s\n" % (mapping_newid_colname_chk,
+                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].head())))
             FastTripsLogger.fatal("pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
             raise
 
