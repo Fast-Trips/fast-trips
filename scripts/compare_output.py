@@ -12,9 +12,9 @@ USAGE = """
 
 """
 
-SPLIT_COLS = {"ft_output_loadProfile.dat"   :[],
-              "ft_output_passengerTimes.dat":['arrivalTimes','boardingTimes','alightingTimes'],
-              "ft_output_passengerPaths.dat":['boardingStops','boardingTrips','alightingStops','walkingTimes']}
+SPLIT_COLS = {"ft_output_loadProfile.txt"   :[],
+              "ft_output_passengerTimes.txt":['arrivalTimes','boardingTimes','alightingTimes'],
+              "ft_output_passengerPaths.txt":['boardingStops','boardingTrips','alightingStops','walkingTimes']}
 
 def compare_file(dir1, dir2, filename):
     """
@@ -26,17 +26,27 @@ def compare_file(dir1, dir2, filename):
     filename2 = os.path.join(dir2, filename)
     FastTripsLogger.info("============== Comparing %s to %s" % (filename1, filename2))
 
-    df1 = pandas.read_csv(filename1, sep="\t")
-    df2 = pandas.read_csv(filename2, sep="\t")
-    if filename == "ft_output_loadProfile.dat":
+    sep = "\t"
+    if filename == "ft_output_loadProfile.txt": sep = ","
+
+    df1 = pandas.read_csv(filename1, sep=sep)
+    df2 = pandas.read_csv(filename2, sep=sep)
+    if filename == "ft_output_loadProfile.txt":
+        index_cols = ['rownum','route_id', 'trip_id', 'direction', 'stop_id']
+        if 'direction' not in df1.columns.values: index_cols.remove('direction')
         # the keys are not unique since some stops come up twice; add rownum columns
         df1['rownum'] = range(1, len(df1)+1)
-        df1.set_index(keys=['rownum','routeId', 'shapeId', 'tripId', 'direction', 'stopId'], inplace=True)
+        df1.set_index(keys=index_cols, inplace=True)
         df2['rownum'] = range(1, len(df2)+1)
-        df2.set_index(keys=['rownum','routeId', 'shapeId', 'tripId', 'direction', 'stopId'], inplace=True)
+        df2.set_index(keys=index_cols, inplace=True)
     else:
-        df1.set_index(keys=['passengerId','mode','originTaz','destinationTaz'], inplace=True)
-        df2.set_index(keys=['passengerId','mode','originTaz','destinationTaz'], inplace=True)
+        df1.set_index(keys=['person_id','trip_list_id_num','mode','originTaz','destinationTaz'], inplace=True)
+        df2.set_index(keys=['person_id','trip_list_id_num','mode','originTaz','destinationTaz'], inplace=True)
+
+    # startTime needs to be read as a time
+    if 'startTime' in df1.columns.values:
+        df1['startTime'] = df1['startTime'].map(lambda x: fasttrips.Util.read_time(x))
+        df2['startTime'] = df2['startTime'].map(lambda x: fasttrips.Util.read_time(x))
 
     # split the columns that have multiple items in them
     split_cols = SPLIT_COLS[filename]
@@ -50,8 +60,13 @@ def compare_file(dir1, dir2, filename):
         split_df2 = df2[col].apply(lambda x: pandas.Series(x.split(',')))
 
         if col.endswith('Times'):
-            split_df1 = split_df1.astype('float')
-            split_df2 = split_df2.astype('float')
+            # these are formatted 11:12:13
+            if filename=='ft_output_passengerTimes.txt':
+                split_df1 = split_df1.applymap(lambda x: fasttrips.Util.read_time(x))
+                split_df2 = split_df2.applymap(lambda x: fasttrips.Util.read_time(x))
+            else:
+                split_df1 = split_df1.astype('float')
+                split_df2 = split_df2.astype('float')
         rename_cols1 = dict( (k,"%s%s" % (col,str(k))) for k in list(split_df1.columns.values))
         rename_cols2 = dict( (k,"%s%s" % (col,str(k))) for k in list(split_df2.columns.values))
         split_df1.rename(columns=rename_cols1, inplace=True)
@@ -87,7 +102,7 @@ def compare_file(dir1, dir2, filename):
         if colname in SPLIT_COLS[filename]: continue
 
         # if it's a time field, mod by 1440 minutes
-        if colname.find("Time") >= 0:
+        if colname.find("Time") >= 0 and str(df_diff[col1].dtype) == 'float':
             df_diff[col1] = df_diff[col1] % 1440
             df_diff[col2] = df_diff[col2] % 1440
 
@@ -106,9 +121,9 @@ def compare_file(dir1, dir2, filename):
         FastTripsLogger.debug(" -- describe --\n" + str(df_diff[[col1, col2, coldiff]].describe()) + "\n")
         if df_diff[colabsdiff].max() == 0:
             FastTripsLogger.debug("-- no diffs --")
-        elif filename=="ft_output_passengerPaths.dat":
+        elif filename=="ft_output_passengerPaths.txt":
             FastTripsLogger.debug(" -- diffs --\n" + \
-                                  str(df_diff.reset_index().sort(columns=[colabsdiff, 'passengerId'], ascending=[False,True]).loc[:,['passengerId','mode','originTaz','destinationTaz',col1, col2, coldiff, colabsdiff]].head()) + "\n")
+                                  str(df_diff.reset_index().sort(columns=[colabsdiff, 'trip_list_id_num'], ascending=[False,True]).loc[:,['trip_list_id_num','mode','originTaz','destinationTaz',col1, col2, coldiff, colabsdiff]].head()) + "\n")
         else:
             FastTripsLogger.debug(" -- diffs --\n" + \
                                   str(df_diff.sort(columns=colabsdiff, ascending=False).loc[:,[col1, col2, coldiff, colabsdiff]].head()) + "\n")
@@ -121,6 +136,8 @@ def compare_file(dir1, dir2, filename):
             status = "%d/%d objects differ" % (len(df_diff.loc[df_diff[coldiff]==True]), len(df_diff))
         elif str(df_diff[col1].dtype)[:3] == 'int':
             status = "Values differ by [% 8.2f,% 8.2f] with %d values differing" % (df_diff[coldiff].min(), df_diff[coldiff].max(), len(df_diff.loc[df_diff[coldiff]!=0]))
+        elif str(df_diff[col1].dtype) == 'datetime64[ns]':
+            status = "Values differ by [%s,%s] mins with mean %s" % (str(df_diff[coldiff].min()), str(df_diff[coldiff].max()), str(df_diff[coldiff].mean()))
         else:
             status = "Values differ by [% 8.2f,% 8.2f] with mean % 8.2f" % (df_diff[coldiff].min(), df_diff[coldiff].max(), df_diff[coldiff].mean())
         FastTripsLogger.info(" %-20s  %s" % (colname, status))
@@ -143,7 +160,7 @@ if __name__ == "__main__":
     fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True)
 
     pandas.set_option('display.width', 300)
-    for output_file in ["ft_output_passengerPaths.dat",
-                        "ft_output_passengerTimes.dat",
-                        "ft_output_loadProfile.dat"]:
+    for output_file in ["ft_output_passengerPaths.txt",
+                        "ft_output_passengerTimes.txt",
+                        "ft_output_loadProfile.txt"]:
         compare_file(OUTPUT_DIR1, OUTPUT_DIR2, output_file)
