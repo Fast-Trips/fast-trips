@@ -8,9 +8,16 @@ USAGE = """
 
   Compares the fasttrips output files in output_dir1 to those in output_dir2 and tallies up information on differences.
 
-  Output is logged to ft_compare_info.log (for summary output) and ft_compare_debug.log (for detailed output).
+  Output is logged to output_dir1:
+    * ft_compare_info.log (for summary output)
+    * ft_compare_debug.log (for detailed output)
+    * ft_join_pathset.csv has the joined pathset results
+    * ft_compare_pathset.csv has an aggregate summary of the pathset results (one line per trip_list_id_num)
 
 """
+
+# TODO: this should match the input in question
+STOCH_DISPERSION = 1.0
 
 SPLIT_COLS = {"ft_output_loadProfile.txt"   :[],
               "ft_output_passengerTimes.txt":['arrivalTimes','boardingTimes','alightingTimes'],
@@ -147,6 +154,92 @@ def compare_file(dir1, dir2, filename):
 
     # df_diff = df_diff[new_cols]
 
+def compare_pathset(dir1, dir2):
+    """
+    Compare the pathset to see if the pathset is 'better'
+    """
+    filename = "ft_pathset.txt"
+    filename1 = os.path.join(dir1, filename)
+    filename2 = os.path.join(dir2, filename)
+    FastTripsLogger.info("============== Comparing %s to %s" % (filename1, filename2))
+
+    df1 = pandas.read_csv(filename1, sep="\s+")
+    df2 = pandas.read_csv(filename2, sep="\s+")
+
+    merge_cols = ['iteration','passenger_id_num','trip_list_id_num','path_board_stops','path_trips','path_alight_stops']
+
+    # outer join
+    df_diff  = df1.merge(right=df2, how='outer', on=merge_cols, suffixes=('_1','_2'))
+
+    # make a single path_cost column
+    df_diff['path_cost'] = df_diff[['path_cost_1','path_cost_2']].min(axis=1)
+
+    # create probabilities based on the union of the path sets
+    df_diff['exp_util'] = numpy.exp(-1.0*STOCH_DISPERSION*df_diff['path_cost'])
+
+    # aggregate it to each person trip
+    df_diff['num total paths'] = 1
+    df_diff_counts = df_diff.groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'num total paths':'count', 'exp_util':'sum'})
+    df_diff_counts.rename(columns={'exp_util':'sum_exp_util'}, inplace=True)
+
+    # join it back to get the probability given a union pathset
+    df_diff = df_diff.merge(df_diff_counts.reset_index()[['iteration','passenger_id_num','trip_list_id_num','sum_exp_util']], how='left')
+    df_diff['union pathset probability'] = df_diff['exp_util']/df_diff['sum_exp_util']
+    # drop these
+    df_diff.drop(['exp_util','sum_exp_util'], axis=1, inplace=True)
+    df_diff_counts.drop(['sum_exp_util'], axis=1, inplace=True)
+
+    # write the joined one
+    join_filename = os.path.join(dir1, "ft_join_pathset.csv")
+    df_diff.to_csv(join_filename, sep=",", index=False)
+    FastTripsLogger.info("Wrote joined pathset diff info to %s" % join_filename)
+
+    # look at the nulls
+    df1_only = df_diff.loc[pandas.isnull(df_diff.path_cost_2)].groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'union pathset probability':'max','path_cost_1':'count'})
+    df1_only.rename(columns={'union pathset probability':'max prob missing from file2',
+                             'path_cost_1':'num paths missing from file2'}, inplace=True)
+    df2_only = df_diff.loc[pandas.isnull(df_diff.path_cost_1)].groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'union pathset probability':'max','path_cost_2':'count'})
+    df2_only.rename(columns={'union pathset probability':'max prob missing from file1',
+                             'path_cost_2':'num paths missing from file1'}, inplace=True)
+
+    df_diff_summary = df_diff_counts.merge(df1_only, how='left', left_index=True, right_index=True)
+    df_diff_summary = df_diff_summary.merge(df2_only, how='left', left_index=True, right_index=True)
+
+    # note paths for which we didn't find ANY in one or the other run
+    df_diff_summary['only in file1'] = 0
+    df_diff_summary.loc[df_diff_summary['num paths missing from file2']==df_diff_summary['num total paths'],'only in file1'] = 1
+    df_diff_summary['only in file2'] = 0
+    df_diff_summary.loc[df_diff_summary['num paths missing from file1']==df_diff_summary['num total paths'],'only in file2'] = 1
+    # NaN means zero
+    df_diff_summary.loc[pandas.isnull(df_diff_summary['num paths missing from file1']), 'num paths missing from file1'] = 0
+    df_diff_summary.loc[pandas.isnull(df_diff_summary['num paths missing from file2']), 'num paths missing from file2'] = 0
+
+    # write detailed output
+    detail_file = os.path.join(dir1, "ft_compare_pathset.csv")
+    df_diff_summary.reset_index().to_csv(detail_file, index=False)
+    FastTripsLogger.info("Wrote detailed pathset diff info to %s" % detail_file)
+
+    # Report
+    FastTripsLogger.info("                   Average pathset size: %.1f" % df_diff_summary['num total paths'].mean())
+    FastTripsLogger.info("     Trips with paths ONLY in pathset 1: %d" % df_diff_summary['only in file1'].sum())
+    FastTripsLogger.debug(" -- diffs --\n" + \
+                          str(df_diff_summary.loc[df_diff_summary['only in file1']==1]) + "\n")
+
+    FastTripsLogger.info("     Trips with paths ONLY in pathset 2: %d" % df_diff_summary['only in file2'].sum())
+    FastTripsLogger.debug(" -- diffs --\n" + \
+                          str(df_diff_summary.loc[df_diff_summary['only in file2']==1]) + "\n")
+
+    FastTripsLogger.info("   Average paths missing from pathset 1: %.1f" % df_diff_summary['num paths missing from file1'].mean())
+    FastTripsLogger.info(" Max probability missing from pathset 1: %.3f%%" % (100*df_diff_summary['max prob missing from file1'].max()))
+    FastTripsLogger.debug(" -- diffs --\n" + \
+        str(df_diff_summary[['max prob missing from file1','num paths missing from file1']].reset_index().sort_values(by=['max prob missing from file1', 'trip_list_id_num'], ascending=[False,True]).head()) + "\n")
+
+    FastTripsLogger.info("   Average paths missing from pathset 2: %.1f" % df_diff_summary['num paths missing from file2'].mean())
+    FastTripsLogger.info(" Max probability missing from pathset 2: %.3f%%" % (100*df_diff_summary['max prob missing from file2'].max()))
+    FastTripsLogger.debug(" -- diffs --\n" + \
+        str(df_diff_summary[['max prob missing from file2','num paths missing from file2']].reset_index().sort_values(by=['max prob missing from file2', 'trip_list_id_num'], ascending=[False,True]).head()) + "\n")
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:
@@ -157,10 +250,13 @@ if __name__ == "__main__":
     OUTPUT_DIR1 = sys.argv[1]
     OUTPUT_DIR2 = sys.argv[2]
 
-    fasttrips.setupLogging("ft_compare_info.log", "ft_compare_debug.log", logToConsole=True)
+    fasttrips.setupLogging(os.path.join(OUTPUT_DIR1, "ft_compare_info.log"),
+                           os.path.join(OUTPUT_DIR1, "ft_compare_debug.log"), logToConsole=True)
 
     pandas.set_option('display.width', 300)
     for output_file in ["ft_output_passengerPaths.txt",
                         "ft_output_passengerTimes.txt",
                         "ft_output_loadProfile.txt"]:
         compare_file(OUTPUT_DIR1, OUTPUT_DIR2, output_file)
+
+    compare_pathset(OUTPUT_DIR1, OUTPUT_DIR2)

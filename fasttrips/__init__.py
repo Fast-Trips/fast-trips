@@ -23,6 +23,7 @@ from .Stop import Stop
 from .TAZ import TAZ
 from .Transfer import Transfer
 from .Trip import Trip
+from .Util import Util
 
 __all__ = [
     'Event',
