@@ -424,7 +424,7 @@ namespace fasttrips {
     {
         // iterate through the weights
         double cost = 0;
-        if (false && path_spec.trace_) {
+        if (true && path_spec.trace_) {
             trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << mode_num_to_str_.find(supply_mode_num)->second;
             trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
         }
@@ -445,13 +445,13 @@ namespace fasttrips {
             }
 
             cost += iter_weights->second * iter_attr->second;
-            if (false && path_spec.trace_) {
+            if (true && path_spec.trace_) {
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
                 trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
                 trace_file << " x " << iter_attr->second << std::endl;
             }
         }
-        if (false && path_spec.trace_) {
+        if (true && path_spec.trace_) {
             trace_file << std::setw(26) << std::setfill(' ') << "final cost" << ":  = ";
             trace_file << std::setw(13) << std::setprecision(4) << std::fixed << cost << std::endl;
         }
@@ -854,8 +854,10 @@ namespace fasttrips {
             // stochastic/hyperpath: cost update
             if (path_spec.hyperpath_)
             {
-                link_cost           = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, transfer_weights, transfer_it->second);
-                cost                = nonwalk_label + link_cost;
+                Attributes link_attr            = transfer_it->second;
+                link_attr["transfer_penalty"]   = 1.0;
+                link_cost                       = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, transfer_weights, link_attr);
+                cost                            = nonwalk_label + link_cost;
 
             }
             // deterministic: label = cost = total time, just additive
@@ -925,6 +927,7 @@ namespace fasttrips {
         // current_stop_state is a vector
         std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
         int current_mode = current_stop_state[0].deparr_mode_;      // why index 0 for hyperpath?-- should this be the latest_dep_earliest_arrival mode?
+        int current_trip_id = current_stop_state[0].trip_id_;
         double latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
         if (path_spec.hyperpath_) {
             latest_dep_earliest_arr = hyperpath_ss[current_label_stop.stop_id_].latest_dep_earliest_arr_;
@@ -1055,6 +1058,52 @@ namespace fasttrips {
                     link_attr["in_vehicle_time_min"] = in_vehicle_time;
                     link_attr["wait_time_min"      ] = wait_time;
 
+                    link_cost = 0;
+                    // If outbound, and the current link is egress, then it's as late as possible and the wait time isn't accurate.
+                    // It should be a preferred delay time instead
+                    // ditto for inbound and access
+                    if (( path_spec.outbound_ && current_mode == MODE_EGRESS) ||
+                        (!path_spec.outbound_ && current_mode == MODE_ACCESS)) {
+                        link_attr["wait_time_min"      ] = 0;
+
+
+                        // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
+                        Attributes delay_attr;
+                        delay_attr["time_min"           ] = 0;
+                        delay_attr["preferred_delay_min"] = wait_time;
+                        UserClassMode delay_ucm = { path_spec.user_class_,
+                                                    path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
+                                                    path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_
+                                                  };
+                        WeightLookup::const_iterator delay_iter_weights = weight_lookup_.find(delay_ucm);
+                        if (delay_iter_weights != weight_lookup_.end()) {
+                            SupplyModeToNamedWeights::const_iterator delay_iter_s2w = delay_iter_weights->second.find(current_trip_id);
+                            if (delay_iter_s2w != delay_iter_weights->second.end()) {
+                                link_cost = tallyLinkCost(current_trip_id, path_spec, trace_file, delay_iter_s2w->second, delay_attr);
+                            }
+                        }
+                    }
+
+                    // if we have a zero walk transfer, we still need to penalize
+                    else if (isTrip(current_mode)) {
+                        // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
+                        Attributes xfer_attr;
+                        xfer_attr["transfer_penalty"] = 1.0;
+                        xfer_attr["walk_time_min"   ] = 0.0;
+
+                        UserClassMode xfer_ucm = { path_spec.user_class_, MODE_TRANSFER, "transfer"};
+                        WeightLookup::const_iterator xfer_iter_weights = weight_lookup_.find(xfer_ucm);
+                        if (xfer_iter_weights != weight_lookup_.end()) {
+                           SupplyModeToNamedWeights::const_iterator xfer_iter_s2w = xfer_iter_weights->second.find(transfer_supply_mode_);
+                           if (xfer_iter_s2w != xfer_iter_weights->second.end()) {
+                                link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, xfer_iter_s2w->second, xfer_attr);
+                           }
+                        }
+                    }
+
+                    // if we calculate the transfer penalty on the transit links.
+                    // I think we can't do this as it's problematic
+                    // TODO: devise test to demonstrate
                     // these are special -- set them
                     if ((current_mode == MODE_ACCESS) || (current_mode == MODE_EGRESS)) {
                         link_attr["transfer_penalty"] = 0.0;
@@ -1063,7 +1112,7 @@ namespace fasttrips {
                     }
 
 
-                    link_cost = tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
+                    link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
                     cost      = hyperpath_ss[current_label_stop.stop_id_].hyperpath_cost_ + link_cost;
 
                 }
@@ -1439,13 +1488,6 @@ namespace fasttrips {
                 // don't double on the same trip ID - that's already covered by a single trip
                 if (state.deparr_mode_ == MODE_TRANSIT && state.trip_id_ == prev_trip_id) { continue; }
 
-
-                if (path_spec.trace_) {
-                    trace_file << "            ";
-                    printStopState(trace_file, current_stop_id, state, path_spec);
-                    trace_file << "  ugh " << std::scientific << state.deparr_time_ - arrdep_time << std::endl;
-                }
-
                 // outbound: we cannot depart before we arrive
                 if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }
                 // inbound: we cannot arrive after we depart
@@ -1724,8 +1766,9 @@ namespace fasttrips {
 
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_TRANSFER, "transfer" };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(transfer_supply_mode_)->second;
-                const Attributes&   attributes    = transfer_links_o_d_.find(orig_stop)->second.find(dest_stop)->second;
-                stop_state.cost_                  = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, named_weights, attributes);
+                Attributes link_attr              = transfer_links_o_d_.find(orig_stop)->second.find(dest_stop)->second;
+                link_attr["transfer_penalty"]     = 1.0;
+                stop_state.cost_                  = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, named_weights, link_attr);
                 path_info.cost_                  += stop_state.cost_;
             }
             // ============= trip =============
