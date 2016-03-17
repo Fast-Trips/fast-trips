@@ -87,6 +87,12 @@ class Assignment:
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
+    #: Route choice configuration: How many times max times should we process a stop
+    #: during labeling?  Use -1 to specify no max.  Int.
+    #: Setting this to a positive value may increase runtime but may decrease
+    #: pathset quality. (Todo: test/quantify this.)
+    STOCH_MAX_STOP_PROCESS_COUNT    = None
+
     #: Route choice configuration: How many stochastic paths will we generate
     #: (not necessarily unique) to define a path choice set?  Int.
     STOCH_PATHSET_SIZE              = None
@@ -178,6 +184,7 @@ class Assignment:
                       'skim_start_time'                 :'5:00',
                       'skim_end_time'                   :'10:00',
                       'stochastic_dispersion'           :1.0,
+                      'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
                       'capacity_constraint'             :False,
                       'trace_person_ids'                :'None',
@@ -208,6 +215,7 @@ class Assignment:
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
         Assignment.STOCH_DISPERSION              = parser.getfloat  ('fasttrips','stochastic_dispersion')
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('fasttrips','stochastic_pathset_size')
+        Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('fasttrips','stochastic_max_stop_process_count')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
@@ -247,6 +255,7 @@ class Assignment:
         parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
         parser.set('fasttrips','stochastic_dispersion',         '%f' % Assignment.STOCH_DISPERSION)
+        parser.set('fasttrips','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
@@ -280,7 +289,8 @@ class Assignment:
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
-                                         Assignment.STOCH_DISPERSION)
+                                         Assignment.STOCH_DISPERSION,
+                                         Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):

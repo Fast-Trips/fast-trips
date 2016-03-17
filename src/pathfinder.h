@@ -265,6 +265,9 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         double STOCH_DISPERSION_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT</a>
+        int STOCH_MAX_STOP_PROCESS_COUNT_;
         ///@}
 
         /// directory in which to write trace files
@@ -493,7 +496,8 @@ namespace fasttrips {
         void initializeParameters(double     time_window,
                                   double     bump_buffer,
                                   int        stoch_pathset_size,
-                                  double     stoch_dispersion);
+                                  double     stoch_dispersion,
+                                  int        stoch_max_stop_process_count);
 
         /**
          * Setup the network supply.  This should happen once, before any pathfinding.

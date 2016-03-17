@@ -19,10 +19,11 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     double     bump_buffer;
     int        stoch_pathset_size;
     double     stoch_dispersion;
-    if (!PyArg_ParseTuple(args, "ddid", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion)) {
+    int        stoch_max_stop_process_count;
+    if (!PyArg_ParseTuple(args, "ddidi", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count)) {
         return NULL;
     }
-    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion);
+    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion, stoch_max_stop_process_count);
     Py_RETURN_NONE;
 
 }

@@ -41,12 +41,14 @@ namespace fasttrips {
         double     time_window,
         double     bump_buffer,
         int        stoch_pathset_size,
-        double     stoch_dispersion)
+        double     stoch_dispersion,
+        int        stoch_max_stop_process_count)
     {
-        TIME_WINDOW_        = time_window;
-        BUMP_BUFFER_        = bump_buffer;
-        STOCH_PATHSET_SIZE_ = stoch_pathset_size;
-        STOCH_DISPERSION_   = stoch_dispersion;
+        TIME_WINDOW_                    = time_window;
+        BUMP_BUFFER_                    = bump_buffer;
+        STOCH_PATHSET_SIZE_             = stoch_pathset_size;
+        STOCH_DISPERSION_               = stoch_dispersion;
+        STOCH_MAX_STOP_PROCESS_COUNT_   = stoch_max_stop_process_count;
     }
 
     void PathFinder::readIntermediateFiles()
@@ -1230,6 +1232,14 @@ namespace fasttrips {
 
             // hyperpath only
             if (path_spec.hyperpath_) {
+                // have we hit the configured limit?
+                if ((STOCH_MAX_STOP_PROCESS_COUNT_ > 0) && (hyperpath_ss[current_label_stop.stop_id_].process_count_ == STOCH_MAX_STOP_PROCESS_COUNT_)) {
+                    if (path_spec.trace_) {
+                        trace_file << "Pulling from label_stop_queue but stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
+                        trace_file << " has been processed the limit " << STOCH_MAX_STOP_PROCESS_COUNT_ << " times so skipping." << std::endl;
+                    }
+                    continue;
+                }
                 // stop is processing
                 hyperpath_ss[current_label_stop.stop_id_].process_count_ += 1;
                 max_process_count = max(max_process_count, hyperpath_ss[current_label_stop.stop_id_].process_count_);
