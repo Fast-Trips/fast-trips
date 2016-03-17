@@ -108,12 +108,8 @@ class Path:
         else:
             raise Exception("Don't understand trip_list %s: %s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(trip_list_dict)))
 
-        #: This will include the stops and their related states
-        #: Ordered dictionary: origin_taz_id -> state,
-        #:                     stop_id -> state
-        #: Note that if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`, then
-        #: this is in reverse order (egress to access)
-        self.states = collections.OrderedDict()
+        #: List of (stop_id, stop_state)
+        self.states = []
 
         #: Final path cost, will be filled in during path finding
         self.cost   = 0.0
@@ -134,7 +130,7 @@ class Path:
         """
         Delete my states, something went wrong and it won't work out.
         """
-        self.states.clear()
+        self.states = []
 
     def num_states(self):
         """
@@ -233,7 +229,7 @@ class Path:
 
 
     @staticmethod
-    def state_str_header(state, direction=DIR_OUTBOUND):
+    def state_str_header(direction=DIR_OUTBOUND):
         """
         Returns a header for the state_str
         """
@@ -280,8 +276,8 @@ class Path:
         Given that states is an ordered dict of states, returns a string version of the path therein.
         """
         if len(states) == 0: return "\nNo path"
-        readable_str = "\n%s" % Path.state_str_header(states.items()[0][1], direction)
-        for state_id,state in states.iteritems():
+        readable_str = "\n%s" % Path.state_str_header(direction)
+        for state_id,state in states:
             readable_str += "\n%s" % Path.state_str(state_id, state)
         return readable_str
 

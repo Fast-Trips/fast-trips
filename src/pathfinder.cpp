@@ -1044,7 +1044,9 @@ namespace fasttrips {
                     if (path_spec.trace_) { trace_file << "trip crossed midnight; adjusting deparr_time" << std::endl; }
                 }
                 double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
-                double  link_cost, cost;
+                double  cost      = 0;
+                double  link_cost = 0;
+
                 if (in_vehicle_time < 0) {
                     printf("in_vehicle_time < 0 -- this shouldn't happen\n");
                     if (path_spec.trace_) { trace_file << "in_vehicle_time < 0 -- this shouldn't happen!" << std::endl; }
@@ -1111,6 +1113,22 @@ namespace fasttrips {
                         link_attr["transfer_penalty"] = 1.0;
                     }
 
+                    // if we have a zero walk transfer, we still need to penalize
+                    if (isTrip(current_mode)) {
+                        // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
+                        Attributes xfer_attr;
+                        xfer_attr["transfer_penalty"] = 1.0;
+                        xfer_attr["walk_time_min"   ] = 0.0;
+
+                        UserClassMode xfer_ucm = { path_spec.user_class_, MODE_TRANSFER, "transfer"};
+                        WeightLookup::const_iterator xfer_iter_weights = weight_lookup_.find(xfer_ucm);
+                        if (xfer_iter_weights != weight_lookup_.end()) {
+                           SupplyModeToNamedWeights::const_iterator xfer_iter_s2w = xfer_iter_weights->second.find(transfer_supply_mode_);
+                           if (xfer_iter_s2w != xfer_iter_weights->second.end()) {
+                                link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, xfer_iter_s2w->second, xfer_attr);
+                           }
+                        }
+                    }
 
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
                     cost      = hyperpath_ss[current_label_stop.stop_id_].hyperpath_cost_ + link_cost;
@@ -1764,10 +1782,17 @@ namespace fasttrips {
                 int orig_stop                     = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
                 int dest_stop                     = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
 
+                Attributes link_attr;
+                if (orig_stop != dest_stop) {
+                    link_attr = transfer_links_o_d_.find(orig_stop)->second.find(dest_stop)->second;
+                } else {
+                    // TODO: this is awkward... Plus we don't nec have all the attributes set.  Store a default no-walk transfer link?
+                    link_attr["walk_time_min"]    = 0.0;
+                }
+                link_attr["transfer_penalty"]     = 1.0;
+
                 UserClassMode ucm                 = { path_spec.user_class_, MODE_TRANSFER, "transfer" };
                 const NamedWeights& named_weights = weight_lookup_.find(ucm)->second.find(transfer_supply_mode_)->second;
-                Attributes link_attr              = transfer_links_o_d_.find(orig_stop)->second.find(dest_stop)->second;
-                link_attr["transfer_penalty"]     = 1.0;
                 stop_state.cost_                  = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, named_weights, link_attr);
                 path_info.cost_                  += stop_state.cost_;
             }
@@ -1795,6 +1820,40 @@ namespace fasttrips {
                 path_info.cost_                  += stop_state.cost_;
 
                 first_trip = false;
+
+                // if the next link is a trip, insert a transfer link
+                if (isTrip(path[index+inc].second.deparr_mode_)) {
+                    int xfer_stop_id = path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id;
+                    StopState xfer_state = {
+                        stop_state.label_,     // label
+                        path_spec.outbound_ ? stop_state.arrdep_time_ : stop_state.deparr_time_, // departure/arrival time
+                        MODE_TRANSFER,         // mode
+                        transfer_supply_mode_, // trip id
+                        xfer_stop_id,          // stop successor/pred
+                        -1,                    // seq
+                        -1,                    // seq successor/pred
+                        0,                     // link time
+                        0,                     // link cost  -- will be tallied later
+                        stop_state.cost_,      // cost
+                        -1,                    // iteration
+                        path_spec.outbound_ ? stop_state.arrdep_time_ : stop_state.deparr_time_
+                    };
+                    if (path_spec.trace_) {
+                        trace_file << "Adding ";
+                        printStopState(trace_file, xfer_stop_id, xfer_state, path_spec);
+                        trace_file << std::endl;
+                    }
+                    // going forward so insert after index, before index+1
+                    if (path_spec.outbound_) {
+                        path.insert( path.begin()+index+1, std::make_pair(xfer_stop_id, xfer_state) );
+                        end_ind += 1;
+                    }
+                    // going backward so insert before index
+                    else {
+                        path.insert( path.begin()+index, std::make_pair(stop_id, xfer_state) );
+                        index += 1;
+                    }
+                }
             }
         }
 

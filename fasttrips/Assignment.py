@@ -529,8 +529,8 @@ class Assignment:
         # FastTripsLogger.debug("C++ extension complete")
         # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (path.person_id, path.trip_list_id_num))
 
-        # Put the results into an ordered dict statelist
-        return_states = collections.OrderedDict()
+        # Put the results into an list of (stop_id, state array)
+        return_states = []
         midnight = datetime.datetime.combine(Assignment.TODAY, datetime.time())
 
         for index in range(ret_ints.shape[0]):
@@ -546,7 +546,7 @@ class Assignment:
                 mode = Passenger.MODE_GENERIC_TRANSIT_NUM
 
             if hyperpath:
-                return_states[ret_ints[index, 0]] = [
+                return_states.append( (ret_ints[index, 0], [
                               ret_doubles[index,0],                                         # label,
                               midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
                               mode,                                                         # departure/arrival mode
@@ -557,9 +557,9 @@ class Assignment:
                               datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
                               ret_doubles[index,3],                                         # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
-                              ]
+                              ] ) )
             else:
-                return_states[ret_ints[index, 0]] = [
+                return_states.append( (ret_ints[index, 0], [
                               datetime.timedelta(minutes=ret_doubles[index,0]),              # label,
                               midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
                               mode,                                                         # departure/arrival mode
@@ -570,7 +570,7 @@ class Assignment:
                               datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
                               datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
-                              ]
+                              ] ) )
         return (path_cost, return_states)
 
     @staticmethod
@@ -674,73 +674,56 @@ class Assignment:
             #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
             prev_linkmode = None
             prev_state_id = None
-            if len(path.states) > 1:
-                state_list = path.states.keys()
-                if not path.outbound(): state_list = list(reversed(state_list))
 
-                for state_index in range(len(state_list)):
-                    state_id        = state_list[state_index]
+            state_list = path.states
+            if not path.outbound(): state_list = list(reversed(state_list))
 
-                    state           = path.states[state_id]
-                    linkmode        = state[Path.STATE_IDX_DEPARRMODE]
-                    trip_id         = None
-                    if linkmode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
-                        trip_id     = state[Path.STATE_IDX_TRIP]
-                        linkmode    = Path.STATE_MODE_TRIP
+            for (state_id, state) in state_list:
 
-                    if path.outbound():
-                        a_id_num    = state_id
-                        b_id_num    = state[Path.STATE_IDX_SUCCPRED]
-                        a_seq       = state[Path.STATE_IDX_SEQ]
-                        b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
-                        b_time      = state[Path.STATE_IDX_ARRDEP]
-                        a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
-                    else:
-                        a_id_num    = state[Path.STATE_IDX_SUCCPRED]
-                        b_id_num    = state_id
-                        a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
-                        b_seq       = state[Path.STATE_IDX_SEQ]
-                        b_time      = state[Path.STATE_IDX_DEPARR]
-                        a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+                linkmode        = state[Path.STATE_IDX_DEPARRMODE]
+                trip_id         = None
+                if linkmode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
+                    trip_id     = state[Path.STATE_IDX_TRIP]
+                    linkmode    = Path.STATE_MODE_TRIP
 
-                    # two trips in a row -- insert zero-walk transfer
-                    if linkmode == Path.STATE_MODE_TRIP and prev_linkmode == Path.STATE_MODE_TRIP:
-                        row = [path.person_id,
-                               trip_list_id,
-                               path.direction,
-                               path.mode,
-                               Path.STATE_MODE_TRANSFER,
-                               None,
-                               a_id_num,
-                               a_id_num,
-                               a_seq,
-                               a_seq,
-                               a_time,
-                               a_time,
-                               datetime.timedelta(),
-                               path.cost,
-                              ]
-                        mylist.append(row)
+                if path.outbound():
+                    a_id_num    = state_id
+                    b_id_num    = state[Path.STATE_IDX_SUCCPRED]
+                    a_seq       = state[Path.STATE_IDX_SEQ]
+                    b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
+                    b_time      = state[Path.STATE_IDX_ARRDEP]
+                    a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+                else:
+                    a_id_num    = state[Path.STATE_IDX_SUCCPRED]
+                    b_id_num    = state_id
+                    a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
+                    b_seq       = state[Path.STATE_IDX_SEQ]
+                    b_time      = state[Path.STATE_IDX_DEPARR]
+                    a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
 
-                    row = [path.person_id,
-                           trip_list_id,
-                           path.direction,
-                           path.mode,
-                           linkmode,
-                           trip_id,
-                           a_id_num,
-                           b_id_num,
-                           a_seq,
-                           b_seq,
-                           a_time,
-                           b_time,
-                           state[Path.STATE_IDX_LINKTIME],
-                           path.cost,
-                           ]
-                    mylist.append(row)
+                # two trips in a row -- this shouldn't happen
+                if linkmode == Path.STATE_MODE_TRIP and prev_linkmode == Path.STATE_MODE_TRIP:
+                    FastTripsLogger.warn("Two trip links in a row... this shouldn't happen.  trip_list_id is %s\n%s\n" % (str(trip_list_id), str(path)))
 
-                    prev_linkmode = linkmode
-                    prev_state_id = state_id
+                row = [path.person_id,
+                       trip_list_id,
+                       path.direction,
+                       path.mode,
+                       linkmode,
+                       trip_id,
+                       a_id_num,
+                       b_id_num,
+                       a_seq,
+                       b_seq,
+                       a_time,
+                       b_time,
+                       state[Path.STATE_IDX_LINKTIME],
+                       path.cost,
+                       ]
+                mylist.append(row)
+
+                prev_linkmode = linkmode
+                prev_state_id = state_id
 
         df =  pandas.DataFrame(mylist,
                                columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
