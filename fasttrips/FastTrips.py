@@ -191,7 +191,7 @@ class FastTrips:
 
         if pathset_init:
             # sort it by iteration, trip_id_num
-            pathsets_df.sort(columns=['iteration','trip_list_id_num'], inplace=True)
+            pathsets_df.sort_values(by=['iteration','trip_list_id_num'], inplace=True)
             # write it
             pathset_filename = os.path.join(self.output_dir, FastTrips.PATHSET_LOG % "")
             pathsets_df.to_csv(pathset_filename, sep=" ", index=False)
