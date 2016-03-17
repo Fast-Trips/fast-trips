@@ -1825,7 +1825,6 @@ namespace fasttrips {
                 if (isTrip(path[index+inc].second.deparr_mode_)) {
                     int xfer_stop_id = path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id;
                     StopState xfer_state = {
-                        stop_state.label_,     // label
                         path_spec.outbound_ ? stop_state.arrdep_time_ : stop_state.deparr_time_, // departure/arrival time
                         MODE_TRANSFER,         // mode
                         transfer_supply_mode_, // trip id
