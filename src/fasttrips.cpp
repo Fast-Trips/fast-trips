@@ -116,7 +116,8 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 
     fasttrips::Path path;
     fasttrips::PathInfo path_info = {0, 0, false, 0, 0};
-    pathfinder.findPath(path_spec, path, path_info);
+    fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0};
+    pathfinder.findPath(path_spec, path, path_info, perf_info);
 
     // package for returning.  We'll separate ints and doubles.
     npy_intp dims_int[2];
@@ -144,7 +145,9 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[ind].second.arrdep_time_;
     }
 
-    PyObject *returnobj = Py_BuildValue("(OOd)",ret_int,ret_double,path_info.cost_);
+    PyObject *returnobj = Py_BuildValue("(OOdiill)",ret_int,ret_double,path_info.cost_,
+                                        perf_info.label_iterations_, perf_info.max_process_count_,
+                                        perf_info.milliseconds_labeling_, perf_info.milliseconds_enumerating_);
     return returnobj;
 }
 

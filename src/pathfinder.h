@@ -4,6 +4,7 @@
  * Defines the C++ the finds a transit path for fast-trips.
  */
 
+#include <ctime>
 #include <map>
 #include <vector>
 #include <queue>
@@ -213,6 +214,14 @@ namespace fasttrips {
         int     prob_i_;                        ///< Cumulative probability * RAND_MAX (for stochastic)
     } PathInfo;
 
+    /** Performance information to return. */
+    typedef struct {
+        int     label_iterations_;              ///< Number of label iterations performed
+        int     max_process_count_;             ///< Maximum number of times a stop was processed
+        long    milliseconds_labeling_;         ///< Number of seconds spent in labeling
+        long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
+    } PerformanceInfo;
+
     /// Comparator to for Path instances so we can put them in a map as keys.
     /// TODO: doc more?
     struct PathCompare {
@@ -381,7 +390,8 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
-                                  HyperpathStopStates& hyperpath_ss) const;
+                                  HyperpathStopStates& hyperpath_ss,
+                                  int& max_process_count) const;
 
         /**
          * This is like the reverse of PathFinder::initializeStopStates.
@@ -531,6 +541,7 @@ namespace fasttrips {
          */
         void findPath(PathSpecification path_spec,
                       Path              &path,
-                      PathInfo          &path_info) const;
+                      PathInfo          &path_info,
+                      PerformanceInfo   &performance_info) const;
     };
 }

@@ -17,14 +17,15 @@ import collections,datetime,math,multiprocessing,os,random,sys,traceback
 import numpy,pandas
 import _fasttrips
 
-from .Logger    import FastTripsLogger, setupLogging
-from .Passenger import Passenger
-from .Path      import Path
-from .Stop      import Stop
-from .TAZ       import TAZ
-from .Transfer  import Transfer
-from .Trip      import Trip
-from .Util      import Util
+from .Logger      import FastTripsLogger, setupLogging
+from .Passenger   import Passenger
+from .Path        import Path
+from .Performance import Performance
+from .Stop        import Stop
+from .TAZ         import TAZ
+from .Transfer    import Transfer
+from .Trip        import Trip
+from .Util        import Util
 
 class Assignment:
     """
@@ -417,11 +418,13 @@ class Assignment:
                         trace_person = True
 
                     # do the work
-                    (cost, return_states) = Assignment.find_trip_based_path(iteration, FT, trip_path,
-                                                                            Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
-                                                                            trace=trace_person)
+                    (cost, return_states, perf_dict) = \
+                        Assignment.find_trip_based_path(iteration, FT, trip_path,
+                                                        Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                        trace=trace_person)
                     trip_path.states = return_states
                     trip_path.cost   = cost
+                    FT.performance.add_info(iteration, trip_list_id, perf_dict)
 
                     if trip_path.path_found():
                         num_paths_found_now += 1
@@ -454,6 +457,10 @@ class Assignment:
                         path            = FT.passengers.get_path(trip_list_id)
                         path.cost       = result[1]
                         path.states     = result[2]
+                        perf_dict       = result[3]
+
+                        FT.performance.add_info(iteration, trip_list_id, perf_dict)
+
                         if path.path_found():
                             num_paths_found_now += 1
 
@@ -492,6 +499,7 @@ class Assignment:
                                  int( time_elapsed.total_seconds() / 3600),
                                  int( (time_elapsed.total_seconds() % 3600) / 60),
                                  time_elapsed.total_seconds() % 60))
+
         return num_paths_found_now + num_paths_found_prev
 
 
@@ -503,7 +511,15 @@ class Assignment:
         Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
         or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
 
-        Returns (path cost, return_states).
+        Returns (path cost,
+                 return_states,
+                 performance_dict)
+
+        Where performance_dict includes:
+                 number of label iterations,
+                 max number of times a stop was processed,
+                 seconds spent in labeling,
+                 seconds spend in enumeration
 
         :param iteration: The pathfinding iteration we're on
         :type  iteration: int
@@ -520,7 +536,9 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles, path_cost) = \
+        (ret_ints, ret_doubles, path_cost,
+         label_iterations, max_label_process_count,
+         seconds_labeling, seconds_enumerating) = \
             _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath,
                                  path.user_class, path.access_mode, path.transit_mode, path.egress_mode,
                                  path.o_taz_num, path.d_taz_num,
@@ -571,7 +589,14 @@ class Assignment:
                               datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
                               ] ) )
-        return (path_cost, return_states)
+        perf_dict = { \
+            Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
+            Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,
+            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : seconds_labeling,
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : seconds_enumerating,
+            Performance.PERFORMANCE_COLUMN_TRACED                : trace,
+        }
+        return (path_cost, return_states, perf_dict)
 
     @staticmethod
     def read_assignment_results(output_dir, iteration):
@@ -1261,8 +1286,8 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
             trace_person = True
 
         try:
-            (cost, return_states) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
-            done_queue.put( (path.trip_list_id_num, cost, return_states) )
+            (cost, return_states, perf_dict) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
+            done_queue.put( (path.trip_list_id_num, cost, return_states, perf_dict) )
         except:
             FastTripsLogger.exception('Exception')
             # call it a day

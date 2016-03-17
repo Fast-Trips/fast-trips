@@ -495,7 +495,7 @@ class Trip:
                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]].groupby([Trip.STOPTIMES_COLUMN_STOP_ID,
                                                                                  Trip.TRIPS_COLUMN_ROUTE_ID])
 
-        stop_group_df = stop_group.apply(lambda x: x.sort(Trip.STOPTIMES_COLUMN_DEPARTURE_TIME))
+        stop_group_df = stop_group.apply(lambda x: x.sort_values(Trip.STOPTIMES_COLUMN_DEPARTURE_TIME))
         # set headway, in minutes
         stop_group_shift_df = stop_group_df.shift()
         stop_group_df['headway'] = (stop_group_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - stop_group_shift_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME])/numpy.timedelta64(1,'m')

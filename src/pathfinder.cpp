@@ -1,5 +1,7 @@
 #include "pathfinder.h"
 
+#include <windows.h>
+
 #include <assert.h>
 #include <sstream>
 #include <ios>
@@ -9,6 +11,7 @@
 #include <string>
 #include <math.h>
 #include <algorithm>
+
 
 const char kPathSeparator =
 #ifdef _WIN32
@@ -360,8 +363,9 @@ namespace fasttrips {
     }
 
     void PathFinder::findPath(PathSpecification path_spec,
-                              Path& path,
-                              PathInfo          &path_info) const
+                              Path              &path,
+                              PathInfo          &path_info,
+                              PerformanceInfo   &performance_info) const
     {
         // for now we'll just trace
         // if (!path_spec.trace_) { return; }
@@ -398,17 +402,50 @@ namespace fasttrips {
         LabelStopQueue       label_stop_queue;
         HyperpathStopStates  hyperpath_ss;
 
+        // TODO: make this platform-agnostic.  probably with std::chrono.
+        // QueryPerformanceFrequency reference: https://msdn.microsoft.com/en-us/library/windows/desktop/dn553408(v=vs.85).aspx
+        LARGE_INTEGER        frequency;
+        LARGE_INTEGER        labeling_start_time, labeling_end_time, pathfind_end_time;
+        LARGE_INTEGER        label_elapsed, pathfind_elapsed;
+        QueryPerformanceFrequency(&frequency);
+        QueryPerformanceCounter(&labeling_start_time);
+
         // todo: handle failure
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue, hyperpath_ss);
 
-        int label_iteration = labelStops(path_spec, trace_file, stop_states, label_stop_queue, hyperpath_ss);
+        performance_info.label_iterations_ = labelStops(path_spec, trace_file, stop_states, label_stop_queue, hyperpath_ss, performance_info.max_process_count_);
 
         std::vector<StopState> taz_state;
-        finalizeTazState(path_spec, trace_file, stop_states, label_stop_queue, label_iteration, hyperpath_ss);
+        finalizeTazState(path_spec, trace_file, stop_states, label_stop_queue, performance_info.label_iterations_, hyperpath_ss);
+
+        QueryPerformanceCounter(&labeling_end_time);
 
         getFoundPath(path_spec, trace_file, stop_states, hyperpath_ss, path, path_info);
 
+        QueryPerformanceCounter(&pathfind_end_time);
+
+        label_elapsed.QuadPart                = labeling_end_time.QuadPart - labeling_start_time.QuadPart;
+        pathfind_elapsed.QuadPart             = pathfind_end_time.QuadPart - labeling_end_time.QuadPart;
+
+        // We now have the elapsed number of ticks, along with the
+        // number of ticks-per-second. We use these values
+        // to convert to the number of elapsed milliseconds.
+        // To guard against loss-of-precision, we convert
+        // to microseconds *before* dividing by ticks-per-second.
+        label_elapsed.QuadPart    *= 1000;
+        label_elapsed.QuadPart    /= frequency.QuadPart;
+        pathfind_elapsed.QuadPart *= 1000;
+        pathfind_elapsed.QuadPart /= frequency.QuadPart;
+
+        performance_info.milliseconds_labeling_    = (long)label_elapsed.QuadPart;
+        performance_info.milliseconds_enumerating_ = (long)pathfind_elapsed.QuadPart;
+
         if (path_spec.trace_) {
+
+            trace_file << "        label iterations: " << performance_info.label_iterations_    << std::endl;
+            trace_file << "       max process count: " << performance_info.max_process_count_   << std::endl;
+            trace_file << "   milliseconds labeling: " << performance_info.milliseconds_labeling_    << std::endl;
+            trace_file << "milliseconds enumerating: " << performance_info.milliseconds_enumerating_ << std::endl;
             trace_file.close();
             label_file.close();
             stopids_file.close();
@@ -1164,7 +1201,8 @@ namespace fasttrips {
                                           std::ofstream& trace_file,
                                           StopStates& stop_states,
                                           LabelStopQueue& label_stop_queue,
-                                          HyperpathStopStates& hyperpath_ss) const
+                                          HyperpathStopStates& hyperpath_ss,
+                                          int& max_process_count) const
     {
         int label_iterations = 1;
         std::tr1::unordered_set<int> stop_done;
@@ -1194,6 +1232,7 @@ namespace fasttrips {
             if (path_spec.hyperpath_) {
                 // stop is processing
                 hyperpath_ss[current_label_stop.stop_id_].process_count_ += 1;
+                max_process_count = max(max_process_count, hyperpath_ss[current_label_stop.stop_id_].process_count_);
             }
 
             // no transfers to the stop
@@ -1350,9 +1389,9 @@ namespace fasttrips {
                                                                 ssi != current_stop_state.end(); ++ssi)
                     {
                         if (path_spec.outbound_) {
-                            earliest_dep_latest_arr = std::min(earliest_dep_latest_arr, ssi->deparr_time_);
+                            earliest_dep_latest_arr = min(earliest_dep_latest_arr, ssi->deparr_time_);
                         } else {
-                            earliest_dep_latest_arr = std::max(earliest_dep_latest_arr, ssi->deparr_time_);
+                            earliest_dep_latest_arr = max(earliest_dep_latest_arr, ssi->deparr_time_);
                         }
                     }
                     nonwalk_label = calculateNonwalkLabel(current_stop_state);
