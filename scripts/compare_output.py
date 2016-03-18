@@ -239,6 +239,28 @@ def compare_pathset(dir1, dir2):
     FastTripsLogger.debug(" -- diffs --\n" + \
         str(df_diff_summary[['max prob missing from file2','num paths missing from file2']].reset_index().sort_values(by=['max prob missing from file2', 'trip_list_id_num'], ascending=[False,True]).head()) + "\n")
 
+def compare_performance(dir1, dir2):
+    """
+    Compare performance output
+    """
+    filename = "ft_output_performance.txt"
+    filename1 = os.path.join(dir1, filename)
+    filename2 = os.path.join(dir2, filename)
+    FastTripsLogger.info("============== Comparing %s to %s" % (filename1, filename2))
+
+    df1 = pandas.read_csv(filename1, sep="\t")
+    df2 = pandas.read_csv(filename2, sep="\t")
+
+    # drop the text-y ones
+    df1.drop([fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING, fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING], axis=1, inplace=True)
+    df2.drop([fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING, fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING], axis=1, inplace=True)
+
+    df_perf_diff  = df1.merge(right=df2, how='outer', on=['iteration','trip_list_id_num'], suffixes=('_1','_2'))
+
+    # write the joined one
+    join_filename = os.path.join(dir1, "ft_compare_performance.csv")
+    df_perf_diff.to_csv(join_filename, sep=",", index=False)
+    FastTripsLogger.info("Wrote joined performance info to %s" % join_filename)
 
 if __name__ == "__main__":
 
@@ -260,3 +282,4 @@ if __name__ == "__main__":
         compare_file(OUTPUT_DIR1, OUTPUT_DIR2, output_file)
 
     compare_pathset(OUTPUT_DIR1, OUTPUT_DIR2)
+    compare_performance(OUTPUT_DIR1, OUTPUT_DIR2)
