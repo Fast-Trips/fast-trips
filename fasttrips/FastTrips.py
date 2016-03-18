@@ -17,14 +17,15 @@ from operator import attrgetter
 import pandas
 import transitfeed
 
-from .Assignment import Assignment
-from .Logger import FastTripsLogger, setupLogging
-from .Passenger import Passenger
-from .Route import Route
-from .Stop import Stop
-from .TAZ import TAZ
-from .Transfer import Transfer
-from .Trip import Trip
+from .Assignment  import Assignment
+from .Logger      import FastTripsLogger, setupLogging
+from .Passenger   import Passenger
+from .Performance import Performance
+from .Route       import Route
+from .Stop        import Stop
+from .TAZ         import TAZ
+from .Transfer    import Transfer
+from .Trip        import Trip
 
 class FastTrips:
     """
@@ -190,7 +191,7 @@ class FastTrips:
 
         if pathset_init:
             # sort it by iteration, trip_id_num
-            pathsets_df.sort(columns=['iteration','trip_list_id_num'], inplace=True)
+            pathsets_df.sort_values(by=['iteration','trip_list_id_num'], inplace=True)
             # write it
             pathset_filename = os.path.join(self.output_dir, FastTrips.PATHSET_LOG % "")
             pathsets_df.to_csv(pathset_filename, sep=" ", index=False)
@@ -198,8 +199,12 @@ class FastTrips:
 
 
     def run_assignment(self, output_dir):
+        # Initialize performance results
+        self.performance = Performance()
+
         # Do it!
         Assignment.assign_paths(output_dir, self)
 
         self.combine_pathset_files()
+        self.performance.write(output_dir)
 

@@ -17,14 +17,15 @@ import collections,datetime,math,multiprocessing,os,random,sys,traceback
 import numpy,pandas
 import _fasttrips
 
-from .Logger    import FastTripsLogger, setupLogging
-from .Passenger import Passenger
-from .Path      import Path
-from .Stop      import Stop
-from .TAZ       import TAZ
-from .Transfer  import Transfer
-from .Trip      import Trip
-from .Util      import Util
+from .Logger      import FastTripsLogger, setupLogging
+from .Passenger   import Passenger
+from .Path        import Path
+from .Performance import Performance
+from .Stop        import Stop
+from .TAZ         import TAZ
+from .Transfer    import Transfer
+from .Trip        import Trip
+from .Util        import Util
 
 class Assignment:
     """
@@ -85,6 +86,12 @@ class Assignment:
     #: Higher values result in less stochasticity. Must be nonnegative. 
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
+
+    #: Route choice configuration: How many times max times should we process a stop
+    #: during labeling?  Use -1 to specify no max.  Int.
+    #: Setting this to a positive value may increase runtime but may decrease
+    #: pathset quality. (Todo: test/quantify this.)
+    STOCH_MAX_STOP_PROCESS_COUNT    = None
 
     #: Route choice configuration: How many stochastic paths will we generate
     #: (not necessarily unique) to define a path choice set?  Int.
@@ -177,6 +184,7 @@ class Assignment:
                       'skim_start_time'                 :'5:00',
                       'skim_end_time'                   :'10:00',
                       'stochastic_dispersion'           :1.0,
+                      'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
                       'capacity_constraint'             :False,
                       'trace_person_ids'                :'None',
@@ -207,6 +215,7 @@ class Assignment:
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
         Assignment.STOCH_DISPERSION              = parser.getfloat  ('fasttrips','stochastic_dispersion')
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('fasttrips','stochastic_pathset_size')
+        Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('fasttrips','stochastic_max_stop_process_count')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
@@ -246,6 +255,7 @@ class Assignment:
         parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
         parser.set('fasttrips','stochastic_dispersion',         '%f' % Assignment.STOCH_DISPERSION)
+        parser.set('fasttrips','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
@@ -279,7 +289,8 @@ class Assignment:
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
-                                         Assignment.STOCH_DISPERSION)
+                                         Assignment.STOCH_DISPERSION,
+                                         Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):
@@ -417,11 +428,13 @@ class Assignment:
                         trace_person = True
 
                     # do the work
-                    (cost, return_states) = Assignment.find_trip_based_path(iteration, FT, trip_path,
-                                                                            Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
-                                                                            trace=trace_person)
+                    (cost, return_states, perf_dict) = \
+                        Assignment.find_trip_based_path(iteration, FT, trip_path,
+                                                        Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                        trace=trace_person)
                     trip_path.states = return_states
                     trip_path.cost   = cost
+                    FT.performance.add_info(iteration, trip_list_id, perf_dict)
 
                     if trip_path.path_found():
                         num_paths_found_now += 1
@@ -454,6 +467,10 @@ class Assignment:
                         path            = FT.passengers.get_path(trip_list_id)
                         path.cost       = result[1]
                         path.states     = result[2]
+                        perf_dict       = result[3]
+
+                        FT.performance.add_info(iteration, trip_list_id, perf_dict)
+
                         if path.path_found():
                             num_paths_found_now += 1
 
@@ -492,6 +509,7 @@ class Assignment:
                                  int( time_elapsed.total_seconds() / 3600),
                                  int( (time_elapsed.total_seconds() % 3600) / 60),
                                  time_elapsed.total_seconds() % 60))
+
         return num_paths_found_now + num_paths_found_prev
 
 
@@ -503,7 +521,15 @@ class Assignment:
         Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
         or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
 
-        Returns (path cost, return_states).
+        Returns (path cost,
+                 return_states,
+                 performance_dict)
+
+        Where performance_dict includes:
+                 number of label iterations,
+                 max number of times a stop was processed,
+                 seconds spent in labeling,
+                 seconds spend in enumeration
 
         :param iteration: The pathfinding iteration we're on
         :type  iteration: int
@@ -520,7 +546,9 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles, path_cost) = \
+        (ret_ints, ret_doubles, path_cost,
+         label_iterations, max_label_process_count,
+         seconds_labeling, seconds_enumerating) = \
             _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath,
                                  path.user_class, path.access_mode, path.transit_mode, path.egress_mode,
                                  path.o_taz_num, path.d_taz_num,
@@ -571,7 +599,14 @@ class Assignment:
                               datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
                               midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
                               ] ) )
-        return (path_cost, return_states)
+        perf_dict = { \
+            Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
+            Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,
+            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : seconds_labeling,
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : seconds_enumerating,
+            Performance.PERFORMANCE_COLUMN_TRACED                : trace,
+        }
+        return (path_cost, return_states, perf_dict)
 
     @staticmethod
     def read_assignment_results(output_dir, iteration):
@@ -1261,8 +1296,8 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
             trace_person = True
 
         try:
-            (cost, return_states) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
-            done_queue.put( (path.trip_list_id_num, cost, return_states) )
+            (cost, return_states, perf_dict) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
+            done_queue.put( (path.trip_list_id_num, cost, return_states, perf_dict) )
         except:
             FastTripsLogger.exception('Exception')
             # call it a day

@@ -19,10 +19,11 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     double     bump_buffer;
     int        stoch_pathset_size;
     double     stoch_dispersion;
-    if (!PyArg_ParseTuple(args, "ddid", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion)) {
+    int        stoch_max_stop_process_count;
+    if (!PyArg_ParseTuple(args, "ddidi", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count)) {
         return NULL;
     }
-    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion);
+    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion, stoch_max_stop_process_count);
     Py_RETURN_NONE;
 
 }
@@ -116,7 +117,8 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
 
     fasttrips::Path path;
     fasttrips::PathInfo path_info = {0, 0, false, 0, 0};
-    pathfinder.findPath(path_spec, path, path_info);
+    fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0};
+    pathfinder.findPath(path_spec, path, path_info, perf_info);
 
     // package for returning.  We'll separate ints and doubles.
     npy_intp dims_int[2];
@@ -137,14 +139,16 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path[ind].second.seq_;
         *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 5) = path[ind].second.seq_succpred_;
 
-        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = path[ind].second.label_;
+        *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = 0.0; // TODO: label
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path[ind].second.deparr_time_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path[ind].second.link_time_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[ind].second.cost_;
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[ind].second.arrdep_time_;
     }
 
-    PyObject *returnobj = Py_BuildValue("(OOd)",ret_int,ret_double,path_info.cost_);
+    PyObject *returnobj = Py_BuildValue("(OOdiill)",ret_int,ret_double,path_info.cost_,
+                                        perf_info.label_iterations_, perf_info.max_process_count_,
+                                        perf_info.milliseconds_labeling_, perf_info.milliseconds_enumerating_);
     return returnobj;
 }
 

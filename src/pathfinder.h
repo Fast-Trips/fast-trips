@@ -4,12 +4,14 @@
  * Defines the C++ the finds a transit path for fast-trips.
  */
 
+#include <ctime>
 #include <map>
 #include <vector>
 #include <queue>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "LabelStopQueue.h"
 
 #if __APPLE__
 #include <tr1/unordered_set>
@@ -145,7 +147,6 @@ namespace fasttrips {
      * For inbound trips, the arrdep_time_ for trip states is not necessarily the person departure time.
      */
     typedef struct {
-        double  label_;                 ///< The label for this stop
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
                                         ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
@@ -162,14 +163,6 @@ namespace fasttrips {
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
     } StopState;
 
-    /**
-     * Struct containing just a label and a stop id, this is stored in the fasttrips::LabelStopQueue
-     * (a priority queue) to find the lowest label stops.
-     */
-    typedef struct {
-        double  label_;                 ///< The label during path finding
-        int     stop_id_;               ///< Stop ID corresponding to this label
-    } LabelStop;
 
     /// Structure used in PathFinder::hyperpathChoosePath
     typedef struct {
@@ -179,23 +172,33 @@ namespace fasttrips {
         size_t  index_;                 ///< Index into StopState vector (or taz state vector)
     } ProbabilityStop;
 
-    /// Comparator to enable the fasttrips::LabelStopQueue to return the lowest labeled stop.
-    struct LabelStopCompare {
-        bool operator()(const LabelStop &cs1, const LabelStop &cs2) const {
-            return (cs1.label_ > cs2.label_);
-        }
-    };
-
     /**
      * The path finding algorithm stores StopState data in this structure.
      * For the stochastic algorithm, a stop ID maps to a vector of StopState instances.
      * For the deterministic algorithm, the vector only has a single instance of StopState.
      */
     typedef std::map<int, std::vector<StopState> > StopStates;
+
     /**
-     * The pathfinding algorithm uses this to find the lowest label stops.
+     * For hyperpaths, this is additional information about the stop state.
+    **/
+    typedef struct {
+      double latest_dep_earliest_arr_; ///< latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
+      int    lder_trip_id_;            ///< trip for the latest departure/earliest arrival
+      double hyperpath_cost_;          ///< hyperpath cost for this stop state
+      int    process_count_;           ///< increment this every time the stop is processed
+    } HyperpathState;
+
+    /**
+     *
+     * Stop id maps to HyperpathState, wihich includes stop window time, hyperpath_cost.
+     *
+     * A stop is completely processed when the current time is before (outbound) or after (inbound)
+     * the stop state's time window
      */
-    typedef std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> LabelStopQueue;
+     typedef std::map<int, HyperpathState> HyperpathStopStates;
+
+
 
     /** A single path consists of a vector of stop ID & stop states.  They are in origin to destination order for
      *  outbound trips, and destination to origin order for inbound trips.
@@ -210,6 +213,14 @@ namespace fasttrips {
         double  probability_;                   ///< Probability of this stop          (for stochastic)
         int     prob_i_;                        ///< Cumulative probability * RAND_MAX (for stochastic)
     } PathInfo;
+
+    /** Performance information to return. */
+    typedef struct {
+        int     label_iterations_;              ///< Number of label iterations performed
+        int     max_process_count_;             ///< Maximum number of times a stop was processed
+        long    milliseconds_labeling_;         ///< Number of seconds spent in labeling
+        long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
+    } PerformanceInfo;
 
     /// Comparator to for Path instances so we can put them in a map as keys.
     /// TODO: doc more?
@@ -254,6 +265,9 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         double STOCH_DISPERSION_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT</a>
+        int STOCH_MAX_STOP_PROCESS_COUNT_;
         ///@}
 
         /// directory in which to write trace files
@@ -326,7 +340,7 @@ namespace fasttrips {
                           const StopState& ss,
                           StopStates& stop_states,
                           LabelStopQueue& label_stop_queue,
-                          const std::tr1::unordered_set<int>* stop_done) const;
+                          HyperpathStopStates& hyperpath_ss) const;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -337,7 +351,8 @@ namespace fasttrips {
         bool initializeStopStates(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
-                                  LabelStopQueue& cost_stop_queue) const;
+                                  LabelStopQueue& cost_stop_queue,
+                                  HyperpathStopStates& hyperpath_ss) const;
 
         /**
          * Iterate through all the stops that transfer to(outbound)/from(inbound) the
@@ -348,10 +363,9 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
+                                  HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
-                                  const LabelStop& current_label_stop,
-                                  double latest_dep_earliest_arr,
-                                  const std::tr1::unordered_set<int>& stop_done) const;
+                                  const LabelStop& current_label_stop) const;
 
         /**
          * Iterate through all the stops that are accessible by transit vehicle trip
@@ -363,11 +377,10 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
+                                  HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
-                                  double latest_dep_earliest_arr,
-                                  std::tr1::unordered_set<int>& trips_done,
-                                  const std::tr1::unordered_set<int>& stop_done) const;
+                                  std::tr1::unordered_set<int>& trips_done) const;
 
         /**
          * Label stops by:
@@ -379,7 +392,9 @@ namespace fasttrips {
         int labelStops(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
-                                  LabelStopQueue& label_stop_queue) const;
+                                  LabelStopQueue& label_stop_queue,
+                                  HyperpathStopStates& hyperpath_ss,
+                                  int& max_process_count) const;
 
         /**
          * This is like the reverse of PathFinder::initializeStopStates.
@@ -392,7 +407,8 @@ namespace fasttrips {
                               std::ofstream& trace_file,
                               StopStates& stop_states,
                               LabelStopQueue& label_stop_queue,
-                              int label_iteration) const;
+                              int label_iteration,
+                              HyperpathStopStates& hyperpath_ss) const;
 
         /**
          * Given all the labeled stops and taz, traces back and generates a
@@ -404,6 +420,7 @@ namespace fasttrips {
         bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   const StopStates& stop_states,
+                                  const HyperpathStopStates& hyperpath_ss,
                                   Path& path) const;
 
         /**
@@ -438,6 +455,7 @@ namespace fasttrips {
         bool getFoundPath(const PathSpecification&      path_spec,
                           std::ofstream&                trace_file,
                           const StopStates&             stop_states,
+                          const HyperpathStopStates&    hyperpath_ss,
                           Path&                         path,
                           PathInfo&                     path_info) const;
 
@@ -478,7 +496,8 @@ namespace fasttrips {
         void initializeParameters(double     time_window,
                                   double     bump_buffer,
                                   int        stoch_pathset_size,
-                                  double     stoch_dispersion);
+                                  double     stoch_dispersion,
+                                  int        stoch_max_stop_process_count);
 
         /**
          * Setup the network supply.  This should happen once, before any pathfinding.
@@ -526,6 +545,7 @@ namespace fasttrips {
          */
         void findPath(PathSpecification path_spec,
                       Path              &path,
-                      PathInfo          &path_info) const;
+                      PathInfo          &path_info,
+                      PerformanceInfo   &performance_info) const;
     };
 }
