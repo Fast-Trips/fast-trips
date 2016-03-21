@@ -216,7 +216,8 @@ class Path:
         # add mode numbers to weights DF for relevant rows
         Path.WEIGHTS_DF = routes.add_numeric_mode_id(Path.WEIGHTS_DF,
                                                     id_colname=Path.WEIGHTS_COLUMN_SUPPLY_MODE,
-                                                    numeric_newcolname=Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM)
+                                                    numeric_newcolname=Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                                                    warn=True)  # don't fail if some supply modes are configured but not used, they may be for future runs
         FastTripsLogger.debug("Path weights: \n%s" % Path.WEIGHTS_DF)
         Path.WEIGHTS_DF.to_csv(os.path.join(output_dir,Path.OUTPUT_WEIGHTS_FILE),
                                columns=[Path.WEIGHTS_COLUMN_USER_CLASS,

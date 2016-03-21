@@ -13,9 +13,10 @@ __license__   = """
     limitations under the License.
 """
 
+import datetime, logging
+
 import numpy
 import pandas
-import datetime
 
 from .Logger import FastTripsLogger
 
@@ -49,13 +50,16 @@ class Util:
 
     @staticmethod
     def add_new_id(input_df,   id_colname,         newid_colname,
-                   mapping_df, mapping_id_colname, mapping_newid_colname):
+                   mapping_df, mapping_id_colname, mapping_newid_colname,
+                   warn=False):
         """
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
 
         *mapping_df* is defines the mapping from an ID (*mapping_id_colname*) 
         to a numeric ID (*mapping_newid_colname*).
+
+        If *warn* is True, then don't worry if some fail.  Just log and move on.  Otherwise, raise an exception.
         """
         input_cols = list(input_df.columns.values)
         # add the new id column
@@ -72,12 +76,24 @@ class Util:
         # first check if mapping_newid_colname was already in input_df; if it was, check needs to be performed on "_mapping" 
         mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname    
         if pandas.isnull(return_df[mapping_newid_colname_chk]).sum() != pandas.isnull(input_df[id_colname]).sum():
-            FastTripsLogger.fatal("Util.add_new_id failed to map all ids to numbers")
-            FastTripsLogger.fatal("pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.fatal("return_df.loc[pandas.isnull(return_df[%s])].head() = \n%s\n" % (mapping_newid_colname_chk,
+
+            msg_level = logging.CRITICAL
+            if warn: msg_level = logging.WARN
+
+            FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
+            FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
+            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].head() = \n%s\n" % (mapping_newid_colname_chk,
                                   str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].head())))
-            FastTripsLogger.fatal("pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
-            raise
+            FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
+
+
+            if warn:
+                # remove them
+                return_df = return_df.loc[pandas.notnull(return_df[mapping_newid_colname_chk])]
+                # make it an int
+                return_df[mapping_newid_colname_chk] = return_df[mapping_newid_colname_chk].astype(int)
+            else:
+                raise
 
         # remove the redundant id column if necessary (it's redundant)
         if id_colname != mapping_id_colname:
