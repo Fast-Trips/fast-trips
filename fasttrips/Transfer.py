@@ -15,6 +15,7 @@ __license__   = """
 import datetime,os,sys
 import pandas
 
+from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
 from .Stop   import Stop
 
@@ -66,6 +67,12 @@ class Transfer:
     TRANSFERS_COLUMN_TO_STOP_NUM            = 'to_stop_id_num'
     #: gtfs Transfers column name: Minimum transfer time for transfer_type=2.  Float, min.
     TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN  = 'min_transfer_time_min'
+
+    #: Transfer walk speed, in miles per hour
+    #:
+    #: .. todo:: Make this configurable?
+    #:
+    WALK_SPEED_MILES_PER_HOUR  = 3.0
 
     #: Transfers column name: Link walk time.  This is a TimeDelta.
     #:
@@ -155,7 +162,16 @@ class Transfer:
 
             # transfer time is based on distance
             self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] = \
-                self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE]*60.0/3.0
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE]*60.0/Transfer.WALK_SPEED_MILES_PER_HOUR
+
+            # Sanity check transfer times.  An hour-long walk transfer is suspicious.
+            too_long_transfers = self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] > 60]
+            if len(too_long_transfers) > 0:
+                error_msg = "Found %d excessively long transfer links out of %d total transfer links. Expected distances are in miles. Unit problem?" % \
+                            (len(too_long_transfers), len(self.transfers_df))
+                FastTripsLogger.fatal(error_msg)
+                FastTripsLogger.fatal("\n%s\n" % str(too_long_transfers.head()))
+                raise NetworkInputError(Transfer.INPUT_TRANSFERS_FILE, error_msg)
 
             self.transfers_df.loc[\
                 self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] < self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN], \
