@@ -72,11 +72,15 @@
           
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Error.html">fasttrips.Error</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
 </ul>
@@ -137,94 +141,506 @@
 <span class="kn">import</span> <span class="nn">collections</span><span class="o">,</span><span class="nn">datetime</span><span class="o">,</span><span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 
-<span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span>
+<span class="kn">from</span> <span class="nn">.Logger</span>   <span class="kn">import</span> <span class="n">FastTripsLogger</span>
+<span class="kn">from</span> <span class="nn">.Route</span>    <span class="kn">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">.Stop</span>     <span class="kn">import</span> <span class="n">Stop</span>
+<span class="kn">from</span> <span class="nn">.Transfer</span> <span class="kn">import</span> <span class="n">Transfer</span>
+<span class="kn">from</span> <span class="nn">.Util</span>     <span class="kn">import</span> <span class="n">Util</span>
 
 <div class="viewcode-block" id="TAZ"><a class="viewcode-back" href="../../_generated/fasttrips.TAZ.html#fasttrips.TAZ">[docs]</a><span class="k">class</span> <span class="nc">TAZ</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    TAZ class.</span>
 
-<span class="sd">    One instance represents all of the Transportation Analysis Zones as well as their access links.</span>
+<span class="sd">    One instance represents all of the Transportation Analysis Zones</span>
+<span class="sd">    as well as their access links and egress links.</span>
 
-<span class="sd">    Stores TAZ information in :py:attr:`TAZ.zones_df`, an instance of :py:class:`pandas.DataFrame`</span>
-<span class="sd">    and access link information in :py:attr:`TAZ.access_links_df`, another instance of</span>
-<span class="sd">    :py:class:`pandas.DataFrame`.</span>
+<span class="sd">    .. todo:: This is really about the access and egress links; perhaps it should be renamed?</span>
+
+<span class="sd">    Stores access link information in :py:attr:`TAZ.walk_access`, and :py:attr:`TAZ.drive_access`,</span>
+<span class="sd">    both instances of :py:class:`pandas.DataFrame`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c">#: File with TAZ (Transporation Analysis Zone) data.</span>
-    <span class="c">#: This is a tab-delimited file with required columns specified by</span>
-    <span class="c">#: :py:attr:`TAZ.ZONES_COLUMN_ID`, :py:attr:`TAZ.ZONES_COLUMN_LATITUDE` and</span>
-    <span class="c">#: :py:attr:`TAZ.ZONES_COLUMN_LONGITUDE`.</span>
-    <span class="n">INPUT_TAZ_FILE</span>          <span class="o">=</span> <span class="s">&quot;ft_input_zones.dat&quot;</span>
+    <span class="c">#: File with fasttrips walk access information.</span>
+    <span class="c">#: See `walk_access specification &lt;https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/walk_access_ft.md&gt;`_.</span>
+    <span class="n">INPUT_WALK_ACCESS_FILE</span>                  <span class="o">=</span> <span class="s">&quot;walk_access_ft.txt&quot;</span>
 
-    <span class="c">#: Zones column name: Unique identifier. This will be the index of the zones table.</span>
-    <span class="n">ZONES_COLUMN_ID</span>         <span class="o">=</span> <span class="s">&#39;ID&#39;</span>
-    <span class="c">#: Zones column name: Latitude</span>
-    <span class="n">ZONES_COLUMN_LATITUDE</span>   <span class="o">=</span> <span class="s">&#39;Lat&#39;</span>
-    <span class="c">#: Zones column name: Longitude</span>
-    <span class="n">ZONES_COLUMN_LONGITUDE</span>  <span class="o">=</span> <span class="s">&#39;ID&#39;</span>
+    <span class="c">#: Walk access links column name: TAZ Identifier. String.</span>
+    <span class="n">WALK_ACCESS_COLUMN_TAZ</span>                  <span class="o">=</span> <span class="s">&#39;taz&#39;</span>
+    <span class="c">#: Walk access links column name: Stop Identifier. String.</span>
+    <span class="n">WALK_ACCESS_COLUMN_STOP</span>                 <span class="o">=</span> <span class="s">&#39;stop_id&#39;</span>
+    <span class="c">#: Walk access links column name: Walk Distance</span>
+    <span class="n">WALK_ACCESS_COLUMN_DIST</span>                 <span class="o">=</span> <span class="s">&#39;dist&#39;</span>
 
-    <span class="c">#: File with access links</span>
-    <span class="c">#: This is a tab-delimited file with required columns specified by</span>
-    <span class="c">#: :py:attr:`TAZ.ACCLINKS_COLUMN_TAZ`, :py:attr:`TAZ.ACCLINKS_COLUMN_STOP`,</span>
-    <span class="c">#: :py:attr:`TAZ.ACCLINKS_COLUMN_DIST` and :py:attr:`TAZ.ACCLINKS_COLUMN_TIME`.</span>
-    <span class="n">INPUT_ACCESS_LINKS_FILE</span> <span class="o">=</span> <span class="s">&quot;ft_input_accessLinks.dat&quot;</span>
+    <span class="c">#: fasttrips Walk access links column name: Elevation Gain, feet gained along link.</span>
+    <span class="n">WALK_ACCESS_COLUMN_ELEVATION_GAIN</span>       <span class="o">=</span> <span class="s">&#39;elevation_gain&#39;</span>
+    <span class="c">#: fasttrips Walk access links column name: Population Density, people per square mile.  Float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_POPULATION_DENSITY</span>   <span class="o">=</span> <span class="s">&#39;population_density&#39;</span>
+    <span class="c">#: fasttrips Walk access links column name: Retail Density, employees per square mile. Float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_RETAIL_DENSITY</span>       <span class="o">=</span> <span class="s">&#39;retail_density&#39;</span>
+    <span class="c">#: fasttrips Walk access links column name: Auto Capacity, vehicles per hour per mile. Float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_AUTO_CAPACITY</span>        <span class="o">=</span> <span class="s">&#39;auto_capacity&#39;</span>
+    <span class="c">#: fasttrips Walk access links column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_INDIRECTNESS</span>         <span class="o">=</span> <span class="s">&#39;indirectness&#39;</span>
 
-    <span class="c">#: Access links column name: TAZ identifier</span>
-    <span class="n">ACCLINKS_COLUMN_TAZ</span>     <span class="o">=</span> <span class="s">&#39;TAZ&#39;</span>
-    <span class="c">#: Access links column name: Stop identifier</span>
-    <span class="n">ACCLINKS_COLUMN_STOP</span>    <span class="o">=</span> <span class="s">&#39;stop&#39;</span>
-    <span class="c">#: Access links column name: Link walk distance</span>
-    <span class="n">ACCLINKS_COLUMN_DIST</span>    <span class="o">=</span> <span class="s">&#39;dist&#39;</span>
-    <span class="c">#: Access links column name: Link walk time.  This is a TimeDelta</span>
-    <span class="n">ACCLINKS_COLUMN_TIME</span>    <span class="o">=</span> <span class="s">&#39;time&#39;</span>
-    <span class="c">#: Access links column name: Link walk time in minutes.  This is float.</span>
-    <span class="n">ACCLINKS_COLUMN_TIME_MIN</span><span class="o">=</span> <span class="s">&#39;time_min&#39;</span>
+    <span class="c"># ========== Added by fasttrips =======================================================</span>
+    <span class="c">#: Walk access links column name: TAZ Numerical Identifier. Int.</span>
+    <span class="n">WALK_ACCESS_COLUMN_TAZ_NUM</span>              <span class="o">=</span> <span class="s">&#39;taz_num&#39;</span>
+    <span class="c">#: Walk access links column name: Stop Numerical Identifier. Int.</span>
+    <span class="n">WALK_ACCESS_COLUMN_STOP_NUM</span>             <span class="o">=</span> <span class="s">&#39;stop_id_num&#39;</span>
 
-    <span class="c">#: Access cost column name: Link generic cost for accessing stop from TAZ. Float.</span>
-    <span class="n">ACCLINKS_COLUMN_ACC_COST</span><span class="o">=</span> <span class="s">&#39;access_cost&#39;</span>
-    <span class="c">#: Egress cost column name: Link generic cost for egressing to TAZ from stop. Float.</span>
-    <span class="n">ACCLINKS_COLUMN_EGR_COST</span><span class="o">=</span> <span class="s">&#39;egress_cost&#39;</span>
+    <span class="c">#: Walk access links column name: Link walk time.  This is a TimeDelta</span>
+    <span class="n">WALK_ACCESS_COLUMN_TIME</span>                 <span class="o">=</span> <span class="s">&#39;time&#39;</span>
+    <span class="c">#: Walk access links column name: Link walk time in minutes.  This is float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_TIME_MIN</span>             <span class="o">=</span> <span class="s">&#39;time_min&#39;</span>
 
-<div class="viewcode-block" id="TAZ.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.TAZ.html#fasttrips.TAZ.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">):</span>
+    <span class="c">#: Walk acess cost column name: Link generic cost for accessing stop from TAZ. Float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_ACC_COST</span>             <span class="o">=</span> <span class="s">&#39;access_cost&#39;</span>
+    <span class="c">#: Walk acess cost column name: Link generic cost for egressing to TAZ from stop. Float.</span>
+    <span class="n">WALK_ACCESS_COLUMN_EGR_COST</span>             <span class="o">=</span> <span class="s">&#39;egress_cost&#39;</span>
+
+    <span class="c">#: Walk access links column name: Supply mode. String.</span>
+    <span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE</span>          <span class="o">=</span> <span class="s">&#39;supply_mode&#39;</span>
+    <span class="c">#: Walk access links column name: Supply mode number. Int.</span>
+    <span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM</span>      <span class="o">=</span> <span class="s">&#39;supply_mode_num&#39;</span>
+
+    <span class="c">#: File with fasttrips drive access information.</span>
+    <span class="c">#: See `drive_access specification &lt;https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access_ft.md&gt;`_.</span>
+    <span class="n">INPUT_DRIVE_ACCESS_FILE</span>                  <span class="o">=</span> <span class="s">&quot;drive_access_ft.txt&quot;</span>
+
+    <span class="c">#: Drive access links column name: TAZ Identifier. String.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_TAZ</span>                  <span class="o">=</span> <span class="n">WALK_ACCESS_COLUMN_TAZ</span>
+    <span class="c">#: Drive access links column name: Stop Identifier. String.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span>               <span class="o">=</span> <span class="s">&#39;lot_id&#39;</span>
+    <span class="c">#: Drive access links column name: Direction (&#39;access&#39; or &#39;egress&#39;)</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_DIRECTION</span>            <span class="o">=</span> <span class="s">&#39;direction&#39;</span>
+    <span class="c">#: Drive access links column name: Drive distance</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_DISTANCE</span>             <span class="o">=</span> <span class="s">&#39;dist&#39;</span>
+    <span class="c">#: Drive access links column name: Drive cost in cents (integer)</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_COST</span>                 <span class="o">=</span> <span class="s">&#39;cost&#39;</span>
+    <span class="c">#: Drive access links column name: Driving time in minutes between TAZ and lot (TimeDelta)</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_TRAVEL_TIME</span>          <span class="o">=</span> <span class="s">&#39;travel_time&#39;</span>
+    <span class="c">#: Drive access links column name: Start time (open time for lot?), minutes after midnight</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_START_TIME_MIN</span>       <span class="o">=</span> <span class="s">&#39;start_time_min&#39;</span>
+    <span class="c">#: Drive access links column name: Start time (open time for lot?). A DateTime instance</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span>           <span class="o">=</span> <span class="s">&#39;start_time&#39;</span>
+    <span class="c">#: Drive access links column name: End time (open time for lot?), minutes after midnight</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_END_TIME_MIN</span>         <span class="o">=</span> <span class="s">&#39;end_time_min&#39;</span>
+    <span class="c">#: Drive access links column name: End time (open time for lot?). A DateTime instance</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span>             <span class="o">=</span> <span class="s">&#39;end_time&#39;</span>
+
+    <span class="c">#: fasttrips Drive access links column name: Elevation Gain, feet gained along link.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_ELEVATION_GAIN</span>       <span class="o">=</span> <span class="s">&#39;elevation_gain&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Population Density, people per square mile.  Float.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_POPULATION_DENSITY</span>   <span class="o">=</span> <span class="s">&#39;population_density&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Retail Density, employees per square mile. Float.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_RETAIL_DENSITY</span>       <span class="o">=</span> <span class="s">&#39;retail_density&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Auto Capacity, vehicles per hour per mile. Float.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_AUTO_CAPACITY</span>        <span class="o">=</span> <span class="s">&#39;auto_capacity&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_INDIRECTNESS</span>         <span class="o">=</span> <span class="s">&#39;indirectness&#39;</span>
+
+    <span class="c"># ========== Added by fasttrips =======================================================</span>
+    <span class="c">#: fasttrips These are the original attributes but renamed to be clear they are the drive component (as opposed to the walk)</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE</span>       <span class="o">=</span> <span class="s">&#39;drive_dist&#39;</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME</span>    <span class="o">=</span> <span class="s">&#39;drive_travel_time&#39;</span>
+    <span class="c">#: Drive access links column name: Driving time in minutes between TAZ and lot (float)</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN</span><span class="o">=</span> <span class="s">&#39;drive_travel_time_min&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: TAZ Numerical Identifier. Int.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_TAZ_NUM</span>              <span class="o">=</span> <span class="n">WALK_ACCESS_COLUMN_TAZ_NUM</span>
+    <span class="c">#: fasttrips Drive access links column name: Stop Numerical Identifier. Int.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_STOP</span>                 <span class="o">=</span> <span class="n">WALK_ACCESS_COLUMN_STOP</span>
+    <span class="c">#: fasttrips Drive access links column name: Stop Numerical Identifier. Int.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_STOP_NUM</span>             <span class="o">=</span> <span class="n">WALK_ACCESS_COLUMN_STOP_NUM</span>
+    <span class="c">#: fasttrips Drive access links column name: Walk distance from lot to transit. Miles. Float.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_WALK_DISTANCE</span>        <span class="o">=</span> <span class="s">&#39;walk_dist&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Walk time from lot to transit. TimeDelta.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME</span>            <span class="o">=</span> <span class="s">&#39;walk_time&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Walk time from lot to transit. Int.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME_MIN</span>        <span class="o">=</span> <span class="s">&#39;walk_time_min&#39;</span>
+    <span class="c">#: fasttrips Drive access links column name: Supply mode. String.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE</span>          <span class="o">=</span> <span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE</span>
+    <span class="c">#: Drive access links column name: Supply mode number. Int.</span>
+    <span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM</span>      <span class="o">=</span> <span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM</span>
+
+    <span class="c">#: File with fasttrips drive access points information.</span>
+    <span class="c">#: See `Drive access points specification &lt;https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/drive_access_points_ft.md&gt;`_.</span>
+    <span class="n">INPUT_DAP_FILE</span>                           <span class="o">=</span> <span class="s">&#39;drive_access_points_ft.txt&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Lot ID. String.</span>
+    <span class="n">DAP_COLUMN_LOT_ID</span>                        <span class="o">=</span> <span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span>
+    <span class="c">#: fasttrips DAP column name: Lot Latitude (WGS 84)</span>
+    <span class="n">DAP_COLUMN_LOT_LATITUDE</span>                  <span class="o">=</span> <span class="s">&#39;lot_lat&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Lot Longitude (WGS 84)</span>
+    <span class="n">DAP_COLUMN_LOT_LONGITUDE</span>                 <span class="o">=</span> <span class="s">&#39;lot_long&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Name of the Lot. String.</span>
+    <span class="n">DAP_COLUMN_NAME</span>                          <span class="o">=</span> <span class="s">&#39;name&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Drop-Off.  Boolean.</span>
+    <span class="n">DAP_COLUMN_DROP_OFF</span>                      <span class="o">=</span> <span class="s">&#39;drop_off&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Capacity (number of parking spaces)</span>
+    <span class="n">DAP_COLUMN_CAPACITY</span>                      <span class="o">=</span> <span class="s">&#39;capacity&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Hourly Cost in cents.  Integer.</span>
+    <span class="n">DAP_COLUMN_HOURLY_COST</span>                   <span class="o">=</span> <span class="s">&#39;hourly_cost&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Maximum Daily Cost in cents.  Integer.</span>
+    <span class="n">DAP_COLUMN_MAXIMUM_COST</span>                  <span class="o">=</span> <span class="s">&#39;max_cost&#39;</span>
+    <span class="c">#: fasttrips DAP column name: Type</span>
+    <span class="n">DAP_COLUMN_TYPE</span>                          <span class="o">=</span> <span class="s">&#39;type&#39;</span>
+
+    <span class="c">#: mode column</span>
+    <span class="n">MODE_COLUMN_MODE</span>                         <span class="o">=</span> <span class="s">&#39;mode&#39;</span>
+    <span class="c">#: mode number</span>
+    <span class="n">MODE_COLUMN_MODE_NUM</span>                     <span class="o">=</span> <span class="s">&#39;mode_num&#39;</span>
+
+    <span class="c">#: access and egress modes.  First is default.</span>
+    <span class="n">ACCESS_EGRESS_MODES</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;walk&quot;</span><span class="p">,</span><span class="s">&quot;bike_own&quot;</span><span class="p">,</span><span class="s">&quot;bike_share&quot;</span><span class="p">,</span><span class="s">&quot;PNR&quot;</span><span class="p">,</span><span class="s">&quot;KNR&quot;</span><span class="p">]</span>
+    <span class="c">#: Access mode: Walk</span>
+    <span class="n">MODE_ACCESS_WALK</span>                         <span class="o">=</span> <span class="mi">101</span>
+    <span class="c">#: Access mode: Bike (own)</span>
+    <span class="n">MODE_ACCESS_BIKE_OWN</span>                     <span class="o">=</span> <span class="mi">102</span>
+    <span class="c">#: Access mode: Bike (share)</span>
+    <span class="n">MODE_ACCESS_BIKE_SHARE</span>                   <span class="o">=</span> <span class="mi">103</span>
+    <span class="c">#: Access mode: Drive to PNR</span>
+    <span class="n">MODE_ACCESS_PNR</span>                          <span class="o">=</span> <span class="mi">104</span>
+    <span class="c">#: Access mode: Drive to KNR</span>
+    <span class="n">MODE_ACCESS_KNR</span>                          <span class="o">=</span> <span class="mi">105</span>
+    <span class="c">#: Egress mode: Walk</span>
+    <span class="n">MODE_EGRESS_WALK</span>                         <span class="o">=</span> <span class="mi">201</span>
+    <span class="c">#: Egress mode: Bike (own)</span>
+    <span class="n">MODE_EGRESS_BIKE_OWN</span>                     <span class="o">=</span> <span class="mi">202</span>
+    <span class="c">#: Egress mode: Bike (share)</span>
+    <span class="n">MODE_EGRESS_BIKE_SHARE</span>                   <span class="o">=</span> <span class="mi">203</span>
+    <span class="c">#: Egress mode: Drive to PNR</span>
+    <span class="n">MODE_EGRESS_PNR</span>                          <span class="o">=</span> <span class="mi">204</span>
+    <span class="c">#: Egress mode: Drive to KNR</span>
+    <span class="n">MODE_EGRESS_KNR</span>                          <span class="o">=</span> <span class="mi">205</span>
+    <span class="c">#: Access mode number list, in order of ACCESS_EGRESS_MODES</span>
+    <span class="n">ACCESS_MODE_NUMS</span> <span class="o">=</span> <span class="p">[</span><span class="n">MODE_ACCESS_WALK</span><span class="p">,</span>
+                        <span class="n">MODE_ACCESS_BIKE_OWN</span><span class="p">,</span> <span class="n">MODE_ACCESS_BIKE_SHARE</span><span class="p">,</span>
+                        <span class="n">MODE_ACCESS_PNR</span><span class="p">,</span>      <span class="n">MODE_ACCESS_KNR</span><span class="p">]</span>
+    <span class="c">#: Egress mode number list, in order of ACCESS_EGRESS_MODES</span>
+    <span class="n">EGRESS_MODE_NUMS</span> <span class="o">=</span> <span class="p">[</span><span class="n">MODE_EGRESS_WALK</span><span class="p">,</span>
+                        <span class="n">MODE_EGRESS_BIKE_OWN</span><span class="p">,</span> <span class="n">MODE_EGRESS_BIKE_SHARE</span><span class="p">,</span>
+                        <span class="n">MODE_EGRESS_PNR</span><span class="p">,</span>      <span class="n">MODE_EGRESS_KNR</span><span class="p">]</span>
+
+    <span class="c">#: File with access/egress links for C++ extension</span>
+    <span class="c">#: It&#39;s easier to pass it via a file rather than through the</span>
+    <span class="c">#: initialize_fasttrips_extension() because of the strings involved, I think.</span>
+    <span class="n">OUTPUT_ACCESS_EGRESS_FILE</span>               <span class="o">=</span> <span class="s">&quot;ft_intermediate_access_egress.txt&quot;</span>
+
+<div class="viewcode-block" id="TAZ.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.TAZ.html#fasttrips.TAZ.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">today</span><span class="p">,</span> <span class="n">stops</span><span class="p">,</span> <span class="n">transfers</span><span class="p">,</span> <span class="n">routes</span><span class="p">,</span> <span class="n">is_child_process</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.  Reads the TAZ data from the input files in *input_dir*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c">#: Zones table</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_TAZ_FILE</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">)</span>
-        <span class="c"># verify required columns are present</span>
-        <span class="n">zone_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ZONES_COLUMN_ID</span>          <span class="ow">in</span> <span class="n">zone_cols</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ZONES_COLUMN_LATITUDE</span>    <span class="ow">in</span> <span class="n">zone_cols</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ZONES_COLUMN_LONGITUDE</span>   <span class="ow">in</span> <span class="n">zone_cols</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ZONES_COLUMN_ID</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">access_modes_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE</span>    <span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCESS_EGRESS_MODES</span><span class="p">,</span>
+                                                      <span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE_NUM</span><span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCESS_MODE_NUMS</span> <span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">access_modes_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">access_modes_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE</span><span class="p">]</span>\
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Route</span><span class="o">.</span><span class="n">MODE_TYPE_ACCESS</span><span class="p">))</span>
 
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== TAZS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">+</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%7d</span><span class="s"> TAZs&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zones_df</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">egress_modes_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE</span>    <span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCESS_EGRESS_MODES</span><span class="p">,</span>
+                                                      <span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE_NUM</span><span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">EGRESS_MODE_NUMS</span> <span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">egress_modes_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">egress_modes_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">MODE_COLUMN_MODE</span><span class="p">]</span>\
+            <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Route</span><span class="o">.</span><span class="n">MODE_TYPE_EGRESS</span><span class="p">))</span>
 
-        <span class="c">#: Access links table</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_ACCESS_LINKS_FILE</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="n">routes</span><span class="o">.</span><span class="n">add_access_egress_modes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">access_modes_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">egress_modes_df</span><span class="p">)</span>
+
+        <span class="c">#: Walk access links table. Make sure TAZ ID and stop ID are read as strings.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_WALK_ACCESS_FILE</span><span class="p">),</span>
+                                              <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ</span> <span class="p">:</span><span class="nb">object</span><span class="p">,</span>
+                                                     <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_STOP</span><span class="p">:</span><span class="nb">object</span><span class="p">})</span>
         <span class="c"># verify required columns are present</span>
-        <span class="n">access_links_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TAZ</span>      <span class="ow">in</span> <span class="n">access_links_cols</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_STOP</span>     <span class="ow">in</span> <span class="n">access_links_cols</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_DIST</span>     <span class="ow">in</span> <span class="n">access_links_cols</span><span class="p">)</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TIME</span>     <span class="ow">in</span> <span class="n">access_links_cols</span><span class="p">)</span>
+        <span class="n">walk_access_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ</span>      <span class="ow">in</span> <span class="n">walk_access_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_STOP</span>     <span class="ow">in</span> <span class="n">walk_access_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_DIST</span>     <span class="ow">in</span> <span class="n">walk_access_cols</span><span class="p">)</span>
 
         <span class="c"># printing this before setting index</span>
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== ACCESS LINKS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;As read</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== WALK ACCESS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;As read</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TAZ</span><span class="p">,</span>
-                                     <span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_STOP</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="c"># keep the time column as float</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TIME</span><span class="p">]</span>
+        <span class="c"># TODO: remove?  Or put walk speed some place?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_DIST</span><span class="p">]</span><span class="o">*</span><span class="mf">60.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">;</span>
         <span class="c"># convert time column from float to timedelta</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TIME</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">ACCLINKS_COLUMN_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TIME</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TIME_MIN</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
 
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Final</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
-        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%7d</span><span class="s"> access links&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">access_links_df</span><span class="p">))</span></div></div>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Final</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%7d</span><span class="s"> </span><span class="si">%15s</span><span class="s"> from </span><span class="si">%25s</span><span class="s">&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">),</span> <span class="s">&quot;walk access&quot;</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_WALK_ACCESS_FILE</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DAP_FILE</span><span class="p">)):</span>
+            <span class="c">#: DAP table. Make sure TAZ ID and lot ID are read as strings.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DAP_FILE</span><span class="p">),</span>
+                                          <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_ID</span><span class="p">:</span><span class="nb">object</span><span class="p">})</span>
+            <span class="c"># verify required columns are present</span>
+            <span class="n">dap_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_ID</span>            <span class="ow">in</span> <span class="n">dap_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_LATITUDE</span>      <span class="ow">in</span> <span class="n">dap_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_LONGITUDE</span>     <span class="ow">in</span> <span class="n">dap_cols</span><span class="p">)</span>
+
+            <span class="c"># default capacity = 0</span>
+            <span class="k">if</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_CAPACITY</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dap_cols</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_CAPACITY</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="c"># default drop-off = True</span>
+            <span class="k">if</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_DROP_OFF</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dap_cols</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_DROP_OFF</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== DAPS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%7d</span><span class="s"> </span><span class="si">%15s</span><span class="s"> from </span><span class="si">%25s</span><span class="s">&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="p">),</span> <span class="s">&quot;DAPs&quot;</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DAP_FILE</span><span class="p">))</span>
+
+        <span class="c">#: Drive access links table. Make sure TAZ ID and lot ID are read as strings.</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DRIVE_ACCESS_FILE</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DRIVE_ACCESS_FILE</span><span class="p">),</span>
+                                                   <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ</span>   <span class="p">:</span><span class="nb">object</span><span class="p">,</span>
+                                                          <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">:</span><span class="nb">object</span><span class="p">})</span>
+
+            <span class="c"># verify required columns are present</span>
+            <span class="n">drive_access_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ</span>              <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span>           <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DIRECTION</span>        <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DISTANCE</span>         <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_COST</span>             <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TRAVEL_TIME</span>      <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span>       <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span>         <span class="ow">in</span> <span class="n">drive_access_cols</span><span class="p">)</span>
+
+            <span class="c"># printing this before setting index</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== DRIVE ACCESS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;As read</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>            <span class="c"># Rename dist to drive_dist</span>
+
+            <span class="c"># the distance and times here are for DRIVING</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DISTANCE</span>       <span class="p">:</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE</span><span class="p">,</span>
+                           <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TRAVEL_TIME</span>    <span class="p">:</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME</span><span class="p">},</span>
+                <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME</span><span class="p">]</span>
+
+            <span class="c"># lot open/close time: datetime version</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">Util</span><span class="o">.</span><span class="n">read_time</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">Util</span><span class="o">.</span><span class="n">read_time</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+            <span class="c"># lot open/close time: float version</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> \
+                    <span class="mi">60</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span> <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME_MIN</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> \
+                    <span class="mi">60</span><span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span> <span class="p">)</span>
+
+            <span class="c"># convert time column from number to timedelta</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+
+            <span class="c"># need PNRs and KNRs - get them from the dap</span>
+            <span class="n">knr_dap_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_DROP_OFF</span><span class="p">]</span><span class="o">==</span><span class="bp">True</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">pnr_dap_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dap_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_CAPACITY</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>  <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">knr_dap_df</span><span class="p">[</span><span class="s">&#39;dap_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;KNR&#39;</span>
+            <span class="n">pnr_dap_df</span><span class="p">[</span><span class="s">&#39;dap_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;PNR&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">,</span>
+                                                <span class="n">right</span><span class="o">=</span><span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">knr_dap_df</span><span class="p">,</span><span class="n">pnr_dap_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                                                <span class="n">on</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">,</span>
+                                                <span class="n">how</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="s">&#39;dap_type&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;_&#39;</span> <span class="o">+</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DIRECTION</span><span class="p">]</span>
+            <span class="c"># done with this</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s">&#39;dap_type&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="c"># We&#39;re going to join this with stops to get drive-to-stop</span>
+            <span class="n">drive_access</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DIRECTION</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;access&#39;</span><span class="p">]</span>
+            <span class="n">drive_egress</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DIRECTION</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;egress&#39;</span><span class="p">]</span>
+
+            <span class="c"># join with transfers</span>
+            <span class="n">drive_access</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">drive_access</span><span class="p">,</span>
+                                        <span class="n">right</span><span class="o">=</span><span class="n">transfers</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">,</span>
+                                        <span class="n">left_on</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">,</span>
+                                        <span class="n">right_on</span><span class="o">=</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span><span class="p">,</span>
+                                        <span class="n">how</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">)</span>
+            <span class="n">drive_access</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_STOP</span><span class="p">]</span> <span class="o">=</span> <span class="n">drive_access</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">]</span>
+            <span class="n">drive_egress</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">drive_egress</span><span class="p">,</span>
+                                        <span class="n">right</span><span class="o">=</span><span class="n">transfers</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">,</span>
+                                        <span class="n">left_on</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">,</span>
+                                        <span class="n">right_on</span><span class="o">=</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">,</span>
+                                        <span class="n">how</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">)</span>
+            <span class="n">drive_egress</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_STOP</span><span class="p">]</span> <span class="o">=</span> <span class="n">drive_egress</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">drive_access</span><span class="p">,</span> <span class="n">drive_egress</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c"># drop redundant columns</span>
+            <span class="c"># TODO: assuming min_transfer_type and transfer_type from GTFS aren&#39;t relevant here, since</span>
+            <span class="c"># the time and dist are what matter.</span>
+            <span class="c"># Assuming schedule_precedence doesn&#39;t make sense in the drive access/egress context</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span><span class="p">,</span>
+                                       <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">,</span>
+                                       <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TRANSFER_TYPE</span><span class="p">,</span>
+                                       <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_MIN_TRANSFER_TIME</span><span class="p">,</span>
+                                       <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="c"># rename walk attributes to be clear</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_DISTANCE</span><span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_WALK_DISTANCE</span><span class="p">,</span>
+                    <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TIME</span>    <span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME</span><span class="p">,</span>
+                    <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TIME_MIN</span><span class="p">:</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME_MIN</span><span class="p">},</span>
+                <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Final</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%7d</span><span class="s"> </span><span class="si">%15s</span><span class="s"> from </span><span class="si">%25s</span><span class="s">&quot;</span> <span class="o">%</span>
+                                 <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">),</span> <span class="s">&quot;drive access&quot;</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DRIVE_ACCESS_FILE</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_drive_access</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_drive_access</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span>  <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">])</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== NO DRIVE ACCESS ===========</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+
+        <span class="c"># add DAPs IDs and TAZ IDs to stop ID list</span>
+        <span class="n">stops</span><span class="o">.</span><span class="n">add_daps_tazs_to_stops</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">]],</span>
+                                     <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">,</span>
+                                     <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">[[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ</span><span class="p">]],</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">[[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ</span><span class="p">]]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                                     <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ</span><span class="p">)</span>
+        <span class="c"># transfers can add stop numeric IDs now that DAPs are available</span>
+        <span class="n">transfers</span><span class="o">.</span><span class="n">add_numeric_stop_id</span><span class="p">(</span><span class="n">stops</span><span class="p">)</span>
+
+
+        <span class="c"># Add numeric stop ID to walk access links</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span>  <span class="o">=</span> <span class="n">stops</span><span class="o">.</span><span class="n">add_numeric_stop_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">,</span>
+                                                         <span class="n">id_colname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_STOP</span><span class="p">,</span>
+                                                         <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_STOP_NUM</span><span class="p">)</span>
+        <span class="c"># Add TAZ stop ID to walk and drive access links</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span>  <span class="o">=</span> <span class="n">stops</span><span class="o">.</span><span class="n">add_numeric_stop_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">,</span>
+                                                         <span class="n">id_colname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ</span><span class="p">,</span>
+                                                         <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ_NUM</span><span class="p">)</span>
+
+        <span class="c"># These are bi-directional - use as access and copy for egress</span>
+        <span class="c"># This should probably be done in TAZ...</span>
+        <span class="n">walk_egress_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">walk_egress_df</span>     <span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;walk_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Route</span><span class="o">.</span><span class="n">MODE_TYPE_EGRESS</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;walk_</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Route</span><span class="o">.</span><span class="n">MODE_TYPE_ACCESS</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">,</span> <span class="n">walk_egress_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span> <span class="o">=</span> <span class="n">routes</span><span class="o">.</span><span class="n">add_numeric_mode_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="p">,</span>
+                                                         <span class="n">id_colname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">,</span>
+                                                         <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_drive_access</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span> <span class="o">=</span> <span class="n">stops</span><span class="o">.</span><span class="n">add_numeric_stop_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">,</span>
+                                                             <span class="n">id_colname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_STOP</span><span class="p">,</span>
+                                                             <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_STOP_NUM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span> <span class="o">=</span> <span class="n">stops</span><span class="o">.</span><span class="n">add_numeric_stop_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">,</span>
+                                                             <span class="n">id_colname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ</span><span class="p">,</span>
+                                                             <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ_NUM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span> <span class="o">=</span> <span class="n">routes</span><span class="o">.</span><span class="n">add_numeric_mode_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="p">,</span>
+                                                              <span class="n">id_colname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">,</span>
+                                                              <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_child_process</span><span class="p">:</span>
+            <span class="c"># write this to communicate to extension</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_access_egress_for_extension</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TAZ.write_access_egress_for_extension"><a class="viewcode-back" href="../../_generated/fasttrips.TAZ.html#fasttrips.TAZ.write_access_egress_for_extension">[docs]</a>    <span class="k">def</span> <span class="nf">write_access_egress_for_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the access and egress links to a single output file for the C++ extension to read.</span>
+<span class="sd">        It&#39;s in this form because I&#39;m not sure how to pass the strings to C++ in</span>
+<span class="sd">        Assignment.initialize_fasttrips_extension so I know that&#39;s inconsistent, but it&#39;s a</span>
+<span class="sd">        time sink to investigate, so I&#39;ll leave this for now</span>
+
+<span class="sd">        .. todo:: clean this up?  Rename intermediate files (they&#39;re not really output)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># ========== Walk access/egres =================================================</span>
+        <span class="c"># print &quot;walk_access columns&quot;</span>
+        <span class="c"># for col in list(self.walk_access_df.columns): print &quot;  %s&quot; % col</span>
+
+        <span class="c"># start with all walk columns</span>
+        <span class="n">walk_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">walk_access_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c"># drop the redundant columns</span>
+        <span class="n">drop_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ</span><span class="p">,</span>         <span class="c"># use numerical version</span>
+                      <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_STOP</span><span class="p">,</span>        <span class="c"># use numerical version</span>
+                      <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">,</span> <span class="c"># use numerical version</span>
+                      <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TIME</span><span class="p">,</span>        <span class="c"># use numerical version</span>
+                     <span class="p">]</span>
+        <span class="c"># we can only drop fields that are in the dataframe</span>
+        <span class="n">walk_fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">walk_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">valid_drop_fields</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">drop_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">walk_fields</span><span class="p">:</span> <span class="n">valid_drop_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+
+        <span class="n">walk_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">valid_drop_fields</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># the index is TAZ num, supply mode num, and stop num</span>
+        <span class="n">walk_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_TAZ_NUM</span><span class="p">,</span>
+                           <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">,</span>
+                           <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_STOP_NUM</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c"># this will make it so beyond taz num, supply mode num, and stop num</span>
+        <span class="c"># the remaining columns collapse to variable name, variable value</span>
+        <span class="n">walk_df</span> <span class="o">=</span> <span class="n">walk_df</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
+        <span class="c"># print walk_df</span>
+
+        <span class="c"># ========== Drive access/egres =================================================</span>
+        <span class="n">drive_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">drive_access_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c"># print &quot;drive_access columns&quot;</span>
+        <span class="c"># for col in list(self.drive_access_df.columns): print &quot;  %s&quot; % col</span>
+
+        <span class="c"># TEMP</span>
+        <span class="n">drive_fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">drive_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN</span> <span class="ow">in</span> <span class="n">drive_fields</span> <span class="ow">and</span> \
+           <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME_MIN</span> <span class="ow">in</span> <span class="n">drive_fields</span><span class="p">:</span>
+            <span class="n">drive_df</span><span class="p">[</span><span class="s">&#39;time_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">drive_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN</span><span class="p">]</span> <span class="o">+</span> \
+                                   <span class="n">drive_df</span><span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME_MIN</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">drive_df</span><span class="p">[</span><span class="s">&#39;time_min&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c"># drop some of the attributes</span>
+        <span class="n">drop_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ</span><span class="p">,</span>               <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_STOP</span><span class="p">,</span>              <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE</span><span class="p">,</span>       <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME</span><span class="p">,</span> <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span><span class="p">,</span>        <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span><span class="p">,</span>          <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_WALK_TIME</span><span class="p">,</span>         <span class="c"># use numerical version</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DIRECTION</span><span class="p">,</span>         <span class="c"># redundant with supply mode</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_DROP_OFF</span><span class="p">,</span>                   <span class="c"># redundant with supply mode</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_LATITUDE</span><span class="p">,</span>               <span class="c"># probably not useful</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_LONGITUDE</span><span class="p">,</span>              <span class="c"># probably not useful</span>
+                       <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_LOT_ID</span><span class="p">,</span>            <span class="c"># probably not useful</span>
+                      <span class="p">]</span>
+        <span class="n">valid_drop_fields</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">drop_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">drive_fields</span><span class="p">:</span> <span class="n">valid_drop_fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="n">drive_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">valid_drop_fields</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># the index is TAZ num, supply mode num, and stop num</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">drive_df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">drive_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TAZ_NUM</span><span class="p">,</span>
+                                <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">,</span>
+                                <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_STOP_NUM</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="c"># this will make it so beyond taz num, supply mode num, and stop num</span>
+            <span class="c"># the remaining columns collapse to variable name, variable value</span>
+            <span class="n">drive_df</span> <span class="o">=</span> <span class="n">drive_df</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
+
+            <span class="c"># put walk and drive together</span>
+            <span class="n">access_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">walk_df</span><span class="p">,</span> <span class="n">drive_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">access_df</span> <span class="o">=</span> <span class="n">walk_df</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+
+        <span class="n">access_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c"># rename from these default column names</span>
+        <span class="n">access_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;level_3&quot;</span><span class="p">:</span><span class="s">&quot;attr_name&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="s">&quot;attr_value&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c"># make attr_value a float instead of an object</span>
+        <span class="n">access_df</span><span class="p">[</span><span class="s">&quot;attr_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">access_df</span><span class="p">[</span><span class="s">&quot;attr_value&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">access_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">access_df</span><span class="o">.</span><span class="n">tail</span><span class="p">()))</span>
+
+        <span class="n">access_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">OUTPUT_ACCESS_EGRESS_FILE</span><span class="p">),</span>
+                         <span class="n">sep</span><span class="o">=</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Wrote </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">TAZ</span><span class="o">.</span><span class="n">OUTPUT_ACCESS_EGRESS_FILE</span><span class="p">))</span></div></div>
 </pre></div>
 
           </div>

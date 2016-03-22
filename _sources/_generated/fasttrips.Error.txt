@@ -1,0 +1,23 @@
+fasttrips.Error
+===============
+
+.. automodule:: fasttrips.Error
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      Error
+      NetworkInputError
+   
+   

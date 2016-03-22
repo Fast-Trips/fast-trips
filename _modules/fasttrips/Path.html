@@ -72,11 +72,15 @@
           
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Error.html">fasttrips.Error</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
 </ul>
@@ -134,55 +138,73 @@
 <span class="s">    See the License for the specific language governing permissions and</span>
 <span class="s">    limitations under the License.</span>
 <span class="s">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">collections</span><span class="o">,</span><span class="nn">datetime</span><span class="o">,</span><span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">collections</span><span class="o">,</span><span class="nn">datetime</span><span class="o">,</span><span class="nn">os</span><span class="o">,</span><span class="nn">string</span><span class="o">,</span><span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">numpy</span><span class="o">,</span><span class="nn">pandas</span>
 
-<span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span>
+<span class="kn">from</span> <span class="nn">.Logger</span>    <span class="kn">import</span> <span class="n">FastTripsLogger</span>
+<span class="kn">from</span> <span class="nn">.Passenger</span> <span class="kn">import</span> <span class="n">Passenger</span>
+<span class="kn">from</span> <span class="nn">.Route</span>     <span class="kn">import</span> <span class="n">Route</span>
+<span class="kn">from</span> <span class="nn">.Util</span>      <span class="kn">import</span> <span class="n">Util</span>
+
+<span class="c">#: Default user class: just one class called &quot;all&quot;</span>
+<span class="k">def</span> <span class="nf">generic_user_class</span><span class="p">(</span><span class="n">row_series</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&quot;all&quot;</span>
 
 <div class="viewcode-block" id="Path"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path">[docs]</a><span class="k">class</span> <span class="nc">Path</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents a path for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`</span>
 <span class="sd">    through a set of stops.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c">#: Path configuration: Weight of in-vehicle time</span>
-    <span class="n">IN_VEHICLE_TIME_WEIGHT</span>          <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="c">#: Paths output file</span>
+    <span class="n">PATHS_OUTPUT_FILE</span>               <span class="o">=</span> <span class="s">&#39;ft_output_passengerPaths.txt&#39;</span>
 
-    <span class="c">#: Path configuration: Weight of waiting time</span>
-    <span class="n">WAIT_TIME_WEIGHT</span>                <span class="o">=</span> <span class="mf">1.77</span>
+    <span class="c">#: Path times output file</span>
+    <span class="n">PATH_TIMES_OUTPUT_FILE</span>          <span class="o">=</span> <span class="s">&#39;ft_output_passengerTimes.txt&#39;</span>
 
-    <span class="c">#: Path configuration: Weight of access walk time</span>
-    <span class="n">WALK_ACCESS_TIME_WEIGHT</span>         <span class="o">=</span> <span class="mf">3.93</span>
+    <span class="c">#: Configured functions, indexed by name</span>
+    <span class="n">CONFIGURED_FUNCTIONS</span>            <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;generic_user_class&#39;</span><span class="p">:</span><span class="n">generic_user_class</span> <span class="p">}</span>
 
-    <span class="c">#: Path configuration: Weight of egress walk time</span>
-    <span class="n">WALK_EGRESS_TIME_WEIGHT</span>         <span class="o">=</span> <span class="mf">3.93</span>
+    <span class="c">#: Path configuration: Name of the function that defines user class</span>
+    <span class="n">USER_CLASS_FUNCTION</span>             <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="c">#: Path configuration: Weight of transfer walking time</span>
-    <span class="n">WALK_TRANSFER_TIME_WEIGHT</span>       <span class="o">=</span> <span class="mf">3.93</span>
+    <span class="c">#: File with weights file.  Space delimited table.</span>
+    <span class="n">WEIGHTS_FILE</span>                    <span class="o">=</span> <span class="s">&#39;pathweight_ft.txt&#39;</span>
+    <span class="c">#: Path weights</span>
+    <span class="n">WEIGHTS_DF</span>                      <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="c">#: Path configuration: Weight transfer penalty (minutes)</span>
-    <span class="n">TRANSFER_PENALTY</span>                <span class="o">=</span> <span class="mf">47.73</span>
+    <span class="c">#: Weights column: User Class</span>
+    <span class="n">WEIGHTS_COLUMN_USER_CLASS</span>       <span class="o">=</span> <span class="s">&quot;user_class&quot;</span>
+    <span class="c">#: Weights column: Demand Mode Type</span>
+    <span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span> <span class="o">=</span> <span class="s">&quot;demand_mode_type&quot;</span>
+    <span class="c">#: Weights column: Demand Mode Type</span>
+    <span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span>      <span class="o">=</span> <span class="s">&quot;demand_mode&quot;</span>
+    <span class="c">#: Weights column: Supply Mode</span>
+    <span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span>      <span class="o">=</span> <span class="s">&quot;supply_mode&quot;</span>
+    <span class="c">#: Weights column: Weight Name</span>
+    <span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span>      <span class="o">=</span> <span class="s">&quot;weight_name&quot;</span>
+    <span class="c">#: Weights column: Weight Value</span>
+    <span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span>     <span class="o">=</span> <span class="s">&quot;weight_value&quot;</span>
 
-    <span class="c">#: Path configuration: Weight of schedule delay (0 - no penalty)</span>
-    <span class="n">SCHEDULE_DELAY_WEIGHT</span>           <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c"># ========== Added by fasttrips =======================================================</span>
+    <span class="c">#: Weights column: Supply Mode number</span>
+    <span class="n">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</span>  <span class="o">=</span> <span class="s">&quot;supply_mode_num&quot;</span>
 
-    <span class="c">#: Path configuration: Fare in dollars per boarding (with no transfer credit)</span>
-    <span class="n">FARE_PER_BOARDING</span>               <span class="o">=</span> <span class="mf">0.0</span>
-
-    <span class="c">#: Path configuration: Value of time (dollars per hour)</span>
-    <span class="n">VALUE_OF_TIME</span>                   <span class="o">=</span> <span class="mi">999</span>
+    <span class="c">#: File with weights for c++</span>
+    <span class="n">OUTPUT_WEIGHTS_FILE</span>             <span class="o">=</span> <span class="s">&quot;ft_intermediate_weights.txt&quot;</span>
 
     <span class="n">DIR_OUTBOUND</span>    <span class="o">=</span> <span class="mi">1</span>  <span class="c">#: Trips outbound from home have preferred arrival times</span>
     <span class="n">DIR_INBOUND</span>     <span class="o">=</span> <span class="mi">2</span>  <span class="c">#: Trips inbound to home have preferred departure times</span>
 
     <span class="n">STATE_IDX_LABEL</span>         <span class="o">=</span> <span class="mi">0</span>  <span class="c">#: :py:class:`datetime.timedelta` instance</span>
     <span class="n">STATE_IDX_DEPARR</span>        <span class="o">=</span> <span class="mi">1</span>  <span class="c">#: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.</span>
-    <span class="n">STATE_IDX_DEPARRMODE</span>    <span class="o">=</span> <span class="mi">2</span>  <span class="c">#: string or trip identifier.</span>
-    <span class="n">STATE_IDX_SUCCPRED</span>      <span class="o">=</span> <span class="mi">3</span>  <span class="c">#: stop identifier or TAZ identifier</span>
-    <span class="n">STATE_IDX_SEQ</span>           <span class="o">=</span> <span class="mi">4</span>  <span class="c">#: sequence (for trip)</span>
-    <span class="n">STATE_IDX_SEQ_SUCCPRED</span>  <span class="o">=</span> <span class="mi">5</span>  <span class="c">#: sequence for successor/predecessor</span>
-    <span class="n">STATE_IDX_LINKTIME</span>      <span class="o">=</span> <span class="mi">6</span>  <span class="c">#: :py:class:`datetime.timedelta` instance</span>
-    <span class="n">STATE_IDX_COST</span>          <span class="o">=</span> <span class="mi">7</span>  <span class="c">#: cost float, for hyperpath/stochastic assignment</span>
-    <span class="n">STATE_IDX_ARRDEP</span>        <span class="o">=</span> <span class="mi">8</span>  <span class="c">#: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.</span>
+    <span class="n">STATE_IDX_DEPARRMODE</span>    <span class="o">=</span> <span class="mi">2</span>  <span class="c">#: mode id</span>
+    <span class="n">STATE_IDX_TRIP</span>          <span class="o">=</span> <span class="mi">3</span>  <span class="c">#: trip id</span>
+    <span class="n">STATE_IDX_SUCCPRED</span>      <span class="o">=</span> <span class="mi">4</span>  <span class="c">#: stop identifier or TAZ identifier</span>
+    <span class="n">STATE_IDX_SEQ</span>           <span class="o">=</span> <span class="mi">5</span>  <span class="c">#: sequence (for trip)</span>
+    <span class="n">STATE_IDX_SEQ_SUCCPRED</span>  <span class="o">=</span> <span class="mi">6</span>  <span class="c">#: sequence for successor/predecessor</span>
+    <span class="n">STATE_IDX_LINKTIME</span>      <span class="o">=</span> <span class="mi">7</span>  <span class="c">#: :py:class:`datetime.timedelta` instance</span>
+    <span class="n">STATE_IDX_COST</span>          <span class="o">=</span> <span class="mi">8</span>  <span class="c">#: cost float, for hyperpath/stochastic assignment</span>
+    <span class="n">STATE_IDX_ARRDEP</span>        <span class="o">=</span> <span class="mi">9</span>  <span class="c">#: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.</span>
 
     <span class="n">STATE_MODE_ACCESS</span>   <span class="o">=</span> <span class="s">&quot;Access&quot;</span>
     <span class="n">STATE_MODE_EGRESS</span>   <span class="o">=</span> <span class="s">&quot;Egress&quot;</span>
@@ -193,49 +215,27 @@
 
     <span class="n">BUMP_EXPERIENCED_COST</span> <span class="o">=</span> <span class="mi">999999</span>
 
-    <span class="n">PATH_ID_COUNTER</span> <span class="o">=</span> <span class="mi">0</span>
-
-<div class="viewcode-block" id="Path.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">passenger_record</span><span class="p">):</span>
+<div class="viewcode-block" id="Path.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trip_list_dict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor from dictionary mapping attribute to value.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c">#: path id - unique for this passenger/path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">path_id</span>            <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">PATH_ID_COUNTER</span>
-        <span class="n">Path</span><span class="o">.</span><span class="n">PATH_ID_COUNTER</span>    <span class="o">+=</span> <span class="mi">1</span> <span class="c"># increment it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">trip_list_dict</span><span class="p">)</span>
 
-        <span class="c">#: identifier for origin TAZ</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">origin_taz_id</span>      <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;OrigTAZ&#39;</span>    <span class="p">]</span>
+        <span class="c">#: Direction is one of :py:attr:`Path.DIR_OUTBOUND` or :py:attr:`Path.DIR_INBOUND`</span>
+        <span class="c">#: Preferred time is a datetime.time object</span>
+        <span class="k">if</span> <span class="n">trip_list_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;arrival&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">direction</span>     <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pref_time</span>     <span class="o">=</span> <span class="n">trip_list_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_ARRIVAL_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">()</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span> <span class="o">=</span> <span class="n">trip_list_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">trip_list_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;departure&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">direction</span>     <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_INBOUND</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pref_time</span>     <span class="o">=</span> <span class="n">trip_list_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DEPARTURE_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">()</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span> <span class="o">=</span> <span class="n">trip_list_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Don&#39;t understand trip_list </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">trip_list_dict</span><span class="p">)))</span>
 
-        <span class="c">#: identifier for destination TAZ</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">destination_taz_id</span> <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;DestTAZ&#39;</span>    <span class="p">]</span>
-
-        <span class="c">#: *Note*: This isn&#39;t used for anything, but it gets passed straight through to output.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>               <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;mode&#39;</span>       <span class="p">]</span>
-
-        <span class="c">#: Demand time period (e.g. AM, PM, OP)</span>
-        <span class="c">#: *Note*: Currently this is not used for anything.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">time_period</span>        <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;timePeriod&#39;</span> <span class="p">]</span>
-
-        <span class="c">#: Should be one of :py:attr:`Path.DIR_OUTBOUND` or</span>
-        <span class="c">#: :py:attr:`Path.DIR_INBOUND`</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">direction</span>          <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;direction&#39;</span>  <span class="p">]</span>
-        <span class="k">assert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_INBOUND</span><span class="p">])</span>
-
-        <span class="c">#: Preferred arrival time if</span>
-        <span class="c">#: :py:attr:`Path.direction` == :py:attr:`Path.DIR_OUTBOUND` or</span>
-        <span class="c">#: preferred departure time if</span>
-        <span class="c">#: :py:attr:`Path.direction` == :py:attr:`Path.DIR_INBOUND`</span>
-        <span class="c">#: This is an instance of :py:class:`datetime.time`</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span>      <span class="o">=</span> <span class="n">passenger_record</span><span class="p">[</span><span class="s">&#39;PAT&#39;</span>        <span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">preferred_time</span>     <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span><span class="o">/</span><span class="mf">60.0</span><span class="p">),</span>
-                                                <span class="n">minute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pref_time_min</span> <span class="o">%</span> <span class="mi">60</span><span class="p">)</span>
-
-        <span class="c">#: This will include the stops and their related states</span>
-        <span class="c">#: Ordered dictionary: origin_taz_id -&gt; state,</span>
-        <span class="c">#:                     stop_id -&gt; state</span>
-        <span class="c">#: Note that if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`, then</span>
-        <span class="c">#: this is in reverse order (egress to access)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="c">#: List of (stop_id, stop_state)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c">#: Final path cost, will be filled in during path finding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cost</span>   <span class="o">=</span> <span class="mf">0.0</span>
@@ -244,7 +244,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Does this path go somewhere?  Does the destination differ from the origin?</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">origin_taz_id</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">destination_taz_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_ORIGIN_TAZ_ID</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DESTINATION_TAZ_ID</span><span class="p">])</span>
 </div>
 <div class="viewcode-block" id="Path.path_found"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.path_found">[docs]</a>    <span class="k">def</span> <span class="nf">path_found</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -256,7 +256,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete my states, something went wrong and it won&#39;t work out.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
 </div>
 <div class="viewcode-block" id="Path.num_states"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.num_states">[docs]</a>    <span class="k">def</span> <span class="nf">num_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -271,7 +271,92 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="o">==</span> <span class="n">Path</span><span class="o">.</span><span class="n">DIR_OUTBOUND</span>
 </div>
     <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="Path.state_str_header"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.state_str_header">[docs]</a>    <span class="k">def</span> <span class="nf">state_str_header</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">DIR_OUTBOUND</span><span class="p">):</span>
+<div class="viewcode-block" id="Path.set_user_class"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.set_user_class">[docs]</a>    <span class="k">def</span> <span class="nf">set_user_class</span><span class="p">(</span><span class="n">trip_list_df</span><span class="p">,</span> <span class="n">new_colname</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a column called user_class by applying the configured user class function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">trip_list_df</span><span class="p">[</span><span class="n">new_colname</span><span class="p">]</span> <span class="o">=</span> <span class="n">trip_list_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">CONFIGURED_FUNCTIONS</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">USER_CLASS_FUNCTION</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.verify_weight_config"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.verify_weight_config">[docs]</a>    <span class="k">def</span> <span class="nf">verify_weight_config</span><span class="p">(</span><span class="n">modes_df</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">routes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.</span>
+
+<span class="sd">        The parameter mode_df is a dataframe with the user_class, demand_mode_type and demand_mode combinations</span>
+<span class="sd">        found in the demand file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">error_str</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="c"># First, verify required columns are found</span>
+        <span class="n">weight_cols</span>     <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span>       <span class="ow">in</span> <span class="n">weight_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span> <span class="ow">in</span> <span class="n">weight_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span>      <span class="ow">in</span> <span class="n">weight_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span>      <span class="ow">in</span> <span class="n">weight_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span>      <span class="ow">in</span> <span class="n">weight_cols</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span>     <span class="ow">in</span> <span class="n">weight_cols</span><span class="p">)</span>
+
+        <span class="c"># Join - make sure that all demand combinations (user class, demand mode type and demand mode) are configured</span>
+        <span class="n">weight_check</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">modes_df</span><span class="p">,</span>
+                                    <span class="n">right</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="p">,</span>
+                                    <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span><span class="p">],</span>
+                                    <span class="n">how</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">)</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;demand_modes x weights: </span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">weight_check</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+        <span class="c"># If something is missing, complain</span>
+        <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">weight_check</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">error_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">The following user_class, demand_mode_type, demand_mode combinations exist in the demand file but are missing from the weight configuration:</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="n">error_str</span> <span class="o">+=</span> <span class="n">weight_check</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">weight_check</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span><span class="p">])]</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
+            <span class="n">error_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+
+        <span class="c"># demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait</span>
+        <span class="n">user_classes</span> <span class="o">=</span> <span class="n">modes_df</span><span class="p">[[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">implicit_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span> <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span><span class="p">:[</span> <span class="s">&#39;transfer&#39;</span><span class="p">],</span>
+                                         <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span>     <span class="p">:[</span> <span class="s">&#39;transfer&#39;</span><span class="p">],</span>
+                                         <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span>     <span class="p">:[</span> <span class="s">&#39;transfer&#39;</span><span class="p">]</span> <span class="p">})</span>
+        <span class="n">user_classes</span><span class="p">[</span><span class="s">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">implicit_df</span><span class="p">[</span><span class="s">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">implicit_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">user_classes</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">implicit_df</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s">&#39;key&#39;</span><span class="p">)</span>
+        <span class="n">implicit_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s">&#39;index&#39;</span><span class="p">,</span><span class="s">&#39;key&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c"># print implicit_df</span>
+
+        <span class="n">weight_check</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">implicit_df</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="p">,</span>
+                                    <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span><span class="p">],</span>
+                                    <span class="n">how</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">)</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;implicit demand_modes x weights: </span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">weight_check</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">weight_check</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">error_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">The following user_class, demand_mode_type, demand_mode, supply_mode combinations exist in the demand file but are missing from the weight configuration:</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="n">error_str</span> <span class="o">+=</span> <span class="n">weight_check</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">weight_check</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">])]</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
+            <span class="n">error_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">&quot;</span>
+
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error_str</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="n">error_str</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c"># add mode numbers to weights DF for relevant rows</span>
+        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span> <span class="o">=</span> <span class="n">routes</span><span class="o">.</span><span class="n">add_numeric_mode_id</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="p">,</span>
+                                                    <span class="n">id_colname</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE</span><span class="p">,</span>
+                                                    <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">,</span>
+                                                    <span class="n">warn</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c"># don&#39;t fail if some supply modes are configured but not used, they may be for future runs</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Path weights: </span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="p">)</span>
+        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span><span class="n">Path</span><span class="o">.</span><span class="n">OUTPUT_WEIGHTS_FILE</span><span class="p">),</span>
+                               <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">,</span>
+                                        <span class="n">Path</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span><span class="p">],</span>
+                               <span class="n">sep</span><span class="o">=</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.state_str_header"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.state_str_header">[docs]</a>    <span class="k">def</span> <span class="nf">state_str_header</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="n">DIR_OUTBOUND</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a header for the state_str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -306,7 +391,11 @@
 
 <span class="sd">        Note: If inbound trip, then the states are in reverse order (egress to access)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Path</span><span class="o">.</span><span class="n">states_to_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+        <span class="n">ret_str</span> <span class="o">=</span> <span class="s">&quot;Dict vars:</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">ret_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="si">%30s</span><span class="s"> =&gt; </span><span class="si">%-30s</span><span class="s">   </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
+        <span class="n">ret_str</span> <span class="o">+=</span> <span class="n">Path</span><span class="o">.</span><span class="n">states_to_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret_str</span>
 
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="Path.states_to_str"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.states_to_str">[docs]</a>    <span class="k">def</span> <span class="nf">states_to_str</span><span class="p">(</span><span class="n">states</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">DIR_OUTBOUND</span><span class="p">):</span>
@@ -314,44 +403,43 @@
 <span class="sd">        Given that states is an ordered dict of states, returns a string version of the path therein.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">No path&quot;</span>
-        <span class="n">readable_str</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Path</span><span class="o">.</span><span class="n">state_str_header</span><span class="p">(</span><span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">direction</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span><span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">readable_str</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Path</span><span class="o">.</span><span class="n">state_str_header</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span><span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">readable_str</span> <span class="o">+=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">Path</span><span class="o">.</span><span class="n">state_str</span><span class="p">(</span><span class="n">state_id</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">readable_str</span>
 </div>
     <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="Path.write_paths"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.write_paths">[docs]</a>    <span class="k">def</span> <span class="nf">write_paths</span><span class="p">(</span><span class="n">passengers_df</span><span class="p">,</span> <span class="n">paths_out</span><span class="p">):</span>
+<div class="viewcode-block" id="Path.write_paths"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.write_paths">[docs]</a>    <span class="k">def</span> <span class="nf">write_paths</span><span class="p">(</span><span class="n">passengers_df</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write the assigned paths to the given output file.</span>
 
 <span class="sd">        :param passengers_df: Passenger paths assignment results</span>
-<span class="sd">        :type passengers_df: :py:class:`pandas.DataFrame` instance</span>
-<span class="sd">        :param paths_out: Output file, opened for writing</span>
-<span class="sd">        :type paths_out: :py:class:`file` instance</span>
+<span class="sd">        :type  passengers_df: :py:class:`pandas.DataFrame` instance</span>
+<span class="sd">        :param output_dir:    Output directory</span>
+<span class="sd">        :type  output_dir:    string</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># get trip information -- board stops, board trips and alight stops</span>
         <span class="n">passenger_trips</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRIP</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="c"># convert to strings for appending</span>
-        <span class="n">passenger_trips</span><span class="p">[</span><span class="s">&#39;board_stop_str&#39;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">A_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;s</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
-        <span class="n">passenger_trips</span><span class="p">[</span><span class="s">&#39;board_trip_str&#39;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">trip_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;t</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
-        <span class="n">passenger_trips</span><span class="p">[</span><span class="s">&#39;alight_stop_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">B_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;s</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
-        <span class="n">ptrip_group</span>     <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">])</span>
+        <span class="n">ptrip_group</span>     <span class="o">=</span> <span class="n">passenger_trips</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;person_id&#39;</span><span class="p">,</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">])</span>
         <span class="c"># these are Series</span>
-        <span class="n">board_stops_str</span> <span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">board_stop_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-        <span class="n">board_trips_str</span> <span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">board_trip_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-        <span class="n">alight_stops_str</span><span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">alight_stop_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">board_stops_str</span> <span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">A_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">board_trips_str</span> <span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">trip_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">alight_stops_str</span><span class="o">=</span> <span class="n">ptrip_group</span><span class="o">.</span><span class="n">B_id</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">board_stops_str</span><span class="o">.</span><span class="n">name</span>  <span class="o">=</span> <span class="s">&#39;board_stop_str&#39;</span>
+        <span class="n">board_trips_str</span><span class="o">.</span><span class="n">name</span>  <span class="o">=</span> <span class="s">&#39;board_trip_str&#39;</span>
+        <span class="n">alight_stops_str</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;alight_stop_str&#39;</span>
 
         <span class="c"># get walking times</span>
         <span class="n">walk_links</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span>  <span class="p">)</span><span class="o">|</span> \
                                        <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_TRANSFER</span><span class="p">)</span><span class="o">|</span> \
                                        <span class="p">(</span><span class="n">passengers_df</span><span class="o">.</span><span class="n">linkmode</span><span class="o">==</span><span class="n">Path</span><span class="o">.</span><span class="n">STATE_MODE_EGRESS</span>  <span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">walk_links</span><span class="p">[</span><span class="s">&#39;linktime_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">walk_links</span><span class="o">.</span><span class="n">linktime</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">&quot;</span><span class="si">%.2f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;m&#39;</span><span class="p">)))</span>
-        <span class="n">walklink_group</span> <span class="o">=</span> <span class="n">walk_links</span><span class="p">[[</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">,</span><span class="s">&#39;linktime_str&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">])</span>
+        <span class="n">walklink_group</span> <span class="o">=</span> <span class="n">walk_links</span><span class="p">[[</span><span class="s">&#39;person_id&#39;</span><span class="p">,</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">,</span><span class="s">&#39;linktime_str&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;person_id&#39;</span><span class="p">,</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">])</span>
         <span class="n">walktimes_str</span>  <span class="o">=</span> <span class="n">walklink_group</span><span class="o">.</span><span class="n">linktime_str</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
-        <span class="c"># aggregate to one line per passenger_id, path_id</span>
-        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="p">[[</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">,</span><span class="s">&#39;pathmode&#39;</span><span class="p">,</span><span class="s">&#39;A_id&#39;</span><span class="p">,</span><span class="s">&#39;B_id&#39;</span><span class="p">,</span><span class="s">&#39;A_time&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;passenger_id&#39;</span><span class="p">,</span><span class="s">&#39;path_id&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+        <span class="c"># aggregate to one line per person_id, trip_list_id</span>
+        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="p">[[</span><span class="s">&#39;person_id&#39;</span><span class="p">,</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">,</span><span class="s">&#39;pathmode&#39;</span><span class="p">,</span><span class="s">&#39;A_id&#39;</span><span class="p">,</span><span class="s">&#39;B_id&#39;</span><span class="p">,</span><span class="s">&#39;A_time&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s">&#39;person_id&#39;</span><span class="p">,</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
            <span class="p">{</span><span class="s">&#39;pathmode&#39;</span>      <span class="p">:</span><span class="s">&#39;first&#39;</span><span class="p">,</span>   <span class="c"># path mode</span>
             <span class="s">&#39;A_id&#39;</span>          <span class="p">:</span><span class="s">&#39;first&#39;</span><span class="p">,</span>   <span class="c"># origin</span>
             <span class="s">&#39;B_id&#39;</span>          <span class="p">:</span><span class="s">&#39;last&#39;</span><span class="p">,</span>    <span class="c"># destination</span>
@@ -366,9 +454,10 @@
                                             <span class="n">walktimes_str</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
         <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span>
-           <span class="p">{</span><span class="s">&#39;passenger_id&#39;</span>      <span class="p">:</span><span class="s">&#39;passengerId&#39;</span><span class="p">,</span>
-            <span class="s">&#39;pathmode&#39;</span>          <span class="p">:</span><span class="s">&#39;mode&#39;</span><span class="p">,</span>
+           <span class="p">{</span><span class="s">&#39;pathmode&#39;</span>          <span class="p">:</span><span class="s">&#39;mode&#39;</span><span class="p">,</span>
             <span class="s">&#39;A_id&#39;</span>              <span class="p">:</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span>
             <span class="s">&#39;B_id&#39;</span>              <span class="p">:</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span>
             <span class="s">&#39;A_time&#39;</span>            <span class="p">:</span><span class="s">&#39;startTime_time&#39;</span><span class="p">,</span>
@@ -376,19 +465,62 @@
             <span class="s">&#39;board_trip_str&#39;</span>    <span class="p">:</span><span class="s">&#39;boardingTrips&#39;</span><span class="p">,</span>
             <span class="s">&#39;alight_stop_str&#39;</span>   <span class="p">:</span><span class="s">&#39;alightingStops&#39;</span><span class="p">,</span>
             <span class="s">&#39;linktime_str&#39;</span>      <span class="p">:</span><span class="s">&#39;walkingTimes&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-        <span class="n">print_passengers_df</span><span class="p">[</span><span class="s">&#39;startTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[</span><span class="s">&#39;startTime_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%.2f</span><span class="s">&#39;</span> <span class="o">%</span> \
-                        <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">hour</span><span class="o">*</span><span class="mf">60.0</span> <span class="o">+</span> \
-                         <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> \
-                         <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">))</span>
+        <span class="n">print_passengers_df</span><span class="p">[</span><span class="s">&#39;startTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[</span><span class="s">&#39;startTime_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">datetime64_formatter</span><span class="p">)</span>
 
-        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;passengerId&#39;</span><span class="p">,</span><span class="s">&#39;mode&#39;</span><span class="p">,</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span><span class="s">&#39;startTime&#39;</span><span class="p">,</span>
+        <span class="n">print_passengers_df</span> <span class="o">=</span> <span class="n">print_passengers_df</span><span class="p">[[</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">,</span><span class="s">&#39;person_id&#39;</span><span class="p">,</span><span class="s">&#39;mode&#39;</span><span class="p">,</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span><span class="s">&#39;startTime&#39;</span><span class="p">,</span>
                                                    <span class="s">&#39;boardingStops&#39;</span><span class="p">,</span><span class="s">&#39;boardingTrips&#39;</span><span class="p">,</span><span class="s">&#39;alightingStops&#39;</span><span class="p">,</span><span class="s">&#39;walkingTimes&#39;</span><span class="p">]]</span>
 
-        <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">paths_out</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">print_passengers_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">PATHS_OUTPUT_FILE</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
         <span class="c"># passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes</span>
+</div>
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Path.write_path_times"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.write_path_times">[docs]</a>    <span class="k">def</span> <span class="nf">write_path_times</span><span class="p">(</span><span class="n">pax_exp_df</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the assigned path times to the given output file.</span>
 
+<span class="sd">        :param pax_exp_df:   Passenger experienced paths (simulation results)</span>
+<span class="sd">        :type  pax_exp_df:   :py:class:`pandas.DataFrame` instance</span>
+<span class="sd">        :param output_dir:   Output directory</span>
+<span class="sd">        :type  output_dir:   string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># reset columns</span>
+        <span class="n">print_pax_exp_df</span> <span class="o">=</span> <span class="n">pax_exp_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">print_pax_exp_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">print_pax_exp_df</span><span class="p">[</span><span class="s">&#39;A_time_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">print_pax_exp_df</span><span class="p">[</span><span class="s">&#39;A_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">datetime64_formatter</span><span class="p">)</span>
+        <span class="n">print_pax_exp_df</span><span class="p">[</span><span class="s">&#39;B_time_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">print_pax_exp_df</span><span class="p">[</span><span class="s">&#39;B_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">datetime64_formatter</span><span class="p">)</span>
+
+        <span class="c"># rename columns</span>
+        <span class="n">print_pax_exp_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span>
+            <span class="p">{</span><span class="s">&#39;pathmode&#39;</span>             <span class="p">:</span><span class="s">&#39;mode&#39;</span><span class="p">,</span>
+             <span class="s">&#39;A_id&#39;</span>                 <span class="p">:</span><span class="s">&#39;originTaz&#39;</span><span class="p">,</span>
+             <span class="s">&#39;B_id&#39;</span>                 <span class="p">:</span><span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span>
+             <span class="s">&#39;A_time_str&#39;</span>           <span class="p">:</span><span class="s">&#39;startTime&#39;</span><span class="p">,</span>
+             <span class="s">&#39;B_time_str&#39;</span>           <span class="p">:</span><span class="s">&#39;endTime&#39;</span><span class="p">,</span>
+             <span class="s">&#39;arrival_time_str&#39;</span>     <span class="p">:</span><span class="s">&#39;arrivalTimes&#39;</span><span class="p">,</span>
+             <span class="s">&#39;board_time_str&#39;</span>       <span class="p">:</span><span class="s">&#39;boardingTimes&#39;</span><span class="p">,</span>
+             <span class="s">&#39;alight_time_str&#39;</span>      <span class="p">:</span><span class="s">&#39;alightingTimes&#39;</span><span class="p">,</span>
+             <span class="s">&#39;cost&#39;</span>                 <span class="p">:</span><span class="s">&#39;travelCost&#39;</span><span class="p">,</span>
+             <span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># reorder</span>
+        <span class="n">print_pax_exp_df</span> <span class="o">=</span> <span class="n">print_pax_exp_df</span><span class="p">[[</span>
+            <span class="s">&#39;trip_list_id_num&#39;</span><span class="p">,</span>
+            <span class="s">&#39;person_id&#39;</span><span class="p">,</span>
+            <span class="s">&#39;mode&#39;</span><span class="p">,</span>
+            <span class="s">&#39;originTaz&#39;</span><span class="p">,</span>
+            <span class="s">&#39;destinationTaz&#39;</span><span class="p">,</span>
+            <span class="s">&#39;startTime&#39;</span><span class="p">,</span>
+            <span class="s">&#39;endTime&#39;</span><span class="p">,</span>
+            <span class="s">&#39;arrivalTimes&#39;</span><span class="p">,</span>
+            <span class="s">&#39;boardingTimes&#39;</span><span class="p">,</span>
+            <span class="s">&#39;alightingTimes&#39;</span><span class="p">,</span>
+            <span class="s">&#39;travelCost&#39;</span><span class="p">]]</span>
+
+        <span class="n">times_out</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">PATH_TIMES_OUTPUT_FILE</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">print_pax_exp_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">times_out</span><span class="p">,</span>
+                                <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">float_format</span><span class="o">=</span><span class="s">&quot;</span><span class="si">%.2f</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 </div>
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="Path.path_str_header"><a class="viewcode-back" href="../../_generated/fasttrips.Path.html#fasttrips.Path.path_str_header">[docs]</a>    <span class="k">def</span> <span class="nf">path_str_header</span><span class="p">():</span>

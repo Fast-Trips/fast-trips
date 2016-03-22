@@ -14,8 +14,6 @@ fasttrips.Path
    .. autosummary::
    
       ~Path.__init__
-      ~Path.calculate_tripcost
-      ~Path.experienced_arrival
       ~Path.goes_somewhere
       ~Path.num_states
       ~Path.outbound
@@ -23,9 +21,12 @@ fasttrips.Path
       ~Path.path_str
       ~Path.path_str_header
       ~Path.reset_states
+      ~Path.set_user_class
       ~Path.state_str
       ~Path.state_str_header
       ~Path.states_to_str
+      ~Path.verify_weight_config
+      ~Path.write_path_times
       ~Path.write_paths
    
    
@@ -37,28 +38,35 @@ fasttrips.Path
    .. autosummary::
    
       ~Path.BUMP_EXPERIENCED_COST
+      ~Path.CONFIGURED_FUNCTIONS
       ~Path.DIR_INBOUND
       ~Path.DIR_OUTBOUND
-      ~Path.FARE_PER_BOARDING
-      ~Path.IN_VEHICLE_TIME_WEIGHT
-      ~Path.PATH_ID_COUNTER
-      ~Path.SCHEDULE_DELAY_WEIGHT
-      ~Path.STATE_IDX_ARRIVAL
+      ~Path.OUTPUT_WEIGHTS_FILE
+      ~Path.PATHS_OUTPUT_FILE
+      ~Path.PATH_TIMES_OUTPUT_FILE
+      ~Path.STATE_IDX_ARRDEP
       ~Path.STATE_IDX_COST
       ~Path.STATE_IDX_DEPARR
       ~Path.STATE_IDX_DEPARRMODE
       ~Path.STATE_IDX_LABEL
       ~Path.STATE_IDX_LINKTIME
+      ~Path.STATE_IDX_SEQ
+      ~Path.STATE_IDX_SEQ_SUCCPRED
       ~Path.STATE_IDX_SUCCPRED
+      ~Path.STATE_IDX_TRIP
       ~Path.STATE_MODE_ACCESS
       ~Path.STATE_MODE_EGRESS
       ~Path.STATE_MODE_TRANSFER
       ~Path.STATE_MODE_TRIP
-      ~Path.TRANSFER_PENALTY
-      ~Path.VALUE_OF_TIME
-      ~Path.WAIT_TIME_WEIGHT
-      ~Path.WALK_ACCESS_TIME_WEIGHT
-      ~Path.WALK_EGRESS_TIME_WEIGHT
-      ~Path.WALK_TRANSFER_TIME_WEIGHT
+      ~Path.USER_CLASS_FUNCTION
+      ~Path.WEIGHTS_COLUMN_DEMAND_MODE
+      ~Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE
+      ~Path.WEIGHTS_COLUMN_SUPPLY_MODE
+      ~Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM
+      ~Path.WEIGHTS_COLUMN_USER_CLASS
+      ~Path.WEIGHTS_COLUMN_WEIGHT_NAME
+      ~Path.WEIGHTS_COLUMN_WEIGHT_VALUE
+      ~Path.WEIGHTS_DF
+      ~Path.WEIGHTS_FILE
    
    

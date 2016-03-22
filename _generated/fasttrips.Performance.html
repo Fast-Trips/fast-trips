@@ -1,0 +1,341 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.Performance &mdash; fasttrips 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="fasttrips.Path" href="fasttrips.Path.html"/>
+        <link rel="prev" title="fasttrips.Passenger" href="fasttrips.Passenger.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> fasttrips
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Error.html">fasttrips.Error</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">fasttrips</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>fasttrips.Performance</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_generated/fasttrips.Performance.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="fasttrips-performance">
+<h1>fasttrips.Performance<a class="headerlink" href="#fasttrips-performance" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fasttrips.Performance">
+<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Performance</code><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance class.  Keeps track of performance information
+(time spent, number of labeling iterations, etc) related to pathfinding
+in Fast-Trips.</p>
+<dl class="method">
+<dt id="fasttrips.Performance.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor.  Initialize empty dataframe for performance info.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>()</td>
+<td>Constructor.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_info</span></code>(iteration,&nbsp;trip_list_id_num,&nbsp;perf_dict)</td>
+<td>Add this row to the performance dataframe.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write</span></code>(output_dir)</td>
+<td>Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OUTPUT_PERFORMANCE_FILE</span></code></td>
+<td>File with to write performance results</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_ITERATION</span></code></td>
+<td>Performance column: Iteration</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_LABEL_ITERATIONS</span></code></td>
+<td>Performance column: Number of label iterations</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT</span></code></td>
+<td>Performance column: Maximum number of times a stop was processed</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TIME_ENUMERATING</span></code></td>
+<td>Performance column: Time spent enumerating (timedelta)</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TIME_ENUMERATING_MS</span></code></td>
+<td>Performance column: Time spent enumerating (milliseconds)</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TIME_LABELING</span></code></td>
+<td>Performance column: Time spent labeling (timedelta)</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TIME_LABELING_MS</span></code></td>
+<td>Performance column: Time spent labeling (milliseconds)</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TRACED</span></code></td>
+<td>Performance column: Traced, since this affects performance</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM</span></code></td>
+<td>Performance column: Trip list ID num</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="fasttrips.Performance.add_info">
+<code class="descname">add_info</code><span class="sig-paren">(</span><em>iteration</em>, <em>trip_list_id_num</em>, <em>perf_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.add_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.add_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add this row to the performance dataframe.
+Assumes time values are in milliseconds.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Performance.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.OUTPUT_PERFORMANCE_FILE">
+<code class="descname">OUTPUT_PERFORMANCE_FILE</code><em class="property"> = 'ft_output_performance.txt'</em><a class="headerlink" href="#fasttrips.Performance.OUTPUT_PERFORMANCE_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with to write performance results</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_ITERATION">
+<code class="descname">PERFORMANCE_COLUMN_ITERATION</code><em class="property"> = 'iteration'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_ITERATION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Iteration</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS">
+<code class="descname">PERFORMANCE_COLUMN_LABEL_ITERATIONS</code><em class="property"> = 'label iterations'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Number of label iterations</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT">
+<code class="descname">PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT</code><em class="property"> = 'max stop process count'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Maximum number of times a stop was processed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING">
+<code class="descname">PERFORMANCE_COLUMN_TIME_ENUMERATING</code><em class="property"> = 'time enumerating'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Time spent enumerating (timedelta)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS">
+<code class="descname">PERFORMANCE_COLUMN_TIME_ENUMERATING_MS</code><em class="property"> = 'time enumerating milliseconds'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Time spent enumerating (milliseconds)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING">
+<code class="descname">PERFORMANCE_COLUMN_TIME_LABELING</code><em class="property"> = 'time labeling'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Time spent labeling (timedelta)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS">
+<code class="descname">PERFORMANCE_COLUMN_TIME_LABELING_MS</code><em class="property"> = 'time labeling milliseconds'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Time spent labeling (milliseconds)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_TRACED">
+<code class="descname">PERFORMANCE_COLUMN_TRACED</code><em class="property"> = 'traced'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_TRACED" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Traced, since this affects performance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM">
+<code class="descname">PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM</code><em class="property"> = 'trip_list_id_num'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Trip list ID num</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="fasttrips.Path.html" class="btn btn-neutral float-right" title="fasttrips.Path" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fasttrips.Passenger.html" class="btn btn-neutral" title="fasttrips.Passenger" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Lisa Zorn.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -31,8 +31,8 @@
 
   
     <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
-        <link rel="next" title="fasttrips.Passenger" href="fasttrips.Passenger.html"/>
-        <link rel="prev" title="fasttrips.Assignment" href="fasttrips.Assignment.html"/> 
+        <link rel="next" title="fasttrips.FastTripsLogger" href="fasttrips.FastTripsLogger.html"/>
+        <link rel="prev" title="fasttrips.Error" href="fasttrips.Error.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -73,11 +73,15 @@
           
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Error.html">fasttrips.Error</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
 </ul>
@@ -124,24 +128,23 @@
 <h1>fasttrips.FastTrips<a class="headerlink" href="#fasttrips-fasttrips" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="fasttrips.FastTrips">
-<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">FastTrips</code><span class="sig-paren">(</span><em>input_dir</em>, <em>output_dir</em>, <em>read_demand=True</em>, <em>log_to_console=True</em>, <em>logname_append=''</em>, <em>appendLog=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">FastTrips</code><span class="sig-paren">(</span><em>input_network_dir</em>, <em>input_demand_dir</em>, <em>output_dir</em>, <em>is_child_process=False</em>, <em>logname_append=''</em>, <em>appendLog=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the model itself.  Should be simple and run pieces and store the big data structures.</p>
 <dl class="method">
 <dt id="fasttrips.FastTrips.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>input_dir</em>, <em>output_dir</em>, <em>read_demand=True</em>, <em>log_to_console=True</em>, <em>logname_append=''</em>, <em>appendLog=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>input_network_dir</em>, <em>input_demand_dir</em>, <em>output_dir</em>, <em>is_child_process=False</em>, <em>logname_append=''</em>, <em>appendLog=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor.</p>
-<p>Reads input files from <em>input_dir</em>.
+<p>Reads configuration and input files from <em>input_network_dir</em>.
 Writes output files to <em>output_dir</em>, including log files.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>input_dir</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Location of csv files to read</li>
+<li><strong>input_network_dir</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Location of network csv files to read</li>
+<li><strong>input_demand_dir</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Location of demand csv files to read</li>
 <li><strong>output_dir</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Location to write output and log files.</li>
-<li><strong>read_demand</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Read passenger demand?  For parallelization, workers don&#8217;t need to
-read demand since the main process will tell them what to do.</li>
-<li><strong>log_to_console</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Log info to console as well as info log?</li>
+<li><strong>is_child_process</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Is this FastTrips instance for a child process?</li>
 <li><strong>logname_append</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Modifier for info and debug log filenames.  So workers can write their own logs.</li>
 <li><strong>appendLog</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Append to info and debug logs?  When FastTrips assignment iterations (to
 handle capacity bumps), we&#8217;d like to append rather than overwrite.</li>
@@ -159,13 +162,16 @@ handle capacity bumps), we&#8217;d like to append rather than overwrite.</li>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(input_dir,&nbsp;output_dir[,&nbsp;...])</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(input_network_dir,&nbsp;...[,&nbsp;...])</td>
 <td>Constructor.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_input_files</span></code>(input_dir,&nbsp;read_demand)</td>
-<td>Reads in the input files files from <em>input_dir</em> and initializes the relevant data structures.</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">combine_pathset_files</span></code>()</td>
+<td>Since the pathset files are output by worker, let&#8217;s combine them into a single file.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">run_assignment</span></code>(output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_input_files</span></code>()</td>
+<td>Reads in the input files files from <em>input_network_dir</em> and initializes the relevant data structures.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">run_assignment</span></code>(output_dir)</td>
 <td></td>
 </tr>
 </tbody>
@@ -183,12 +189,21 @@ handle capacity bumps), we&#8217;d like to append rather than overwrite.</li>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">INFO_LOG</span></code></td>
 <td>Info log filename.</td>
 </tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PATHSET_LOG</span></code></td>
+<td>Pathset debug filename.</td>
+</tr>
 </tbody>
 </table>
 <dl class="method">
+<dt id="fasttrips.FastTrips.combine_pathset_files">
+<code class="descname">combine_pathset_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips.combine_pathset_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips.combine_pathset_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Since the pathset files are output by worker, let&#8217;s combine them into a single file.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="fasttrips.FastTrips.read_input_files">
-<code class="descname">read_input_files</code><span class="sig-paren">(</span><em>input_dir</em>, <em>read_demand</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips.read_input_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips.read_input_files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads in the input files files from <em>input_dir</em> and initializes the relevant data structures.</p>
+<code class="descname">read_input_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips.read_input_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips.read_input_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in the input files files from <em>input_network_dir</em> and initializes the relevant data structures.</p>
 </dd></dl>
 
 <dl class="method">
@@ -209,9 +224,33 @@ handle capacity bumps), we&#8217;d like to append rather than overwrite.</li>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.FastTrips.input_dir">
-<code class="descname">input_dir</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.input_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>string representing directory with input data</p>
+<dt id="fasttrips.FastTrips.PATHSET_LOG">
+<code class="descname">PATHSET_LOG</code><em class="property"> = 'ft_pathset%s.txt'</em><a class="headerlink" href="#fasttrips.FastTrips.PATHSET_LOG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pathset debug filename.  Writes pathset here.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.FastTrips.gtfs_schedule">
+<code class="descname">gtfs_schedule</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.gtfs_schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>transitfeed schedule instance.  See <a class="reference external" href="https://github.com/google/transitfeed">https://github.com/google/transitfeed</a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.FastTrips.input_demand_dir">
+<code class="descname">input_demand_dir</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.input_demand_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>string representing directory with input demand data</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.FastTrips.input_network_dir">
+<code class="descname">input_network_dir</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.input_network_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>string representing directory with input network data</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.FastTrips.is_child_process">
+<code class="descname">is_child_process</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.is_child_process" title="Permalink to this definition">¶</a></dt>
+<dd><p>is this instance for a child process?</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -229,7 +268,7 @@ handle capacity bumps), we&#8217;d like to append rather than overwrite.</li>
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.routes">
 <code class="descname">routes</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.routes" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> with <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route.route_id" title="fasttrips.Route.route_id"><code class="xref py py-attr docutils literal"><span class="pre">fasttrips.Route.route_id</span></code></a> key and <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route" title="fasttrips.Route"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Route</span></code></a> value</p>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal"><span class="pre">fasttrips.Route.route_id</span></code> key and <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route" title="fasttrips.Route"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Route</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -260,10 +299,10 @@ handle capacity bumps), we&#8217;d like to append rather than overwrite.</li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="fasttrips.Passenger.html" class="btn btn-neutral float-right" title="fasttrips.Passenger" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="fasttrips.FastTripsLogger.html" class="btn btn-neutral float-right" title="fasttrips.FastTripsLogger" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="fasttrips.Assignment.html" class="btn btn-neutral" title="fasttrips.Assignment" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="fasttrips.Error.html" class="btn btn-neutral" title="fasttrips.Error" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

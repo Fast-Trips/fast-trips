@@ -73,11 +73,15 @@
           
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Error.html">fasttrips.Error</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Path.html">fasttrips.Path</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
 </ul>
@@ -130,28 +134,138 @@
 <dd><div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Typedefs</p>
 <dl class="type">
+<dt id="_CPPv2N9fasttrips12NamedWeightsE">
+<span id="fasttrips::NamedWeights"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a732c1b8e508cfe4d5cbc042185f6017e"></span><em class="property">typedef </em>std::map&lt;std::string, double&gt; <code class="descname">NamedWeights</code><a class="headerlink" href="#_CPPv2N9fasttrips12NamedWeightsE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips24SupplyModeToNamedWeightsE">
+<span id="fasttrips::SupplyModeToNamedWeights"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a96c973bc93fca27ea94b4d6217f1e976"></span><em class="property">typedef </em>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips12NamedWeightsE" title="fasttrips::NamedWeights">NamedWeights</a>&gt; <code class="descname">SupplyModeToNamedWeights</code><a class="headerlink" href="#_CPPv2N9fasttrips24SupplyModeToNamedWeightsE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips12WeightLookupE">
+<span id="fasttrips::WeightLookup"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1abaed35ac92854c9c6f359885d5753edc"></span><em class="property">typedef </em>std::map&lt;<a class="reference internal" href="#_CPPv2N9fasttrips13UserClassModeE" title="fasttrips::UserClassMode">UserClassMode</a>, <a class="reference internal" href="#_CPPv2N9fasttrips24SupplyModeToNamedWeightsE" title="fasttrips::SupplyModeToNamedWeights">SupplyModeToNamedWeights</a>, <em class="property">struct</em> <a class="reference internal" href="#_CPPv29fasttrips" title="fasttrips">fasttrips</a>::<a class="reference internal" href="#_CPPv2N9fasttrips20UserClassModeCompareE" title="fasttrips::UserClassModeCompare">UserClassModeCompare</a>&gt; <code class="descname">WeightLookup</code><a class="headerlink" href="#_CPPv2N9fasttrips12WeightLookupE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips10AttributesE">
+<span id="fasttrips::Attributes"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a737adf7c7608d5a89546c08c776eea4b"></span><em class="property">typedef </em>std::map&lt;std::string, double&gt; <code class="descname">Attributes</code><a class="headerlink" href="#_CPPv2N9fasttrips10AttributesE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Access/Egress information: taz id -&gt; supply_mode -&gt; stop id -&gt; attribute map. </p>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips10StopToAttrE">
+<span id="fasttrips::StopToAttr"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a784716af36f3d858477d9e3d4e74dd23"></span><em class="property">typedef </em>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips10AttributesE" title="fasttrips::Attributes">Attributes</a>&gt; <code class="descname">StopToAttr</code><a class="headerlink" href="#_CPPv2N9fasttrips10StopToAttrE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips16SupplyStopToAttrE">
+<span id="fasttrips::SupplyStopToAttr"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a135c933d2664d38912087002e95ec644"></span><em class="property">typedef </em>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips10StopToAttrE" title="fasttrips::StopToAttr">StopToAttr</a>&gt; <code class="descname">SupplyStopToAttr</code><a class="headerlink" href="#_CPPv2N9fasttrips16SupplyStopToAttrE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips19TAZSupplyStopToAttrE">
+<span id="fasttrips::TAZSupplyStopToAttr"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1ac98677adca7ea20d519a13447830f9f8"></span><em class="property">typedef </em>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips16SupplyStopToAttrE" title="fasttrips::SupplyStopToAttr">SupplyStopToAttr</a>&gt; <code class="descname">TAZSupplyStopToAttr</code><a class="headerlink" href="#_CPPv2N9fasttrips19TAZSupplyStopToAttrE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips14StopStopToAttrE">
+<span id="fasttrips::StopStopToAttr"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1ac08d318e355f1d861cb7cc20d0712c5d"></span><em class="property">typedef </em>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips10StopToAttrE" title="fasttrips::StopToAttr">StopToAttr</a>&gt; <code class="descname">StopStopToAttr</code><a class="headerlink" href="#_CPPv2N9fasttrips14StopStopToAttrE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="type">
 <dt id="_CPPv2N9fasttrips10StopStatesE">
 <span id="fasttrips::StopStates"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a048d7ec73c72448e479f11ec888f136b"></span><em class="property">typedef </em>std::map&lt;int, std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt;&gt; <code class="descname">StopStates</code><a class="headerlink" href="#_CPPv2N9fasttrips10StopStatesE" title="Permalink to this definition">¶</a></dt>
 <dd><p>The path finding algorithm stores <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a> data in this structure. For the stochastic algorithm, a stop ID maps to a vector of <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a> instances. For the deterministic algorithm, the vector only has a single instance of <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a>. </p>
 </dd></dl>
 
 <dl class="type">
-<dt id="_CPPv2N9fasttrips14LabelStopQueueE">
-<span id="fasttrips::LabelStopQueue"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a9e6152418813c27b086a0af364bd9051"></span><em class="property">typedef </em>std::priority_queue&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a>, std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a>&gt;, <em class="property">struct</em> <a class="reference internal" href="#_CPPv2N9fasttrips16LabelStopCompareE" title="fasttrips::LabelStopCompare">LabelStopCompare</a>&gt; <code class="descname">LabelStopQueue</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="Permalink to this definition">¶</a></dt>
-<dd><p>The pathfinding algorithm uses this to find the lowest label stops. </p>
+<dt id="_CPPv2N9fasttrips19HyperpathStopStatesE">
+<span id="fasttrips::HyperpathStopStates"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a1a79e54e4591fcaad7b263b9141566d3"></span><em class="property">typedef </em>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips14HyperpathStateE" title="fasttrips::HyperpathState">HyperpathState</a>&gt; <code class="descname">HyperpathStopStates</code><a class="headerlink" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop id maps to <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_hyperpath_state"><span>HyperpathState</span></a>, wihich includes stop window time, hyperpath_cost.</p>
+<p>A stop is completely processed when the current time is before (outbound) or after (inbound) the stop state&#8217;s time window </p>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv2N9fasttrips4PathE">
+<span id="fasttrips::Path"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1aa11101ff6530a9d7e59c43c868093c90"></span><em class="property">typedef </em>std::vector&lt;std::pair&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt;&gt; <code class="descname">Path</code><a class="headerlink" href="#_CPPv2N9fasttrips4PathE" title="Permalink to this definition">¶</a></dt>
+<dd><p>A single path consists of a vector of stop ID &amp; stop states. They are in origin to destination order for outbound trips, and destination to origin order for inbound trips. </p>
 </dd></dl>
 
 <dl class="type">
 <dt id="_CPPv2N9fasttrips7PathSetE">
 <span id="fasttrips::PathSet"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1a01a6f9a235d6d0c94d8c09a10f8dd4bb"></span><em class="property">typedef </em>std::map&lt;<a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a>, <em class="property">struct</em> <a class="reference internal" href="#_CPPv29fasttrips" title="fasttrips">fasttrips</a>::<a class="reference internal" href="#_CPPv2N9fasttrips11PathCompareE" title="fasttrips::PathCompare">PathCompare</a>&gt; <code class="descname">PathSet</code><a class="headerlink" href="#_CPPv2N9fasttrips7PathSetE" title="Permalink to this definition">¶</a></dt>
-<dd><p>A set of paths consists of paths mapping to information about them (for chooseing one) </p>
+<dd><p>A set of paths consists of paths mapping to information about them (for choosing one) </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Enums</p>
+<dl class="type">
+<dt id="_CPPv2N9fasttrips14DemandModeTypeE">
+<span id="fasttrips::DemandModeType"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90"></span><em class="property">enum </em><code class="descname">DemandModeType</code><a class="headerlink" href="#_CPPv2N9fasttrips14DemandModeTypeE" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Values:</em></p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips11MODE_ACCESSE">
+<span id="fasttrips::MODE_ACCESS"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a97073c3f1de9ba14bad239d8c80fe356"></span><code class="descname">MODE_ACCESS</code> = -100<a class="headerlink" href="#_CPPv2N9fasttrips11MODE_ACCESSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips11MODE_EGRESSE">
+<span id="fasttrips::MODE_EGRESS"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a93f5ec9d8d6e96c5642061e5ca898991"></span><code class="descname">MODE_EGRESS</code> = -101<a class="headerlink" href="#_CPPv2N9fasttrips11MODE_EGRESSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips13MODE_TRANSFERE">
+<span id="fasttrips::MODE_TRANSFER"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90ac7d130d2e194c08d902336c1ace8a74b"></span><code class="descname">MODE_TRANSFER</code> = -102<a class="headerlink" href="#_CPPv2N9fasttrips13MODE_TRANSFERE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips12MODE_TRANSITE">
+<span id="fasttrips::MODE_TRANSIT"></span><span class="target" id="fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a6169ecc8a769cde8e6789e3b1780c541"></span><code class="descname">MODE_TRANSIT</code> = -103<a class="headerlink" href="#_CPPv2N9fasttrips12MODE_TRANSITE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
 <dl class="class">
+<dt id="_CPPv2N9fasttrips14HyperpathStateE">
+<span id="fasttrips::HyperpathState"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_hyperpath_state"></span><em class="property">struct </em><code class="descname">HyperpathState</code><a class="headerlink" href="#_CPPv2N9fasttrips14HyperpathStateE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>For hyperpaths, this is additional information about the stop state. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14HyperpathState24latest_dep_earliest_arr_E">
+<span id="fasttrips::HyperpathState::latest_dep_earliest_arr___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_hyperpath_state_1a1f2cde6a4b93965689fd4c722d834c44"></span>double <code class="descname">latest_dep_earliest_arr_</code><a class="headerlink" href="#_CPPv2N9fasttrips14HyperpathState24latest_dep_earliest_arr_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14HyperpathState13lder_trip_id_E">
+<span id="fasttrips::HyperpathState::lder_trip_id___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_hyperpath_state_1a771c7e47bb6efd9be3abf0bebb0fd65c"></span>int <code class="descname">lder_trip_id_</code><a class="headerlink" href="#_CPPv2N9fasttrips14HyperpathState13lder_trip_id_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>trip for the latest departure/earliest arrival </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14HyperpathState15hyperpath_cost_E">
+<span id="fasttrips::HyperpathState::hyperpath_cost___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_hyperpath_state_1ad1587e9a98662b92694dee0986730f64"></span>double <code class="descname">hyperpath_cost_</code><a class="headerlink" href="#_CPPv2N9fasttrips14HyperpathState15hyperpath_cost_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>hyperpath cost for this stop state </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14HyperpathState14process_count_E">
+<span id="fasttrips::HyperpathState::process_count___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_hyperpath_state_1ae4b7caa1c5a8fabb2b57d95acc73dcba"></span>int <code class="descname">process_count_</code><a class="headerlink" href="#_CPPv2N9fasttrips14HyperpathState14process_count_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>increment this every time the stop is processed </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
 <dt id="_CPPv2N9fasttrips9LabelStopE">
 <span id="fasttrips::LabelStop"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop"></span><em class="property">struct </em><code class="descname">LabelStop</code><a class="headerlink" href="#_CPPv2N9fasttrips9LabelStopE" title="Permalink to this definition">¶</a></dt>
-<dd><em>#include &lt;pathfinder.h&gt;</em><p>Struct containing just a label and a stop id, this is stored in the <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1a9e6152418813c27b086a0af364bd9051"><span>fasttrips::LabelStopQueue</span></a> (a priority queue) to find the lowest label stops. </p>
+<dd><em>#include &lt;LabelStopQueue.h&gt;</em><p>Struct containing just a label and a stop id, this is stored in the <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_label_stop_queue"><span>fasttrips::LabelStopQueue</span></a> (a priority queue) to find the lowest label stops. </p>
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
@@ -172,7 +286,7 @@
 <dl class="class">
 <dt id="_CPPv2N9fasttrips16LabelStopCompareE">
 <span id="fasttrips::LabelStopCompare"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop_compare"></span><em class="property">struct </em><code class="descname">LabelStopCompare</code><a class="headerlink" href="#_CPPv2N9fasttrips16LabelStopCompareE" title="Permalink to this definition">¶</a></dt>
-<dd><em>#include &lt;pathfinder.h&gt;</em><p>Comparator to enable the <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1a9e6152418813c27b086a0af364bd9051"><span>fasttrips::LabelStopQueue</span></a> to return the lowest labeled stop. </p>
+<dd><em>#include &lt;LabelStopQueue.h&gt;</em><p>Comparator to enable the <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_label_stop_queue"><span>fasttrips::LabelStopQueue</span></a> to return the lowest labeled stop. </p>
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Functions</p>
 <dl class="function">
@@ -184,22 +298,110 @@
 </dd></dl>
 
 <dl class="class">
-<dt id="_CPPv2N9fasttrips4PathE">
-<span id="fasttrips::Path"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path"></span><em class="property">struct </em><code class="descname">Path</code><a class="headerlink" href="#_CPPv2N9fasttrips4PathE" title="Permalink to this definition">¶</a></dt>
-<dd><em>#include &lt;pathfinder.h&gt;</em><p>A single path consists of a map of stop id to <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state"><span>StopState</span></a>, plus the order of the stops are given a list of stop ids. </p>
+<dt id="_CPPv2N9fasttrips14LabelStopQueueE">
+<span id="fasttrips::LabelStopQueue"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue"></span><em class="property">class </em><code class="descname">LabelStopQueue</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;LabelStopQueue.h&gt;</em><p>This is just like a priority queue but with the additonal constraint that each stop ID can only be in the queue once.</p>
+<p>This is to save work; if we mark a stop for processing by adding it onto the queue, and then do that again shortly after, we don&#8217;t actually want to process twice. We only want to process it once, for the lowest label. </p>
 <div class="breathe-sectiondef container">
-<p class="breathe-sectiondef-title rubric">Public Members</p>
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue14LabelStopQueueEv">
+<span id="fasttrips::LabelStopQueue::LabelStopQueue"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1ae28abfcc56829dee93b505c97c003319"></span><code class="descname">LabelStopQueue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue14LabelStopQueueEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips14LabelStopQueueD0Ev">
+<span id="fasttrips::LabelStopQueue::~LabelStopQueue"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1adf1593d37d1e8671e562ce8a33d6704b"></span><code class="descname">~LabelStopQueue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueueD0Ev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue4pushERK9LabelStop">
+<span id="fasttrips::LabelStopQueue::push__LabelStopCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1a1841faed66e07aaea2e6c87accb6e4d4"></span>void <code class="descname">push</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue4pushERK9LabelStop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue7pop_topERKNSt3mapIiNSt6stringEEEbRNSt8ofstreamE">
+<span id="fasttrips::LabelStopQueue::pop_top__std::map:i.ss:CR.b.std::ofstreamR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1a57ab658ed4b7ecea003923aba9b4614b"></span><a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> <code class="descname">pop_top</code><span class="sig-paren">(</span><em class="property">const</em> std::map&lt;int, std::string&gt; &amp;<em>stop_num_to_str</em>, bool <em>trace</em>, std::ofstream &amp;<em>trace_file</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue7pop_topERKNSt3mapIiNSt6stringEEEbRNSt8ofstreamE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pop the top <em>valid</em> <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_label_stop"><span>LabelStop</span></a> </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue4sizeEv">
+<span id="fasttrips::LabelStopQueue::size"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1a18188963628635b659ad7ede7fa65670"></span>size_t <code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue4sizeEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue5emptyEv">
+<span id="fasttrips::LabelStopQueue::empty"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1abc4aa53ccb7a99a95aebd97c3d8a618b"></span>bool <code class="descname">empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue5emptyEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Private Members</p>
 <dl class="member">
-<dt id="_CPPv2N9fasttrips4Path7states_E">
-<span id="fasttrips::Path::states___std::map:i.StopState:"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_1aa27ccc57a9389a971e5a6bfdb7b5ff75"></span>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; <code class="descname">states_</code><a class="headerlink" href="#_CPPv2N9fasttrips4Path7states_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Stop states will be in here, indexed by stop ID. </p>
+<dt id="_CPPv2N9fasttrips14LabelStopQueue25labelstop_priority_queue_E">
+<span id="fasttrips::LabelStopQueue::labelstop_priority_queue___std::priority_queue:LabelStop.std::vector:LabelStop:.LabelStopCompare:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1a969751fb8a29cacf096a1b84ae0d011f"></span>std::priority_queue&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a>, std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a>&gt;, <em class="property">struct</em> <a class="reference internal" href="#_CPPv2N9fasttrips16LabelStopCompareE" title="fasttrips::LabelStopCompare">LabelStopCompare</a>&gt; <code class="descname">labelstop_priority_queue_</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue25labelstop_priority_queue_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue14labelstop_map_E">
+<span id="fasttrips::LabelStopQueue::labelstop_map___std::map:i.LabelCount:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1ac161bf9d957c40c37b98e78a6a765736"></span>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueue10LabelCountE" title="fasttrips::LabelStopQueue::LabelCount">LabelCount</a>&gt; <code class="descname">labelstop_map_</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue14labelstop_map_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keep track of the lowest label and the count for each stop </p>
 </dd></dl>
 
 <dl class="member">
-<dt id="_CPPv2N9fasttrips4Path6stops_E">
-<span id="fasttrips::Path::stops___std::vector:i:"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_1a681cd22e49a443b571e3259b8b3ea232"></span>std::vector&lt;int&gt; <code class="descname">stops_</code><a class="headerlink" href="#_CPPv2N9fasttrips4Path6stops_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>stop IDs. They are in origin to destination order for outbound trips, and destination to origin order for inbound trips. </p>
+<dt id="_CPPv2N9fasttrips14LabelStopQueue12valid_count_E">
+<span id="fasttrips::LabelStopQueue::valid_count___i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_1ab55d302dfe2b3879757ff5b47347abd5"></span>int <code class="descname">valid_count_</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue12valid_count_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<dl class="class">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue10LabelCountE">
+<span id="fasttrips::LabelStopQueue::LabelCount"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop_queue_1_1_label_count"></span><em class="property">struct </em><code class="descname">LabelCount</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue10LabelCountE" title="Permalink to this definition">¶</a></dt>
+<dd><div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue10LabelCount6label_E">
+<span id="fasttrips::LabelStopQueue::LabelCount::label___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop_queue_1_1_label_count_1aa20f5eebed825bc52a137ed38c3117d0"></span>double <code class="descname">label_</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue10LabelCount6label_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>lowest label for this stop in the labelstop_priority_queue_ (e.g. the only valid one) </p>
 </dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue10LabelCount6valid_E">
+<span id="fasttrips::LabelStopQueue::LabelCount::valid___b"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop_queue_1_1_label_count_1a62d25c5db3a8065e61effd3f4248c44a"></span>bool <code class="descname">valid_</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue10LabelCount6valid_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>is this stop valid in the queue? </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips14LabelStopQueue10LabelCount6count_E">
+<span id="fasttrips::LabelStopQueue::LabelCount::count___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_label_stop_queue_1_1_label_count_1a036099cc234b580e6bf378fd41980101"></span>int <code class="descname">count_</code><a class="headerlink" href="#_CPPv2N9fasttrips14LabelStopQueue10LabelCount6count_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of instances of this stop in the labelstop_priority_queue_ (valid and invalid) </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips19LabelStopQueueErrorE">
+<span id="fasttrips::LabelStopQueueError"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_error"></span><em class="property">class </em><code class="descname">LabelStopQueueError</code><a class="headerlink" href="#_CPPv2N9fasttrips19LabelStopQueueErrorE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;LabelStopQueue.h&gt;</em><div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv2N9fasttrips19LabelStopQueueError19LabelStopQueueErrorERKNSt6stringE">
+<span id="fasttrips::LabelStopQueueError::LabelStopQueueError__ssCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_error_1a3c690114b2d58af8f195f0922b40dc43"></span><code class="descname">LabelStopQueueError</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>what_arg</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips19LabelStopQueueError19LabelStopQueueErrorERKNSt6stringE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips19LabelStopQueueError19LabelStopQueueErrorEPKc">
+<span id="fasttrips::LabelStopQueueError::LabelStopQueueError__cCP"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_error_1a748e0a1d47ecdffb9d074adb9c95c56c"></span><code class="descname">LabelStopQueueError</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>what_arg</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips19LabelStopQueueError19LabelStopQueueErrorEPKc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips19LabelStopQueueErrorD0Ev">
+<span id="fasttrips::LabelStopQueueError::~LabelStopQueueError"></span>virtual <span class="target" id="fast-trips-cppclassfasttrips_1_1_label_stop_queue_error_1aa52dc3f720d51466051de42737881474"></span><code class="descname">~LabelStopQueueError</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips19LabelStopQueueErrorD0Ev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 </dd></dl>
@@ -207,7 +409,7 @@
 <dl class="class">
 <dt id="_CPPv2N9fasttrips11PathCompareE">
 <span id="fasttrips::PathCompare"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_compare"></span><em class="property">struct </em><code class="descname">PathCompare</code><a class="headerlink" href="#_CPPv2N9fasttrips11PathCompareE" title="Permalink to this definition">¶</a></dt>
-<dd><em>#include &lt;pathfinder.h&gt;</em><p>Comparator to for <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path"><span>Path</span></a> instances so we can put them in a map as keys. TODO: doc more? </p>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Comparator to for Path instances so we can put them in a map as keys. TODO: doc more? </p>
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Functions</p>
 <dl class="function">
@@ -223,6 +425,39 @@
 <span id="fasttrips::PathFinder"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder"></span><em class="property">class </em><code class="descname">PathFinder</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinderE" title="Permalink to this definition">¶</a></dt>
 <dd><em>#include &lt;pathfinder.h&gt;</em><p>This is the class that does all the work. Setup the network supply first. </p>
 <div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Path finding parameters</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder12TIME_WINDOW_E">
+<span id="fasttrips::PathFinder::TIME_WINDOW___double"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ad0447d11bbb48a9bc299c7da3325e9bf"></span>double <code class="descname">TIME_WINDOW_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12TIME_WINDOW_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a> </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder12BUMP_BUFFER_E">
+<span id="fasttrips::PathFinder::BUMP_BUFFER___double"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a25d56328d531803e9a1b0fdd346bc0a8"></span>double <code class="descname">BUMP_BUFFER_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12BUMP_BUFFER_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">fasttrips.Assignment.BUMP_BUFFER</a> </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder19STOCH_PATHSET_SIZE_E">
+<span id="fasttrips::PathFinder::STOCH_PATHSET_SIZE___i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a68adebd2cad826b2683974f4b6660b89"></span>int <code class="descname">STOCH_PATHSET_SIZE_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19STOCH_PATHSET_SIZE_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a> </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder17STOCH_DISPERSION_E">
+<span id="fasttrips::PathFinder::STOCH_DISPERSION___double"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ae1042e031d6a47ee58a7b3e78c5f113c"></span>double <code class="descname">STOCH_DISPERSION_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17STOCH_DISPERSION_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a> </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder29STOCH_MAX_STOP_PROCESS_COUNT_E">
+<span id="fasttrips::PathFinder::STOCH_MAX_STOP_PROCESS_COUNT___i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a320663c3c6171d622768973d80127a71"></span>int <code class="descname">STOCH_MAX_STOP_PROCESS_COUNT_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder29STOCH_MAX_STOP_PROCESS_COUNT_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT</a> </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Functions</p>
 <dl class="function">
 <dt id="_CPPv2N9fasttrips10PathFinder10PathFinderEv">
@@ -232,8 +467,14 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder16initializeSupplyEPKciPiPdiPiPdiPiPdi">
-<span id="fasttrips::PathFinder::initializeSupply__cCP.i.iP.doubleP.i.iP.doubleP.i.iP.doubleP.i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a7f76243cbf6ac938a3ba2b94fb7f40ae"></span>void <code class="descname">initializeSupply</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>output_dir</em>, int <em>process_num</em>, int *<em>taz_access_index</em>, double *<em>taz_access_cost</em>, int <em>num_tazlinks</em>, int *<em>stoptime_index</em>, double *<em>stoptime_times</em>, int <em>num_stoptimes</em>, int *<em>xfer_index</em>, double *<em>xfer_data</em>, int <em>num_xfers</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16initializeSupplyEPKciPiPdiPiPdiPiPdi" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder20initializeParametersEddidi">
+<span id="fasttrips::PathFinder::initializeParameters__double.double.i.double.i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a9aa6008d637d5e742ed4106cfcf3f241"></span>void <code class="descname">initializeParameters</code><span class="sig-paren">(</span>double <em>time_window</em>, double <em>bump_buffer</em>, int <em>stoch_pathset_size</em>, double <em>stoch_dispersion</em>, int <em>stoch_max_stop_process_count</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder20initializeParametersEddidi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup the path finding parameters. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder16initializeSupplyEPKciPiPdi">
+<span id="fasttrips::PathFinder::initializeSupply__cCP.i.iP.doubleP.i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ab18279a1583d5006b395f1dafbd326a9"></span>void <code class="descname">initializeSupply</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>output_dir</em>, int <em>process_num</em>, int *<em>stoptime_index</em>, double *<em>stoptime_times</em>, int <em>num_stoptimes</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16initializeSupplyEPKciPiPdi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup the network supply. This should happen once, before any pathfinding.</p>
 <p><dl class="docutils">
 <dt><strong>Parameters</strong></dt>
@@ -242,23 +483,11 @@
 </li>
 <li><code class="first docutils literal"><span class="pre">process_num</span></code> - <p>The process number for this instance </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">taz_access_index</span></code> - <p>For populating <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1adbee1bb552862f2a51de7da1fb84960d"><span>PathFinder::taz_access_links_</span></a>, this array contains TAZ IDs and stop IDs </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">taz_access_cost</span></code> - <p>For populating <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1adbee1bb552862f2a51de7da1fb84960d"><span>PathFinder::taz_access_links_</span></a>, this array contains times, access costs, and egress costs. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">num_tazlinks</span></code> - <p>The number of TAZ-stop links described by the previous two arrays </p>
-</li>
 <li><code class="first docutils literal"><span class="pre">stoptime_index</span></code> - <p>For populating <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1ab1650e529a06e98d3478123aabfada44"><span>PathFinder::trip_stop_times_</span></a>, this array contains trip IDs, sequence numbers and stop IDs </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">stoptime_times</span></code> - <p>For populating <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1ab1650e529a06e98d3478123aabfada44"><span>PathFinder::trip_stop_times_</span></a>, this array contains transit vehicle arrival times and departure times at a stop. </p>
 </li>
 <li><code class="first docutils literal"><span class="pre">num_stoptimes</span></code> - <p>The number of stop times described in the previous two arrays. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">xfer_index</span></code> - <p>For populating <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a649d746406850371c9d78874547822fd"><span>PathFinder::transfer_links_o_d_</span></a> and <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a3655e3bf2de973f0cd4a401c9316155c"><span>PathFinder::transfer_links_d_o_</span></a>, this array contains the origin stop ID and the destination stop ID for transfers. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">xfer_data</span></code> - <p>For populating <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a649d746406850371c9d78874547822fd"><span>PathFinder::transfer_links_o_d_</span></a> and <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a3655e3bf2de973f0cd4a401c9316155c"><span>PathFinder::transfer_links_d_o_</span></a>, this array contains time and cost for transfers. </p>
-</li>
-<li><code class="first docutils literal"><span class="pre">num_xfers</span></code> - <p>The number of transfers described in the previous two arrays. </p>
 </li>
 </ul>
 </dd>
@@ -293,18 +522,18 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationR4PathR8PathInfo">
-<span id="fasttrips::PathFinder::findPath__PathSpecification.PathR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a71faa426b9753f6af3af1c6bd84963ad"></span>void <code class="descname">findPath</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> <em>path_spec</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationR4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationR4PathR8PathInfoR15PerformanceInfo">
+<span id="fasttrips::PathFinder::findPath__PathSpecification.PathR.PathInfoR.PerformanceInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ac1b74aa99dc374e5329536659fcd3d3b"></span>void <code class="descname">findPath</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> <em>path_spec</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em>, <a class="reference internal" href="#_CPPv2N9fasttrips15PerformanceInfoE" title="fasttrips::PerformanceInfo">PerformanceInfo</a> &amp;<em>performance_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder8findPathE17PathSpecificationR4PathR8PathInfoR15PerformanceInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find the path! This method is the <em>WHOLE POINT</em> of our existence!</p>
-<p>See <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af55d21017634e74d46512ce08a493cf9"><span>PathFinder::initializeStopStates</span></a>, <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a1f67902ba7cb263e51b4ba181d6aa339"><span>PathFinder::labelStops</span></a>, PathFinder::finalTazState, and <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a3fbecb251f15a362f2c61bc95e4a4ea7"><span>PathFinder::getFoundPath</span></a></p>
+<p>See <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a065ba84e2a964a6d00bc2ac0e610b306"><span>PathFinder::initializeStopStates</span></a>, <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1ac398eb87750b2d13335900ab66a969fc"><span>PathFinder::labelStops</span></a>, PathFinder::finalTazState, and <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a061a66cd0d156fd688033c5e03792dfc"><span>PathFinder::getFoundPath</span></a></p>
 <p><dl class="docutils">
 <dt><strong>Parameters</strong></dt>
 <dd><ul class="breatheparameterlist first last">
 <li><code class="first docutils literal"><span class="pre">path_spec</span></code> - <p>The specifications of that path to find </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">path</span></code> - <p>This is really a return <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path"><span>fasttrips::Path</span></a> </p>
+<li><code class="first docutils literal"><span class="pre">path</span></code> - <p>This is really a return <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1aa11101ff6530a9d7e59c43c868093c90"><span>fasttrips::Path</span></a> </p>
 </li>
-<li><code class="first docutils literal"><span class="pre">path_info</span></code> - <p>Also for returng information (e.g. about the <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path"><span>Path</span></a> cost) </p>
+<li><code class="first docutils literal"><span class="pre">path_info</span></code> - <p>Also for returng information (e.g. about the Path cost) </p>
 </li>
 </ul>
 </dd>
@@ -316,33 +545,8 @@
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Static Attributes</p>
 <dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder11MODE_ACCESSE">
-<span id="fasttrips::PathFinder::MODE_ACCESS__iC"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a9364312733f60f07c53387bb2ef32c23"></span><em class="property">const</em> int <code class="descname">MODE_ACCESS</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder11MODE_ACCESSE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder11MODE_EGRESSE">
-<span id="fasttrips::PathFinder::MODE_EGRESS__iC"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a6126b7c0d352275fc8512c9238abd770"></span><em class="property">const</em> int <code class="descname">MODE_EGRESS</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder11MODE_EGRESSE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder13MODE_TRANSFERE">
-<span id="fasttrips::PathFinder::MODE_TRANSFER__iC"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a6704fc8db4d3937e8a1203081bf4f80d"></span><em class="property">const</em> int <code class="descname">MODE_TRANSFER</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder13MODE_TRANSFERE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder12MAX_DATETIMEE">
 <span id="fasttrips::PathFinder::MAX_DATETIME__iC"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a16be80d33dcc64ce7ff3465788d7ec48"></span><em class="property">const</em> int <code class="descname">MAX_DATETIME</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12MAX_DATETIMEE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder29MAX_HYPERPATH_ASSIGN_ATTEMPTSE">
-<span id="fasttrips::PathFinder::MAX_HYPERPATH_ASSIGN_ATTEMPTS__iC"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a4c803b7391cdc003fb6bdfbd5c482b4a"></span><em class="property">const</em> int <code class="descname">MAX_HYPERPATH_ASSIGN_ATTEMPTS</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder29MAX_HYPERPATH_ASSIGN_ATTEMPTSE" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder20DISPERSION_PARAMETERE">
-<span id="fasttrips::PathFinder::DISPERSION_PARAMETER__doubleC"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1aff1eae64de1eeb85fdd59630edfb6ade"></span><em class="property">const</em> double <code class="descname">DISPERSION_PARAMETER</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder20DISPERSION_PARAMETERE" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="member">
@@ -359,8 +563,69 @@
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Protected Functions</p>
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder20initializeStopStatesERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueue">
-<span id="fasttrips::PathFinder::initializeStopStates__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1af55d21017634e74d46512ce08a493cf9"></span>bool <code class="descname">initializeStopStates</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>cost_stop_queue</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder20initializeStopStatesERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueue" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder21readIntermediateFilesEv">
+<span id="fasttrips::PathFinder::readIntermediateFiles"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a811178b51eb0831f09e2f9f504b7a0a5"></span>void <code class="descname">readIntermediateFiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder21readIntermediateFilesEv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the intermediate files mapping integer IDs to strings for modes, stops, trips, and routes. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder11readTripIdsEv">
+<span id="fasttrips::PathFinder::readTripIds"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a4fb05ff9418e5820d3424c71ab1cd455"></span>void <code class="descname">readTripIds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder11readTripIdsEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder11readStopIdsEv">
+<span id="fasttrips::PathFinder::readStopIds"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ab88c44bd972ecd1fb7f9387f1e5f5052"></span>void <code class="descname">readStopIds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder11readStopIdsEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder12readRouteIdsEv">
+<span id="fasttrips::PathFinder::readRouteIds"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a57cf68a1d9aa8762c403e1468cbee58f"></span>void <code class="descname">readRouteIds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12readRouteIdsEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder11readModeIdsEv">
+<span id="fasttrips::PathFinder::readModeIds"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a9641a8e65b567655087d3dcb1ba70d5d"></span>void <code class="descname">readModeIds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder11readModeIdsEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder15readAccessLinksEv">
+<span id="fasttrips::PathFinder::readAccessLinks"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1aa1eb0ead2f050881b73c57c567e9b836"></span>void <code class="descname">readAccessLinks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder15readAccessLinksEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder17readTransferLinksEv">
+<span id="fasttrips::PathFinder::readTransferLinks"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a39b0ae774a25100209d2da67ab57ee17"></span>void <code class="descname">readTransferLinks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17readTransferLinksEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder12readTripInfoEv">
+<span id="fasttrips::PathFinder::readTripInfo"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a354f79626031233951f62e1592665894"></span>void <code class="descname">readTripInfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12readTripInfoEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder11readWeightsEv">
+<span id="fasttrips::PathFinder::readWeights"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a5c64b76b718ac30dfd8de07b73941a60"></span>void <code class="descname">readWeights</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder11readWeightsEv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder10PathFinder13tallyLinkCostEKiRK17PathSpecificationRNSt8ofstreamERK12NamedWeightsRK10Attributes">
+<span id="fasttrips::PathFinder::PathFinder::tallyLinkCost__iC.PathSpecificationCR.std::ofstreamR.NamedWeightsCR.AttributesCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1acccf3402ef02a82f92e086324508e1ff"></span>double <code class="descname">tallyLinkCost</code><span class="sig-paren">(</span><em class="property">const</em> int <em>supply_mode_num</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips12NamedWeightsE" title="fasttrips::NamedWeights">NamedWeights</a> &amp;<em>weights</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10AttributesE" title="fasttrips::Attributes">Attributes</a> &amp;<em>attributes</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder10PathFinder13tallyLinkCostEKiRK17PathSpecificationRNSt8ofstreamERK12NamedWeightsRK10Attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tally the link cost, which is the sum of the weighted attributes. <dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>the cost. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder12addStopStateERK17PathSpecificationRNSt8ofstreamEKiRK9StopStateR10StopStatesR14LabelStopQueueR19HyperpathStopStates">
+<span id="fasttrips::PathFinder::addStopState__PathSpecificationCR.std::ofstreamR.iC.StopStateCR.StopStatesR.LabelStopQueueR.HyperpathStopStatesR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ab5d8fd97c026f92bb5d98515d8d1f4ff"></span>void <code class="descname">addStopState</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> int <em>stop_id</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a> &amp;<em>ss</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12addStopStateERK17PathSpecificationRNSt8ofstreamEKiRK9StopStateR10StopStatesR14LabelStopQueueR19HyperpathStopStates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N9fasttrips10PathFinder20initializeStopStatesERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStates">
+<span id="fasttrips::PathFinder::initializeStopStates__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.HyperpathStopStatesR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a065ba84e2a964a6d00bc2ac0e610b306"></span>bool <code class="descname">initializeStopStates</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>cost_stop_queue</em>, <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder20initializeStopStatesERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize the stop states from the access (for inbound) or egress (for outbound) links from the start TAZ.</p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -370,25 +635,26 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder28updateStopStatesForTransfersERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueRK9LabelStopd">
-<span id="fasttrips::PathFinder::updateStopStatesForTransfers__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.LabelStopCR.double"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a3545044805b16aa12ef1f074a587cd1f"></span>void <code class="descname">updateStopStatesForTransfers</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>current_label_stop</em>, double <em>latest_dep_earliest_arr</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder28updateStopStatesForTransfersERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueRK9LabelStopd" title="Permalink to this definition">¶</a></dt>
-<dd><p>Iterate through all the stops that transfer to(outbound)/from(inbound) the <em>current_label_stop</em> and update the <em>stop_states</em> with information about how accessible those stops are as a transfer to/from the <em>current_label_stop</em>. </p>
+<dt id="_CPPv2N9fasttrips10PathFinder28updateStopStatesForTransfersERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStatesiRK9LabelStop">
+<span id="fasttrips::PathFinder::updateStopStatesForTransfers__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.HyperpathStopStatesR.i.LabelStopCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ab0514431ad6f80ad44887e794dc67fb4"></span>void <code class="descname">updateStopStatesForTransfers</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em>, int <em>label_iteration</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>current_label_stop</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder28updateStopStatesForTransfersERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStatesiRK9LabelStop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate through all the stops that transfer to(outbound)/from(inbound) the <em>current_label_stop</em> and update the <em>stop_states</em> with information about how accessible those stops are as a transfer to/from the <em>current_label_stop</em>.</p>
+<p>Part of the labeling loop. Assuming the <em>current_label_stop</em> was just pulled off the <em>label_stop_queue</em>, this method will iterate through transfers to (for outbound) or from (for inbound) the current stop and update the next stop given the current stop state. </p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueRK9LabelStopdRNSt3tr113unordered_setIiEE">
-<span id="fasttrips::PathFinder::updateStopStatesForTrips__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.LabelStopCR.double.std::tr1::unordered_set:i:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a1500e59c822c4af521ec8791ca9cec9c"></span>void <code class="descname">updateStopStatesForTrips</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>current_label_stop</em>, double <em>latest_dep_earliest_arr</em>, std::tr1::unordered_set&lt;int&gt; &amp;<em>trips_done</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueRK9LabelStopdRNSt3tr113unordered_setIiEE" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStatesiRK9LabelStopRNSt3tr113unordered_setIiEE">
+<span id="fasttrips::PathFinder::updateStopStatesForTrips__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.HyperpathStopStatesR.i.LabelStopCR.std::tr1::unordered_set:i:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a29e3fcacc88593897fe2071b0f3ee139"></span>void <code class="descname">updateStopStatesForTrips</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em>, int <em>label_iteration</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>current_label_stop</em>, std::tr1::unordered_set&lt;int&gt; &amp;<em>trips_done</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStatesiRK9LabelStopRNSt3tr113unordered_setIiEE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterate through all the stops that are accessible by transit vehicle trip to(outbound)/from(inbound) the <em>current_label_stop</em> and update the <em>stop_states</em> with information about how accessible those stops are as a transit trip to/from the <em>current_label_stop</em>. </p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder10labelStopsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueue">
-<span id="fasttrips::PathFinder::labelStops__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a1f67902ba7cb263e51b4ba181d6aa339"></span>void <code class="descname">labelStops</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder10labelStopsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueue" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder10labelStopsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStatesRi">
+<span id="fasttrips::PathFinder::labelStops__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.HyperpathStopStatesR.iR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ac398eb87750b2d13335900ab66a969fc"></span>int <code class="descname">labelStops</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em>, int &amp;<em>max_process_count</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder10labelStopsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueR19HyperpathStopStatesRi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Label stops by:<ul class="simple">
 <li>while the label_stop_queue has stops<ul>
 <li>pulling the lowest-labeled stop</li>
-<li>adding the stops accessible by transfer (<a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a3545044805b16aa12ef1f074a587cd1f"><span>PathFinder::updateStopStatesForTransfers</span></a>)</li>
-<li>adding the stops accessible by transit trip (<a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a1500e59c822c4af521ec8791ca9cec9c"><span>PathFinder::updateStopStatesForTrips</span></a>) </li>
+<li>adding the stops accessible by transfer (<a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1ab0514431ad6f80ad44887e794dc67fb4"><span>PathFinder::updateStopStatesForTransfers</span></a>)</li>
+<li>adding the stops accessible by transit trip (<a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a29e3fcacc88593897fe2071b0f3ee139"><span>PathFinder::updateStopStatesForTrips</span></a>) </li>
 </ul>
 </li>
 </ul>
@@ -396,9 +662,9 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder16finalizeTazStateERK17PathSpecificationRNSt8ofstreamERK10StopStatesRNSt6vectorI9StopStateEE">
-<span id="fasttrips::PathFinder::finalizeTazState__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1af2a4401f1697b7385e0bc588b0352391"></span>bool <code class="descname">finalizeTazState</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16finalizeTazStateERK17PathSpecificationRNSt8ofstreamERK10StopStatesRNSt6vectorI9StopStateEE" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is like the reverse of <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af55d21017634e74d46512ce08a493cf9"><span>PathFinder::initializeStopStates</span></a>. Once all the stops are labeled, try to get from the labeled stop to the end TAZ (origin for outbound, destination for inbound).</p>
+<dt id="_CPPv2N9fasttrips10PathFinder16finalizeTazStateERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiR19HyperpathStopStates">
+<span id="fasttrips::PathFinder::finalizeTazState__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.i.HyperpathStopStatesR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a9c275b108231c9bdb49ac587a3db0897"></span>bool <code class="descname">finalizeTazState</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv2N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, int <em>label_iteration</em>, <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16finalizeTazStateERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiR19HyperpathStopStates" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is like the reverse of <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a065ba84e2a964a6d00bc2ac0e610b306"><span>PathFinder::initializeStopStates</span></a>. Once all the stops are labeled, try to get from the labeled stop to the end TAZ (origin for outbound, destination for inbound).</p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
 <dd>sucess. </dd>
@@ -407,8 +673,8 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4Path">
-<span id="fasttrips::PathFinder::hyperpathGeneratePath__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:CR.PathR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a570bd130272071a139c6c5a162b7f614"></span>bool <code class="descname">hyperpathGeneratePath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4Path" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRK19HyperpathStopStatesR4Path">
+<span id="fasttrips::PathFinder::hyperpathGeneratePath__PathSpecificationCR.std::ofstreamR.StopStatesCR.HyperpathStopStatesCR.PathR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a50242b9019303d013e05a8e77d4f7f7f"></span>bool <code class="descname">hyperpathGeneratePath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRK19HyperpathStopStatesR4Path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given all the labeled stops and taz, traces back and generates a specific path. We do this by setting up probabilities for each option and then choosing via <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1af7619390e2dca39340e635c45c23fa73"><span>PathFinder::chooseState</span></a>.</p>
 <p><dl class="docutils">
 <dt><strong>Return</strong></dt>
@@ -436,15 +702,15 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder17calculatePathCostERK17PathSpecificationRNSt8ofstreamERK4PathR8PathInfo">
-<span id="fasttrips::PathFinder::calculatePathCost__PathSpecificationCR.std::ofstreamR.PathCR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a2563b51d30280c1bb214966da4e903fb"></span>void <code class="descname">calculatePathCost</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17calculatePathCostERK17PathSpecificationRNSt8ofstreamERK4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder17calculatePathCostERK17PathSpecificationRNSt8ofstreamER4PathR8PathInfo">
+<span id="fasttrips::PathFinder::calculatePathCost__PathSpecificationCR.std::ofstreamR.PathR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1afb8f494b83da198a58768595563fc75d"></span>void <code class="descname">calculatePathCost</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17calculatePathCostERK17PathSpecificationRNSt8ofstreamER4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the cost for the entire given path, and checks for capacity issues. Sets the results into the given <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path_info"><span>fasttrips::PathInfo</span></a> instance.</p>
-<p>TODO: Test calculating this in python? Or other ways of making it more flexible without compiling... For now, the magic numbers are just in here... </p>
+<p>Calculate the path cost now that we know all the links. This may result in different costs than the original costs. This updates the path&#8217;s <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_stop_state_1ac9c6e81376889d33fa23aa077a4a75e1"><span>StopState.cost_</span></a> attributes as well as the <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_path_info_1a69d2fe6e06ab628f42956d640c2d8710"><span>PathInfo.cost_</span></a> attribute. </p>
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4PathR8PathInfo">
-<span id="fasttrips::PathFinder::getFoundPath__PathSpecificationCR.std::ofstreamR.StopStatesCR.std::vector:StopState:CR.PathR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a3fbecb251f15a362f2c61bc95e4a4ea7"></span>bool <code class="descname">getFoundPath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips9StopStateE" title="fasttrips::StopState">StopState</a>&gt; &amp;<em>taz_state</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRKNSt6vectorI9StopStateEER4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRK19HyperpathStopStatesR4PathR8PathInfo">
+<span id="fasttrips::PathFinder::getFoundPath__PathSpecificationCR.std::ofstreamR.StopStatesCR.HyperpathStopStatesCR.PathR.PathInfoR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a061a66cd0d156fd688033c5e03792dfc"></span>bool <code class="descname">getFoundPath</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips19HyperpathStopStatesE" title="fasttrips::HyperpathStopStates">HyperpathStopStates</a> &amp;<em>hyperpath_ss</em>, <a class="reference internal" href="#_CPPv2N9fasttrips4PathE" title="fasttrips::Path">Path</a> &amp;<em>path</em>, <a class="reference internal" href="#_CPPv2N9fasttrips8PathInfoE" title="fasttrips::PathInfo">PathInfo</a> &amp;<em>path_info</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12getFoundPathERK17PathSpecificationRNSt8ofstreamERK10StopStatesRK19HyperpathStopStatesR4PathR8PathInfo" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -457,7 +723,7 @@
 <dt id="_CPPv2N9fasttrips10PathFinder18getTripsWithinTimeEibdRNSt6vectorI12TripStopTimeEE">
 <span id="fasttrips::PathFinder::getTripsWithinTime__i.b.double.std::vector:TripStopTime:R"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a9a09294b010b3f9d4453ddea7d2e2115"></span>void <code class="descname">getTripsWithinTime</code><span class="sig-paren">(</span>int <em>stop_id</em>, bool <em>outbound</em>, double <em>timepoint</em>, std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips12TripStopTimeE" title="fasttrips::TripStopTime">TripStopTime</a>&gt; &amp;<em>return_trips</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder18getTripsWithinTimeEibdRNSt6vectorI12TripStopTimeEE" title="Permalink to this definition">¶</a></dt>
 <dd><p>If outbound, then we&#8217;re searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint. If inbound, then we&#8217;re searching forwards, so this returns trips that depart at the given stop time after timepoint</p>
-<p>If outbound, then we&#8217;re searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint. If inbound, then we&#8217;re searching forwards, so this returns trips that depart at the stop time after timepoint. </p>
+<p>If outbound, then we&#8217;re searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint (timepoint-TIME_WINDOW_, timepoint] If inbound, then we&#8217;re searching forwards, so this returns trips that depart at the stop time after timepoint [timepoint, timepoint+TIME_WINDOW_) </p>
 </dd></dl>
 
 <dl class="function">
@@ -496,8 +762,8 @@
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder9printModeERNSt7ostreamERKi">
-<span id="fasttrips::PathFinder::printMode__osR.iCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1aa4d82703cf1ed06221f987ab89cf8605"></span>void <code class="descname">printMode</code><span class="sig-paren">(</span>std::ostream &amp;<em>ostr</em>, <em class="property">const</em> int &amp;<em>mode</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder9printModeERNSt7ostreamERKi" title="Permalink to this definition">¶</a></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder9printModeERNSt7ostreamERKiRKi">
+<span id="fasttrips::PathFinder::printMode__osR.iCR.iCR"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a934f573c6f9bbc28efd0f04e47df9958"></span>void <code class="descname">printMode</code><span class="sig-paren">(</span>std::ostream &amp;<em>ostr</em>, <em class="property">const</em> int &amp;<em>mode</em>, <em class="property">const</em> int &amp;<em>trip_id</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder9printModeERNSt7ostreamERKiRKi" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -521,33 +787,33 @@
 </dd></dl>
 
 <dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder12time_window_E">
-<span id="fasttrips::PathFinder::time_window___double"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ac73982b61a717349faacc9b3e2f079a2"></span>double <code class="descname">time_window_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12time_window_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>time window </p>
-</dd></dl>
-
-<dl class="member">
-<dt id="_CPPv2N9fasttrips10PathFinder12bump_buffer_E">
-<span id="fasttrips::PathFinder::bump_buffer___double"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a3f1af62c94047c4bb0c5279f1f6add1d"></span>double <code class="descname">bump_buffer_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder12bump_buffer_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>bump buffer </p>
+<dt id="_CPPv2N9fasttrips10PathFinder14weight_lookup_E">
+<span id="fasttrips::PathFinder::weight_lookup___WeightLookup"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a712752e4031aa462479ee824327e0a83"></span><a class="reference internal" href="#_CPPv2N9fasttrips12WeightLookupE" title="fasttrips::WeightLookup">WeightLookup</a> <code class="descname">weight_lookup_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder14weight_lookup_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>(User class, demand_mode_type, demand_mode) -&gt; supply_mode -&gt; weight_map </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder17taz_access_links_E">
-<span id="fasttrips::PathFinder::taz_access_links___std::map:i.std::map:i.TazStopCost::"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1adbee1bb552862f2a51de7da1fb84960d"></span>std::map&lt;int, std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips11TazStopCostE" title="fasttrips::TazStopCost">TazStopCost</a>&gt;&gt; <code class="descname">taz_access_links_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17taz_access_links_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>TAZ information: taz id -&gt; stop id -&gt; costs. </p>
+<span id="fasttrips::PathFinder::taz_access_links___TAZSupplyStopToAttr"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a1cf5f62cb7bbf64b2eba6e55a81fd6b4"></span><a class="reference internal" href="#_CPPv2N9fasttrips19TAZSupplyStopToAttrE" title="fasttrips::TAZSupplyStopToAttr">TAZSupplyStopToAttr</a> <code class="descname">taz_access_links_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17taz_access_links_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Access/Egress information: taz id -&gt; supply_mode -&gt; stop id -&gt; attribute map. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder19transfer_links_o_d_E">
-<span id="fasttrips::PathFinder::transfer_links_o_d___std::map:i.std::map:i.TransferCost::"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a649d746406850371c9d78874547822fd"></span>std::map&lt;int, std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips12TransferCostE" title="fasttrips::TransferCost">TransferCost</a>&gt;&gt; <code class="descname">transfer_links_o_d_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19transfer_links_o_d_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Transfer information: stop id -&gt; stop id -&gt; costs. </p>
+<span id="fasttrips::PathFinder::transfer_links_o_d___StopStopToAttr"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a2e21025ddc41bf65dfd780e957482010"></span><a class="reference internal" href="#_CPPv2N9fasttrips14StopStopToAttrE" title="fasttrips::StopStopToAttr">StopStopToAttr</a> <code class="descname">transfer_links_o_d_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19transfer_links_o_d_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transfer information: stop id -&gt; stop id -&gt; attributes. </p>
 </dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder19transfer_links_d_o_E">
-<span id="fasttrips::PathFinder::transfer_links_d_o___std::map:i.std::map:i.TransferCost::"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a3655e3bf2de973f0cd4a401c9316155c"></span>std::map&lt;int, std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips12TransferCostE" title="fasttrips::TransferCost">TransferCost</a>&gt;&gt; <code class="descname">transfer_links_d_o_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19transfer_links_d_o_E" title="Permalink to this definition">¶</a></dt>
+<span id="fasttrips::PathFinder::transfer_links_d_o___StopStopToAttr"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ade2e0449d106cadf76c388f1383299ae"></span><a class="reference internal" href="#_CPPv2N9fasttrips14StopStopToAttrE" title="fasttrips::StopStopToAttr">StopStopToAttr</a> <code class="descname">transfer_links_d_o_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19transfer_links_d_o_E" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder10trip_info_E">
+<span id="fasttrips::PathFinder::trip_info___std::map:i.TripInfo:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a2f03e6b3c2c55b0417f2d283e5beaa00"></span>std::map&lt;int, <a class="reference internal" href="#_CPPv2N9fasttrips8TripInfoE" title="fasttrips::TripInfo">TripInfo</a>&gt; <code class="descname">trip_info_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder10trip_info_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trip information: trip id -&gt; Trip Info. </p>
+</dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder16trip_stop_times_E">
@@ -560,6 +826,31 @@
 <span id="fasttrips::PathFinder::stop_trip_times___std::map:i.std::vector:TripStopTime::"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1ab059cfbfb839de36b8ae3e6895a7511d"></span>std::map&lt;int, std::vector&lt;<a class="reference internal" href="#_CPPv2N9fasttrips12TripStopTimeE" title="fasttrips::TripStopTime">TripStopTime</a>&gt;&gt; <code class="descname">stop_trip_times_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16stop_trip_times_E" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop information: stop id -&gt; vector of [trip id, sequence, stop id, arrival time, departure time]. </p>
 </dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder16trip_num_to_str_E">
+<span id="fasttrips::PathFinder::trip_num_to_str___std::map:i.ss:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a18462e5a8d424e8c735cc4d20c681440"></span>std::map&lt;int, std::string&gt; <code class="descname">trip_num_to_str_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16trip_num_to_str_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder16stop_num_to_str_E">
+<span id="fasttrips::PathFinder::stop_num_to_str___std::map:i.ss:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a25e6c65e2ba23b6bdd8e0566be2856f7"></span>std::map&lt;int, std::string&gt; <code class="descname">stop_num_to_str_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16stop_num_to_str_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder17route_num_to_str_E">
+<span id="fasttrips::PathFinder::route_num_to_str___std::map:i.ss:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1aef39323b5c8fc24c646500be453aae25"></span>std::map&lt;int, std::string&gt; <code class="descname">route_num_to_str_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder17route_num_to_str_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder16mode_num_to_str_E">
+<span id="fasttrips::PathFinder::mode_num_to_str___std::map:i.ss:"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a4ba35d7346bfc3ca110ac85f6450f7cb"></span>std::map&lt;int, std::string&gt; <code class="descname">mode_num_to_str_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder16mode_num_to_str_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder21transfer_supply_mode_E">
+<span id="fasttrips::PathFinder::transfer_supply_mode___i"></span><span class="target" id="fast-trips-cppclassfasttrips_1_1_path_finder_1a26bfb4ac1d5ab35fc3db60e76a9ee49e"></span>int <code class="descname">transfer_supply_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder21transfer_supply_mode_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder10bump_wait_E">
@@ -617,6 +908,12 @@
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
+<dt id="_CPPv2N9fasttrips17PathSpecification10iteration_E">
+<span id="fasttrips::PathSpecification::iteration___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1ac61573d02c356208ed20c218cbe637ed"></span>int <code class="descname">iteration_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification10iteration_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iteration. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N9fasttrips17PathSpecification13passenger_id_E">
 <span id="fasttrips::PathSpecification::passenger_id___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1ac789edd009d79123dabb3fe1daf416fb"></span>int <code class="descname">passenger_id_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification13passenger_id_E" title="Permalink to this definition">¶</a></dt>
 <dd><p>The passenger ID. </p>
@@ -662,6 +959,63 @@
 <dt id="_CPPv2N9fasttrips17PathSpecification6trace_E">
 <span id="fasttrips::PathSpecification::trace___b"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1a6f88096dbaf5af2d79260e89bdd2fb54"></span>bool <code class="descname">trace_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification6trace_E" title="Permalink to this definition">¶</a></dt>
 <dd><p>If true, log copious details of the pathfinding into a trace log. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips17PathSpecification11user_class_E">
+<span id="fasttrips::PathSpecification::user_class___ss"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1a0c6e724e3677238e02844879e42c26ea"></span>std::string <code class="descname">user_class_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification11user_class_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>User class string. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips17PathSpecification12access_mode_E">
+<span id="fasttrips::PathSpecification::access_mode___ss"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1af1f4c73aac5469dd64b51a4809a33c88"></span>std::string <code class="descname">access_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification12access_mode_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Access demand mode. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips17PathSpecification13transit_mode_E">
+<span id="fasttrips::PathSpecification::transit_mode___ss"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1a3bc82c277919e6e6ec7ff2c69f2fd03a"></span>std::string <code class="descname">transit_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification13transit_mode_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transit demand mode. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips17PathSpecification12egress_mode_E">
+<span id="fasttrips::PathSpecification::egress_mode___ss"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_path_specification_1a206daf9e4d27eead73031424bcd5f08b"></span>std::string <code class="descname">egress_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips17PathSpecification12egress_mode_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Egress demand mode. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips15PerformanceInfoE">
+<span id="fasttrips::PerformanceInfo"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_performance_info"></span><em class="property">struct </em><code class="descname">PerformanceInfo</code><a class="headerlink" href="#_CPPv2N9fasttrips15PerformanceInfoE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Performance information to return. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips15PerformanceInfo17label_iterations_E">
+<span id="fasttrips::PerformanceInfo::label_iterations___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_performance_info_1a379500deb26b2c900322b8c92edf741f"></span>int <code class="descname">label_iterations_</code><a class="headerlink" href="#_CPPv2N9fasttrips15PerformanceInfo17label_iterations_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of label iterations performed. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips15PerformanceInfo18max_process_count_E">
+<span id="fasttrips::PerformanceInfo::max_process_count___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_performance_info_1a5d4ef7cac37d0ee219c6cc1958a1f1aa"></span>int <code class="descname">max_process_count_</code><a class="headerlink" href="#_CPPv2N9fasttrips15PerformanceInfo18max_process_count_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of times a stop was processed. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips15PerformanceInfo22milliseconds_labeling_E">
+<span id="fasttrips::PerformanceInfo::milliseconds_labeling___l"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_performance_info_1a42de1cbd202ab2b68352c657bacdcab9"></span>long <code class="descname">milliseconds_labeling_</code><a class="headerlink" href="#_CPPv2N9fasttrips15PerformanceInfo22milliseconds_labeling_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of seconds spent in labeling. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips15PerformanceInfo25milliseconds_enumerating_E">
+<span id="fasttrips::PerformanceInfo::milliseconds_enumerating___l"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_performance_info_1ac45992e450cf8015f46a193f888ca91d"></span>long <code class="descname">milliseconds_enumerating_</code><a class="headerlink" href="#_CPPv2N9fasttrips15PerformanceInfo25milliseconds_enumerating_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of seconds spent in enumerating. </p>
 </dd></dl>
 
 </div>
@@ -710,12 +1064,6 @@
 <div class="breathe-sectiondef container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
-<dt id="_CPPv2N9fasttrips9StopState6label_E">
-<span id="fasttrips::StopState::label___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1a23ada4c1bbada46a80b6d57575b97af6"></span>double <code class="descname">label_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState6label_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>The label for this stop. </p>
-</dd></dl>
-
-<dl class="member">
 <dt id="_CPPv2N9fasttrips9StopState12deparr_time_E">
 <span id="fasttrips::StopState::deparr_time___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1ac717d840180b45a5b8024e72bebd808e"></span>double <code class="descname">deparr_time_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState12deparr_time_E" title="Permalink to this definition">¶</a></dt>
 <dd><p>Departure time for outbound, arrival time for inbound. </p>
@@ -724,7 +1072,13 @@
 <dl class="member">
 <dt id="_CPPv2N9fasttrips9StopState12deparr_mode_E">
 <span id="fasttrips::StopState::deparr_mode___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1a3a9f79a2fe749a3c983a5286066fada6"></span>int <code class="descname">deparr_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState12deparr_mode_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Departure mode for outbound, arrival mode for inbound. One of <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a9364312733f60f07c53387bb2ef32c23"><span>PathFinder::MODE_ACCESS</span></a>, <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a6126b7c0d352275fc8512c9238abd770"><span>PathFinder::MODE_EGRESS</span></a>, <a class="reference internal" href="#fast-trips-cppclassfasttrips_1_1_path_finder_1a6704fc8db4d3937e8a1203081bf4f80d"><span>PathFinder::MODE_TRANSFER</span></a>, or a trip ID </p>
+<dd><p>Departure mode for outbound, arrival mode for inbound. One of <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a97073c3f1de9ba14bad239d8c80fe356"><span>fasttrips::MODE_ACCESS</span></a>, <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a93f5ec9d8d6e96c5642061e5ca898991"><span>fasttrips::MODE_EGRESS</span></a>, <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90ac7d130d2e194c08d902336c1ace8a74b"><span>fasttrips::MODE_TRANSFER</span></a>, or <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a6169ecc8a769cde8e6789e3b1780c541"><span>fasttrips::MODE_TRANSIT</span></a> </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips9StopState8trip_id_E">
+<span id="fasttrips::StopState::trip_id___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1a404e02ec38c47966633ec4879eb8f010"></span>int <code class="descname">trip_id_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState8trip_id_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trip ID if deparr_mode_ is <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1af79d8c41ed1909b51e04d37a68518e90a6169ecc8a769cde8e6789e3b1780c541"><span>fasttrips::MODE_TRANSIT</span></a>, or the supply_mode_num for access, egress </p>
 </dd></dl>
 
 <dl class="member">
@@ -752,9 +1106,21 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N9fasttrips9StopState10link_cost_E">
+<span id="fasttrips::StopState::link_cost___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1a19ff20ed829944e9e437071d0498f747"></span>double <code class="descname">link_cost_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState10link_cost_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Link cost. </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N9fasttrips9StopState5cost_E">
 <span id="fasttrips::StopState::cost___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1ac9c6e81376889d33fa23aa077a4a75e1"></span>double <code class="descname">cost_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState5cost_E" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cost. </p>
+<dd><p>Cost from previous link(s) and this link together. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips9StopState10iteration_E">
+<span id="fasttrips::StopState::iteration___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_stop_state_1ad0a41c23631c5862203749a9b6961ef0"></span>int <code class="descname">iteration_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState10iteration_E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Labeling iteration that generated this stop state. </p>
 </dd></dl>
 
 <dl class="member">
@@ -810,6 +1176,30 @@
 <span id="fasttrips::TransferCost::cost___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_transfer_cost_1a796450d9bd083f8f9290a0a2304c598e"></span>double <code class="descname">cost_</code><a class="headerlink" href="#_CPPv2N9fasttrips12TransferCost5cost_E" title="Permalink to this definition">¶</a></dt>
 <dd><p>general cost units </p>
 </dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips8TripInfoE">
+<span id="fasttrips::TripInfo"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_trip_info"></span><em class="property">struct </em><code class="descname">TripInfo</code><a class="headerlink" href="#_CPPv2N9fasttrips8TripInfoE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Supply data: Transit trip data, indexed by trip ID. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8TripInfo16supply_mode_num_E">
+<span id="fasttrips::TripInfo::supply_mode_num___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_trip_info_1a44eeecee0acfa35ebfb86062e37a19ea"></span>int <code class="descname">supply_mode_num_</code><a class="headerlink" href="#_CPPv2N9fasttrips8TripInfo16supply_mode_num_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8TripInfo9route_id_E">
+<span id="fasttrips::TripInfo::route_id___i"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_trip_info_1a842c2b8e8f1f11c0bac868301af60c07"></span>int <code class="descname">route_id_</code><a class="headerlink" href="#_CPPv2N9fasttrips8TripInfo9route_id_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips8TripInfo10trip_attr_E">
+<span id="fasttrips::TripInfo::trip_attr___Attributes"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_trip_info_1ac356d5fcf6800e545b88392913b2d24d"></span><a class="reference internal" href="#_CPPv2N9fasttrips10AttributesE" title="fasttrips::Attributes">Attributes</a> <code class="descname">trip_attr_</code><a class="headerlink" href="#_CPPv2N9fasttrips8TripInfo10trip_attr_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 </dd></dl>
@@ -881,6 +1271,44 @@
 <dl class="member">
 <dt id="_CPPv2N9fasttrips12TripStopTime12depart_time_E">
 <span id="fasttrips::TripStopTime::depart_time___double"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_trip_stop_time_1ae4fb02ede3f20733ed2bfe1590d0035a"></span>double <code class="descname">depart_time_</code><a class="headerlink" href="#_CPPv2N9fasttrips12TripStopTime12depart_time_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips13UserClassModeE">
+<span id="fasttrips::UserClassMode"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_user_class_mode"></span><em class="property">struct </em><code class="descname">UserClassMode</code><a class="headerlink" href="#_CPPv2N9fasttrips13UserClassModeE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Weight lookup. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips13UserClassMode11user_class_E">
+<span id="fasttrips::UserClassMode::user_class___ss"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_user_class_mode_1a6c160b1b99768a5232dee8748b81fbbd"></span>std::string <code class="descname">user_class_</code><a class="headerlink" href="#_CPPv2N9fasttrips13UserClassMode11user_class_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips13UserClassMode17demand_mode_type_E">
+<span id="fasttrips::UserClassMode::demand_mode_type___DemandModeType"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_user_class_mode_1a323a82606c6ed878d1f422ef5a5551a0"></span><a class="reference internal" href="#_CPPv2N9fasttrips14DemandModeTypeE" title="fasttrips::DemandModeType">DemandModeType</a> <code class="descname">demand_mode_type_</code><a class="headerlink" href="#_CPPv2N9fasttrips13UserClassMode17demand_mode_type_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips13UserClassMode12demand_mode_E">
+<span id="fasttrips::UserClassMode::demand_mode___ss"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_user_class_mode_1a7c4f7da5552d17e2a16c547da49ae41c"></span>std::string <code class="descname">demand_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips13UserClassMode12demand_mode_E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips20UserClassModeCompareE">
+<span id="fasttrips::UserClassModeCompare"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_user_class_mode_compare"></span><em class="property">struct </em><code class="descname">UserClassModeCompare</code><a class="headerlink" href="#_CPPv2N9fasttrips20UserClassModeCompareE" title="Permalink to this definition">¶</a></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p>Comparator to enable the <a class="reference internal" href="#fast-trips-cppnamespacefasttrips_1abaed35ac92854c9c6f359885d5753edc"><span>fasttrips::WeightLookup</span></a> to use <a class="reference internal" href="#fast-trips-cppstructfasttrips_1_1_user_class_mode"><span>UserClassMode</span></a> as a lookup. </p>
+<div class="breathe-sectiondef container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv2N9fasttrips20UserClassModeCompareclERK13UserClassModeRK13UserClassMode">
+<span id="fasttrips::UserClassModeCompare::call-operator__UserClassModeCR.UserClassModeCR"></span><span class="target" id="fast-trips-cppstructfasttrips_1_1_user_class_mode_compare_1ad2ae8570c75a5f75f10e0f2c2d0ba718"></span>bool <code class="descname">operator()</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips13UserClassModeE" title="fasttrips::UserClassMode">UserClassMode</a> &amp;<em>ucm1</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips13UserClassModeE" title="fasttrips::UserClassMode">UserClassMode</a> &amp;<em>ucm2</em><span class="sig-paren">)</span> const<a class="headerlink" href="#_CPPv2N9fasttrips20UserClassModeCompareclERK13UserClassModeRK13UserClassMode" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>

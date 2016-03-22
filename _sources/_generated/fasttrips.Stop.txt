@@ -14,6 +14,8 @@ fasttrips.Stop
    .. autosummary::
    
       ~Stop.__init__
+      ~Stop.add_daps_tazs_to_stops
+      ~Stop.add_numeric_stop_id
       ~Stop.add_trips
       ~Stop.get_transfers
       ~Stop.get_trips_arriving_within_time
@@ -29,18 +31,19 @@ fasttrips.Stop
    .. autosummary::
    
       ~Stop.INPUT_STOPS_FILE
-      ~Stop.INPUT_TRANSFERS_FILE
-      ~Stop.STOPS_COLUMN_CAPACITY
-      ~Stop.STOPS_COLUMN_DESCRIPTION
-      ~Stop.STOPS_COLUMN_ID
-      ~Stop.STOPS_COLUMN_LATITUDE
-      ~Stop.STOPS_COLUMN_LONGITUDE
-      ~Stop.STOPS_COLUMN_NAME
-      ~Stop.TRANSFERS_COLUMN_COST
-      ~Stop.TRANSFERS_COLUMN_DISTANCE
-      ~Stop.TRANSFERS_COLUMN_FROM_STOP
-      ~Stop.TRANSFERS_COLUMN_TIME
-      ~Stop.TRANSFERS_COLUMN_TIME_MIN
-      ~Stop.TRANSFERS_COLUMN_TO_STOP
+      ~Stop.OUTPUT_STOP_ID_NUM_FILE
+      ~Stop.STOPS_COLUMN_BIKE_PARKING
+      ~Stop.STOPS_COLUMN_BIKE_SHARE_STATION
+      ~Stop.STOPS_COLUMN_LEVEL
+      ~Stop.STOPS_COLUMN_LIGHTING
+      ~Stop.STOPS_COLUMN_OFF_BOARD_PAYMENT
+      ~Stop.STOPS_COLUMN_PLATFORM_HEIGHT
+      ~Stop.STOPS_COLUMN_SEATING
+      ~Stop.STOPS_COLUMN_SHELTER
+      ~Stop.STOPS_COLUMN_STOP_ID
+      ~Stop.STOPS_COLUMN_STOP_ID_NUM
+      ~Stop.STOPS_COLUMN_STOP_LATITUDE
+      ~Stop.STOPS_COLUMN_STOP_LONGITUDE
+      ~Stop.STOPS_COLUMN_STOP_NAME
    
    

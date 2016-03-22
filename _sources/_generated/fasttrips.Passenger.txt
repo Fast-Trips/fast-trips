@@ -14,7 +14,8 @@ fasttrips.Passenger
    .. autosummary::
    
       ~Passenger.__init__
-      ~Passenger.read_demand
+      ~Passenger.add_path
+      ~Passenger.get_path
    
    
 
@@ -24,6 +25,33 @@ fasttrips.Passenger
 
    .. autosummary::
    
-      ~Passenger.INPUT_DEMAND_FILE
+      ~Passenger.HOUSEHOLDS_COLUMN_HOUSEHOLD_ID
+      ~Passenger.INPUT_HOUSEHOLDS_FILE
+      ~Passenger.INPUT_PERSONS_FILE
+      ~Passenger.INPUT_TRIP_LIST_FILE
+      ~Passenger.MODE_GENERIC_TRANSIT
+      ~Passenger.MODE_GENERIC_TRANSIT_NUM
+      ~Passenger.PERSONS_COLUMN_HOUSEHOLD_ID
+      ~Passenger.PERSONS_COLUMN_PERSON_ID
+      ~Passenger.PERSONS_COLUMN_PERSON_ID_NUM
+      ~Passenger.TRIP_LIST_COLUMN_ACCESS_MODE
+      ~Passenger.TRIP_LIST_COLUMN_ACCESS_MODE_NUM
+      ~Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME
+      ~Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN
+      ~Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME
+      ~Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN
+      ~Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID
+      ~Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM
+      ~Passenger.TRIP_LIST_COLUMN_EGRESS_MODE
+      ~Passenger.TRIP_LIST_COLUMN_EGRESS_MODE_NUM
+      ~Passenger.TRIP_LIST_COLUMN_MODE
+      ~Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID
+      ~Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM
+      ~Passenger.TRIP_LIST_COLUMN_PERSON_ID
+      ~Passenger.TRIP_LIST_COLUMN_TIME_TARGET
+      ~Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE
+      ~Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE_NUM
+      ~Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM
+      ~Passenger.TRIP_LIST_COLUMN_USER_CLASS
    
    

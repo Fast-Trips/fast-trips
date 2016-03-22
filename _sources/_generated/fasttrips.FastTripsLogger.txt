@@ -1,0 +1,6 @@
+fasttrips.FastTripsLogger
+=========================
+
+.. currentmodule:: fasttrips
+
+.. autodata:: FastTripsLogger

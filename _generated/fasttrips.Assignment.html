@@ -31,7 +31,7 @@
 
   
     <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
-        <link rel="next" title="fasttrips.FastTrips" href="fasttrips.FastTrips.html"/>
+        <link rel="next" title="fasttrips.Error" href="fasttrips.Error.html"/>
         <link rel="prev" title="fasttrips C++ Extension" href="../fasttrips_c_extension.html"/> 
 
   
@@ -73,11 +73,15 @@
           
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Error.html">fasttrips.Error</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
 </ul>
@@ -142,62 +146,44 @@
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>()</td>
 <td>This does nothing.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.assign_passengers</span></code></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">assign_paths</span></code>(output_dir,&nbsp;FT)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">assign_paths</span></code>(output_dir,&nbsp;FT)</td>
 <td>Finds the paths for the passengers.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.calculate_nonwalk_label</span></code></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.choose_path_from_hyperpath_states</span></code></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.choose_state</span></code></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_formatter</span></code>(x)</td>
-<td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM.SS</cite></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_min_formatter</span></code>(x)</td>
-<td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to minutes after minutes</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">find_trip_based_path</span></code>(FT,&nbsp;passenger,&nbsp;path,&nbsp;...)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">find_trip_based_path</span></code>(iteration,&nbsp;FT,&nbsp;path,&nbsp;...)</td>
 <td>Perform trip-based path search.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">generate_paths</span></code>(FT,&nbsp;output_dir,&nbsp;iteration)</td>
+<td>Generates paths ofr passengers using deterministic trip-based shortest path (TBSP) or stochastic trip-based hyperpath (TBHP).</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_passenger_trips</span></code>(passengers_df,&nbsp;veh_trips_df)</td>
+<td>Creates a list of passenger trips with passenger arrive, board and alight times.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">initialize_fasttrips_extension</span></code>(...)</td>
 <td>Initialize the C++ fasttrips extension by passing it the network supply.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">print_load_profile</span></code>(veh_trips_df,&nbsp;output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">print_load_profile</span></code>(FT,&nbsp;veh_trips_df,&nbsp;output_dir)</td>
 <td>Print the load profile output</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">print_passenger_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
-<td>Print the passenger paths.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">print_passenger_times</span></code>(pax_exp_df,&nbsp;output_dir)</td>
-<td>Print the passenger times.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_assignment_results</span></code>(output_dir,&nbsp;iteration)</td>
 <td>Reads assignment results from <a class="reference internal" href="#fasttrips.Assignment.PASSENGERS_CSV" title="fasttrips.Assignment.PASSENGERS_CSV"><code class="xref py py-attr docutils literal"><span class="pre">Assignment.PASSENGERS_CSV</span></code></a></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_configuration</span></code>()</td>
-<td>Read the configuration parameters and override the above</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_configuration</span></code>(input_network_dir,&nbsp;...)</td>
+<td>Read the configuration parameters.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">setup_passengers</span></code>(FT,&nbsp;output_dir,&nbsp;iteration)</td>
-<td>Converts assignment results (which is stored in each Passenger <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><code class="xref py py-class docutils literal"><span class="pre">Path</span></code></a>, in the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.states" title="fasttrips.Path.states"><code class="xref py py-attr docutils literal"><span class="pre">Path.states</span></code></a>) into a single <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>.</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_fasttrips_bump_wait</span></code>(bump_wait_df)</td>
+<td>Sends the bump wait information to the fasttrips extension</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">setup_trips</span></code>(FT)</td>
-<td>Sets up and returns a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> where each row contains a leg of a transit vehicle trip.</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">setup_passengers</span></code>(FT,&nbsp;output_dir,&nbsp;iteration)</td>
+<td>Converts assignment results (which is stored in each Passenger <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><code class="xref py py-class docutils literal"><span class="pre">Path</span></code></a>, in the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.states" title="fasttrips.Path.states"><code class="xref py py-attr docutils literal"><span class="pre">Path.states</span></code></a>) into a single <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">simulate</span></code>(FT,&nbsp;passengers_df,&nbsp;veh_trips_df)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">setup_trips</span></code>(FT)</td>
+<td>Sets up and returns a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> where each row contains a leg of a transit vehicle trip.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">simulate</span></code>(FT,&nbsp;passengers_df,&nbsp;veh_trips_df)</td>
 <td>Actually assign the passengers trips to the vehicles.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.test_rand</span></code></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">timedelta_formatter</span></code>(x)</td>
-<td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.timedelta64</span></code> to string that looks like <cite>4m 35.6s</cite></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_configuration</span></code>(output_dir)</td>
+<td>Write the configuration parameters to function as a record with the output.</td>
 </tr>
 </tbody>
 </table>
@@ -221,66 +207,93 @@
 <td></td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">BUMP_BUFFER</span></code></td>
-<td>Extra time so passengers don&#8217;t get bumped (?)</td>
+<td>Extra time so passengers don&#8217;t get bumped (?).</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">BUMP_ONE_AT_A_TIME</span></code></td>
 <td>Simulation: bump one stop at a time (slower, more accurate)</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">CAPACITY_CONSTRAINT</span></code></td>
-<td>Route choice configuration: Use vehicle capacity constraints</td>
+<td>Route choice configuration: Use vehicle capacity constraints.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">CREATE_SKIMS</span></code></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">CONFIGURATION_FILE</span></code></td>
+<td>Configuration file for fasttrips</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">CONFIGURATION_FUNCTIONS_FILE</span></code></td>
+<td>Configuration functions</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">CONFIGURATION_OUTPUT_FILE</span></code></td>
+<td>Output copy of the configuration file in case anything got overridden</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">CREATE_SKIMS</span></code></td>
 <td>Configuration: Create skims flag.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">DISPERSION_PARAMETER</span></code></td>
-<td>Route choice configuration: Dispersion parameter in the logit function.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">ITERATION_FLAG</span></code></td>
 <td>Configuration: Maximum number of iterations to remove capacity violations.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.MAX_HYPERPATH_ASSIGN_ATTEMPTS</span></code></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">NUMBER_OF_PROCESSES</span></code></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">NUMBER_OF_PROCESSES</span></code></td>
 <td>Number of processes to use for path finding (via <a class="reference external" href="http://docs.python.org/2.7/library/multiprocessing.html#module-multiprocessing" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">multiprocessing</span></code></a>)</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OUTPUT_PASSENGER_TRAJECTORIES</span></code></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">OUTPUT_PASSENGER_TRAJECTORIES</span></code></td>
 <td>Configuration: Passenger trajectory output flag.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PASSENGERS_CSV</span></code></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PASSENGERS_CSV</span></code></td>
 <td>assignment results - Passenger table</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PATH_TIME_WINDOW</span></code></td>
-<td>Configuration: Path time-window.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.RAND_FILE</span></code></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.RAND_FILENAME</span></code></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.RAND_MAX</span></code></td>
-<td></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PREPEND_ROUTE_ID_TO_TRIP_ID</span></code></td>
+<td>Prepend the route id to the trip id?  This is for readability in debugging, since</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SIMULATION_FLAG</span></code></td>
 <td>Configuration: Simulation flag.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">SKIM_END_TIME</span></code></td>
-<td>Configuration: End of the time period for which the skim is required</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">SIM_COL_PAX_ALIGHT_TIME</span></code></td>
+<td></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SKIM_START_TIME</span></code></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SIM_COL_PAX_ARRIVE_TIME</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">SIM_COL_PAX_ARRIVE_TIME_MIN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SIM_COL_PAX_BOARD_TIME</span></code></td>
+<td>Column names for simulation</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">SIM_COL_PAX_LINK_TIME</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SKIM_END_TIME</span></code></td>
+<td>Configuration: End of the time period for which the skim is required (specify as &#8216;HH:MM&#8217;).</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">SKIM_START_TIME</span></code></td>
 <td>Configuration: Beginning of the time period for which the skim is required.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">TODAY</span></code></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STOCH_DISPERSION</span></code></td>
+<td>Route choice configuration: Dispersion parameter in the logit function.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STOCH_MAX_STOP_PROCESS_COUNT</span></code></td>
+<td>Route choice configuration: How many times max times should we process a stop during labeling?  Use -1 to specify no max.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STOCH_PATHSET_SIZE</span></code></td>
+<td>Route choice configuration: How many stochastic paths will we generate (not necessarily unique) to define a path choice set?  Int.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">TIME_WINDOW</span></code></td>
+<td>Configuration: Path time-window.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">TODAY</span></code></td>
 <td>Use this as the date</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">TRACE_PASSENGER_IDS</span></code></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">TRACE_PERSON_IDS</span></code></td>
 <td>Trace these passengers</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">bump_wait</span></code></td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">bump_wait</span></code></td>
 <td>This is the only simulation state that exists across iterations</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">Assignment.bumped_ids</span></code></td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">bump_wait_df</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">bumped_person_ids</span></code></td>
+<td>This is a <a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#set" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">set</span></code></a> of bumped passenger IDs.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">bumped_trip_list_nums</span></code></td>
 <td></td>
 </tr>
 </tbody>
@@ -292,32 +305,28 @@
 </dd></dl>
 
 <dl class="staticmethod">
-<dt id="fasttrips.Assignment.datetime64_formatter">
-<em class="property">static </em><code class="descname">datetime64_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.datetime64_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.datetime64_formatter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM.SS</cite></p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="fasttrips.Assignment.datetime64_min_formatter">
-<em class="property">static </em><code class="descname">datetime64_min_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.datetime64_min_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.datetime64_min_formatter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to minutes after minutes
-(with two decimal places)</p>
-</dd></dl>
-
-<dl class="staticmethod">
 <dt id="fasttrips.Assignment.find_trip_based_path">
-<em class="property">static </em><code class="descname">find_trip_based_path</code><span class="sig-paren">(</span><em>FT</em>, <em>passenger</em>, <em>path</em>, <em>hyperpath</em>, <em>trace</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.find_trip_based_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.find_trip_based_path" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">find_trip_based_path</code><span class="sig-paren">(</span><em>iteration</em>, <em>FT</em>, <em>path</em>, <em>hyperpath</em>, <em>trace</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.find_trip_based_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.find_trip_based_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform trip-based path search.</p>
-<p>Will do so either backwards (destination to origin) if <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.direction" title="fasttrips.Path.direction"><code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code></a> is <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.DIR_OUTBOUND" title="fasttrips.Path.DIR_OUTBOUND"><code class="xref py py-attr docutils literal"><span class="pre">Path.DIR_OUTBOUND</span></code></a>
-or forwards (origin to destination) if <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.direction" title="fasttrips.Path.direction"><code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code></a> is <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.DIR_INBOUND" title="fasttrips.Path.DIR_INBOUND"><code class="xref py py-attr docutils literal"><span class="pre">Path.DIR_INBOUND</span></code></a>.</p>
-<p>Returns (path cost, return_states).</p>
+<p>Will do so either backwards (destination to origin) if <code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code> is <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.DIR_OUTBOUND" title="fasttrips.Path.DIR_OUTBOUND"><code class="xref py py-attr docutils literal"><span class="pre">Path.DIR_OUTBOUND</span></code></a>
+or forwards (origin to destination) if <code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code> is <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.DIR_INBOUND" title="fasttrips.Path.DIR_INBOUND"><code class="xref py py-attr docutils literal"><span class="pre">Path.DIR_INBOUND</span></code></a>.</p>
+<dl class="docutils">
+<dt>Returns (path cost,</dt>
+<dd>return_states,
+performance_dict)</dd>
+<dt>Where performance_dict includes:</dt>
+<dd>number of label iterations,
+max number of times a stop was processed,
+seconds spent in labeling,
+seconds spend in enumeration</dd>
+</dl>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>iteration</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; The pathfinding iteration we&#8217;re on</li>
 <li><strong>FT</strong> (a <a class="reference internal" href="fasttrips.FastTrips.html#fasttrips.FastTrips" title="fasttrips.FastTrips"><code class="xref py py-class docutils literal"><span class="pre">FastTrips</span></code></a> instance) &#8211; fasttrips data</li>
-<li><strong>passenger</strong> (a <a class="reference internal" href="fasttrips.Passenger.html#fasttrips.Passenger" title="fasttrips.Passenger"><code class="xref py py-class docutils literal"><span class="pre">Passenger</span></code></a> instance) &#8211; the passenger whose path we&#8217;re finding</li>
 <li><strong>path</strong> (a <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><code class="xref py py-class docutils literal"><span class="pre">Path</span></code></a> instance) &#8211; the path to fill in</li>
 <li><strong>hyperpath</strong> (<em>boolean</em>) &#8211; pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
 search algorithm will be use.</li>
@@ -338,6 +347,19 @@ stochastic trip-based hyperpath (TBHP).</p>
 </dd></dl>
 
 <dl class="staticmethod">
+<dt id="fasttrips.Assignment.get_passenger_trips">
+<em class="property">static </em><code class="descname">get_passenger_trips</code><span class="sig-paren">(</span><em>passengers_df</em>, <em>veh_trips_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.get_passenger_trips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.get_passenger_trips" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a list of passenger trips with passenger arrive, board and alight times.</p>
+<ul class="simple">
+<li>Takes the trip links of passengers_df</li>
+<li>Joins with vehicle trips on trip id num, A_id, A_seq to get board time (Assignment.SIM_COL_PAX_BOARD_TIME)</li>
+<li>Joins with vehicle trips on trip id num, B_id, B_seq to get alight time (Assignment.SIM_COL_PAX_ALIGHT_TIME)</li>
+<li>Renames A_time to passenger arrival time (Assignment.SIM_COL_PAX_ARRIVE)</li>
+</ul>
+<p>returns DataFrame</p>
+</dd></dl>
+
+<dl class="staticmethod">
 <dt id="fasttrips.Assignment.initialize_fasttrips_extension">
 <em class="property">static </em><code class="descname">initialize_fasttrips_extension</code><span class="sig-paren">(</span><em>process_number</em>, <em>output_dir</em>, <em>FT</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.initialize_fasttrips_extension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.initialize_fasttrips_extension" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize the C++ fasttrips extension by passing it the network supply.</p>
@@ -345,20 +367,8 @@ stochastic trip-based hyperpath (TBHP).</p>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Assignment.print_load_profile">
-<em class="property">static </em><code class="descname">print_load_profile</code><span class="sig-paren">(</span><em>veh_trips_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.print_load_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.print_load_profile" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">print_load_profile</code><span class="sig-paren">(</span><em>FT</em>, <em>veh_trips_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.print_load_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.print_load_profile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print the load profile output</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="fasttrips.Assignment.print_passenger_paths">
-<em class="property">static </em><code class="descname">print_passenger_paths</code><span class="sig-paren">(</span><em>passengers_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.print_passenger_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.print_passenger_paths" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print the passenger paths.</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="fasttrips.Assignment.print_passenger_times">
-<em class="property">static </em><code class="descname">print_passenger_times</code><span class="sig-paren">(</span><em>pax_exp_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.print_passenger_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.print_passenger_times" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print the passenger times.</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -376,10 +386,10 @@ stochastic trip-based hyperpath (TBHP).</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The number of paths assigned, the paths.  See <a class="reference internal" href="#fasttrips.Assignment.setup_passengers" title="fasttrips.Assignment.setup_passengers"><code class="xref py py-meth docutils literal"><span class="pre">Assignment.setup_passengers()</span></code></a>
-for documentation on the passenger paths <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a></p>
+for documentation on the passenger paths <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a></p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a tuple of (int, <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>)</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a tuple of (int, <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>)</p>
 </td>
 </tr>
 </tbody>
@@ -388,8 +398,8 @@ for documentation on the passenger paths <a class="reference external" href="htt
 
 <dl class="staticmethod">
 <dt id="fasttrips.Assignment.read_configuration">
-<em class="property">static </em><code class="descname">read_configuration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.read_configuration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.read_configuration" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read the configuration parameters and override the above</p>
+<em class="property">static </em><code class="descname">read_configuration</code><span class="sig-paren">(</span><em>input_network_dir</em>, <em>input_demand_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.read_configuration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.read_configuration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the configuration parameters.</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -402,8 +412,8 @@ for documentation on the passenger paths <a class="reference external" href="htt
 <dt id="fasttrips.Assignment.setup_passengers">
 <em class="property">static </em><code class="descname">setup_passengers</code><span class="sig-paren">(</span><em>FT</em>, <em>output_dir</em>, <em>iteration</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.setup_passengers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.setup_passengers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts assignment results (which is stored in each Passenger <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><code class="xref py py-class docutils literal"><span class="pre">Path</span></code></a>,
-in the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.states" title="fasttrips.Path.states"><code class="xref py py-attr docutils literal"><span class="pre">Path.states</span></code></a>) into a single <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>.  Each row
-represents a link in the passenger&#8217;s path.  The returned <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>
+in the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.states" title="fasttrips.Path.states"><code class="xref py py-attr docutils literal"><span class="pre">Path.states</span></code></a>) into a single <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>.  Each row
+represents a link in the passenger&#8217;s path.  The returned <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>
 has the following columns:</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -418,21 +428,21 @@ has the following columns:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><cite>passenger_id</cite></td>
-<td>int64</td>
-<td>the <a class="reference internal" href="fasttrips.Passenger.html#fasttrips.Passenger.passenger_id" title="fasttrips.Passenger.passenger_id"><code class="xref py py-attr docutils literal"><span class="pre">Passenger.passenger_id</span></code></a></td>
+<tr class="row-even"><td><a href="#id1"><span class="problematic" id="id2">`</span></a>person_id</td>
+<td>object</td>
+<td>person unique ID</td>
 </tr>
-<tr class="row-odd"><td><cite>path_id</cite></td>
+<tr class="row-odd"><td><cite>trip_list_id</cite></td>
 <td>int64</td>
-<td>a sequential integer ID unique to each <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path" title="fasttrips.Path"><code class="xref py py-class docutils literal"><span class="pre">Path</span></code></a> instance</td>
+<td>trip list numerical ID</td>
 </tr>
 <tr class="row-even"><td><cite>pathdir</cite></td>
 <td>int64</td>
-<td>the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.direction" title="fasttrips.Path.direction"><code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code></a></td>
+<td>the <code class="xref py py-attr docutils literal"><span class="pre">Path.direction</span></code></td>
 </tr>
 <tr class="row-odd"><td><cite>pathmode</cite></td>
-<td>int64</td>
-<td>the <a class="reference internal" href="fasttrips.Path.html#fasttrips.Path.mode" title="fasttrips.Path.mode"><code class="xref py py-attr docutils literal"><span class="pre">Path.mode</span></code></a></td>
+<td>object</td>
+<td>the <code class="xref py py-attr docutils literal"><span class="pre">Path.mode</span></code></td>
 </tr>
 <tr class="row-even"><td><cite>linkmode</cite></td>
 <td>object</td>
@@ -441,38 +451,50 @@ has the following columns:</p>
 access, followed by trips with transfers in between, and ending in an egress following the last trip.</td>
 </tr>
 <tr class="row-odd"><td><cite>trip_id</cite></td>
-<td>float64</td>
-<td>the <code class="xref py py-attr docutils literal"><span class="pre">Trip.trip_id</span></code> for trip links.  Set to <code class="xref py py-attr docutils literal"><span class="pre">numpy.nan</span></code> for non-trip links.</td>
+<td>object</td>
+<td>the trip ID for trip links.  Set to <code class="xref py py-attr docutils literal"><span class="pre">numpy.nan</span></code> for non-trip links.</td>
 </tr>
-<tr class="row-even"><td><cite>A_id</cite></td>
+<tr class="row-even"><td><cite>trip_id_num</cite></td>
 <td>float64</td>
-<td>the <code class="xref py py-attr docutils literal"><span class="pre">Stop.stop_id</span></code> at the start of the link, or a <code class="xref py py-attr docutils literal"><span class="pre">TAZ.taz_id</span></code> for access links</td>
+<td>the numerical trip ID for trip links.  Set to <code class="xref py py-attr docutils literal"><span class="pre">numpy.nan</span></code> for non-trip links.</td>
+</tr>
+<tr class="row-odd"><td><cite>A_id</cite></td>
+<td>object</td>
+<td>the stop ID at the start of the link, or TAZ ID for access links</td>
+</tr>
+<tr class="row-even"><td><cite>A_id_num</cite></td>
+<td>int64</td>
+<td>the numerical stop ID at the start of the link, or a numerical TAZ ID for access links</td>
 </tr>
 <tr class="row-odd"><td><cite>B_id</cite></td>
-<td>float64</td>
-<td>the <code class="xref py py-attr docutils literal"><span class="pre">Stop.stop_id</span></code> at the end of the link, or a <code class="xref py py-attr docutils literal"><span class="pre">TAZ.taz_id</span></code> for access links</td>
+<td>object</td>
+<td>the stop ID at the end of the link, or a TAZ ID for access links</td>
 </tr>
-<tr class="row-even"><td><cite>A_seq</cite>,</td>
+<tr class="row-even"><td><cite>B_id_num</cite></td>
+<td>int64</td>
+<td>the numerical stop ID at the end of the link, or a numerical TAZ ID for access links</td>
+</tr>
+<tr class="row-odd"><td><cite>A_seq</cite>,</td>
 <td>int64</td>
 <td>the sequence number for the stop at the start of the link, or -1 for access links</td>
 </tr>
-<tr class="row-odd"><td><cite>B_seq</cite>,</td>
+<tr class="row-even"><td><cite>B_seq</cite>,</td>
 <td>int64</td>
 <td>the sequence number for the stop at the start of the link, or -1 for access links</td>
 </tr>
-<tr class="row-even"><td><cite>A_time</cite></td>
+<tr class="row-odd"><td><cite>A_time</cite></td>
 <td>datetime64[ns]</td>
 <td>the time the passenger arrives at <cite>A_id</cite></td>
 </tr>
-<tr class="row-odd"><td><cite>B_time</cite></td>
+<tr class="row-even"><td><cite>B_time</cite></td>
 <td>datetime64[ns]</td>
 <td>the time the passenger arrives at <cite>B_id</cite></td>
 </tr>
-<tr class="row-even"><td><cite>linktime</cite></td>
+<tr class="row-odd"><td><cite>linktime</cite></td>
 <td>timedelta64[ns]</td>
 <td>the time spent on the link</td>
 </tr>
-<tr class="row-odd"><td><cite>cost</cite></td>
+<tr class="row-even"><td><cite>cost</cite></td>
 <td>float64</td>
 <td>the cost of the entire path</td>
 </tr>
@@ -485,39 +507,37 @@ and labeled with the given <cite>iteration</cite>.</p>
 <dl class="staticmethod">
 <dt id="fasttrips.Assignment.setup_trips">
 <em class="property">static </em><code class="descname">setup_trips</code><span class="sig-paren">(</span><em>FT</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.setup_trips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.setup_trips" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets up and returns a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.16.2)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> where each row contains a leg of a transit vehicle trip.
+<dd><p>Sets up and returns a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> where each row contains a leg of a transit vehicle trip.
 # 2015-06-22 15:42:34 DEBUG Setup vehicle trips dataframe:
-# routeId                  int64
-# shapeId                  int64
-# direction                int64
-# trip_id                  int64
-# stop_seq                 int64
-# stop_id                  int64
-# capacity                 int64
-# arrive_time     datetime64[ns]
-# depart_time     datetime64[ns]
-# service_type             int64</p>
+# arrival_time          datetime64[ns]
+# departure_time        datetime64[ns]
+# stop_id                       object
+# stop_sequence                  int64
+# trip_id                       object
+# arrival_time_min             float64
+# departure_time_min           float64
+# stop_id_num                    int64
+# trip_id_num                    int64
+# route_id                      object
+# service_id                    object
+# vehicle_name                  object</p>
 </dd></dl>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Assignment.simulate">
 <em class="property">static </em><code class="descname">simulate</code><span class="sig-paren">(</span><em>FT</em>, <em>passengers_df</em>, <em>veh_trips_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.simulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.simulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Actually assign the passengers trips to the vehicles.</p>
-<div class="admonition-todo admonition" id="index-0">
-<p class="first admonition-title">Todo</p>
-<p class="last">Remove step zero.  Duplicate passenger IDs should be ok because we can generate unique path IDs.</p>
-</div>
 </dd></dl>
 
 <dl class="staticmethod">
-<dt id="fasttrips.Assignment.timedelta_formatter">
-<em class="property">static </em><code class="descname">timedelta_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.timedelta_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.timedelta_formatter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.timedelta64</span></code> to string that looks like <cite>4m 35.6s</cite></p>
+<dt id="fasttrips.Assignment.write_configuration">
+<em class="property">static </em><code class="descname">write_configuration</code><span class="sig-paren">(</span><em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.write_configuration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.write_configuration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the configuration parameters to function as a record with the output.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.ASSIGNMENT_TYPE">
-<code class="descname">ASSIGNMENT_TYPE</code><em class="property"> = 'Deterministic Assignment'</em><a class="headerlink" href="#fasttrips.Assignment.ASSIGNMENT_TYPE" title="Permalink to this definition">¶</a></dt>
+<code class="descname">ASSIGNMENT_TYPE</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.ASSIGNMENT_TYPE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration: Assignment Type
 &#8216;Simulation Only&#8217; - No Assignment (only simulation, given paths in the input)
 &#8216;Deterministic Assignment&#8217;
@@ -541,13 +561,13 @@ and labeled with the given <cite>iteration</cite>.</p>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.BUMP_BUFFER">
-<code class="descname">BUMP_BUFFER</code><em class="property"> = datetime.timedelta(0, 300)</em><a class="headerlink" href="#fasttrips.Assignment.BUMP_BUFFER" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extra time so passengers don&#8217;t get bumped (?)</p>
+<code class="descname">BUMP_BUFFER</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.BUMP_BUFFER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extra time so passengers don&#8217;t get bumped (?). A <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.BUMP_ONE_AT_A_TIME">
-<code class="descname">BUMP_ONE_AT_A_TIME</code><em class="property"> = True</em><a class="headerlink" href="#fasttrips.Assignment.BUMP_ONE_AT_A_TIME" title="Permalink to this definition">¶</a></dt>
+<code class="descname">BUMP_ONE_AT_A_TIME</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.BUMP_ONE_AT_A_TIME" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulation: bump one stop at a time (slower, more accurate)</p>
 <p>When addressing capacity constraints in simulation, we look at all the (trip, stop)-pairs
 where the boards are not allowed since vehicle is over capacity.  The faster way to address
@@ -557,33 +577,44 @@ to reassign.</p>
 crowded vehicles, then bumping her frees up space on other vehicles and so some other bumping
 may not be necessary.  Thus, the more accurate (but slower) method is to bump passengers from
 each (trip,stop) at a time, in order of the full vehicle arrival time, and then recalculate
-loads, and iterate until we have no capacity issues.</p>
+loads, and iterate until we have no capacity issues.  Boolean.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.CAPACITY_CONSTRAINT">
-<code class="descname">CAPACITY_CONSTRAINT</code><em class="property"> = False</em><a class="headerlink" href="#fasttrips.Assignment.CAPACITY_CONSTRAINT" title="Permalink to this definition">¶</a></dt>
-<dd><p>Route choice configuration: Use vehicle capacity constraints</p>
+<code class="descname">CAPACITY_CONSTRAINT</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.CAPACITY_CONSTRAINT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route choice configuration: Use vehicle capacity constraints. Boolean.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.CONFIGURATION_FILE">
+<code class="descname">CONFIGURATION_FILE</code><em class="property"> = 'config_ft.txt'</em><a class="headerlink" href="#fasttrips.Assignment.CONFIGURATION_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration file for fasttrips</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.CONFIGURATION_FUNCTIONS_FILE">
+<code class="descname">CONFIGURATION_FUNCTIONS_FILE</code><em class="property"> = 'config_ft.py'</em><a class="headerlink" href="#fasttrips.Assignment.CONFIGURATION_FUNCTIONS_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration functions</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.CONFIGURATION_OUTPUT_FILE">
+<code class="descname">CONFIGURATION_OUTPUT_FILE</code><em class="property"> = 'ft_output_config.txt'</em><a class="headerlink" href="#fasttrips.Assignment.CONFIGURATION_OUTPUT_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output copy of the configuration file in case anything got overridden
+(Hmm naming conventions are a bit awkward here)</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.CREATE_SKIMS">
-<code class="descname">CREATE_SKIMS</code><em class="property"> = False</em><a class="headerlink" href="#fasttrips.Assignment.CREATE_SKIMS" title="Permalink to this definition">¶</a></dt>
+<code class="descname">CREATE_SKIMS</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.CREATE_SKIMS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration: Create skims flag. This is specific to the travel demand models
-(not working in this version)</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="fasttrips.Assignment.DISPERSION_PARAMETER">
-<code class="descname">DISPERSION_PARAMETER</code><em class="property"> = 1.0</em><a class="headerlink" href="#fasttrips.Assignment.DISPERSION_PARAMETER" title="Permalink to this definition">¶</a></dt>
-<dd><p>Route choice configuration: Dispersion parameter in the logit function.
-Higher values result in less stochasticity. Must be nonnegative.
-If unknown use a value between 0.5 and 1</p>
+(not working in this version). Boolean.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.ITERATION_FLAG">
-<code class="descname">ITERATION_FLAG</code><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.Assignment.ITERATION_FLAG" title="Permalink to this definition">¶</a></dt>
+<code class="descname">ITERATION_FLAG</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.ITERATION_FLAG" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration: Maximum number of iterations to remove capacity violations. When
 the transit system is not crowded or when capacity constraint is
 relaxed the model will terminate after the first iteration</p>
@@ -591,7 +622,7 @@ relaxed the model will terminate after the first iteration</p>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.NUMBER_OF_PROCESSES">
-<code class="descname">NUMBER_OF_PROCESSES</code><em class="property"> = 14</em><a class="headerlink" href="#fasttrips.Assignment.NUMBER_OF_PROCESSES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">NUMBER_OF_PROCESSES</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.NUMBER_OF_PROCESSES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of processes to use for path finding (via <a class="reference external" href="http://docs.python.org/2.7/library/multiprocessing.html#module-multiprocessing" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">multiprocessing</span></code></a>)
 Set to 1 to run everything in this process
 Set to less than 1 to use the result of <a class="reference external" href="http://docs.python.org/2.7/library/multiprocessing.html#multiprocessing.cpu_count" title="(in Python v2.7)"><code class="xref py py-func docutils literal"><span class="pre">multiprocessing.cpu_count()</span></code></a>
@@ -600,10 +631,10 @@ Set to positive integer greater than 1 to set a fixed number of processes</p>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.OUTPUT_PASSENGER_TRAJECTORIES">
-<code class="descname">OUTPUT_PASSENGER_TRAJECTORIES</code><em class="property"> = True</em><a class="headerlink" href="#fasttrips.Assignment.OUTPUT_PASSENGER_TRAJECTORIES" title="Permalink to this definition">¶</a></dt>
+<code class="descname">OUTPUT_PASSENGER_TRAJECTORIES</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.OUTPUT_PASSENGER_TRAJECTORIES" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration: Passenger trajectory output flag. Passengers&#8217; path and time will be
 reported if this flag is on. Note that the simulation flag should be on for
-passengers&#8217; time.</p>
+passengers&#8217; time.  Boolean.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -613,44 +644,103 @@ passengers&#8217; time.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Assignment.PATH_TIME_WINDOW">
-<code class="descname">PATH_TIME_WINDOW</code><em class="property"> = datetime.timedelta(0, 1800)</em><a class="headerlink" href="#fasttrips.Assignment.PATH_TIME_WINDOW" title="Permalink to this definition">¶</a></dt>
-<dd><p>Configuration: Path time-window. This is the time in which the paths are generated.
-E.g. with a typical 30 min window, any path within 30 min of the
-departure time will be checked.</p>
+<dt id="fasttrips.Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID">
+<code class="descname">PREPEND_ROUTE_ID_TO_TRIP_ID</code><em class="property"> = False</em><a class="headerlink" href="#fasttrips.Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepend the route id to the trip id?  This is for readability in debugging, since
+route IDs are typically more readable and trip ids are inscrutable</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.SIMULATION_FLAG">
-<code class="descname">SIMULATION_FLAG</code><em class="property"> = True</em><a class="headerlink" href="#fasttrips.Assignment.SIMULATION_FLAG" title="Permalink to this definition">¶</a></dt>
-<dd><p>Configuration: Simulation flag. It should be on for iterative assignment. In a one shot
+<code class="descname">SIMULATION_FLAG</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.SIMULATION_FLAG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration: Simulation flag. It should be True for iterative assignment. In a one shot
 assignment with simulation flag off, the passengers are assigned to
-paths but are not loaded to the network.</p>
+paths but are not loaded to the network.  Boolean.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="fasttrips.Assignment.SIM_COL_PAX_ALIGHT_TIME">
+<code class="descname">SIM_COL_PAX_ALIGHT_TIME</code><em class="property"> = 'alight_time'</em><a class="headerlink" href="#fasttrips.Assignment.SIM_COL_PAX_ALIGHT_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.SIM_COL_PAX_ARRIVE_TIME">
+<code class="descname">SIM_COL_PAX_ARRIVE_TIME</code><em class="property"> = 'pax_arrive_time'</em><a class="headerlink" href="#fasttrips.Assignment.SIM_COL_PAX_ARRIVE_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN">
+<code class="descname">SIM_COL_PAX_ARRIVE_TIME_MIN</code><em class="property"> = 'pax_arrive_time_min'</em><a class="headerlink" href="#fasttrips.Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.SIM_COL_PAX_BOARD_TIME">
+<code class="descname">SIM_COL_PAX_BOARD_TIME</code><em class="property"> = 'board_time'</em><a class="headerlink" href="#fasttrips.Assignment.SIM_COL_PAX_BOARD_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Column names for simulation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.SIM_COL_PAX_LINK_TIME">
+<code class="descname">SIM_COL_PAX_LINK_TIME</code><em class="property"> = 'linktime'</em><a class="headerlink" href="#fasttrips.Assignment.SIM_COL_PAX_LINK_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="fasttrips.Assignment.SKIM_END_TIME">
-<code class="descname">SKIM_END_TIME</code><em class="property"> = 600</em><a class="headerlink" href="#fasttrips.Assignment.SKIM_END_TIME" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SKIM_END_TIME</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.SKIM_END_TIME" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration: End of the time period for which the skim is required
-(minutes from start of day)</p>
+(specify as &#8216;HH:MM&#8217;). A <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.SKIM_START_TIME">
-<code class="descname">SKIM_START_TIME</code><em class="property"> = 300</em><a class="headerlink" href="#fasttrips.Assignment.SKIM_START_TIME" title="Permalink to this definition">¶</a></dt>
-<dd><p>Configuration: Beginning of the time period for which the skim is required.
-(in minutes from start of day)</p>
+<code class="descname">SKIM_START_TIME</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.SKIM_START_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Configuration: Beginning of the time period for which the skim is required.</dt>
+<dd>(specify as &#8216;HH:MM&#8217;). A <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.STOCH_DISPERSION">
+<code class="descname">STOCH_DISPERSION</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.STOCH_DISPERSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route choice configuration: Dispersion parameter in the logit function.
+Higher values result in less stochasticity. Must be nonnegative.
+If unknown use a value between 0.5 and 1. Float.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">
+<code class="descname">STOCH_MAX_STOP_PROCESS_COUNT</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route choice configuration: How many times max times should we process a stop
+during labeling?  Use -1 to specify no max.  Int.
+Setting this to a positive value may increase runtime but may decrease
+pathset quality. (Todo: test/quantify this.)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.STOCH_PATHSET_SIZE">
+<code class="descname">STOCH_PATHSET_SIZE</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.STOCH_PATHSET_SIZE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route choice configuration: How many stochastic paths will we generate
+(not necessarily unique) to define a path choice set?  Int.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.TIME_WINDOW">
+<code class="descname">TIME_WINDOW</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.TIME_WINDOW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration: Path time-window. This is the time in which the paths are generated.
+E.g. with a typical 30 min window, any path within 30 min of the
+departure time will be checked.  A <a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.TODAY">
-<code class="descname">TODAY</code><em class="property"> = datetime.date(2015, 9, 15)</em><a class="headerlink" href="#fasttrips.Assignment.TODAY" title="Permalink to this definition">¶</a></dt>
+<code class="descname">TODAY</code><em class="property"> = datetime.date(2016, 3, 22)</em><a class="headerlink" href="#fasttrips.Assignment.TODAY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use this as the date</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Assignment.TRACE_PASSENGER_IDS">
-<code class="descname">TRACE_PASSENGER_IDS</code><em class="property"> = [11, 215]</em><a class="headerlink" href="#fasttrips.Assignment.TRACE_PASSENGER_IDS" title="Permalink to this definition">¶</a></dt>
+<dt id="fasttrips.Assignment.TRACE_PERSON_IDS">
+<code class="descname">TRACE_PERSON_IDS</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.TRACE_PERSON_IDS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trace these passengers</p>
 </dd></dl>
 
@@ -667,15 +757,15 @@ It&#8217;s a dictionary of (trip_id, stop_id) -&gt; earliest time a bumped passe
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Assignment.bumped_passenger_ids">
-<code class="descname">bumped_passenger_ids</code><em class="property"> = set([])</em><a class="headerlink" href="#fasttrips.Assignment.bumped_passenger_ids" title="Permalink to this definition">¶</a></dt>
+<dt id="fasttrips.Assignment.bumped_person_ids">
+<code class="descname">bumped_person_ids</code><em class="property"> = set([])</em><a class="headerlink" href="#fasttrips.Assignment.bumped_person_ids" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a <a class="reference external" href="http://docs.python.org/2.7/library/stdtypes.html#set" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">set</span></code></a> of bumped passenger IDs.  For multiple-iteration assignment,
 this determines which passengers to assign.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Assignment.bumped_path_ids">
-<code class="descname">bumped_path_ids</code><em class="property"> = set([])</em><a class="headerlink" href="#fasttrips.Assignment.bumped_path_ids" title="Permalink to this definition">¶</a></dt>
+<dt id="fasttrips.Assignment.bumped_trip_list_nums">
+<code class="descname">bumped_trip_list_nums</code><em class="property"> = set([])</em><a class="headerlink" href="#fasttrips.Assignment.bumped_trip_list_nums" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -688,7 +778,7 @@ this determines which passengers to assign.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="fasttrips.FastTrips.html" class="btn btn-neutral float-right" title="fasttrips.FastTrips" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="fasttrips.Error.html" class="btn btn-neutral float-right" title="fasttrips.Error" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../fasttrips_c_extension.html" class="btn btn-neutral" title="fasttrips C++ Extension" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
