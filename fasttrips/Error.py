@@ -1,3 +1,7 @@
+"""
+This file will define the various exceptions that can be raised in the course of running Fast-Trips.
+"""
+
 __copyright__ = "Copyright 2016 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
