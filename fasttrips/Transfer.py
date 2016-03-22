@@ -164,8 +164,9 @@ class Transfer:
             self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] = \
                 self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE]*60.0/Transfer.WALK_SPEED_MILES_PER_HOUR
 
-            # Sanity check transfer times.  An hour-long walk transfer is suspicious.
-            too_long_transfers = self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] > 60]
+            # Sanity check transfer times.  A 13 hour-long walk transfer is suspicious.
+            # TODO: make this less arbitrary?  It's based on the max SFCTA xfer link but it is too high
+            too_long_transfers = self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] > 780]
             if len(too_long_transfers) > 0:
                 error_msg = "Found %d excessively long transfer links out of %d total transfer links. Expected distances are in miles. Unit problem?" % \
                             (len(too_long_transfers), len(self.transfers_df))
