@@ -1674,7 +1674,10 @@ namespace fasttrips {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
 
         // no taz states -> no path found
-        const Hyperlink& taz_state = stop_states.find(end_taz_id)->second;
+        StopStates::const_iterator ssi_iter = stop_states.find(end_taz_id);
+        if (ssi_iter == stop_states.end()) { return false; }
+
+        const Hyperlink& taz_state = ssi_iter->second;
         if (taz_state.size() == 0) { return false; }
 
         if (path_spec.hyperpath_)
