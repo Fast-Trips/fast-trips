@@ -103,6 +103,9 @@ class Assignment:
     #: Use this as the date
     TODAY                           = datetime.date.today()
 
+    #: Debug mode: only run trace passengers
+    DEBUG_TRACE_ONLY                = False
+
     #: Trace these passengers
     TRACE_PERSON_IDS                = None
 
@@ -188,6 +191,7 @@ class Assignment:
                       'stochastic_pathset_size'         :1000,
                       'capacity_constraint'             :False,
                       'trace_person_ids'                :'None',
+                      'debug_trace_only'                :'False',
                       'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
@@ -218,6 +222,7 @@ class Assignment:
         Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('fasttrips','stochastic_max_stop_process_count')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
+        Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
@@ -259,6 +264,7 @@ class Assignment:
         parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
+        parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
         parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
@@ -366,9 +372,12 @@ class Assignment:
         todo_queue          = None
         done_queue          = None
 
-        est_paths_to_find   = len(FT.passengers.trip_list_df)
-        if iteration > 1:
-            est_paths_to_find = len(Assignment.bumped_trip_list_nums)
+        if Assignment.DEBUG_TRACE_ONLY:
+            est_paths_to_find = len(Assignment.TRACE_PERSON_IDS)
+        else:
+            est_paths_to_find   = len(FT.passengers.trip_list_df)
+            if iteration > 1:
+                est_paths_to_find = len(Assignment.bumped_trip_list_nums)
 
         info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
         if info_freq < 1: info_freq = 1
@@ -405,6 +414,9 @@ class Assignment:
                 path_dict         = dict(zip(path_cols, path_tuple))
                 trip_list_id      = path_dict[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
                 person_id         = path_dict[Passenger.TRIP_LIST_COLUMN_PERSON_ID]
+                trace_person      = person_id in Assignment.TRACE_PERSON_IDS
+
+                if Assignment.DEBUG_TRACE_ONLY and not trace_person: continue
 
                 # first iteration -- create path objects
                 if iteration==1:
@@ -422,10 +434,8 @@ class Assignment:
                 if num_processes > 1:
                     todo_queue.put( trip_path )
                 else:
-                    trace_person = False
-                    if person_id in Assignment.TRACE_PERSON_IDS:
+                    if trace_person:
                         FastTripsLogger.debug("Tracing assignment of person_id %s" % str(person_id))
-                        trace_person = True
 
                     # do the work
                     (cost, return_states, perf_dict) = \
