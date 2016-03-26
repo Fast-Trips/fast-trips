@@ -507,8 +507,6 @@ namespace fasttrips {
         // do we even want to incorporate this link to our stop state?
         bool rejected = false;
 
-        std::string trace_suffix;
-
         // initialize the hyperlink if we need to
         if (stop_states.find(stop_id) == stop_states.end()) {
             Hyperlink h(stop_id);
@@ -517,57 +515,19 @@ namespace fasttrips {
 
         Hyperlink& hyperlink = stop_states[stop_id];
 
-        // for deterministic, this is simple
-        if (!path_spec.hyperpath_) {
-            LabelStop ls = { ss.cost_, stop_id };
+        // keep track if the state changed (label or time window)
+        // if so, we'll want to trigger dealing with the effects by adding it to the queue
+        bool update_state = hyperlink.addLink(ss, rejected, trace_file, path_spec, *this);
 
-            trace_suffix = " (rejected)";
-            rejected     = true;
+        if (update_state) {
+            LabelStop ls = { hyperlink.hyperpathCost(), stop_id };
 
-            // new stop state -- just add it
-            if (hyperlink.size() == 0) {
-                hyperlink.addLink(ss, rejected, trace_suffix, trace_file, path_spec, *this);
-
-                // push this stop and it's cost for processing
-                label_stop_queue.push( ls );
-                rejected     = false;
-            }
-            // if the stop state exists already, check if this cost is lower
-            else if (ss.cost_ < hyperlink.lowestCostStopState().cost_) {
-                // replace
-                hyperlink.clear();
-                hyperlink.addLink(ss, rejected, trace_suffix, trace_file, path_spec, *this);
-                trace_suffix = " (update)";  // it's really this
-
-                // push this stop and it's cost for processing
-                label_stop_queue.push( ls );
-                rejected     = false;
-            }
-        }
-
-        else {
-
-            // keep track if the state changed (label or time window)
-            // if so, we'll want to trigger dealing with the effects by adding it to the queue
-            bool update_state = hyperlink.addLink(ss, rejected, trace_suffix, trace_file, path_spec, *this);
-
-            if (update_state) {
-                LabelStop ls = { hyperlink.hyperpathCost(), stop_id };
-
-                // push this stop and it's departure time / arrival time for processing
-                label_stop_queue.push( ls );
-            }
+            // push this stop and it's departure time / arrival time for processing
+            label_stop_queue.push( ls );
         }
 
         // the rest is for debugging
-        if (!path_spec.trace_) {
-            return;
-        }
-
-        // log it to trace
-        trace_file << "  + new ";
-        Hyperlink::printStopState(trace_file, stop_id, ss, path_spec, *this);
-        trace_file << trace_suffix << std::endl;
+        if (!path_spec.trace_) { return; }
 
         if (rejected) { return; }
 

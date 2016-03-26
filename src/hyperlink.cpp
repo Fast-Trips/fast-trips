@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <stack>
 
 namespace fasttrips {
 
@@ -51,17 +52,37 @@ namespace fasttrips {
             ++cm_iter;
         }
         if (cm_iter->second != ssk) {
-            std::cerr << "This shouldn't happen" << std::endl;
+            std::cerr << "Hyperlink::removeFromCostMap() This shouldn't happen" << std::endl;
         }
         cost_map_.erase(cm_iter);
     }
 
-    bool Hyperlink::addLink(const StopState& ss, bool& rejected, std::string& notes,
+    bool Hyperlink::addLink(const StopState& ss, bool& rejected,
                             std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf)
     {
         rejected = false;
         const StopStateKey ssk = { ss.deparr_mode_, ss.trip_id_, ss.stop_succpred_, ss.seq_, ss.seq_succpred_ };
 
+        // deterministic -- we only keep one, the low cost link
+        if (path_spec.hyperpath_ == false && stop_state_map_.size() > 0)
+        {
+            // if the cost isn't better, reject
+            if (ss.cost_ >= lowestCostStopState().cost_) {
+                rejected = true;
+
+                // log it
+                if (path_spec.trace_) {
+                    trace_file << "  + new ";
+                    Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+                    trace_file << " (rejected)" << std::endl;
+                }
+
+                return false;
+            }
+            // otherwise, accept by clearing out
+            clear();
+            // fall through to add it below
+        }
         // simplest case -- we have no stop states/links, so just add it
         if (stop_state_map_.size() == 0)
         {
@@ -69,7 +90,6 @@ namespace fasttrips {
             lder_trip_id_            = ss.trip_id_;
             sum_exp_cost_            = exp(-1.0*STOCH_DISPERSION_*ss.cost_);
             hyperpath_cost_          = ss.cost_;
-            notes                    = " (new)";
 
             // add to the map
             stop_state_map_[ssk] = ss;
@@ -77,15 +97,33 @@ namespace fasttrips {
             // assume success
             // todo: switch to double, cost
             cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+
+            // log it
+            if (path_spec.trace_) {
+                trace_file << "  + new ";
+                Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+                trace_file << std::endl;
+            }
+
             return true;
         }
         // ========= now we have links in the hyperlink =========
 
         // is it too early (outbound) or too late (inbound)?
+        // don't worry about the last labeling (access for outbound, egress for inbound) -- that one is special
+        // if (( path_spec.outbound_ && (ss.deparr_mode_ != MODE_ACCESS) && (ss.deparr_time_ < latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
+        //     (!path_spec.outbound_ && (ss.deparr_mode_ != MODE_EGRESS) && (ss.deparr_time_ > latest_dep_earliest_arr_ + TIME_WINDOW_))) {
         if (( path_spec.outbound_ && (ss.deparr_time_ < latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
             (!path_spec.outbound_ && (ss.deparr_time_ > latest_dep_earliest_arr_ + TIME_WINDOW_))) {
-            notes = " (rejected)";
             rejected = true;
+
+            // log it
+            if (path_spec.trace_) {
+                trace_file << "  + new ";
+                Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+                trace_file << " (rejected)" << std::endl;
+            }
+
             return false;
         }
 
@@ -97,7 +135,11 @@ namespace fasttrips {
 
         // if we succeeded, the key isn't in here already
         if (result_l.second == true) {
-            notes = " (new)";
+            std::string notes;
+
+            // todo: switch to double, cost
+            cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+
             // check if the window is updated -- this is a state update
             if (( path_spec.outbound_ && (ss.deparr_time_ > latest_dep_earliest_arr_)) ||
                 (!path_spec.outbound_ && (ss.deparr_time_ < latest_dep_earliest_arr_)))
@@ -106,39 +148,50 @@ namespace fasttrips {
                 lder_trip_id_            = ss.trip_id_;
                 update_state             = true;
                 notes                   += " (window)";
+                // if the window changes, we need to prune states out of bounds -- this recalculates sum_exp_cost_
+                pruneWindow(trace_file, path_spec, pf);
+            } else {
+                sum_exp_cost_         += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
             }
 
             // check if the hyperpath cost is affected -- this would be a state update
-            sum_exp_cost_         += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
             double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(sum_exp_cost_);
             if (abs(hyperpath_cost - hyperpath_cost_) > 0.0001)
             {
                 std::ostringstream oss;
-                oss << " (hp cost " << std::setprecision(4) << std::fixed << hyperpath_cost_ << "->" << hyperpath_cost << ")";
+                oss << " (hp cost " << std::setprecision(6) << std::fixed << hyperpath_cost_ << "->" << hyperpath_cost << ")";
                 notes                   += oss.str();
                 update_state             = true;
                 hyperpath_cost_          = hyperpath_cost;
             }
 
-            // todo: switch to double, cost
-            cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+            // log it
+            if (path_spec.trace_) {
+                trace_file << "  + new ";
+                Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+                trace_file << notes << std::endl;
+            }
+
             return update_state;
         }
 
         // ========= the key is in already in here so replace the values =========
-        notes = " (sub)";
+        std::string notes(" (sub)");
 
         // todo: what if the the latest_dep_earliest_arr_/lder_trip_id_ were set to this before?  update?
 
         // update the cost map
-        removeFromCostMap(ssk, stop_state_map_[ssk]);
-        cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+        // todo: when we use cost, do this.  But we don't actually change the iteration order
+        int old_iteration = stop_state_map_[ssk].iteration_;
+        // removeFromCostMap(ssk, stop_state_map_[ssk]);
+        // cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
 
         // update the cost
         sum_exp_cost_ -= exp(-1.0*STOCH_DISPERSION_*stop_state_map_[ssk].cost_);
 
         // and the other state elements
         stop_state_map_[ssk] = ss;
+        stop_state_map_[ssk].iteration_ = old_iteration; // remove this
         sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
 
         // check if the window is updated -- this is a state update
@@ -149,16 +202,25 @@ namespace fasttrips {
             lder_trip_id_            = ss.trip_id_;
             update_state             = true;
             notes                   += " (window)";
+            // if the window changes, we need to prune states out of bounds -- this recalculates sum_exp_cost_
+            pruneWindow(trace_file, path_spec, pf);
         }
 
         double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(sum_exp_cost_);
         if (abs(hyperpath_cost - hyperpath_cost_) > 0.0001)
         {
             std::ostringstream oss;
-            oss << " (hp cost" << std::setprecision(4) << std::fixed << hyperpath_cost_ << "->" << hyperpath_cost << ")";
+            oss << " (hp cost " << std::setprecision(6) << std::fixed << hyperpath_cost_ << "->" << hyperpath_cost << ")";
             notes                   += oss.str();
             update_state             = true;
             hyperpath_cost_          = hyperpath_cost;
+        }
+
+        // log it
+        if (path_spec.trace_) {
+            trace_file << "  + new ";
+            Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+            trace_file << notes << std::endl;
         }
         return update_state;
     }
@@ -295,31 +357,45 @@ namespace fasttrips {
         }
     }
 
-    void Hyperlink::pruneWindow()
+    // Go through stop states (links) and remove any outside the time window
+    // Recalculates sum_exp_cost_ but not hyperpath_cost_
+    void Hyperlink::pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf)
     {
-        /**
-        std::stack<int> prune_indices;
+        std::stack<StopStateKey> prune_keys;
 
-        // TODO: window-pruning?  prune stop states outside the window??
-        if (( path_spec.outbound_ && (stop_states[stop_id][ss_index].deparr_time_ < hss.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-            (!path_spec.outbound_ && (stop_states[stop_id][ss_index].deparr_time_ > hss.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
-            prune_indices.push(ss_index);
+        // recalculate this
+        sum_exp_cost_ = 0;
+
+        for (StopStateMap::const_iterator ssm_iter = stop_state_map_.begin(); ssm_iter != stop_state_map_.end(); ++ssm_iter)
+        {
+            const StopStateKey& ssk = ssm_iter->first;
+            const StopState&    ss  = ssm_iter->second;
+
+            if (( path_spec.outbound_ && (ss.deparr_time_ < latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
+                (!path_spec.outbound_ && (ss.deparr_time_ > latest_dep_earliest_arr_ + TIME_WINDOW_))) {
+                prune_keys.push(ssk);
+            } else {
+                sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+            }
         }
 
+        if (prune_keys.size() == 0) { return; }
+
         // window-pruning
-        while (!prune_indices.empty()) {
-            int prune_index = prune_indices.top();
+        while (!prune_keys.empty()) {
+            const StopStateKey& ssk = prune_keys.top();
 
             if (path_spec.trace_) {
                 trace_file << "  + del ";
-                printStopState(trace_file, stop_id, stop_states[stop_id][prune_index], path_spec);
+                printStopState(trace_file, stop_id_, stop_state_map_[ssk], path_spec, pf);
                 trace_file << " (prune-window)" << std::endl;
             }
 
-            stop_states[stop_id].erase( stop_states[stop_id].begin() + prune_index );
-            prune_indices.pop();
+            removeFromCostMap(ssk, stop_state_map_[ssk]);
+            stop_state_map_.erase( ssk );
+            prune_keys.pop();
         }
-        **/
+
     }
 
     // Choose a link from this hyperlink based on the probabilities

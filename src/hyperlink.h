@@ -165,10 +165,12 @@ namespace fasttrips {
         size_t size() const { return stop_state_map_.size(); }
 
         /// Add this link to the hyperlink.
-        /// - If it's outside the time window, do nothing.
-        /// - If it's already here according to the key, then replace.
+        /// For deterministic: we only keep one link.  Accept it iff the cost is lower.
+        /// For stochastic:
+        /// - If it's outside the time window, reject it.
+        /// - If it's already here according to the key, then replace the state.
         /// - Return true iff the hyperlink state was affected (e.g. the stop needs to be re-processed)
-        bool addLink(const StopState& ss, bool& rejected, std::string& notes,
+        bool addLink(const StopState& ss, bool& rejected,
                      std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
 
         /// Clears data
@@ -201,8 +203,8 @@ namespace fasttrips {
         /// Print the hyperlink, including a header and the stop states (links) that make it up.
         void print(std::ostream& ostr, const PathSpecification& path_spec, const PathFinder& pf) const;
 
-        /// todo: prune?
-        void pruneWindow();
+        /// Go through stop states (links) and remove any outside the time window
+        void pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
 
         /// Setup probabilities for hyperlink's stop states (links)
         void setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
