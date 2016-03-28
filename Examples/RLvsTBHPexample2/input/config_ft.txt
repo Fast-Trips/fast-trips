@@ -1,0 +1,19 @@
+# configuration for fasttrips
+[fasttrips]
+iterations                    = 1
+pathfinding_type              = Stochastic Assignment
+simulation                    = True
+output_passenger_trajectories = True
+time_window                   = 30
+create_skims                  = False
+stochastic_dispersion         = 1.0
+stochastic_pathset_size       = 1000
+capacity_constraint           = False
+trace_person_ids              = ['frogger','lisa']
+number_of_processes           = 1
+bump_buffer                   = 5
+bump_one_at_a_time            = True
+
+# pathfinding configuration
+[pathfinding]
+user_class_function           = generic_user_class

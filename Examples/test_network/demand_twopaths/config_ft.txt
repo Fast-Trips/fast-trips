@@ -1,0 +1,6 @@
+[fasttrips]
+number_of_processes           = 1
+trace_person_ids              = ['paperboy','marge']
+
+[pathfinding]
+user_class_function           = user_class

@@ -1,0 +1,10 @@
+person_id,hh_id,age,gender,worker_status,work_athome,multiple_jobs,transit_pass,disability
+homer,simpson,45,male,full-time,False,False,True,none
+marge,simpson,42,female,part-time,True,True,False,none
+lisas,simpson,10,female,unemployed,False,False,True,none
+bart,simpson,8,male,unemployed,False,False,False,none
+maggie,simpson,2,female,unemployed,False,False,True,wheelchair
+lisaz,zorn,21,female,full-time,False,True,True,none
+ben,zorn,21,male,full-time,False,False,True,none
+frogger,zorn,21,female,part-time,True,True,False,walker
+paperboy,zorn,21,male,part-time,True,True,False,walker

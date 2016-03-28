@@ -18,10 +18,13 @@ from .FastTrips import FastTrips
 from .Logger import FastTripsLogger, setupLogging
 from .Passenger import Passenger
 from .Path import Path
+from .Performance import Performance
 from .Route import Route
 from .Stop import Stop
 from .TAZ import TAZ
+from .Transfer import Transfer
 from .Trip import Trip
+from .Util import Util
 
 __all__ = [
     'Event',

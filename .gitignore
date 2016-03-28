@@ -2,8 +2,14 @@
 *.log
 *.swp
 *.so
+*.bak
 
-Examples/*
+Examples/*/output
+Examples/*/output_bak
 
 # Distribution / packaging
 build/
+
+# test
+sfcta/
+psrc/

@@ -1,0 +1,4 @@
+trip_id,vehicle_name
+blue_t,bus
+green_t,bus
+purple_t,bus

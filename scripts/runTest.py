@@ -1,55 +1,60 @@
 import fasttrips
-import os, pandas, re, sys
-import compare_output
+import argparse, os, pandas, re, sys
 
 USAGE = r"""
 
-  python test_run.py input_dir output_dir
+  python runTest.py asgn_type iters capacity input_network_dir input_demand_dir output_dir
 
-  e.g. python test_run.py ..\FAST-TrIPs-1\Examples\PSRC\pax100_deterministic_iter1_nocap Examples\PSRC
+  Where asgn_type is one of 'deterministic' or 'stochastic'
 
-  Creates subdir in output_dir matching subdir in input_dir and places results there.
-  Parses that subdir to determine test settings.
+  Use capacity='yes', 'true', 't', or 1 to enable a capacity constraint.
 
+  e.g.
+
+  python scripts\runTest.py deterministic 2 true "C:\Users\lzorn\Box Sync\SHRP C-10\7-Test Case Development\test_net_export_20151005" Examples\test_net_20151005
 """
+
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print USAGE
-        print sys.argv
-        sys.exit(2)
+    def str2bool(v):
+        #susendberg's function
+        return v.lower() in ("yes", "true", "t", "1")
 
-    INPUT_DIR, subdir = os.path.split(sys.argv[1])
-    OUTPUT_DIR  = sys.argv[2]
-    test_pat    = re.compile(r"pax(\d+)_(deterministic|stochastic)_iter(\d+)_(cap\d+|nocap)")
-    if not os.path.exists(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
-    pandas.set_option('display.width', 300)
-    m = test_pat.match(subdir)
+    parser = argparse.ArgumentParser(usage=USAGE)
+    parser.register('type','bool',str2bool)
+    parser.add_argument("asgn_type",         choices=['deterministic','stochastic'])
+    parser.add_argument("iters",             type=int)
+    parser.add_argument("capacity",          type='bool')
+    parser.add_argument("input_network_dir", type=str)
+    parser.add_argument("input_demand_dir",  type=str)
+    parser.add_argument("output_dir",        type=str)
 
-    print "subdir = [%s]" % subdir
-    if not os.path.exists(os.path.join(OUTPUT_DIR, subdir)):
-        os.mkdir(os.path.join(OUTPUT_DIR, subdir))
+    args = parser.parse_args(sys.argv[1:])
 
-    ft = fasttrips.FastTrips(os.path.join(INPUT_DIR,  subdir),
-                             os.path.join(OUTPUT_DIR, subdir))
+    if not os.path.exists(args.output_dir):
+        os.mkdir(args.output_dir)
 
-    if m.group(2) == "deterministic":
+    test_dir = "%s%s_iter%d_%s" % ("" if args.input_network_dir == args.input_demand_dir else "%s_" % os.path.basename(args.input_demand_dir),
+                                   args.asgn_type, args.iters,
+                                  "cap" if args.capacity else "nocap")
+
+    full_output_dir = os.path.join(args.output_dir, test_dir)
+    if not os.path.exists(full_output_dir):
+        print "Creating full output dir [%s]" % full_output_dir
+        os.mkdir(full_output_dir)
+
+    ft = fasttrips.FastTrips(args.input_network_dir, args.input_demand_dir, full_output_dir)
+
+    if args.asgn_type == "deterministic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN
-    elif m.group(2) == "stochastic":
+    elif args.asgn_type == "stochastic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_STO_ASGN
 
-    fasttrips.Assignment.ITERATION_FLAG          = int(m.group(3))
+    fasttrips.Assignment.ITERATION_FLAG          = int(args.iters)
 
-    if m.group(4) == "nocap":
+    if args.capacity == 0:
         fasttrips.Assignment.CAPACITY_CONSTRAINT = False
     else:
         fasttrips.Assignment.CAPACITY_CONSTRAINT = True
 
-    ft.run_assignment(os.path.join(OUTPUT_DIR, subdir))
-
-    # Original output files are in input_dir
-    for output_file in ["ft_output_passengerPaths.dat",
-                        "ft_output_passengerTimes.dat",
-                        "ft_output_loadProfile.dat"]:
-        compare_output.compare_file(os.path.join(OUTPUT_DIR, subdir),
-                                    os.path.join(INPUT_DIR,  subdir), output_file)
+    ft.run_assignment(full_output_dir)

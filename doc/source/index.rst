@@ -22,11 +22,15 @@ fast-trips Classes
    :toctree: _generated
 
    Assignment
+   Error
    FastTrips
+   FastTripsLogger
    Passenger
+   Performance
    Path
    Route
    Stop
+   Transfer
    TAZ
    Trip
 

@@ -1,0 +1,3 @@
+person_id,o_taz,d_taz,mode,purpose,departure_time,arrival_time,time_target,vot,pnr_ids
+frogger,ZO,ZD,walk-local_bus-walk,meal,10:00:00,10:30:00,arrival,25.50,
+lisa,ZO,ZD,walk-local_bus-walk,meal,10:00:00,10:30:00,departure,25.50,
