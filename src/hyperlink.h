@@ -109,6 +109,18 @@ namespace fasttrips {
     // cost to stop state key
     typedef std::multimap< double, StopStateKey> CostToStopState;
 
+    struct LinkSet {
+        double latest_dep_earliest_arr_;   ///< latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
+        int    lder_trip_id_;              ///< trip for the latest departure/earliest arrival
+        double sum_exp_cost_;              ///< sum of the exponentiated cost
+        double hyperpath_cost_;            ///< hyperpath cost for this stop state
+
+        StopStateMap stop_state_map_;      ///< set of stop states where compare means the key is unique
+        CostToStopState cost_map_;         ///< multimap of cost -> stop state pointers into the stop_state_set_ above
+
+        LinkSet() : latest_dep_earliest_arr_(0), lder_trip_id_(0), sum_exp_cost_(0), hyperpath_cost_(0) {}
+    } ;
+
     class PathFinder;
 
     /**
@@ -126,23 +138,10 @@ namespace fasttrips {
     private:
         /// For outbound, originating stop; for inbound, destination stop.
         int stop_id_;
-
-        /// latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
-        double latest_dep_earliest_arr_;
-        /// trip for the latest departure/earliest arrival
-        int lder_trip_id_;
         /// increment this every time the stop is processed
         int process_count_;
 
-        /// sum of the exponentiated cost
-        double sum_exp_cost_;
-        /// hyperpath cost for this stop state
-        double hyperpath_cost_;
-
-        /// set of stop states where compare means the key is unique
-        StopStateMap stop_state_map_;
-        /// multimap of cost -> stop state pointers into the stop_state_set_ above
-        CostToStopState cost_map_;
+        LinkSet linkset_;
 
         /// Remove the given stop state from cost_map_
         void removeFromCostMap(const StopStateKey& ssk, const StopState& ss);
@@ -162,7 +161,7 @@ namespace fasttrips {
         ~Hyperlink() {}
 
         /// How many links make up the hyperlink?
-        size_t size() const { return stop_state_map_.size(); }
+        size_t size() const { return linkset_.stop_state_map_.size(); }
 
         /// Add this link to the hyperlink.
         /// For deterministic: we only keep one link.  Accept it iff the cost is lower.
@@ -194,7 +193,7 @@ namespace fasttrips {
         /// Increment process count
         void incrementProcessCount() { process_count_ += 1; }
         /// Accessor for the hyperlink cost
-        double hyperpathCost() const { return hyperpath_cost_; }
+        double hyperpathCost() const { return linkset_.hyperpath_cost_; }
 
         /// Print the stop state header.  For printing stop states in table form.
         static void printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec);
