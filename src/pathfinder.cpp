@@ -391,8 +391,8 @@ namespace fasttrips {
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
             trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
             trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
-            trace_file << "orig_taz_id_     = " << path_spec.origin_taz_id_      << std::endl;
-            trace_file << "dest_taz_id_     = " << path_spec.destination_taz_id_ << std::endl;
+            trace_file << "orig_taz_id_     = " << stop_num_to_str_.find(path_spec.origin_taz_id_     )->second << std::endl;
+            trace_file << "dest_taz_id_     = " << stop_num_to_str_.find(path_spec.destination_taz_id_)->second << std::endl;
 
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
