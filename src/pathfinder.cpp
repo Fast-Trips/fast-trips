@@ -33,7 +33,7 @@ namespace fasttrips {
     /**
      * This doesn't really do anything.
      */
-    PathFinder::PathFinder() : process_num_(-1), TIME_WINDOW_(-1), BUMP_BUFFER_(-1), STOCH_PATHSET_SIZE_(-1), STOCH_DISPERSION_(-1)
+    PathFinder::PathFinder() : process_num_(-1), BUMP_BUFFER_(-1), STOCH_PATHSET_SIZE_(-1)
     {
     }
 
@@ -44,11 +44,12 @@ namespace fasttrips {
         double     stoch_dispersion,
         int        stoch_max_stop_process_count)
     {
-        TIME_WINDOW_                    = time_window;
         BUMP_BUFFER_                    = bump_buffer;
         STOCH_PATHSET_SIZE_             = stoch_pathset_size;
-        STOCH_DISPERSION_               = stoch_dispersion;
         STOCH_MAX_STOP_PROCESS_COUNT_   = stoch_max_stop_process_count;
+
+        Hyperlink::TIME_WINDOW_         = time_window;
+        Hyperlink::STOCH_DISPERSION_    = stoch_dispersion;
     }
 
     void PathFinder::readIntermediateFiles()
@@ -390,8 +391,8 @@ namespace fasttrips {
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
             trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
             trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
-            trace_file << "orig_taz_id_     = " << path_spec.origin_taz_id_      << std::endl;
-            trace_file << "dest_taz_id_     = " << path_spec.destination_taz_id_ << std::endl;
+            trace_file << "orig_taz_id_     = " << stop_num_to_str_.find(path_spec.origin_taz_id_     )->second << std::endl;
+            trace_file << "dest_taz_id_     = " << stop_num_to_str_.find(path_spec.destination_taz_id_)->second << std::endl;
 
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
@@ -402,7 +403,6 @@ namespace fasttrips {
 
         StopStates           stop_states;
         LabelStopQueue       label_stop_queue;
-        HyperpathStopStates  hyperpath_ss;
 
         // TODO: make this platform-agnostic.  probably with std::chrono.
         // QueryPerformanceFrequency reference: https://msdn.microsoft.com/en-us/library/windows/desktop/dn553408(v=vs.85).aspx
@@ -413,16 +413,15 @@ namespace fasttrips {
         QueryPerformanceCounter(&labeling_start_time);
 
         // todo: handle failure
-        bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue, hyperpath_ss);
+        bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
 
-        performance_info.label_iterations_ = labelStops(path_spec, trace_file, stop_states, label_stop_queue, hyperpath_ss, performance_info.max_process_count_);
+        performance_info.label_iterations_ = labelStops(path_spec, trace_file, stop_states, label_stop_queue, performance_info.max_process_count_);
 
-        std::vector<StopState> taz_state;
-        finalizeTazState(path_spec, trace_file, stop_states, label_stop_queue, performance_info.label_iterations_, hyperpath_ss);
+        finalizeTazState(path_spec, trace_file, stop_states, label_stop_queue, performance_info.label_iterations_);
 
         QueryPerformanceCounter(&labeling_end_time);
 
-        getFoundPath(path_spec, trace_file, stop_states, hyperpath_ss, path, path_info);
+        getFoundPath(path_spec, trace_file, stop_states, path, path_info);
 
         QueryPerformanceCounter(&pathfind_end_time);
 
@@ -503,178 +502,32 @@ namespace fasttrips {
         const int stop_id,
         const StopState& ss,
         StopStates& stop_states,
-        LabelStopQueue& label_stop_queue,
-        HyperpathStopStates& hyperpath_ss) const
+        LabelStopQueue& label_stop_queue) const
     {
         // do we even want to incorporate this link to our stop state?
         bool rejected = false;
 
-        std::string trace_suffix;
-
-        // for deterministic, this is simple
-        if (!path_spec.hyperpath_) {
-            LabelStop ls = { ss.cost_, stop_id };
-
-            trace_suffix = " (rejected)";
-            rejected     = true;
-
-            // new stop state -- just add it
-            if (stop_states[stop_id].size() == 0) {
-                stop_states[stop_id].push_back(ss);
-
-                // push this stop and it's cost for processing
-                label_stop_queue.push( ls );
-
-                trace_suffix = " (new)";
-                rejected     = false;
-            }
-            // if the stop state exists already, check if this cost is lower
-            else if (ss.cost_ < stop_states[stop_id][0].cost_) {
-                stop_states[stop_id][0] = ss;  // replace
-
-                // push this stop and it's cost for processing
-                label_stop_queue.push( ls );
-
-                trace_suffix = " (update)";
-                rejected     = false;
-            }
+        // initialize the hyperlink if we need to
+        if (stop_states.find(stop_id) == stop_states.end()) {
+            Hyperlink h(stop_id);
+            stop_states[stop_id] = h;
         }
 
-        else {
-            LabelStop ls = { ss.cost_, stop_id };
+        Hyperlink& hyperlink = stop_states[stop_id];
 
-            // Just set if it's new
-            // However, if it's bigger than MAX_COST, that's problematic 
-            if (hyperpath_ss.find(stop_id) == hyperpath_ss.end()) {
-                HyperpathState hss =  { ss.deparr_time_, ss.trip_id_, ss.cost_, 0 };
-                hyperpath_ss[stop_id] = hss;
+        // keep track if the state changed (label or time window)
+        // if so, we'll want to trigger dealing with the effects by adding it to the queue
+        bool update_state = hyperlink.addLink(ss, rejected, trace_file, path_spec, *this);
 
-                stop_states[stop_id].push_back(ss);
-                label_stop_queue.push( ls );
+        if (update_state) {
+            LabelStop ls = { hyperlink.hyperpathCost(), stop_id };
 
-                trace_suffix = " (new)";
-            }
-
-            else
-            {
-
-                // keep track if the state changed (label or time window)
-                // if so, we'll want to trigger dealing with the effects by adding it to the queue
-                bool update_state = false;
-
-                // Update stop state
-                HyperpathState& hss = hyperpath_ss[stop_id];
-
-                // is it too early (outbound) or too late (inbound)?
-                if (( path_spec.outbound_ && (ss.deparr_time_ < hss.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-                    (!path_spec.outbound_ && (ss.deparr_time_ > hss.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
-                    rejected = true;
-                    trace_suffix = " (rejected)";
-                }
-
-                // update latest departure time or earliest arrival time window
-                if (( path_spec.outbound_ && (ss.deparr_time_ > hss.latest_dep_earliest_arr_)) ||
-                    (!path_spec.outbound_ && (ss.deparr_time_ < hss.latest_dep_earliest_arr_))) {
-                    hss.latest_dep_earliest_arr_ = ss.deparr_time_;
-                    hss.lder_trip_id_            = ss.trip_id_;
-                    update_state                 = true;
-                    ls.label_                    = hss.hyperpath_cost_;
-                    trace_suffix                += " (window)";
-                }
-
-                // update stop cost if it's affected
-                if (!rejected) {
-
-                    // see if it's there already and add it if not, and recalculate hyperpath cost
-                    bool stop_state_found = false;
-                    double hyperpath_cost = 0.0;
-                    std::stack<int> prune_indices;
-
-                    for (int ss_index=0; ss_index < stop_states[stop_id].size(); ++ss_index) {
-
-                        // see if it's there already
-                        StopState& ss_check = stop_states[stop_id][ss_index];
-                        if ((ss_check.deparr_mode_   == ss.deparr_mode_  ) &&
-                            (ss_check.trip_id_       == ss.trip_id_      ) &&
-                            (ss_check.stop_succpred_ == ss.stop_succpred_) &&
-                            (ss_check.seq_succpred_  == ss.seq_succpred_ )) {
-                            // log it
-                            trace_suffix += " (sub)";
-                            if (false && path_spec.trace_) {
-                                trace_file << "Updating stop state:" << std::endl;
-                                trace_file << "        ";
-                                printStopState(trace_file, stop_id, ss_check, path_spec);
-                                trace_file << " (orig)" << std::endl;
-                                trace_file << "        ";
-                                printStopState(trace_file, stop_id, ss, path_spec);
-                                trace_file << " (new)" << std::endl;
-                            }
-                            // replace it with updated version
-                            stop_states[stop_id][ss_index] = ss;
-                            stop_state_found = true;
-                        }
-
-                        // TODO: window-pruning?  prune stop states outside the window??
-                        if (( path_spec.outbound_ && (stop_states[stop_id][ss_index].deparr_time_ < hss.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-                            (!path_spec.outbound_ && (stop_states[stop_id][ss_index].deparr_time_ > hss.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
-                            prune_indices.push(ss_index);
-                        }
-                        // otherwise tally the cost
-                        else {
-                            hyperpath_cost += exp(-1.0*STOCH_DISPERSION_*stop_states[stop_id][ss_index].cost_);
-                        }
-                    }
-
-                    // window-pruning
-                    while (!prune_indices.empty()) {
-                        int prune_index = prune_indices.top();
-
-                        if (path_spec.trace_) {
-                            trace_file << "  + del ";
-                            printStopState(trace_file, stop_id, stop_states[stop_id][prune_index], path_spec);
-                            trace_file << " (prune-window)" << std::endl;
-                        }
-
-                        stop_states[stop_id].erase( stop_states[stop_id].begin() + prune_index );
-                        prune_indices.pop();
-                    }
-
-                    if (!stop_state_found) {
-                        // add it to stop_states
-                        stop_states[stop_id].push_back(ss);
-                        hyperpath_cost += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
-                    }
-
-                    // update the hyperpath cost if it's changed
-                    hyperpath_cost = (-1.0/STOCH_DISPERSION_)*log(hyperpath_cost);
-                    if (abs(hyperpath_cost - hss.hyperpath_cost_) > 0.0001) {
-                        if (path_spec.trace_) {
-                            std::ostringstream oss;
-                            oss << " (hp cost " << std::setprecision(4) << std::fixed << hss.hyperpath_cost_ << "->" << hyperpath_cost << ")";
-                            trace_suffix += oss.str();
-                        }
-                        update_state        = true;
-                        hss.hyperpath_cost_ = hyperpath_cost;
-                        ls.label_           = hyperpath_cost;
-                    }
-
-                    if (update_state) {
-                        // push this stop and it's departure time / arrival time for processing
-                        label_stop_queue.push( ls );
-                    }
-                }
-            }
+            // push this stop and it's departure time / arrival time for processing
+            label_stop_queue.push( ls );
         }
 
         // the rest is for debugging
-        if (!path_spec.trace_) {
-            return;
-        }
-
-        // log it to trace
-        trace_file << "  + new ";
-        printStopState(trace_file, stop_id, ss, path_spec);
-        trace_file << trace_suffix << std::endl;
+        if (!path_spec.trace_) { return; }
 
         if (rejected) { return; }
 
@@ -727,8 +580,7 @@ namespace fasttrips {
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         StopStates& stop_states,
-        LabelStopQueue& label_stop_queue,
-        HyperpathStopStates& hyperpath_ss) const
+        LabelStopQueue& label_stop_queue) const
     {
         int     start_taz_id = path_spec.outbound_ ? path_spec.destination_taz_id_ : path_spec.origin_taz_id_;
         double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
@@ -810,7 +662,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_ };                                                 // arrival/departure time
-                addStopState(path_spec, trace_file, stop_id, ss, stop_states, label_stop_queue, hyperpath_ss);
+                addStopState(path_spec, trace_file, stop_id, ss, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
@@ -830,17 +682,16 @@ namespace fasttrips {
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
-        HyperpathStopStates& hyperpath_ss,
         int label_iteration,
         const LabelStop& current_label_stop) const
     {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
-        // current_stop_state is a vector
-        std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
-        int current_mode = current_stop_state[0].deparr_mode_;      // why index 0?
-        int current_trip = current_stop_state[0].trip_id_;
-        double latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
+        // current_stop_state is a hyperlink
+        Hyperlink& current_stop_state = stop_states[current_label_stop.stop_id_];
+        int current_mode = current_stop_state.lowestCostStopState().deparr_mode_;      // why index 0?
+        int current_trip = current_stop_state.lowestCostStopState().trip_id_;
+        double latest_dep_earliest_arr = current_stop_state.lowestCostStopState().deparr_time_;
 
         // no transfer to/from access or egress
         if (current_mode == MODE_EGRESS) return;
@@ -851,8 +702,8 @@ namespace fasttrips {
 
         double nonwalk_label = 0;
         if (path_spec.hyperpath_) {
-            latest_dep_earliest_arr = hyperpath_ss[current_label_stop.stop_id_].latest_dep_earliest_arr_;
-            nonwalk_label = calculateNonwalkLabel(current_stop_state);
+            latest_dep_earliest_arr = current_stop_state.latestDepartureEarliestArrival();
+            nonwalk_label = current_stop_state.calculateNonwalkLabel();
             if (path_spec.trace_) { trace_file << "  nonwalk label:    " << nonwalk_label << std::endl; }
 
             // if nonwalk label == MAX_COST then the only way to reach this stop is via transfer so we don't want to transfer again
@@ -910,17 +761,17 @@ namespace fasttrips {
                 // TODO: capacity stuff
                 if (path_spec.outbound_)
                 {
-                    TripStop ts = { current_trip, current_stop_state[0].seq_, current_label_stop.stop_id_ };
+                    TripStop ts = { current_trip, current_stop_state.lowestCostStopState().seq_, current_label_stop.stop_id_ };
                     std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
                     if (bwi != bump_wait_.end())
                     {
                         // time a bumped passenger started waiting
                         double latest_time = bwi->second;
                         // we can't come in time
-                        if (deparr_time - TIME_WINDOW_ > latest_time) { continue; }
+                        if (deparr_time - Hyperlink::TIME_WINDOW_ > latest_time) { continue; }
                         // leave earlier -- to get in line 5 minutes before bump wait time
                         // (confused... We don't resimulate previous bumping passenger so why does this make sense?)
-                        cost            = cost + (current_stop_state[0].deparr_time_ - latest_time) + BUMP_BUFFER_;
+                        cost            = cost + (current_stop_state.lowestCostStopState().deparr_time_ - latest_time) + BUMP_BUFFER_;
                         deparr_time     = latest_time - transfer_time - BUMP_BUFFER_;
                     }
                 }
@@ -940,7 +791,7 @@ namespace fasttrips {
                 label_iteration,                // label iteration
                 latest_dep_earliest_arr         // arrival/departure time
             };
-            addStopState(path_spec, trace_file, xfer_stop_id, ss, stop_states, label_stop_queue, hyperpath_ss);
+            addStopState(path_spec, trace_file, xfer_stop_id, ss, stop_states, label_stop_queue);
         }
     }
 
@@ -949,7 +800,6 @@ namespace fasttrips {
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
-        HyperpathStopStates& hyperpath_ss,
         int label_iteration,
         const LabelStop& current_label_stop,
         std::tr1::unordered_set<int>& trips_done) const
@@ -963,14 +813,11 @@ namespace fasttrips {
             return;
         }
 
-        // current_stop_state is a vector
-        std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
-        int current_mode = current_stop_state[0].deparr_mode_;      // why index 0 for hyperpath?-- should this be the latest_dep_earliest_arrival mode?
-        int current_trip_id = current_stop_state[0].trip_id_;
-        double latest_dep_earliest_arr = current_stop_state[0].deparr_time_;
-        if (path_spec.hyperpath_) {
-            latest_dep_earliest_arr = hyperpath_ss[current_label_stop.stop_id_].latest_dep_earliest_arr_;
-        }
+        // current_stop_state is a hyperlink
+        Hyperlink& current_stop_state       = stop_states[current_label_stop.stop_id_];
+        int        current_mode             = current_stop_state.lowestCostStopState().deparr_mode_;      // why index 0 for hyperpath?-- should this be the latest_dep_earliest_arrival mode?
+        int        current_trip_id          = current_stop_state.lowestCostStopState().trip_id_;
+        double     latest_dep_earliest_arr  = current_stop_state.latestDepartureEarliestArrival();
 
         // Update by trips
         std::vector<TripStopTime> relevant_trips;
@@ -979,7 +826,7 @@ namespace fasttrips {
 
             // don't include the trip that's determining the time boundary -- we don't want to just use that again
             // otherwise it is likely to end up the best one and then we'll end up having no other option but to choose two links in a row from the same trip
-            if (path_spec.hyperpath_ && hyperpath_ss[current_label_stop.stop_id_].lder_trip_id_ == it->trip_id_) { continue; }
+            if (path_spec.hyperpath_ && current_stop_state.latestDepartingEarliestArrivingTripID() == it->trip_id_) { continue; }
 
             // the trip info for this trip
             const TripInfo& trip_info = trip_info_.find(it->trip_id_)->second;
@@ -1016,8 +863,8 @@ namespace fasttrips {
                 if (path_spec.outbound_) {
                     // if outbound, this trip loop is possible trips *before* the current trip
                     // checking that we get here in time for the current trip
-                    check_for_bump_wait.trip_id_ = current_stop_state[0].trip_id_;
-                    check_for_bump_wait.seq_     = current_stop_state[0].seq_;
+                    check_for_bump_wait.trip_id_ = current_stop_state.lowestCostStopState().trip_id_;
+                    check_for_bump_wait.seq_     = current_stop_state.lowestCostStopState().seq_;
                     check_for_bump_wait.stop_id_ = current_label_stop.stop_id_;
                     //  arrive from the loop trip
                     arrive_time = arrdep_time;
@@ -1028,12 +875,12 @@ namespace fasttrips {
                     check_for_bump_wait.seq_     = it->seq_;
                     check_for_bump_wait.stop_id_ = current_label_stop.stop_id_;
                     // arrive for this trip
-                    arrive_time = current_stop_state[0].deparr_time_;
+                    arrive_time = current_stop_state.lowestCostStopState().deparr_time_;
                 }
                 std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(check_for_bump_wait);
                 if (bwi != bump_wait_.end()) {
                     // time a bumped passenger started waiting
-                    float latest_time = bwi->second;
+                    double latest_time = bwi->second;
                     if (path_spec.trace_) {
                         trace_file << "checking latest_time ";
                         printTime(trace_file, latest_time);
@@ -1042,7 +889,7 @@ namespace fasttrips {
                         trace_file << " for potential trip " << it->trip_id_ << std::endl;
                     }
                     if ((arrive_time + 0.01 >= latest_time) &&
-                        (current_stop_state[0].trip_id_ != it->trip_id_)) {
+                        (current_stop_state.lowestCostStopState().trip_id_ != it->trip_id_)) {
                         if (path_spec.trace_) { trace_file << "Continuing" << std::endl; }
                         continue;
                     }
@@ -1068,7 +915,7 @@ namespace fasttrips {
                 // hyperpath: potential successor/predessor can't be access or egress
                 if (path_spec.hyperpath_) {
                     if (possible_stop_state_iter != stop_states.end() && possible_stop_state_iter->second.size()>0) {
-                        int possible_mode = possible_stop_state_iter->second.front().deparr_mode_; // first mode; why 0 index?
+                        int possible_mode = possible_stop_state_iter->second.lowestCostStopState().deparr_mode_; // first mode; why 0 index?
                         if ((possible_mode == MODE_ACCESS) || (possible_mode == MODE_EGRESS)) { continue; }
                     }
                 }
@@ -1152,31 +999,14 @@ namespace fasttrips {
                         link_attr["transfer_penalty"] = 1.0;
                     }
 
-                    // if we have a zero walk transfer, we still need to penalize
-                    if (isTrip(current_mode)) {
-                        // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
-                        Attributes xfer_attr;
-                        xfer_attr["transfer_penalty"] = 1.0;
-                        xfer_attr["walk_time_min"   ] = 0.0;
-
-                        UserClassMode xfer_ucm = { path_spec.user_class_, MODE_TRANSFER, "transfer"};
-                        WeightLookup::const_iterator xfer_iter_weights = weight_lookup_.find(xfer_ucm);
-                        if (xfer_iter_weights != weight_lookup_.end()) {
-                           SupplyModeToNamedWeights::const_iterator xfer_iter_s2w = xfer_iter_weights->second.find(transfer_supply_mode_);
-                           if (xfer_iter_s2w != xfer_iter_weights->second.end()) {
-                                link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, xfer_iter_s2w->second, xfer_attr);
-                           }
-                        }
-                    }
-
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
-                    cost      = hyperpath_ss[current_label_stop.stop_id_].hyperpath_cost_ + link_cost;
+                    cost      = current_stop_state.hyperpathCost() + link_cost;
 
                 }
                 // deterministic: label = cost = total time, just additive
                 else {
                     link_cost   = in_vehicle_time + wait_time;
-                    cost        = current_stop_state[0].cost_ + link_cost;
+                    cost        = current_stop_state.lowestCostStopState().cost_ + link_cost;
                 }
 
                 StopState ss = {
@@ -1192,7 +1022,7 @@ namespace fasttrips {
                     label_iteration,                // label iteration
                     arrdep_time                     // arrival/departure time
                 };
-                addStopState(path_spec, trace_file, board_alight_stop, ss, stop_states, label_stop_queue, hyperpath_ss);
+                addStopState(path_spec, trace_file, board_alight_stop, ss, stop_states, label_stop_queue);
 
             }
             trips_done.insert(it->trip_id_);
@@ -1203,7 +1033,6 @@ namespace fasttrips {
                                           std::ofstream& trace_file,
                                           StopStates& stop_states,
                                           LabelStopQueue& label_stop_queue,
-                                          HyperpathStopStates& hyperpath_ss,
                                           int& max_process_count) const
     {
         int label_iterations = 1;
@@ -1233,7 +1062,7 @@ namespace fasttrips {
             // hyperpath only
             if (path_spec.hyperpath_) {
                 // have we hit the configured limit?
-                if ((STOCH_MAX_STOP_PROCESS_COUNT_ > 0) && (hyperpath_ss[current_label_stop.stop_id_].process_count_ == STOCH_MAX_STOP_PROCESS_COUNT_)) {
+                if ((STOCH_MAX_STOP_PROCESS_COUNT_ > 0) && (stop_states[current_label_stop.stop_id_].processCount() == STOCH_MAX_STOP_PROCESS_COUNT_)) {
                     if (path_spec.trace_) {
                         trace_file << "Pulling from label_stop_queue but stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
                         trace_file << " has been processed the limit " << STOCH_MAX_STOP_PROCESS_COUNT_ << " times so skipping." << std::endl;
@@ -1241,46 +1070,38 @@ namespace fasttrips {
                     continue;
                 }
                 // stop is processing
-                hyperpath_ss[current_label_stop.stop_id_].process_count_ += 1;
-                max_process_count = max(max_process_count, hyperpath_ss[current_label_stop.stop_id_].process_count_);
+                stop_states[current_label_stop.stop_id_].incrementProcessCount();
+                max_process_count = max(max_process_count, stop_states[current_label_stop.stop_id_].processCount());
             }
 
             // no transfers to the stop
             // todo? continue if there are no transfers to/from the stop?
 
-            // current_stop_state is a vector
-            std::vector<StopState>& current_stop_state = stop_states[current_label_stop.stop_id_];
+            // current_stop_state is a hyperlink
+            Hyperlink& current_stop_state = stop_states[current_label_stop.stop_id_];
 
             if (path_spec.trace_) {
                 trace_file << "Pulling from label_stop_queue (iteration " << std::setw( 6) << std::setfill(' ') << label_iterations;
                 trace_file << ", stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
                 if (path_spec.hyperpath_) {
-                    trace_file << ", count " << hyperpath_ss[current_label_stop.stop_id_].process_count_;
+                    trace_file << ", count " << current_stop_state.processCount();
                     trace_file << ", label ";
                     trace_file << std::setprecision(6) << current_label_stop.label_;
                 }
                 trace_file << ", cost ";
                 if (path_spec.hyperpath_) {
-                    trace_file << std::setprecision(6) << hyperpath_ss[current_label_stop.stop_id_].hyperpath_cost_;
+                    trace_file << std::setprecision(6) << current_stop_state.hyperpathCost();
                 }
                 else {
-                    printTimeDuration(trace_file, current_stop_state[0].cost_);
+                    printTimeDuration(trace_file, current_stop_state.lowestCostStopState().cost_);
                 }
                 trace_file << ", len "  << current_stop_state.size();
                 if (path_spec.hyperpath_) {
                     trace_file << (path_spec.outbound_ ? ", latest_dep " : ", earliest_arr ");
-                    printTime(trace_file, hyperpath_ss[current_label_stop.stop_id_].latest_dep_earliest_arr_);
+                    printTime(trace_file, current_stop_state.latestDepartureEarliestArrival());
                 }
                 trace_file << ") :======" << std::endl;
-                trace_file << "        ";
-                printStopStateHeader(trace_file, path_spec);
-                trace_file << std::endl;
-                for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
-                                                            ssi != current_stop_state.end(); ++ssi) {
-                    trace_file << "        ";
-                    printStopState(trace_file, current_label_stop.stop_id_, *ssi, path_spec);
-                    trace_file << std::endl;
-                }
+                current_stop_state.print(trace_file, path_spec, *this);
                 trace_file << "==============================" << std::endl;
 
                 stopids_file << stop_num_to_str_.find(current_label_stop.stop_id_)->second << "," << label_iterations << std::endl;
@@ -1290,7 +1111,6 @@ namespace fasttrips {
                                          trace_file,
                                          stop_states,
                                          label_stop_queue,
-                                         hyperpath_ss,
                                          label_iterations,
                                          current_label_stop);
 
@@ -1298,7 +1118,6 @@ namespace fasttrips {
                                      trace_file,
                                      stop_states,
                                      label_stop_queue,
-                                     hyperpath_ss,
                                      label_iterations,
                                      current_label_stop,
                                      trips_done);
@@ -1317,14 +1136,10 @@ namespace fasttrips {
         std::ofstream& trace_file,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue,
-        int label_iteration,
-        HyperpathStopStates& hyperpath_ss) const
+        int label_iteration) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
-
-        // instantiate this
-        std::vector<StopState>& taz_state = stop_states[end_taz_id];
 
         // are there any egress/access links?
         TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
@@ -1387,24 +1202,16 @@ namespace fasttrips {
                 bool    use_new_state           = false;
                 double  deparr_time, link_cost, cost;
 
-                std::map<int, std::vector<StopState> >::const_iterator stop_states_iter = stop_states.find(stop_id);
+                StopStates::const_iterator stop_states_iter = stop_states.find(stop_id);
                 if (stop_states_iter == stop_states.end()) { continue; }
 
-                const std::vector<StopState>& current_stop_state = stop_states_iter->second;
-                earliest_dep_latest_arr = current_stop_state[0].deparr_time_;
+                const Hyperlink& current_stop_state = stop_states_iter->second;
+                earliest_dep_latest_arr = current_stop_state.lowestCostStopState().deparr_time_;
 
                 if (path_spec.hyperpath_)
                 {
-                    for (std::vector<StopState>::const_iterator ssi  = current_stop_state.begin();
-                                                                ssi != current_stop_state.end(); ++ssi)
-                    {
-                        if (path_spec.outbound_) {
-                            earliest_dep_latest_arr = min(earliest_dep_latest_arr, ssi->deparr_time_);
-                        } else {
-                            earliest_dep_latest_arr = max(earliest_dep_latest_arr, ssi->deparr_time_);
-                        }
-                    }
-                    nonwalk_label = calculateNonwalkLabel(current_stop_state);
+                    earliest_dep_latest_arr = current_stop_state.earliestDepartureLatestArrival(path_spec.outbound_);
+                    nonwalk_label = current_stop_state.calculateNonwalkLabel();
                     // if nonwalk label == MAX_COST then the only way to reach this stop is via transfer so we don't want to walk again
                     if (nonwalk_label == PathFinder::MAX_COST) continue;
 
@@ -1420,24 +1227,24 @@ namespace fasttrips {
                     deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
 
                     // first leg has to be a trip
-                    if (current_stop_state.front().deparr_mode_ == MODE_TRANSFER) { continue; }
-                    if (current_stop_state.front().deparr_mode_ == MODE_EGRESS  ) { continue; }
-                    if (current_stop_state.front().deparr_mode_ == MODE_ACCESS  ) { continue; }
+                    if (current_stop_state.lowestCostStopState().deparr_mode_ == MODE_TRANSFER) { continue; }
+                    if (current_stop_state.lowestCostStopState().deparr_mode_ == MODE_EGRESS  ) { continue; }
+                    if (current_stop_state.lowestCostStopState().deparr_mode_ == MODE_ACCESS  ) { continue; }
                     link_cost = access_time;
-                    cost      = current_stop_state.front().cost_ + link_cost;
+                    cost      = current_stop_state.lowestCostStopState().cost_ + link_cost;
 
                     // capacity check
                     if (path_spec.outbound_)
                     {
-                        TripStop ts = { current_stop_state[0].deparr_mode_, current_stop_state[0].seq_, stop_id };
+                        TripStop ts = { current_stop_state.lowestCostStopState().deparr_mode_, current_stop_state.lowestCostStopState().seq_, stop_id };
                         std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
                         if (bwi != bump_wait_.end()) {
                             // time a bumped passenger started waiting
-                            float latest_time = bwi->second;
+                            double latest_time = bwi->second;
                             // we can't come in time
-                            if (deparr_time - TIME_WINDOW_ > latest_time) { continue; }
+                            if (deparr_time - Hyperlink::TIME_WINDOW_ > latest_time) { continue; }
                             // leave earlier -- to get in line 5 minutes before bump wait time
-                            cost   = cost + (current_stop_state[0].deparr_time_ - latest_time) + BUMP_BUFFER_;
+                            cost   = cost + (current_stop_state.lowestCostStopState().deparr_time_ - latest_time) + BUMP_BUFFER_;
                             deparr_time = latest_time - access_time - BUMP_BUFFER_;
                         }
                     }
@@ -1457,7 +1264,7 @@ namespace fasttrips {
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
                 };
-                addStopState(path_spec, trace_file, end_taz_id, ts, stop_states, label_stop_queue, hyperpath_ss);
+                addStopState(path_spec, trace_file, end_taz_id, ts, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
@@ -1468,148 +1275,63 @@ namespace fasttrips {
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         const StopStates& stop_states,
-        const HyperpathStopStates& hyperpath_ss,
         Path& path) const
     {
         int    start_state_id   = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor       = path_spec.outbound_ ? 1 : -1;
-        
-        const std::vector<StopState>& taz_state = stop_states.find(start_state_id)->second;
-        double taz_label        = hyperpath_ss.find(start_state_id)->second.hyperpath_cost_;
+
+        const Hyperlink& taz_state = stop_states.find(start_state_id)->second;
+        double taz_label        = taz_state.hyperpathCost();
         int    cost_cutoff      = 1;
 
         // setup access/egress probabilities
-        std::vector<ProbabilityStop> access_cum_prob; // access/egress cumulative probabilities
-        for (size_t state_index = 0; state_index < taz_state.size(); ++state_index)
-        {
-            double probability = exp(-1.0*STOCH_DISPERSION_*taz_state[state_index].cost_) /
-                                 exp(-1.0*STOCH_DISPERSION_*taz_label);
-            // why?  :p
-            int prob_i = static_cast<int>(RAND_MAX*probability);
-            // too small to consider
-            if (prob_i < cost_cutoff) { continue; }
-            if (access_cum_prob.size() == 0) {
-                ProbabilityStop pb = { probability, prob_i, taz_state[state_index].stop_succpred_, state_index };
-                access_cum_prob.push_back( pb );
-            } else {
-                ProbabilityStop pb = { probability, access_cum_prob.back().prob_i_ + prob_i, taz_state[state_index].stop_succpred_, state_index };
-                access_cum_prob.push_back( pb );
-            }
-            if (path_spec.trace_) {
-                printStopState(trace_file, start_state_id, taz_state[state_index], path_spec);
-                trace_file << " : prob ";
-                trace_file << std::setw(10) << probability << " cum_prob ";
-                trace_file << std::setw( 6) << access_cum_prob.back().prob_i_;
-                trace_file << "; index " << access_cum_prob.back().index_ << std::endl;
-            }
-        }
+        std::vector<ProbabilityStopState> access_cum_prob;
+        taz_state.setupProbabilities(path_spec, trace_file, *this, access_cum_prob);
+        if (access_cum_prob.size() == 0) { return false; }
 
-        size_t chosen_index = chooseState(path_spec, trace_file, access_cum_prob);
-        StopState ss = taz_state[chosen_index];
-        path.push_back( std::make_pair(start_state_id, ss) );
+        // choose the state and store it
+        path.push_back( std::make_pair(start_state_id,
+                                       taz_state.chooseState(path_spec, trace_file, access_cum_prob) ) );
 
         if (path_spec.trace_)
         {
             trace_file << " -> Chose access/egress ";
-            printStopState(trace_file, start_state_id, ss, path_spec);
+            Hyperlink::printStopState(trace_file, start_state_id, path.back().second, path_spec, *this);
             trace_file << std::endl;
         }
 
-        int     current_stop_id = ss.stop_succpred_;
-        // outbound: arrival time
-        //  inbound: departure time
-        double  arrdep_time     = ss.deparr_time_ + (ss.link_time_*dir_factor);
-        int     prev_mode       = ss.deparr_mode_;
-        int     prev_trip_id    = ss.trip_id_;
+        // moving on, ss is now the previous link
         while (true)
         {
-            // setup probabilities
+            const StopState& ss = path.back().second;
+            int current_stop_id = ss.stop_succpred_;
+
+            StopStates::const_iterator ssi = stop_states.find(current_stop_id);
+            if (ssi == stop_states.end()) { return false; }
+
             if (path_spec.trace_) {
                 trace_file << "current_stop=" << stop_num_to_str_.find(current_stop_id)->second;
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
-                printTime(trace_file, arrdep_time);
+                printTime(trace_file, ss.arrdep_time_);
                 trace_file << "; prev_mode=";
-                printMode(trace_file, prev_mode, prev_trip_id);
-                trace_file << std::endl;
-                trace_file << "            ";
-                printStopStateHeader(trace_file, path_spec);
+                printMode(trace_file, ss.deparr_mode_, ss.trip_id_);
                 trace_file << std::endl;
             }
-            std::vector<ProbabilityStop> stop_cum_prob;
-            double sum_exp = 0;
-            StopStates::const_iterator ssi = stop_states.find(current_stop_id);
-            for (size_t stop_state_index = 0; stop_state_index < ssi->second.size(); ++stop_state_index)
+
+            // setup probabilities
+            std::vector<ProbabilityStopState> stop_cum_prob;
+            const Hyperlink& current_hyperlink = ssi->second;
+            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss);
+
+            if (stop_cum_prob.size() == 0) { return false; }
+
+            // choose state and make a copy of it since we will update it, below
+            StopState next_ss = current_hyperlink.chooseState(path_spec, trace_file, stop_cum_prob);
+
+            if (path_spec.trace_)
             {
-                const StopState& state = ssi->second[stop_state_index];
-
-                // no repeat of access/egress
-                if ( path_spec.outbound_ && state.deparr_mode_ == MODE_ACCESS) { continue; }
-                if (!path_spec.outbound_ && state.deparr_mode_ == MODE_EGRESS) { continue; }
-                // no double walk
-                if (path_spec.outbound_ &&
-                    ((state.deparr_mode_ == MODE_EGRESS) || (state.deparr_mode_ == MODE_TRANSFER)) &&
-                    ((         prev_mode == MODE_ACCESS) || (         prev_mode == MODE_TRANSFER))) { continue; }
-                if (!path_spec.outbound_ &&
-                    ((state.deparr_mode_ == MODE_ACCESS) || (state.deparr_mode_ == MODE_TRANSFER)) &&
-                    ((         prev_mode == MODE_EGRESS) || (         prev_mode == MODE_TRANSFER))) { continue; }
-                // don't double on the same trip ID - that's already covered by a single trip
-                if (state.deparr_mode_ == MODE_TRANSIT && state.trip_id_ == prev_trip_id) { continue; }
-
-                // outbound: we cannot depart before we arrive
-                if (path_spec.outbound_ && state.deparr_time_ < arrdep_time) { continue; }
-                // inbound: we cannot arrive after we depart
-                if (!path_spec.outbound_ && state.deparr_time_ > arrdep_time) { continue; }
-
-                // calculating denominator
-                sum_exp += exp(-1.0*STOCH_DISPERSION_*state.cost_);
-                // probabilities will be filled in later - use cost for now
-                ProbabilityStop pb = { state.cost_, 0, state.stop_succpred_, stop_state_index };
-                stop_cum_prob.push_back(pb);
-
-                if (path_spec.trace_) {
-                    trace_file << "            ";
-                    printStopState(trace_file, current_stop_id, state, path_spec);
-                    trace_file << "  sum_exp = " << std::scientific << sum_exp << std::endl;
-                }
-            }
-
-            // dead end
-            if (stop_cum_prob.size() == 0) {
-                return false;
-            }
-            if (sum_exp == 0) {
-                return false;
-            }
-
-            // denom found - cum prob time
-            for (size_t idx = 0; idx < stop_cum_prob.size(); ++idx) {
-                double probability = exp(-1.0*STOCH_DISPERSION_*stop_cum_prob[idx].probability_) / sum_exp;
-
-                // why?  :p
-                int prob_i = static_cast<int>(RAND_MAX*probability);
-
-                stop_cum_prob[idx].probability_ = probability;
-                if (idx == 0) {
-                    stop_cum_prob[idx].prob_i_ = prob_i;
-                } else {
-                    stop_cum_prob[idx].prob_i_ = prob_i + stop_cum_prob[idx-1].prob_i_;
-                }
-                if (path_spec.trace_) {
-                    printStopState(trace_file, current_stop_id, ssi->second[stop_cum_prob[idx].index_], path_spec);
-                    trace_file << std::setw( 6) << std::setfill(' ') << std::fixed << stop_cum_prob[idx].stop_id_ << " ";
-                    trace_file << ": prob ";
-                    trace_file << std::setw(10) << probability << " cum_prob ";
-                    trace_file << std::setw( 6) << stop_cum_prob[idx].prob_i_ << std::endl;
-                }
-            }
-
-            // choose!
-            size_t chosen_index = chooseState(path_spec, trace_file, stop_cum_prob);
-            StopState next_ss   = ssi->second[chosen_index];
-
-            if (path_spec.trace_) {
                 trace_file << " -> Chose stop link ";
-                printStopState(trace_file, current_stop_id, next_ss, path_spec);
+                Hyperlink::printStopState(trace_file, current_stop_id, next_ss, path_spec, *this);
                 trace_file << std::endl;
             }
 
@@ -1621,7 +1343,7 @@ namespace fasttrips {
             if (path_spec.outbound_)
             {
                 // Leave origin as late as possible
-                if (prev_mode == MODE_ACCESS) {
+                if (ss.deparr_mode_ == MODE_ACCESS) {
                     double dep_time = getScheduledDeparture(next_ss.trip_id_, current_stop_id, next_ss.seq_);
                     // set departure time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
@@ -1633,7 +1355,7 @@ namespace fasttrips {
                 // *Fix trip time*
                 else if (isTrip(next_ss.deparr_mode_)) {
                     // link time is arrival time - previous arrival time
-                    next_ss.link_time_ = next_ss.arrdep_time_ - arrdep_time;
+                    next_ss.link_time_ = next_ss.arrdep_time_ - ss.arrdep_time_;
                 }
                 // *Fix transfer times*
                 else if (next_ss.deparr_mode_ == MODE_TRANSFER) {
@@ -1665,7 +1387,7 @@ namespace fasttrips {
                     next_ss.link_time_ = next_ss.deparr_time_ - next_ss.arrdep_time_;
                     // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
                     // and we can update the transfer and the trip with the real wait
-                    if (prev_mode == MODE_TRANSFER) {
+                    if (ss.deparr_mode_ == MODE_TRANSFER) {
                         // move transfer time so we do it right after arriving
                         path.back().second.arrdep_time_ = next_ss.deparr_time_; // depart right away
                         path.back().second.deparr_time_ = next_ss.deparr_time_ + path.back().second.link_time_; // arrive after walk
@@ -1673,7 +1395,7 @@ namespace fasttrips {
                         path[path.size()-2].second.link_time_ = path[path.size()-2].second.deparr_time_ - path.back().second.deparr_time_;
                     }
                     // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
-                    else if (isTrip(prev_mode)) {
+                    else if (isTrip(ss.deparr_mode_)) {
                         path.back().second.link_time_ = path.back().second.deparr_time_ - next_ss.deparr_time_;
                     }
                 }
@@ -1683,7 +1405,7 @@ namespace fasttrips {
                     next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
-                if (prev_mode == MODE_EGRESS) {
+                if (ss.deparr_mode_ == MODE_EGRESS) {
                     path.back().second.arrdep_time_ = next_ss.deparr_time_;
                     path.back().second.deparr_time_ = path.back().second.arrdep_time_ + path.back().second.link_time_;
                 }
@@ -1693,17 +1415,9 @@ namespace fasttrips {
             // record the choice
             path.push_back( std::make_pair(current_stop_id, next_ss) );
 
-            // move on to the next
-            current_stop_id     = next_ss.stop_succpred_;
-            prev_mode           = next_ss.deparr_mode_;
-            prev_trip_id        = next_ss.trip_id_;
-
-            // update arrival / departure time
-            arrdep_time = next_ss.arrdep_time_;
-
             if (path_spec.trace_) {
                 trace_file << " ->    Updated link ";
-                printStopState(trace_file, path.back().first, path.back().second, path_spec);
+                Hyperlink::printStopState(trace_file, path.back().first, path.back().second, path_spec, *this);
                 trace_file << std::endl;
             }
 
@@ -1738,26 +1452,6 @@ namespace fasttrips {
         printf("PathFinder::choosePath() This should never happen!\n");
     }
 
-    size_t PathFinder::chooseState(
-        const PathSpecification& path_spec,
-        std::ofstream& trace_file,
-        const std::vector<ProbabilityStop>& prob_stops) const
-    {
-        int random_num = rand();
-        if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
-
-        // mod it by max prob
-        random_num = random_num % (prob_stops.back().prob_i_);
-        if (path_spec.trace_) { trace_file << random_num << std::endl; }
-
-        for (size_t ind = 0; ind < prob_stops.size(); ++ind)
-        {
-            if (prob_stops[ind].prob_i_==0) { continue; }
-            if (random_num <= prob_stops[ind].prob_i_) { return prob_stops[ind].index_; }
-        }
-        // shouldn't get here
-        printf("PathFinder::chooseState() This should never happen!\n");
-    }
 
     /**
      * Calculate the path cost now that we know all the links.  This may result in different
@@ -1888,7 +1582,7 @@ namespace fasttrips {
                     };
                     if (path_spec.trace_) {
                         trace_file << "Adding ";
-                        printStopState(trace_file, xfer_stop_id, xfer_state, path_spec);
+                        Hyperlink::printStopState(trace_file, xfer_stop_id, xfer_state, path_spec, *this);
                         trace_file << std::endl;
                     }
                     // going forward so insert after index, before index+1
@@ -1917,14 +1611,16 @@ namespace fasttrips {
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
         const StopStates& stop_states,
-        const HyperpathStopStates& hyperpath_ss,
         Path& path,
         PathInfo& path_info) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
 
         // no taz states -> no path found
-        const std::vector<StopState>& taz_state = stop_states.find(end_taz_id)->second;
+        StopStates::const_iterator ssi_iter = stop_states.find(end_taz_id);
+        if (ssi_iter == stop_states.end()) { return false; }
+
+        const Hyperlink& taz_state = ssi_iter->second;
         if (taz_state.size() == 0) { return false; }
 
         if (path_spec.hyperpath_)
@@ -1937,7 +1633,7 @@ namespace fasttrips {
             for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
                 Path new_path;
-                bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, hyperpath_ss, new_path);
+                bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, new_path);
 
                 if (path_found) {
                     if (path_spec.trace_) {
@@ -1974,7 +1670,7 @@ namespace fasttrips {
                 paths_updated_cost[path_updated] = pathinfo_updated;
                 if (pathinfo_updated.cost_ > 0)
                 {
-                    logsum += exp(-1.0*STOCH_DISPERSION_*pathinfo_updated.cost_);
+                    logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*pathinfo_updated.cost_);
                 }
             }
             if (logsum == 0) { return false; } // fail
@@ -1997,7 +1693,7 @@ namespace fasttrips {
             // calculate the probabilities for those paths
             for (PathSet::iterator paths_iter = paths_updated_cost.begin(); paths_iter != paths_updated_cost.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*STOCH_DISPERSION_*paths_iter->second.cost_)/logsum;
+                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->second.cost_)/logsum;
                 // why?  :p
                 int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
                 // too small to consider
@@ -2040,14 +1736,14 @@ namespace fasttrips {
             // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
 
-            StopState ss = taz_state.front(); // there's only one
+            StopState ss = taz_state.lowestCostStopState(); // there's only one
             path.push_back( std::make_pair(end_taz_id, ss) );
 
             while (ss.deparr_mode_ != final_state_type)
             {
                 int stop_id = ss.stop_succpred_;
                 StopStates::const_iterator ssi = stop_states.find(stop_id);
-                ss          = ssi->second.front();
+                ss          = ssi->second.lowestCostStopState();
                 path.push_back( std::make_pair(stop_id, ss));
 
                 int curr_index = path.size() - 1;
@@ -2153,41 +1849,21 @@ namespace fasttrips {
         }
         for (std::vector<TripStopTime>::const_iterator it  = mapiter->second.begin();
                                                        it != mapiter->second.end();   ++it) {
-            if (outbound && (it->arrive_time_ <= timepoint) && (it->arrive_time_ > timepoint-TIME_WINDOW_)) {
+            if (outbound && (it->arrive_time_ <= timepoint) && (it->arrive_time_ > timepoint-Hyperlink::TIME_WINDOW_)) {
                 return_trips.push_back(*it);
-            } else if (!outbound && (it->depart_time_ >= timepoint) && (it->depart_time_ < timepoint+TIME_WINDOW_)) {
+            } else if (!outbound && (it->depart_time_ >= timepoint) && (it->depart_time_ < timepoint+Hyperlink::TIME_WINDOW_)) {
                 return_trips.push_back(*it);
             }
         }
-    }
-
-    double PathFinder::calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const
-    {
-        double nonwalk_label = 0.0;
-        for (std::vector<StopState>::const_iterator it = current_stop_state.begin();
-             it != current_stop_state.end(); ++it)
-        {
-            if ((it->deparr_mode_ != MODE_EGRESS  ) &&
-                (it->deparr_mode_ != MODE_TRANSFER) &&
-                (it->deparr_mode_ != MODE_ACCESS  ))
-            {
-                nonwalk_label += exp(-1.0*STOCH_DISPERSION_*it->cost_);
-            }
-        }
-
-        if (nonwalk_label == 0.0) {
-            return PathFinder::MAX_COST;
-        }
-        return -1.0/STOCH_DISPERSION_*log(nonwalk_label);
     }
 
     void PathFinder::printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const
     {
-        printStopStateHeader(ostr, path_spec);
+        Hyperlink::printStopStateHeader(ostr, path_spec);
         ostr << std::endl;
         for (int index = 0; index < path.size(); ++index)
         {
-            printStopState(ostr, path[index].first, path[index].second, path_spec);
+            Hyperlink::printStopState(ostr, path[index].first, path[index].second, path_spec, *this);
             ostr << std::endl;
         }
     }
@@ -2222,60 +1898,6 @@ namespace fasttrips {
     }
 
 
-    void PathFinder::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const
-    {
-        ostr << std::setw( 8) << std::setfill(' ') << std::right << "stop" << ": ";
-        ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
-        ostr << std::setw(12) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
-        ostr << std::setw(22) << "trip_id";
-        ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");
-        ostr << std::setw( 5) << "seq";
-        ostr << std::setw( 5) << (path_spec.outbound_ ? "suc" : "pred");
-        ostr << std::setw(12) << "linktime";
-        ostr << std::setw(14) << "linkcost";
-        ostr << std::setw(13) << "cost";
-        ostr << std::setw( 9) << "iter";
-        ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
-    }
-
-    void PathFinder::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const
-    {
-        ostr << std::setw( 8) << std::setfill(' ') << std::right << stop_num_to_str_.find(stop_id)->second << ":   ";
-        printTime(ostr, ss.deparr_time_);
-        ostr << "  ";
-        printMode(ostr, ss.deparr_mode_, ss.trip_id_);
-        ostr << "  ";
-        if (ss.deparr_mode_ == MODE_TRANSIT) {
-            ostr << std::setw(20) << std::setfill(' ') << trip_num_to_str_.find(ss.trip_id_)->second;
-        } else if (ss.deparr_mode_ == MODE_ACCESS || ss.deparr_mode_ == MODE_EGRESS) {
-            ostr << std::setw(20) << std::setfill(' ') << mode_num_to_str_.find(ss.trip_id_)->second;
-        } else {
-            ostr << std::setw(20) << std::setfill(' ') << ss.trip_id_;
-        }
-        ostr << "  ";
-        ostr << std::setw(10) << std::setfill(' ') << stop_num_to_str_.find(ss.stop_succpred_)->second;
-        ostr << "  ";
-        ostr << std::setw(3) << std::setfill(' ') << ss.seq_;
-        ostr << "  ";
-        ostr << std::setw(3) << std::setfill(' ') << ss.seq_succpred_;
-        ostr << "  ";
-        printTimeDuration(ostr, ss.link_time_);
-        ostr << "  ";
-        if (path_spec.hyperpath_) {
-            ostr << std::setw(12) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.link_cost_;
-            ostr << std::setw(13) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.cost_;
-        } else {
-            // cost is a time duration
-            ostr << "  ";
-            printTimeDuration(ostr, ss.link_cost_);
-            ostr << "  ";
-            printTimeDuration(ostr, ss.cost_);
-        }
-        ostr << "  ";
-        ostr << std::setw(7) << std::setfill(' ') << ss.iteration_;
-        ostr << "  ";
-        printTime(ostr, ss.arrdep_time_);
-    }
 
     /*
      * Assuming that timedur is duration in minutes, prints a formatted version.

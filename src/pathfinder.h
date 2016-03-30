@@ -1,7 +1,7 @@
 /**
  * \file pathfinder.h
  *
- * Defines the C++ the finds a transit path for fast-trips.
+ * Defines the class that does the transit pathfinding for fast-trips.
  */
 
 #include <ctime>
@@ -11,7 +11,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "pathspec.h"
 #include "LabelStopQueue.h"
+#include "hyperlink.h"
 
 #if __APPLE__
 #include <tr1/unordered_set>
@@ -22,13 +24,6 @@
 #endif
 
 namespace fasttrips {
-
-    enum DemandModeType {
-        MODE_ACCESS   = -100,
-        MODE_EGRESS   = -101,
-        MODE_TRANSFER = -102,
-        MODE_TRANSIT  = -103,
-    };
 
     /// Weight lookup
     typedef struct {
@@ -110,60 +105,6 @@ namespace fasttrips {
         }
     };
 
-    /**
-     * The definition of the path we're trying to find.
-     */
-    typedef struct {
-        int     iteration_;             ///< Iteration
-        int     passenger_id_;          ///< The passenger ID
-        int     path_id_;               ///< The path ID - uniquely identifies a passenger+path
-        bool    hyperpath_;             ///< If true, find path using stochastic algorithm
-        int     origin_taz_id_;         ///< Origin of path
-        int     destination_taz_id_;    ///< Destination of path
-        bool    outbound_;              ///< If true, the preferred time is for arrival, otherwise it's departure
-        double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
-        bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
-        std::string user_class_;        ///< User class string
-        std::string access_mode_;       ///< Access demand mode
-        std::string transit_mode_;      ///< Transit demand mode
-        std::string egress_mode_;       ///< Egress demand mode
-    } PathSpecification;
-
-    /**
-     * The pathfinding algorithm is a labeling algorithm which associates each stop with a state, encapsulated
-     * here.  See StopStates for more.  If the sought path is outbound, then the preferred time is an arrival time
-     * at the destination, so the labeling algorithm starts at the destination and works backwards.  If the sought
-     * path is inbound, then the preferred time is a departure time from the origin, so the labeling algorithm starts
-     * at the origin and works forwards.  Thus, the attributes here have different meanings if the path sought is
-     * outbound versus inbound, and the convention is outbound/inbound fo the variable names.
-     *
-     * The StopState is basically the state at this stop with details of the link after (for outbound) or before
-     * (inbound) the stop in the found path.
-     *
-     * NOTE: for trip states, deparr_time_ and arrdep_time_ are both for the *vehicle* because the passenger
-     * times can be inferred from the surrounding states.
-     *
-     * In particular, for outbound trips, the deparr_time_ for trip states is not necessarily the person departure time.
-     * For inbound trips, the arrdep_time_ for trip states is not necessarily the person departure time.
-     */
-    typedef struct {
-        double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
-        int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
-                                        ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
-                                        ///< fasttrips::MODE_TRANSFER, or fasttrips::MODE_TRANSIT
-        int     trip_id_;               ///< Trip ID if deparr_mode_ is fasttrips::MODE_TRANSIT,
-                                        ///< or the supply_mode_num for access, egress
-        int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
-        int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
-        int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
-        double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
-        double  link_cost_;             ///< Link cost.
-        double  cost_;                  ///< Cost from previous link(s) and this link together.
-        int     iteration_;             ///< Labeling iteration that generated this stop state.
-        double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
-    } StopState;
-
-
     /// Structure used in PathFinder::hyperpathChoosePath
     typedef struct {
         double  probability_;           ///< Probability of this stop
@@ -171,34 +112,6 @@ namespace fasttrips {
         int     stop_id_;               ///< Stop ID
         size_t  index_;                 ///< Index into StopState vector (or taz state vector)
     } ProbabilityStop;
-
-    /**
-     * The path finding algorithm stores StopState data in this structure.
-     * For the stochastic algorithm, a stop ID maps to a vector of StopState instances.
-     * For the deterministic algorithm, the vector only has a single instance of StopState.
-     */
-    typedef std::map<int, std::vector<StopState> > StopStates;
-
-    /**
-     * For hyperpaths, this is additional information about the stop state.
-    **/
-    typedef struct {
-      double latest_dep_earliest_arr_; ///< latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
-      int    lder_trip_id_;            ///< trip for the latest departure/earliest arrival
-      double hyperpath_cost_;          ///< hyperpath cost for this stop state
-      int    process_count_;           ///< increment this every time the stop is processed
-    } HyperpathState;
-
-    /**
-     *
-     * Stop id maps to HyperpathState, wihich includes stop window time, hyperpath_cost.
-     *
-     * A stop is completely processed when the current time is before (outbound) or after (inbound)
-     * the stop state's time window
-     */
-     typedef std::map<int, HyperpathState> HyperpathStopStates;
-
-
 
     /** A single path consists of a vector of stop ID & stop states.  They are in origin to destination order for
      *  outbound trips, and destination to origin order for inbound trips.
@@ -254,17 +167,12 @@ namespace fasttrips {
     protected:
         /** @name Path finding parameters */
         ///@{
-        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a>
-        double TIME_WINDOW_;
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">fasttrips.Assignment.BUMP_BUFFER</a>
         double BUMP_BUFFER_;
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a>
         int STOCH_PATHSET_SIZE_; // er....
-
-        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
-        double STOCH_DISPERSION_;
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT</a>
         int STOCH_MAX_STOP_PROCESS_COUNT_;
@@ -339,8 +247,7 @@ namespace fasttrips {
                           const int stop_id,
                           const StopState& ss,
                           StopStates& stop_states,
-                          LabelStopQueue& label_stop_queue,
-                          HyperpathStopStates& hyperpath_ss) const;
+                          LabelStopQueue& label_stop_queue) const;
 
         /**
          * Initialize the stop states from the access (for inbound) or egress (for outbound) links
@@ -351,8 +258,7 @@ namespace fasttrips {
         bool initializeStopStates(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
-                                  LabelStopQueue& cost_stop_queue,
-                                  HyperpathStopStates& hyperpath_ss) const;
+                                  LabelStopQueue& cost_stop_queue) const;
 
         /**
          * Iterate through all the stops that transfer to(outbound)/from(inbound) the
@@ -363,7 +269,6 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
-                                  HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
                                   const LabelStop& current_label_stop) const;
 
@@ -377,7 +282,6 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
-                                  HyperpathStopStates& hyperpath_ss,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
                                   std::tr1::unordered_set<int>& trips_done) const;
@@ -393,7 +297,6 @@ namespace fasttrips {
                                   std::ofstream& trace_file,
                                   StopStates& stop_states,
                                   LabelStopQueue& label_stop_queue,
-                                  HyperpathStopStates& hyperpath_ss,
                                   int& max_process_count) const;
 
         /**
@@ -407,8 +310,7 @@ namespace fasttrips {
                               std::ofstream& trace_file,
                               StopStates& stop_states,
                               LabelStopQueue& label_stop_queue,
-                              int label_iteration,
-                              HyperpathStopStates& hyperpath_ss) const;
+                              int label_iteration) const;
 
         /**
          * Given all the labeled stops and taz, traces back and generates a
@@ -420,7 +322,6 @@ namespace fasttrips {
         bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
                                   const StopStates& stop_states,
-                                  const HyperpathStopStates& hyperpath_ss,
                                   Path& path) const;
 
         /**
@@ -433,16 +334,6 @@ namespace fasttrips {
                         std::ofstream& trace_file,
                         PathSet& paths,
                         int max_prob_i) const;
-        /**
-         * Given a vector of fasttrips::ProbabilityStop instances,
-         * randomly selects one based on the cumulative probability
-         * (fasttrips::ProbabilityStop.prob_i_)
-         *
-         * @return the index_ from chosen ProbabilityStop.
-         */
-        size_t chooseState(const PathSpecification& path_spec,
-                                  std::ofstream& trace_file,
-                                  const std::vector<ProbabilityStop>& prob_stops) const;
 
         /** Calculates the cost for the entire given path, and checks for capacity issues.
          *  Sets the results into the given fasttrips::PathInfo instance.
@@ -455,7 +346,6 @@ namespace fasttrips {
         bool getFoundPath(const PathSpecification&      path_spec,
                           std::ofstream&                trace_file,
                           const StopStates&             stop_states,
-                          const HyperpathStopStates&    hyperpath_ss,
                           Path&                         path,
                           PathInfo&                     path_info) const;
 
@@ -466,21 +356,8 @@ namespace fasttrips {
          */
         void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips) const;
 
-        double calculateNonwalkLabel(const std::vector<StopState>& current_stop_state) const;
-
         void printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
         void printPathCompat(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
-
-        void printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec) const;
-        void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec) const;
-
-        void printTimeDuration(std::ostream& ostr, const double& timedur) const;
-
-        void printTime(std::ostream& ostr, const double& timemin) const;
-
-        void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
-
-        bool isTrip(const int& mode) const;
 
     public:
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
@@ -547,5 +424,20 @@ namespace fasttrips {
                       Path              &path,
                       PathInfo          &path_info,
                       PerformanceInfo   &performance_info) const;
+
+        void printTimeDuration(std::ostream& ostr, const double& timedur) const;
+
+        void printTime(std::ostream& ostr, const double& timemin) const;
+
+        void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
+
+        bool isTrip(const int& mode) const;
+
+        /// Accessor for stop strings.  Assumes valid stop id.
+        const std::string& stopStringForId(int stop_id) const { return stop_num_to_str_.find(stop_id)->second; }
+        /// Accessor for trip strings.  Assumes valid trip id.
+        const std::string& tripStringForId(int trip_id) const { return trip_num_to_str_.find(trip_id)->second; }
+        /// Accessor for mode strings.  Assumes valid mode number.
+        const std::string& modeStringForNum(int mode_num) const { return mode_num_to_str_.find(mode_num)->second; }
     };
 }

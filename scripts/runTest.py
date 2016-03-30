@@ -3,7 +3,7 @@ import argparse, os, pandas, re, sys
 
 USAGE = r"""
 
-  python runTest.py asgn_type iters capacity input_network_dir input_demand_dir output_dir
+  python runTest.py [--trace_only] asgn_type iters capacity input_network_dir input_demand_dir output_dir
 
   Where asgn_type is one of 'deterministic' or 'stochastic'
 
@@ -22,6 +22,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(usage=USAGE)
     parser.register('type','bool',str2bool)
+    parser.add_argument('-t','--trace_only', action='store_true')
     parser.add_argument("asgn_type",         choices=['deterministic','stochastic'])
     parser.add_argument("iters",             type=int)
     parser.add_argument("capacity",          type='bool')
@@ -37,6 +38,10 @@ if __name__ == "__main__":
     test_dir = "%s%s_iter%d_%s" % ("" if args.input_network_dir == args.input_demand_dir else "%s_" % os.path.basename(args.input_demand_dir),
                                    args.asgn_type, args.iters,
                                   "cap" if args.capacity else "nocap")
+
+    # don't override full run results
+    if args.trace_only:
+        test_dir = "%s_trace" % test_dir
 
     full_output_dir = os.path.join(args.output_dir, test_dir)
     if not os.path.exists(full_output_dir):
@@ -56,5 +61,9 @@ if __name__ == "__main__":
         fasttrips.Assignment.CAPACITY_CONSTRAINT = False
     else:
         fasttrips.Assignment.CAPACITY_CONSTRAINT = True
+
+    if args.trace_only:
+        fasttrips.Assignment.DEBUG_TRACE_ONLY    = True
+        fasttrips.Assignment.NUMBER_OF_PROCESSES = 1
 
     ft.run_assignment(full_output_dir)
