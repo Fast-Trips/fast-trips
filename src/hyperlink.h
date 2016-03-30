@@ -106,8 +106,8 @@ namespace fasttrips {
     } ProbabilityStopState;
 
     typedef std::map<StopStateKey, StopState> StopStateMap;
-    // this WILL be cost but to verify it's working we'll keep it equivalent to the old implementation, which is sorted by iteration
-    typedef std::multimap< int, StopStateKey> CostToStopState;
+    // cost to stop state key
+    typedef std::multimap< double, StopStateKey> CostToStopState;
 
     class PathFinder;
 

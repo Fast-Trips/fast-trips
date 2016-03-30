@@ -43,7 +43,7 @@ namespace fasttrips {
     void Hyperlink::removeFromCostMap(const StopStateKey& ssk, const StopState& ss)
     {
         // todo: switch this to cost_
-        std::pair<CostToStopState::iterator, CostToStopState::iterator> iter_range = cost_map_.equal_range(ss.iteration_);
+        std::pair<CostToStopState::iterator, CostToStopState::iterator> iter_range = cost_map_.equal_range(ss.cost_);
         CostToStopState::iterator cm_iter = iter_range.first;
         while (cm_iter != iter_range.second) {
             if (cm_iter->second == ssk) {
@@ -95,8 +95,7 @@ namespace fasttrips {
             stop_state_map_[ssk] = ss;
 
             // assume success
-            // todo: switch to double, cost
-            cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+            cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
             // log it
             if (path_spec.trace_) {
@@ -111,10 +110,8 @@ namespace fasttrips {
 
         // is it too early (outbound) or too late (inbound)?
         // don't worry about the last labeling (access for outbound, egress for inbound) -- that one is special
-        // if (( path_spec.outbound_ && (ss.deparr_mode_ != MODE_ACCESS) && (ss.deparr_time_ < latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-        //     (!path_spec.outbound_ && (ss.deparr_mode_ != MODE_EGRESS) && (ss.deparr_time_ > latest_dep_earliest_arr_ + TIME_WINDOW_))) {
-        if (( path_spec.outbound_ && (ss.deparr_time_ < latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-            (!path_spec.outbound_ && (ss.deparr_time_ > latest_dep_earliest_arr_ + TIME_WINDOW_))) {
+        if (( path_spec.outbound_ && (ss.deparr_mode_ != MODE_ACCESS) && (ss.deparr_time_ < latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
+            (!path_spec.outbound_ && (ss.deparr_mode_ != MODE_EGRESS) && (ss.deparr_time_ > latest_dep_earliest_arr_ + TIME_WINDOW_))) {
             rejected = true;
 
             // log it
@@ -137,8 +134,7 @@ namespace fasttrips {
         if (result_l.second == true) {
             std::string notes;
 
-            // todo: switch to double, cost
-            cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+            cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
             // check if the window is updated -- this is a state update
             if (( path_spec.outbound_ && (ss.deparr_time_ > latest_dep_earliest_arr_)) ||
@@ -182,16 +178,16 @@ namespace fasttrips {
 
         // update the cost map
         // todo: when we use cost, do this.  But we don't actually change the iteration order
-        int old_iteration = stop_state_map_[ssk].iteration_;
-        // removeFromCostMap(ssk, stop_state_map_[ssk]);
-        // cost_map_.insert (std::pair<int, StopStateKey>(ss.iteration_,ssk));
+        // int old_iteration = stop_state_map_[ssk].iteration_;
+        removeFromCostMap(ssk, stop_state_map_[ssk]);
+        cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
         // update the cost
         sum_exp_cost_ -= exp(-1.0*STOCH_DISPERSION_*stop_state_map_[ssk].cost_);
 
         // and the other state elements
         stop_state_map_[ssk] = ss;
-        stop_state_map_[ssk].iteration_ = old_iteration; // remove this
+        // stop_state_map_[ssk].iteration_ = old_iteration; // remove this
         sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
 
         // check if the window is updated -- this is a state update
