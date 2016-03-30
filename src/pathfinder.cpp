@@ -999,23 +999,6 @@ namespace fasttrips {
                         link_attr["transfer_penalty"] = 1.0;
                     }
 
-                    // if we have a zero walk transfer, we still need to penalize
-                    if (isTrip(current_mode)) {
-                        // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
-                        Attributes xfer_attr;
-                        xfer_attr["transfer_penalty"] = 1.0;
-                        xfer_attr["walk_time_min"   ] = 0.0;
-
-                        UserClassMode xfer_ucm = { path_spec.user_class_, MODE_TRANSFER, "transfer"};
-                        WeightLookup::const_iterator xfer_iter_weights = weight_lookup_.find(xfer_ucm);
-                        if (xfer_iter_weights != weight_lookup_.end()) {
-                           SupplyModeToNamedWeights::const_iterator xfer_iter_s2w = xfer_iter_weights->second.find(transfer_supply_mode_);
-                           if (xfer_iter_s2w != xfer_iter_weights->second.end()) {
-                                link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, xfer_iter_s2w->second, xfer_attr);
-                           }
-                        }
-                    }
-
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
                     cost      = current_stop_state.hyperpathCost() + link_cost;
 
