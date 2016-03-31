@@ -291,7 +291,7 @@ class Trip:
         self.trips_df = pandas.merge(left=self.trips_df, right=routes.routes_df,
                                      how='left',
                                      on=Trip.TRIPS_COLUMN_ROUTE_ID)
-        FastTripsLogger.debug("Final\n"+str(self.trips_df.head()))
+        FastTripsLogger.debug("Final (%d)\n%s" % (len(self.trips_df), str(self.trips_df.head())))
         FastTripsLogger.debug("\n"+str(self.trips_df.dtypes))
 
         FastTripsLogger.debug("=========== SERVICE PERIODS ===========\n" + str(self.service_df.head()))

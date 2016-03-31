@@ -15,6 +15,7 @@ __license__   = """
 import datetime, os
 import pandas
 
+from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
 from .Util   import Util
 
@@ -148,6 +149,15 @@ class Route(object):
         routes_ft_cols = list(routes_ft_df.columns.values)
         assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
         assert(Route.ROUTES_COLUMN_MODE         in routes_ft_cols)
+
+        # verify no routes_ids are duplicated
+        if routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum()>0:
+            error_msg = "Found %d duplicate %s in %s" % (routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum(),
+                                                         Route.ROUTES_COLUMN_ROUTE_ID, Route.INPUT_ROUTES_FILE)
+            FastTripsLogger.fatal(error_msg)
+            FastTripsLogger.fatal("\nFirst five duplicates:\n%s" % \
+                                  str(routes_ft_df.loc[routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID])].head()))
+            raise NetworkInputError(Route.INPUT_ROUTES_FILE, error_msg)
 
         # Join to the routes dataframe
         self.routes_df = pandas.merge(left=self.routes_df, right=routes_ft_df,
