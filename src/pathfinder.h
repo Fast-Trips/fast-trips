@@ -361,8 +361,6 @@ namespace fasttrips {
 
     public:
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
-        const static double MAX_COST;
-        const static double MAX_TIME;
 
         /// PathFinder constructor.
         PathFinder();
@@ -430,8 +428,6 @@ namespace fasttrips {
         void printTime(std::ostream& ostr, const double& timemin) const;
 
         void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
-
-        bool isTrip(const int& mode) const;
 
         /// Accessor for stop strings.  Assumes valid stop id.
         const std::string& stopStringForId(int stop_id) const { return stop_num_to_str_.find(stop_id)->second; }

@@ -16,26 +16,31 @@
 
 namespace fasttrips {
 
+    bool isTrip(const int& mode)
+    {
+        return (mode == MODE_TRANSIT);
+    }
+
     double Hyperlink::TIME_WINDOW_      = 0.0;
     double Hyperlink::STOCH_DISPERSION_ = 0.0;
 
     // Default constructor
     Hyperlink::Hyperlink() :
-        stop_id_(0),
-        process_count_(0)
+        stop_id_(0)
     {}
 
     // Constructor we should call
     Hyperlink::Hyperlink(int stop_id) :
-        stop_id_(stop_id),
-        process_count_(0)
+        stop_id_(stop_id)
     {}
 
     // Remove the given stop state from cost_map_
     void Hyperlink::removeFromCostMap(const StopStateKey& ssk, const StopState& ss)
     {
+        LinkSet& linkset = (isTrip(ssk.deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
+
         // todo: switch this to cost_
-        std::pair<CostToStopState::iterator, CostToStopState::iterator> iter_range = linkset_.cost_map_.equal_range(ss.cost_);
+        std::pair<CostToStopState::iterator, CostToStopState::iterator> iter_range = linkset.cost_map_.equal_range(ss.cost_);
         CostToStopState::iterator cm_iter = iter_range.first;
         while (cm_iter != iter_range.second) {
             if (cm_iter->second == ssk) {
@@ -46,8 +51,54 @@ namespace fasttrips {
         if (cm_iter->second != ssk) {
             std::cerr << "Hyperlink::removeFromCostMap() This shouldn't happen" << std::endl;
         }
-        linkset_.cost_map_.erase(cm_iter);
+        linkset.cost_map_.erase(cm_iter);
     }
+
+
+    // Reset latest departure/earliest arrival
+    void Hyperlink::resetLatestDepartureEarliestArrival(bool of_trip_links, const PathSpecification& path_spec)
+    {
+        LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        // reset
+        linkset.latest_dep_earliest_arr_ = 0;
+        linkset.lder_ssk_.deparr_mode_   = MODE_UNSET;
+        linkset.lder_ssk_.trip_id_       = 0;
+        linkset.lder_ssk_.stop_succpred_ = 0;
+        linkset.lder_ssk_.seq_           = 0;
+        linkset.lder_ssk_.seq_succpred_  = 0;
+
+        for (StopStateMap::const_iterator it = linkset.stop_state_map_.begin(); it != linkset.stop_state_map_.end(); ++it)
+        {
+            const StopStateKey& ssk = it->first;
+            const StopState&    ss  = it->second;
+
+            if (linkset.lder_ssk_.deparr_mode_ == MODE_UNSET)
+            {
+                linkset.latest_dep_earliest_arr_ = ss.deparr_time_;
+                linkset.lder_ssk_                = ssk;
+            } else if (( path_spec.outbound_ && (linkset.latest_dep_earliest_arr_ > ss.deparr_time_)) ||
+                       (!path_spec.outbound_ && (linkset.latest_dep_earliest_arr_ < ss.deparr_time_)))
+            {
+                linkset.latest_dep_earliest_arr_ = ss.deparr_time_;
+                linkset.lder_ssk_                = ssk;
+            }
+        }
+
+    }
+
+    // How many links make up the hyperlink?
+    size_t Hyperlink::size() const
+    {
+        return linkset_trip_.stop_state_map_.size() + linkset_nontrip_.stop_state_map_.size();
+    }
+
+    // How many links make up the trip/nontrip hyperlink
+    size_t Hyperlink::size(bool of_trip_links) const
+    {
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        return linkset.stop_state_map_.size();
+    }
+
 
     bool Hyperlink::addLink(const StopState& ss, bool& rejected,
                             std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf)
@@ -55,11 +106,17 @@ namespace fasttrips {
         rejected = false;
         const StopStateKey ssk = { ss.deparr_mode_, ss.trip_id_, ss.stop_succpred_, ss.seq_, ss.seq_succpred_ };
 
+        // add to the linkset based on the mode
+        LinkSet& linkset = (isTrip(ssk.deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
+
         // deterministic -- we only keep one, the low cost link
-        if (path_spec.hyperpath_ == false && linkset_.stop_state_map_.size() > 0)
+        if (path_spec.hyperpath_ == false && size() > 0)
         {
+
             // if the cost isn't better, reject
-            if (ss.cost_ >= lowestCostStopState().cost_) {
+            if (((linkset_trip_.cost_map_.size() > 0   ) && (ss.cost_ >= linkset_trip_.cost_map_.begin()->first   )) ||
+                ((linkset_nontrip_.cost_map_.size() > 0) && (ss.cost_ >= linkset_nontrip_.cost_map_.begin()->first)))
+            {
                 rejected = true;
 
                 // log it
@@ -76,18 +133,18 @@ namespace fasttrips {
             // fall through to add it below
         }
         // simplest case -- we have no stop states/links, so just add it
-        if (linkset_.stop_state_map_.size() == 0)
+        if (linkset.stop_state_map_.size() == 0)
         {
-            linkset_.latest_dep_earliest_arr_ = ss.deparr_time_;
-            linkset_.lder_trip_id_            = ss.trip_id_;
-            linkset_.sum_exp_cost_            = exp(-1.0*STOCH_DISPERSION_*ss.cost_);
-            linkset_.hyperpath_cost_          = ss.cost_;
+            linkset.latest_dep_earliest_arr_ = ss.deparr_time_;
+            linkset.lder_ssk_                = ssk;
+            linkset.sum_exp_cost_            = exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+            linkset.hyperpath_cost_          = ss.cost_;
 
             // add to the map
-            linkset_.stop_state_map_[ssk] = ss;
+            linkset.stop_state_map_[ssk] = ss;
 
             // assume success
-            linkset_.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
+            linkset.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
             // log it
             if (path_spec.trace_) {
@@ -102,8 +159,8 @@ namespace fasttrips {
 
         // is it too early (outbound) or too late (inbound)?
         // don't worry about the last labeling (access for outbound, egress for inbound) -- that one is special
-        if (( path_spec.outbound_ && (ss.deparr_mode_ != MODE_ACCESS) && (ss.deparr_time_ < linkset_.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-            (!path_spec.outbound_ && (ss.deparr_mode_ != MODE_EGRESS) && (ss.deparr_time_ > linkset_.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
+        if (( path_spec.outbound_ && (ss.deparr_mode_ != MODE_ACCESS) && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
+            (!path_spec.outbound_ && (ss.deparr_mode_ != MODE_EGRESS) && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
             rejected = true;
 
             // log it
@@ -120,37 +177,37 @@ namespace fasttrips {
 
         bool update_state = false;
         // we have some stop states/links, so try to insert but we may fail
-        std::pair<StopStateMap::iterator, bool> result_l = linkset_.stop_state_map_.insert(std::pair<StopStateKey,StopState>(ssk,ss));
+        std::pair<StopStateMap::iterator, bool> result_l = linkset.stop_state_map_.insert(std::pair<StopStateKey,StopState>(ssk,ss));
 
         // if we succeeded, the key isn't in here already
         if (result_l.second == true) {
             std::string notes;
 
-            linkset_.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
+            linkset.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
             // check if the window is updated -- this is a state update
-            if (( path_spec.outbound_ && (ss.deparr_time_ > linkset_.latest_dep_earliest_arr_)) ||
-                (!path_spec.outbound_ && (ss.deparr_time_ < linkset_.latest_dep_earliest_arr_)))
+            if (( path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_)) ||
+                (!path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_)))
             {
-                linkset_.latest_dep_earliest_arr_ = ss.deparr_time_;
-                linkset_.lder_trip_id_            = ss.trip_id_;
+                linkset.latest_dep_earliest_arr_  = ss.deparr_time_;
+                linkset.lder_ssk_                 = ssk;
                 update_state                      = true;
                 notes                            += " (window)";
                 // if the window changes, we need to prune states out of bounds -- this recalculates sum_exp_cost_
-                pruneWindow(trace_file, path_spec, pf);
+                pruneWindow(trace_file, path_spec, pf, isTrip(ssk.deparr_mode_));
             } else {
-                linkset_.sum_exp_cost_         += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                linkset.sum_exp_cost_         += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
             }
 
             // check if the hyperpath cost is affected -- this would be a state update
-            double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset_.sum_exp_cost_);
-            if (abs(hyperpath_cost - linkset_.hyperpath_cost_) > 0.0001)
+            double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
+            if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
             {
                 std::ostringstream oss;
-                oss << " (hp cost " << std::setprecision(6) << std::fixed << linkset_.hyperpath_cost_ << "->" << hyperpath_cost << ")";
+                oss << " (hp cost " << std::setprecision(6) << std::fixed << linkset.hyperpath_cost_ << "->" << hyperpath_cost << ")";
                 notes                   += oss.str();
                 update_state             = true;
-                linkset_.hyperpath_cost_ = hyperpath_cost;
+                linkset.hyperpath_cost_  = hyperpath_cost;
             }
 
             // log it
@@ -166,42 +223,45 @@ namespace fasttrips {
         // ========= the key is in already in here so replace the values =========
         std::string notes(" (sub)");
 
-        // todo: what if the the latest_dep_earliest_arr_/lder_trip_id_ were set to this before?  update?
-
         // update the cost map
-        // todo: when we use cost, do this.  But we don't actually change the iteration order
-        // int old_iteration = stop_state_map_[ssk].iteration_;
-        removeFromCostMap(ssk, linkset_.stop_state_map_[ssk]);
-        linkset_.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
+        removeFromCostMap(ssk, linkset.stop_state_map_[ssk]);
+        linkset.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
         // update the cost
-        linkset_.sum_exp_cost_ -= exp(-1.0*STOCH_DISPERSION_*linkset_.stop_state_map_[ssk].cost_);
+        linkset.sum_exp_cost_ -= exp(-1.0*STOCH_DISPERSION_*linkset.stop_state_map_[ssk].cost_);
 
         // and the other state elements
-        linkset_.stop_state_map_[ssk] = ss;
+        linkset.stop_state_map_[ssk] = ss;
         // stop_state_map_[ssk].iteration_ = old_iteration; // remove this
-        linkset_.sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+        linkset.sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+
+        // if the the latest_dep_earliest_arr_ were set to the previous value, we need to check
+        if (linkset.lder_ssk_ == ssk)
+        {
+            if (path_spec.trace_) { trace_file << "Resetting lder" << std::endl; }
+            resetLatestDepartureEarliestArrival(isTrip(ssk.deparr_mode_), path_spec);
+        }
 
         // check if the window is updated -- this is a state update
-        if (( path_spec.outbound_ && (ss.deparr_time_ > linkset_.latest_dep_earliest_arr_)) ||
-            (!path_spec.outbound_ && (ss.deparr_time_ < linkset_.latest_dep_earliest_arr_)))
+        if (( path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_)) ||
+            (!path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_)))
         {
-            linkset_.latest_dep_earliest_arr_ = ss.deparr_time_;
-            linkset_.lder_trip_id_            = ss.trip_id_;
+            linkset.latest_dep_earliest_arr_  = ss.deparr_time_;
+            linkset.lder_ssk_                 = ssk;
             update_state                      = true;
             notes                            += " (window)";
             // if the window changes, we need to prune states out of bounds -- this recalculates sum_exp_cost_
-            pruneWindow(trace_file, path_spec, pf);
+            pruneWindow(trace_file, path_spec, pf, isTrip(ssk.deparr_mode_));
         }
 
-        double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset_.sum_exp_cost_);
-        if (abs(hyperpath_cost - linkset_.hyperpath_cost_) > 0.0001)
+        double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
+        if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
         {
             std::ostringstream oss;
-            oss << " (hp cost " << std::setprecision(6) << std::fixed << linkset_.hyperpath_cost_ << "->" << hyperpath_cost << ")";
+            oss << " (hp cost " << std::setprecision(6) << std::fixed << linkset.hyperpath_cost_ << "->" << hyperpath_cost << ")";
             notes                   += oss.str();
             update_state             = true;
-            linkset_.hyperpath_cost_          = hyperpath_cost;
+            linkset.hyperpath_cost_  = hyperpath_cost;
         }
 
         // log it
@@ -215,26 +275,61 @@ namespace fasttrips {
 
     void Hyperlink::clear()
     {
-        linkset_.cost_map_.clear();
-        linkset_.stop_state_map_.clear();
-        linkset_.sum_exp_cost_            = 0;
-        linkset_.hyperpath_cost_          = 0;
-        linkset_.latest_dep_earliest_arr_ = 0;
-        linkset_.lder_trip_id_            = 0;
-        process_count_           = 0;
+        const StopStateKey zero_ssk = { 0.0, 0, 0, 0, 0.0 };
+
+        linkset_trip_.cost_map_.clear();
+        linkset_trip_.stop_state_map_.clear();
+        linkset_trip_.sum_exp_cost_               = 0;
+        linkset_trip_.hyperpath_cost_             = 0;
+        linkset_trip_.latest_dep_earliest_arr_    = 0;
+        linkset_trip_.lder_ssk_                   = zero_ssk;
+
+        linkset_nontrip_.cost_map_.clear();
+        linkset_nontrip_.stop_state_map_.clear();
+        linkset_nontrip_.sum_exp_cost_            = 0;
+        linkset_nontrip_.hyperpath_cost_          = 0;
+        linkset_nontrip_.latest_dep_earliest_arr_ = 0;
+        linkset_nontrip_.lder_ssk_                = zero_ssk;
+
+        // don't reset process counts
     }
 
-    const StopState& Hyperlink::lowestCostStopState() const
+    const StopState& Hyperlink::lowestCostStopState(bool of_trip_links) const
     {
-        const StopStateKey& ssk = linkset_.cost_map_.begin()->second;
-        return linkset_.stop_state_map_.find(ssk)->second;
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+
+        const StopStateKey& ssk = linkset.cost_map_.begin()->second;
+        return linkset.stop_state_map_.find(ssk)->second;
     }
+
+    // Given an arrival time into this hyperlink (outbound) or a departure time out of this hyperlink (inbound),
+    // returns the best guess link
+    // arrdep time is for a trip so looks at nontrip
+    const StopState& Hyperlink::bestGuessLink(bool outbound, double arrdep_time) const
+    {
+        for (CostToStopState::const_iterator iter = linkset_nontrip_.cost_map_.begin(); iter != linkset_nontrip_.cost_map_.end(); ++iter)
+        {
+            const StopStateKey& ssk = iter->second;
+            const StopState&    ss  = linkset_nontrip_.stop_state_map_.find(ssk)->second;
+            if (outbound && (ss.deparr_time_ >= arrdep_time)) {
+                return ss;
+            }
+
+            if (!outbound && (arrdep_time >= ss.deparr_time_)) {
+                return ss;
+            }
+        }
+        return linkset_nontrip_.stop_state_map_.find(linkset_nontrip_.cost_map_.begin()->second)->second;
+    }
+
 
     // Returns the earliest departure (outbound) or latest arrival (inbound) of the links that make up this hyperlink
-    double Hyperlink::earliestDepartureLatestArrival(bool outbound) const
+    double Hyperlink::earliestDepartureLatestArrival(bool outbound, bool of_trip_links) const
     {
-        double earliest_dep_latest_arr = lowestCostStopState().deparr_time_;
-        for (StopStateMap::const_iterator it = linkset_.stop_state_map_.begin(); it != linkset_.stop_state_map_.end(); ++it)
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+
+        double earliest_dep_latest_arr = lowestCostStopState(of_trip_links).deparr_time_;
+        for (StopStateMap::const_iterator it = linkset.stop_state_map_.begin(); it != linkset.stop_state_map_.end(); ++it)
         {
             if (outbound) {
                 earliest_dep_latest_arr = std::min(earliest_dep_latest_arr, it->second.deparr_time_);
@@ -246,35 +341,37 @@ namespace fasttrips {
     }
 
     // Returns the trip id for the latest departure (outbound) or earliest arrival (inbound) trip
-    double Hyperlink::latestDepartureEarliestArrival() const
+    double Hyperlink::latestDepartureEarliestArrival(bool of_trip_links) const
     {
-        return linkset_.latest_dep_earliest_arr_;
-    }
-
-    // Returns the trip id for the latest departure (outbound) or earliest arrival (inbound) trip
-    int Hyperlink::latestDepartingEarliestArrivingTripID() const
-    {
-        return linkset_.lder_trip_id_;
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        return linkset.latest_dep_earliest_arr_;
     }
 
     // Calculate the cost of just the non-walk links that make up this hyperlink
     double Hyperlink::calculateNonwalkLabel() const
     {
-        double nonwalk_label = 0.0;
-        for (StopStateMap::const_iterator it = linkset_.stop_state_map_.begin(); it != linkset_.stop_state_map_.end(); ++it)
-        {
-            if ((it->first.deparr_mode_ != MODE_EGRESS  ) &&
-                (it->first.deparr_mode_ != MODE_TRANSFER) &&
-                (it->first.deparr_mode_ != MODE_ACCESS  ))
-            {
-                nonwalk_label += exp(-1.0*STOCH_DISPERSION_*it->second.cost_);
-            }
-        }
+        return linkset_trip_.hyperpath_cost_;
+    }
 
-        if (nonwalk_label == 0.0) {
-            return PathFinder::MAX_COST;
-        }
-        return -1.0/STOCH_DISPERSION_*log(nonwalk_label);
+    // Accessor for the process count
+    int Hyperlink::processCount(bool of_trip_links) const
+    {
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        return linkset.process_count_;
+    }
+
+    // Increment process count
+    void Hyperlink::incrementProcessCount(bool of_trip_links)
+    {
+        LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        linkset.process_count_ += 1;
+    }
+
+    // Accessor for the hyperlink cost
+    double Hyperlink::hyperpathCost(bool of_trip_links) const
+    {
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        return linkset.hyperpath_cost_;
     }
 
     void Hyperlink::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec)
@@ -332,38 +429,75 @@ namespace fasttrips {
         pf.printTime(ostr, ss.arrdep_time_);
     }
 
-    void Hyperlink::print(std::ostream& ostr, const PathSpecification& path_spec, const PathFinder& pf) const
+    void Hyperlink::printLinkSet(std::ostream& ostr, int stop_id, bool is_trip, const LinkSet& linkset, const PathSpecification& path_spec, const PathFinder& pf)
     {
-        ostr << "  ";
+        ostr << " (size " << linkset.cost_map_.size();
+        ostr << "; count " << linkset.process_count_;
+        ostr << "; lder ";
+        pf.printTime(ostr, linkset.latest_dep_earliest_arr_);
+        ostr << " @ trip ";
+        if (is_trip) {
+            ostr << pf.tripStringForId(linkset.lder_ssk_.trip_id_) << ", stop " << pf.stopStringForId(linkset.lder_ssk_.stop_succpred_);
+        } else {
+            ostr << pf.modeStringForNum(linkset.lder_ssk_.trip_id_) << ", stop " << pf.stopStringForId(linkset.lder_ssk_.stop_succpred_);
+        }
+        ostr << "; cost ";
+        if (path_spec.hyperpath_) {
+            ostr << linkset.hyperpath_cost_;
+        }
+        else {
+            pf.printTimeDuration(ostr, linkset.hyperpath_cost_);
+        }
+        ostr << ")" << std::endl << "  ";
         Hyperlink::printStopStateHeader(ostr, path_spec);
         ostr << std::endl;
-        for (CostToStopState::const_iterator iter = linkset_.cost_map_.begin(); iter != linkset_.cost_map_.end(); ++iter) {
+        for (CostToStopState::const_iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter) {
             ostr << "  ";
             const StopStateKey& ssk = iter->second;
-            Hyperlink::printStopState(ostr, stop_id_, linkset_.stop_state_map_.find(ssk)->second, path_spec, pf);
+            Hyperlink::printStopState(ostr, stop_id, linkset.stop_state_map_.find(ssk)->second, path_spec, pf);
             ostr << std::endl;
+        }
+    }
+
+    void Hyperlink::print(std::ostream& ostr, const PathSpecification& path_spec, const PathFinder& pf) const
+    {
+        if (linkset_trip_.cost_map_.size() == 0) {
+            ostr << "   No trip links" << std::endl;
+        } else {
+            ostr << " Trip links";
+            Hyperlink::printLinkSet(ostr, stop_id_, true, linkset_trip_, path_spec, pf);
+        }
+
+        if (linkset_nontrip_.cost_map_.size() == 0) {
+            ostr << "   No non-trip links" << std::endl;
+        } else {
+            ostr << " Non-Trip links";
+            Hyperlink::printLinkSet(ostr, stop_id_, false, linkset_nontrip_, path_spec, pf);
         }
     }
 
     // Go through stop states (links) and remove any outside the time window
     // Recalculates sum_exp_cost_ but not hyperpath_cost_
-    void Hyperlink::pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf)
+    void Hyperlink::pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf, bool of_trip_links)
     {
+
+        LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+
         std::stack<StopStateKey> prune_keys;
 
         // recalculate this
-        linkset_.sum_exp_cost_ = 0;
+        linkset.sum_exp_cost_ = 0;
 
-        for (StopStateMap::const_iterator ssm_iter = linkset_.stop_state_map_.begin(); ssm_iter != linkset_.stop_state_map_.end(); ++ssm_iter)
+        for (StopStateMap::const_iterator ssm_iter = linkset.stop_state_map_.begin(); ssm_iter != linkset.stop_state_map_.end(); ++ssm_iter)
         {
             const StopStateKey& ssk = ssm_iter->first;
             const StopState&    ss  = ssm_iter->second;
 
-            if (( path_spec.outbound_ && (ss.deparr_time_ < linkset_.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-                (!path_spec.outbound_ && (ss.deparr_time_ > linkset_.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
+            if (( path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
+                (!path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
                 prune_keys.push(ssk);
             } else {
-                linkset_.sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                linkset.sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
             }
         }
 
@@ -375,12 +509,12 @@ namespace fasttrips {
 
             if (path_spec.trace_) {
                 trace_file << "  + del ";
-                printStopState(trace_file, stop_id_, linkset_.stop_state_map_[ssk], path_spec, pf);
+                printStopState(trace_file, stop_id_, linkset.stop_state_map_[ssk], path_spec, pf);
                 trace_file << " (prune-window)" << std::endl;
             }
 
-            removeFromCostMap(ssk, linkset_.stop_state_map_[ssk]);
-            linkset_.stop_state_map_.erase( ssk );
+            removeFromCostMap(ssk, linkset.stop_state_map_[ssk]);
+            linkset.stop_state_map_.erase( ssk );
             prune_keys.pop();
         }
 
@@ -391,6 +525,8 @@ namespace fasttrips {
                                        const PathFinder& pf, std::vector<ProbabilityStopState>& probabilities,
                                        const StopState* prev_link) const
     {
+        const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
+
         static int COST_CUTOFF = 1;
 
         // Build a vector of probabilities in order of the costmap iteration
@@ -399,10 +535,10 @@ namespace fasttrips {
         double sum_exp     = 0;
 
         // Setup the probabilities
-        for (CostToStopState::const_iterator iter = linkset_.cost_map_.begin(); iter != linkset_.cost_map_.end(); ++iter)
+        for (CostToStopState::const_iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
         {
             const StopStateKey& ssk   = iter->second;
-            const StopState&     ss   = linkset_.stop_state_map_.find(ssk)->second;
+            const StopState&     ss   = linkset.stop_state_map_.find(ssk)->second;
             ProbabilityStopState pss  = { 0.0, 0, ssk };
 
             // some checks if we have a previous link -- this will be a two-pass :p
@@ -414,19 +550,6 @@ namespace fasttrips {
                     Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
                     trace_file << std::endl;
                 }
-
-                // no repeat of access/egress
-                if ( path_spec.outbound_ && ssk.deparr_mode_ == MODE_ACCESS) { continue; }
-                if (!path_spec.outbound_ && ssk.deparr_mode_ == MODE_EGRESS) { continue; }
-                // no double walk
-                if (path_spec.outbound_ &&
-                    ((       ssk.deparr_mode_ == MODE_EGRESS) || (       ssk.deparr_mode_ == MODE_TRANSFER)) &&
-                    ((prev_link->deparr_mode_ == MODE_ACCESS) || (prev_link->deparr_mode_ == MODE_TRANSFER))) { continue; }
-                if (!path_spec.outbound_ &&
-                    ((       ssk.deparr_mode_ == MODE_ACCESS) || (       ssk.deparr_mode_ == MODE_TRANSFER)) &&
-                    ((prev_link->deparr_mode_ == MODE_EGRESS) || (prev_link->deparr_mode_ == MODE_TRANSFER))) { continue; }
-                // don't double on the same trip ID - that's already covered by a single trip
-                if (ssk.deparr_mode_ == MODE_TRANSIT && ssk.trip_id_ == prev_link->trip_id_) { continue; }
 
                 // outbound: we cannot depart before we arrive
                 if ( path_spec.outbound_ && ss.deparr_time_ < prev_link->arrdep_time_) { continue; }
@@ -440,7 +563,7 @@ namespace fasttrips {
             {
                 // we have no additional information so we trust the hyperpath cost and can go ahead
                 pss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) /
-                                   exp(-1.0*STOCH_DISPERSION_*linkset_.hyperpath_cost_);
+                                   exp(-1.0*STOCH_DISPERSION_*linkset.hyperpath_cost_);
                 pss.prob_i_      = static_cast<int>(RAND_MAX*pss.probability_);
 
                 // too small to consider
@@ -472,7 +595,7 @@ namespace fasttrips {
         // fix up the probabilities
         for (int idx = 0; idx < probabilities.size(); ++idx)
         {
-            const StopState& ss = linkset_.stop_state_map_.find(probabilities[idx].ssk_)->second;
+            const StopState& ss = linkset.stop_state_map_.find(probabilities[idx].ssk_)->second;
             probabilities[idx].probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) / sum_exp;
             probabilities[idx].prob_i_      = static_cast<int>(RAND_MAX*probabilities[idx].probability_);
 
@@ -492,8 +615,11 @@ namespace fasttrips {
     const StopState& Hyperlink::chooseState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        const std::vector<ProbabilityStopState>& prob_stops) const
+        const std::vector<ProbabilityStopState>& prob_stops,
+        const StopState* prev_link) const
     {
+        const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
+
         int random_num = rand();
         if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
 
@@ -504,10 +630,10 @@ namespace fasttrips {
         for (size_t ind = 0; ind < prob_stops.size(); ++ind)
         {
             if (prob_stops[ind].prob_i_==0) { continue; }
-            if (random_num <= prob_stops[ind].prob_i_) { return linkset_.stop_state_map_.find(prob_stops[ind].ssk_)->second; }
+            if (random_num <= prob_stops[ind].prob_i_) { return linkset.stop_state_map_.find(prob_stops[ind].ssk_)->second; }
         }
         // shouldn't get here
         printf("PathFinder::chooseState() This should never happen!\n");
-        return linkset_.stop_state_map_.begin()->second;
+        return linkset.stop_state_map_.begin()->second;
     }
 }
