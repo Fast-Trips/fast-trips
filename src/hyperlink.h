@@ -1,7 +1,7 @@
 /**
- * \file StopStates.h
+ * \file hyperlink.h
  *
- * Defines the structure to hold the stop states for a stop.
+ * Defines the Hyperlink class that holds the links (stop states) for a stop.
  */
 #include <iostream>
 #include <map>
@@ -234,11 +234,11 @@ namespace fasttrips {
                                 const StopState* prev_link = NULL) const;
 
         /**
-         * Given a vector of fasttrips::ProbabilityStop instances,
+         * Given a vector of fasttrips::ProbabilityStopState instances,
          * randomly selects one based on the cumulative probability
-         * (fasttrips::ProbabilityStop.prob_i_)
+         * (fasttrips::ProbabilityStopState.prob_i_)
          *
-         * @return the index_ from chosen ProbabilityStop.
+         * @return a const reference to the chosen StopState.
          */
         const StopState& chooseState(const PathSpecification& path_spec,
                                      std::ofstream& trace_file,

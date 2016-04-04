@@ -105,14 +105,6 @@ namespace fasttrips {
         }
     };
 
-    /// Structure used in PathFinder::hyperpathChoosePath
-    typedef struct {
-        double  probability_;           ///< Probability of this stop
-        int     prob_i_;                ///< Cumulative probability * 1000
-        int     stop_id_;               ///< Stop ID
-        size_t  index_;                 ///< Index into StopState vector (or taz state vector)
-    } ProbabilityStop;
-
     /** A single path consists of a vector of stop ID & stop states.  They are in origin to destination order for
      *  outbound trips, and destination to origin order for inbound trips.
      **/
