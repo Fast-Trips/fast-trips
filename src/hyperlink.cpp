@@ -322,6 +322,26 @@ namespace fasttrips {
         return linkset_nontrip_.stop_state_map_.find(linkset_nontrip_.cost_map_.begin()->second)->second;
     }
 
+    // Given an arrival link into this hyperlink (outbound) or a departure time out of this hyperlink (inbound),
+    // returns the best guess cost.  Time consuming but more accurate.  Make it an option?
+    double Hyperlink::bestGuessCost(bool outbound, double arrdep_time) const
+    {
+        double sum_exp = 0.0;
+        for (StopStateMap::const_iterator it = linkset_nontrip_.stop_state_map_.begin(); it != linkset_nontrip_.stop_state_map_.end(); ++it)
+        {
+            const StopState& ss = it->second;
+            if (outbound && (ss.deparr_time_ >= arrdep_time)) {
+                sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+            } else if (!outbound && (arrdep_time >= ss.deparr_time_)) {
+                sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+            }
+        }
+        if (sum_exp == 0) {
+            return MAX_COST;
+        }
+        return (-1.0/STOCH_DISPERSION_)*log(sum_exp);
+    }
+
 
     // Returns the earliest departure (outbound) or latest arrival (inbound) of the links that make up this hyperlink
     double Hyperlink::earliestDepartureLatestArrival(bool outbound, bool of_trip_links) const

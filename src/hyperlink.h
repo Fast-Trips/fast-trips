@@ -195,6 +195,10 @@ namespace fasttrips {
         /// Given an arrival time into this hyperlink (outbound) or a departure time out of this hyperlink (inbound),
         /// returns the best guess link
         const StopState& bestGuessLink(bool outbound, double arrdep_time) const;
+        /// Given an arrival link into this hyperlink (outbound) or a departure time out of this hyperlink (inbound),
+        /// returns the best guess cost.  Time consuming but more accurate.  Make it an option?
+        /// This isn't currently being used.  Initial tests didn't show it helping things.  TODO: remove?
+        double bestGuessCost(bool outbound, double arrdep_time) const;
 
         /// Returns the earliest departure (outbound) or latest arrival (inbound) of the links that make up this hyperlink
         double earliestDepartureLatestArrival(bool outbound, bool of_trip_links=true) const;
