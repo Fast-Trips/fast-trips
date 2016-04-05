@@ -1278,15 +1278,10 @@ namespace fasttrips {
         if (access_cum_prob.size() == 0) { return false; }
 
         // choose the state and store it
-        path.push_back( std::make_pair(start_state_id,
-                                       taz_state.chooseState(path_spec, trace_file, access_cum_prob) ) );
-
-        if (path_spec.trace_)
-        {
-            trace_file << " -> Chose access/egress ";
-            Hyperlink::printStopState(trace_file, start_state_id, path.back().second, path_spec, *this);
-            trace_file << std::endl;
-        }
+        if (path_spec.trace_) { trace_file << " -> Chose access/egress " << std::endl; }
+        path.addLink(start_state_id,
+                     taz_state.chooseState(path_spec, trace_file, access_cum_prob),
+                     trace_file, *this);
 
         // moving on, ss is now the previous link
         while (true)
@@ -1313,105 +1308,15 @@ namespace fasttrips {
 
             if (stop_cum_prob.size() == 0) { return false; }
 
-            // choose state and make a copy of it since we will update it, below
-            StopState next_ss = current_hyperlink.chooseState(path_spec, trace_file, stop_cum_prob, &ss);
-
-            if (path_spec.trace_)
-            {
-                trace_file << " -> Chose stop link ";
-                Hyperlink::printStopState(trace_file, current_stop_id, next_ss, path_spec, *this);
-                trace_file << std::endl;
-            }
-
-            // UPDATES to states
-            // Hyperpaths have some uncertainty built in which we need to rectify as we go through and choose
-            // concrete path states.
-
-            // OUTBOUND: We are choosing links in chronological order.
-            if (path_spec.outbound_)
-            {
-                // Leave origin as late as possible
-                if (ss.deparr_mode_ == MODE_ACCESS) {
-                    double dep_time = getScheduledDeparture(next_ss.trip_id_, current_stop_id, next_ss.seq_);
-                    // set departure time for the access link to perfectly catch the vehicle
-                    // todo: what if there is a wait queue?
-                    path.back().second.arrdep_time_ = dep_time;
-                    path.back().second.deparr_time_ = dep_time - path.front().second.link_time_;
-                    // no wait time for the trip
-                    next_ss.link_time_ = next_ss.arrdep_time_ - next_ss.deparr_time_;
-                }
-                // *Fix trip time*
-                else if (isTrip(next_ss.deparr_mode_)) {
-                    // link time is arrival time - previous arrival time
-                    next_ss.link_time_ = next_ss.arrdep_time_ - ss.arrdep_time_;
-                }
-                // *Fix transfer times*
-                else if (next_ss.deparr_mode_ == MODE_TRANSFER) {
-                    next_ss.deparr_time_ = path.back().second.arrdep_time_;   // start transferring immediately
-                    next_ss.arrdep_time_ = next_ss.deparr_time_ + next_ss.link_time_;
-                }
-                // Egress: don't wait, just walk. Get to destination as early as possible
-                else if (next_ss.deparr_mode_ == MODE_EGRESS) {
-                    next_ss.deparr_time_ = path.back().second.arrdep_time_;
-                    next_ss.arrdep_time_ = next_ss.deparr_time_ + next_ss.link_time_;
-                }
-            }
-            // INBOUND: We are choosing links in REVERSE chronological order
-            else
-            {
-                // Leave origin as late as possible
-                if (next_ss.deparr_mode_ == MODE_ACCESS) {
-                    double dep_time = getScheduledDeparture(path.back().second.trip_id_, current_stop_id, path.back().second.seq_succpred_);
-                    // set arrival time for the access link to perfectly catch the vehicle
-                    // todo: what if there is a wait queue?
-                    next_ss.deparr_time_ = dep_time;
-                    next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
-                    // no wait time for the trip
-                    path.back().second.link_time_ = path.back().second.deparr_time_ - path.back().second.arrdep_time_;
-                }
-                // *Fix trip time*: we are choosing in reverse so pretend the wait time is zero for now to
-                // accurately evaluate possible transfers in next choice.
-                else if (isTrip(next_ss.deparr_mode_)) {
-                    next_ss.link_time_ = next_ss.deparr_time_ - next_ss.arrdep_time_;
-                    // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
-                    // and we can update the transfer and the trip with the real wait
-                    if (ss.deparr_mode_ == MODE_TRANSFER) {
-                        // move transfer time so we do it right after arriving
-                        path.back().second.arrdep_time_ = next_ss.deparr_time_; // depart right away
-                        path.back().second.deparr_time_ = next_ss.deparr_time_ + path.back().second.link_time_; // arrive after walk
-                        // give the wait time to the previous trip
-                        path[path.size()-2].second.link_time_ = path[path.size()-2].second.deparr_time_ - path.back().second.deparr_time_;
-                    }
-                    // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
-                    else if (isTrip(ss.deparr_mode_)) {
-                        path.back().second.link_time_ = path.back().second.deparr_time_ - next_ss.deparr_time_;
-                    }
-                }
-                // *Fix transfer depart/arrive times*: transfer as late as possible to preserve options for earlier trip
-                else if (next_ss.deparr_mode_ == MODE_TRANSFER) {
-                    next_ss.deparr_time_ = path.back().second.arrdep_time_;
-                    next_ss.arrdep_time_ = next_ss.deparr_time_ - next_ss.link_time_;
-                }
-                // Egress: don't wait, just walk. Get to destination as early as possible
-                if (ss.deparr_mode_ == MODE_EGRESS) {
-                    path.back().second.arrdep_time_ = next_ss.deparr_time_;
-                    path.back().second.deparr_time_ = path.back().second.arrdep_time_ + path.back().second.link_time_;
-                }
-            }
-
-
-            // record the choice
-            path.push_back( std::make_pair(current_stop_id, next_ss) );
-
-            if (path_spec.trace_) {
-                trace_file << " ->    Updated link ";
-                Hyperlink::printStopState(trace_file, path.back().first, path.back().second, path_spec, *this);
-                trace_file << std::endl;
-            }
+            // choose next link and add it to the path
+            if (path_spec.trace_) { trace_file << " -> Chose stop link " << std::endl; }
+            path.addLink(current_stop_id,
+                         current_hyperlink.chooseState(path_spec, trace_file, stop_cum_prob, &ss),
+                         trace_file, *this);
 
             // are we done?
-            if (( path_spec.outbound_ && next_ss.deparr_mode_ == MODE_EGRESS) ||
-                (!path_spec.outbound_ && next_ss.deparr_mode_ == MODE_ACCESS)) {
+            if (( path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_EGRESS) ||
+                (!path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_ACCESS)) {
                 break;
             }
 
@@ -1588,7 +1493,7 @@ namespace fasttrips {
             // find a *set of Paths*
             for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
-                Path new_path;
+                Path new_path(path_spec);
                 bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, new_path);
 
                 if (path_found) {
@@ -1692,76 +1597,18 @@ namespace fasttrips {
             // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
 
-            StopState ss = taz_state.lowestCostStopState(false); // there's only one
-            path.push_back( std::make_pair(end_taz_id, ss) );
+            path.addLink(end_taz_id, taz_state.lowestCostStopState(false), trace_file, *this);
 
-            while (ss.deparr_mode_ != final_state_type)
+            while (path.back().second.deparr_mode_ != final_state_type)
             {
-                int stop_id = ss.stop_succpred_;
+                const StopState& last_link = path.back().second;
+                int stop_id = last_link.stop_succpred_;
                 StopStates::const_iterator ssi = stop_states.find(stop_id);
-                ss          = ssi->second.lowestCostStopState(!isTrip(ss.deparr_mode_));
-                path.push_back( std::make_pair(stop_id, ss));
+                path.addLink(stop_id,
+                             ssi->second.lowestCostStopState(!isTrip(last_link.deparr_mode_)),
+                             trace_file,
+                             *this);
 
-                int curr_index = path.size() - 1;
-                int prev_index = curr_index - 1;
-
-                if (path_spec.outbound_)
-                {
-                    // Leave origin as late as possible
-                    if (path[prev_index].second.deparr_mode_ == MODE_ACCESS) {
-                        path[prev_index].second.arrdep_time_ = ss.deparr_time_;
-                        path[prev_index].second.deparr_time_ = path[prev_index].second.arrdep_time_ - path[prev_index].second.link_time_;
-                        // no wait time for the trip
-                        path[curr_index].second.link_time_   = path[curr_index].second.arrdep_time_ - path[curr_index].second.deparr_time_;
-                    }
-                    // *Fix trip time*
-                    else if (isTrip(path[curr_index].second.deparr_mode_)) {
-                        // link time is arrival time - previous arrival time
-                        path[curr_index].second.link_time_ = path[curr_index].second.arrdep_time_ - path[prev_index].second.arrdep_time_;
-                    }
-                    // *Fix transfer times*
-                    else if (path[curr_index].second.deparr_mode_ == MODE_TRANSFER) {
-                        path[curr_index].second.deparr_time_ = path[prev_index].second.arrdep_time_;   // start transferring immediately
-                        path[curr_index].second.arrdep_time_ = path[curr_index].second.deparr_time_ + path[curr_index].second.link_time_;
-                    }
-                    // Egress: don't wait, just walk. Get to destination as early as possible
-                    else if (ss.deparr_mode_ == MODE_EGRESS) {
-                        path[curr_index].second.deparr_time_ = path[prev_index].second.arrdep_time_;
-                        path[curr_index].second.arrdep_time_ = path[curr_index].second.deparr_time_ + path[curr_index].second.link_time_;
-                    }
-                }
-                // INBOUND: We are choosing links in REVERSE chronological order
-                else
-                {
-                    // Leave origin as late as possible
-                    if (path[curr_index].second.deparr_mode_ == MODE_ACCESS) {
-                        path[curr_index].second.deparr_time_ = path[prev_index].second.arrdep_time_;
-                        path[curr_index].second.arrdep_time_ = path[curr_index].second.deparr_time_ - path[curr_index].second.link_time_;
-                        // no wait time for the trip
-                        path[prev_index].second.link_time_   = path[prev_index].second.deparr_time_ - path[prev_index].second.arrdep_time_;
-                    }
-                    // *Trip* - fix transfer and next trip if applicable
-                    else if (isTrip(path[curr_index].second.deparr_mode_)) {
-                        // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
-                        // and we can update the transfer and the trip with the real wait
-                        if (path[prev_index].second.deparr_mode_ == MODE_TRANSFER) {
-                            // move transfer time so we do it right after arriving
-                            path[prev_index].second.arrdep_time_ = path[curr_index].second.deparr_time_; // depart right away
-                            path[prev_index].second.deparr_time_ = path[curr_index].second.deparr_time_ + path[prev_index].second.link_time_; // arrive after walk
-                            // give the wait time to the previous trip
-                            path[prev_index-1].second.link_time_ = path[prev_index-1].second.deparr_time_ - path[prev_index].second.deparr_time_;
-                        }
-                        // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
-                        else if (isTrip(path[prev_index].second.deparr_mode_)) {
-                            path[prev_index].second.link_time_ = path[prev_index].second.deparr_time_ - path[curr_index].second.deparr_time_;
-                        }
-                    }
-                    // Egress: don't wait, just walk. Get to destination as early as possible
-                    if (path[prev_index].second.deparr_mode_ == MODE_EGRESS) {
-                        path[prev_index].second.arrdep_time_ = ss.deparr_time_;
-                        path[prev_index].second.deparr_time_ = path[prev_index].second.arrdep_time_ + path[prev_index].second.link_time_;
-                    }
-                }
             }
             calculatePathCost(path_spec, trace_file, path, path_info);
         }

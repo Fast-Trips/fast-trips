@@ -1,7 +1,7 @@
 /**
- * \file StopStates.cpp
+ * \file hyperlink.cpp
  *
- * StopStates implementation
+ * Hyperlink implementation
  **/
 
 #include "hyperlink.h"
@@ -114,8 +114,7 @@ namespace fasttrips {
         {
 
             // if the cost isn't better, reject
-            if (((linkset_trip_.cost_map_.size() > 0   ) && (ss.cost_ >= linkset_trip_.cost_map_.begin()->first   )) ||
-                ((linkset_nontrip_.cost_map_.size() > 0) && (ss.cost_ >= linkset_nontrip_.cost_map_.begin()->first)))
+            if ((linkset.cost_map_.size() > 0) && (ss.cost_ >= linkset.cost_map_.begin()->first))
             {
                 rejected = true;
 
@@ -129,7 +128,7 @@ namespace fasttrips {
                 return false;
             }
             // otherwise, accept by clearing out
-            clear();
+            clear(isTrip(ssk.deparr_mode_));
             // fall through to add it below
         }
         // simplest case -- we have no stop states/links, so just add it
@@ -273,23 +272,18 @@ namespace fasttrips {
         return update_state;
     }
 
-    void Hyperlink::clear()
+    void Hyperlink::clear(bool of_trip_links)
     {
         const StopStateKey zero_ssk = { 0.0, 0, 0, 0, 0.0 };
 
-        linkset_trip_.cost_map_.clear();
-        linkset_trip_.stop_state_map_.clear();
-        linkset_trip_.sum_exp_cost_               = 0;
-        linkset_trip_.hyperpath_cost_             = 0;
-        linkset_trip_.latest_dep_earliest_arr_    = 0;
-        linkset_trip_.lder_ssk_                   = zero_ssk;
+        LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
 
-        linkset_nontrip_.cost_map_.clear();
-        linkset_nontrip_.stop_state_map_.clear();
-        linkset_nontrip_.sum_exp_cost_            = 0;
-        linkset_nontrip_.hyperpath_cost_          = 0;
-        linkset_nontrip_.latest_dep_earliest_arr_ = 0;
-        linkset_nontrip_.lder_ssk_                = zero_ssk;
+        linkset.cost_map_.clear();
+        linkset.stop_state_map_.clear();
+        linkset.sum_exp_cost_               = 0;
+        linkset.hyperpath_cost_             = 0;
+        linkset.latest_dep_earliest_arr_    = 0;
+        linkset.lder_ssk_                   = zero_ssk;
 
         // don't reset process counts
     }
@@ -634,7 +628,7 @@ namespace fasttrips {
 
     const StopState& Hyperlink::chooseState(
         const PathSpecification& path_spec,
-        std::ofstream& trace_file,
+        std::ostream& trace_file,
         const std::vector<ProbabilityStopState>& prob_stops,
         const StopState* prev_link) const
     {

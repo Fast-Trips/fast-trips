@@ -187,7 +187,7 @@ namespace fasttrips {
                      std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
 
         /// Clears data
-        void clear();
+        void clear(bool of_trip_links);
 
         /// Returns the lowest cost stop state (link) in this hyperlink
         /// If for_trip_link, lowest trip link. Otherwise, lowest non-trip link.
@@ -241,7 +241,7 @@ namespace fasttrips {
          * @return a const reference to the chosen StopState.
          */
         const StopState& chooseState(const PathSpecification& path_spec,
-                                     std::ofstream& trace_file,
+                                     std::ostream& trace_file,
                                      const std::vector<ProbabilityStopState>& prob_stops,
                                      const StopState* prev_link = NULL) const;
     };

@@ -14,6 +14,7 @@
 #include "pathspec.h"
 #include "LabelStopQueue.h"
 #include "hyperlink.h"
+#include "path.h"
 
 #if __APPLE__
 #include <tr1/unordered_set>
@@ -105,20 +106,6 @@ namespace fasttrips {
         }
     };
 
-    /** A single path consists of a vector of stop ID & stop states.  They are in origin to destination order for
-     *  outbound trips, and destination to origin order for inbound trips.
-     **/
-    typedef std::vector< std::pair<int, StopState> > Path;
-
-    /** In stochastic path finding, this is the information we'll collect about the path. */
-    typedef struct {
-        int     count_;                         ///< Number of times this path was generated (for stochastic)
-        double  cost_;                          ///< Cost of this path
-        bool    capacity_problem_;              ///< Does this path have a capacity problem?
-        double  probability_;                   ///< Probability of this stop          (for stochastic)
-        int     prob_i_;                        ///< Cumulative probability * RAND_MAX (for stochastic)
-    } PathInfo;
-
     /** Performance information to return. */
     typedef struct {
         int     label_iterations_;              ///< Number of label iterations performed
@@ -126,30 +113,6 @@ namespace fasttrips {
         long    milliseconds_labeling_;         ///< Number of seconds spent in labeling
         long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
     } PerformanceInfo;
-
-    /// Comparator to for Path instances so we can put them in a map as keys.
-    /// TODO: doc more?
-    struct PathCompare {
-        // less than
-        bool operator()(const Path &path1, const Path &path2) const {
-            if (path1.size() < path2.size()) { return true; }
-            if (path1.size() > path2.size()) { return false; }
-            // if number of stops matches, check the stop ids and deparr_mode_
-            for (int ind=0; ind<path1.size(); ++ind) {
-                if (path1[ind].first < path2[ind].first) { return true; }
-                if (path1[ind].first > path2[ind].first) { return false; }
-                if (path1[ind].second.deparr_mode_ < path2[ind].second.deparr_mode_) { return true; }
-                if (path1[ind].second.deparr_mode_ > path2[ind].second.deparr_mode_) { return false; }
-                if (path1[ind].second.trip_id_     < path2[ind].second.trip_id_    ) { return true; }
-                if (path1[ind].second.trip_id_     > path2[ind].second.trip_id_    ) { return false; }
-            }
-            return false;
-        }
-    };
-
-    /** A set of paths consists of paths mapping to information about them (for choosing one)
-     */
-    typedef std::map<Path, PathInfo, struct fasttrips::PathCompare> PathSet;
 
     /**
     * This is the class that does all the work.  Setup the network supply first.
@@ -341,7 +304,6 @@ namespace fasttrips {
                           Path&                         path,
                           PathInfo&                     path_info) const;
 
-        double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
@@ -414,6 +376,8 @@ namespace fasttrips {
                       Path              &path,
                       PathInfo          &path_info,
                       PerformanceInfo   &performance_info) const;
+
+        double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
 
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 
