@@ -32,8 +32,8 @@ namespace fasttrips {
     class Path
     {
     private:
-        /// reference to path spec
-        const PathSpecification& path_spec_;
+        /// is this path in chronological order?
+        bool chrono_order_;
 
         /// The links that make up this path (stop id, stop states)
         /// They are in origin to destination order for outbound trips,
@@ -42,12 +42,9 @@ namespace fasttrips {
 
     public:
         /// Constructor
-        Path(const PathSpecification& path_spec);
+        Path(bool outbound, bool enumerating);
         /// Desctructor
         ~Path();
-
-        /// Assignment operator
-        Path& operator=(const Path& other);
 
         /// How many links are in this path?
         size_t size() const;
@@ -64,6 +61,7 @@ namespace fasttrips {
         void addLink(int stop_id,
                      const StopState& link,
                      std::ostream& trace_file,
+                     const PathSpecification& path_spec,
                      const PathFinder& pf);
 
     };

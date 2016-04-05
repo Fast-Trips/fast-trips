@@ -10,23 +10,12 @@
 
 namespace fasttrips {
 
-    Path::Path(const PathSpecification& path_spec) :
-        path_spec_(path_spec)
+    Path::Path(bool outbound, bool enumerating) :
+        chrono_order_( (outbound && enumerating) || (!outbound && !enumerating) )
     {}
 
     Path::~Path()
     {}
-
-    // Assignment operator
-    Path& Path::operator=(const Path& other)
-    {
-        // check for self-assignment
-        if (&other == this) {
-            return *this;
-        }
-        links_ = other.links_;
-        return *this;
-    }
 
     // How many links are in this path?
     size_t Path::size() const
@@ -71,6 +60,7 @@ namespace fasttrips {
     void Path::addLink(int stop_id,
                        const StopState& link,
                        std::ostream& trace_file,
+                       const PathSpecification& path_spec,
                        const PathFinder& pf)
     {
         // We'll likely modify this
@@ -79,10 +69,10 @@ namespace fasttrips {
         // if we already have liks
         if (links_.size() > 0)
         {
-            if (path_spec_.trace_)
+            if (path_spec.trace_)
             {
                 trace_file << "path_req ";
-                Hyperlink::printStopState(trace_file, stop_id, link, path_spec_, pf);
+                Hyperlink::printStopState(trace_file, stop_id, link, path_spec, pf);
                 trace_file << std::endl;
             }
 
@@ -91,8 +81,9 @@ namespace fasttrips {
             // concrete path states.
             StopState& prev_link = links_.back().second;
 
+            // chronological order -- access to egress.
             // OUTBOUND: We are choosing links in chronological order.
-            if (path_spec_.outbound_)
+            if (chrono_order_)
             {
                 // Leave origin as late as possible
                 if (prev_link.deparr_mode_ == MODE_ACCESS) {
@@ -166,10 +157,10 @@ namespace fasttrips {
         }
         links_.push_back( std::make_pair(stop_id, new_link) );
 
-        if (path_spec_.trace_)
+        if (path_spec.trace_)
         {
             trace_file << "path_add ";
-            Hyperlink::printStopState(trace_file, stop_id, links_.back().second, path_spec_, pf);
+            Hyperlink::printStopState(trace_file, stop_id, links_.back().second, path_spec, pf);
             trace_file << std::endl;
         }
     }

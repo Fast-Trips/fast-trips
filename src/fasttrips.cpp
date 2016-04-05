@@ -115,7 +115,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     path_spec.transit_mode_= transit_mode;
     path_spec.egress_mode_ = egress_mode;
 
-    fasttrips::Path path(path_spec);
+    fasttrips::Path path(path_spec.outbound_, true); // enumerating
     fasttrips::PathInfo path_info = {0, 0, false, 0, 0};
     fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0};
     pathfinder.findPath(path_spec, path, path_info, perf_info);

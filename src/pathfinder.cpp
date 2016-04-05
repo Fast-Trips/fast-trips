@@ -1281,7 +1281,7 @@ namespace fasttrips {
         if (path_spec.trace_) { trace_file << " -> Chose access/egress " << std::endl; }
         path.addLink(start_state_id,
                      taz_state.chooseState(path_spec, trace_file, access_cum_prob),
-                     trace_file, *this);
+                     trace_file, path_spec, *this);
 
         // moving on, ss is now the previous link
         while (true)
@@ -1312,7 +1312,7 @@ namespace fasttrips {
             if (path_spec.trace_) { trace_file << " -> Chose stop link " << std::endl; }
             path.addLink(current_stop_id,
                          current_hyperlink.chooseState(path_spec, trace_file, stop_cum_prob, &ss),
-                         trace_file, *this);
+                         trace_file, path_spec, *this);
 
             // are we done?
             if (( path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_EGRESS) ||
@@ -1493,7 +1493,7 @@ namespace fasttrips {
             // find a *set of Paths*
             for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
-                Path new_path(path_spec);
+                Path new_path(path_spec.outbound_, true);
                 bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, new_path);
 
                 if (path_found) {
@@ -1597,7 +1597,7 @@ namespace fasttrips {
             // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
 
-            path.addLink(end_taz_id, taz_state.lowestCostStopState(false), trace_file, *this);
+            path.addLink(end_taz_id, taz_state.lowestCostStopState(false), trace_file, path_spec, *this);
 
             while (path.back().second.deparr_mode_ != final_state_type)
             {
@@ -1607,7 +1607,7 @@ namespace fasttrips {
                 path.addLink(stop_id,
                              ssi->second.lowestCostStopState(!isTrip(last_link.deparr_mode_)),
                              trace_file,
-                             *this);
+                             path_spec, *this);
 
             }
             calculatePathCost(path_spec, trace_file, path, path_info);
