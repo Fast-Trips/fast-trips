@@ -110,9 +110,8 @@ namespace fasttrips {
         LinkSet& linkset = (isTrip(ssk.deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
 
         // deterministic -- we only keep one, the low cost link
-        if (path_spec.hyperpath_ == false && size() > 0)
+        if (path_spec.hyperpath_ == false)
         {
-
             // if the cost isn't better, reject
             if ((linkset.cost_map_.size() > 0) && (ss.cost_ >= linkset.cost_map_.begin()->first))
             {
