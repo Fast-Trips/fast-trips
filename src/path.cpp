@@ -164,4 +164,156 @@ namespace fasttrips {
             trace_file << std::endl;
         }
     }
+
+    /**
+     * Calculate the path cost now that we know all the links.  This may result in different
+     * costs than the original costs.  This updates the path's StopState.cost_ attributes
+     * and returns the cost
+     */
+    double Path::calculateCost(
+        std::ostream& trace_file,
+        const PathSpecification& path_spec,
+        const PathFinder& pf)
+    {
+        // no stops - nothing to do
+        if (links_.size()==0) { return 0.0; }
+
+        if (path_spec.trace_) {
+            trace_file << "calculatePathCost:" << std::endl;
+            print(trace_file, path_spec, pf);
+            trace_file << std::endl;
+        }
+
+        bool   first_trip           = true;
+        double dir_factor           = path_spec.outbound_ ? 1.0 : -1.0;
+
+        // iterate through the states in chronological order
+        int start_ind       = chrono_order_ ? 0 : links_.size()-1;
+        int end_ind         = chrono_order_ ? links_.size() : -1;
+        int inc             = chrono_order_ ? 1 : -1;
+
+        double path_cost    = 0;
+        for (int index = start_ind; index != end_ind; index += inc)
+        {
+            int stop_id             = links_[index].first;
+            StopState& stop_state   = links_[index].second;
+
+            // ============= access =============
+            if (stop_state.deparr_mode_ == MODE_ACCESS)
+            {
+                // inbound: preferred time is origin departure time
+                double orig_departure_time        = (path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.deparr_time_ - stop_state.link_time_);
+                double preference_delay           = (path_spec.outbound_ ? 0 : orig_departure_time - path_spec.preferred_time_);
+
+                int transit_stop                  = (path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id);
+                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_ACCESS, path_spec.access_mode_, stop_state.trip_id_);
+                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop ));
+                attributes["preferred_delay_min"] = preference_delay;
+
+                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes);
+                path_cost                        += stop_state.cost_;
+            }
+            // ============= egress =============
+            else if (stop_state.deparr_mode_ == MODE_EGRESS)
+            {
+                // outbound: preferred time is destination arrival time
+                double dest_arrival_time          = (path_spec.outbound_ ? stop_state.deparr_time_ + stop_state.link_time_ : stop_state.deparr_time_);
+                double preference_delay           = (path_spec.outbound_ ? path_spec.preferred_time_ - dest_arrival_time : 0);
+
+                int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
+                const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
+                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop ));
+                attributes["preferred_delay_min"] = preference_delay;
+
+                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes);
+                path_cost                        += stop_state.cost_;
+
+            }
+            // ============= transfer =============
+            else if (stop_state.deparr_mode_ == MODE_TRANSFER)
+            {
+                int orig_stop                     = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
+                int dest_stop                     = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
+
+                const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
+                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
+                stop_state.cost_                  = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr);
+                path_cost                        += stop_state.cost_;
+            }
+            // ============= trip =============
+            else
+            {
+                double trip_ivt_min               = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
+                double wait_min                   = stop_state.link_time_ - trip_ivt_min;
+
+                const TripInfo& trip_info         = *(pf.getTripInfo(stop_state.trip_id_));
+                int supply_mode_num               = trip_info.supply_mode_num_;
+                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSIT, path_spec.transit_mode_, supply_mode_num);
+                Attributes link_attr              = trip_info.trip_attr_;
+                link_attr["in_vehicle_time_min"]  = trip_ivt_min;
+                link_attr["wait_time_min"]        = wait_min;
+
+
+                stop_state.cost_                  = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr);
+                path_cost                        += stop_state.cost_;
+
+                first_trip = false;
+            }
+        }
+
+        if (path_spec.trace_) {
+            trace_file << " ==================================================> cost: " << path_cost << std::endl;
+            print(trace_file, path_spec, pf);
+            trace_file << std::endl;
+        }
+        return path_cost;
+    }
+
+    void Path::print(
+        std::ostream& ostr,
+        const PathSpecification& path_spec,
+        const PathFinder& pf) const
+    {
+        Hyperlink::printStopStateHeader(ostr, path_spec);
+        ostr << std::endl;
+        for (int index = 0; index < links_.size(); ++index)
+        {
+            Hyperlink::printStopState(ostr, links_[index].first, links_[index].second, path_spec, pf);
+            ostr << std::endl;
+        }
+    }
+
+    void Path::printCompat(
+        std::ostream& ostr,
+        const PathSpecification& path_spec,
+        const PathFinder& pf) const
+    {
+        if (links_.size() == 0)
+        {
+            ostr << "no_path";
+            return;
+        }
+        // board stops, trips, alight stops
+        std::string board_stops, trips, alight_stops;
+        int start_ind = path_spec.outbound_ ? 0 : links_.size()-1;
+        int end_ind   = path_spec.outbound_ ? links_.size() : -1;
+        int inc       = path_spec.outbound_ ? 1 : -1;
+        for (int index = start_ind; index != end_ind; index += inc)
+        {
+            int stop_id = links_[index].first;
+            // only want trips
+            if (links_[index].second.deparr_mode_ == MODE_ACCESS  ) { continue; }
+            if (links_[index].second.deparr_mode_ == MODE_EGRESS  ) { continue; }
+            if (links_[index].second.deparr_mode_ == MODE_TRANSFER) { continue; }
+            if ( board_stops.length() > 0) {  board_stops += ","; }
+            if (       trips.length() > 0) {        trips += ","; }
+            if (alight_stops.length() > 0) { alight_stops += ","; }
+            board_stops  += (path_spec.outbound_ ? pf.stopStringForId(stop_id) : pf.stopStringForId(links_[index].second.stop_succpred_));
+            trips        += pf.tripStringForId(links_[index].second.trip_id_);
+            alight_stops += (path_spec.outbound_ ? pf.stopStringForId(links_[index].second.stop_succpred_) : pf.stopStringForId(stop_id));
+        }
+        ostr << " " << board_stops << " " << trips << " " << alight_stops;
+
+    }
+
 }

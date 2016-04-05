@@ -133,6 +133,9 @@ namespace fasttrips {
         int STOCH_MAX_STOP_PROCESS_COUNT_;
         ///@}
 
+        /// Access this through getTransferAttributes()
+        static Attributes* ZERO_WALK_TRANSFER_ATTRIBUTES_;
+
         /// directory in which to write trace files
         std::string output_dir_;
 
@@ -186,16 +189,6 @@ namespace fasttrips {
         void readTransferLinks();
         void readTripInfo();
         void readWeights();
-
-        /**
-         * Tally the link cost, which is the sum of the weighted attributes.
-         * @return the cost.
-         */
-        double PathFinder::tallyLinkCost(const int supply_mode_num,
-                                         const PathSpecification& path_spec,
-                                         std::ofstream& trace_file,
-                                         const NamedWeights& weights,
-                                         const Attributes& attributes) const;
 
         void addStopState(const PathSpecification& path_spec,
                           std::ofstream& trace_file,
@@ -290,14 +283,6 @@ namespace fasttrips {
                         PathSet& paths,
                         int max_prob_i) const;
 
-        /** Calculates the cost for the entire given path, and checks for capacity issues.
-         *  Sets the results into the given fasttrips::PathInfo instance.
-         */
-        void calculatePathCost(const PathSpecification& path_spec,
-                               std::ofstream& trace_file,
-                               Path& path,
-                               PathInfo& path_info) const;
-
         bool getFoundPath(const PathSpecification&      path_spec,
                           std::ofstream&                trace_file,
                           const StopStates&             stop_states,
@@ -310,15 +295,39 @@ namespace fasttrips {
          */
         void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips) const;
 
-        void printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
-        void printPathCompat(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
-
     public:
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
 
         /// PathFinder constructor.
         PathFinder();
 
+        /// This is the transfer supply mode number
+        int transferSupplyMode() const { return transfer_supply_mode_; }
+        /// Accessor for access link attributes
+        const Attributes* getAccessAttributes(int taz_id, int supply_mode_num, int stop_id) const;
+        /// Accessor for transfer link attributes
+        const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
+        /// Accessor for trip info
+        const TripInfo* getTripInfo(int trip_id_num) const;
+
+        /**
+         * Tally the link cost, which is the sum of the weighted attributes.
+         * @return the cost.
+         */
+        double PathFinder::tallyLinkCost(const int supply_mode_num,
+                                         const PathSpecification& path_spec,
+                                         std::ostream& trace_file,
+                                         const NamedWeights& weights,
+                                         const Attributes& attributes) const;
+
+        /**
+         * Access the named weights given user/link information.
+         * Returns NULL if not found.
+         **/
+        const NamedWeights* getNamedWeights(const std::string& user_class,
+                                            DemandModeType     demand_mode_type,
+                                            const std::string& demand_mode,
+                                            int                suppy_mode_num) const;
         /**
          * Setup the path finding parameters.
          */

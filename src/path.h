@@ -60,11 +60,27 @@ namespace fasttrips {
 
         /// Add link to the path, modifying if necessary
         void addLink(int stop_id,
-                     const StopState& link,
-                     std::ostream& trace_file,
-                     const PathSpecification& path_spec,
-                     const PathFinder& pf);
+            const StopState& link,
+            std::ostream& trace_file,
+            const PathSpecification& path_spec,
+            const PathFinder& pf);
 
+        /** Calculates the cost for the entire given path, and checks for capacity issues.
+         *  Returns the resulting cost.
+         * This is not const because it also updates link costs
+         **/
+        double calculateCost(std::ostream& trace_file,
+            const PathSpecification& path_spec,
+            const PathFinder& pf);
+
+        void print(std::ostream& ostr,
+            const PathSpecification& path_spec,
+            const PathFinder& pf) const;
+
+        void printCompat(
+            std::ostream& ostr,
+            const PathSpecification& path_spec,
+            const PathFinder& pf) const;
     };
 
     /** A set of paths consists of paths mapping to information about them (for choosing one)
