@@ -4,9 +4,10 @@
  * Defines Path class.
  */
 #include <iostream>
+#include <map>
 #include <vector>
 
-#include "hyperlink.h"
+#include "pathspec.h"
 
 #ifndef PATH_H
 #define PATH_H
