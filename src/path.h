@@ -18,13 +18,11 @@ namespace fasttrips {
     /** In stochastic path finding, this is the information we'll collect about the path. */
     typedef struct {
         int     count_;             ///< Number of times this path was generated (for stochastic)
-        double  cost_;              ///< Cost of this path.                       TODO: move to Path?
-        bool    capacity_problem_;  ///< Does this path have a capacity problem?  TODO: move to Path?
         double  probability_;       ///< Probability of this stop          (for stochastic)
         int     prob_i_;            ///< Cumulative probability * RAND_MAX (for stochastic)
     } PathInfo;
 
-    // Forward declaration
+    // Forward declarations
     class PathFinder;
 
     /**
@@ -33,8 +31,9 @@ namespace fasttrips {
     class Path
     {
     private:
-        /// is this path in chronological order?
-        bool chrono_order_;
+        bool    chrono_order_;      ///< is this path in chronological order?
+        double  cost_;              ///< Cost of this path.
+        bool    capacity_problem_;  ///< Does this path have a capacity problem?
 
         /// The links that make up this path (stop id, stop states)
         /// They are in origin to destination order for outbound trips,
@@ -49,6 +48,8 @@ namespace fasttrips {
 
         /// How many links are in this path?
         size_t size() const;
+        /// What's the cost of this path?
+        double cost() const;
 
         /// Accessors
         const std::pair<int, StopState>& operator[](size_t n) const;
@@ -66,10 +67,9 @@ namespace fasttrips {
             const PathFinder& pf);
 
         /** Calculates the cost for the entire given path, and checks for capacity issues.
-         *  Returns the resulting cost.
-         * This is not const because it also updates link costs
+         *  Sets the resulting cost and also updates link costs
          **/
-        double calculateCost(std::ostream& trace_file,
+        void calculateCost(std::ostream& trace_file,
             const PathSpecification& path_spec,
             const PathFinder& pf);
 

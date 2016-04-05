@@ -1427,8 +1427,9 @@ namespace fasttrips {
 
         if (path_spec.hyperpath_)
         {
+            double logsum = 0;
             // find a bunch!
-            PathSet paths, paths_updated_cost;
+            PathSet paths;
             // random seed
             srand(path_spec.path_id_);
             // find a *set of Paths*
@@ -1450,8 +1451,11 @@ namespace fasttrips {
                     if (paths_iter != paths.end()) {
                         paths_iter->second.count_ += 1;
                     } else {
-                        PathInfo pi = { 1, 0, false, 0, 0 };  // count is 1
+                        PathInfo pi = { 1, 0, 0 };  // count is 1
+                        new_path.calculateCost(trace_file, path_spec, *this);
                         paths[new_path] = pi;
+
+                        logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
                     }
                     if (path_spec.trace_) { trace_file << "paths size = " << paths.size() << std::endl; }
                 } else {
@@ -1460,21 +1464,7 @@ namespace fasttrips {
                     }
                 }
             }
-            // calculate the costs for those paths and the logsum
-            double logsum = 0;
-            for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
-            {
-                // updated cost version
-                Path     path_updated     = paths_iter->first;
-                PathInfo pathinfo_updated = paths_iter->second;
-                pathinfo_updated.cost_    = path_updated.calculateCost(trace_file, path_spec, *this);
-                // save it into the new map
-                paths_updated_cost[path_updated] = pathinfo_updated;
-                if (pathinfo_updated.cost_ > 0)
-                {
-                    logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*pathinfo_updated.cost_);
-                }
-            }
+
             if (logsum == 0) { return false; } // fail
 
             // debug -- print pet set to file
@@ -1493,9 +1483,9 @@ namespace fasttrips {
             int cum_prob    = 0;
             int cost_cutoff = 1;
             // calculate the probabilities for those paths
-            for (PathSet::iterator paths_iter = paths_updated_cost.begin(); paths_iter != paths_updated_cost.end(); ++paths_iter)
+            for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->second.cost_)/logsum;
+                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
                 // why?  :p
                 int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
                 // too small to consider
@@ -1508,8 +1498,8 @@ namespace fasttrips {
                     trace_file << "-> probability " << std::setfill(' ') << std::setw(8) << paths_iter->second.probability_;
                     trace_file << "; prob_i " << std::setw(8) << paths_iter->second.prob_i_;
                     trace_file << "; count " << std::setw(4) << paths_iter->second.count_;
-                    trace_file << "; cost " << std::setw(8) << paths_iter->second.cost_;
-                    trace_file << "; cap bad? " << std::setw(2) << paths_iter->second.capacity_problem_;
+                    trace_file << "; cost " << std::setw(8) << paths_iter->first.cost();
+                    // trace_file << "; cap bad? " << std::setw(2) << paths_iter->first.capacity_problem_;
                     trace_file << "   ";
                     paths_iter->first.printCompat(trace_file, path_spec, *this);
                     trace_file << std::endl;
@@ -1518,7 +1508,7 @@ namespace fasttrips {
                 pathset_file << path_spec.iteration_ << " ";  // Iteration
                 pathset_file << path_spec.passenger_id_ << " ";         // The passenger ID
                 pathset_file << path_spec.path_id_ << " ";              // The path ID - uniquely identifies a passenger+path
-                pathset_file << std::setw(8) << std::fixed << std::setprecision(2) << paths_iter->second.cost_ << " ";
+                pathset_file << std::setw(8) << std::fixed << std::setprecision(2) << paths_iter->first.cost() << " ";
                 pathset_file << std::setw(8) << std::fixed << std::setprecision(6) << paths_iter->second.probability_ << " ";
                 paths_iter->first.printCompat(pathset_file, path_spec, *this);
                 pathset_file << std::endl;
@@ -1529,8 +1519,8 @@ namespace fasttrips {
             if (cum_prob == 0) { return false; } // fail
 
             // choose path
-            path = choosePath(path_spec, trace_file, paths_updated_cost, cum_prob);
-            path_info = paths_updated_cost[path];
+            path = choosePath(path_spec, trace_file, paths, cum_prob);
+            path_info = paths[path];
         }
         else
         {
@@ -1551,7 +1541,7 @@ namespace fasttrips {
                              path_spec, *this);
 
             }
-            path_info.cost_ = path.calculateCost(trace_file, path_spec, *this);
+            path.calculateCost(trace_file, path_spec, *this);
         }
         if (path_spec.trace_)
         {

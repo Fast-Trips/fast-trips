@@ -11,7 +11,9 @@
 namespace fasttrips {
 
     Path::Path(bool outbound, bool enumerating) :
-        chrono_order_( (outbound && enumerating) || (!outbound && !enumerating) )
+        chrono_order_( (outbound && enumerating) || (!outbound && !enumerating) ),
+        cost_(0),
+        capacity_problem_(false)
     {}
 
     Path::~Path()
@@ -21,6 +23,12 @@ namespace fasttrips {
     size_t Path::size() const
     {
         return links_.size();
+    }
+
+    // What's the cost of this path?
+    double Path::cost() const
+    {
+        return cost_;
     }
 
     // Accessor
@@ -170,13 +178,13 @@ namespace fasttrips {
      * costs than the original costs.  This updates the path's StopState.cost_ attributes
      * and returns the cost
      */
-    double Path::calculateCost(
+    void Path::calculateCost(
         std::ostream& trace_file,
         const PathSpecification& path_spec,
         const PathFinder& pf)
     {
         // no stops - nothing to do
-        if (links_.size()==0) { return 0.0; }
+        if (links_.size()==0) { return; }
 
         if (path_spec.trace_) {
             trace_file << "calculatePathCost:" << std::endl;
@@ -192,7 +200,7 @@ namespace fasttrips {
         int end_ind         = chrono_order_ ? links_.size() : -1;
         int inc             = chrono_order_ ? 1 : -1;
 
-        double path_cost    = 0;
+        cost_               = 0;
         for (int index = start_ind; index != end_ind; index += inc)
         {
             int stop_id             = links_[index].first;
@@ -211,7 +219,7 @@ namespace fasttrips {
                 attributes["preferred_delay_min"] = preference_delay;
 
                 stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes);
-                path_cost                        += stop_state.cost_;
+                cost_                            += stop_state.cost_;
             }
             // ============= egress =============
             else if (stop_state.deparr_mode_ == MODE_EGRESS)
@@ -226,7 +234,7 @@ namespace fasttrips {
                 attributes["preferred_delay_min"] = preference_delay;
 
                 stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes);
-                path_cost                        += stop_state.cost_;
+                cost_                            += stop_state.cost_;
 
             }
             // ============= transfer =============
@@ -238,7 +246,7 @@ namespace fasttrips {
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
                 stop_state.cost_                  = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr);
-                path_cost                        += stop_state.cost_;
+                cost_                            += stop_state.cost_;
             }
             // ============= trip =============
             else
@@ -255,18 +263,17 @@ namespace fasttrips {
 
 
                 stop_state.cost_                  = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr);
-                path_cost                        += stop_state.cost_;
+                cost_                            += stop_state.cost_;
 
                 first_trip = false;
             }
         }
 
         if (path_spec.trace_) {
-            trace_file << " ==================================================> cost: " << path_cost << std::endl;
+            trace_file << " ==================================================> cost: " << cost_ << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;
         }
-        return path_cost;
     }
 
     void Path::print(
