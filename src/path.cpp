@@ -158,7 +158,7 @@ namespace fasttrips {
                     new_link.arrdep_time_ = new_link.deparr_time_ - new_link.link_time_;
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
-                if (new_link.deparr_mode_ == MODE_EGRESS) {
+                if (prev_link.deparr_mode_ == MODE_EGRESS) {
                     prev_link.arrdep_time_ = new_link.deparr_time_;
                     prev_link.deparr_time_ = prev_link.arrdep_time_ + prev_link.link_time_;
                 }
