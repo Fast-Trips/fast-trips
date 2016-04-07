@@ -34,7 +34,7 @@ namespace fasttrips {
      * at the destination, so the labeling algorithm starts at the destination and works backwards.  If the sought
      * path is inbound, then the preferred time is a departure time from the origin, so the labeling algorithm starts
      * at the origin and works forwards.  Thus, the attributes here have different meanings if the path sought is
-     * outbound versus inbound, and the convention is outbound/inbound fo the variable names.
+     * outbound versus inbound, and the convention is outbound/inbound for the variable names.
      *
      * The StopState is basically the state at this stop with details of the link after (for outbound) or before
      * (inbound) the stop in the found path.

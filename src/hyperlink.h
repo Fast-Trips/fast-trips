@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "pathspec.h"
+#include "path.h"
 
 #ifndef HYPERLINK_H
 #define HYPERLINK_H
@@ -50,7 +51,9 @@ namespace fasttrips {
         StopStateMap    stop_state_map_;           ///< set of stop states where compare means the key is unique
         CostToStopState cost_map_;                 ///< multimap of cost -> stop state pointers into the stop_state_set_ above
 
-        LinkSet() : latest_dep_earliest_arr_(0), sum_exp_cost_(0), hyperpath_cost_(MAX_COST), process_count_(0) {}
+        Path            path_;                     ///< Lowest cost path from stop to destination (outbound) or from origin to stop (inbound)
+
+        LinkSet(bool outbound) : latest_dep_earliest_arr_(0), sum_exp_cost_(0), hyperpath_cost_(MAX_COST), process_count_(0), path_(outbound, false) {}
     } ;
 
     class PathFinder;
@@ -82,6 +85,10 @@ namespace fasttrips {
         /// Reset latest departure/earliest arrival
         void resetLatestDepartureEarliestArrival(bool of_trip_links, const PathSpecification& path_spec);
 
+        /// Update the low cost path for this stop state
+        void updateLowCostPath(const StopState& ss, const Hyperlink* prev_link,
+                               std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
+
     public:
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a>
@@ -93,7 +100,7 @@ namespace fasttrips {
         /// Default constructor
         Hyperlink();
         /// Constructor we should call
-        Hyperlink(int stop_id);
+        Hyperlink(int stop_id, bool outbound);
         /// Destructor
         ~Hyperlink() {}
 
@@ -102,13 +109,16 @@ namespace fasttrips {
         /// How many links make up the trip/nontrip hyperlink
         size_t size(bool of_trip_links) const;
 
+        /// Accessor for the low cost path
+        const Path& getLowCostPath(bool of_trip_links) const;
+
         /// Add this link to the hyperlink.
         /// For deterministic: we only keep one link.  Accept it iff the cost is lower.
         /// For stochastic:
         /// - If it's outside the time window, reject it.
         /// - If it's already here according to the key, then replace the state.
         /// - Return true iff the hyperlink state was affected (e.g. the stop needs to be re-processed)
-        bool addLink(const StopState& ss, bool& rejected,
+        bool addLink(const StopState& ss, const Hyperlink* prev_link, bool& rejected,
                      std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
 
         /// Clears data

@@ -526,11 +526,12 @@ namespace fasttrips {
         const PathSpecification& path_spec,
         std::ostream& trace_file,
         const NamedWeights& weights,
-        const Attributes& attributes) const
+        const Attributes& attributes,
+        bool hush) const
     {
         // iterate through the weights
         double cost = 0;
-        if (true && path_spec.trace_) {
+        if (true && path_spec.trace_ && !hush) {
             trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << mode_num_to_str_.find(supply_mode_num)->second;
             trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
         }
@@ -551,13 +552,13 @@ namespace fasttrips {
             }
 
             cost += iter_weights->second * iter_attr->second;
-            if (true && path_spec.trace_) {
+            if (true && path_spec.trace_ && !hush) {
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
                 trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
                 trace_file << " x " << iter_attr->second << std::endl;
             }
         }
-        if (true && path_spec.trace_) {
+        if (true && path_spec.trace_ && !hush) {
             trace_file << std::setw(26) << std::setfill(' ') << "final cost" << ":  = ";
             trace_file << std::setw(13) << std::setprecision(4) << std::fixed << cost << std::endl;
         }
@@ -569,6 +570,7 @@ namespace fasttrips {
         std::ofstream& trace_file,
         const int stop_id,
         const StopState& ss,
+        const Hyperlink* prev_link,
         StopStates& stop_states,
         LabelStopQueue& label_stop_queue) const
     {
@@ -577,7 +579,7 @@ namespace fasttrips {
 
         // initialize the hyperlink if we need to
         if (stop_states.find(stop_id) == stop_states.end()) {
-            Hyperlink h(stop_id);
+            Hyperlink h(stop_id, path_spec.outbound_);
             stop_states[stop_id] = h;
         }
 
@@ -585,7 +587,7 @@ namespace fasttrips {
 
         // keep track if the state changed (label or time window)
         // if so, we'll want to trigger dealing with the effects by adding it to the queue
-        bool update_state = hyperlink.addLink(ss, rejected, trace_file, path_spec, *this);
+        bool update_state = hyperlink.addLink(ss, prev_link, rejected, trace_file, path_spec, *this);
 
         if (update_state) {
             LabelStop ls = { hyperlink.hyperpathCost(isTrip(ss.deparr_mode_)), stop_id, isTrip(ss.deparr_mode_) };
@@ -730,7 +732,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_ };                                                 // arrival/departure time
-                addStopState(path_spec, trace_file, stop_id, ss, stop_states, label_stop_queue);
+                addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
@@ -797,7 +799,7 @@ namespace fasttrips {
             label_iteration,                // label iteration
             current_deparr_time             // arrival/departure time
         };
-        addStopState(path_spec, trace_file, xfer_stop_id, ss, stop_states, label_stop_queue);
+        addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
 
         // are there other relevant transfers?
         // if outbound, going backwards, so transfer TO this current stop
@@ -866,7 +868,7 @@ namespace fasttrips {
                 label_iteration,                // label iteration
                 current_deparr_time             // arrival/departure time
             };
-            addStopState(path_spec, trace_file, xfer_stop_id, ss, stop_states, label_stop_queue);
+            addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
     }
 
@@ -1075,7 +1077,7 @@ namespace fasttrips {
                     label_iteration,                // label iteration
                     arrdep_time                     // arrival/departure time
                 };
-                addStopState(path_spec, trace_file, board_alight_stop, ss, stop_states, label_stop_queue);
+                addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
 
             }
             trips_done.insert(it->trip_id_);
@@ -1315,7 +1317,7 @@ namespace fasttrips {
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
                 };
-                addStopState(path_spec, trace_file, end_taz_id, ts, stop_states, label_stop_queue);
+                addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
@@ -1425,6 +1427,15 @@ namespace fasttrips {
         const Hyperlink& taz_state = ssi_iter->second;
         if (taz_state.size() == 0) { return false; }
 
+        // experimental-- look at the low cost path?
+        if (path_spec.trace_)
+        {
+            const Path& low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
+            trace_file << "Low cost path: " << low_cost_path.cost() << std::endl;
+            low_cost_path.print(trace_file, path_spec, *this);
+            trace_file << std::endl;
+        }
+
         if (path_spec.hyperpath_)
         {
             double logsum = 0;
@@ -1482,6 +1493,7 @@ namespace fasttrips {
             // for integerized probability*1000000
             int cum_prob    = 0;
             int cost_cutoff = 1;
+            const Path* real_low_cost_path = NULL;
             // calculate the probabilities for those paths
             for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
             {
@@ -1512,12 +1524,25 @@ namespace fasttrips {
                 pathset_file << std::setw(8) << std::fixed << std::setprecision(6) << paths_iter->second.probability_ << " ";
                 paths_iter->first.printCompat(pathset_file, path_spec, *this);
                 pathset_file << std::endl;
+
+                if (real_low_cost_path == NULL) {
+                    real_low_cost_path = &(paths_iter->first);
+                }
+                else if (paths_iter->first.cost() < real_low_cost_path->cost()) {
+                    real_low_cost_path = &(paths_iter->first);
+                }
             }
 
             pathset_file.close();
 
             if (cum_prob == 0) { return false; } // fail
 
+            // experimental-- verify lowest cost path is low?
+            if (real_low_cost_path && real_low_cost_path->cost() < taz_state.getLowCostPath(false).cost())
+            {
+                std::cerr << "Real low cost path not found for path_id " << path_spec.path_id_ << std::endl;
+            }
+    
             // choose path
             path = choosePath(path_spec, trace_file, paths, cum_prob);
             path_info = paths[path];

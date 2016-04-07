@@ -9,9 +9,17 @@
 #include "hyperlink.h"
 
 namespace fasttrips {
+    // Default constructor
+    Path::Path() :
+        outbound_(false),
+        enumerating_(false),
+        cost_(0),
+        capacity_problem_(false)
+    {}
 
     Path::Path(bool outbound, bool enumerating) :
-        chrono_order_( (outbound && enumerating) || (!outbound && !enumerating) ),
+        outbound_(outbound),
+        enumerating_(enumerating),
         cost_(0),
         capacity_problem_(false)
     {}
@@ -29,6 +37,14 @@ namespace fasttrips {
     double Path::cost() const
     {
         return cost_;
+    }
+
+    // Clear
+    void Path::clear()
+    {
+        links_.clear();
+        cost_ = 0;
+        capacity_problem_ = false;
     }
 
     // Accessor
@@ -65,7 +81,8 @@ namespace fasttrips {
     }
 
     // Add link to the path, modifying if necessary
-    void Path::addLink(int stop_id,
+    // Return feasibility (infeasible if two out of order trips)
+    bool Path::addLink(int stop_id,
                        const StopState& link,
                        std::ostream& trace_file,
                        const PathSpecification& path_spec,
@@ -73,104 +90,141 @@ namespace fasttrips {
     {
         // We'll likely modify this
         StopState new_link = link;
+        bool feasible = true;
 
         // if we already have liks
         if (links_.size() > 0)
         {
+            bool chrono_order    = (!outbound_ && !enumerating_) || (outbound_ && enumerating_);
+            StopState& prev_link = links_.back().second;
+
             if (path_spec.trace_)
             {
+                trace_file << (outbound_ ? "outbound, " : "inbound, ") << (enumerating_ ? "enumerating, " : "labeling, ");
+                trace_file << (chrono_order ? "chrono, " : "not chrono, ") << "size " << links_.size() << ", prev mode ";
+                pf.printMode(trace_file, prev_link.deparr_mode_, prev_link.trip_id_);
+                trace_file << std::endl;
                 trace_file << "path_req ";
                 Hyperlink::printStopState(trace_file, stop_id, link, path_spec, pf);
                 trace_file << std::endl;
+
+                // delete this later
+                trace_file << "--------------- path_before ---- (cost " << cost_ << ")" << std::endl;
+                print(trace_file, path_spec, pf);
+                trace_file << "--------------------------------" << std::endl;
             }
 
             // UPDATES to links
             // Hyperpaths have some uncertainty built in which we need to rectify as we go through and choose
             // concrete path states.
-            StopState& prev_link = links_.back().second;
 
-            // chronological order -- access to egress.
-            // OUTBOUND: We are choosing links in chronological order.
-            if (chrono_order_)
+            // this is confusing
+            double& new_dep_time  = (outbound_ ? new_link.deparr_time_  : new_link.arrdep_time_ );
+            double& new_arr_time  = (outbound_ ? new_link.arrdep_time_  : new_link.deparr_time_ );
+            double& prev_dep_time = (outbound_ ? prev_link.deparr_time_ : prev_link.arrdep_time_);
+            double& prev_arr_time = (outbound_ ? prev_link.arrdep_time_ : prev_link.deparr_time_);
+
+            // chronological order.
+            if (chrono_order)
             {
                 // Leave origin as late as possible
                 if (prev_link.deparr_mode_ == MODE_ACCESS) {
-                    double dep_time = pf.getScheduledDeparture(new_link.trip_id_, stop_id, new_link.seq_);
+                    int first_stop_id  = (outbound_ ? stop_id       : new_link.stop_succpred_);
+                    int first_stop_seq = (outbound_ ? new_link.seq_ : new_link.seq_succpred_ );
+                    double dep_time = pf.getScheduledDeparture(new_link.trip_id_, first_stop_id, first_stop_seq);
                     // set departure time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
-                    prev_link.arrdep_time_ = dep_time;
-                    prev_link.deparr_time_ = dep_time - links_.front().second.link_time_;
+                    prev_arr_time = dep_time;
+                    prev_dep_time = dep_time - prev_link.link_time_;
                     // no wait time for the trip
-                    new_link.link_time_ = new_link.arrdep_time_ - new_link.deparr_time_;
+                    new_link.link_time_ = new_arr_time - new_dep_time;
                 }
                 // *Fix trip time*
                 else if (isTrip(new_link.deparr_mode_)) {
                     // link time is arrival time - previous arrival time
-                    new_link.link_time_ = new_link.arrdep_time_ - prev_link.arrdep_time_;
+                    new_link.link_time_ = new_arr_time - prev_arr_time;
+                    if (new_link.link_time_ < 0)      { feasible = false; }
+                    if (new_dep_time < prev_arr_time) { feasible = false; }
                 }
                 // *Fix transfer times*
                 else if (new_link.deparr_mode_ == MODE_TRANSFER) {
-                    new_link.deparr_time_ = prev_link.arrdep_time_;   // start transferring immediately
-                    new_link.arrdep_time_ = new_link.deparr_time_ + new_link.link_time_;
+                    new_dep_time = prev_arr_time;   // start transferring immediately
+                    new_arr_time = new_dep_time + new_link.link_time_;
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
                 else if (new_link.deparr_mode_ == MODE_EGRESS) {
-                    new_link.deparr_time_ = prev_link.arrdep_time_;
-                    new_link.arrdep_time_ = new_link.deparr_time_ + new_link.link_time_;
+                    new_dep_time = prev_arr_time;
+                    new_arr_time = new_dep_time + new_link.link_time_;
                 }
             }
 
-            // INBOUND: We are choosing links in REVERSE chronological order
+            // REVERSE chronological order: egress, trip, [transfer, trip]*, access
             else
             {
                 // Leave origin as late as possible
                 if (new_link.deparr_mode_ == MODE_ACCESS) {
-                    double dep_time = pf.getScheduledDeparture(prev_link.trip_id_, stop_id, prev_link.seq_succpred_);
+                    int first_stop_id  = (outbound_ ? new_link.stop_succpred_ : prev_link.stop_succpred_ );
+                    int first_stop_seq = (outbound_ ? prev_link.seq_          : prev_link.seq_succpred_  );
+                    double dep_time = pf.getScheduledDeparture(prev_link.trip_id_, first_stop_id, first_stop_seq);
                     // set arrival time for the access link to perfectly catch the vehicle
                     // todo: what if there is a wait queue?
-                    new_link.deparr_time_ = dep_time;
-                    new_link.arrdep_time_ = new_link.deparr_time_ - new_link.link_time_;
+                    new_arr_time = dep_time;
+                    new_dep_time = new_arr_time - new_link.link_time_;
                     // no wait time for the trip
-                    prev_link.link_time_ = prev_link.deparr_time_ - prev_link.arrdep_time_;
+                    prev_link.link_time_ = prev_arr_time - prev_dep_time;
                 }
                 // *Fix trip time*: we are choosing in reverse so pretend the wait time is zero for now to
                 // accurately evaluate possible transfers in next choice.
                 else if (isTrip(new_link.deparr_mode_)) {
-                    new_link.link_time_ = new_link.deparr_time_ - new_link.arrdep_time_;
+                    // no wait time yet
+                    new_link.link_time_ = new_arr_time - new_dep_time;
                     // If we just picked this trip and the previous (next in time) is transfer then we know the wait now
                     // and we can update the transfer and the trip with the real wait
                     if (prev_link.deparr_mode_ == MODE_TRANSFER) {
                         // move transfer time so we do it right after arriving
-                        prev_link.arrdep_time_ = new_link.deparr_time_; // depart right away
-                        prev_link.deparr_time_ = new_link.deparr_time_ + prev_link.link_time_; // arrive after walk
+                        prev_dep_time = new_arr_time;                        // depart right away for the transfer
+                        prev_arr_time = new_arr_time + prev_link.link_time_; // arrive after walk
+
+                        // if the previous trip departure time is before the transfer arrival time, we have a feasibility issue
+                        double prev_trip_dep_time = (outbound_ ? links_[links_.size()-2].second.deparr_time_ : links_[links_.size()-2].second.arrdep_time_);
+                        if (prev_trip_dep_time < prev_arr_time) { feasible = false; }
+
                         // give the wait time to the previous trip
-                        links_[links_.size()-2].second.link_time_ = links_[links_.size()-2].second.deparr_time_ - prev_link.deparr_time_;
-                    }
-                    // If the previous (next in time) is another trip (so zero-walk transfer) give it wait time
-                    else if (isTrip(new_link.deparr_mode_)) {
-                        prev_link.link_time_ = prev_link.deparr_time_ - new_link.deparr_time_;
+                        double prev_trip_arr_time = (outbound_ ? links_[links_.size()-2].second.arrdep_time_ : links_[links_.size()-2].second.deparr_time_);
+                        links_[links_.size()-2].second.link_time_ = prev_trip_arr_time - prev_arr_time;
+                        // negative wait time means infeasible
+                        if (links_[links_.size()-2].second.link_time_ < 0) { feasible = false; }
                     }
                 }
                 // *Fix transfer depart/arrive times*: transfer as late as possible to preserve options for earlier trip
                 else if (new_link.deparr_mode_ == MODE_TRANSFER) {
-                    new_link.deparr_time_ = prev_link.arrdep_time_;
-                    new_link.arrdep_time_ = new_link.deparr_time_ - new_link.link_time_;
+                    new_arr_time = prev_dep_time; // arrive for subsequent trip (prev_link)
+                    new_dep_time = new_arr_time - new_link.link_time_;
                 }
                 // Egress: don't wait, just walk. Get to destination as early as possible
                 if (prev_link.deparr_mode_ == MODE_EGRESS) {
-                    prev_link.arrdep_time_ = new_link.deparr_time_;
-                    prev_link.deparr_time_ = prev_link.arrdep_time_ + prev_link.link_time_;
+                    prev_dep_time = new_arr_time;
+                    prev_arr_time = prev_dep_time + prev_link.link_time_;
                 }
             }
         }
         links_.push_back( std::make_pair(stop_id, new_link) );
+        cost_ += new_link.link_cost_;
 
         if (path_spec.trace_)
         {
             trace_file << "path_add ";
             Hyperlink::printStopState(trace_file, stop_id, links_.back().second, path_spec, pf);
             trace_file << std::endl;
+
+            // this is excessive but oh well
+            if (links_.size() > 1) {
+                trace_file << "--------------- path so far ----" << (feasible ? " (feasible)" : " (infeasible)") << " (cost " << cost_ << ")" << std::endl;
+                print(trace_file, path_spec, pf);
+                trace_file << "--------------------------------" << std::endl;
+            }
         }
+        return feasible;
     }
 
     /**
@@ -181,13 +235,15 @@ namespace fasttrips {
     void Path::calculateCost(
         std::ostream& trace_file,
         const PathSpecification& path_spec,
-        const PathFinder& pf)
+        const PathFinder& pf,
+        bool hush)
     {
         // no stops - nothing to do
         if (links_.size()==0) { return; }
 
-        if (path_spec.trace_) {
-            trace_file << "calculatePathCost:" << std::endl;
+        bool chrono_order   = (!outbound_ && !enumerating_) || (outbound_ && enumerating_);
+        if (path_spec.trace_ && !hush) {
+            trace_file << "calculatePathCost: (chrono? " << (chrono_order ? "yes)" : "no)") << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;
         }
@@ -196,9 +252,9 @@ namespace fasttrips {
         double dir_factor           = path_spec.outbound_ ? 1.0 : -1.0;
 
         // iterate through the states in chronological order
-        int start_ind       = chrono_order_ ? 0 : links_.size()-1;
-        int end_ind         = chrono_order_ ? links_.size() : -1;
-        int inc             = chrono_order_ ? 1 : -1;
+        int start_ind       = chrono_order ? 0 : links_.size()-1;
+        int end_ind         = chrono_order ? links_.size() : -1;
+        int inc             = chrono_order ? 1 : -1;
 
         cost_               = 0;
         for (int index = start_ind; index != end_ind; index += inc)
@@ -218,7 +274,7 @@ namespace fasttrips {
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop ));
                 attributes["preferred_delay_min"] = preference_delay;
 
-                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes);
+                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
                 cost_                            += stop_state.cost_;
             }
             // ============= egress =============
@@ -233,7 +289,7 @@ namespace fasttrips {
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop ));
                 attributes["preferred_delay_min"] = preference_delay;
 
-                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes);
+                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
                 cost_                            += stop_state.cost_;
 
             }
@@ -245,7 +301,7 @@ namespace fasttrips {
 
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
-                stop_state.cost_                  = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr);
+                stop_state.cost_                  = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
                 cost_                            += stop_state.cost_;
             }
             // ============= trip =============
@@ -262,14 +318,14 @@ namespace fasttrips {
                 link_attr["wait_time_min"]        = wait_min;
 
 
-                stop_state.cost_                  = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr);
+                stop_state.cost_                  = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
                 cost_                            += stop_state.cost_;
 
                 first_trip = false;
             }
         }
 
-        if (path_spec.trace_) {
+        if (path_spec.trace_ && !hush) {
             trace_file << " ==================================================> cost: " << cost_ << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;

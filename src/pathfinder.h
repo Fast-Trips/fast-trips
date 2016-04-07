@@ -194,6 +194,7 @@ namespace fasttrips {
                           std::ofstream& trace_file,
                           const int stop_id,
                           const StopState& ss,
+                          const Hyperlink* prev_link,
                           StopStates& stop_states,
                           LabelStopQueue& label_stop_queue) const;
 
@@ -318,7 +319,8 @@ namespace fasttrips {
                                          const PathSpecification& path_spec,
                                          std::ostream& trace_file,
                                          const NamedWeights& weights,
-                                         const Attributes& attributes) const;
+                                         const Attributes& attributes,
+                                         bool  hush = false) const;
 
         /**
          * Access the named weights given user/link information.

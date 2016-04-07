@@ -31,7 +31,8 @@ namespace fasttrips {
     class Path
     {
     private:
-        bool    chrono_order_;      ///< is this path in chronological order?
+        bool    outbound_;          ///< is this path outbound (preferred arrival) or inbound (preferred departure)?
+        bool    enumerating_;       ///< are we enumarating paths?  or labeling?
         double  cost_;              ///< Cost of this path.
         bool    capacity_problem_;  ///< Does this path have a capacity problem?
 
@@ -41,6 +42,8 @@ namespace fasttrips {
         std::vector< std::pair<int, StopState> > links_;
 
     public:
+        /// Default constructor
+        Path();
         /// Constructor
         Path(bool outbound, bool enumerating);
         /// Desctructor
@@ -50,6 +53,8 @@ namespace fasttrips {
         size_t size() const;
         /// What's the cost of this path?
         double cost() const;
+        /// Clear
+        void clear();
 
         /// Accessors
         const std::pair<int, StopState>& operator[](size_t n) const;
@@ -60,7 +65,8 @@ namespace fasttrips {
         bool operator<(const Path& other) const;
 
         /// Add link to the path, modifying if necessary
-        void addLink(int stop_id,
+        /// Return feasibility (infeasible if two out of order trips)
+        bool addLink(int stop_id,
             const StopState& link,
             std::ostream& trace_file,
             const PathSpecification& path_spec,
@@ -71,7 +77,8 @@ namespace fasttrips {
          **/
         void calculateCost(std::ostream& trace_file,
             const PathSpecification& path_spec,
-            const PathFinder& pf);
+            const PathFinder& pf,
+            bool hush = false);
 
         void print(std::ostream& ostr,
             const PathSpecification& path_spec,
