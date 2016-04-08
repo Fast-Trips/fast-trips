@@ -34,6 +34,13 @@ namespace fasttrips {
         stop_id_(stop_id), linkset_trip_(outbound), linkset_nontrip_(outbound)
     {}
 
+    // Destructor
+    Hyperlink::~Hyperlink()
+    {
+        this->clear(true);
+        this->clear(false);
+    }
+
     // Remove the given stop state from cost_map_
     void Hyperlink::removeFromCostMap(const StopStateKey& ssk, const StopState& ss)
     {
@@ -88,64 +95,60 @@ namespace fasttrips {
 
     // Update the low cost path for this stop state
     void Hyperlink::updateLowCostPath(
-        const StopState& ss,
+        const StopStateKey& ssk,
         const Hyperlink* prev_link,
         std::ostream& trace_file,
         const PathSpecification& path_spec,
         const PathFinder& pf)
     {
-        LinkSet& linkset = (isTrip(ss.deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
+        LinkSet& linkset = (isTrip(ssk.deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
+        // get the link
+        StopState& ss = linkset.stop_state_map_[ssk];
 
-        // If we have no links in our candidate path, great.  Add this one.
-        if (linkset.path_.size() == 0) {
+        // if it's a start link, it's a new path
+        if (( path_spec.outbound_ && ssk.deparr_mode_ == MODE_EGRESS) ||
+            (!path_spec.outbound_ && ssk.deparr_mode_ == MODE_ACCESS))
+        {
+            if (ss.low_cost_path_ != NULL) { std::cerr << "updateLowCostPath error1" << std::endl; return; }
+            // initialize it
+            ss.low_cost_path_ = new Path(path_spec.outbound_, false); // labeling, not enumerating
+            ss.low_cost_path_->addLink(stop_id_, ss, trace_file, path_spec, pf);
+            return;
+        }
 
-            // start with the previous link's path, if we have one
-            if (prev_link) {
-                linkset.path_ = prev_link->getLowCostPath(!isTrip(ss.deparr_mode_));
-            }
+        // otherwise prev_link better exist for us to pull trips
+        if (prev_link == NULL) { std::cerr << "updateLowCostPath error2" << std::endl; return; }
 
+        // pull trips (for non-trip links) or non-trips for trip links
+        const StopStateMap& prev_link_map = prev_link->getStopStateMap(!isTrip(ssk.deparr_mode_));
+        for (StopStateMap::const_iterator it = prev_link_map.begin(); it != prev_link_map.end(); ++it)
+        {
+            const StopStateKey& prev_ssk = it->first;
+            const StopState&    prev_ss  = it->second;
+
+            if (prev_ss.low_cost_path_ == NULL) { continue; }
+
+            Path path_candidate = *(prev_ss.low_cost_path_);
             // we shouldn't add a non-start state onto an empty path
-            if (linkset.path_.size() == 0) {
-                if ( path_spec.outbound_ && ss.deparr_mode_ != MODE_EGRESS) { return; }
-                if (!path_spec.outbound_ && ss.deparr_mode_ != MODE_ACCESS) { return; }
-            }
-            // add this one
-            bool feasible = linkset.path_.addLink(stop_id_, ss, trace_file, path_spec, pf);
-            // if not feasible, clear
-            if (!feasible) { linkset.path_.clear(); }
-            // update cost
-            linkset.path_.calculateCost(trace_file, path_spec, pf, true);
+            if (path_candidate.size() == 0) { continue; }
+            bool feasible = path_candidate.addLink(stop_id_, ss, trace_file, path_spec, pf);
+            if (!feasible) { continue; }
+
+            // todo -- make this unnecessary?  if additive then the path.addLink() could take care of costs properly
+            path_candidate.calculateCost(trace_file, path_spec, pf, true);
+
             if (path_spec.trace_) {
-                trace_file << "Updated single candidate cost " << linkset.path_.cost() << std::endl;
-                linkset.path_.print(trace_file, path_spec, pf);
+                trace_file << "Path candidate cost " << path_candidate.cost();
+                trace_file << " compared to current cost " << (ss.low_cost_path_ ? ss.low_cost_path_->cost() : -999) << std::endl;
+                path_candidate.print(trace_file, path_spec, pf);
             }
-            return;
-        }
 
-        if (prev_link == NULL) {
-            std::cerr << "Hyperlink::updateLowCostPath NULL prev_link shouldn't happen" << std::endl;
-            return;
-        }
-
-        // let's see if we can get a lower cost path
-        Path path_candidate = prev_link->getLowCostPath(!isTrip(ss.deparr_mode_));
-        if (path_candidate.size() == 0) { return; }
-
-        if (path_spec.trace_) {
-            trace_file << "Path candidate: " << std::endl;
-        }
-        bool feasible = path_candidate.addLink(stop_id_, ss, trace_file, path_spec, pf);
-        // if not feasible, stay with what we have
-        if (!feasible) { return; }
-        path_candidate.calculateCost(trace_file, path_spec, pf, path_candidate.size() == 2 ? false : true); // don't log -- too noisy
-
-        if (path_spec.trace_) {
-            trace_file << "Path candidate cost " << path_candidate.cost() << " compared to current cost " << linkset.path_.cost() << std::endl;
-            path_candidate.print(trace_file, path_spec, pf);
-        }
-
-        if (path_candidate.cost() < linkset.path_.cost()) {
-            linkset.path_ = path_candidate;
+            // keep it?
+            if (ss.low_cost_path_ == NULL) {
+                ss.low_cost_path_ = new Path(path_candidate);
+            } else if (ss.low_cost_path_->cost() > path_candidate.cost()) {
+                *ss.low_cost_path_ = path_candidate;
+            }
         }
     }
 
@@ -162,11 +165,38 @@ namespace fasttrips {
         return linkset.stop_state_map_.size();
     }
 
-    // Accessor for the low cost path
-    const Path& Hyperlink::getLowCostPath(bool of_trip_links) const
+    const StopStateMap& Hyperlink::getStopStateMap(bool of_trip_links) const
     {
         const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
-        return linkset.path_;
+        return linkset.stop_state_map_;
+    }
+
+    // Accessor for the low cost path
+    const Path* Hyperlink::getLowCostPath(bool of_trip_links) const
+    {
+        const Path* low_cost_path = NULL;
+        double low_cost = 0;
+
+        const LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
+        for (StopStateMap::const_iterator it = linkset.stop_state_map_.begin(); it != linkset.stop_state_map_.end(); ++it)
+        {
+            const StopState& ss = it->second;
+
+            if (ss.low_cost_path_ == NULL) { continue; }
+
+            if (low_cost_path == NULL) {
+                low_cost_path = ss.low_cost_path_;
+                low_cost      = ss.low_cost_path_->cost();
+                continue;
+            }
+
+            if (low_cost_path->cost() > ss.low_cost_path_->cost()) {
+                low_cost_path = ss.low_cost_path_;
+                low_cost      = ss.low_cost_path_->cost();
+            }
+        }
+
+        return low_cost_path;
     }
 
     bool Hyperlink::addLink(const StopState& ss, const Hyperlink* prev_link, bool& rejected,
@@ -221,7 +251,7 @@ namespace fasttrips {
             }
 
             // update low-cost path
-            updateLowCostPath(ss, prev_link, trace_file, path_spec, pf);
+            // updateLowCostPath(ssk, prev_link, trace_file, path_spec, pf);
             return true;
         }
         // ========= now we have links in the hyperlink =========
@@ -286,7 +316,7 @@ namespace fasttrips {
                 trace_file << notes << std::endl;
             }
 
-            updateLowCostPath(ss, prev_link, trace_file, path_spec, pf);
+            // updateLowCostPath(ssk, prev_link, trace_file, path_spec, pf);
             return update_state;
         }
 
@@ -300,6 +330,11 @@ namespace fasttrips {
         // update the cost
         linkset.sum_exp_cost_ -= exp(-1.0*STOCH_DISPERSION_*linkset.stop_state_map_[ssk].cost_);
 
+        // we're replacing the stopstate so delete the old path
+        if (linkset.stop_state_map_[ssk].low_cost_path_) {
+            delete linkset.stop_state_map_[ssk].low_cost_path_;
+            linkset.stop_state_map_[ssk].low_cost_path_ = NULL;
+        }
         // and the other state elements
         linkset.stop_state_map_[ssk] = ss;
         // stop_state_map_[ssk].iteration_ = old_iteration; // remove this
@@ -341,7 +376,7 @@ namespace fasttrips {
             trace_file << notes << std::endl;
         }
 
-        updateLowCostPath(ss, prev_link, trace_file, path_spec, pf);
+        // updateLowCostPath(ssk, prev_link, trace_file, path_spec, pf);
         return update_state;
     }
 
@@ -351,8 +386,18 @@ namespace fasttrips {
 
         LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
 
-        linkset.cost_map_.clear();
+        // this memory needs to be freed
+        for (StopStateMap::iterator it = linkset.stop_state_map_.begin(); it != linkset.stop_state_map_.end(); ++it)
+        {
+            StopState& ss = it->second;
+            if (ss.low_cost_path_) {
+                delete ss.low_cost_path_;
+                ss.low_cost_path_ = NULL;
+            }
+        }
+
         linkset.stop_state_map_.clear();
+        linkset.cost_map_.clear();
         linkset.sum_exp_cost_               = 0;
         linkset.hyperpath_cost_             = 0;
         linkset.latest_dep_earliest_arr_    = 0;
@@ -601,6 +646,10 @@ namespace fasttrips {
             }
 
             removeFromCostMap(ssk, linkset.stop_state_map_[ssk]);
+            if (linkset.stop_state_map_[ssk].low_cost_path_) {
+                delete linkset.stop_state_map_[ssk].low_cost_path_;
+                linkset.stop_state_map_[ssk].low_cost_path_ = NULL;
+            }
             linkset.stop_state_map_.erase( ssk );
             prune_keys.pop();
         }

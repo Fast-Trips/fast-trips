@@ -87,7 +87,10 @@ namespace fasttrips {
         }
     };
 
-    typedef struct {
+    // forward dec
+    class Path;
+
+    struct StopState {
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
                                         ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
@@ -102,7 +105,48 @@ namespace fasttrips {
         double  cost_;                  ///< Cost from previous link(s) and this link together.
         int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
-    } StopState;
+
+        Path*   low_cost_path_;         ///< Lowest cost path that includes this link.  Only set in labeling.
+
+        StopState() :
+            deparr_time_  (0),
+            deparr_mode_  (0),
+            trip_id_      (0),
+            stop_succpred_(0),
+            seq_          (0),
+            seq_succpred_ (0),
+            link_time_    (0),
+            link_cost_    (0),
+            cost_         (0),
+            iteration_    (-1),
+            arrdep_time_  (0),
+            low_cost_path_(NULL) {}
+
+        StopState(
+            double deparr_time,
+            int    deparr_mode,
+            int    trip_id,
+            int    stop_succpred,
+            int    seq,
+            int    seq_succpred,
+            double link_time,
+            double link_cost,
+            double cost,
+            int    iteration,
+            double arrdep_time) :
+            deparr_time_  (deparr_time),
+            deparr_mode_  (deparr_mode),
+            trip_id_      (trip_id),
+            stop_succpred_(stop_succpred),
+            seq_          (seq),
+            seq_succpred_ (seq_succpred),
+            link_time_    (link_time),
+            link_cost_    (link_cost),
+            cost_         (cost),
+            iteration_    (iteration),
+            arrdep_time_  (arrdep_time),
+            low_cost_path_(NULL) {}
+    };
 }
 
 #endif

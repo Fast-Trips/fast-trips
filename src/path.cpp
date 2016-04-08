@@ -89,8 +89,10 @@ namespace fasttrips {
                        const PathFinder& pf)
     {
         // We'll likely modify this
-        StopState new_link = link;
-        bool feasible = true;
+        StopState new_link      = link;
+        // for simplicity, don't need link to low cost path here.
+        new_link.low_cost_path_ = NULL;
+        bool feasible           = true;
 
         // if we already have liks
         if (links_.size() > 0)
@@ -208,8 +210,9 @@ namespace fasttrips {
                 }
             }
         }
+        cost_          += new_link.link_cost_;
+        new_link.cost_  = cost_;
         links_.push_back( std::make_pair(stop_id, new_link) );
-        cost_ += new_link.link_cost_;
 
         if (path_spec.trace_)
         {
@@ -274,8 +277,7 @@ namespace fasttrips {
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop ));
                 attributes["preferred_delay_min"] = preference_delay;
 
-                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
-                cost_                            += stop_state.cost_;
+                stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
             }
             // ============= egress =============
             else if (stop_state.deparr_mode_ == MODE_EGRESS)
@@ -289,8 +291,7 @@ namespace fasttrips {
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop ));
                 attributes["preferred_delay_min"] = preference_delay;
 
-                stop_state.cost_                  = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
-                cost_                            += stop_state.cost_;
+                stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
 
             }
             // ============= transfer =============
@@ -301,8 +302,7 @@ namespace fasttrips {
 
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
-                stop_state.cost_                  = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
-                cost_                            += stop_state.cost_;
+                stop_state.link_cost_             = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
             }
             // ============= trip =============
             else
@@ -317,12 +317,12 @@ namespace fasttrips {
                 link_attr["in_vehicle_time_min"]  = trip_ivt_min;
                 link_attr["wait_time_min"]        = wait_min;
 
-
-                stop_state.cost_                  = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
-                cost_                            += stop_state.cost_;
+                stop_state.link_cost_             = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
 
                 first_trip = false;
             }
+            cost_                            += stop_state.link_cost_;
+            stop_state.cost_                  = cost_;
         }
 
         if (path_spec.trace_ && !hush) {

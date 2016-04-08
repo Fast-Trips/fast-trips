@@ -48,12 +48,10 @@ namespace fasttrips {
         double          hyperpath_cost_;           ///< hyperpath cost for this stop state
         int             process_count_;            ///< increment this every time the stop is processed
 
-        StopStateMap    stop_state_map_;           ///< set of stop states where compare means the key is unique
+        StopStateMap    stop_state_map_;           ///< the links.  (or a set of stop states where compare means the key is unique)
         CostToStopState cost_map_;                 ///< multimap of cost -> stop state pointers into the stop_state_set_ above
 
-        Path            path_;                     ///< Lowest cost path from stop to destination (outbound) or from origin to stop (inbound)
-
-        LinkSet(bool outbound) : latest_dep_earliest_arr_(0), sum_exp_cost_(0), hyperpath_cost_(MAX_COST), process_count_(0), path_(outbound, false) {}
+        LinkSet(bool outbound) : latest_dep_earliest_arr_(0), sum_exp_cost_(0), hyperpath_cost_(MAX_COST), process_count_(0) {}
     } ;
 
     class PathFinder;
@@ -86,7 +84,7 @@ namespace fasttrips {
         void resetLatestDepartureEarliestArrival(bool of_trip_links, const PathSpecification& path_spec);
 
         /// Update the low cost path for this stop state
-        void updateLowCostPath(const StopState& ss, const Hyperlink* prev_link,
+        void updateLowCostPath(const StopStateKey& ssk, const Hyperlink* prev_link,
                                std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
 
     public:
@@ -102,15 +100,17 @@ namespace fasttrips {
         /// Constructor we should call
         Hyperlink(int stop_id, bool outbound);
         /// Destructor
-        ~Hyperlink() {}
+        ~Hyperlink();
 
         /// How many links make up the hyperlink?
         size_t size() const;
         /// How many links make up the trip/nontrip hyperlink
         size_t size(bool of_trip_links) const;
 
+        /// Accessor for stop state map
+        const StopStateMap& getStopStateMap(bool of_trip_links) const;
         /// Accessor for the low cost path
-        const Path& getLowCostPath(bool of_trip_links) const;
+        const Path* getLowCostPath(bool of_trip_links) const;
 
         /// Add this link to the hyperlink.
         /// For deterministic: we only keep one link.  Accept it iff the cost is lower.

@@ -509,6 +509,9 @@ namespace fasttrips {
         performance_info.milliseconds_labeling_    = (long)label_elapsed.QuadPart;
         performance_info.milliseconds_enumerating_ = (long)pathfind_elapsed.QuadPart;
 
+        // clear stop states since they have path pointers
+        stop_states.clear();
+
         if (path_spec.trace_) {
 
             trace_file << "        label iterations: " << performance_info.label_iterations_    << std::endl;
@@ -720,7 +723,7 @@ namespace fasttrips {
                     cost = attr_time;
                 }
 
-                StopState ss = {
+                StopState ss(
                     deparr_time,                                                                // departure/arrival time
                     path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS,                            // departure/arrival mode
                     supply_mode_num,                                                            // trip id
@@ -731,7 +734,8 @@ namespace fasttrips {
                     cost,                                                                       // link cost
                     cost,                                                                       // cost
                     0,                                                                          // iteration
-                    path_spec.preferred_time_ };                                                 // arrival/departure time
+                    path_spec.preferred_time_                                                   // arrival/departure time
+                );
                 addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
@@ -786,7 +790,7 @@ namespace fasttrips {
             cost      = current_label_stop.label_ + link_cost;
         }
         // addStopState will handle logic of updating total cost
-        StopState ss = {
+        StopState ss(
             deparr_time,                    // departure/arrival time
             MODE_TRANSFER,                  // departure/arrival mode
             1 ,                             // trip id
@@ -798,7 +802,7 @@ namespace fasttrips {
             cost,                           // cost
             label_iteration,                // label iteration
             current_deparr_time             // arrival/departure time
-        };
+        );
         addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
 
         // are there other relevant transfers?
@@ -855,7 +859,7 @@ namespace fasttrips {
             }
 
             // addStopState will handle logic of updating total cost
-            StopState ss = {
+            StopState ss(
                 deparr_time,                    // departure/arrival time
                 MODE_TRANSFER,                  // departure/arrival mode
                 1 ,                             // trip id
@@ -867,7 +871,7 @@ namespace fasttrips {
                 cost,                           // cost
                 label_iteration,                // label iteration
                 current_deparr_time             // arrival/departure time
-            };
+            );
             addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
     }
@@ -1064,7 +1068,7 @@ namespace fasttrips {
                     cost        = current_stop_state.lowestCostStopState(false).cost_ + link_cost;
                 }
 
-                StopState ss = {
+                StopState ss(
                     deparr_time,                    // departure/arrival time
                     MODE_TRANSIT,                   // departure/arrival mode
                     possible_board_alight.trip_id_, // trip id
@@ -1076,7 +1080,7 @@ namespace fasttrips {
                     cost,                           // cost
                     label_iteration,                // label iteration
                     arrdep_time                     // arrival/departure time
-                };
+                );
                 addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
 
             }
@@ -1304,7 +1308,7 @@ namespace fasttrips {
 
                 }
 
-                StopState ts = {
+                StopState ts(
                     deparr_time,                                                                // departure/arrival time
                     path_spec.outbound_ ? MODE_ACCESS : MODE_EGRESS,                            // departure/arrival mode
                     supply_mode_num,                                                            // trip id
@@ -1316,7 +1320,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
-                };
+                );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
@@ -1428,12 +1432,14 @@ namespace fasttrips {
         if (taz_state.size() == 0) { return false; }
 
         // experimental-- look at the low cost path?
-        if (path_spec.trace_)
+        if (false && path_spec.trace_)
         {
-            const Path& low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
-            trace_file << "Low cost path: " << low_cost_path.cost() << std::endl;
-            low_cost_path.print(trace_file, path_spec, *this);
-            trace_file << std::endl;
+            const Path* low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
+            if (low_cost_path) {
+                trace_file << "Low cost path: " << low_cost_path->cost() << std::endl;
+                low_cost_path->print(trace_file, path_spec, *this);
+                trace_file << std::endl;
+            } else { trace_file <<  "Low cost path: " << "None" << std::endl; }
         }
 
         if (path_spec.hyperpath_)
@@ -1538,11 +1544,18 @@ namespace fasttrips {
             if (cum_prob == 0) { return false; } // fail
 
             // experimental-- verify lowest cost path is low?
-            if (real_low_cost_path && real_low_cost_path->cost() < taz_state.getLowCostPath(false).cost())
+            if (false && real_low_cost_path)
             {
-                std::cerr << "Real low cost path not found for path_id " << path_spec.path_id_ << std::endl;
+                const Path* low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
+                if (low_cost_path == NULL) {
+                    std::cerr << "No low cost path found for path_id " << path_spec.path_id_ << std::endl;
+                } else if (real_low_cost_path->cost() < low_cost_path->cost()) {
+                    std::cerr << "Real low cost path not found for path_id " << path_spec.path_id_ << std::endl;
+                } else {
+                    std::cerr << "Real low cost path found" << std::endl;
+                }
             }
-    
+
             // choose path
             path = choosePath(path_spec, trace_file, paths, cum_prob);
             path_info = paths[path];
