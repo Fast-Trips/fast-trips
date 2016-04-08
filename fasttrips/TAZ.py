@@ -144,7 +144,7 @@ class TAZ:
     #: fasttrips DAP column name: Lot Latitude (WGS 84)
     DAP_COLUMN_LOT_LATITUDE                  = 'lot_lat'
     #: fasttrips DAP column name: Lot Longitude (WGS 84)
-    DAP_COLUMN_LOT_LONGITUDE                 = 'lot_long'
+    DAP_COLUMN_LOT_LONGITUDE                 = 'lot_lon'
     #: fasttrips DAP column name: Name of the Lot. String.
     DAP_COLUMN_NAME                          = 'name'
     #: fasttrips DAP column name: Drop-Off.  Boolean.
