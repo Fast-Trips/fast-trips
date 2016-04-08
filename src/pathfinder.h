@@ -14,6 +14,7 @@
 #include "pathspec.h"
 #include "LabelStopQueue.h"
 #include "hyperlink.h"
+#include "path.h"
 
 #if __APPLE__
 #include <tr1/unordered_set>
@@ -105,28 +106,6 @@ namespace fasttrips {
         }
     };
 
-    /// Structure used in PathFinder::hyperpathChoosePath
-    typedef struct {
-        double  probability_;           ///< Probability of this stop
-        int     prob_i_;                ///< Cumulative probability * 1000
-        int     stop_id_;               ///< Stop ID
-        size_t  index_;                 ///< Index into StopState vector (or taz state vector)
-    } ProbabilityStop;
-
-    /** A single path consists of a vector of stop ID & stop states.  They are in origin to destination order for
-     *  outbound trips, and destination to origin order for inbound trips.
-     **/
-    typedef std::vector< std::pair<int, StopState> > Path;
-
-    /** In stochastic path finding, this is the information we'll collect about the path. */
-    typedef struct {
-        int     count_;                         ///< Number of times this path was generated (for stochastic)
-        double  cost_;                          ///< Cost of this path
-        bool    capacity_problem_;              ///< Does this path have a capacity problem?
-        double  probability_;                   ///< Probability of this stop          (for stochastic)
-        int     prob_i_;                        ///< Cumulative probability * RAND_MAX (for stochastic)
-    } PathInfo;
-
     /** Performance information to return. */
     typedef struct {
         int     label_iterations_;              ///< Number of label iterations performed
@@ -134,30 +113,6 @@ namespace fasttrips {
         long    milliseconds_labeling_;         ///< Number of seconds spent in labeling
         long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
     } PerformanceInfo;
-
-    /// Comparator to for Path instances so we can put them in a map as keys.
-    /// TODO: doc more?
-    struct PathCompare {
-        // less than
-        bool operator()(const Path &path1, const Path &path2) const {
-            if (path1.size() < path2.size()) { return true; }
-            if (path1.size() > path2.size()) { return false; }
-            // if number of stops matches, check the stop ids and deparr_mode_
-            for (int ind=0; ind<path1.size(); ++ind) {
-                if (path1[ind].first < path2[ind].first) { return true; }
-                if (path1[ind].first > path2[ind].first) { return false; }
-                if (path1[ind].second.deparr_mode_ < path2[ind].second.deparr_mode_) { return true; }
-                if (path1[ind].second.deparr_mode_ > path2[ind].second.deparr_mode_) { return false; }
-                if (path1[ind].second.trip_id_     < path2[ind].second.trip_id_    ) { return true; }
-                if (path1[ind].second.trip_id_     > path2[ind].second.trip_id_    ) { return false; }
-            }
-            return false;
-        }
-    };
-
-    /** A set of paths consists of paths mapping to information about them (for choosing one)
-     */
-    typedef std::map<Path, PathInfo, struct fasttrips::PathCompare> PathSet;
 
     /**
     * This is the class that does all the work.  Setup the network supply first.
@@ -177,6 +132,9 @@ namespace fasttrips {
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT</a>
         int STOCH_MAX_STOP_PROCESS_COUNT_;
         ///@}
+
+        /// Access this through getTransferAttributes()
+        static Attributes* ZERO_WALK_TRANSFER_ATTRIBUTES_;
 
         /// directory in which to write trace files
         std::string output_dir_;
@@ -232,20 +190,11 @@ namespace fasttrips {
         void readTripInfo();
         void readWeights();
 
-        /**
-         * Tally the link cost, which is the sum of the weighted attributes.
-         * @return the cost.
-         */
-        double PathFinder::tallyLinkCost(const int supply_mode_num,
-                                         const PathSpecification& path_spec,
-                                         std::ofstream& trace_file,
-                                         const NamedWeights& weights,
-                                         const Attributes& attributes) const;
-
         void addStopState(const PathSpecification& path_spec,
                           std::ofstream& trace_file,
                           const int stop_id,
                           const StopState& ss,
+                          const Hyperlink* prev_link,
                           StopStates& stop_states,
                           LabelStopQueue& label_stop_queue) const;
 
@@ -335,38 +284,52 @@ namespace fasttrips {
                         PathSet& paths,
                         int max_prob_i) const;
 
-        /** Calculates the cost for the entire given path, and checks for capacity issues.
-         *  Sets the results into the given fasttrips::PathInfo instance.
-         */
-        void calculatePathCost(const PathSpecification& path_spec,
-                               std::ofstream& trace_file,
-                               Path& path,
-                               PathInfo& path_info) const;
-
         bool getFoundPath(const PathSpecification&      path_spec,
                           std::ofstream&                trace_file,
                           const StopStates&             stop_states,
                           Path&                         path,
                           PathInfo&                     path_info) const;
 
-        double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
          * If inbound,  then we're searching forwards,  so this returns trips that depart at the given stop time after timepoint
          */
         void getTripsWithinTime(int stop_id, bool outbound, double timepoint, std::vector<TripStopTime>& return_trips) const;
 
-        void printPath(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
-        void printPathCompat(std::ostream& ostr, const PathSpecification& path_spec, const Path& path) const;
-
     public:
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
-        const static double MAX_COST;
-        const static double MAX_TIME;
 
         /// PathFinder constructor.
         PathFinder();
 
+        /// This is the transfer supply mode number
+        int transferSupplyMode() const { return transfer_supply_mode_; }
+        /// Accessor for access link attributes
+        const Attributes* getAccessAttributes(int taz_id, int supply_mode_num, int stop_id) const;
+        /// Accessor for transfer link attributes
+        const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
+        /// Accessor for trip info
+        const TripInfo* getTripInfo(int trip_id_num) const;
+
+        /**
+         * Tally the link cost, which is the sum of the weighted attributes.
+         * @return the cost.
+         */
+        double PathFinder::tallyLinkCost(const int supply_mode_num,
+                                         const PathSpecification& path_spec,
+                                         std::ostream& trace_file,
+                                         const NamedWeights& weights,
+                                         const Attributes& attributes,
+                                         bool  hush = false) const;
+
+        /**
+         * Access the named weights given user/link information.
+         * Returns NULL if not found.
+         **/
+        const NamedWeights* getNamedWeights(const std::string& user_class,
+                                            DemandModeType     demand_mode_type,
+                                            const std::string& demand_mode,
+                                            int                suppy_mode_num) const;
         /**
          * Setup the path finding parameters.
          */
@@ -425,13 +388,13 @@ namespace fasttrips {
                       PathInfo          &path_info,
                       PerformanceInfo   &performance_info) const;
 
+        double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
+
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 
         void printTime(std::ostream& ostr, const double& timemin) const;
 
         void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
-
-        bool isTrip(const int& mode) const;
 
         /// Accessor for stop strings.  Assumes valid stop id.
         const std::string& stopStringForId(int stop_id) const { return stop_num_to_str_.find(stop_id)->second; }

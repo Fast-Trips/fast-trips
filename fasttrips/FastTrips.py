@@ -192,6 +192,12 @@ class FastTrips:
         if pathset_init:
             # sort it by iteration, trip_id_num
             pathsets_df.sort_values(by=['iteration','trip_list_id_num'], inplace=True)
+
+            # add the person_id since that's what we trace
+            pathsets_df = pandas.merge(left=pathsets_df,
+                                       right=self.passengers.trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.TRIP_LIST_COLUMN_PERSON_ID]],
+                                       how="left")
+
             # write it
             pathset_filename = os.path.join(self.output_dir, FastTrips.PATHSET_LOG % "")
             pathsets_df.to_csv(pathset_filename, sep=" ", index=False)

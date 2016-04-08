@@ -115,7 +115,10 @@ def compare_file(dir1, dir2, filename):
 
         coldiff     = "%s_diff" % colname
         colabsdiff  = "%s_absdiff" % colname
-        if str(df_diff[col1].dtype) == 'object':
+        if df_diff[col1].dtype != df_diff[col2].dtype:
+            FastTripsLogger.debug("mismatching dtypes for %s and %s: %s vs %s" % (col1, col2, str(df_diff[col1].dtype), str(df_diff[col2].dtype)))
+            df_diff[coldiff] = 0
+        elif str(df_diff[col1].dtype) == 'object':
             df_diff[coldiff] = ((df_diff[col1] != df_diff[col2]) & (df_diff[col1].notnull() | df_diff[col2].notnull()))
         else:
             df_diff[coldiff] = df_diff[col1] - df_diff[col2]
@@ -220,24 +223,31 @@ def compare_pathset(dir1, dir2):
     FastTripsLogger.info("Wrote detailed pathset diff info to %s" % detail_file)
 
     # Report
-    FastTripsLogger.info("                   Average pathset size: %.1f" % df_diff_summary['num total paths'].mean())
-    FastTripsLogger.info("     Trips with paths ONLY in pathset 1: %d" % df_diff_summary['only in file1'].sum())
+    FastTripsLogger.info("                        Average pathset size: %.1f" % df_diff_summary['num total paths'].mean())
+    FastTripsLogger.info("          Trips with paths ONLY in pathset 1: %d" % df_diff_summary['only in file1'].sum())
     FastTripsLogger.debug(" -- diffs --\n" + \
                           str(df_diff_summary.loc[df_diff_summary['only in file1']==1]) + "\n")
 
-    FastTripsLogger.info("     Trips with paths ONLY in pathset 2: %d" % df_diff_summary['only in file2'].sum())
+    FastTripsLogger.info("          Trips with paths ONLY in pathset 2: %d" % df_diff_summary['only in file2'].sum())
     FastTripsLogger.debug(" -- diffs --\n" + \
                           str(df_diff_summary.loc[df_diff_summary['only in file2']==1]) + "\n")
 
-    FastTripsLogger.info("   Average paths missing from pathset 1: %.1f" % df_diff_summary['num paths missing from file1'].mean())
-    FastTripsLogger.info(" Max probability missing from pathset 1: %.3f%%" % (100*df_diff_summary['max prob missing from file1'].max()))
-    FastTripsLogger.debug(" -- diffs --\n" + \
-        str(df_diff_summary[['max prob missing from file1','num paths missing from file1']].reset_index().sort_values(by=['max prob missing from file1', 'trip_list_id_num'], ascending=[False,True]).head()) + "\n")
+    FastTripsLogger.info("        Average paths missing from pathset 1: %.1f" % df_diff_summary['num paths missing from file1'].mean())
+    FastTripsLogger.info("      Max probability missing from pathset 1: %.3f%%" % (100*df_diff_summary['max prob missing from file1'].max()))
+    FastTripsLogger.info(" # trips w/ paths>10%% missing from pathset 1: %d" % len(df_diff_summary.loc[df_diff_summary['max prob missing from file1']>0.10]))
+    FastTripsLogger.info(" # trips w/ paths> 1%% missing from pathset 1: %d" % len(df_diff_summary.loc[df_diff_summary['max prob missing from file1']>0.01]))
+    temp_df = df_diff_summary[['max prob missing from file1','num paths missing from file1']].reset_index().sort_values(by=['max prob missing from file1', 'trip_list_id_num'], ascending=[False,True])
+    FastTripsLogger.debug(" trips w/ paths> 1%% missing from pathset 1\n%s\n" %
+        str(temp_df.loc[temp_df['max prob missing from file1']>0.01]))
 
-    FastTripsLogger.info("   Average paths missing from pathset 2: %.1f" % df_diff_summary['num paths missing from file2'].mean())
-    FastTripsLogger.info(" Max probability missing from pathset 2: %.3f%%" % (100*df_diff_summary['max prob missing from file2'].max()))
-    FastTripsLogger.debug(" -- diffs --\n" + \
-        str(df_diff_summary[['max prob missing from file2','num paths missing from file2']].reset_index().sort_values(by=['max prob missing from file2', 'trip_list_id_num'], ascending=[False,True]).head()) + "\n")
+    FastTripsLogger.info("        Average paths missing from pathset 2: %.1f" % df_diff_summary['num paths missing from file2'].mean())
+    FastTripsLogger.info("      Max probability missing from pathset 2: %.3f%%" % (100*df_diff_summary['max prob missing from file2'].max()))
+    FastTripsLogger.info(" # trips w/ paths>10%% missing from pathset 2: %d" % len(df_diff_summary.loc[df_diff_summary['max prob missing from file2']>0.10]))
+    FastTripsLogger.info(" # trips w/ paths> 1%% missing from pathset 2: %d" % len(df_diff_summary.loc[df_diff_summary['max prob missing from file2']>0.01]))
+    temp_df = df_diff_summary[['max prob missing from file2','num paths missing from file2']].reset_index().sort_values(by=['max prob missing from file2', 'trip_list_id_num'], ascending=[False,True])
+    FastTripsLogger.debug(" trips w/ paths> 1%% missing from pathset 2\n%s\n" %
+        str(temp_df.loc[temp_df['max prob missing from file2']>0.01]))
+
 
 def compare_performance(dir1, dir2):
     """

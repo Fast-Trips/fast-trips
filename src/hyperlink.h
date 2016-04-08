@@ -1,7 +1,7 @@
 /**
- * \file StopStates.h
+ * \file hyperlink.h
  *
- * Defines the structure to hold the stop states for a stop.
+ * Defines the Hyperlink class that holds the links (stop states) for a stop.
  */
 #include <iostream>
 #include <map>
@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "pathspec.h"
+#include "path.h"
 
 #ifndef HYPERLINK_H
 #define HYPERLINK_H
@@ -20,83 +21,14 @@ namespace fasttrips {
         MODE_EGRESS   = -101,
         MODE_TRANSFER = -102,
         MODE_TRANSIT  = -103,
+        MODE_UNSET    =    0,
     };
 
-    /**
-     * The pathfinding algorithm is a labeling algorithm which associates each stop with a state, encapsulated
-     * here.  See StopStates for more.  If the sought path is outbound, then the preferred time is an arrival time
-     * at the destination, so the labeling algorithm starts at the destination and works backwards.  If the sought
-     * path is inbound, then the preferred time is a departure time from the origin, so the labeling algorithm starts
-     * at the origin and works forwards.  Thus, the attributes here have different meanings if the path sought is
-     * outbound versus inbound, and the convention is outbound/inbound fo the variable names.
-     *
-     * The StopState is basically the state at this stop with details of the link after (for outbound) or before
-     * (inbound) the stop in the found path.
-     *
-     * NOTE: for trip states, deparr_time_ and arrdep_time_ are both for the *vehicle* because the passenger
-     * times can be inferred from the surrounding states.
-     *
-     * In particular, for outbound trips, the deparr_time_ for trip states is not necessarily the person departure time.
-     * For inbound trips, the arrdep_time_ for trip states is not necessarily the person departure time.
-     */
-    struct StopStateKey {
-        int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
-                                        ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
-                                        ///< fasttrips::MODE_TRANSFER, or fasttrips::MODE_TRANSIT
-        int     trip_id_;               ///< Trip ID if deparr_mode_ is fasttrips::MODE_TRANSIT,
-                                        ///< or the supply_mode_num for access, egress
-        int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
-        int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
-        int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
+    /// Hyperpath cost when no links are there
+    const double MAX_COST = 999999;
 
-        bool operator ==(const StopStateKey& rhs) const
-        {
-            return (rhs.deparr_mode_    == deparr_mode_   ) &&
-                   (rhs.trip_id_        == trip_id_       ) &&
-                   (rhs.stop_succpred_  == stop_succpred_ ) &&
-                   (rhs.seq_            == seq_           ) &&
-                   (rhs.seq_succpred_   == seq_succpred_  );
-        }
-        bool operator !=(const StopStateKey& rhs) const
-        {
-            return (rhs.deparr_mode_    != deparr_mode_   ) ||
-                   (rhs.trip_id_        != trip_id_       ) ||
-                   (rhs.stop_succpred_  != stop_succpred_ ) ||
-                   (rhs.seq_            != seq_           ) ||
-                   (rhs.seq_succpred_   != seq_succpred_  );
-        }
-        bool operator<(const StopStateKey& rhs) const
-        {
-            if (deparr_mode_   < rhs.deparr_mode_  ) { return true;  }
-            if (deparr_mode_   > rhs.deparr_mode_  ) { return false; }
-            if (trip_id_       < rhs.trip_id_      ) { return true;  }
-            if (trip_id_       > rhs.trip_id_      ) { return false; }
-            if (stop_succpred_ < rhs.stop_succpred_) { return true;  }
-            if (stop_succpred_ > rhs.stop_succpred_) { return false; }
-            if (seq_           < rhs.seq_          ) { return true;  }
-            if (seq_           > rhs.seq_          ) { return false; }
-            if (seq_succpred_  < rhs.seq_succpred_ ) { return true;  }
-            if (seq_succpred_  > rhs.seq_succpred_ ) { return false; }
-            return false;
-        }
-    };
+    bool isTrip(const int& mode);
 
-    typedef struct {
-        double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
-        int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
-                                        ///< One of fasttrips::MODE_ACCESS, fasttrips::MODE_EGRESS,
-                                        ///< fasttrips::MODE_TRANSFER, or fasttrips::MODE_TRANSIT
-        int     trip_id_;               ///< Trip ID if deparr_mode_ is fasttrips::MODE_TRANSIT,
-                                        ///< or the supply_mode_num for access, egress
-        int     stop_succpred_;         ///< Successor stop for outbound, predecessor stop for inbound
-        int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
-        int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
-        double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
-        double  link_cost_;             ///< Link cost.
-        double  cost_;                  ///< Cost from previous link(s) and this link together.
-        int     iteration_;             ///< Labeling iteration that generated this stop state.
-        double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
-    } StopState;
 
     /// Structure used in PathFinder::hyperpathChoosePath
     typedef struct {
@@ -106,8 +38,21 @@ namespace fasttrips {
     } ProbabilityStopState;
 
     typedef std::map<StopStateKey, StopState> StopStateMap;
-    // this WILL be cost but to verify it's working we'll keep it equivalent to the old implementation, which is sorted by iteration
-    typedef std::multimap< int, StopStateKey> CostToStopState;
+    // cost to stop state key
+    typedef std::multimap< double, StopStateKey> CostToStopState;
+
+    struct LinkSet {
+        double          latest_dep_earliest_arr_;  ///< latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
+        StopStateKey    lder_ssk_;                 ///< trip for the latest departure/earliest arrival
+        double          sum_exp_cost_;             ///< sum of the exponentiated cost
+        double          hyperpath_cost_;           ///< hyperpath cost for this stop state
+        int             process_count_;            ///< increment this every time the stop is processed
+
+        StopStateMap    stop_state_map_;           ///< the links.  (or a set of stop states where compare means the key is unique)
+        CostToStopState cost_map_;                 ///< multimap of cost -> stop state pointers into the stop_state_set_ above
+
+        LinkSet(bool outbound) : latest_dep_earliest_arr_(0), sum_exp_cost_(0), hyperpath_cost_(MAX_COST), process_count_(0) {}
+    } ;
 
     class PathFinder;
 
@@ -127,27 +72,23 @@ namespace fasttrips {
         /// For outbound, originating stop; for inbound, destination stop.
         int stop_id_;
 
-        /// latest departure time from this stop for outbound trips, earliest arrival time to this stop for inbound trips
-        double latest_dep_earliest_arr_;
-        /// trip for the latest departure/earliest arrival
-        int lder_trip_id_;
-        /// increment this every time the stop is processed
-        int process_count_;
-
-        /// sum of the exponentiated cost
-        double sum_exp_cost_;
-        /// hyperpath cost for this stop state
-        double hyperpath_cost_;
-
-        /// set of stop states where compare means the key is unique
-        StopStateMap stop_state_map_;
-        /// multimap of cost -> stop state pointers into the stop_state_set_ above
-        CostToStopState cost_map_;
+        /// link set with trip links
+        LinkSet linkset_trip_;
+        /// link set with non-trip link
+        LinkSet linkset_nontrip_;
 
         /// Remove the given stop state from cost_map_
         void removeFromCostMap(const StopStateKey& ssk, const StopState& ss);
 
+        /// Reset latest departure/earliest arrival
+        void resetLatestDepartureEarliestArrival(bool of_trip_links, const PathSpecification& path_spec);
+
+        /// Update the low cost path for this stop state
+        void updateLowCostPath(const StopStateKey& ssk, const Hyperlink* prev_link,
+                               std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
+
     public:
+
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a>
         /// This could be configured per stop in the future.
         static double TIME_WINDOW_;
@@ -157,12 +98,19 @@ namespace fasttrips {
         /// Default constructor
         Hyperlink();
         /// Constructor we should call
-        Hyperlink(int stop_id);
+        Hyperlink(int stop_id, bool outbound);
         /// Destructor
-        ~Hyperlink() {}
+        ~Hyperlink();
 
         /// How many links make up the hyperlink?
-        size_t size() const { return stop_state_map_.size(); }
+        size_t size() const;
+        /// How many links make up the trip/nontrip hyperlink
+        size_t size(bool of_trip_links) const;
+
+        /// Accessor for stop state map
+        const StopStateMap& getStopStateMap(bool of_trip_links) const;
+        /// Accessor for the low cost path
+        const Path* getLowCostPath(bool of_trip_links) const;
 
         /// Add this link to the hyperlink.
         /// For deterministic: we only keep one link.  Accept it iff the cost is lower.
@@ -170,41 +118,50 @@ namespace fasttrips {
         /// - If it's outside the time window, reject it.
         /// - If it's already here according to the key, then replace the state.
         /// - Return true iff the hyperlink state was affected (e.g. the stop needs to be re-processed)
-        bool addLink(const StopState& ss, bool& rejected,
+        bool addLink(const StopState& ss, const Hyperlink* prev_link, bool& rejected,
                      std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
 
         /// Clears data
-        void clear();
+        void clear(bool of_trip_links);
 
         /// Returns the lowest cost stop state (link) in this hyperlink
-        const StopState& lowestCostStopState() const;
+        /// If for_trip_link, lowest trip link. Otherwise, lowest non-trip link.
+        const StopState& lowestCostStopState(bool of_trip_links) const;
+        /// Given an arrival time into this hyperlink (outbound) or a departure time out of this hyperlink (inbound),
+        /// returns the best guess link
+        const StopState& bestGuessLink(bool outbound, double arrdep_time) const;
+        /// Given an arrival link into this hyperlink (outbound) or a departure time out of this hyperlink (inbound),
+        /// returns the best guess cost.  Time consuming but more accurate.  Make it an option?
+        /// This isn't currently being used.  Initial tests didn't show it helping things.  TODO: remove?
+        double bestGuessCost(bool outbound, double arrdep_time) const;
 
         /// Returns the earliest departure (outbound) or latest arrival (inbound) of the links that make up this hyperlink
-        double earliestDepartureLatestArrival(bool outbound) const;
+        double earliestDepartureLatestArrival(bool outbound, bool of_trip_links=true) const;
 
         /// Returns the trip id for the latest departure (outbound) or earliest arrival (inbound) trip
-        double latestDepartureEarliestArrival() const;
-        /// Returns the trip id for the latest departure (outbound) or earliest arrival (inbound) trip
-        int latestDepartingEarliestArrivingTripID() const;
+        double latestDepartureEarliestArrival(bool of_trip_links) const;
         /// Calculate the cost of just the non-walk links that make up this hyperlink
         double calculateNonwalkLabel() const;
 
         /// Accessor for the process count
-        int processCount() const { return process_count_; }
+        int processCount(bool of_trip_links) const;
         /// Increment process count
-        void incrementProcessCount() { process_count_ += 1; }
+        void incrementProcessCount(bool of_trip_links);
         /// Accessor for the hyperlink cost
-        double hyperpathCost() const { return hyperpath_cost_; }
+        double hyperpathCost(bool of_trip_links) const;
 
         /// Print the stop state header.  For printing stop states in table form.
         static void printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec);
         /// Print the given stop state.
         static void printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec, const PathFinder& pf);
+        /// Print the given Link Set
+        static void printLinkSet(std::ostream& ostr, int stop_id, bool is_trip, const LinkSet& linkset, const PathSpecification& path_spec, const PathFinder& pf);
+
         /// Print the hyperlink, including a header and the stop states (links) that make it up.
         void print(std::ostream& ostr, const PathSpecification& path_spec, const PathFinder& pf) const;
 
         /// Go through stop states (links) and remove any outside the time window
-        void pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf);
+        void pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf, bool of_trip_links);
 
         /// Setup probabilities for hyperlink's stop states (links)
         void setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
@@ -212,15 +169,16 @@ namespace fasttrips {
                                 const StopState* prev_link = NULL) const;
 
         /**
-         * Given a vector of fasttrips::ProbabilityStop instances,
+         * Given a vector of fasttrips::ProbabilityStopState instances,
          * randomly selects one based on the cumulative probability
-         * (fasttrips::ProbabilityStop.prob_i_)
+         * (fasttrips::ProbabilityStopState.prob_i_)
          *
-         * @return the index_ from chosen ProbabilityStop.
+         * @return a const reference to the chosen StopState.
          */
         const StopState& chooseState(const PathSpecification& path_spec,
-                                     std::ofstream& trace_file,
-                                     const std::vector<ProbabilityStopState>& prob_stops) const;
+                                     std::ostream& trace_file,
+                                     const std::vector<ProbabilityStopState>& prob_stops,
+                                     const StopState* prev_link = NULL) const;
     };
 
     /**

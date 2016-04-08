@@ -152,6 +152,9 @@ class Transfer:
                                             Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE:0},
                                      inplace=True)
 
+        # SPECIAL -- we rely on this in the extension
+        self.transfers_df["transfer_penalty"] = 1.0
+
         FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
 

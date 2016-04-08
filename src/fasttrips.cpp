@@ -115,8 +115,8 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
     path_spec.transit_mode_= transit_mode;
     path_spec.egress_mode_ = egress_mode;
 
-    fasttrips::Path path;
-    fasttrips::PathInfo path_info = {0, 0, false, 0, 0};
+    fasttrips::Path path(path_spec.outbound_, true); // enumerating
+    fasttrips::PathInfo path_info = {0, 0, 0};
     fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0};
     pathfinder.findPath(path_spec, path, path_info, perf_info);
 
@@ -146,7 +146,7 @@ _fasttrips_find_path(PyObject *self, PyObject *args)
         *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[ind].second.arrdep_time_;
     }
 
-    PyObject *returnobj = Py_BuildValue("(OOdiill)",ret_int,ret_double,path_info.cost_,
+    PyObject *returnobj = Py_BuildValue("(OOdiill)",ret_int,ret_double,path.cost(),
                                         perf_info.label_iterations_, perf_info.max_process_count_,
                                         perf_info.milliseconds_labeling_, perf_info.milliseconds_enumerating_);
     return returnobj;
