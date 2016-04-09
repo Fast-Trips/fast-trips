@@ -357,6 +357,7 @@ namespace fasttrips {
             // TODO: make this configurable
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["walk_time_min"   ] = 0.0;
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 1.0;
+            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["elevation_gain"  ] = 0.0;
         }
 
         if (origin_stop_id == destination_stop_id) {
