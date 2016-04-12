@@ -381,7 +381,7 @@ class Assignment:
 
         info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
         if info_freq < 1: info_freq = 1
-        # info_freq = 1 # DEBUG CRASH
+        info_freq = 1 # DEBUG CRASH
 
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
@@ -895,11 +895,12 @@ class Assignment:
             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,     # transit vehicle arrive time (at B) = alight time for pax
             }, inplace=True)
 
-        # redundant with A_id, B_id, A_seq, B_seq
+        # redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time
         passenger_trips.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                               '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
+                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                              'B_time'], axis=1, inplace=True)
         FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
 
         # FastTripsLogger.debug("passenger_trips\n%s" % \
@@ -939,6 +940,10 @@ class Assignment:
 
         passenger_trips     = Assignment.get_passenger_trips(passengers_df, veh_trips_df)
         passenger_trips_len = len(passenger_trips)
+        FastTripsLogger.debug("passenger_trips:\n%s\n" % passenger_trips.head().to_string(formatters=\
+                   {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_formatter,
+                    Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_formatter,
+                    Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_formatter}))
 
         ######################################################################################################
         bump_iter = 0
@@ -949,14 +954,14 @@ class Assignment:
 
             # Group to boards by counting trip_list_id_nums for a (trip_id, A_id as stop_id)
             passenger_trips_boards = passenger_trips[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                      Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']].groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']).count()
+                                                      Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq']].groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq']).count()
             passenger_trips_boards.index.names = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                   Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]
 
             # And alights by counting path_ids for a (trip_id, B_id as stop_id)
             passenger_trips_alights = passenger_trips[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                       Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id','B_seq']].groupby([Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id','B_seq']).count()
+                                                       Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq']].groupby([Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq']).count()
             passenger_trips_alights.index.names = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]
@@ -1192,6 +1197,8 @@ class Assignment:
             FastTripsLogger.debug("Bump_wait_df:\n%s" % Assignment.bump_wait_df.to_string(formatters=\
                 {Assignment.SIM_COL_PAX_ARRIVE_TIME :Util.datetime64_formatter}))
 
+        veh_loaded_df = Trip.update_trip_times(veh_loaded_df)
+
         ######################################################################################################
         FastTripsLogger.info("Step 4. Convert times to strings")
 
@@ -1264,8 +1271,9 @@ class Assignment:
         """
         # reset columns
         print_veh_trips_df = veh_trips_df
+        FastTripsLogger.debug("print_load_profile.  veh_trips_df.head()=\n%s\n" % veh_trips_df.head().to_string())
+        FastTripsLogger.debug("dtypes=\n%s" % str(veh_trips_df.dtypes))
 
-        Trip.calculate_dwell_times(print_veh_trips_df)
         print_veh_trips_df = FT.trips.calculate_headways(print_veh_trips_df)
 
         # recode/reformat
@@ -1279,7 +1287,7 @@ class Assignment:
                    'traveledDist',
                    'departureTime',
                    'headway',
-                   'dwell_time',
+                   Trip.STOPTIMES_COLUMN_DWELL_TIME,
                    'boards',
                    'alights',
                    'onboard']
