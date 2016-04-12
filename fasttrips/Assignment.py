@@ -381,7 +381,7 @@ class Assignment:
 
         info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
         if info_freq < 1: info_freq = 1
-        info_freq = 1 # DEBUG CRASH
+        # info_freq = 1 # DEBUG CRASH
 
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
@@ -1287,7 +1287,7 @@ class Assignment:
                    'traveledDist',
                    'departureTime',
                    'headway',
-                   Trip.STOPTIMES_COLUMN_DWELL_TIME,
+                   Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
                    'boards',
                    'alights',
                    'onboard']
