@@ -316,6 +316,10 @@ class Assignment:
         """
         Assignment.write_configuration(output_dir)
 
+        # write the initial load profile, iteration 0
+        veh_trips_df = FT.trips.get_full_trips()
+        Trip.print_load_profile(FT, 0, veh_trips_df, output_dir)
+
         Assignment.bump_wait = {}
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
@@ -329,7 +333,7 @@ class Assignment:
                 num_paths_found    = Assignment.generate_paths(FT, output_dir, iteration)
                 passengers_df      = Assignment.setup_passengers(FT, output_dir, iteration)
 
-            veh_trips_df       = Assignment.setup_trips(FT)
+            veh_trips_df       = FT.trips.get_full_trips()
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                 Path.write_paths(passengers_df, output_dir)
@@ -351,12 +355,13 @@ class Assignment:
             FastTripsLogger.info("  MISSED PASSENGERS:         %10d" % num_bumped_passengers)
             FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
 
+            FastTripsLogger.info("**************************** WRITING OUTPUTS ****************************")
+            Trip.print_load_profile(FT, iteration, veh_trips_df, output_dir)
+
             if capacity_gap < 0.001 or Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
                 break
 
         # end for loop
-        FastTripsLogger.info("**************************** WRITING OUTPUTS ****************************")
-        Assignment.print_load_profile(FT, veh_trips_df, output_dir)
 
     @staticmethod
     def generate_paths(FT, output_dir, iteration):
@@ -829,31 +834,6 @@ class Assignment:
         return df
 
     @staticmethod
-    def setup_trips(FT):
-        """
-        Sets up and returns a :py:class:`pandas.DataFrame` where each row contains a leg of a transit vehicle trip.
-        # 2015-06-22 15:42:34 DEBUG Setup vehicle trips dataframe:
-        # arrival_time          datetime64[ns]
-        # departure_time        datetime64[ns]
-        # stop_id                       object
-        # stop_sequence                  int64
-        # trip_id                       object
-        # arrival_time_min             float64
-        # departure_time_min           float64
-        # stop_id_num                    int64
-        # trip_id_num                    int64
-        # route_id                      object
-        # service_id                    object
-        # vehicle_name                  object
-        """
-        # join with trips to get additional fields
-        df = pandas.merge(left= FT.trips.stop_times_df, right= FT.trips.trips_df,
-                          how='left',
-                          on=[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_TRIP_ID_NUM])
-        assert(len(FT.trips.stop_times_df) == len(df))
-        return df
-
-    @staticmethod
     def get_passenger_trips(passengers_df, veh_trips_df):
         """
         Creates a list of passenger trips with passenger arrive, board and alight times.
@@ -920,8 +900,9 @@ class Assignment:
         passengers_df_len       = len(passengers_df)
         veh_trips_df_len        = len(veh_trips_df)
 
-        # veh_trips_df.set_index(['trip_id','stop_seq','stop_id'],verify_integrity=True,inplace=True)
-        # FastTripsLogger.debug("veh_trips_df types = \n%s" % str(veh_trips_df.dtypes))
+        # drop these -- we'll set them
+        veh_trips_df.drop(["boards","alights","onboard"], axis=1, inplace=True)
+
         FastTripsLogger.debug("veh_trips_df: \n%s" % veh_trips_df.head().to_string(formatters=
             {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
              Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter,
@@ -1264,43 +1245,6 @@ class Assignment:
 
         return (len(pax_exp_df), veh_loaded_df, pax_exp_df)
 
-    @staticmethod
-    def print_load_profile(FT, veh_trips_df, output_dir):
-        """
-        Print the load profile output
-        """
-        # reset columns
-        print_veh_trips_df = veh_trips_df
-        FastTripsLogger.debug("print_load_profile.  veh_trips_df.head()=\n%s\n" % veh_trips_df.head().to_string())
-        FastTripsLogger.debug("dtypes=\n%s" % str(veh_trips_df.dtypes))
-
-        print_veh_trips_df = FT.trips.calculate_headways(print_veh_trips_df)
-
-        # recode/reformat
-        print_veh_trips_df['traveledDist']  = -1
-        print_veh_trips_df['departureTime'] = print_veh_trips_df.departure_time.apply(Util.datetime64_min_formatter)
-        # reorder
-        columns = [Trip.TRIPS_COLUMN_ROUTE_ID,
-                   Trip.TRIPS_COLUMN_TRIP_ID,
-                   Trip.TRIPS_COLUMN_DIRECTION_ID,
-                   Trip.STOPTIMES_COLUMN_STOP_ID,
-                   'traveledDist',
-                   'departureTime',
-                   'headway',
-                   Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
-                   'boards',
-                   'alights',
-                   'onboard']
-        # this one may not be in their; direction_id is optional
-        if Trip.TRIPS_COLUMN_DIRECTION_ID not in print_veh_trips_df.columns.values:
-            columns.remove(Trip.TRIPS_COLUMN_DIRECTION_ID)
-        print_veh_trips_df = print_veh_trips_df[columns]
-
-        load_file = open(os.path.join(output_dir, "ft_output_loadProfile.txt"), 'w')
-        print_veh_trips_df.to_csv(load_file,
-                              float_format="%.2f",
-                              index=False)
-        load_file.close()
 
 def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, input_demand_dir,
                                          output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):

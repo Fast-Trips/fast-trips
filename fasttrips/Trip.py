@@ -153,10 +153,15 @@ class Trip:
     #: accel from first stop and decel to last stop, but no dwell times and no other
     #: accel/decel times.
     STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME       = "original_travel_time"
+    #: fasttrips Trips column name: Travel Time.  This is a timedelta.
+    STOPTIMES_COLUMN_TRAVEL_TIME                = "travel_time"
+    #: fasttrips Trips column name: Travel Time in seconds. Float.
+    STOPTIMES_COLUMN_TRAVEL_TIME_SEC            = "travel_time_sec"
     #: fasttrips Trips column name: Dwell Time.  This is a timedelta.
     STOPTIMES_COLUMN_DWELL_TIME                 = "dwell_time"
     #: fasttrips Trips column name: Dwell Time in seconds.  Float
     STOPTIMES_COLUMN_DWELL_TIME_SEC             = "dwell_time_sec"
+
 
     #: File with trip ID, trip ID number correspondence
     OUTPUT_TRIP_ID_NUM_FILE                     = 'ft_intermediate_trip_id.txt'
@@ -374,7 +379,7 @@ class Trip:
 
         self.stop_times_df = Util.remove_null_columns(self.stop_times_df)
 
-        self.add_original_travel_time()
+        self.add_original_travel_time_and_dwell()
         self.add_trip_attrs_from_stoptimes()
 
         FastTripsLogger.debug("Final\n" + str(self.stop_times_df.head().to_string(formatters=\
@@ -427,9 +432,16 @@ class Trip:
                 return row[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]
         raise Exception("get_scheduled_departure: stop %s not find for trip %s" % (str(stop_id), str(trip_id)))
 
-    def add_original_travel_time(self):
+    def add_original_travel_time_and_dwell(self):
         """
-        Add original travel time to the :py:attr:`Trip.stop_times_df` as the column named :py:attr:`Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME`
+        Add original travel time to the :py:attr:`Trip.stop_times_df` as the
+        column named :py:attr:`Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME`
+
+        Copies it into working travel time columns :py:attr:`Trip.STOPTIMES_COLUMN_TRAVEL_TIME`
+        and :py:attr:`Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC`
+
+        Also adds dwell time columns named :py:attr:`Trip.STOPTIMES_COLUMN_DWELL_TIME`
+        and :py:attr:`Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC`
         """
         stop_times_len_df = len(self.stop_times_df)
         # first, find the original travel time following each stop
@@ -451,6 +463,17 @@ class Trip:
         # drop the extra column
         self.stop_times_df.drop(["next_stop_arrival"], axis=1, inplace=True)
 
+        # copy
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME    ] = self.stop_times_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = \
+            (self.stop_times_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/numpy.timedelta64(1, 's'))
+
+        # dwell time
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME] = \
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC] = \
+            (self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME]/numpy.timedelta64(1, 's'))
+
     def add_trip_attrs_from_stoptimes(self):
         """
         Adds the columns :py:attr:`Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE` and :py:attr:`Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME`
@@ -469,8 +492,24 @@ class Trip:
         self.trips_df = pandas.merge(left=self.trips_df, right=stops_by_trip)
         # make sure we didn't change the length
         assert(trips_len == len(self.trips_df))
-        print self.trips_df.head()
 
+    def get_full_trips(self):
+        """
+        Returns the fullest dataframe of trip + stop information.
+        """
+        # join with trips to get additional fields
+        df = pandas.merge(left = self.stop_times_df,
+                          right= self.trips_df,
+                          how  = 'left',
+                          on   =[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_TRIP_ID_NUM])
+        assert(len(self.stop_times_df) == len(df))
+
+        # add blank boards, alights and onboard
+        assert("boards" not in list(df.columns.values))
+        df["boards" ] = 0
+        df["alights"] = 0
+        df["onboard"] = 0
+        return df
     def write_trips_for_extension(self):
         """
         This writes to an intermediate file a formatted file for the C++ extension.
@@ -528,11 +567,11 @@ class Trip:
         If vehicle max_speed and acceleration rate specified, for non first/last stop, adds lost time due to stopping.
         If dwell time formula specified, adds dwell time at stop.
 
-        Adds the following columns:
-        - Trip.STOPTIMES_COLUMN_DWELL_TIME and
-        - Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC
-
         Updates the following columns:
+        - Trip.STOPTIMES_COLUMN_TRAVEL_TIME
+        - Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC
+        - Trip.STOPTIMES_COLUMN_DWELL_TIME
+        - Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC
         - Trip.STOPTIMES_COLUMN_ARRIVAL_TIME
         - Trip.STOPTIMES_COLUMN_DEPARTURE_TIME
 
@@ -540,49 +579,12 @@ class Trip:
         trips_df_len = len(trips_df)
         FastTripsLogger.debug("Trip.update_trip_times() trips_df has %d rows" % len(trips_df))
         FastTripsLogger.debug("trips_df.dtypes=\n%s\n" % str(trips_df.dtypes))
+        trip_cols = list(trips_df.columns.values)
 
         # TODO: what is this?
         trips_df["friction"] = 0.0
 
-
-        trips_df["does_stop"] = (trips_df['boards']>0) | (trips_df['alights']>0)
-        # first, find the original travel time following each stop
-        # need to join the next stop and it's arrival time
-        next_stop_df = trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                 Trip.STOPTIMES_COLUMN_STOP_SEQUENCE, Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE,
-                                 "does_stop"]].copy()
-        next_stop_df.loc[:,"is_last_stop"] = next_stop_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] == next_stop_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]
-        next_stop_df.loc[:,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] = next_stop_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]-1
-        next_stop_df.rename(columns={"does_stop"                       :"next_does_stop",
-                                     "is_last_stop"                    :"next_is_last_stop"}, inplace=True)
-        FastTripsLogger.debug("next stop arrival:\n%s\n" % next_stop_df.head().to_string())
-
-        trips_df = pandas.merge(left=trips_df, right=next_stop_df, how='left')
-        assert(trips_df_len==len(trips_df))
-
-        # Start with original travel time for the link FROM this stop to the NEXT stop
-        trip_cols = list(trips_df.columns.values)
-
-        # Add acceleration from stop if there are boards/alights
-        # Skip first stop because we assume it's already there, and last since we don't go anywhere
-        trips_df["accel_secs"] = 0.0
-        if (Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS in trip_cols) and \
-           (Trip.VEHICLES_COLUMN_ACCELERATION in trip_cols):
-            trips_df.loc[trips_df["does_stop"] & (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1) & \
-                         (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]<trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]), "accel_secs"] = \
-                            trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_ACCELERATION]
-        # Add deceleration to next stop.
-        # Skip stop with next stop = last stop because we assume it's already there
-        trips_df["decel_secs"] = 0.0
-        if (Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS in trip_cols) and \
-           (Trip.VEHICLES_COLUMN_DECELERATION in trip_cols):
-            trips_df.loc[(trips_df["next_does_stop"]) & (trips_df["next_is_last_stop"]==False), "decel_secs"] = \
-                            trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_DECELERATION]
-
-        # update the travel time
-        trips_df["travel_time_sec"] = (trips_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/numpy.timedelta64(1, 's')) + trips_df["accel_secs"] + trips_df["decel_secs"]
-
-        # update the dwell time
+        # Update the dwell time
         if Trip.VEHICLES_COLUMN_DWELL_FORMULA in trip_cols:
             all_dwell_df   = None
             all_dwell_init = False
@@ -612,22 +614,79 @@ class Trip:
             # use the new one
             trips_df = all_dwell_df
 
-        # keep the dwell time
-        trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME] = trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC].map(lambda x: datetime.timedelta(seconds=x))
+            # keep the dwell time
+            trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME] = trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC].map(lambda x: datetime.timedelta(seconds=x))
+
+        # the vehicle stops if someone boards or someone alights or both
+        trips_df["does_stop"] = (trips_df['boards']>0) | (trips_df['alights']>0)
+
+        # we need information about the next stop
+        next_stop_df = trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                 Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                 Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE,
+                                 "does_stop"]].copy()
+        next_stop_df.loc[:,"is_last_stop"] = next_stop_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] == next_stop_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]
+        next_stop_df.loc[:,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] = next_stop_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]-1
+        next_stop_df.rename(columns={"does_stop"                       :"next_does_stop",
+                                     "is_last_stop"                    :"next_is_last_stop"}, inplace=True)
+        FastTripsLogger.debug("next_stop_df:\n%s\n" % next_stop_df.head().to_string())
+
+        trips_df = pandas.merge(left=trips_df, right=next_stop_df, how='left')
+        assert(trips_df_len==len(trips_df))
+
+        # Start with original travel time for the link FROM this stop to the NEXT stop
+        trip_cols = list(trips_df.columns.values)
+
+        # Add acceleration from stop if there are boards/alights
+        # Skip first stop because we assume it's already there, and last since we don't go anywhere
+        trips_df["accel_secs"] = 0.0
+        if (Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS in trip_cols) and \
+           (Trip.VEHICLES_COLUMN_ACCELERATION in trip_cols):
+            trips_df.loc[trips_df["does_stop"] & (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1) & \
+                         (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]<trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]), "accel_secs"] = \
+                            trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_ACCELERATION]
+        # Add deceleration to next stop.
+        # Skip stop with next stop = last stop because we assume it's already there
+        trips_df["decel_secs"] = 0.0
+        if (Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS in trip_cols) and \
+           (Trip.VEHICLES_COLUMN_DECELERATION in trip_cols):
+            trips_df.loc[(trips_df["next_does_stop"]) & (trips_df["next_is_last_stop"]==False), "decel_secs"] = \
+                            trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_DECELERATION]
+
+        # update the travel time
+        trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = (trips_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/numpy.timedelta64(1, 's')) + trips_df["accel_secs"] + trips_df["decel_secs"]
+        trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME    ] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC].map(lambda x: datetime.timedelta(seconds=x))
 
         # put travel time + dwell together because that's the full time for a link (stop arrival time to next stop arrival time)
-        trips_df["travel_dwell_sec"] = trips_df["travel_time_sec"] + trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC]
+        trips_df["travel_dwell_sec"] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] + trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC]
         # cumulatively sum it to get arrival times times for the trip
-        trips_df["travel_dwell_sec_cum"] = trips_df.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID])["travel_dwell_sec"].cumsum()
+        trips_df["travel_dwell_sec_cum"] = trips_df.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM])["travel_dwell_sec"].cumsum()
         trips_df["travel_dwell_cum"    ] = trips_df["travel_dwell_sec_cum"].map(lambda x: datetime.timedelta(seconds=x) if pandas.notnull(x) else None)
+        # verifying cumsum did as expected
+        # FastTripsLogger.debug("\n"+ trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE, "travel_dwell_sec","travel_dwell_sec_cum"]].to_string())
 
         # move the next arrival time for joining to the next stop
         next_stop_df = trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                  Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME,
                                  "travel_dwell_cum"]].copy()
-        next_stop_df["new_arrival_time"   ] = next_stop_df[Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME] + trips_df["travel_dwell_cum"]
+        # need to start from trip arrival time.  For some reason can't aggregate STOPTIMES_COLUMN_DWELL_TIME, only the seconds version
+        first_dwell_df = trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC]]. \
+            groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM]).agg({Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC:'first'}).reset_index()
+        first_dwell_df.rename(columns={Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC:"trip_first_dwell_sec"}, inplace=True)
+        first_dwell_df["trip_first_dwell"] = first_dwell_df["trip_first_dwell_sec"].map(lambda x: datetime.timedelta(seconds=x))
+
+        # verify first dwell is correct
+        # FastTripsLogger.debug("first_dwell:\n%s\n" % first_dwell_df.head().to_string())
+        next_stop_df = pandas.merge(left=next_stop_df, right=first_dwell_df, how='left')
+
+        FastTripsLogger.debug("next_stop_df:\n%s\n" % next_stop_df.head().to_string())
+
+        next_stop_df["trip_arrival_time" ] = next_stop_df[Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME] - next_stop_df["trip_first_dwell"]
+        next_stop_df["new_arrival_time"  ] = next_stop_df["trip_arrival_time"] + trips_df["travel_dwell_cum"]
         next_stop_df.loc[:,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] += 1
+
+        FastTripsLogger.debug("next_stop_df:\n%s\n" % next_stop_df.head().to_string())
         trips_df = pandas.merge(left=trips_df,
                                 right=next_stop_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                     Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
@@ -649,13 +708,13 @@ class Trip:
                 60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
         FastTripsLogger.debug("Trips:calculate_dwell_times() trips_df:\n%s\n" % \
-            trips_df.loc[trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]>2,[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+            trips_df.loc[trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]>1,[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                       Trip.STOPTIMES_COLUMN_ARRIVAL_TIME, Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
                       Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS, Trip.VEHICLES_COLUMN_ACCELERATION, Trip.VEHICLES_COLUMN_DECELERATION,
                       "boards", "alights", "does_stop","next_does_stop","next_is_last_stop",
                       "accel_secs","decel_secs",
-                      "travel_time_sec",Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
+                      Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
                       "travel_dwell_sec","travel_dwell_sec_cum","new_arrival_time"
                       ]].head(15).to_string())
 
@@ -663,7 +722,7 @@ class Trip:
         assert(trips_df_len==len(trips_df))
         # drop all the intermediate columns
         trips_df.drop(["does_stop","next_does_stop","next_is_last_stop",
-                      "accel_secs","decel_secs","travel_time_sec",
+                      "accel_secs","decel_secs",
                       "travel_dwell_sec","travel_dwell_sec_cum","travel_dwell_cum",
                       "new_arrival_time"], axis=1, inplace=True)
         FastTripsLogger.debug("trips_df.dtypes=\n%s\n" % str(trips_df.dtypes))
@@ -723,3 +782,45 @@ class Trip:
                                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])
         assert(len(trips_df)==trips_df_len)
         return trips_df
+
+    @staticmethod
+    def print_load_profile(FT, iteration, veh_trips_df, output_dir):
+        """
+        Print the load profile output
+        """
+        # reset columns
+        print_veh_trips_df = veh_trips_df
+
+        FastTripsLogger.debug("print_load_profile.  veh_trips_df.head()=\n%s\n" % veh_trips_df.head().to_string())
+        FastTripsLogger.debug("dtypes=\n%s" % str(veh_trips_df.dtypes))
+
+        print_veh_trips_df = FT.trips.calculate_headways(print_veh_trips_df)
+        print_veh_trips_df["iteration"] = iteration
+
+        # reorder
+        columns = ["iteration",
+                   Trip.TRIPS_COLUMN_ROUTE_ID,
+                   Trip.TRIPS_COLUMN_TRIP_ID,
+                   Trip.TRIPS_COLUMN_DIRECTION_ID,
+                   Trip.STOPTIMES_COLUMN_STOP_ID,
+                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                   Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
+                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+                   Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
+                   Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC,
+                   'boards',
+                   'alights',
+                   'onboard']
+        # this one may not be in their; direction_id is optional
+        if Trip.TRIPS_COLUMN_DIRECTION_ID not in print_veh_trips_df.columns.values:
+            columns.remove(Trip.TRIPS_COLUMN_DIRECTION_ID)
+        print_veh_trips_df = print_veh_trips_df[columns]
+
+        load_filename = os.path.join(output_dir, "ft_output_loadProfile.txt")
+        load_file = open(load_filename, 'w' if iteration==0 else 'a')
+        print_veh_trips_df.to_csv(load_file,
+                              float_format="%.2f",
+                              index=False,
+                              header=True if iteration==0 else False)
+        load_file.close()
+        FastTripsLogger.info("%s %s" % ("Wrote" if iteration==0 else "Updated", load_filename))
