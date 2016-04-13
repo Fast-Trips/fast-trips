@@ -15,6 +15,7 @@ __license__   = """
 import collections,datetime,os,sys
 import pandas
 
+from .Error    import NetworkInputError
 from .Logger   import FastTripsLogger
 from .Route    import Route
 from .Stop     import Stop
@@ -321,6 +322,17 @@ class TAZ:
                                                 right=pandas.concat([knr_dap_df,pnr_dap_df], axis=0),
                                                 on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                                 how='left')
+
+            # look for required column being null
+            lots_not_found = self.drive_access_df.loc[pandas.isnull(self.drive_access_df[TAZ.DAP_COLUMN_LOT_LATITUDE])]
+            if len(lots_not_found) > 0:
+                error_msg = "Found %d drive access links in %s with lots not specified in %s" % \
+                    (len(lots_not_found), TAZ.INPUT_DRIVE_ACCESS_FILE, TAZ.INPUT_DAP_FILE)
+                FastTripsLogger.fatal(error_msg)
+                FastTripsLogger.fatal("\nFirst five drive access links with lots not found:\n%s" % \
+                                      str(lots_not_found.head().to_string()))
+                raise NetworkInputError(TAZ.INPUT_DAP_FILE, error_msg)
+
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE] = \
                 self.drive_access_df['dap_type'] + '_' + \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DIRECTION]
@@ -454,7 +466,6 @@ class TAZ:
         # this will make it so beyond taz num, supply mode num, and stop num
         # the remaining columns collapse to variable name, variable value
         walk_df = walk_df.stack()
-        # print walk_df
 
         # ========== Drive access/egres =================================================
         drive_df = self.drive_access_df.copy()
