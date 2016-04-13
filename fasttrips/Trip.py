@@ -800,6 +800,11 @@ class Trip:
         # reorder
         columns = ["iteration",
                    Trip.TRIPS_COLUMN_ROUTE_ID,
+                   Route.ROUTES_COLUMN_ROUTE_SHORT_NAME,
+                   Route.ROUTES_COLUMN_ROUTE_LONG_NAME,
+                   Route.ROUTES_COLUMN_ROUTE_TYPE,
+                   Route.ROUTES_COLUMN_AGENCY_ID,
+                   Route.ROUTES_COLUMN_MODE,
                    Trip.TRIPS_COLUMN_TRIP_ID,
                    Trip.TRIPS_COLUMN_DIRECTION_ID,
                    Trip.STOPTIMES_COLUMN_STOP_ID,
@@ -811,9 +816,13 @@ class Trip:
                    'boards',
                    'alights',
                    'onboard']
-        # this one may not be in their; direction_id is optional
-        if Trip.TRIPS_COLUMN_DIRECTION_ID not in print_veh_trips_df.columns.values:
-            columns.remove(Trip.TRIPS_COLUMN_DIRECTION_ID)
+
+        # these may not be in there since they're optional
+        for optional_col in [Trip.TRIPS_COLUMN_DIRECTION_ID,
+                             Route.ROUTES_COLUMN_AGENCY_ID]:
+            if optional_col not in print_veh_trips_df.columns.values:
+                columns.remove(optional_col)
+
         print_veh_trips_df = print_veh_trips_df[columns]
 
         load_filename = os.path.join(output_dir, "ft_output_loadProfile.txt")

@@ -44,6 +44,8 @@ class Route(object):
     ROUTES_COLUMN_ROUTE_LONG_NAME           = "route_long_name"
     #: gtfs Routes column name: Route type
     ROUTES_COLUMN_ROUTE_TYPE                = "route_type"
+    #: gtfs Routes column name: Agency ID
+    ROUTES_COLUMN_AGENCY_ID                 = "agency_id"
     #: fasttrips Routes column name: Mode
     ROUTES_COLUMN_MODE                      = "mode"
 
