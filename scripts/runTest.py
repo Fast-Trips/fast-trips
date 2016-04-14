@@ -3,7 +3,7 @@ import argparse, os, pandas, re, sys
 
 USAGE = r"""
 
-  python runTest.py [--trace_only] asgn_type iters capacity input_network_dir input_demand_dir output_dir
+  python runTest.py [--trace_only|-t] [--num_trips|-n #trips] asgn_type iters capacity input_network_dir input_demand_dir output_dir
 
   Where asgn_type is one of 'deterministic' or 'stochastic'
 
@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(usage=USAGE)
     parser.register('type','bool',str2bool)
     parser.add_argument('-t','--trace_only', action='store_true')
+    parser.add_argument('-n','--num_trips',  type=int)
     parser.add_argument("asgn_type",         choices=['deterministic','stochastic'])
     parser.add_argument("iters",             type=int)
     parser.add_argument("capacity",          type='bool')
@@ -57,12 +58,18 @@ if __name__ == "__main__":
 
     fasttrips.Assignment.ITERATION_FLAG          = int(args.iters)
 
+    if args.num_trips:
+        fasttrips.Assignment.DEBUG_NUM_TRIPS     = args.num_trips
+
     if args.capacity == 0:
         fasttrips.Assignment.CAPACITY_CONSTRAINT = False
     else:
         fasttrips.Assignment.CAPACITY_CONSTRAINT = True
 
     if args.trace_only:
+        if len(fasttrips.Assignment.TRACE_PERSON_IDS) == 0:
+            print "Trace only requested but no trace IDs are specified in configuration."
+            sys.exit(2)
         fasttrips.Assignment.DEBUG_TRACE_ONLY    = True
         fasttrips.Assignment.NUMBER_OF_PROCESSES = 1
 

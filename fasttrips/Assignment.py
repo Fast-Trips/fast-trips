@@ -106,6 +106,9 @@ class Assignment:
     #: Debug mode: only run trace passengers
     DEBUG_TRACE_ONLY                = False
 
+    #: Debug mode: only run this number of trips, -1 to run all. Int.
+    DEBUG_NUM_TRIPS                 = -1
+
     #: Trace these passengers
     TRACE_PERSON_IDS                = None
 
@@ -192,6 +195,7 @@ class Assignment:
                       'capacity_constraint'             :False,
                       'trace_person_ids'                :'None',
                       'debug_trace_only'                :'False',
+                      'debug_num_trips'                 :-1,
                       'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
@@ -223,6 +227,7 @@ class Assignment:
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
+        Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
@@ -265,6 +270,7 @@ class Assignment:
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
+        parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
         parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
@@ -380,6 +386,10 @@ class Assignment:
         if Assignment.DEBUG_TRACE_ONLY:
             est_paths_to_find = len(Assignment.TRACE_PERSON_IDS)
         else:
+            if Assignment.DEBUG_NUM_TRIPS > 0 and len(FT.passengers.trip_list_df) > Assignment.DEBUG_NUM_TRIPS:
+                FastTripsLogger.info("Truncating trip list to %d trips" % Assignment.DEBUG_NUM_TRIPS)
+                FT.passengers.trip_list_df = FT.passengers.trip_list_df.iloc[:Assignment.DEBUG_NUM_TRIPS]
+
             est_paths_to_find   = len(FT.passengers.trip_list_df)
             if iteration > 1:
                 est_paths_to_find = len(Assignment.bumped_trip_list_nums)
