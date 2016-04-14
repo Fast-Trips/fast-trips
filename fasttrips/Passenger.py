@@ -17,7 +17,9 @@ import pandas
 
 from .Logger import FastTripsLogger
 from .Route  import Route
+from .Stop   import Stop
 from .TAZ    import TAZ
+from .Trip   import Trip
 from .Util   import Util
 
 class Passenger:
@@ -94,6 +96,9 @@ class Passenger:
 
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
+
+    #: assignment results - Passenger table
+    PASSENGERS_CSV                              = r"passengers_df_iter%d.csv"
 
     def __init__(self, input_dir, output_dir, today, stops, routes):
         """
@@ -271,3 +276,150 @@ class Passenger:
         """
         # print self.id_to_path
         return self.id_to_path[trip_list_id]
+
+    def setup_passenger_paths(self, output_dir, iteration, stop_id_df, trip_id_df):
+        """
+        Converts assignment results (which is stored in each Passenger :py:class:`Path`,
+        in the :py:attr:`Path.states`) into a single :py:class:`pandas.DataFrame`.  Each row
+        represents a link in the passenger's path.  The returned :py:class:`pandas.DataFrame`
+        has the following columns:
+
+        ==============  ===============  =====================================================================================================
+        column name      column type     description
+        ==============  ===============  =====================================================================================================
+        `person_id               object  person unique ID
+        `trip_list_id`            int64  trip list numerical ID
+        `pathdir`                 int64  the :py:attr:`Path.direction`
+        `pathmode`               object  the :py:attr:`Path.mode`
+        `linkmode`               object  the mode of the link, one of :py:attr:`Path.STATE_MODE_ACCESS`, :py:attr:`Path.STATE_MODE_EGRESS`,
+                                         :py:attr:`Path.STATE_MODE_TRANSFER` or :py:attr:`Path.STATE_MODE_TRIP`.  Paths will always start with
+                                         access, followed by trips with transfers in between, and ending in an egress following the last trip.
+        `trip_id`                object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
+        `trip_id_num`           float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
+        `A_id`                   object  the stop ID at the start of the link, or TAZ ID for access links
+        `A_id_num`                int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
+        `B_id`                   object  the stop ID at the end of the link, or a TAZ ID for access links
+        `B_id_num`                int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
+        `A_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
+        `B_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
+        `A_time`         datetime64[ns]  the time the passenger arrives at `A_id`
+        `B_time`         datetime64[ns]  the time the passenger arrives at `B_id`
+        `linktime`      timedelta64[ns]  the time spent on the link
+        `cost`                  float64  the cost of the entire path
+        ==============  ===============  =====================================================================================================
+
+        Additionally, this method writes out the dataframe to a csv at :py:attr:`Passenger.PASSENGERS_CSV` in the given `output_dir`
+        and labeled with the given `iteration`.
+        """
+        from .Path import Path
+        mylist = []
+        for trip_list_id,path in self.id_to_path.iteritems():
+            if not path.goes_somewhere():   continue
+            if not path.path_found():       continue
+
+            # OUTBOUND passengers have states like this:
+            #    stop:          label    departure   dep_mode  successor linktime
+            # orig_taz                                 Access    b stop1
+            #  b stop1                                  trip1    a stop2
+            #  a stop2                               Transfer    b stop3
+            #  b stop3                                  trip2    a stop4
+            #  a stop4                                 Egress   dest_taz
+            #
+            #  stop:         label  dep_time    dep_mode   successor  seq  suc       linktime             cost  arr_time
+            #   460:  0:20:49.4000  17:41:10      Access        3514   -1   -1   0:03:08.4000     0:03:08.4000  17:44:18
+            #  3514:  0:17:41.0000  17:44:18     5131292        4313   30   40   0:06:40.0000     0:12:21.8000  17:50:59
+            #  4313:  0:05:19.2000  17:50:59    Transfer        5728   -1   -1   0:00:19.2000     0:00:19.2000  17:51:18
+            #  5728:  0:04:60.0000  17:57:00     5154302        5726   16   17   0:07:33.8000     0:03:02.4000  17:58:51
+            #  5726:  0:01:57.6000  17:58:51      Egress         231   -1   -1   0:01:57.6000     0:01:57.6000  18:00:49
+
+            # INBOUND passengers have states like this
+            #   stop:          label      arrival   arr_mode predecessor linktime
+            # dest_taz                                 Egress    a stop4
+            #  a stop4                                  trip2    b stop3
+            #  b stop3                               Transfer    a stop2
+            #  a stop2                                  trip1    b stop1
+            #  b stop1                                 Access   orig_taz
+            #
+            #  stop:         label  arr_time    arr_mode predecessor  seq pred       linktime             cost  dep_time
+            #    15:  0:36:38.4000  17:30:38      Egress        3772   -1   -1   0:02:38.4000     0:02:38.4000  17:28:00
+            #  3772:  0:34:00.0000  17:28:00     5123368        6516   22   14   0:24:17.2000     0:24:17.2000  17:05:50
+            #  6516:  0:09:42.8000  17:03:42    Transfer        4766   -1   -1   0:00:16.8000     0:00:16.8000  17:03:25
+            #  4766:  0:09:26.0000  17:03:25     5138749        5671    7    3   0:05:30.0000     0:05:33.2000  16:57:55
+            #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
+            prev_linkmode = None
+            prev_state_id = None
+
+            state_list = path.states
+            if not path.outbound(): state_list = list(reversed(state_list))
+
+            for (state_id, state) in state_list:
+
+                linkmode        = state[Path.STATE_IDX_DEPARRMODE]
+                trip_id         = None
+                if linkmode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
+                    trip_id     = state[Path.STATE_IDX_TRIP]
+                    linkmode    = Path.STATE_MODE_TRIP
+
+                if path.outbound():
+                    a_id_num    = state_id
+                    b_id_num    = state[Path.STATE_IDX_SUCCPRED]
+                    a_seq       = state[Path.STATE_IDX_SEQ]
+                    b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
+                    b_time      = state[Path.STATE_IDX_ARRDEP]
+                    a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+                else:
+                    a_id_num    = state[Path.STATE_IDX_SUCCPRED]
+                    b_id_num    = state_id
+                    a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
+                    b_seq       = state[Path.STATE_IDX_SEQ]
+                    b_time      = state[Path.STATE_IDX_DEPARR]
+                    a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+
+                # two trips in a row -- this shouldn't happen
+                if linkmode == Path.STATE_MODE_TRIP and prev_linkmode == Path.STATE_MODE_TRIP:
+                    FastTripsLogger.warn("Two trip links in a row... this shouldn't happen.  trip_list_id is %s\n%s\n" % (str(trip_list_id), str(path)))
+
+                row = [path.person_id,
+                       trip_list_id,
+                       path.direction,
+                       path.mode,
+                       linkmode,
+                       trip_id,
+                       a_id_num,
+                       b_id_num,
+                       a_seq,
+                       b_seq,
+                       a_time,
+                       b_time,
+                       state[Path.STATE_IDX_LINKTIME],
+                       path.cost,
+                       ]
+                mylist.append(row)
+
+                prev_linkmode = linkmode
+                prev_state_id = state_id
+
+        df =  pandas.DataFrame(mylist,
+                               columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                        Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                        'pathdir',  # for debugging
+                                        'pathmode', # for output
+                                        'linkmode', 'trip_id_num',
+                                        'A_id_num','B_id_num',
+                                        'A_seq','B_seq',
+                                        'A_time', 'B_time',
+                                        'linktime', 'cost'])
+
+        # get A_id and B_id and trip_id
+        df = Util.add_new_id(  input_df=df,                 id_colname='A_id_num',                            newid_colname='A_id',
+                             mapping_df=stop_id_df, mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        df = Util.add_new_id(  input_df=df,                 id_colname='B_id_num',                            newid_colname='B_id',
+                             mapping_df=stop_id_df, mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        # get trip_id
+        df = Util.add_new_id(  input_df=df,                 id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
+                             mapping_df=trip_id_df, mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
+
+        FastTripsLogger.debug("Setup passengers dataframe:\n%s" % str(df.dtypes))
+        df.to_csv(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration), index=False)
+        FastTripsLogger.info("Wrote passengers dataframe to %s" % os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration))
+        return df
