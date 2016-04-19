@@ -149,14 +149,10 @@ class Assignment:
     #: loads, and iterate until we have no capacity issues.  Boolean.
     BUMP_ONE_AT_A_TIME              = None
 
-
-
     #: Column names for simulation
-    SIM_COL_PAX_BOARD_TIME              = 'board_time'
-    SIM_COL_PAX_ALIGHT_TIME             = 'alight_time'
-    SIM_COL_PAX_ARRIVE_TIME             = 'pax_arrive_time'
-    SIM_COL_PAX_ARRIVE_TIME_MIN         = 'pax_arrive_time_min'
-    SIM_COL_PAX_LINK_TIME               = 'linktime'
+    SIM_COL_PAX_BOARD_TIME          = 'board_time'
+    SIM_COL_PAX_ALIGHT_TIME         = 'alight_time'
+    SIM_COL_PAX_LINK_TIME           = 'linktime'
 
     def __init__(self):
         """
@@ -311,7 +307,7 @@ class Assignment:
         _fasttrips.set_bump_wait(bump_wait_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                 bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN].values.astype('float64'))
+                                 bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype('float64'))
 
 
     @staticmethod
@@ -346,8 +342,6 @@ class Assignment:
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
                 (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT, passengers_df, veh_trips_df)
-
-
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                 Path.write_path_times(pax_exp_df, output_dir)
@@ -385,7 +379,8 @@ class Assignment:
         done_queue          = None
 
         if Assignment.DEBUG_TRACE_ONLY:
-            est_paths_to_find = len(Assignment.TRACE_PERSON_IDS)
+            FT.passengers.trip_list_df = FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]
+            est_paths_to_find = len(FT.passengers.trip_list_df)
         else:
             if Assignment.DEBUG_NUM_TRIPS > 0 and len(FT.passengers.trip_list_df) > Assignment.DEBUG_NUM_TRIPS:
                 FastTripsLogger.info("Truncating trip list to %d trips" % Assignment.DEBUG_NUM_TRIPS)
@@ -402,8 +397,9 @@ class Assignment:
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
             num_processes   = multiprocessing.cpu_count()
-        if num_processes > est_paths_to_find:
-            num_processes = est_paths_to_find
+        # it's not worth it unless each process does 3
+        if num_processes > est_paths_to_find*3:
+            num_processes = int(est_paths_to_find/3)
 
         # this is probalby time consuming... put in a try block
         try:
@@ -684,7 +680,7 @@ class Assignment:
         # read existing paths
         passengers_df = pandas.read_csv(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration),
                                         parse_dates=['A_time','B_time'])
-        passengers_df['linktime'] = pandas.to_timedelta(passengers_df['linktime'])
+        passengers_df[Passenger.PF_COL_LINK_TIME] = pandas.to_timedelta(passengers_df[Passenger.PF_COL_LINK_TIME])
 
         FastTripsLogger.info("Read %s" % os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration))
         FastTripsLogger.debug("passengers_df.dtypes=\n%s" % str(passengers_df.dtypes))
@@ -699,20 +695,22 @@ class Assignment:
 
 
     @staticmethod
-    def get_passenger_trips(passengers_df, veh_trips_df):
+    def find_passenger_vehicle_times(passengers_df, veh_trips_df):
         """
         Creates a list of passenger trips with passenger arrive, board and alight times.
 
-        - Takes the trip links of passengers_df
+        - Takes the trip links of passengers_df (columns: person_id, trip_list_id_num, pathdir, pathmode, linkmode, trip_id_num, A_id_num, B_id_num, A_seq, B_seq, pf_A_time, pf_B_time, pf_linktime, cost, A_id, B_id, trip_id)
         - Joins with vehicle trips on trip id num, A_id, A_seq to get board time (Assignment.SIM_COL_PAX_BOARD_TIME)
         - Joins with vehicle trips on trip id num, B_id, B_seq to get alight time (Assignment.SIM_COL_PAX_ALIGHT_TIME)
         - Renames A_time to passenger arrival time (Assignment.SIM_COL_PAX_ARRIVE)
+        - Drops B_time
+
         returns DataFrame
         """
-        passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
-        FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
+        # passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
+        FastTripsLogger.debug("       Have %d passenger trips" % len(passengers_df))
 
-        passenger_trips = pandas.merge(left    =passenger_trips,
+        passenger_trips = pandas.merge(left    =passengers_df,
                                        right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
@@ -735,26 +733,30 @@ class Assignment:
                                        suffixes=("_A","_B"))
 
         passenger_trips.rename(columns=
-           {Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Assignment.SIM_COL_PAX_BOARD_TIME,      # transit vehicle depart time (at A) = board time for pax
-            'A_time'                            :Assignment.SIM_COL_PAX_ARRIVE_TIME,     # passenger arrival at the stop
-            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,     # transit vehicle arrive time (at B) = alight time for pax
+           {Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Assignment.SIM_COL_PAX_BOARD_TIME,   # transit vehicle depart time (at A) = board time for pax
+            'A_time'                            :Passenger.PF_COL_PAX_A_TIME,         # pathfinder understanding of arrival at stop A
+            'B_time'                            :Passenger.PF_COL_PAX_B_TIME,         # pathfinder understanding of arrival at stop A
+            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,  # transit vehicle arrive time (at B) = alight time for pax
             }, inplace=True)
 
         # redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time
         passenger_trips.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                               '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                              'B_time'], axis=1, inplace=True)
+                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
         FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
 
-        # FastTripsLogger.debug("passenger_trips\n%s" % \
-        #                (passenger_trips.to_string(formatters=\
-        #                {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_min_formatter,
-        #                 Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_min_formatter,
-        #                 Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_min_formatter,
-        #                 'B_time'                            :Util.datetime64_min_formatter,
-        #                 Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter})))
+        FastTripsLogger.debug("find_passenger_vehicle_times(): input passengers_df\n%s" % passengers_df.head(30).to_string(formatters=\
+           {'A_time'                            :Util.datetime64_formatter,
+            'B_time'                            :Util.datetime64_formatter,
+            Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter}))
+
+        FastTripsLogger.debug("find_passenger_vehicle_times(): output passenger_trips\n%s" % passenger_trips.head(30).to_string(formatters=\
+           {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_formatter,
+            Passenger.PF_COL_PAX_A_TIME         :Util.datetime64_formatter,
+            Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_formatter,
+            Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter}))
+
         return passenger_trips
 
     @staticmethod
@@ -777,19 +779,20 @@ class Assignment:
             FastTripsLogger.debug("Initial passengers_df for %s\n%s" % \
                (str(trace_pax),
                 passengers_df.loc[passengers_df.person_id==trace_pax].to_string(formatters=\
-               {'A_time'               :Util.datetime64_min_formatter,
-                'B_time'               :Util.datetime64_min_formatter,
-                'linktime'             :Util.timedelta_formatter})))
+               {Passenger.PF_COL_PAX_A_TIME :Util.datetime64_min_formatter,
+                Passenger.PF_COL_PAX_B_TIME :Util.datetime64_min_formatter,
+                Passenger.PF_COL_LINK_TIME  :Util.timedelta_formatter})))
 
         ######################################################################################################
         FastTripsLogger.info("Step 1. Find out board/alight times for passengers from vehicle times")
 
-        passenger_trips     = Assignment.get_passenger_trips(passengers_df, veh_trips_df)
+        passenger_trips     = Assignment.find_passenger_vehicle_times(passengers_df, veh_trips_df)
         passenger_trips_len = len(passenger_trips)
         FastTripsLogger.debug("passenger_trips:\n%s\n" % passenger_trips.head().to_string(formatters=\
                    {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_formatter,
                     Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_formatter,
-                    Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_formatter}))
+                    Passenger.PF_COL_PAX_A_TIME         :Util.datetime64_formatter,
+                    Passenger.PF_COL_PAX_B_TIME         :Util.datetime64_formatter}))
 
         ######################################################################################################
         bump_iter = 0
@@ -901,7 +904,7 @@ class Assignment:
                 # FastTripsLogger.debug("passenger_trips\n%s" % \
                 #                (passenger_trips.to_string(formatters=\
                 #                {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_min_formatter,
-                #                 Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_min_formatter,
+                #                 Passenger.PF_COL_PAXA_TIME  :Util.datetime64_min_formatter,
                 #                 Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_min_formatter,
                 #                 'B_time'                            :Util.datetime64_min_formatter,
                 #                 Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter})))
@@ -911,7 +914,7 @@ class Assignment:
                                                             Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id',
                                                             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,'A_seq',
-                                                            Assignment.SIM_COL_PAX_ARRIVE_TIME]],
+                                                            Passenger.PF_COL_PAX_A_TIME]],
                                                  left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq'],
                                                  right   =bump_stops_df.reset_index()[[ \
                                                             Trip.STOPTIMES_COLUMN_TRIP_ID,
@@ -930,7 +933,7 @@ class Assignment:
                                         Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                         Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                         Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                        Assignment.SIM_COL_PAX_ARRIVE_TIME,
+                                        Passenger.PF_COL_PAX_A_TIME,
                                         Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM],
                                        ascending=[True, True, True, True, False, False], inplace=True)
                 bumped_pax_boards.reset_index(drop=True, inplace=True)
@@ -947,7 +950,7 @@ class Assignment:
 
                 FastTripsLogger.debug("bumped_pax_boards (%d rows, showing head):\n%s" % (len(bumped_pax_boards),
                     bumped_pax_boards.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME   :Util.datetime64_formatter,
+                   {Passenger.PF_COL_PAX_A_TIME          :Util.datetime64_formatter,
                     Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
 
@@ -956,7 +959,7 @@ class Assignment:
 
                 FastTripsLogger.debug("filtered bumped_pax_boards (%d rows, showing head):\n%s" % (len(bumped_pax_boards),
                     bumped_pax_boards.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME   :Util.datetime64_formatter,
+                   {Passenger.PF_COL_PAX_A_TIME   :Util.datetime64_formatter,
                     Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
 
@@ -972,7 +975,7 @@ class Assignment:
                 FastTripsLogger.debug("bumped_pax_boards without duplicate passengers (%d rows, showing head):\n%s" % \
                     (len(bumped_pax_boards),
                      bumped_pax_boards.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME   :Util.datetime64_formatter,
+                   {Passenger.PF_COL_PAX_A_TIME   :Util.datetime64_formatter,
                     Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
 
@@ -992,14 +995,14 @@ class Assignment:
                 passengers_df_len = len(passengers_df)
 
                 # recreate
-                passenger_trips     = Assignment.get_passenger_trips(passengers_df, veh_trips_df)
+                passenger_trips     = Assignment.find_passenger_vehicle_times(passengers_df, veh_trips_df)
                 passenger_trips_len = len(passenger_trips)
 
                 new_bump_wait = bumped_pax_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                    Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                    Trip.STOPTIMES_COLUMN_STOP_ID,
                                                    'A_id','A_seq',
-                                                   Assignment.SIM_COL_PAX_ARRIVE_TIME]].groupby([\
+                                                   Assignment.PF_COL_PAX_A_TIME]].groupby([\
                                                      Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']).first()
                 new_bump_wait.reset_index(drop=False, inplace=True)
                 new_bump_wait.rename(columns={'A_id' :Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
@@ -1007,7 +1010,7 @@ class Assignment:
 
                 FastTripsLogger.debug("new_bump_wait (%d rows, showing head):\n%s" %
                     (len(new_bump_wait), new_bump_wait.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME:Util.datetime64_formatter})))
+                   {Assignment.PF_COL_PAX_A_TIME:Util.datetime64_formatter})))
 
                 # incorporate it into the bump wait df
                 if type(Assignment.bump_wait_df) == type(None):
@@ -1021,7 +1024,7 @@ class Assignment:
                 # This is (trip_id, stop_id) -> Timestamp
                 bump_wait_dict  = Assignment.bump_wait_df.set_index([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                                      Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                                     Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]).to_dict()[Assignment.SIM_COL_PAX_ARRIVE_TIME]
+                                                                     Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]).to_dict()[Assignment.PF_COL_PAX_A_TIME]
                 bump_wait_dict2 = {k: v.to_datetime() for k, v in bump_wait_dict.iteritems()}
                 Assignment.bump_wait.update(bump_wait_dict2)
 
@@ -1034,23 +1037,27 @@ class Assignment:
                 FastTripsLogger.info("        -> complete loop iter %d" % bump_iter)
 
         if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
-            Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN] = \
-                Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME].map(lambda x: (60.0*x.hour) + x.minute + (x.second/60.0))
+            Assignment.bump_wait_df[Assignment.PF_COL_PAX_A_TIME_MIN] = \
+                Assignment.bump_wait_df[Assignment.PF_COL_PAX_A_TIME].map(lambda x: (60.0*x.hour) + x.minute + (x.second/60.0))
 
         FastTripsLogger.debug("Bumped passenger ids: %s" % str(Assignment.bumped_person_ids))
         FastTripsLogger.debug("Bumped path ids: %s" % str(Assignment.bumped_trip_list_nums))
         if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
             FastTripsLogger.debug("Bump_wait_df:\n%s" % Assignment.bump_wait_df.to_string(formatters=\
-                {Assignment.SIM_COL_PAX_ARRIVE_TIME :Util.datetime64_formatter}))
+                {Assignment.PF_COL_PAX_A_TIME :Util.datetime64_formatter}))
 
-        veh_loaded_df = Trip.update_trip_times(veh_loaded_df)
+        # update the trip times -- accel/decel rates + stops affect travel times, and boards/alights affect dwell times
+        veh_loaded_df   = Trip.update_trip_times(veh_loaded_df)
+        # update the passengers for those times
+        passenger_trips = Assignment.find_passenger_vehicle_times(passengers_df, veh_loaded_df)
+        Passenger.flag_invalid_paths(passenger_trips, FT.output_dir)
 
         ######################################################################################################
         FastTripsLogger.info("Step 4. Convert times to strings")
 
         ######         TODO: this is really catering to output format; an alternative might be more appropriate
         passenger_trips.loc[:,  'board_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_BOARD_TIME ].apply(Util.datetime64_formatter)
-        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ARRIVE_TIME].apply(Util.datetime64_formatter)
+        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Passenger.PF_COL_PAX_A_TIME].apply(Util.datetime64_formatter)
         passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ALIGHT_TIME].apply(Util.datetime64_formatter)
         assert(len(passenger_trips) == passenger_trips_len)
 
@@ -1065,12 +1072,12 @@ class Assignment:
         # Aggregate other fields across each passenger + path
         pax_exp_df = passengers_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).agg(
-            {'pathmode'     :'first',  # path mode
-             'A_id'         :'first',  # origin
-             'B_id'         :'last',   # destination
-             'A_time'       :'first',  # start time
-             'B_time'       :'last',   # end time
-             'cost'         :'first',  # total travel cost is calculated for the whole path
+            {'pathmode'                  :'first',  # path mode
+             'A_id'                      :'first',  # origin
+             'B_id'                      :'last',   # destination
+             Passenger.PF_COL_PAX_A_TIME :'first',  # start time
+             Passenger.PF_COL_PAX_B_TIME :'last',   # end time
+             'cost'                      :'first',  # total travel cost is calculated for the whole path
             })
 
         # Put them together and return
@@ -1092,9 +1099,9 @@ class Assignment:
                 FastTripsLogger.debug("Final passengers_df for %s\n%s" % \
                    (str(trace_pax),
                     passengers_df.loc[passengers_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]==trace_pax].to_string(formatters=\
-                   {'A_time'               :Util.datetime64_min_formatter,
-                    'B_time'               :Util.datetime64_min_formatter,
-                    'linktime'             :Util.timedelta_formatter,
+                   {Passenger.PF_COL_PAX_A_TIME :Util.datetime64_min_formatter,
+                    Passenger.PF_COL_PAX_B_TIME :Util.datetime64_min_formatter,
+                    Passenger.PF_COL_LINK_TIME  :Util.timedelta_formatter,
                     'board_time'           :Util.datetime64_min_formatter,
                     'alight_time'          :Util.datetime64_min_formatter,
                     'board_time_prev'      :Util.datetime64_min_formatter,
@@ -1105,8 +1112,8 @@ class Assignment:
                 FastTripsLogger.debug("Passengers experienced times for %s\n%s" % \
                    (str(trace_pax),
                     pax_exp_df.loc[trace_pax].to_string(formatters=\
-                   {'A_time'               :Util.datetime64_min_formatter,
-                    'B_time'               :Util.datetime64_min_formatter})))
+                   {Passenger.PF_COL_PAX_A_TIME :Util.datetime64_min_formatter,
+                    Passenger.PF_COL_PAX_B_TIME :Util.datetime64_min_formatter})))
 
         return (len(pax_exp_df), veh_loaded_df, pax_exp_df)
 

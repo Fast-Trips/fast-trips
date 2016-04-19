@@ -135,7 +135,7 @@ class Util:
         """
         Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM:SS`
         """
-        return pandas.to_datetime(x).strftime('%H:%M:%S')
+        return pandas.to_datetime(x).strftime('%H:%M:%S') if pandas.notnull(x) else ""
 
     @staticmethod
     def datetime64_min_formatter(x):
@@ -156,7 +156,7 @@ class Util:
         minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
-    
+
     @staticmethod
     def read_time(x, end_of_day=False):
         try:

@@ -13,6 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
+import numpy
 import pandas
 
 from .Logger import FastTripsLogger
@@ -96,6 +97,16 @@ class Passenger:
 
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
+
+    #: Column names from pathfinding
+    PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
+    PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
+    PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
+    PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
+    PF_COL_LINK_MODE                = 'linkmode'     #: link mode (Access, Trip, Egress, etc)
+    PF_COL_LINK_NUM                 = 'linknum'      #: link number, starting from access=0
+    #: todo replace/rename ??
+    PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
 
     #: assignment results - Passenger table
     PASSENGERS_CSV                              = r"passengers_df_iter%d.csv"
@@ -302,9 +313,9 @@ class Passenger:
         `B_id_num`                int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
         `A_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
         `B_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `A_time`         datetime64[ns]  the time the passenger arrives at `A_id`
-        `B_time`         datetime64[ns]  the time the passenger arrives at `B_id`
-        `linktime`      timedelta64[ns]  the time spent on the link
+        `pf_A_time`      datetime64[ns]  the time the passenger arrives at `A_id`
+        `pf_B_time`      datetime64[ns]  the time the passenger arrives at `B_id`
+        `pf_linktime`   timedelta64[ns]  the time spent on the link
         `cost`                  float64  the cost of the entire path
         ==============  ===============  =====================================================================================================
 
@@ -352,10 +363,13 @@ class Passenger:
             state_list = path.states
             if not path.outbound(): state_list = list(reversed(state_list))
 
+            link_num   = 0
             for (state_id, state) in state_list:
 
                 linkmode        = state[Path.STATE_IDX_DEPARRMODE]
                 trip_id         = None
+                waittime        = None
+
                 if linkmode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
                     trip_id     = state[Path.STATE_IDX_TRIP]
                     linkmode    = Path.STATE_MODE_TRIP
@@ -367,6 +381,7 @@ class Passenger:
                     b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
                     b_time      = state[Path.STATE_IDX_ARRDEP]
                     a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+                    trip_time   = state[Path.STATE_IDX_ARRDEP] - state[Path.STATE_IDX_DEPARR]
                 else:
                     a_id_num    = state[Path.STATE_IDX_SUCCPRED]
                     b_id_num    = state_id
@@ -374,6 +389,11 @@ class Passenger:
                     b_seq       = state[Path.STATE_IDX_SEQ]
                     b_time      = state[Path.STATE_IDX_DEPARR]
                     a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
+                    trip_time   = state[Path.STATE_IDX_DEPARR] - state[Path.STATE_IDX_ARRDEP]
+
+                # trips: linktime includes wait
+                if linkmode == Path.STATE_MODE_TRIP:
+                    waittime    = state[Path.STATE_IDX_LINKTIME] - trip_time
 
                 # two trips in a row -- this shouldn't happen
                 if linkmode == Path.STATE_MODE_TRIP and prev_linkmode == Path.STATE_MODE_TRIP:
@@ -392,23 +412,31 @@ class Passenger:
                        a_time,
                        b_time,
                        state[Path.STATE_IDX_LINKTIME],
+                       waittime,
                        path.cost,
+                       link_num
                        ]
                 mylist.append(row)
 
                 prev_linkmode = linkmode
                 prev_state_id = state_id
+                link_num     += 1
 
         df =  pandas.DataFrame(mylist,
                                columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                         Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                         'pathdir',  # for debugging
                                         'pathmode', # for output
-                                        'linkmode', 'trip_id_num',
+                                        Passenger.PF_COL_LINK_MODE,
+                                        Trip.TRIPS_COLUMN_TRIP_ID_NUM,
                                         'A_id_num','B_id_num',
                                         'A_seq','B_seq',
-                                        'A_time', 'B_time',
-                                        'linktime', 'cost'])
+                                        Passenger.PF_COL_PAX_A_TIME,
+                                        Passenger.PF_COL_PAX_B_TIME,
+                                        Passenger.PF_COL_LINK_TIME,
+                                        Passenger.PF_COL_WAIT_TIME,
+                                        'cost',
+                                        Passenger.PF_COL_LINK_NUM])
 
         # get A_id and B_id and trip_id
         df = Util.add_new_id(  input_df=df,                 id_colname='A_id_num',                            newid_colname='A_id',
@@ -423,3 +451,92 @@ class Passenger:
         df.to_csv(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration), index=False)
         FastTripsLogger.info("Wrote passengers dataframe to %s" % os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration))
         return df
+
+    @staticmethod
+    def flag_invalid_paths(passenger_trips, output_dir):
+        """
+        Given passenger paths (formatted as described above) with the vehicle board_time and alight_time attached to trip links,
+        add columns:
+
+        1) alight_delay_min   delay in alight_time from original pathfinding understanding of alight time
+        2) new_A_time         new A_time given the trip board/alight times for the trip links
+        3) new_B_time         new B_time given the trip board/alight times for the trip links
+        4) new_linktime       new linktime from new_B_time-new_A_time
+        5) new_waittime       new waittime given the trip board/alight times for the trip links
+        """
+        # for strings
+        from .Path import Path
+
+        FastTripsLogger.debug("flag_invalid_paths() passenger_trips (%d):\n%s" % (len(passenger_trips), passenger_trips.head().to_string()))
+        passenger_trips["alight_delay_min"] = 0.0
+        passenger_trips.loc[pandas.notnull(passenger_trips[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "alight_delay_min"] = \
+            ((passenger_trips["alight_time"]-passenger_trips[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
+
+        #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
+        passenger_trips.loc[passenger_trips["alight_delay_min"]>22*60, "board_time" ] -= numpy.timedelta64(24, 'h')
+        passenger_trips.loc[passenger_trips["alight_delay_min"]>22*60, "alight_time"] -= numpy.timedelta64(24, 'h')
+        passenger_trips.loc[passenger_trips["alight_delay_min"]>22*60, "alight_delay_min"] = \
+            ((passenger_trips["alight_time"]-passenger_trips[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
+
+        FastTripsLogger.debug("Biggest alight_delay:=\n%s" % \
+                              (passenger_trips.sort_values(by="alight_delay_min", ascending=False).head().to_string()))
+
+        # For trips, alight_time is the new B_time
+        # Set A_time for links AFTER trip links by joining to next leg
+        next_trips = passenger_trips[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_LINK_NUM, "alight_time"]].copy()
+        next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
+        next_trips.rename(columns={"alight_time":"new_A_time"}, inplace=True)
+        # Add it to passenger trips.  Now new_A_time is set for links after trip links (note this will never be a trip link)
+        passenger_trips = pandas.merge(left=passenger_trips, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,  Passenger.PF_COL_LINK_NUM])
+
+        # Set the new_B_time for those links -- link time for access/egress/xfer is travel time since wait times are in trip links
+        passenger_trips["new_B_time"] = passenger_trips["new_A_time"] + passenger_trips[Passenger.PF_COL_LINK_TIME]
+        # For trip links, it's alight time
+        passenger_trips.loc[passenger_trips[Passenger.PF_COL_LINK_MODE]==Path.STATE_MODE_TRIP, "new_B_time"] = passenger_trips["alight_time"]
+        # For access links, it doesn't change from the original pathfinding result
+        passenger_trips.loc[passenger_trips[Passenger.PF_COL_LINK_MODE]==Path.STATE_MODE_ACCESS, "new_A_time"] = passenger_trips[Passenger.PF_COL_PAX_A_TIME]
+        passenger_trips.loc[passenger_trips[Passenger.PF_COL_LINK_MODE]==Path.STATE_MODE_ACCESS, "new_B_time"] = passenger_trips[Passenger.PF_COL_PAX_B_TIME]
+
+        # Now we only need to set the trip link's A time from the previous link's new_B_time
+        next_trips = passenger_trips[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_LINK_NUM, "new_B_time"]].copy()
+        next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
+        next_trips.rename(columns={"new_B_time":"new_trip_A_time"}, inplace=True)
+        # Add it to passenger trips.  Now new_trip_A_time is set for trip links
+        passenger_trips = pandas.merge(left=passenger_trips, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,  Passenger.PF_COL_LINK_NUM])
+        passenger_trips.loc[passenger_trips[Passenger.PF_COL_LINK_MODE]==Path.STATE_MODE_TRIP, "new_A_time"] = passenger_trips["new_trip_A_time"]
+        passenger_trips.drop(["new_trip_A_time"], axis=1, inplace=True)
+
+        passenger_trips["new_linktime"] = passenger_trips["new_B_time"] - passenger_trips["new_A_time"]
+
+        #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
+        #: if the linktime > 23 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
+        passenger_trips.loc[passenger_trips["new_linktime"] > numpy.timedelta64(22, 'h'), "new_B_time"  ] -= numpy.timedelta64(24, 'h')
+        passenger_trips.loc[passenger_trips["new_linktime"] > numpy.timedelta64(22, 'h'), "new_linktime"] = passenger_trips["new_B_time"] - passenger_trips["new_A_time"]
+
+        # new wait time
+        passenger_trips.loc[pandas.notnull(passenger_trips[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "new_waittime"] = passenger_trips["board_time"] - passenger_trips["new_A_time"]
+
+        # invalid trips have negative wait time
+        passenger_trips["invalid"] = 0
+        passenger_trips.loc[passenger_trips["new_waittime"]<numpy.timedelta64(0,'m'), "invalid"] = 1
+        FastTripsLogger.debug("flag_invalid_paths() %d invalid (missed transfer) trips" % passenger_trips["invalid"].sum())
+
+        # passenger_trips_grouped = passenger_trips.groupby(Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM).aggregate({"invalid":"sum"})
+        # FastTripsLogger.debug("flag_invalid_paths() passenger_trips_grouped:\n%s" % passenger_trips_grouped.head(30).to_string())
+
+        FastTripsLogger.debug("flag_invalid_paths() passenger_trips (%d):\n%s" % (len(passenger_trips), passenger_trips.head(30).to_string()))
+
+        # quick and dirty -- save this
+        # todo: when we iterate, this will get smarter
+        passenger_file = os.path.join(output_dir, "ft_output_passenger_paths.csv")
+
+        passenger_trips["pf_linktime_min" ] = passenger_trips[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1, 'm')
+        passenger_trips["new_linktime_min"] = passenger_trips["new_linktime"]/numpy.timedelta64(1, 'm')
+        passenger_trips["pf_waittime_min" ] = passenger_trips[Passenger.PF_COL_WAIT_TIME]/numpy.timedelta64(1, 'm')
+        passenger_trips["new_waittime_min"] = passenger_trips["new_waittime"]/numpy.timedelta64(1, 'm')
+
+        passenger_trips.to_csv(passenger_file, float_format="%.2f", date_format="%x %X",
+                               index=False)
+        FastTripsLogger.info("Wrote %s" % passenger_file)
+
+        return passenger_trips

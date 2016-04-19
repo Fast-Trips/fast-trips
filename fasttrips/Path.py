@@ -308,16 +308,16 @@ class Path:
         walk_links = passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_ACCESS  )| \
                                        (passengers_df.linkmode==Path.STATE_MODE_TRANSFER)| \
                                        (passengers_df.linkmode==Path.STATE_MODE_EGRESS  )].copy()
-        walk_links['linktime_str'] = walk_links.linktime.apply(lambda x: "%.2f" % (x/numpy.timedelta64(1,'m')))
+        walk_links['linktime_str'] = walk_links.pf_linktime.apply(lambda x: "%.2f" % (x/numpy.timedelta64(1,'m')))
         walklink_group = walk_links[['person_id','trip_list_id_num','linktime_str']].groupby(['person_id','trip_list_id_num'])
         walktimes_str  = walklink_group.linktime_str.apply(lambda x:','.join(x))
 
         # aggregate to one line per person_id, trip_list_id
-        print_passengers_df = passengers_df[['person_id','trip_list_id_num','pathmode','A_id','B_id','A_time']].groupby(['person_id','trip_list_id_num']).agg(
-           {'pathmode'      :'first',   # path mode
-            'A_id'          :'first',   # origin
-            'B_id'          :'last',    # destination
-            'A_time'        :'first'    # start time
+        print_passengers_df = passengers_df[['person_id','trip_list_id_num','pathmode','A_id','B_id',Passenger.PF_COL_PAX_A_TIME]].groupby(['person_id','trip_list_id_num']).agg(
+           {'pathmode'                  :'first',   # path mode
+            'A_id'                      :'first',   # origin
+            'B_id'                      :'last',    # destination
+            Passenger.PF_COL_PAX_A_TIME :'first'    # start time
            })
 
         # put them all together
@@ -331,14 +331,14 @@ class Path:
         print_passengers_df.sort_values(by=['trip_list_id_num'], inplace=True)
 
         print_passengers_df.rename(columns=
-           {'pathmode'          :'mode',
-            'A_id'              :'originTaz',
-            'B_id'              :'destinationTaz',
-            'A_time'            :'startTime_time',
-            'board_stop_str'    :'boardingStops',
-            'board_trip_str'    :'boardingTrips',
-            'alight_stop_str'   :'alightingStops',
-            'linktime_str'      :'walkingTimes'}, inplace=True)
+           {'pathmode'                  :'mode',
+            'A_id'                      :'originTaz',
+            'B_id'                      :'destinationTaz',
+            Passenger.PF_COL_PAX_A_TIME :'startTime_time',
+            'board_stop_str'            :'boardingStops',
+            'board_trip_str'            :'boardingTrips',
+            'alight_stop_str'           :'alightingStops',
+            'linktime_str'              :'walkingTimes'}, inplace=True)
 
         print_passengers_df['startTime'] = print_passengers_df['startTime_time'].apply(Util.datetime64_formatter)
 
@@ -362,8 +362,8 @@ class Path:
         print_pax_exp_df = pax_exp_df.reset_index()
         print_pax_exp_df.sort_values(by=['trip_list_id_num'], inplace=True)
 
-        print_pax_exp_df['A_time_str'] = print_pax_exp_df['A_time'].apply(Util.datetime64_formatter)
-        print_pax_exp_df['B_time_str'] = print_pax_exp_df['B_time'].apply(Util.datetime64_formatter)
+        print_pax_exp_df['A_time_str'] = print_pax_exp_df[Passenger.PF_COL_PAX_A_TIME].apply(Util.datetime64_formatter)
+        print_pax_exp_df['B_time_str'] = print_pax_exp_df[Passenger.PF_COL_PAX_B_TIME].apply(Util.datetime64_formatter)
 
         # rename columns
         print_pax_exp_df.rename(columns=

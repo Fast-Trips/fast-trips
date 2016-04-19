@@ -510,6 +510,7 @@ class Trip:
         df["alights"] = 0
         df["onboard"] = 0
         return df
+
     def write_trips_for_extension(self):
         """
         This writes to an intermediate file a formatted file for the C++ extension.
@@ -581,8 +582,25 @@ class Trip:
         FastTripsLogger.debug("trips_df.dtypes=\n%s\n" % str(trips_df.dtypes))
         trip_cols = list(trips_df.columns.values)
 
-        # TODO: what is this?
+        # Default to 0
         trips_df["friction"] = 0.0
+        if Trip.VEHICLES_COLUMN_SEATED_CAPACITY in trip_cols:
+
+            # log null seated capacities
+            if pandas.isnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY]).sum() > 0:
+                FastTripsLogger.warn("Trip.update_trip_times(): some [%s] not configured; assuming zero friction for those vehicles" % Trip.VEHICLES_COLUMN_SEATED_CAPACITY)
+                FastTripsLogger.warn("\n%s" % trips_df[[Trip.VEHICLES_COLUMN_VEHICLE_NAME, Trip.VEHICLES_COLUMN_SEATED_CAPACITY]].loc[pandas.isnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY])].drop_duplicates())
+
+            # set standeeds
+            trips_df["standees"] = trips_df["onboard"] - trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY]
+            # it can only be non-negative
+            trips_df.loc[trips_df["standees"]<0, "standees"] = 0
+            # where it is positive, friction = on+off+standees
+            trips_df.loc[(trips_df["standees"]>0)&(pandas.notnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY])), "friction"] = \
+                                                   trips_df["boards"] + trips_df["alights"] + trips_df["standees"]
+        else:
+            # log no seated capacities at all
+            FastTripsLogger.warn("Trip.update_trip_times(): Cannot calculate friction because [%s] not configured" % Trip.VEHICLES_COLUMN_SEATED_CAPACITY)
 
         # Update the dwell time
         if Trip.VEHICLES_COLUMN_DWELL_FORMULA in trip_cols:
@@ -707,12 +725,13 @@ class Trip:
             trips_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
                 60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
-        FastTripsLogger.debug("Trips:calculate_dwell_times() trips_df:\n%s\n" % \
+        FastTripsLogger.debug("Trips:update_trip_times() trips_df:\n%s\n" % \
             trips_df.loc[trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]>1,[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                       Trip.STOPTIMES_COLUMN_ARRIVAL_TIME, Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
                       Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS, Trip.VEHICLES_COLUMN_ACCELERATION, Trip.VEHICLES_COLUMN_DECELERATION,
-                      "boards", "alights", "does_stop","next_does_stop","next_is_last_stop",
+                      Trip. VEHICLES_COLUMN_SEATED_CAPACITY,
+                      "boards", "alights", "onboard", "standees", "friction", "does_stop","next_does_stop","next_is_last_stop",
                       "accel_secs","decel_secs",
                       Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
                       "travel_dwell_sec","travel_dwell_sec_cum","new_arrival_time"
