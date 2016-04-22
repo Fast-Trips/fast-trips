@@ -467,7 +467,7 @@ namespace fasttrips {
             ss2 << output_dir_ << kPathSeparator;
             ss2 << "fasttrips_labels_ids_" << path_spec.path_id_ << ".csv";
             stopids_file.open(ss2.str().c_str(), (std::ios_base::out | (path_spec.iteration_ == 1 ? 0 : std::ios_base::app)));
-            stopids_file << "stop_id,stop_id_label_iter" << std::endl;
+            stopids_file << "stop_id,stop_id_label_iter,is_trip,label_stop_cost" << std::endl;
         }
 
         StopStates           stop_states;
@@ -679,7 +679,8 @@ namespace fasttrips {
         }
 
         if (path_spec.trace_) {
-            stopids_file << stop_num_to_str_.find(start_taz_id)->second << ",0" << std::endl;
+            // stop_id,stop_id_label_iter,is_trip,label_stop_cost
+            stopids_file << stop_num_to_str_.find(start_taz_id)->second << ",0,0,0" << std::endl;
         }
 
         // Iterate through valid supply modes
@@ -1154,7 +1155,9 @@ namespace fasttrips {
                 current_stop_state.print(trace_file, path_spec, *this);
                 trace_file << "==============================" << std::endl;
 
-                stopids_file << stop_num_to_str_.find(current_label_stop.stop_id_)->second << "," << label_iterations << std::endl;
+                // stop_id,stop_id_label_iter,is_trip,label_stop_cost
+                stopids_file << stop_num_to_str_.find(current_label_stop.stop_id_)->second << "," << label_iterations << ",";
+                stopids_file << current_label_stop.is_trip_ << "," << current_label_stop.label_ << std::endl;
             }
 
             // if the low cost is trip ids, process transfers
@@ -1218,7 +1221,8 @@ namespace fasttrips {
         }
 
         if (path_spec.trace_) {
-            stopids_file << stop_num_to_str_.find(end_taz_id)->second << "," << label_iteration << std::endl;
+            // stop_id,stop_id_label_iter,is_trip,label_stop_cost
+            stopids_file << stop_num_to_str_.find(end_taz_id)->second << "," << label_iteration << ",0,";
         }
 
         // Iterate through valid supply modes
