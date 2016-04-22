@@ -1050,7 +1050,7 @@ class Assignment:
         veh_loaded_df   = Trip.update_trip_times(veh_loaded_df)
         # update the passengers for those times
         passenger_trips = Assignment.find_passenger_vehicle_times(passengers_df, veh_loaded_df)
-        Passenger.flag_invalid_paths(passenger_trips, FT.output_dir)
+        passenger_trips = Passenger.flag_invalid_paths(passenger_trips, FT.output_dir)
 
         ######################################################################################################
         FastTripsLogger.info("Step 4. Convert times to strings")
