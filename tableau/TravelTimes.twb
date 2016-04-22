@@ -1091,6 +1091,9 @@
           <datasources>
             <datasource caption='ft_output_loadProfile' name='textscan.0wpsspj0o0yxzr15337mc17r4yws' />
           </datasources>
+          <datasource-dependencies datasource='textscan.0tup2cg10ek9o81g9p2sr0m5oh85'>
+            <column caption='Trip Id' datatype='integer' name='[trip_id]' role='dimension' type='ordinal' />
+          </datasource-dependencies>
           <datasource-dependencies datasource='textscan.0wpsspj0o0yxzr15337mc17r4yws'>
             <column caption='Average Travel Time (Min)' datatype='real' name='[Calculation_979532924888981504]' role='measure' type='quantitative'>
               <calculation class='tableau' formula='(SUM([travel_time_sec])/60.0)/COUNTD([trip_id])' />
@@ -1188,6 +1191,9 @@
         </panes>
         <rows>([textscan.0wpsspj0o0yxzr15337mc17r4yws].[none:agency_id:nk] / [textscan.0wpsspj0o0yxzr15337mc17r4yws].[none:route_id:nk])</rows>
         <cols>([textscan.0wpsspj0o0yxzr15337mc17r4yws].[:Measure Names] / [textscan.0wpsspj0o0yxzr15337mc17r4yws].[none:iteration:ok])</cols>
+        <join-lod-include-overrides>
+          <column>[textscan.0tup2cg10ek9o81g9p2sr0m5oh85].[trip_id]</column>
+        </join-lod-include-overrides>
       </table>
     </worksheet>
   </worksheets>
