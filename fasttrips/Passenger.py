@@ -16,6 +16,7 @@ import collections,datetime,os,sys
 import numpy
 import pandas
 
+from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
 from .Route  import Route
 from .Stop   import Stop
@@ -193,12 +194,17 @@ class Passenger:
             self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM] = self.trip_list_df.index + 1
 
         # add TAZ numeric ids (stored in the stop mapping)
-        self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
-            id_colname        =Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID,
-            numeric_newcolname=Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM)
-        self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
-            id_colname        =Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID,
-            numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM)
+        try:
+            self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
+                id_colname        =Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID,
+                numeric_newcolname=Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM)
+            self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
+                id_colname        =Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID,
+                numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM)
+        except:
+            error_msg = "TAZ numbers configured as origins and/or destinations in demand file are not found in the network"
+            FastTripsLogger.fatal(error_msg)
+            raise NetworkInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
         # figure out modes:
         if Passenger.TRIP_LIST_COLUMN_MODE not in trip_list_cols:
