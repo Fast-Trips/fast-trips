@@ -19,7 +19,7 @@ import _fasttrips
 
 from .Logger      import FastTripsLogger, setupLogging
 from .Passenger   import Passenger
-from .Path        import Path
+from .PathSet     import PathSet
 from .Performance import Performance
 from .Stop        import Stop
 from .TAZ         import TAZ
@@ -172,8 +172,8 @@ class Assignment:
         if os.path.exists(func_file):
             my_globals = {}
             FastTripsLogger.info("Reading %s" % func_file)
-            execfile(func_file, my_globals, Path.CONFIGURED_FUNCTIONS)
-            FastTripsLogger.info("Path.CONFIGURED_FUNCTIONS = %s" % str(Path.CONFIGURED_FUNCTIONS))
+            execfile(func_file, my_globals, PathSet.CONFIGURED_FUNCTIONS)
+            FastTripsLogger.info("PathSet.CONFIGURED_FUNCTIONS = %s" % str(PathSet.CONFIGURED_FUNCTIONS))
 
         parser = ConfigParser.RawConfigParser(
             defaults={'iterations'                      :1,
@@ -230,19 +230,19 @@ class Assignment:
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
         # pathfinding
-        Path.USER_CLASS_FUNCTION                 = parser.get     ('pathfinding','user_class_function')
-        if Path.USER_CLASS_FUNCTION not in Path.CONFIGURED_FUNCTIONS:
-            FastTripsLogger.fatal("User class function [%s] not defined.  Please check your function file [%s]" % (Path.USER_CLASS_FUNCTION, func_file))
+        PathSet.USER_CLASS_FUNCTION              = parser.get     ('pathfinding','user_class_function')
+        if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
+            FastTripsLogger.fatal("User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file))
             raise
 
-        weights_file = os.path.join(input_demand_dir, Path.WEIGHTS_FILE)
+        weights_file = os.path.join(input_demand_dir, PathSet.WEIGHTS_FILE)
         if not os.path.exists(weights_file):
             FastTripsLogger.fatal("No path weights file %s" % weights_file)
             sys.exit(2)
 
-        Path.WEIGHTS_DF = pandas.read_fwf(weights_file)
-        FastTripsLogger.debug("Weights =\n%s" % str(Path.WEIGHTS_DF))
-        FastTripsLogger.debug("Weight types = \n%s" % str(Path.WEIGHTS_DF.dtypes))
+        PathSet.WEIGHTS_DF = pandas.read_fwf(weights_file)
+        FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
+        FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
 
     @staticmethod
     def write_configuration(output_dir):
@@ -273,7 +273,7 @@ class Assignment:
 
         #pathfinding
         parser.add_section('pathfinding')
-        parser.set('pathfinding','user_class_function',         '%s' % Path.USER_CLASS_FUNCTION)
+        parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)
@@ -328,23 +328,23 @@ class Assignment:
             if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY and \
                os.path.exists(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration)):
                 FastTripsLogger.info("Simulation only")
-                (num_paths_found, passengers_df) = Assignment.read_assignment_results(output_dir, iteration)
+                (num_paths_found, pathset_paths_df, pathset_links_df) = FT.passengers.read_assignment_results(output_dir, iteration)
 
             else:
-                num_paths_found    = Assignment.generate_paths(FT, output_dir, iteration)
-                passengers_df      = FT.passengers.setup_passenger_paths(output_dir, iteration, FT.stops.stop_id_df, FT.trips.trip_id_df)
+                num_paths_found                      = Assignment.generate_pathsets(FT, output_dir, iteration)
+                (pathset_paths_df, pathset_links_df) = FT.passengers.setup_passenger_pathsets(output_dir, iteration, FT.stops.stop_id_df, FT.trips.trip_id_df)
 
             veh_trips_df       = FT.trips.get_full_trips()
 
-            if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Path.write_paths(passengers_df, output_dir)
+            # if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
+            #     PathSet.write_paths(passengers_df, output_dir)
 
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
-                (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT, passengers_df, veh_trips_df)
+                (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT, pathset_paths_df, pathset_links_df, veh_trips_df)
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Path.write_path_times(pax_exp_df, output_dir)
+                PathSet.write_path_times(pax_exp_df, output_dir)
 
             # capacity gap stuff
             num_bumped_passengers = num_paths_found - num_passengers_arrived
@@ -365,12 +365,12 @@ class Assignment:
         # end for loop
 
     @staticmethod
-    def generate_paths(FT, output_dir, iteration):
+    def generate_pathsets(FT, output_dir, iteration):
         """
-        Generates paths ofr passengers using deterministic trip-based shortest path (TBSP) or
+        Generates paths sets for passengers using deterministic trip-based shortest path (TBSP) or
         stochastic trip-based hyperpath (TBHP).
 
-        Returns the number of paths found.
+        Returns the number of pathsets found.
         """
         FastTripsLogger.info("**************************** GENERATING PATHS ****************************")
         start_time          = datetime.datetime.now()
@@ -436,33 +436,32 @@ class Assignment:
 
                 # first iteration -- create path objects
                 if iteration==1:
-                    trip_path = Path(path_dict)
-                    FT.passengers.add_path(trip_list_id, trip_path)
+                    trip_pathset = PathSet(path_dict)
+                    FT.passengers.add_pathset(trip_list_id, trip_pathset)
                 else:
-                    trip_path = FT.passengers.get_path(trip_list_id)
+                    trip_pathset = FT.passengers.get_pathset(trip_list_id)
 
-                if not trip_path.goes_somewhere(): continue
+                if not trip_pathset.goes_somewhere(): continue
 
                 if iteration > 1 and trip_list_id not in Assignment.bumped_trip_list_nums:
                     num_paths_found_prev += 1
                     continue
 
                 if num_processes > 1:
-                    todo_queue.put( trip_path )
+                    todo_queue.put( trip_pathset )
                 else:
                     if trace_person:
                         FastTripsLogger.debug("Tracing assignment of person_id %s" % str(person_id))
 
                     # do the work
-                    (cost, return_states, perf_dict) = \
-                        Assignment.find_trip_based_path(iteration, FT, trip_path,
+                    (pathdict, perf_dict) = \
+                        Assignment.find_trip_based_pathset(iteration, FT, trip_pathset,
                                                         Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                         trace=trace_person)
-                    trip_path.states = return_states
-                    trip_path.cost   = cost
+                    trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, trip_list_id, perf_dict)
 
-                    if trip_path.path_found():
+                    if trip_pathset.path_found():
                         num_paths_found_now += 1
 
                     if num_paths_found_now % info_freq == 0:
@@ -495,14 +494,13 @@ class Assignment:
                             process_dict[worker_num]["working_on"] = (result[2],result[3])
                         elif result[1] == "COMPLETED":
                             trip_list_id    = result[2]
-                            path            = FT.passengers.get_path(trip_list_id)
-                            path.cost       = result[3]
-                            path.states     = result[4]
-                            perf_dict       = result[5]
+                            pathset         = FT.passengers.get_pathset(trip_list_id)
+                            pathset.pathdict= result[3]
+                            perf_dict       = result[4]
 
                             FT.performance.add_info(iteration, trip_list_id, perf_dict)
 
-                            if path.path_found():
+                            if pathset.path_found():
                                 num_paths_found_now += 1
 
                             if num_paths_found_now % info_freq == 0:
@@ -569,16 +567,17 @@ class Assignment:
 
 
     @staticmethod
-    def find_trip_based_path(iteration, FT, path, hyperpath, trace):
+    def find_trip_based_pathset(iteration, FT, pathset, hyperpath, trace):
         """
-        Perform trip-based path search.
+        Perform trip-based path set search.
 
-        Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
-        or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
+        Will do so either backwards (destination to origin) if :py:attr:`PathSet.direction` is :py:attr:`PathSet.DIR_OUTBOUND`
+        or forwards (origin to destination) if :py:attr:`PathSet.direction` is :py:attr:`PathSet.DIR_INBOUND`.
 
-        Returns (path cost,
-                 return_states,
+        Returns (pathdict,
                  performance_dict)
+
+        Where pathdict maps {pathnum:{PATH_KEY_COST:cost, PATH_KEY_PROBABILITY:probability, PATH_KEY_STATES:[state list]}}
 
         Where performance_dict includes:
                  number of label iterations,
@@ -590,8 +589,8 @@ class Assignment:
         :type  iteration: int
         :param FT:        fasttrips data
         :type  FT:        a :py:class:`FastTrips` instance
-        :param path:      the path to fill in
-        :type  path:      a :py:class:`Path` instance
+        :param pathset:   the path to fill in
+        :type  pathset:   a :py:class:`PathSet` instance
         :param hyperpath: pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
                           search algorithm will be use.
         :type  hyperpath: boolean
@@ -601,59 +600,74 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles, path_cost,
+        (ret_ints, ret_doubles, path_costs,
          label_iterations, max_label_process_count,
          seconds_labeling, seconds_enumerating) = \
-            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath,
-                                 path.user_class, path.access_mode, path.transit_mode, path.egress_mode,
-                                 path.o_taz_num, path.d_taz_num,
-                                 1 if path.outbound() else 0, float(path.pref_time_min),
+            _fasttrips.find_pathset(iteration, pathset.person_id_num, pathset.trip_list_id_num, hyperpath,
+                                 pathset.user_class, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
+                                 pathset.o_taz_num, pathset.d_taz_num,
+                                 1 if pathset.outbound() else 0, float(pathset.pref_time_min),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
-        # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (path.person_id, path.trip_list_id_num))
+        # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (pathset.person_id, pathset.trip_list_id_num))
 
-        # Put the results into an list of (stop_id, state array)
-        return_states = []
+        pathdict = {}
         midnight = datetime.datetime.combine(Assignment.TODAY, datetime.time())
+        row_num  = 0
 
-        for index in range(ret_ints.shape[0]):
-            mode = ret_ints[index,1]
-            # todo
-            if mode == -100:
-                mode = Path.STATE_MODE_ACCESS
-            elif mode == -101:
-                mode = Path.STATE_MODE_EGRESS
-            elif mode == -102:
-                mode = Path.STATE_MODE_TRANSFER
-            elif mode == -103:
-                mode = Passenger.MODE_GENERIC_TRANSIT_NUM
+        for path_num in range(path_costs.shape[0]):
 
-            if hyperpath:
-                return_states.append( (ret_ints[index, 0], [
-                              ret_doubles[index,0],                                         # label,
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
-                              mode,                                                         # departure/arrival mode
-                              ret_ints[index,2],                                            # trip id
-                              ret_ints[index,3],                                            # successor/predecessor
-                              ret_ints[index,4],                                            # sequence
-                              ret_ints[index,5],                                            # sequence succ/pred
-                              datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
-                              ret_doubles[index,3],                                         # cost
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
-                              ] ) )
-            else:
-                return_states.append( (ret_ints[index, 0], [
-                              datetime.timedelta(minutes=ret_doubles[index,0]),              # label,
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
-                              mode,                                                         # departure/arrival mode
-                              ret_ints[index,2],                                            # trip id
-                              ret_ints[index,3],                                            # successor/predecessor
-                              ret_ints[index,4],                                            # sequence
-                              ret_ints[index,5],                                            # sequence succ/pred
-                              datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
-                              datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
-                              ] ) )
+            pathdict[path_num] = {}
+            pathdict[path_num][PathSet.PATH_KEY_COST       ] = path_costs[path_num, 0]
+            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 1]
+            # List of (stop_id, stop_state)
+            pathdict[path_num][PathSet.PATH_KEY_STATES     ] = []
+
+            # print "path_num %d" % path_num
+
+            # while we have unprocessed rows and the row is still relevant for this path_num
+            while (row_num < ret_ints.shape[0]) and (ret_ints[row_num, 0] == path_num):
+                # print row_num
+
+                mode = ret_ints[row_num,2]
+                # todo
+                if mode == -100:
+                    mode = PathSet.STATE_MODE_ACCESS
+                elif mode == -101:
+                    mode = PathSet.STATE_MODE_EGRESS
+                elif mode == -102:
+                    mode = PathSet.STATE_MODE_TRANSFER
+                elif mode == -103:
+                    mode = Passenger.MODE_GENERIC_TRANSIT_NUM
+
+                if hyperpath:
+                    pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
+                                  ret_doubles[row_num,0],                                         # label,
+                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                                  mode,                                                           # departure/arrival mode
+                                  ret_ints[row_num,3],                                            # trip id
+                                  ret_ints[row_num,4],                                            # successor/predecessor
+                                  ret_ints[row_num,5],                                            # sequence
+                                  ret_ints[row_num,6],                                            # sequence succ/pred
+                                  datetime.timedelta(minutes=ret_doubles[row_num,2]),             # link time
+                                  ret_doubles[row_num,3],                                         # cost
+                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
+                                  ] ) )
+                else:
+                    pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
+                                  datetime.timedelta(minutes=ret_doubles[row_num,0]),             # label,
+                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                                  mode,                                                           # departure/arrival mode
+                                  ret_ints[row_num,3],                                            # trip id
+                                  ret_ints[row_num,4],                                            # successor/predecessor
+                                  ret_ints[row_num,5],                                            # sequence
+                                  ret_ints[row_num,6],                                            # sequence succ/pred
+                                  datetime.timedelta(minutes=ret_doubles[row_num,2]),             # link time
+                                  datetime.timedelta(minutes=ret_doubles[row_num,3]),             # cost
+                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
+                                  ] ) )
+                row_num += 1
+
         perf_dict = { \
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,
@@ -661,38 +675,7 @@ class Assignment:
             Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : seconds_enumerating,
             Performance.PERFORMANCE_COLUMN_TRACED                : trace,
         }
-        return (path_cost, return_states, perf_dict)
-
-    @staticmethod
-    def read_assignment_results(output_dir, iteration):
-        """
-        Reads assignment results from :py:attr:`Passenger.PASSENGERS_CSV`
-
-        :param output_dir: Location of csv files to read
-        :type output_dir: string
-        :param iteration: The iteration label for the csv files to read
-        :type iteration: integer
-        :return: The number of paths assigned, the paths.  See :py:meth:`Assignment.setup_passengers`
-                 for documentation on the passenger paths :py:class:`pandas.DataFrame`
-        :rtype: a tuple of (int, :py:class:`pandas.DataFrame`)
-        """
-
-        # read existing paths
-        passengers_df = pandas.read_csv(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration),
-                                        parse_dates=['A_time','B_time'])
-        passengers_df[Passenger.PF_COL_LINK_TIME] = pandas.to_timedelta(passengers_df[Passenger.PF_COL_LINK_TIME])
-
-        FastTripsLogger.info("Read %s" % os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration))
-        FastTripsLogger.debug("passengers_df.dtypes=\n%s" % str(passengers_df.dtypes))
-
-        uniq_pax = passengers_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]].drop_duplicates(subset=\
-                                 [Passenger.PERSONS_COLUMN_PERSON_ID,
-                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
-        num_paths_found = len(uniq_pax)
-
-        return (num_paths_found, passengers_df)
-
+        return (pathdict, perf_dict)
 
     @staticmethod
     def find_passenger_vehicle_times(passengers_df, veh_trips_df):
@@ -709,6 +692,9 @@ class Assignment:
         """
         # passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
         FastTripsLogger.debug("       Have %d passenger trips" % len(passengers_df))
+
+        FastTripsLogger.debug("passengers_df:\n%s\n" % passengers_df.head().to_string())
+        FastTripsLogger.debug("veh_trips_df:\n%s\n" % veh_trips_df.head().to_string())
 
         passenger_trips = pandas.merge(left    =passengers_df,
                                        right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
@@ -739,6 +725,8 @@ class Assignment:
             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,  # transit vehicle arrive time (at B) = alight time for pax
             }, inplace=True)
 
+        FastTripsLogger.debug("passenger_trips:\n%s\n" % passenger_trips.head().to_string())
+
         # redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time
         passenger_trips.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
@@ -759,11 +747,16 @@ class Assignment:
 
         return passenger_trips
 
+
     @staticmethod
-    def simulate(FT, passengers_df, veh_trips_df):
+    def simulate(FT, pathset_paths_df, pathset_links_df, veh_trips_df):
         """
-        Actually assign the passengers trips to the vehicles.
+        Given a pathset for each passenger, choose a path (if relevant) and then
+        actually assign the passengers trips to the vehicles.
         """
+        # Choose path for each passenger
+        (pathset_paths_df, passengers_df) = Passenger.choose_paths(pathset_paths_df, pathset_links_df)
+
         passengers_df_len       = len(passengers_df)
         veh_trips_df_len        = len(veh_trips_df)
 
@@ -1077,7 +1070,8 @@ class Assignment:
              'B_id'                      :'last',   # destination
              Passenger.PF_COL_PAX_A_TIME :'first',  # start time
              Passenger.PF_COL_PAX_B_TIME :'last',   # end time
-             'cost'                      :'first',  # total travel cost is calculated for the whole path
+             # TODO: cost needs to be updated for updated dwell & travel time
+             # 'cost'                      :'first',  # total travel cost is calculated for the whole path
             })
 
         # Put them together and return
@@ -1119,7 +1113,7 @@ class Assignment:
 
 
 def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, input_demand_dir,
-                                         output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):
+                                         output_dir, todo_pathset_queue, done_queue, hyperpath, bump_wait_df):
     """
     Process worker function.  Processes all the paths in queue.
 
@@ -1146,27 +1140,27 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
 
     while True:
         # go through my queue -- check if we're done
-        todo = todo_path_queue.get()
+        todo = todo_pathset_queue.get()
         if todo == 'DONE':
             done_queue.put( (worker_num, 'DONE') )
-            FastTripsLogger.debug("Received DONE from the todo_path_queue")
+            FastTripsLogger.debug("Received DONE from the todo_pathset_queue")
             return
 
         # do the work
-        path = todo
+        pathset = todo
 
-        FastTripsLogger.info("Processing person %20s path %d" % (path.person_id, path.trip_list_id_num))
+        FastTripsLogger.info("Processing person %20s path %d" % (pathset.person_id, pathset.trip_list_id_num))
         # communicate it to the parent
-        done_queue.put( (worker_num, "STARTING", path.person_id, path.trip_list_id_num ))
+        done_queue.put( (worker_num, "STARTING", pathset.person_id, pathset.trip_list_id_num ))
 
         trace_person = False
-        if path.person_id in Assignment.TRACE_PERSON_IDS:
-            FastTripsLogger.debug("Tracing assignment of person %s" % path.person_id)
+        if pathset.person_id in Assignment.TRACE_PERSON_IDS:
+            FastTripsLogger.debug("Tracing assignment of person %s" % pathset.person_id)
             trace_person = True
 
         try:
-            (cost, return_states, perf_dict) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
-            done_queue.put( (worker_num, "COMPLETED", path.trip_list_id_num, cost, return_states, perf_dict) )
+            (pathdict, perf_dict) = Assignment.find_trip_based_pathset(iteration, worker_FT, pathset, hyperpath, trace=trace_person)
+            done_queue.put( (worker_num, "COMPLETED", pathset.trip_list_id_num, pathdict, perf_dict) )
         except:
             FastTripsLogger.exception("Exception")
             # call it a day

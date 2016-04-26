@@ -1,4 +1,4 @@
-__copyright__ = "Copyright 2015 Contributing Entities"
+__copyright__ = "Copyright 2015-2016 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ from .Util      import Util
 def generic_user_class(row_series):
     return "all"
 
-class Path:
+class PathSet:
     """
-    Represents a path for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`
+    Represents a path set for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`
     through a set of stops.
     """
     #: Paths output file
@@ -69,6 +69,10 @@ class Path:
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 
+    PATH_KEY_COST           = "cost"
+    PATH_KEY_PROBABILITY    = "probability"
+    PATH_KEY_STATES         = "states"
+
     STATE_IDX_LABEL         = 0  #: :py:class:`datetime.timedelta` instance
     STATE_IDX_DEPARR        = 1  #: :py:class:`datetime.datetime` instance. Departure if outbound/backwards, arrival if inbound/forwards.
     STATE_IDX_DEPARRMODE    = 2  #: mode id
@@ -95,24 +99,21 @@ class Path:
         """
         self.__dict__.update(trip_list_dict)
 
-        #: Direction is one of :py:attr:`Path.DIR_OUTBOUND` or :py:attr:`Path.DIR_INBOUND`
+        #: Direction is one of :py:attr:`PathSet.DIR_OUTBOUND` or :py:attr:`PathSet.DIR_INBOUND`
         #: Preferred time is a datetime.time object
         if trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "arrival":
-            self.direction     = Path.DIR_OUTBOUND
+            self.direction     = PathSet.DIR_OUTBOUND
             self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].to_datetime().time()
             self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN]
         elif trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "departure":
-            self.direction     = Path.DIR_INBOUND
+            self.direction     = PathSet.DIR_INBOUND
             self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].to_datetime().time()
             self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN]
         else:
             raise Exception("Don't understand trip_list %s: %s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(trip_list_dict)))
 
-        #: List of (stop_id, stop_state)
-        self.states = []
-
-        #: Final path cost, will be filled in during path finding
-        self.cost   = 0.0
+        #: Dict of path-num -> { cost:, probability:, states: [List of (stop_id, stop_state)]}
+        self.pathdict = {}
 
     def goes_somewhere(self):
         """
@@ -124,32 +125,32 @@ class Path:
         """
         Was a a transit path found from the origin to the destination with the constraints?
         """
-        return len(self.states) > 1
+        return len(self.pathdict) > 1
 
-    def reset_states(self):
+    def num_paths(self):
+        """
+        Number of paths in the PathSet
+        """
+        return len(self.pathdict)
+
+    def reset(self):
         """
         Delete my states, something went wrong and it won't work out.
         """
-        self.states = []
-
-    def num_states(self):
-        """
-        Quick accessor for number of :py:attr:`Path.states`.
-        """
-        return len(self.states)
+        self.pathdict = []
 
     def outbound(self):
         """
-        Quick accessor to see if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`.
+        Quick accessor to see if :py:attr:`PathSet.direction` is :py:attr:`PathSet.DIR_OUTBOUND`.
         """
-        return self.direction == Path.DIR_OUTBOUND
+        return self.direction == PathSet.DIR_OUTBOUND
 
     @staticmethod
     def set_user_class(trip_list_df, new_colname):
         """
         Adds a column called user_class by applying the configured user class function.
         """
-        trip_list_df[new_colname] = trip_list_df.apply(Path.CONFIGURED_FUNCTIONS[Path.USER_CLASS_FUNCTION], axis=1)
+        trip_list_df[new_colname] = trip_list_df.apply(PathSet.CONFIGURED_FUNCTIONS[PathSet.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
     def verify_weight_config(modes_df, output_dir, routes):
@@ -161,51 +162,51 @@ class Path:
         """
         error_str = ""
         # First, verify required columns are found
-        weight_cols     = list(Path.WEIGHTS_DF.columns.values)
-        assert(Path.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
-        assert(Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE in weight_cols)
-        assert(Path.WEIGHTS_COLUMN_DEMAND_MODE      in weight_cols)
-        assert(Path.WEIGHTS_COLUMN_SUPPLY_MODE      in weight_cols)
-        assert(Path.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
-        assert(Path.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
+        weight_cols     = list(PathSet.WEIGHTS_DF.columns.values)
+        assert(PathSet.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
+        assert(PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE in weight_cols)
+        assert(PathSet.WEIGHTS_COLUMN_DEMAND_MODE      in weight_cols)
+        assert(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE      in weight_cols)
+        assert(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
+        assert(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
 
         # Join - make sure that all demand combinations (user class, demand mode type and demand mode) are configured
         weight_check = pandas.merge(left=modes_df,
-                                    right=Path.WEIGHTS_DF,
-                                    on=[Path.WEIGHTS_COLUMN_USER_CLASS,
-                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
-                                        Path.WEIGHTS_COLUMN_DEMAND_MODE],
+                                    right=PathSet.WEIGHTS_DF,
+                                    on=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE],
                                     how='left')
         FastTripsLogger.debug("demand_modes x weights: \n%s" % weight_check.to_string())
 
         # If something is missing, complain
-        if pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_SUPPLY_MODE]).sum() > 0:
+        if pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE]).sum() > 0:
             error_str += "\nThe following user_class, demand_mode_type, demand_mode combinations exist in the demand file but are missing from the weight configuration:\n"
-            error_str += weight_check.loc[pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_SUPPLY_MODE])].to_string()
+            error_str += weight_check.loc[pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE])].to_string()
             error_str += "\n"
 
         # demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait
-        user_classes = modes_df[[Path.WEIGHTS_COLUMN_USER_CLASS]].drop_duplicates().reset_index()
-        implicit_df = pandas.DataFrame({ Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer'],
-                                         Path.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer'],
-                                         Path.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'transfer'] })
+        user_classes = modes_df[[PathSet.WEIGHTS_COLUMN_USER_CLASS]].drop_duplicates().reset_index()
+        implicit_df = pandas.DataFrame({ PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer'],
+                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer'],
+                                         PathSet.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'transfer'] })
         user_classes['key'] = 1
         implicit_df['key'] = 1
         implicit_df = pandas.merge(left=user_classes, right=implicit_df, on='key')
         implicit_df.drop(['index','key'], axis=1, inplace=True)
         # print implicit_df
 
-        weight_check = pandas.merge(left=implicit_df, right=Path.WEIGHTS_DF,
-                                    on=[Path.WEIGHTS_COLUMN_USER_CLASS,
-                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
-                                        Path.WEIGHTS_COLUMN_DEMAND_MODE,
-                                        Path.WEIGHTS_COLUMN_SUPPLY_MODE],
+        weight_check = pandas.merge(left=implicit_df, right=PathSet.WEIGHTS_DF,
+                                    on=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                        PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
                                     how='left')
         FastTripsLogger.debug("implicit demand_modes x weights: \n%s" % weight_check.to_string())
 
-        if pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_WEIGHT_NAME]).sum() > 0:
+        if pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]).sum() > 0:
             error_str += "\nThe following user_class, demand_mode_type, demand_mode, supply_mode combinations exist in the demand file but are missing from the weight configuration:\n"
-            error_str += weight_check.loc[pandas.isnull(weight_check[Path.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
+            error_str += weight_check.loc[pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
             error_str += "\n\n"
 
 
@@ -214,20 +215,19 @@ class Path:
             sys.exit(2)
 
         # add mode numbers to weights DF for relevant rows
-        Path.WEIGHTS_DF = routes.add_numeric_mode_id(Path.WEIGHTS_DF,
-                                                    id_colname=Path.WEIGHTS_COLUMN_SUPPLY_MODE,
-                                                    numeric_newcolname=Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+        PathSet.WEIGHTS_DF = routes.add_numeric_mode_id(PathSet.WEIGHTS_DF,
+                                                    id_colname=PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
+                                                    numeric_newcolname=PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
                                                     warn=True)  # don't fail if some supply modes are configured but not used, they may be for future runs
-        FastTripsLogger.debug("Path weights: \n%s" % Path.WEIGHTS_DF)
-        Path.WEIGHTS_DF.to_csv(os.path.join(output_dir,Path.OUTPUT_WEIGHTS_FILE),
-                               columns=[Path.WEIGHTS_COLUMN_USER_CLASS,
-                                        Path.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
-                                        Path.WEIGHTS_COLUMN_DEMAND_MODE,
-                                        Path.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
-                                        Path.WEIGHTS_COLUMN_WEIGHT_NAME,
-                                        Path.WEIGHTS_COLUMN_WEIGHT_VALUE],
+        FastTripsLogger.debug("PathSet weights: \n%s" % PathSet.WEIGHTS_DF)
+        PathSet.WEIGHTS_DF.to_csv(os.path.join(output_dir,PathSet.OUTPUT_WEIGHTS_FILE),
+                               columns=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                        PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                                        PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
+                                        PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
                                sep=" ", index=False)
-
 
     @staticmethod
     def state_str_header(direction=DIR_OUTBOUND):
@@ -237,12 +237,12 @@ class Path:
         return "%8s: %-14s %9s %10s %11s %-17s %-12s  %s" % \
             ("stop",
              "label",
-             "departure" if direction == Path.DIR_OUTBOUND else "arrival",
-             "dep_mode"  if direction == Path.DIR_OUTBOUND else "arr_mode",
-             "successor" if direction == Path.DIR_OUTBOUND else "predecessor",
+             "departure" if direction == PathSet.DIR_OUTBOUND else "arrival",
+             "dep_mode"  if direction == PathSet.DIR_OUTBOUND else "arr_mode",
+             "successor" if direction == PathSet.DIR_OUTBOUND else "predecessor",
              "linktime",
              "cost",
-             "arrival"   if direction == Path.DIR_OUTBOUND else "departure")
+             "arrival"   if direction == PathSet.DIR_OUTBOUND else "departure")
 
     @staticmethod
     def state_str(state_id, state):
@@ -251,13 +251,13 @@ class Path:
         """
         return "%8s: %-14s  %s %10s %10s  %-17s %-12s  %s" % \
             (str(state_id),
-             str(state[Path.STATE_IDX_LABEL]) if type(state[Path.STATE_IDX_LABEL])==datetime.timedelta else "%.4f" % state[Path.STATE_IDX_LABEL],
-             state[Path.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
-             str(state[Path.STATE_IDX_DEPARRMODE]),
-             str(state[Path.STATE_IDX_SUCCPRED]),
-             str(state[Path.STATE_IDX_LINKTIME]),
-             str(state[Path.STATE_IDX_COST]) if type(state[Path.STATE_IDX_COST])==datetime.timedelta else "%.4f" % state[Path.STATE_IDX_COST],
-             state[Path.STATE_IDX_ARRDEP].strftime("%H.%M:%S"))
+             str(state[PathSet.STATE_IDX_LABEL]) if type(state[PathSet.STATE_IDX_LABEL])==datetime.timedelta else "%.4f" % state[PathSet.STATE_IDX_LABEL],
+             state[PathSet.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
+             str(state[PathSet.STATE_IDX_DEPARRMODE]),
+             str(state[PathSet.STATE_IDX_SUCCPRED]),
+             str(state[PathSet.STATE_IDX_LINKTIME]),
+             str(state[PathSet.STATE_IDX_COST]) if type(state[PathSet.STATE_IDX_COST])==datetime.timedelta else "%.4f" % state[PathSet.STATE_IDX_COST],
+             state[PathSet.STATE_IDX_ARRDEP].strftime("%H.%M:%S"))
 
     def __str__(self):
         """
@@ -268,7 +268,7 @@ class Path:
         ret_str = "Dict vars:\n"
         for k,v in self.__dict__.iteritems():
             ret_str += "%30s => %-30s   %s\n" % (str(k), str(v), str(type(v)))
-        ret_str += Path.states_to_str(self.states, self.direction)
+        # ret_str += PathSet.states_to_str(self.states, self.direction)
         return ret_str
 
     @staticmethod
@@ -277,9 +277,9 @@ class Path:
         Given that states is an ordered dict of states, returns a string version of the path therein.
         """
         if len(states) == 0: return "\nNo path"
-        readable_str = "\n%s" % Path.state_str_header(direction)
+        readable_str = "\n%s" % PathSet.state_str_header(direction)
         for state_id,state in states:
-            readable_str += "\n%s" % Path.state_str(state_id, state)
+            readable_str += "\n%s" % PathSet.state_str(state_id, state)
         return readable_str
 
     @staticmethod
@@ -294,7 +294,7 @@ class Path:
 
         """
         # get trip information -- board stops, board trips and alight stops
-        passenger_trips = passengers_df.loc[passengers_df.linkmode==Path.STATE_MODE_TRIP].copy()
+        passenger_trips = passengers_df.loc[passengers_df.linkmode==PathSet.STATE_MODE_TRIP].copy()
         ptrip_group     = passenger_trips.groupby(['person_id','trip_list_id_num'])
         # these are Series
         board_stops_str = ptrip_group.A_id.apply(lambda x:','.join(x))
@@ -305,9 +305,9 @@ class Path:
         alight_stops_str.name = 'alight_stop_str'
 
         # get walking times
-        walk_links = passengers_df.loc[(passengers_df.linkmode==Path.STATE_MODE_ACCESS  )| \
-                                       (passengers_df.linkmode==Path.STATE_MODE_TRANSFER)| \
-                                       (passengers_df.linkmode==Path.STATE_MODE_EGRESS  )].copy()
+        walk_links = passengers_df.loc[(passengers_df.linkmode==PathSet.STATE_MODE_ACCESS  )| \
+                                       (passengers_df.linkmode==PathSet.STATE_MODE_TRANSFER)| \
+                                       (passengers_df.linkmode==PathSet.STATE_MODE_EGRESS  )].copy()
         walk_links['linktime_str'] = walk_links.pf_linktime.apply(lambda x: "%.2f" % (x/numpy.timedelta64(1,'m')))
         walklink_group = walk_links[['person_id','trip_list_id_num','linktime_str']].groupby(['person_id','trip_list_id_num'])
         walktimes_str  = walklink_group.linktime_str.apply(lambda x:','.join(x))
@@ -345,7 +345,7 @@ class Path:
         print_passengers_df = print_passengers_df[['trip_list_id_num','person_id','mode','originTaz','destinationTaz','startTime',
                                                    'boardingStops','boardingTrips','alightingStops','walkingTimes']]
 
-        print_passengers_df.to_csv(os.path.join(output_dir, Path.PATHS_OUTPUT_FILE), sep="\t", index=False)
+        print_passengers_df.to_csv(os.path.join(output_dir, PathSet.PATHS_OUTPUT_FILE), sep="\t", index=False)
         # passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes
 
     @staticmethod
@@ -375,7 +375,8 @@ class Path:
              'arrival_time_str'     :'arrivalTimes',
              'board_time_str'       :'boardingTimes',
              'alight_time_str'      :'alightingTimes',
-             'cost'                 :'travelCost',
+             # TODO: cost needs to be updated for updated dwell & travel time
+             # 'cost'                 :'travelCost',
              }, inplace=True)
 
         # reorder
@@ -390,9 +391,10 @@ class Path:
             'arrivalTimes',
             'boardingTimes',
             'alightingTimes',
-            'travelCost']]
+            # 'travelCost',
+            ]]
 
-        times_out = open(os.path.join(output_dir, Path.PATH_TIMES_OUTPUT_FILE), 'w')
+        times_out = open(os.path.join(output_dir, PathSet.PATH_TIMES_OUTPUT_FILE), 'w')
         print_pax_exp_df.to_csv(times_out,
                                 sep="\t", float_format="%.2f", index=False)
 
@@ -464,18 +466,18 @@ class Path:
             for state_id in state_list:
                 state = self.states[state_id]
                 # access
-                if state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_ACCESS:
-                    access_time     = state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0
-                    start_time      = state[Path.STATE_IDX_DEPARR]
-                    if not self.outbound(): start_time -= state[Path.STATE_IDX_LINKTIME]
+                if state[PathSet.STATE_IDX_DEPARRMODE] == PathSet.STATE_MODE_ACCESS:
+                    access_time     = state[PathSet.STATE_IDX_LINKTIME].total_seconds()/60.0
+                    start_time      = state[PathSet.STATE_IDX_DEPARR]
+                    if not self.outbound(): start_time -= state[PathSet.STATE_IDX_LINKTIME]
 
                 # transfer
-                elif state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_TRANSFER:
-                    transfer_time  += ",%.2f" % (state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0)
+                elif state[PathSet.STATE_IDX_DEPARRMODE] == PathSet.STATE_MODE_TRANSFER:
+                    transfer_time  += ",%.2f" % (state[PathSet.STATE_IDX_LINKTIME].total_seconds()/60.0)
 
                 # egress
-                elif state[Path.STATE_IDX_DEPARRMODE] == Path.STATE_MODE_EGRESS:
-                    egress_time     = state[Path.STATE_IDX_LINKTIME].total_seconds()/60.0
+                elif state[PathSet.STATE_IDX_DEPARRMODE] == PathSet.STATE_MODE_EGRESS:
+                    egress_time     = state[PathSet.STATE_IDX_LINKTIME].total_seconds()/60.0
 
                 # trip link
                 else:
@@ -483,20 +485,20 @@ class Path:
                         boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
                                                      int(state_id))
                         alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else  "",
-                                                     int(state[Path.STATE_IDX_SUCCPRED]))
+                                                     int(state[PathSet.STATE_IDX_SUCCPRED]))
                     else:
                         boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
-                                                     int(state[Path.STATE_IDX_SUCCPRED]))
+                                                     int(state[PathSet.STATE_IDX_SUCCPRED]))
                         alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else  "",
                                                      int(state_id))
 
                     boarding_trips += "%st%d" % ("," if len(boarding_trips) > 0 else "",
-                                                 int(state[Path.STATE_IDX_DEPARRMODE]))
+                                                 int(state[PathSet.STATE_IDX_DEPARRMODE]))
                     # if the prev_mode is a trip link then we had a no-walk transfer
-                    if prev_mode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
+                    if prev_mode not in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
                         transfer_time  += ",%.2f" % 0
 
-                prev_mode = state[Path.STATE_IDX_DEPARRMODE]
+                prev_mode = state[PathSet.STATE_IDX_DEPARRMODE]
 
         return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
         return_str += "%.2f\t%s\t%s\t%s\t" % (start_time.hour*60.0 + start_time.minute + start_time.second/60.0,

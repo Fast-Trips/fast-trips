@@ -90,7 +90,7 @@ namespace fasttrips {
             const PathFinder& pf) const;
     };
 
-    /** A set of paths consists of paths mapping to information about them (for choosing one)
+    /** Path -> count of times it was generated
      */
     typedef std::map<Path, PathInfo> PathSet;
 

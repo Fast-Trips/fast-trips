@@ -284,11 +284,10 @@ namespace fasttrips {
                         PathSet& paths,
                         int max_prob_i) const;
 
-        bool getFoundPath(const PathSpecification&      path_spec,
-                          std::ofstream&                trace_file,
-                          const StopStates&             stop_states,
-                          Path&                         path,
-                          PathInfo&                     path_info) const;
+        bool getPathSet(const PathSpecification&      path_spec,
+                        std::ofstream&                trace_file,
+                        const StopStates&             stop_states,
+                        PathSet&                      pathset) const;
 
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
@@ -374,7 +373,7 @@ namespace fasttrips {
         ~PathFinder();
 
         /**
-         * Find the path!  This method is the *WHOLE POINT* of our existence!
+         * Find the path set!  This method is the *WHOLE POINT* of our existence!
          *
          * See PathFinder::initializeStopStates, PathFinder::labelStops,
          * PathFinder::finalTazState, and PathFinder::getFoundPath
@@ -383,10 +382,10 @@ namespace fasttrips {
          * @param path          This is really a return fasttrips::Path
          * @param path_info     Also for returng information (e.g. about the Path cost)
          */
-        void findPath(PathSpecification path_spec,
-                      Path              &path,
-                      PathInfo          &path_info,
-                      PerformanceInfo   &performance_info) const;
+        void findPathSet(
+            PathSpecification path_spec,
+            PathSet           &pathset,
+            PerformanceInfo   &performance_info) const;
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
 

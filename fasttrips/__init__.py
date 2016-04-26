@@ -17,7 +17,7 @@ from .Assignment import Assignment
 from .FastTrips import FastTrips
 from .Logger import FastTripsLogger, setupLogging
 from .Passenger import Passenger
-from .Path import Path
+from .PathSet import PathSet
 from .Performance import Performance
 from .Route import Route
 from .Stop import Stop
@@ -31,7 +31,7 @@ __all__ = [
     'FastTrips',
     'FastTripsLogger','setupLogging',
     'Passenger',
-    'Path',
+    'PathSet',
     'Route',
     'Stop',
     'TAZ',

@@ -12,7 +12,6 @@
 #include <math.h>
 #include <algorithm>
 
-
 const char kPathSeparator =
 #ifdef _WIN32
                             '\\';
@@ -434,13 +433,19 @@ namespace fasttrips {
         // std::cout << "PathFinder destructor" << std::endl;
     }
 
-    void PathFinder::findPath(PathSpecification path_spec,
-                              Path              &path,
-                              PathInfo          &path_info,
-                              PerformanceInfo   &performance_info) const
+    void PathFinder::findPathSet(
+        PathSpecification path_spec,
+        PathSet           &pathset,
+        PerformanceInfo   &performance_info) const
     {
         // for now we'll just trace
         // if (!path_spec.trace_) { return; }
+
+        if (path_spec.user_class_ == "crash") {
+            std::cerr << "Crashing to test" << std::endl;
+            Sleep(5000);
+            exit(2);
+        }
 
         std::ofstream trace_file;
         if (path_spec.trace_) {
@@ -490,7 +495,7 @@ namespace fasttrips {
 
         QueryPerformanceCounter(&labeling_end_time);
 
-        getFoundPath(path_spec, trace_file, stop_states, path, path_info);
+        getPathSet(path_spec, trace_file, stop_states, pathset);
 
         QueryPerformanceCounter(&pathfind_end_time);
 
@@ -1420,12 +1425,11 @@ namespace fasttrips {
     }
 
     // Return success
-    bool PathFinder::getFoundPath(
-        const PathSpecification& path_spec,
-        std::ofstream& trace_file,
-        const StopStates& stop_states,
-        Path& path,
-        PathInfo& path_info) const
+    bool PathFinder::getPathSet(
+        const PathSpecification&    path_spec,
+        std::ofstream&              trace_file,
+        const StopStates&           stop_states,
+        PathSet&                    pathset) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
 
@@ -1450,8 +1454,6 @@ namespace fasttrips {
         if (path_spec.hyperpath_)
         {
             double logsum = 0;
-            // find a bunch!
-            PathSet paths;
             // random seed
             srand(path_spec.path_id_);
             // find a *set of Paths*
@@ -1469,17 +1471,17 @@ namespace fasttrips {
                         trace_file << std::endl;
                     }
                     // do we already have this?  if so, increment
-                    PathSet::iterator paths_iter = paths.find(new_path);
-                    if (paths_iter != paths.end()) {
+                    PathSet::iterator paths_iter = pathset.find(new_path);
+                    if (paths_iter != pathset.end()) {
                         paths_iter->second.count_ += 1;
                     } else {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
                         new_path.calculateCost(trace_file, path_spec, *this);
-                        paths[new_path] = pi;
+                        pathset[new_path] = pi;
 
                         logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
                     }
-                    if (path_spec.trace_) { trace_file << "paths size = " << paths.size() << std::endl; }
+                    if (path_spec.trace_) { trace_file << "pathsset size = " << pathset.size() << std::endl; }
                 } else {
                     if (path_spec.trace_) {
                         trace_file << "----> No path found" << std::endl;
@@ -1506,7 +1508,7 @@ namespace fasttrips {
             int cost_cutoff = 1;
             const Path* real_low_cost_path = NULL;
             // calculate the probabilities for those paths
-            for (PathSet::iterator paths_iter = paths.begin(); paths_iter != paths.end(); ++paths_iter)
+            for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
                 paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
                 // why?  :p
@@ -1562,8 +1564,8 @@ namespace fasttrips {
             }
 
             // choose path
-            path = choosePath(path_spec, trace_file, paths, cum_prob);
-            path_info = paths[path];
+            // path = choosePath(path_spec, trace_file, pathsset, cum_prob);
+            // path_info = paths[path];
         }
         else
         {
@@ -1571,6 +1573,7 @@ namespace fasttrips {
             // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
 
+            Path path(path_spec.outbound_, true);
             path.addLink(end_taz_id, taz_state.lowestCostStopState(false), trace_file, path_spec, *this);
 
             while (path.back().second.deparr_mode_ != final_state_type)
@@ -1584,12 +1587,14 @@ namespace fasttrips {
                              path_spec, *this);
 
             }
+            PathInfo pi = { 1, 0, 0 };  // count is 1
             path.calculateCost(trace_file, path_spec, *this);
-        }
-        if (path_spec.trace_)
-        {
-            trace_file << "Final path" << std::endl;
-            path.print(trace_file, path_spec, *this);
+            pathset[path] = pi;
+            if (path_spec.trace_)
+            {
+                trace_file << "Final path" << std::endl;
+                path.print(trace_file, path_spec, *this);
+            }
         }
     }
 
