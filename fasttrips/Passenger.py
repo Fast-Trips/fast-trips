@@ -187,6 +187,15 @@ class Passenger:
             self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.persons_df,
                                              how='left',
                                              on=Passenger.TRIP_LIST_COLUMN_PERSON_ID)
+
+            # are any null?
+            no_person_ids = self.trip_list_df.loc[pandas.isnull(self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM])]
+            if len(no_person_ids) > 0:
+                error_msg = "Even though a person list is given, failed to find person information for %d trips" % len(no_person_ids)
+                FastTripsLogger.fatal(error_msg)
+                FastTripsLogger.fatal("\n%s\n" % no_person_ids.to_string())
+                raise NetworkInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+
             # And then to households
             self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.households_df,
                                              how='left',
