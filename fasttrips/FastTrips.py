@@ -38,9 +38,6 @@ class FastTrips:
     #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    #: Pathset debug filename.  Writes pathset here.
-    PATHSET_LOG = "ft_pathset%s.txt"
-
     def __init__(self, input_network_dir, input_demand_dir, output_dir,
                  is_child_process=False, logname_append="", appendLog=False):
         """
@@ -98,15 +95,6 @@ class FastTrips:
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
                      logToConsole=False if is_child_process else True, append=appendLog)
 
-        # clear pathset files if we're starting out -- reset them to just a header
-        # there will be one for the parent process, and one each for workers
-        pathset_filename = os.path.join(self.output_dir, FastTrips.PATHSET_LOG % logname_append)
-        if not appendLog:
-            FastTripsLogger.info("Writing %s" % pathset_filename)
-            pathset_file = open(pathset_filename, 'w')
-            pathset_file.write("iteration passenger_id_num trip_list_id_num path_cost path_probability path_board_stops path_trips path_alight_stops\n")
-            pathset_file.close()
-
         # Read the configuration
         Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
 
@@ -125,6 +113,7 @@ class FastTrips:
             # Validate the GTFS
             FastTripsLogger.info("Validating GTFS schedule")
             self.gtfs_schedule.Validate()
+            FastTripsLogger.info("Done validating GTFS schedule")
 
         # Required: Trips, Routes, Stops, Stop Times, Agency, Calendar
         # Optional: Transfers, Shapes, Calendar Dates...
@@ -157,52 +146,6 @@ class FastTrips:
         else:
             self.passengers = None
 
-    def combine_pathset_files(self):
-        """
-        Since the pathset files are output by worker, let's combine them into a single file.
-        """
-        procnum      = 1
-        pathset_init = False
-        pathsets_df  = None
-        # if we don't have one, no worries
-
-        while True:
-            logname_append = "_worker%02d" % procnum
-            pathset_filename = os.path.join(self.output_dir, FastTrips.PATHSET_LOG % logname_append)
-
-            if not os.path.exists(pathset_filename):
-                break
-
-            # read the pathset
-            pathset_df = pandas.read_table(pathset_filename, sep="[ ]+")
-            FastTripsLogger.info("Read %d lines from %s" % (len(pathset_df), pathset_filename))
-            # remove it
-            os.remove(pathset_filename)
-
-            # append to ours
-            if not pathset_init:
-                pathsets_df = pathset_df
-                pathset_init = True
-            else:
-                pathsets_df = pandas.concat([pathsets_df, pathset_df], axis=0)
-
-            # see if we have more
-            procnum += 1
-
-        if pathset_init:
-            # sort it by iteration, trip_id_num
-            pathsets_df.sort_values(by=['iteration','trip_list_id_num'], inplace=True)
-
-            # add the person_id since that's what we trace
-            pathsets_df = pandas.merge(left=pathsets_df,
-                                       right=self.passengers.trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.TRIP_LIST_COLUMN_PERSON_ID]],
-                                       how="left")
-
-            # write it
-            pathset_filename = os.path.join(self.output_dir, FastTrips.PATHSET_LOG % "")
-            pathsets_df.to_csv(pathset_filename, sep=" ", index=False)
-            FastTripsLogger.info("Wrote %d lines to %s" % (len(pathsets_df), pathset_filename))
-
 
     def run_assignment(self, output_dir):
         # Initialize performance results
@@ -211,6 +154,5 @@ class FastTrips:
         # Do it!
         Assignment.assign_paths(output_dir, self)
 
-        self.combine_pathset_files()
         self.performance.write(output_dir)
 

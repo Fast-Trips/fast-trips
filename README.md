@@ -29,46 +29,46 @@ to network inputs.)
 
 The configuration files are parsed by python's [ConfigParser module](https://docs.python.org/2/library/configparser.html#module-ConfigParser) and therefore
 adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
-[Network Example](Examples/test_network/input/config_ft.txt) [Demand Example](Examples/test_network/demand_twopaths/config_ft.txt)
+(See [Network Example](Examples/test_network/input/config_ft.txt) ) (See [Demand Example](Examples/test_network/demand_twopaths/config_ft.txt) )
 
 **fasttrips configuration options**
 
-Option Name                       | Type   | Default | Description
------------                       | ----   | --------| -----------
-bump_buffer                       | float  |
-bump_one_at_a_time                | bool   |
-capacity_constraint               | bool   |
-create_skims                      | bool   |
-debug_num_trips                   | int    |
-debug_trace_only                  | bool   |
-iterations                        | int    |
-output_passenger_trajectories     | bool   |
-number_of_processes               | int    |
-pathfinding_type                  | string |
-prepend_route_id_to_trip_id       | bool   |
-simulation                        | bool   |
-skim_end_time                     | string |
-skim_start_time                   | string |
-stochastic_dispersion             | float  |
-stochastic_max_stop_process_count | int    |
-stochastic_pathset_size           | int    |
-time_window                       | float  |
-trace_person_ids                  | string |
+Option Name                         | Type   | Default | Description
+-----------                         | ----   | --------| -----------
+`bump_buffer`                       | float  |
+`bump_one_at_a_time`                | bool   |
+`capacity_constraint`               | bool   |
+`create_skims`                      | bool   |
+`debug_num_trips`                   | int    |
+`debug_trace_only`                  | bool   |
+`iterations`                        | int    |
+`output_passenger_trajectories`     | bool   |
+`number_of_processes`               | int    |
+`pathfinding_type`                  | string |
+`prepend_route_id_to_trip_id`       | bool   |
+`simulation`                        | bool   |
+`skim_end_time`                     | string |
+`skim_start_time`                   | string |
+`stochastic_dispersion`             | float  |
+`stochastic_max_stop_process_count` | int    |
+`stochastic_pathset_size`           | int    |
+`time_window`                       | float  |
+`trace_person_ids`                  | string |
 
 **pathfinding configuration options**
 
-Option Name                       | Type   | Default | Description
------------                       | ----   | --------| -----------
-user_class_function               | string |
+Option Name                         | Type   | Default | Description
+-----------                         | ----   | --------| -----------
+`user_class_function`               | string |
 
 #### `config_ft.py`
 
 This is an *optional* python file in the Transit Demand input directory containing functions that are evaluated.
 This could be used to programmatically define user classes based on person, household and/or trip attributes.
 To use a function in this file, specify it in the *pathfinding* configuration as the `user_class_function`.
-[Example](Examples/test_network/demand_twopaths/config.py)
+(See [Example](Examples/test_network/demand_twopaths/config.py) )
 
-*  `pathweight_ft.txt`
+####  `pathweight_ft.txt`
 
 ### Test Sample Input
 Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical test network and also example transit demand data.

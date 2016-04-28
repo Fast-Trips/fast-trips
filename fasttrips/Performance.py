@@ -17,6 +17,7 @@ import pandas
 
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
+from .Util      import Util
 
 class Performance:
     """
@@ -44,7 +45,7 @@ class Performance:
     PERFORMANCE_COLUMN_TRACED                 = "traced"
 
     #: File with to write performance results
-    OUTPUT_PERFORMANCE_FILE                   = 'ft_output_performance.txt'
+    OUTPUT_PERFORMANCE_FILE                   = 'ft_output_performance.csv'
 
     def __init__(self):
         """
@@ -75,6 +76,4 @@ class Performance:
         """
         Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.
         """
-        output_filename = os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE)
-        self.performance_df.to_csv(output_filename, sep="\t", index=False, date_format="")
-        FastTripsLogger.info("Wrote performance info to %s" % output_filename)
+        Util.write_dataframe(self.performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE))

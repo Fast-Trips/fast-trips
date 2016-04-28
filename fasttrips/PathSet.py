@@ -125,7 +125,7 @@ class PathSet:
         """
         Was a a transit path found from the origin to the destination with the constraints?
         """
-        return len(self.pathdict) > 1
+        return len(self.pathdict) > 0
 
     def num_paths(self):
         """
@@ -349,15 +349,78 @@ class PathSet:
         # passengerId mode    originTaz   destinationTaz  startTime   boardingStops   boardingTrips   alightingStops  walkingTimes
 
     @staticmethod
-    def write_path_times(pax_exp_df, output_dir):
+    def write_path_times(passengers_df, output_dir):
         """
         Write the assigned path times to the given output file.
 
-        :param pax_exp_df:   Passenger experienced paths (simulation results)
-        :type  pax_exp_df:   :py:class:`pandas.DataFrame` instance
-        :param output_dir:   Output directory
-        :type  output_dir:   string
+        :param passengers_df: Passenger path links
+        :type  passengers_df: :py:class:`pandas.DataFrame` instance
+        :param output_dir:    Output directory
+        :type  output_dir:    string
         """
+        passenger_trips = passengers_df.loc[passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP].copy()
+
+        ######         TODO: this is really catering to output format; an alternative might be more appropriate
+        from .Assignment import Assignment
+        passenger_trips.loc[:,  'board_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_BOARD_TIME ].apply(Util.datetime64_formatter)
+        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Passenger.PF_COL_PAX_A_TIME].apply(Util.datetime64_formatter)
+        passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ALIGHT_TIME].apply(Util.datetime64_formatter)
+
+        # Aggregate (by joining) across each passenger + path
+        ptrip_group = passenger_trips.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
+        # these are Series
+        board_time_str   = ptrip_group['board_time_str'  ].apply(lambda x:','.join(x))
+        arrival_time_str = ptrip_group['arrival_time_str'].apply(lambda x:','.join(x))
+        alight_time_str  = ptrip_group['alight_time_str' ].apply(lambda x:','.join(x))
+
+        # Aggregate other fields across each passenger + path
+        pax_exp_df = passengers_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).agg(
+            {# 'pathmode'                  :'first',  # path mode
+             'A_id'                      :'first',  # origin
+             'B_id'                      :'last',   # destination
+             Passenger.PF_COL_PAX_A_TIME :'first',  # start time
+             Passenger.PF_COL_PAX_B_TIME :'last',   # end time
+             # TODO: cost needs to be updated for updated dwell & travel time
+             # 'cost'                      :'first',  # total travel cost is calculated for the whole path
+            })
+
+        # Put them together and return
+        assert(len(pax_exp_df) == len(board_time_str))
+        pax_exp_df = pandas.concat([pax_exp_df,
+                                    board_time_str,
+                                    arrival_time_str,
+                                    alight_time_str], axis=1)
+        # print pax_exp_df.to_string(formatters={'A_time':Assignment.datetime64_min_formatter,
+        #                                        'B_time':Assignment.datetime64_min_formatter})
+
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            simulated_person_ids = passengers_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].values
+
+        for trace_pax in Assignment.TRACE_PERSON_IDS:
+            if trace_pax not in simulated_person_ids:
+                FastTripsLogger.debug("Passenger %s not in final simulated list" % trace_pax)
+            else:
+                FastTripsLogger.debug("Final passengers_df for %s\n%s" % \
+                   (str(trace_pax),
+                    passengers_df.loc[passengers_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]==trace_pax].to_string(formatters=\
+                   {Passenger.PF_COL_PAX_A_TIME :Util.datetime64_min_formatter,
+                    Passenger.PF_COL_PAX_B_TIME :Util.datetime64_min_formatter,
+                    Passenger.PF_COL_LINK_TIME  :Util.timedelta_formatter,
+                    'board_time'           :Util.datetime64_min_formatter,
+                    'alight_time'          :Util.datetime64_min_formatter,
+                    'board_time_prev'      :Util.datetime64_min_formatter,
+                    'alight_time_prev'     :Util.datetime64_min_formatter,
+                    'B_time_prev'          :Util.datetime64_min_formatter,
+                    'A_time_next'          :Util.datetime64_min_formatter,})))
+
+                FastTripsLogger.debug("Passengers experienced times for %s\n%s" % \
+                   (str(trace_pax),
+                    pax_exp_df.loc[trace_pax].to_string(formatters=\
+                   {Passenger.PF_COL_PAX_A_TIME :Util.datetime64_min_formatter,
+                    Passenger.PF_COL_PAX_B_TIME :Util.datetime64_min_formatter})))
+
         # reset columns
         print_pax_exp_df = pax_exp_df.reset_index()
         print_pax_exp_df.sort_values(by=['trip_list_id_num'], inplace=True)
@@ -367,7 +430,7 @@ class PathSet:
 
         # rename columns
         print_pax_exp_df.rename(columns=
-            {'pathmode'             :'mode',
+            {#'pathmode'             :'mode',
              'A_id'                 :'originTaz',
              'B_id'                 :'destinationTaz',
              'A_time_str'           :'startTime',
@@ -383,7 +446,7 @@ class PathSet:
         print_pax_exp_df = print_pax_exp_df[[
             'trip_list_id_num',
             'person_id',
-            'mode',
+            #'mode',
             'originTaz',
             'destinationTaz',
             'startTime',

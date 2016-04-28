@@ -82,8 +82,8 @@ class Util:
 
             FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
             FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].head() = \n%s\n" % (mapping_newid_colname_chk,
-                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].head())))
+            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].drop_duplicates() = \n%s\n" % (mapping_newid_colname_chk,
+                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates())))
             FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
 
 
@@ -173,3 +173,38 @@ class Util:
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
+
+    @staticmethod
+    def write_dataframe(df, name, output_file):
+        """
+        Convenience method to write a dataframe but make some of the fields more usable.
+
+        If a column named colname is a timedelta64 fields, instead of writing "0 days 00:12:00.000000000",
+         writes colname_min with the minutes.
+        """
+        df_cols = list(df.columns.values)
+        df_toprint = df.copy()
+
+        for col_idx in range(len(df_cols)):
+            old_colname = df_cols[col_idx]
+            if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
+                max_timedelta = df_toprint[old_colname].abs().max()
+                FastTripsLogger.debug("Util.write_dataframe() %s column %s has max val %s" % (name, old_colname, str(max_timedelta)))
+                # milliseconds
+                if max_timedelta < numpy.timedelta64(1,'m'):
+                    new_colname = "%s milliseconds" % old_colname
+                    # if the column already exists, continue
+                    if new_colname in df_cols: continue
+                    df_toprint[new_colname] = df_toprint[old_colname]/numpy.timedelta64(1,'m')
+                # minutes
+                else:
+                    new_colname = "%s min" % old_colname
+                    df_toprint[new_colname] = df_toprint[old_colname]/numpy.timedelta64(1,'m')
+                    df_cols[col_idx] = new_colname
+            # print df_toprint.dtypes[col_idx]
+
+        # the cols have new column names instead of old
+        df_toprint = df_toprint[df_cols]
+
+        df_toprint.to_csv(output_file, index=False)
+        FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))
