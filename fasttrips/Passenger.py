@@ -111,8 +111,8 @@ class Passenger:
     PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
 
     #: pathfinding results - Pathsets
-    PATHSET_PATHS_CSV               = r"pathset_paths_iter%d.csv"
-    PATHSET_LINKS_CSV               = r"pathset_links_iter%d.csv"
+    PATHSET_PATHS_CSV               = r"pathset_paths.csv"
+    PATHSET_LINKS_CSV               = r"pathset_links.csv"
 
     def __init__(self, input_dir, output_dir, today, stops, routes):
         """
@@ -508,7 +508,7 @@ class Passenger:
             PathSet.PATH_KEY_PROBABILITY ])
 
         # write it
-        Util.write_dataframe(pathset_paths_df, "pathset_paths_df", os.path.join(output_dir, Passenger.PATHSET_PATHS_CSV % iteration))
+        Util.write_dataframe(pathset_paths_df, "pathset_paths_df", os.path.join(output_dir, Passenger.PATHSET_PATHS_CSV), append=(iteration>1))
 
         pathset_links_df = pandas.DataFrame(linklist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -534,12 +534,12 @@ class Passenger:
                                            mapping_df=trip_id_df,        mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
 
         # write it
-        Util.write_dataframe(pathset_links_df, "pathset_links_df", os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV % iteration))
+        Util.write_dataframe(pathset_links_df, "pathset_links_df", os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV), append=(iteration>1))
 
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def choose_paths(pathset_paths_df, pathset_links_df):
+    def choose_paths(iteration, pathset_paths_df, pathset_links_df):
         """
         Returns two dataframes:
 
@@ -549,7 +549,7 @@ class Passenger:
         """
         from .PathSet import PathSet
         # todo: do this differently?  Include iteration?
-        numpy.random.seed(1)
+        numpy.random.seed(iteration)
 
         # assume probability is correct -- create cumulative probability
         pathset_paths_df["prob_cum"] = pathset_paths_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -617,7 +617,7 @@ class Passenger:
         return (pathset_paths_df, passengers_df)
 
     @staticmethod
-    def flag_invalid_paths(passengers_df, output_dir):
+    def flag_invalid_paths(iteration, passengers_df, output_dir):
         """
         Given passenger path links with the vehicle board_time and alight_time attached to trip links,
         add columns:
@@ -697,6 +697,7 @@ class Passenger:
 
         # quick and dirty -- save this
         # todo: when we iterate, this will get smarter
-        Util.write_dataframe(passengers_df, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"))
+        passengers_df["iteration"] = iteration
+        Util.write_dataframe(passengers_df, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"), append=(iteration > 1))
 
         return (valid_linked_trips, passengers_df)

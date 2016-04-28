@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 
-import datetime, logging
+import csv, datetime, logging, os
 
 import numpy
 import pandas
@@ -175,7 +175,7 @@ class Util:
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
 
     @staticmethod
-    def write_dataframe(df, name, output_file):
+    def write_dataframe(df, name, output_file, append=False):
         """
         Convenience method to write a dataframe but make some of the fields more usable.
 
@@ -206,5 +206,19 @@ class Util:
         # the cols have new column names instead of old
         df_toprint = df_toprint[df_cols]
 
-        df_toprint.to_csv(output_file, index=False)
-        FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))
+        if append and os.path.exists(output_file):
+            # get the columns
+            df_file = open(output_file, 'rb')
+            df_reader = csv.reader(df_file, delimiter=",")
+            header_row = df_reader.next()
+            df_file.close()
+
+            df_file = open(output_file, "a")
+            df_toprint[header_row].to_csv(df_file, index=False, header=False)
+            df_file.close()
+
+            FastTripsLogger.info("Appended %s dataframe to %s" % (name, output_file))
+
+        else:
+            df_toprint.to_csv(output_file, index=False)
+            FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))

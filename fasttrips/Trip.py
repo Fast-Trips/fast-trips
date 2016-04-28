@@ -504,8 +504,7 @@ class Trip:
                           on   =[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_TRIP_ID_NUM])
         assert(len(self.stop_times_df) == len(df))
 
-        # add blank boards, alights and onboard
-        assert("boards" not in list(df.columns.values))
+        # blank boards, alights and onboard
         df["boards" ] = 0
         df["alights"] = 0
         df["onboard"] = 0
