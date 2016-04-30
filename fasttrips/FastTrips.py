@@ -154,5 +154,3 @@ class FastTrips:
         # Do it!
         Assignment.assign_paths(output_dir, self)
 
-        self.performance.write(output_dir)
-

@@ -507,9 +507,6 @@ class Passenger:
             PathSet.PATH_KEY_COST,
             PathSet.PATH_KEY_PROBABILITY ])
 
-        # write it
-        Util.write_dataframe(pathset_paths_df, "pathset_paths_df", os.path.join(output_dir, Passenger.PATHSET_PATHS_CSV), append=(iteration>1))
-
         pathset_links_df = pandas.DataFrame(linklist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
@@ -539,12 +536,23 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def choose_paths(iteration, pathset_paths_df, pathset_links_df):
+    def write_paths(output_dir, iteration, pathset_df, links):
         """
-        Returns two dataframes:
+        Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
+        """
+        # write it
+        pathset_df["iteration"] = iteration
+        Util.write_dataframe(pathset_df,
+                             "pathset_links_df" if links else "pathset_paths_df",
+                             os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
+                             append=(iteration>1))
+        pathset_df.drop("iteration", axis=1, inplace=True)
 
-        1) the same dataframe as input pathset_paths_df, but with a new column, PF_COL_CHOSEN, indicating if that path was chosen.
-        2) the subset of pathset_links_df -- the ones that are chosen
+
+    @staticmethod
+    def choose_paths(iteration, pathset_paths_df):
+        """
+        Returns  the same dataframe as input pathset_paths_df, but with a new column, PF_COL_CHOSEN, indicating if that path was chosen.
 
         """
         from .PathSet import PathSet
@@ -603,6 +611,14 @@ class Passenger:
         pathset_paths_df.drop(["prob_cum","rand","rand_less","chosen_idx"], axis=1, inplace=True)
         FastTripsLogger.debug("Passenger.choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
 
+        return pathset_paths_df
+
+
+    @staticmethod
+    def get_chosen_links(pathset_paths_df, pathset_links_df):
+        """
+        Given the pathset paths and pathset links, returns the pathset links for the ones marked as chosen.
+        """
         # subset the links to return
         pathset_links_df = pandas.merge(left=pathset_links_df,
                                         right=pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -614,7 +630,7 @@ class Passenger:
         passengers_df = pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_CHOSEN]==1,].copy()
         passengers_df.drop([Passenger.PF_COL_CHOSEN], axis=1, inplace=True)
 
-        return (pathset_paths_df, passengers_df)
+        return passengers_df
 
     @staticmethod
     def flag_invalid_paths(iteration, passengers_df, output_dir):

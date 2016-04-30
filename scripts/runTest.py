@@ -5,7 +5,7 @@ USAGE = r"""
 
   python runTest.py [--trace_only|-t] [--num_trips|-n #trips] asgn_type iters capacity input_network_dir input_demand_dir output_dir
 
-  Where asgn_type is one of 'deterministic' or 'stochastic'
+  Where asgn_type is one of 'deterministic','stochastic' or 'simulation'
 
   Use capacity='yes', 'true', 't', or 1 to enable a capacity constraint.
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.register('type','bool',str2bool)
     parser.add_argument('-t','--trace_only', action='store_true')
     parser.add_argument('-n','--num_trips',  type=int)
-    parser.add_argument("asgn_type",         choices=['deterministic','stochastic'])
+    parser.add_argument("asgn_type",         choices=['deterministic','stochastic','simulation'])
     parser.add_argument("iters",             type=int)
     parser.add_argument("capacity",          type='bool')
     parser.add_argument("input_network_dir", type=str)
@@ -55,6 +55,8 @@ if __name__ == "__main__":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN
     elif args.asgn_type == "stochastic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_STO_ASGN
+    elif args.asgn_type == "simulation":
+        fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_SIM_ONLY
 
     fasttrips.Assignment.ITERATION_FLAG          = int(args.iters)
 

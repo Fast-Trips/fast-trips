@@ -72,8 +72,16 @@ class Performance:
 
         self.performance_df = self.performance_df.append(perf_dict, ignore_index=True)
 
-    def write(self, output_dir):
+    def write(self, output_dir, iteration):
         """
         Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.
         """
-        Util.write_dataframe(self.performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE))
+        Util.write_dataframe(self.performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE), append=(iteration>1))
+
+        # reset dataframe to blank
+        self.performance_df = pandas.DataFrame(columns=[Performance.PERFORMANCE_COLUMN_ITERATION,
+                                                        Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM,
+                                                        Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
+                                                        Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT,
+                                                        Performance.PERFORMANCE_COLUMN_TIME_LABELING,
+                                                        Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING])

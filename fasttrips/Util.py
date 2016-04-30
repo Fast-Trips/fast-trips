@@ -187,6 +187,8 @@ class Util:
 
         for col_idx in range(len(df_cols)):
             old_colname = df_cols[col_idx]
+            FastTripsLogger.debug("%s -> %s" % (old_colname, df_toprint.dtypes[col_idx]))
+
             if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
                 max_timedelta = df_toprint[old_colname].abs().max()
                 FastTripsLogger.debug("Util.write_dataframe() %s column %s has max val %s" % (name, old_colname, str(max_timedelta)))

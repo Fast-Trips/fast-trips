@@ -508,6 +508,7 @@ class Trip:
         df["boards" ] = 0
         df["alights"] = 0
         df["onboard"] = 0
+        df["overcap"] = 0.0
         return df
 
     def write_trips_for_extension(self):
@@ -801,53 +802,3 @@ class Trip:
         assert(len(trips_df)==trips_df_len)
         return trips_df
 
-    @staticmethod
-    def print_load_profile(FT, iteration, veh_trips_df, output_dir):
-        """
-        Print the load profile output
-        """
-        # reset columns
-        print_veh_trips_df = veh_trips_df
-
-        FastTripsLogger.debug("print_load_profile.  veh_trips_df.head()=\n%s\n" % veh_trips_df.head().to_string())
-        FastTripsLogger.debug("dtypes=\n%s" % str(veh_trips_df.dtypes))
-
-        print_veh_trips_df = FT.trips.calculate_headways(print_veh_trips_df)
-        print_veh_trips_df["iteration"] = iteration
-
-        # reorder
-        columns = ["iteration",
-                   Trip.TRIPS_COLUMN_ROUTE_ID,
-                   Route.ROUTES_COLUMN_ROUTE_SHORT_NAME,
-                   Route.ROUTES_COLUMN_ROUTE_LONG_NAME,
-                   Route.ROUTES_COLUMN_ROUTE_TYPE,
-                   Route.ROUTES_COLUMN_AGENCY_ID,
-                   Route.ROUTES_COLUMN_MODE,
-                   Trip.TRIPS_COLUMN_TRIP_ID,
-                   Trip.TRIPS_COLUMN_DIRECTION_ID,
-                   Trip.STOPTIMES_COLUMN_STOP_ID,
-                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                   Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
-                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
-                   Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
-                   Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC,
-                   'boards',
-                   'alights',
-                   'onboard']
-
-        # these may not be in there since they're optional
-        for optional_col in [Trip.TRIPS_COLUMN_DIRECTION_ID,
-                             Route.ROUTES_COLUMN_AGENCY_ID]:
-            if optional_col not in print_veh_trips_df.columns.values:
-                columns.remove(optional_col)
-
-        print_veh_trips_df = print_veh_trips_df[columns]
-
-        load_filename = os.path.join(output_dir, "ft_output_loadProfile.txt")
-        load_file = open(load_filename, 'w' if iteration==0 else 'a')
-        print_veh_trips_df.to_csv(load_file,
-                              float_format="%.2f",
-                              index=False,
-                              header=True if iteration==0 else False)
-        load_file.close()
-        FastTripsLogger.info("%s %s" % ("Wrote" if iteration==0 else "Updated", load_filename))

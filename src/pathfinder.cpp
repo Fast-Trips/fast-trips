@@ -1041,8 +1041,10 @@ namespace fasttrips {
 
                         // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
                         Attributes delay_attr;
-                        delay_attr["time_min"           ] = 0;
-                        delay_attr["preferred_delay_min"] = wait_time;
+                        delay_attr["time_min"             ] = 0;
+                        delay_attr["drive_travel_time_min"] = 0;
+                        delay_attr["walk_time_min"        ] = 0;
+                        delay_attr["preferred_delay_min"  ] = wait_time;
                         UserClassMode delay_ucm = { path_spec.user_class_,
                                                     path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
                                                     path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_
