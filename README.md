@@ -34,10 +34,11 @@ adhere to that format, with two possible sections: *fasttrips* and *pathfinding*
 **fasttrips configuration options**
 
 Option Name                         | Type   | Default | Description
------------                         | ----   | --------| -----------
-`bump_buffer`                       | float  |
-`bump_one_at_a_time`                | bool   |
-`capacity_constraint`               | bool   |
+-----------                         | ----   | --------| -------------------------
+`bump_buffer`                       | float  | 5       | Not really used yet.
+`bump_one_at_a_time`                | bool   | False   |
+`capacity_constraint`               | bool   | False   | Hard capacity constraint.  When True, fasttrips forces everyone off overcapacity vehicles and
+                                                         disallows them from finding a new path using an overcapacity vehicle.
 `create_skims`                      | bool   |
 `debug_num_trips`                   | int    |
 `debug_trace_only`                  | bool   |

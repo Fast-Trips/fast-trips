@@ -89,6 +89,7 @@ namespace fasttrips {
         int     stop_id_;
         double  arrive_time_;   // minutes after midnight
         double  depart_time_;   // minutes after midnight
+        double  overcap_;       // number of passengers overcap
     } TripStopTime;
 
     /// For capacity lookups: TripStop definition
@@ -154,9 +155,9 @@ namespace fasttrips {
         StopStopToAttr transfer_links_d_o_;
         /// Trip information: trip id -> Trip Info
         std::map<int, TripInfo> trip_info_;
-        /// Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time]
+        /// Trip information: trip id -> vector of [trip id, sequence, stop id, arrival time, departure time, overcap]
         std::map<int, std::vector<TripStopTime> > trip_stop_times_;
-        /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time]
+        /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time, overcap]
         std::map<int, std::vector<TripStopTime> > stop_trip_times_;
 
         // ================ ID numbers to ID strings ===============
@@ -309,7 +310,8 @@ namespace fasttrips {
         const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
         /// Accessor for trip info
         const TripInfo* getTripInfo(int trip_id_num) const;
-
+        /// Accessor for TripStopTime for given trip id, stop sequence
+        const TripStopTime& getTripStopTime(int trip_id, int stop_seq) const;
         /**
          * Tally the link cost, which is the sum of the weighted attributes.
          * @return the cost.
@@ -344,9 +346,9 @@ namespace fasttrips {
          * @param output_dir        The directory in which to output trace files (if any)
          * @param process_num       The process number for this instance
          * @param stoptime_index    For populating PathFinder::trip_stop_times_, this array contains
-         *                          trip IDs, sequence numbers and stop IDs
+         *                          trip IDs, sequence numbers, stop IDs
          * @param stoptime_times    For populating PathFinder::trip_stop_times_, this array contains
-         *                          transit vehicle arrival times and departure times at a stop.
+         *                          transit vehicle arrival times, departure times, and overcap pax at a stop.
          * @param num_stoptimes     The number of stop times described in the previous two arrays.
          */
         void initializeSupply(const char*   output_dir,

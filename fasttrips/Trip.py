@@ -171,6 +171,33 @@ class Trip:
     #: Default headway if no previous matching route/trip
     DEFAULT_HEADWAY             = 60
 
+    # ========== Simulation column names =======================================================
+    #: Result column name: Boards. Int.
+    SIM_COL_VEH_BOARDS                          = 'boards'
+    #: Result column name: Alights.  Int.
+    SIM_COL_VEH_ALIGHTS                         = 'alights'
+    #: Result column name: Onboard.  Cumulative sum of :py:attr:`SIM_COL_VEH_BOARDS` - :py:attr:`SIM_COL_VEH_ALIGHTS`. Int.
+    SIM_COL_VEH_ONBOARD                         = 'onboard'
+    #: Result column name: Standees. Onboard - sitting capacity, if configured. Int.
+    SIM_COL_VEH_STANDEES                        = 'standees'
+    #: Result column name: Friction. Where positive, friction = on+off+standees. Int.
+    SIM_COL_VEH_FRICTION                        = 'friction'
+    #: Result column name: Number of onboard passengers minus capacity. Int.
+    SIM_COL_VEH_OVERCAP                         = 'overcap'
+
+    #: Result column name: MSA of column :py:attr:`SIM_COL_VEH_BOARDS`. Float.
+    SIM_COL_VEH_MSA_BOARDS                      = 'msa_boards'
+    #: Result column name: MSA of column :py:attr:`SIM_COL_VEH_ALIGHTS`. Float.
+    SIM_COL_VEH_MSA_ALIGHTS                     = 'msa_alights'
+    #: Result column name: MSA Onboard. Cumulative sum of :py:attr:`SIM_COL_VEH_MSA_BOARDS` - :py:attr:`SIM_COL_VEH_MSA_ALIGHTS`. Float.
+    SIM_COL_VEH_MSA_ONBOARD                     = 'msa_onboard'
+    #: Result column name: MSA Standeeds.  MSA onboard - sitting capacity, if configured. Float.
+    SIM_COL_VEH_MSA_STANDEES                    = 'msa_standees'
+    #: Result column name: MSA Friction. Where positive, MSA friction = MSA boards + MSA alights + MSA standees. Float.
+    SIM_COL_VEH_MSA_FRICTION                    = 'msa_friction'
+    #: Result column name: Number of MSA onboard passengers minus capacity. Float.
+    SIM_COL_VEH_MSA_OVERCAP                     = 'msa_overcap'
+
     def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process, stops, routes, prepend_route_id_to_trip_id):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
@@ -495,6 +522,7 @@ class Trip:
 
     def get_full_trips(self):
         """
+
         Returns the fullest dataframe of trip + stop information.
         """
         # join with trips to get additional fields
@@ -505,10 +533,19 @@ class Trip:
         assert(len(self.stop_times_df) == len(df))
 
         # blank boards, alights and onboard
-        df["boards" ] = 0
-        df["alights"] = 0
-        df["onboard"] = 0
-        df["overcap"] = 0.0
+        df[Trip.SIM_COL_VEH_BOARDS      ] = 0
+        df[Trip.SIM_COL_VEH_ALIGHTS     ] = 0
+        df[Trip.SIM_COL_VEH_ONBOARD     ] = 0
+        df[Trip.SIM_COL_VEH_FRICTION    ] = 0
+        df[Trip.SIM_COL_VEH_STANDEES    ] = 0
+        df[Trip.SIM_COL_VEH_OVERCAP     ] = 0
+
+        df[Trip.SIM_COL_VEH_MSA_BOARDS  ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_ALIGHTS ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_ONBOARD ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_FRICTION] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_STANDEES] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_OVERCAP ] = 0.0
         return df
 
     def write_trips_for_extension(self):
@@ -560,7 +597,7 @@ class Trip:
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Trip.OUTPUT_TRIPINFO_FILE))
 
     @staticmethod
-    def update_trip_times(trips_df):
+    def update_trip_times(trips_df, MSA_RESULTS):
         """
         Updates trip times for stops with boards and/or alights.
 
@@ -569,6 +606,10 @@ class Trip:
         If dwell time formula specified, adds dwell time at stop.
 
         Updates the following columns:
+        - Trip.SIM_COL_VEH_STANDEES
+        - Trip.SIM_COL_VEH_MSA_STANDEES
+        - Trip.SIM_COL_VEH_FRICTION
+        - Trip.SIM_COL_VEH_MSA_FRICTION
         - Trip.STOPTIMES_COLUMN_TRAVEL_TIME
         - Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC
         - Trip.STOPTIMES_COLUMN_DWELL_TIME
@@ -583,7 +624,9 @@ class Trip:
         trip_cols = list(trips_df.columns.values)
 
         # Default to 0
-        trips_df["friction"] = 0.0
+        trips_df[Trip.SIM_COL_VEH_FRICTION    ] = 0.0
+        trips_df[Trip.SIM_COL_VEH_MSA_FRICTION] = 0.0
+
         if Trip.VEHICLES_COLUMN_SEATED_CAPACITY in trip_cols:
 
             # log null seated capacities
@@ -592,12 +635,16 @@ class Trip:
                 FastTripsLogger.warn("\n%s" % trips_df[[Trip.VEHICLES_COLUMN_VEHICLE_NAME, Trip.VEHICLES_COLUMN_SEATED_CAPACITY]].loc[pandas.isnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY])].drop_duplicates())
 
             # set standeeds
-            trips_df["standees"] = trips_df["onboard"] - trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY]
+            trips_df[Trip.SIM_COL_VEH_STANDEES    ] = trips_df[Trip.SIM_COL_VEH_ONBOARD    ] - trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY]
+            trips_df[Trip.SIM_COL_VEH_MSA_STANDEES] = trips_df[Trip.SIM_COL_VEH_MSA_ONBOARD] - trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY]
             # it can only be non-negative
-            trips_df.loc[trips_df["standees"]<0, "standees"] = 0
+            trips_df.loc[trips_df[Trip.SIM_COL_VEH_STANDEES    ]<0, Trip.SIM_COL_VEH_STANDEES    ] = 0
+            trips_df.loc[trips_df[Trip.SIM_COL_VEH_MSA_STANDEES]<0, Trip.SIM_COL_VEH_MSA_STANDEES] = 0
             # where it is positive, friction = on+off+standees
-            trips_df.loc[(trips_df["standees"]>0)&(pandas.notnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY])), "friction"] = \
-                                                   trips_df["boards"] + trips_df["alights"] + trips_df["standees"]
+            trips_df.loc[(trips_df[Trip.SIM_COL_VEH_STANDEES    ]>0)&(pandas.notnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY])), Trip.SIM_COL_VEH_FRICTION    ] = \
+                trips_df[Trip.SIM_COL_VEH_BOARDS    ] + trips_df[Trip.SIM_COL_VEH_ALIGHTS    ] + trips_df[Trip.SIM_COL_VEH_STANDEES    ]
+            trips_df.loc[(trips_df[Trip.SIM_COL_VEH_MSA_STANDEES]>0)&(pandas.notnull(trips_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY])), Trip.SIM_COL_VEH_MSA_FRICTION] = \
+                trips_df[Trip.SIM_COL_VEH_MSA_BOARDS] + trips_df[Trip.SIM_COL_VEH_MSA_ALIGHTS] + trips_df[Trip.SIM_COL_VEH_MSA_STANDEES]
         else:
             # log no seated capacities at all
             FastTripsLogger.warn("Trip.update_trip_times(): Cannot calculate friction because [%s] not configured" % Trip.VEHICLES_COLUMN_SEATED_CAPACITY)
@@ -613,8 +660,12 @@ class Trip:
                 dwell_df = dwell_group.copy()
                 FastTripsLogger.debug("dwell_formula %s has %d rows" % (str(dwell_formula), len(dwell_df)))
                 if isinstance(dwell_formula,str):
-                    # replace [boards], [alights], etc with trip_df[boards], trip_df[alights], etc
-                    dwell_formula = dwell_formula.replace("[","dwell_df['")
+                    if MSA_RESULTS:
+                        # replace [boards], [alights], etc with trip_df['msa_boards'], trip_df['msa_alights'], etc
+                        dwell_formula = dwell_formula.replace("[","dwell_df['msa_")
+                    else:
+                        # replace [boards], [alights], etc with trip_df['boards'], trip_df['alights'], etc
+                        dwell_formula = dwell_formula.replace("[","dwell_df['")
                     dwell_formula = dwell_formula.replace("]","']")
 
                     # eval it
@@ -636,7 +687,7 @@ class Trip:
             trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME] = trips_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC].map(lambda x: datetime.timedelta(seconds=x))
 
         # the vehicle stops if someone boards or someone alights or both
-        trips_df["does_stop"] = (trips_df['boards']>0) | (trips_df['alights']>0)
+        trips_df["does_stop"] = (trips_df[Trip.SIM_COL_VEH_BOARDS]>0) | (trips_df[Trip.SIM_COL_VEH_ALIGHTS]>0)
 
         # we need information about the next stop
         next_stop_df = trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
@@ -731,7 +782,8 @@ class Trip:
                       Trip.STOPTIMES_COLUMN_ARRIVAL_TIME, Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
                       Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS, Trip.VEHICLES_COLUMN_ACCELERATION, Trip.VEHICLES_COLUMN_DECELERATION,
                       Trip. VEHICLES_COLUMN_SEATED_CAPACITY,
-                      "boards", "alights", "onboard", "standees", "friction", "does_stop","next_does_stop","next_is_last_stop",
+                      Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS, Trip.SIM_COL_VEH_ONBOARD, Trip.SIM_COL_VEH_STANDEES, Trip.SIM_COL_VEH_FRICTION,
+                      "does_stop","next_does_stop","next_is_last_stop",
                       "accel_secs","decel_secs",
                       Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
                       "travel_dwell_sec","travel_dwell_sec_cum","new_arrival_time"

@@ -498,6 +498,8 @@ class Passenger:
                     prev_state_id = state_id
                     link_num     += 1
 
+        FastTripsLogger.debug("setup_passenger_pathsets(): pathlist and linklist constructed")
+
         pathset_paths_df = pandas.DataFrame(pathlist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
@@ -521,6 +523,8 @@ class Passenger:
             Passenger.PF_COL_WAIT_TIME,
             Passenger.PF_COL_LINK_NUM ])
 
+        FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
+
         # get A_id and B_id and trip_id
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='A_id_num',                            newid_colname='A_id',
                                            mapping_df=stop_id_df,        mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
@@ -530,9 +534,7 @@ class Passenger:
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                            mapping_df=trip_id_df,        mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
 
-        # write it
-        Util.write_dataframe(pathset_links_df, "pathset_links_df", os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV), append=(iteration>1))
-
+        FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
@@ -698,16 +700,19 @@ class Passenger:
         passengers_df.loc[pandas.notnull(passengers_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "new_waittime"] = passengers_df["board_time"] - passengers_df["new_A_time"]
 
         # invalid trips have negative wait time
-        passengers_df["invalid"] = 0
-        passengers_df.loc[passengers_df["new_waittime"]<numpy.timedelta64(0,'m'), "invalid"] = 1
+        passengers_df["missed_xfer"] = 0
+        passengers_df.loc[passengers_df["new_waittime"]<numpy.timedelta64(0,'m'), "missed_xfer"] = 1
 
         # count how many are valid (sum of invalid = 0 for the trip list id)
-        passengers_df_grouped = passengers_df.groupby(Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM).aggregate({"invalid":"sum"})
-        passengers_df_grouped.loc[passengers_df_grouped["invalid"]>0,"invalid"] = 1
+        passengers_df_grouped = passengers_df.groupby(Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM).aggregate({"missed_xfer":"sum",
+                                                                                                              "bump_iter":"max"})
+        passengers_df_grouped["invalid"] = 0
+        passengers_df_grouped.loc[passengers_df_grouped["missed_xfer"]> 0,"invalid"] = 1 # invalid: any missed xfers
+        passengers_df_grouped.loc[passengers_df_grouped["bump_iter"  ]>=0,"invalid"] = 1 # invalid: any bumped
         valid_linked_trips = len(passengers_df_grouped) - passengers_df_grouped["invalid"].sum()
 
-        FastTripsLogger.info("  flag_invalid_paths() %d invalid (missed transfer) trip legs for %d linked trips" % \
-                             (passengers_df["invalid"].sum(), passengers_df_grouped["invalid"].sum()))
+        FastTripsLogger.info("  flag_invalid_paths (%d missed transfer, %d bumped) trip legs for %d linked trips" % \
+                             (passengers_df["missed_xfer"].sum(), len(passengers_df.loc[passengers_df["bump_iter"]>=0]), passengers_df_grouped["invalid"].sum()))
 
         FastTripsLogger.debug("flag_invalid_paths() passengers_df (%d):\n%s" % (len(passengers_df), passengers_df.head(30).to_string()))
 

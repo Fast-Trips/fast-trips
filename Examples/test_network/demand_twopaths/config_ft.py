@@ -6,7 +6,7 @@ def user_class(row_series):
     This function takes a single argument, the pandas.Series with person, household and
     trip_list attributes, and returns a user class string.
     """
-    print row_series
+    # print row_series
     if row_series["hh_id"] == "simpson":
         return "not_real"
     return "real"

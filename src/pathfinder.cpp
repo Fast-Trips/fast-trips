@@ -381,6 +381,16 @@ namespace fasttrips {
         return &(it->second);
     }
 
+    // Accessor for TripStopTime for given trip id, stop sequence
+    const TripStopTime& PathFinder::getTripStopTime(int trip_id, int stop_seq) const
+    {
+        const TripStopTime& tst = trip_stop_times_.find(trip_id)->second[stop_seq-1];  // stop sequences start at 1
+        if (tst.seq_ != stop_seq) {
+            printf("getTripStopTime: this shouldn't happen!");
+        }
+        return tst;
+    }
+
     void PathFinder::initializeSupply(
         const char* output_dir,
         int         process_num,
@@ -390,24 +400,39 @@ namespace fasttrips {
     {
         output_dir_  = output_dir;
         process_num_ = process_num;
-        readIntermediateFiles();
+        printf("PathFinder::initializeSupply()  trip_stop_times_.size() = %d\n", trip_stop_times_.size());
+        if (trip_stop_times_.size() == 0)
+        {
+            readIntermediateFiles();
+        } else
+        {
+            // reset these
+            trip_stop_times_.clear();
+            stop_trip_times_.clear();
+        }
 
         for (int i=0; i<num_stoptimes; ++i) {
             TripStopTime stt = {
                 stoptime_index[3*i],    // trip id
                 stoptime_index[3*i+1],  // sequence
                 stoptime_index[3*i+2],  // stop id
-                stoptime_times[2*i],    // arrive time
-                stoptime_times[2*i+1]   // depart time
+                stoptime_times[3*i],    // arrive time
+                stoptime_times[3*i+1],  // depart time
+                stoptime_times[3*i+2]   // overcap
             };
             // verify the sequence number makes sense: sequential, starts with 1
             assert(stt.sequence_ == trip_stop_times_[stt.trip_id_].size()+1);
 
             trip_stop_times_[stt.trip_id_].push_back(stt);
             stop_trip_times_[stt.stop_id_].push_back(stt);
-            if (false && (process_num <= 1) && ((i<5) || (i>num_stoptimes-5))) {
-                printf("stoptimes[%4d][%4d][%4d]=%f, %f\n", stoptime_index[3*i], stoptime_index[3*i+1], stoptime_index[3*i+2],
-                       stoptime_times[2*i], stoptime_times[2*i+1]);
+            // if (false && (process_num <= 1) && ((i<5) || (i>num_stoptimes-5))) {
+            if (stt.overcap_ != 0) {
+                std::cerr << "stoptimes[" << tripStringForId(stt.trip_id_) << "," << stt.seq_ << "," << stopStringForId(stt.stop_id_) << "] = ";
+                std::cerr << " arrtime:";
+                printTime(std::cerr, stt.arrive_time_);
+                std::cerr << ", depptime:";
+                printTime(std::cerr, stt.depart_time_);
+                std::cerr << ", overcap:" << stt.overcap_ << std::endl;
             }
         }
     }
@@ -911,6 +936,8 @@ namespace fasttrips {
 
             // the trip info for this trip
             const TripInfo& trip_info = trip_info_.find(it->trip_id_)->second;
+            // the trip stop time for this trip
+            const TripStopTime& tst = getTripStopTime(it->trip_id_, it->seq_);
 
             // get the weights applicable for this trip
             SupplyModeToNamedWeights::const_iterator iter_sm2nw = iter_weights->second.find(trip_info.supply_mode_num_);
@@ -1023,10 +1050,28 @@ namespace fasttrips {
                 // stochastic/hyperpath: cost update
                 if (path_spec.hyperpath_) {
 
+                    int overcap = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
+
+                    if (path_spec.trace_) {
+                        if (path_spec.outbound_) {
+                            trace_file << "trip " << tripStringForId(possible_board_alight.trip_id_)
+                                       << ", stop " << stopStringForId(possible_board_alight.stop_id_)
+                                       << ", seq " << possible_board_alight.seq_
+                                       << ", overcap " << possible_board_alight.overcap_ << std::endl;
+                        }
+                        else {
+                            trace_file << "trip " << tripStringForId(it->trip_id_)
+                                       << ", stop " << stopStringForId(it->stop_id_)
+                                       << ", seq " << it->seq_
+                                       << ", overcap " << tst.overcap_ << std::endl;
+                        }
+                    }
+
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
                     link_attr["in_vehicle_time_min"] = in_vehicle_time;
                     link_attr["wait_time_min"      ] = wait_time;
+                    link_attr["overcap"            ] = overcap;
 
                     link_cost = 0;
                     // If outbound, and the current link is egress, then it's as late as possible and the wait time isn't accurate.
