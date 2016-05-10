@@ -771,10 +771,7 @@ namespace fasttrips {
         // current_stop_state is a hyperlink
         // It should have trip-states in it, because otherwise it wouldn't have come up in the label stop queue to process
         Hyperlink& current_stop_state  = stop_states[current_label_stop.stop_id_];
-        int    current_mode            = current_stop_state.lowestCostStopState(true).deparr_mode_;
-        int    current_trip            = current_stop_state.lowestCostStopState(true).trip_id_;
-        double current_deparr_time     = current_stop_state.lowestCostStopState(true).deparr_time_;
-
+        double current_deparr_time     = current_stop_state.latestDepartureEarliestArrival(true);
         double nonwalk_label           = current_stop_state.hyperpathCost(true);
 
         // Lookup transfer weights
@@ -849,6 +846,7 @@ namespace fasttrips {
                 // TODO: capacity stuff
                 if (path_spec.outbound_)
                 {
+                    int current_trip = current_stop_state.lowestCostStopState(true).trip_id_;
                     TripStop ts = { current_trip, current_stop_state.lowestCostStopState(true).seq_, current_label_stop.stop_id_ };
                     std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
                     if (bwi != bump_wait_.end())
