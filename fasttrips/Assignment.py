@@ -100,9 +100,6 @@ class Assignment:
     #: Route choice configuration: Use vehicle capacity constraints. Boolean.
     CAPACITY_CONSTRAINT             = None
 
-    #: Use this as the date
-    TODAY                           = datetime.date.today()
-
     #: Debug mode: only run trace passengers
     DEBUG_TRACE_ONLY                = False
 
@@ -674,7 +671,6 @@ class Assignment:
         # FastTripsLogger.debug("C++ extension complete")
         # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (pathset.person_id, pathset.trip_list_id_num))
         pathdict = {}
-        midnight = datetime.datetime.combine(Assignment.TODAY, datetime.time())
         row_num  = 0
 
         for path_num in range(path_costs.shape[0]):
@@ -704,30 +700,30 @@ class Assignment:
 
                 if hyperpath:
                     pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
-                                  ret_doubles[row_num,0],                                         # label,
-                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
-                                  mode,                                                           # departure/arrival mode
-                                  ret_ints[row_num,3],                                            # trip id
-                                  ret_ints[row_num,4],                                            # successor/predecessor
-                                  ret_ints[row_num,5],                                            # sequence
-                                  ret_ints[row_num,6],                                            # sequence succ/pred
-                                  datetime.timedelta(minutes=ret_doubles[row_num,2]),             # link time
-                                  ret_doubles[row_num,3],                                         # cost
-                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
-                                  ] ) )
+                        ret_doubles[row_num,0],                                                          # label,
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                        mode,                                                                            # departure/arrival mode
+                        ret_ints[row_num,3],                                                             # trip id
+                        ret_ints[row_num,4],                                                             # successor/predecessor
+                        ret_ints[row_num,5],                                                             # sequence
+                        ret_ints[row_num,6],                                                             # sequence succ/pred
+                        datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
+                        ret_doubles[row_num,3],                                                          # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
+                    ] ) )
                 else:
                     pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
-                                  datetime.timedelta(minutes=ret_doubles[row_num,0]),             # label,
-                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
-                                  mode,                                                           # departure/arrival mode
-                                  ret_ints[row_num,3],                                            # trip id
-                                  ret_ints[row_num,4],                                            # successor/predecessor
-                                  ret_ints[row_num,5],                                            # sequence
-                                  ret_ints[row_num,6],                                            # sequence succ/pred
-                                  datetime.timedelta(minutes=ret_doubles[row_num,2]),             # link time
-                                  datetime.timedelta(minutes=ret_doubles[row_num,3]),             # cost
-                                  midnight + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
-                                  ] ) )
+                        datetime.timedelta(minutes=ret_doubles[row_num,0]),                              # label,
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                        mode,                                                                            # departure/arrival mode
+                        ret_ints[row_num,3],                                                             # trip id
+                        ret_ints[row_num,4],                                                             # successor/predecessor
+                        ret_ints[row_num,5],                                                             # sequence
+                        ret_ints[row_num,6],                                                             # sequence succ/pred
+                        datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
+                        datetime.timedelta(minutes=ret_doubles[row_num,3]),                              # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
+                    ] ) )
                 row_num += 1
 
         perf_dict = { \
@@ -894,8 +890,9 @@ class Assignment:
         If :py:attr:`Assignment.CAPACITY_CONSTRAINT`, then 
         bump off overcapacity passengers.  The process is:
 
-        1) Look at which vehicle links are over capacity, adding columns named :py:attr:`Trip.SIM_COL_VEH_OVERCAP` and py:attr:`Trip.SIM_COL_VEH_OVERCAP_FRAC` to *veh_loaded_df*
-        2) Looking at the stops where the first people board after we're at capacity (impossible boards) if any
+        1) Look at which vehicle links are over capacity, adding columns named :py:attr:`Trip.SIM_COL_VEH_OVERCAP`
+           and py:attr:`Trip.SIM_COL_VEH_OVERCAP_FRAC` to *veh_loaded_df*
+        2) Look at the stops where the first people board after we're at capacity (impossible boards) if any
         3) If :py:attr:`Assignment.BUMP_ONE_AT_A_TIME`, select the first such stop by arrival time
            Otherwise, select the first such stop for each vehicle trip
         4) Join these stops to passengers_df, so passengers_df now has column Assignment.SIM_COL_PAX_OVERCAP_FRAC

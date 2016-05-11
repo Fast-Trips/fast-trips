@@ -645,7 +645,8 @@ class Passenger:
         3) new_B_time         new B_time given the trip board/alight times for the trip links
         4) new_linktime       new linktime from new_B_time-new_A_time
         5) new_waittime       new waittime given the trip board/alight times for the trip links
-        6) invalid            1 if invalid, 0 otherwise
+        6) mixed_xfer         number of missed transfers in the path
+        6) invalid            1 if invalid, 0 otherwise.  Invalid if mixed_xfer > 0 or bump_iter >= 0
         """
         # for strings
         from .PathSet import PathSet

@@ -26,6 +26,10 @@ class Util:
 
     Collect useful stuff here that doesn't belong in any particular existing class.
     """
+    #: Use this as the date
+    SIMULATION_DAY                  = datetime.date(2016,1,1)
+    #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
+    SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
 
     @staticmethod
     def add_numeric_column(input_df, id_colname, numeric_newcolname):
@@ -167,7 +171,7 @@ class Util:
                 x = '23:59:59' if end_of_day else '00:00:00'
         time_split = x.split(':')
         hour = int(time_split[0])
-        day = datetime.datetime.today()
+        day = Util.SIMULATION_DAY
         if hour >= 24: 
             time_split[0] = '%02d' %(hour-24)
             day += datetime.timedelta(days=1)
