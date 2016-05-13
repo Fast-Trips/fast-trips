@@ -17,6 +17,7 @@ import collections,datetime,math,multiprocessing,os,random,sys,traceback
 import numpy,pandas
 import _fasttrips
 
+from .Error       import ConfigurationError
 from .Logger      import FastTripsLogger, setupLogging
 from .Passenger   import Passenger
 from .PathSet     import PathSet
@@ -163,12 +164,12 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration(input_network_dir, input_demand_dir):
+    def read_configuration(input_network_dir, input_demand_dir, config_file=CONFIGURATION_FILE):
         """
         Read the configuration parameters.
         """
         pandas.set_option('display.width',   1000)
-        pandas.set_option('display.height',  1000)
+        # pandas.set_option('display.height',  1000)
         pandas.set_option('display.max_rows',1000)
 
         # Functions are defined in here -- read this and eval it
@@ -202,9 +203,9 @@ class Assignment:
                       # pathfinding
                       'user_class_function'             :'generic_user_class'
                      })
-        parser.read(os.path.join(input_network_dir, Assignment.CONFIGURATION_FILE))
-        if input_demand_dir and os.path.exists(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE)):
-            parser.read(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE))
+        parser.read(os.path.join(input_network_dir, config_file))
+        if input_demand_dir and (input_demand_dir != input_network_dir) and os.path.exists(os.path.join(input_demand_dir,  config_file)):
+            parser.read(os.path.join(input_demand_dir, config_file))
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
         Assignment.ASSIGNMENT_TYPE               = parser.get       ('fasttrips','pathfinding_type')
@@ -236,8 +237,9 @@ class Assignment:
         # pathfinding
         PathSet.USER_CLASS_FUNCTION              = parser.get     ('pathfinding','user_class_function')
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
-            FastTripsLogger.fatal("User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file))
-            raise
+            msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file)
+            FastTripsLogger.fatal(msg)
+            raise ConfigurationError(func_file, msg)
 
         weights_file = os.path.join(input_demand_dir, PathSet.WEIGHTS_FILE)
         if not os.path.exists(weights_file):
@@ -284,7 +286,7 @@ class Assignment:
         output_file.close()
 
     @staticmethod
-    def initialize_fasttrips_extension(process_number, output_dir, FT):
+    def initialize_fasttrips_extension(process_number, output_dir, stop_times_df):
         """
         Initialize the C++ fasttrips extension by passing it the network supply.
         """
@@ -295,17 +297,20 @@ class Assignment:
         if Assignment.MSA_RESULTS:
             overcap_col = Trip.SIM_COL_VEH_MSA_OVERCAP
 
-        if overcap_col not in list(FT.trips.stop_times_df.columns.values):
-            FT.trips.stop_times_df[overcap_col] = 0
+        if overcap_col not in list(stop_times_df.columns.values):
+            stop_times_df[overcap_col] = 0
 
-        FastTripsLogger.debug("initialize_fasttrips_extension() overcap sum: %d" % FT.trips.stop_times_df[overcap_col].sum())
+        FastTripsLogger.debug("initialize_fasttrips_extension() overcap sum: %d" % stop_times_df[overcap_col].sum())
+        FastTripsLogger.debug("initialize_fasttrips_extension() STOPTIMES_COLUMN_DEPARTURE_TIME_MIN len: %d mean: %f" % \
+                              (len(stop_times_df), stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN].mean()))
+
         _fasttrips.initialize_supply(output_dir, process_number,
-                                     FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                             Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                             Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                     FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
-                                                             overcap_col]].as_matrix().astype('float64'))
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+                                                    overcap_col]].as_matrix().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
@@ -386,7 +391,7 @@ class Assignment:
 
             else:
                 num_paths_found                      = Assignment.generate_pathsets(FT, output_dir, iteration)
-                (pathset_paths_df, pathset_links_df) = FT.passengers.setup_passenger_pathsets(output_dir, iteration, FT.stops.stop_id_df, FT.trips.trip_id_df)
+                (pathset_paths_df, pathset_links_df) = FT.passengers.setup_passenger_pathsets(output_dir, iteration, FT.stops.stop_id_df, FT.trips.trip_id_df, FT.trips.trips_df)
 
                 # write performance info right away in case we crash, quit, etc
                 FT.performance.write(output_dir, iteration)
@@ -473,13 +478,13 @@ class Assignment:
                             args=(iteration, process_idx, FT.input_network_dir, FT.input_demand_dir,
                                   FT.output_dir, todo_queue, done_queue,
                                   Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
-                                  Assignment.bump_wait_df)),
+                                  Assignment.bump_wait_df, FT.trips.stop_times_df)),
                         "alive":True,
                         "done":False
                     }
                     process_dict[process_idx]["process"].start()
             else:
-                Assignment.initialize_fasttrips_extension(0, output_dir, FT)
+                Assignment.initialize_fasttrips_extension(0, output_dir, FT.trips.stop_times_df)
 
             # process tasks or send tasks to workers for processing
             num_paths_found_prev  = 0
@@ -515,7 +520,7 @@ class Assignment:
 
                     # do the work
                     (pathdict, perf_dict) = \
-                        Assignment.find_trip_based_pathset(iteration, FT, trip_pathset,
+                        Assignment.find_trip_based_pathset(iteration, trip_pathset,
                                                         Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                         trace=trace_person)
                     trip_pathset.pathdict = pathdict
@@ -627,7 +632,7 @@ class Assignment:
 
 
     @staticmethod
-    def find_trip_based_pathset(iteration, FT, pathset, hyperpath, trace):
+    def find_trip_based_pathset(iteration, pathset, hyperpath, trace):
         """
         Perform trip-based path set search.
 
@@ -647,8 +652,6 @@ class Assignment:
 
         :param iteration: The pathfinding iteration we're on
         :type  iteration: int
-        :param FT:        fasttrips data
-        :type  FT:        a :py:class:`FastTrips` instance
         :param pathset:   the path to fill in
         :type  pathset:   a :py:class:`PathSet` instance
         :param hyperpath: pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
@@ -1131,6 +1134,8 @@ class Assignment:
         """
         Given a pathset for each passenger, choose a path (if relevant) and then
         actually assign the passengers trips to the vehicles.
+
+        Returns (valid_linked_trips, passengers_df, veh_loaded_df)
         """
         ######################################################################################################
         FastTripsLogger.info("Step 1. Choose a path for each passenger from their pathset")
@@ -1243,7 +1248,7 @@ class Assignment:
 
 
 def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, input_demand_dir,
-                                         output_dir, todo_pathset_queue, done_queue, hyperpath, bump_wait_df):
+                                         output_dir, todo_pathset_queue, done_queue, hyperpath, bump_wait_df, stop_times_df):
     """
     Process worker function.  Processes all the paths in queue.
 
@@ -1251,20 +1256,22 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
     """
     worker_str = "_worker%02d" % worker_num
 
-    # Setup a new FT instance for this worker.
-    # This is just for reading input files into the FT structures,
-    # but it won't change the FT structures themselves (so it's a read-only instance).
-    #
-    # You'd think we could have just passed the FT structure to this method but that would involve pickling/unpickling the
-    # data and ends up meaning it takes a *really long time* to start the new process ~ 2 minutes per process.
-    # Simply reading the input files again is faster.  No need to read the demand tho.
     from .FastTrips import FastTrips
-    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=input_demand_dir, output_dir=output_dir, 
-                          is_child_process=True, logname_append=worker_str, appendLog=True if iteration > 1 else False)
-
+    setupLogging(infoLogFilename  = None,
+                 debugLogFilename = os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str), 
+                 logToConsole     = False,
+                 append           = True if iteration > 1 else False)
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))
 
-    Assignment.initialize_fasttrips_extension(worker_num, output_dir, worker_FT)
+    # the child process doesn't have these set to read them
+    Assignment.read_configuration(output_dir, input_demand_dir, Assignment.CONFIGURATION_OUTPUT_FILE)
+
+    # this passes those read parameters and the stop times to the C++ extension
+    Assignment.initialize_fasttrips_extension(worker_num, output_dir, stop_times_df)
+
+    # the extension has it now, so we're done
+    stop_times_df = None
+
     if iteration > 1:
         Assignment.set_fasttrips_bump_wait(bump_wait_df)
 
@@ -1289,7 +1296,7 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
             trace_person = True
 
         try:
-            (pathdict, perf_dict) = Assignment.find_trip_based_pathset(iteration, worker_FT, pathset, hyperpath, trace=trace_person)
+            (pathdict, perf_dict) = Assignment.find_trip_based_pathset(iteration, pathset, hyperpath, trace=trace_person)
             done_queue.put( (worker_num, "COMPLETED", pathset.trip_list_id_num, pathdict, perf_dict) )
         except:
             FastTripsLogger.exception("Exception")
