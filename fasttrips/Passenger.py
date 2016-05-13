@@ -338,7 +338,7 @@ class Passenger:
         return (num_paths_found, pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, output_dir, iteration, stop_id_df, trip_id_df):
+    def setup_passenger_pathsets(self, output_dir, iteration, stop_id_df, trip_id_df, trips_df):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -370,6 +370,7 @@ class Passenger:
         `linkmode`               object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
                                          :py:attr:`PathSet.STATE_MODE_TRANSFER` or :py:attr:`PathSet.STATE_MODE_TRIP`.  PathSets will always start with
                                          access, followed by trips with transfers in between, and ending in an egress following the last trip.
+        `route_id`               object  the route ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `trip_id`                object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `trip_id_num`           float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `A_id`                   object  the stop ID at the start of the link, or TAZ ID for access links
@@ -533,6 +534,9 @@ class Passenger:
         # get trip_id
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                            mapping_df=trip_id_df,        mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
+
+        # get route id
+        pathset_links_df = pandas.merge(left=pathset_links_df, right=trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID]], how="left")
 
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         return (pathset_paths_df, pathset_links_df)
@@ -711,15 +715,19 @@ class Passenger:
         passengers_df_grouped.loc[passengers_df_grouped["missed_xfer"]> 0,"invalid"] = 1 # invalid: any missed xfers
         passengers_df_grouped.loc[passengers_df_grouped["bump_iter"  ]>=0,"invalid"] = 1 # invalid: any bumped
         valid_linked_trips = len(passengers_df_grouped) - passengers_df_grouped["invalid"].sum()
-
         FastTripsLogger.info("  flag_invalid_paths (%d missed transfer, %d bumped) trip legs for %d linked trips" % \
                              (passengers_df["missed_xfer"].sum(), len(passengers_df.loc[passengers_df["bump_iter"]>=0]), passengers_df_grouped["invalid"].sum()))
 
+        # add invalid to passengers_df
+        passengers_df = pandas.merge(left=passengers_df, right=passengers_df_grouped.reset_index()[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "invalid"]], how="left")
         FastTripsLogger.debug("flag_invalid_paths() passengers_df (%d):\n%s" % (len(passengers_df), passengers_df.head(30).to_string()))
 
         # quick and dirty -- save this
         # todo: when we iterate, this will get smarter
-        passengers_df["iteration"] = iteration
-        Util.write_dataframe(passengers_df, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"), append=(iteration > 1))
+        passengers_df_to_write = passengers_df.copy()
+        passengers_df_to_write["iteration"] = iteration
+        for col in [Passenger.PF_COL_PAX_A_TIME, Passenger.PF_COL_PAX_B_TIME, 'board_time', 'alight_time', 'new_A_time', 'new_B_time']:
+            passengers_df_to_write[col] = passengers_df_to_write[col].apply(Util.datetime64_formatter)
+        Util.write_dataframe(passengers_df_to_write, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"), append=(iteration > 1))
 
         return (valid_linked_trips, passengers_df)
