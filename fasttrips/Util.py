@@ -189,29 +189,8 @@ class Util:
         df_cols = list(df.columns.values)
         df_toprint = df.copy()
 
-        for col_idx in range(len(df_cols)):
-            old_colname = df_cols[col_idx]
-            FastTripsLogger.debug("%s -> %s" % (old_colname, df_toprint.dtypes[col_idx]))
-
-            if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
-                max_timedelta = df_toprint[old_colname].abs().max()
-                FastTripsLogger.debug("Util.write_dataframe() %s column %s has max val %s" % (name, old_colname, str(max_timedelta)))
-                # milliseconds
-                if max_timedelta < numpy.timedelta64(1,'m'):
-                    new_colname = "%s milliseconds" % old_colname
-                    # if the column already exists, continue
-                    if new_colname in df_cols: continue
-                    df_toprint[new_colname] = df_toprint[old_colname]/numpy.timedelta64(1,'m')
-                # minutes
-                else:
-                    new_colname = "%s min" % old_colname
-                    df_toprint[new_colname] = df_toprint[old_colname]/numpy.timedelta64(1,'m')
-                    df_cols[col_idx] = new_colname
-            # print df_toprint.dtypes[col_idx]
-
-        # the cols have new column names instead of old
-        df_toprint = df_toprint[df_cols]
-
+        # if we're appending, figure out the header row
+        header_row = None
         if append and os.path.exists(output_file):
             # get the columns
             df_file = open(output_file, 'rb')
@@ -219,6 +198,50 @@ class Util:
             header_row = df_reader.next()
             df_file.close()
 
+        for col_idx in range(len(df_cols)):
+            old_colname = df_cols[col_idx]
+            FastTripsLogger.debug("%s -> %s" % (old_colname, df_toprint.dtypes[col_idx]))
+
+            # convert timedelta untils because the string version is just awful
+            if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
+
+                units = None
+
+                # figure out timedelta units
+                if header_row == None:
+                    max_timedelta = df_toprint[old_colname].abs().max()
+                    FastTripsLogger.debug("Util.write_dataframe() %s column %s has max val %s" % (name, old_colname, str(max_timedelta)))
+
+                    if max_timedelta < numpy.timedelta64(5,'m'):       # milliseconds
+                        units = numpy.timedelta64(1,'ms')
+                        new_colname = "%s milliseconds" % old_colname
+                    else:                                              # minutes
+                        units = numpy.timedelta64(1,'m')
+                        new_colname = "%s min" % old_colname
+                else:
+                    # use the one we already have
+                    if "%s milliseconds" % old_colname in header_row:  # milliseconds
+                        units = numpy.timedelta64(1,'ms')
+                        new_colname = "%s milliseconds" % old_colname
+                    elif  "%s min" % old_colname in header_row:         # minutes
+                        units = numpy.timedelta64(1,'m')
+                        new_colname = "%s min" % old_colname
+                    else:
+                        raise
+
+                # if the column already exists, continue
+                if new_colname in df_cols: continue
+
+                # otherwise make the new one and replace it
+                df_toprint[new_colname] = df_toprint[old_colname]/units
+                df_cols[col_idx] = new_colname
+            # print df_toprint.dtypes[col_idx]
+
+        # the cols have new column names instead of old
+        df_toprint = df_toprint[df_cols]
+
+        # append
+        if header_row:
             df_file = open(output_file, "a")
             df_toprint[header_row].to_csv(df_file, index=False, header=False)
             df_file.close()
