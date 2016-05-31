@@ -37,24 +37,23 @@ Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -------------------------
 `bump_buffer`                       | float  | 5       | Not really used yet.
 `bump_one_at_a_time`                | bool   | False   |
-`capacity_constraint`               | bool   | False   | Hard capacity constraint.  When True, fasttrips forces everyone off overcapacity vehicles and
-                                                         disallows them from finding a new path using an overcapacity vehicle.
-`create_skims`                      | bool   |
-`debug_num_trips`                   | int    |
-`debug_trace_only`                  | bool   |
-`iterations`                        | int    |
-`output_passenger_trajectories`     | bool   |
-`number_of_processes`               | int    |
-`pathfinding_type`                  | string |
-`prepend_route_id_to_trip_id`       | bool   |
-`simulation`                        | bool   |
-`skim_end_time`                     | string |
-`skim_start_time`                   | string |
-`stochastic_dispersion`             | float  |
-`stochastic_max_stop_process_count` | int    |
-`stochastic_pathset_size`           | int    |
-`time_window`                       | float  |
-`trace_person_ids`                  | string |
+`capacity_constraint`               | bool   | False   | Hard capacity constraint.  When True, fasttrips forces everyone off overcapacity vehicles and disallows them from finding a new path using an overcapacity vehicle.
+`create_skims`                      | bool   | False   |
+`debug_num_trips`                   | int    | -1      |
+`debug_trace_only`                  | bool   | False   |
+`iterations`                        | int    | 1       |
+`output_passenger_trajectories`     | bool   | True    |
+`number_of_processes`               | int    | 0       |
+`pathfinding_type`                  | string | 'Deterministic Assignment' |
+`prepend_route_id_to_trip_id`       | bool   | False   |
+`simulation`                        | bool   | True    |
+`skim_start_time`                   | string | 5:00    |
+`skim_end_time`                     | string | 10:00   |
+`stochastic_dispersion`             | float  | 1.0     |
+`stochastic_max_stop_process_count` | int    | -1      |
+`stochastic_pathset_size`           | int    | 1000    |
+`time_window`                       | float  | 30      |
+`trace_person_ids`                  | string | 'None'  |
 
 **pathfinding configuration options**
 
@@ -71,7 +70,10 @@ To use a function in this file, specify it in the *pathfinding* configuration as
 
 ####  `pathweight_ft.txt`
 
+TBD
+
 ### Test Sample Input
+
 Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical test network and also example transit demand data.
 To quickly test the setup, run fast-trips on sample input using the following steps:
 *  Add `<fast-trips-dir>` to the `PYTHONPATH` environment variable in *Advanced system settings*.
