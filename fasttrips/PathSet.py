@@ -15,9 +15,13 @@ __license__   = """
 import collections,datetime,os,string,sys
 import numpy,pandas
 
+from .Error     import NotImplementedError
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
 from .Route     import Route
+from .TAZ       import TAZ
+from .Transfer  import Transfer
+from .Trip      import Trip
 from .Util      import Util
 
 #: Default user class: just one class called "all"
@@ -84,12 +88,13 @@ class PathSet:
     STATE_IDX_COST          = 8  #: cost float, for hyperpath/stochastic assignment
     STATE_IDX_ARRDEP        = 9  #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
 
-    STATE_MODE_ACCESS   = "Access"
-    STATE_MODE_EGRESS   = "Egress"
-    STATE_MODE_TRANSFER = "Transfer"
+    # these are also the demand_mode_type values
+    STATE_MODE_ACCESS   = "access"
+    STATE_MODE_EGRESS   = "egress"
+    STATE_MODE_TRANSFER = "transfer"
 
     # new
-    STATE_MODE_TRIP     = "Trip" # onboard
+    STATE_MODE_TRIP     = "transit" # onboard
 
     BUMP_EXPERIENCED_COST = 999999
 
@@ -229,36 +234,6 @@ class PathSet:
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
                                sep=" ", index=False)
 
-    @staticmethod
-    def state_str_header(direction=DIR_OUTBOUND):
-        """
-        Returns a header for the state_str
-        """
-        return "%8s: %-14s %9s %10s %11s %-17s %-12s  %s" % \
-            ("stop",
-             "label",
-             "departure" if direction == PathSet.DIR_OUTBOUND else "arrival",
-             "dep_mode"  if direction == PathSet.DIR_OUTBOUND else "arr_mode",
-             "successor" if direction == PathSet.DIR_OUTBOUND else "predecessor",
-             "linktime",
-             "cost",
-             "arrival"   if direction == PathSet.DIR_OUTBOUND else "departure")
-
-    @staticmethod
-    def state_str(state_id, state):
-        """
-        Returns a readable string version of the given state_id and state, as a single line.
-        """
-        return "%8s: %-14s  %s %10s %10s  %-17s %-12s  %s" % \
-            (str(state_id),
-             str(state[PathSet.STATE_IDX_LABEL]) if type(state[PathSet.STATE_IDX_LABEL])==datetime.timedelta else "%.4f" % state[PathSet.STATE_IDX_LABEL],
-             state[PathSet.STATE_IDX_DEPARR].strftime("%H:%M:%S"),
-             str(state[PathSet.STATE_IDX_DEPARRMODE]),
-             str(state[PathSet.STATE_IDX_SUCCPRED]),
-             str(state[PathSet.STATE_IDX_LINKTIME]),
-             str(state[PathSet.STATE_IDX_COST]) if type(state[PathSet.STATE_IDX_COST])==datetime.timedelta else "%.4f" % state[PathSet.STATE_IDX_COST],
-             state[PathSet.STATE_IDX_ARRDEP].strftime("%H.%M:%S"))
-
     def __str__(self):
         """
         Readable string version of the path.
@@ -270,17 +245,6 @@ class PathSet:
             ret_str += "%30s => %-30s   %s\n" % (str(k), str(v), str(type(v)))
         # ret_str += PathSet.states_to_str(self.states, self.direction)
         return ret_str
-
-    @staticmethod
-    def states_to_str(states, direction=DIR_OUTBOUND):
-        """
-        Given that states is an ordered dict of states, returns a string version of the path therein.
-        """
-        if len(states) == 0: return "\nNo path"
-        readable_str = "\n%s" % PathSet.state_str_header(direction)
-        for state_id,state in states:
-            readable_str += "\n%s" % PathSet.state_str(state_id, state)
-        return readable_str
 
     @staticmethod
     def write_paths(passengers_df, output_dir):
@@ -462,112 +426,265 @@ class PathSet:
                                 sep="\t", float_format="%.2f", index=False)
 
     @staticmethod
-    def path_str_header():
+    def calculate_cost(pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df):
         """
-        The header for the path file.
+        This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
+        It would require us to package up the networks and paths and send back and forth.  :p
+
+        I think if we can do it using vectorized pandas operations, it should be fast, but we can compare/test.
+
+        It's also messier to have this in two places.
+
+        Returns pathset_paths_df with additional column, "pathcost"
+        And pathset_links_df with additional column, "linkcost"
+
         """
-        return "mode\toriginTaz\tdestinationTaz\tstartTime\tboardingStops\tboardingTrips\talightingStops\twalkingTimes"
+        FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.head(20)))
+        FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.head(10)))
 
-    def path_str(self):
-        """
-        String output of the path, in legacy format (tab-delimited):
+        # First, we need user class, purpose, and demand modes
+        pathset_links_cost_df = pandas.merge(left =pathset_links_df,
+                                             right=trip_list_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
+                                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                                 Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                                                 Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                                                                 Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+                                                                 Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+                                                                 Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE
+                                                                ]],
+                                             how  ="left",
+                                             on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
+        # TODO: add purpose
 
-        * mode
-        * origin TAZ
-        * destination TAZ
-        * start time, in minutes after midnight
-        * boarding stop IDs, comma-delimited and prefixed with 's'
-        * boarding trip IDs, comma-delimited and prefixed with 't'
-        * alighting stop IDs, comma-delimited and prefixed with 's'
-        * access time, sum of transfer times, egress time in number of minutes, comma-delimited
+        #                                                          Passenger.TRIP_LIST_COLUMN_VOT
 
-        .. todo:: if the stop_ids and trip_ids are the correct type, no need to cast to int
-        """
-        # OUTBOUND passengers have states like this:
-        #    stop:          label    departure   dep_mode  successor linktime
-        # orig_taz                                 Access    b stop1
-        #  b stop1                                  trip1    a stop2
-        #  a stop2                               Transfer    b stop3
-        #  b stop3                                  trip2    a stop4
-        #  a stop4                                 Egress   dest_taz
-        #
-        # e.g. (preferred arrival = 404 = 06:44:00)
-        #    stop:          label    departure   dep_mode  successor linktime
-        #      29: 0:24:29.200000     06:19:30     Access    23855.0 0:11:16.200000
-        # 23855.0: 0:13:13            06:30:47   21649852    38145.0 0:06:51
-        # 38145.0: 0:06:22            06:37:38   Transfer      38650 0:00:42
-        #   38650: 0:05:40            06:38:20   25009729    76730.0 0:03:51.400000
-        # 76730.0: 0:01:48.600000     06:42:11     Egress         18 0:01:48.600000
-        #
-        # INBOUND passengers have states like this
-        #   stop:          label      arrival   arr_mode predecessor linktime
-        # dest_taz                                 Egress    a stop4
-        #  a stop4                                  trip2    b stop3
-        #  b stop3                               Transfer    a stop2
-        #  a stop2                                  trip1    b stop1
-        #  b stop1                                 Access   orig_taz
-        #
-        # e.g. (preferred departure = 447 = 07:27:00)
-        #    stop:          label      arrival   arr_mode predecessor linktime
-        #    1586: 0:49:06            08:16:06     Egress    73054.0 0:06:27
-        # 73054.0: 0:42:39            08:09:39   24201511    69021.0 0:13:11.600000
-        # 69021.0: 0:29:27.400000     07:56:27   Transfer      68007 0:00:26.400000
-        #   68007: 0:29:01            07:56:01   25539006    64065.0 0:28:11.200000
-        # 64065.0: 0:00:49.800000     07:27:49     Access       3793 0:00:49.800000
-        boarding_stops  = ""
-        boarding_trips  = ""
-        alighting_stops = ""
-        start_time      = self.preferred_time
-        access_time     = 0
-        transfer_time   = ""
-        egress_time     = 0
-        prev_mode       = None
-        if len(self.states) > 1:
-            state_list = self.states.keys()
-            if not self.outbound(): state_list = list(reversed(state_list))
+        # linkmode = demand_mode_type.  Set demand_mode to for the links
+        pathset_links_cost_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = None
+        pathset_links_cost_df.loc[ pathset_links_cost_df['linkmode']== PathSet.STATE_MODE_ACCESS  , PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE ]
+        pathset_links_cost_df.loc[ pathset_links_cost_df['linkmode']== PathSet.STATE_MODE_EGRESS  , PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE ]
+        pathset_links_cost_df.loc[ pathset_links_cost_df['linkmode']== PathSet.STATE_MODE_TRIP    , PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE]
+        pathset_links_cost_df.loc[ pathset_links_cost_df['linkmode']== PathSet.STATE_MODE_TRANSFER, PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = "transfer"
+        # Verify that it's set for every link
+        missing_demand_mode = pandas.isnull(pathset_links_cost_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE]).sum()
+        assert(missing_demand_mode == 0)
 
-            for state_id in state_list:
-                state = self.states[state_id]
-                # access
-                if state[PathSet.STATE_IDX_DEPARRMODE] == PathSet.STATE_MODE_ACCESS:
-                    access_time     = state[PathSet.STATE_IDX_LINKTIME].total_seconds()/60.0
-                    start_time      = state[PathSet.STATE_IDX_DEPARR]
-                    if not self.outbound(): start_time -= state[PathSet.STATE_IDX_LINKTIME]
+        # drop the individual mode columns, we have what we need
+        pathset_links_cost_df.drop([Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+                                    Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+                                    Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE], axis=1, inplace=True)
 
-                # transfer
-                elif state[PathSet.STATE_IDX_DEPARRMODE] == PathSet.STATE_MODE_TRANSFER:
-                    transfer_time  += ",%.2f" % (state[PathSet.STATE_IDX_LINKTIME].total_seconds()/60.0)
+        FastTripsLogger.debug("calculate_cost: pathset_links_cost_df\n%s" % str(pathset_links_cost_df.head(20)))
 
-                # egress
-                elif state[PathSet.STATE_IDX_DEPARRMODE] == PathSet.STATE_MODE_EGRESS:
-                    egress_time     = state[PathSet.STATE_IDX_LINKTIME].total_seconds()/60.0
+        # Inner join with the weights - now each weight has a row
+        cost_df = pandas.merge(left    =pathset_links_cost_df,
+                               right   =PathSet.WEIGHTS_DF,
+                               # TODO: add purpose
+                               left_on =[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                         "linkmode",
+                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                         Passenger.TRIP_LIST_COLUMN_MODE],
+                               right_on=[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                         PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
+                               how     ="inner")
+        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"pathnum", "linknum"]).head(20)))
 
-                # trip link
-                else:
-                    if self.outbound():
-                        boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
-                                                     int(state_id))
-                        alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else  "",
-                                                     int(state[PathSet.STATE_IDX_SUCCPRED]))
-                    else:
-                        boarding_stops += "%ss%d" % ("," if len(boarding_stops) > 0 else "",
-                                                     int(state[PathSet.STATE_IDX_SUCCPRED]))
-                        alighting_stops += "%ss%d" %("," if len(alighting_stops) > 0 else  "",
-                                                     int(state_id))
+        # NOW we split it into 3 lists -- access/egress, transit, and transfer
+        # This is because they will each be joined to tables specific to those kinds of mode categories, and so we don't want all the transit nulls on the other tables, etc.
+        cost_columns = list(cost_df.columns.values)
+        cost_df["var_value"] = numpy.nan  # This means unset
+        cost_accegr_df       = cost_df.loc[(cost_df["linkmode"]==PathSet.STATE_MODE_ACCESS  )|(cost_df["linkmode"]==PathSet.STATE_MODE_EGRESS)]
+        cost_trip_df         = cost_df.loc[(cost_df["linkmode"]==PathSet.STATE_MODE_TRIP    )]
+        cost_transfer_df     = cost_df.loc[(cost_df["linkmode"]==PathSet.STATE_MODE_TRANSFER)]
+        del cost_df
 
-                    boarding_trips += "%st%d" % ("," if len(boarding_trips) > 0 else "",
-                                                 int(state[PathSet.STATE_IDX_DEPARRMODE]))
-                    # if the prev_mode is a trip link then we had a no-walk transfer
-                    if prev_mode not in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
-                        transfer_time  += ",%.2f" % 0
+        ##################### First, handle Access/Egress link costs
 
-                prev_mode = state[PathSet.STATE_IDX_DEPARRMODE]
+        for accegr_type in ["walk","bike","drive"]:
 
-        return_str = "%s\t%s\t%s\t" % (str(self.mode), str(self.origin_taz_id), str(self.destination_taz_id))
-        return_str += "%.2f\t%s\t%s\t%s\t" % (start_time.hour*60.0 + start_time.minute + start_time.second/60.0,
-                                            boarding_stops,
-                                            boarding_trips,
-                                            alighting_stops)
-        # no transfers: access, trip egress
-        return_str += "%.2f%s,%.2f" % (access_time, transfer_time, egress_time)
-        return return_str
+            # make copies; we don't want to mess with originals
+            if accegr_type == "walk":
+                link_df   = walk_df.copy()
+                mode_list = TAZ.WALK_MODE_NUMS
+            elif accegr_type == "bike":
+                mode_list = TAZ.BIKE_MODE_NUMS
+                # not supported yet
+                continue
+            else:
+                link_df   = drive_df.copy()
+                mode_list = TAZ.DRIVE_MODE_NUMS
+
+            FastTripsLogger.debug("Access/egress link_df %s\n%s" % (accegr_type, link_df.head().to_string()))
+
+            # format these with A & B instead of TAZ and Stop
+            link_df.reset_index(inplace=True)
+            link_df["A_id_num"] = -1
+            link_df["B_id_num"] = -1
+            link_df.loc[link_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM].isin(TAZ.ACCESS_MODE_NUMS), "A_id_num"] = link_df[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM ]
+            link_df.loc[link_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM].isin(TAZ.ACCESS_MODE_NUMS), "B_id_num"] = link_df[TAZ.WALK_ACCESS_COLUMN_STOP_NUM]
+            link_df.loc[link_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM].isin(TAZ.EGRESS_MODE_NUMS), "A_id_num"] = link_df[TAZ.WALK_ACCESS_COLUMN_STOP_NUM]
+            link_df.loc[link_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM].isin(TAZ.EGRESS_MODE_NUMS), "B_id_num"] = link_df[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM ]
+            link_df.drop([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM, TAZ.WALK_ACCESS_COLUMN_STOP_NUM], axis=1, inplace=True)
+            assert(len(link_df.loc[link_df["A_id_num"] < 0]) == 0)
+
+            FastTripsLogger.debug("%s link_df =\n%s" % (accegr_type, link_df.head().to_string()))
+
+            # Merge access/egress with walk|bike|drive access/egress information
+            cost_accegr_df = pandas.merge(left     = cost_accegr_df,
+                                          right    = link_df,
+                                          on       = ["A_id_num",
+                                                      PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                                                      "B_id_num"],
+                                          how      = "left")
+            # rename new columns so it's clear it's for walk|bike|drive
+            for colname in list(link_df.select_dtypes(include=['float64','int64']).columns.values):
+                # don't worry about join columns
+                if colname in ["A_id_num", PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM, "B_id_num"]: continue
+
+                # rename the rest
+                new_colname = "%s %s" % (colname, accegr_type)
+                cost_accegr_df.rename(columns={colname:new_colname}, inplace=True)
+
+                # use it, if relevant
+                cost_accegr_df.loc[ (cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == colname)&
+                                    (cost_accegr_df[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM].isin(mode_list)), "var_value"] = cost_accegr_df[new_colname]
+
+        # Access/egress needs passenger trip departure, arrival and time_target
+        cost_accegr_df = pandas.merge(left =cost_accegr_df,
+                                      right=trip_list_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
+                                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
+                                                          Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
+                                                          Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
+                                                        ]],
+                                      how  ="left",
+                                      on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
+
+        # preferred delay_min - arrival means want to arrive before that time
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
+                           (cost_accegr_df['linkmode']                             == PathSet.STATE_MODE_ACCESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
+                           (cost_accegr_df['linkmode']                             == PathSet.STATE_MODE_EGRESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1,'m')
+        # preferred delay_min - departure means want to depart after that time
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
+                           (cost_accegr_df['linkmode']                             == PathSet.STATE_MODE_ACCESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = (cost_accegr_df[Passenger.PF_COL_PAX_A_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME])/numpy.timedelta64(1,'m')
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
+                           (cost_accegr_df['linkmode']                             == PathSet.STATE_MODE_EGRESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
+
+        FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.head().to_string(), str(cost_accegr_df.dtypes)))
+
+        missing_accegr_costs = cost_accegr_df.loc[ pandas.isnull(cost_accegr_df["var_value"]) ]
+        error_accegr_msg = "Missing %d out of %d access/egress var_value values" % (len(missing_accegr_costs), len(cost_accegr_df))
+        FastTripsLogger.debug(error_accegr_msg)
+
+        if len(missing_accegr_costs) > 0:
+            error_accegr_msg += "\n%s" % missing_accegr_costs.head(10).to_string()
+            FastTripsLogger.fatal(error_accegr_msg)
+
+        ##################### Next, handle Transit Trip link costs
+        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min", "var_value"] = (cost_trip_df["alight_time"] - cost_trip_df["board_time"])/numpy.timedelta64(1,'m')
+        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min"      , "var_value"] = (cost_trip_df["board_time" ] - cost_trip_df[Passenger.PF_COL_PAX_A_TIME])/numpy.timedelta64(1,'m')
+        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"            , "var_value"] =  cost_trip_df[Trip.SIM_COL_VEH_OVERCAP]
+
+        FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.head().to_string(), str(cost_trip_df.dtypes)))
+
+        missing_trip_costs = cost_trip_df.loc[ pandas.isnull(cost_trip_df["var_value"]) ]
+        error_trip_msg = "Missing %d out of %d transit trip var_value values" % (len(missing_trip_costs), len(cost_trip_df))
+        FastTripsLogger.debug(error_trip_msg)
+
+        if len(missing_trip_costs) > 0:
+            error_trip_msg += "\n%s" % missing_trip_costs.head(10).to_string()
+            FastTripsLogger.fatal(error_trip_msg)
+
+        ##################### Finally, handle Transfer link costs
+        FastTripsLogger.debug("cost_transfer_df head = \n%s\ntransfers_df head=\n%s" % (cost_transfer_df.head().to_string(), transfers_df.head().to_string()))
+        cost_transfer_df = pandas.merge(left     = cost_transfer_df,
+                                        left_on  = ["A_id_num","B_id_num"],
+                                        right    = transfers_df,
+                                        right_on = [Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM, Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
+                                        how      = "left")
+        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min"   , "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
+
+        # any numeric column can be used
+        for colname in list(transfers_df.select_dtypes(include=['float64','int64']).columns.values):
+            FastTripsLogger.debug("Using numeric column %s" % colname)
+            cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == colname, "var_value"] = cost_transfer_df[colname]
+
+        # zero walk transfers have a transfer penalty although they're not otherwise configured
+        cost_transfer_df.loc[ (cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "transfer_penalty")&
+                              (pandas.isnull(cost_transfer_df["var_value"])), "var_value"] = 1.0
+
+        FastTripsLogger.debug("cost_transfer_df=\n%s\ndtypes=\n%s" % (cost_transfer_df.head().to_string(), str(cost_transfer_df.dtypes)))
+
+        missing_transfer_costs = cost_transfer_df.loc[ pandas.isnull(cost_transfer_df["var_value"]) ]
+        error_transfer_msg = "Missing %d out of %d transfer var_value values" % (len(missing_transfer_costs), len(cost_transfer_df))
+        FastTripsLogger.debug(error_transfer_msg)
+
+        if len(missing_transfer_costs) > 0:
+            error_transfer_msg += "\n%s" % missing_transfer_costs.head(10).to_string()
+            FastTripsLogger.fatal(error_transfer_msg)
+
+        # abort here if we're missing anything
+        if len(missing_accegr_costs) + len(missing_trip_costs) + len(missing_transfer_costs) > 0:
+            raise NotImplementedError("Missing var_values; See log")
+
+        ##################### Put them back together
+        cost_columns = [Passenger.PERSONS_COLUMN_PERSON_ID,
+                        Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                        Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                        Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                        "pathnum", "linknum",
+                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                        PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                        PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
+                        PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                        PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
+                        PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE,
+                        "var_value"]
+        cost_accegr_df   = cost_accegr_df[cost_columns]
+        cost_trip_df     = cost_trip_df[cost_columns]
+        cost_transfer_df = cost_transfer_df[cost_columns]
+        cost_df          = pandas.concat([cost_accegr_df, cost_trip_df, cost_transfer_df], axis=0)
+
+        FastTripsLogger.debug("cost_df=\n%s\ndtypes=\n%s" % (cost_df.head().to_string(), str(cost_df.dtypes)))
+
+        # linkcost = weight x variable
+        cost_df["linkcost"] = cost_df["var_value"]*cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
+
+        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                                                       "pathnum", "linknum"]).head(30)))
+
+        # sum to links
+        cost_link_df = cost_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                "pathnum","linknum","linkcost"]].groupby(
+                                    [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"pathnum","linknum"]).aggregate('sum').reset_index()
+        FastTripsLogger.debug("calculate_cost: cost_link_df\n%s" % str(cost_link_df.head(20)))
+        # join to pathset_links_df
+        pathset_links_df = pandas.merge(left=pathset_links_df, right=cost_link_df, how="left",
+                                        on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum","linknum"])
+        FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.head(20)))
+
+        # sum to path
+        cost_link_df.drop(["linknum"], axis=1, inplace=True)
+        cost_path_df = cost_link_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"pathnum"]).aggregate('sum').reset_index()
+        FastTripsLogger.debug("calculate_cost: cost_path_df\n%s" % str(cost_path_df.head(20)))
+        # join to pathset_paths_df
+        pathset_paths_df = pandas.merge(left=pathset_paths_df, right=cost_path_df, how="left",
+                                        on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum"])
+        pathset_paths_df.rename(columns={"linkcost":"pathcost"}, inplace=True)
+
+        FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.head(20)))
+
+        # verify the cost matches what came from the C++ extension
+        pathset_paths_df["cost_diff"    ] = pathset_paths_df["cost"] - pathset_paths_df["pathcost"]
+        pathset_paths_df["cost_pct_diff"] = pathset_paths_df["cost_diff"]/pathset_paths_df["cost"]
+        cost_differs = pathset_paths_df.loc[abs(pathset_paths_df["cost_pct_diff"])>0.01]
+        FastTripsLogger.debug("calculate_cost: cost_differs for %d rows\n%s" % (len(cost_differs), cost_differs.to_string()))
+        assert(len(cost_differs) == 0)
+
+

@@ -49,3 +49,12 @@ class ConfigurationError(Error):
         self.expr     = filename
         self.msg      = msg
 
+class NotImplementedError(Error):
+    """
+    Exception raised for something expected but not implemented.
+
+    Attributes:
+       msg   -- explanation of the error
+    """
+    def __init__(self, msg):
+        self.msg      = msg

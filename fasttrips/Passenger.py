@@ -98,6 +98,10 @@ class Passenger:
 
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
+    #: Trip list column: Purpose. String.
+    TRIP_LIST_COLUMN_PURPOSE                    = "purpose"
+    #: Trip list column: Value of time. Float.
+    TRIP_LIST_COLUMN_VOT                        = "vot"
 
     #: Column names from pathfinding
     PF_COL_CHOSEN                   = 'chosen'       #: chosen path of pathset returned from pathfinder
@@ -338,7 +342,7 @@ class Passenger:
         return (num_paths_found, pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, output_dir, iteration, stop_id_df, trip_id_df, trips_df):
+    def setup_passenger_pathsets(self, output_dir, iteration, stop_id_df, trip_id_df, trips_df, modes_df):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -370,6 +374,8 @@ class Passenger:
         `linkmode`               object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
                                          :py:attr:`PathSet.STATE_MODE_TRANSFER` or :py:attr:`PathSet.STATE_MODE_TRIP`.  PathSets will always start with
                                          access, followed by trips with transfers in between, and ending in an egress following the last trip.
+        `mode_num`                int64  the mode number for the link
+        `mode`                   object  the supply mode for the link
         `route_id`               object  the route ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `trip_id`                object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
         `trip_id_num`           float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
@@ -446,10 +452,14 @@ class Passenger:
                 for (state_id, state) in state_list:
 
                     linkmode        = state[PathSet.STATE_IDX_DEPARRMODE]
+                    mode_num        = None
                     trip_id         = None
                     waittime        = None
 
-                    if linkmode not in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
+                    if linkmode in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
+                        mode_num    = state[PathSet.STATE_IDX_TRIP]
+                    else:
+                        # trip mode_num will need to be joined
                         trip_id     = state[PathSet.STATE_IDX_TRIP]
                         linkmode    = PathSet.STATE_MODE_TRIP
 
@@ -484,6 +494,7 @@ class Passenger:
                         trip_list_id,
                         pathnum,
                         linkmode,
+                        mode_num,
                         trip_id,
                         a_id_num,
                         b_id_num,
@@ -515,6 +526,7 @@ class Passenger:
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
             'pathnum',
             Passenger.PF_COL_LINK_MODE,
+            Route.ROUTES_COLUMN_MODE_NUM,
             Trip.TRIPS_COLUMN_TRIP_ID_NUM,
             'A_id_num','B_id_num',
             'A_seq','B_seq',
@@ -536,9 +548,23 @@ class Passenger:
                                            mapping_df=trip_id_df,        mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
 
         # get route id
-        pathset_links_df = pandas.merge(left=pathset_links_df, right=trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID]], how="left")
+        # mode_num will appear in left (for non-transit links) and right (for transit link) both, so we need to consolidate
+        pathset_links_df = pandas.merge(left=pathset_links_df, right=trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID, Route.ROUTES_COLUMN_MODE_NUM]],
+                                        how="left", on=Trip.TRIPS_COLUMN_TRIP_ID)
+
+        pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_x" % Route.ROUTES_COLUMN_MODE_NUM]
+        pathset_links_df.loc[pandas.notnull(pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]), Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
+        pathset_links_df.drop(["%s_x" % Route.ROUTES_COLUMN_MODE_NUM,
+                               "%s_y" % Route.ROUTES_COLUMN_MODE_NUM], axis=1, inplace=True)
+        # verify it's always set
+        FastTripsLogger.debug("Have %d links with no mode number set" % len(pathset_links_df.loc[ pandas.isnull(pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM]) ]))
+
+        # get supply mode
+        pathset_links_df = pandas.merge(left=pathset_links_df, right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]], how="left")
 
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
+        # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())
+
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
