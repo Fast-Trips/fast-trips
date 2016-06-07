@@ -426,7 +426,7 @@ class PathSet:
                                 sep="\t", float_format="%.2f", index=False)
 
     @staticmethod
-    def calculate_cost(pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df):
+    def calculate_cost(STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -435,7 +435,7 @@ class PathSet:
 
         It's also messier to have this in two places.
 
-        Returns pathset_paths_df with additional column, "pathcost"
+        Returns pathset_paths_df with additional column, "pathcost", "pathprob"
         And pathset_links_df with additional column, "linkcost"
 
         """
@@ -633,7 +633,7 @@ class PathSet:
         if len(missing_accegr_costs) + len(missing_trip_costs) + len(missing_transfer_costs) > 0:
             raise NotImplementedError("Missing var_values; See log")
 
-        ##################### Put them back together
+        ##################### Put them back together into a single dataframe
         cost_columns = [Passenger.PERSONS_COLUMN_PERSON_ID,
                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
@@ -659,7 +659,7 @@ class PathSet:
         FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                                                        "pathnum", "linknum"]).head(30)))
 
-        # sum to links
+        ###################### sum linkcost to links
         cost_link_df = cost_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                 "pathnum","linknum","linkcost"]].groupby(
                                     [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"pathnum","linknum"]).aggregate('sum').reset_index()
@@ -669,7 +669,7 @@ class PathSet:
                                         on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum","linknum"])
         FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.head(20)))
 
-        # sum to path
+        ###################### sum linkcost to paths
         cost_link_df.drop(["linknum"], axis=1, inplace=True)
         cost_path_df = cost_link_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"pathnum"]).aggregate('sum').reset_index()
         FastTripsLogger.debug("calculate_cost: cost_path_df\n%s" % str(cost_path_df.head(20)))
@@ -677,6 +677,17 @@ class PathSet:
         pathset_paths_df = pandas.merge(left=pathset_paths_df, right=cost_path_df, how="left",
                                         on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum"])
         pathset_paths_df.rename(columns={"linkcost":"pathcost"}, inplace=True)
+
+        ###################### logsum and probabilities
+        pathset_paths_df["logsum_component"] = numpy.exp(-1.0*STOCH_DISPERSION*pathset_paths_df["pathcost"])
+
+        # sum across all paths
+        pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "logsum_component"]].groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate('sum').reset_index()
+        pathset_logsum_df.rename(columns={"logsum_component":"logsum"}, inplace=True)
+        pathset_paths_df = pandas.merge(left=pathset_paths_df,
+                                        right=pathset_logsum_df,
+                                        how="left")
+        pathset_paths_df["pathprob"] = pathset_paths_df["logsum_component"]/pathset_paths_df["logsum"]
 
         FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.head(20)))
 
@@ -686,5 +697,11 @@ class PathSet:
         cost_differs = pathset_paths_df.loc[abs(pathset_paths_df["cost_pct_diff"])>0.01]
         FastTripsLogger.debug("calculate_cost: cost_differs for %d rows\n%s" % (len(cost_differs), cost_differs.to_string()))
         assert(len(cost_differs) == 0)
+
+        pathset_paths_df["prob_diff"    ] = pathset_paths_df["probability"] - pathset_paths_df["pathprob"]
+        prob_differs = pathset_paths_df.loc[abs(pathset_paths_df["prob_diff"])>0.01]
+        FastTripsLogger.debug("calculate_cost: prob_differs for %d rows\n%s" % (len(prob_differs), prob_differs.to_string()))
+        assert(len(prob_differs) == 0)
+
 
 

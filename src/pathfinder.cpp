@@ -1611,7 +1611,7 @@ namespace fasttrips {
                              path_spec, *this);
 
             }
-            PathInfo pi = { 1, 0, 0 };  // count is 1
+            PathInfo pi = { 1, 1, 0 };  // count is 1
             path.calculateCost(trace_file, path_spec, *this);
             pathset[path] = pi;
             if (path_spec.trace_)

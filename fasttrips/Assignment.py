@@ -1170,7 +1170,8 @@ class Assignment:
 
         ######################################################################################################
         FastTripsLogger.info("Step 2. Calculate costs for all pathset paths")
-        PathSet.calculate_cost(pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df, FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df)
+        PathSet.calculate_cost(Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df,
+                               FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df)
 
         ######################################################################################################
         FastTripsLogger.info("Step 3. Choose a path for each passenger from their pathset")
