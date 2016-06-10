@@ -59,14 +59,14 @@ if __name__ == "__main__":
     print "Read %d lines from %s" % (len(walk_access_df), walk_access_file)
 
     # make the shape id and melt it for access links
-    walk_access_df["shape_id"] = "Access " + walk_access_df["taz"].map(str) + " " + walk_access_df["stop_id"].map(str)
+    walk_access_df["shape_id"] = "access " + walk_access_df["taz"].map(str) + " " + walk_access_df["stop_id"].map(str)
     # print "walk_access: length %d; head:" % len(walk_access_df)
     # print walk_access_df.head()
     access_df = pandas.melt(walk_access_df, id_vars=["shape_id","dist"], value_vars=["taz","stop_id"]).sort_values(by=["shape_id","variable"], ascending=[True,False]).reset_index(drop=True)
     access_df.replace(to_replace={"taz":0,"stop_id":1}, inplace=True)
 
     # re-make the shape id and melt it for egress links
-    walk_access_df["shape_id"] = "Egress " + walk_access_df["stop_id"].map(str) + " " + walk_access_df["taz"].map(str)
+    walk_access_df["shape_id"] = "egress " + walk_access_df["stop_id"].map(str) + " " + walk_access_df["taz"].map(str)
     egress_df = pandas.melt(walk_access_df, id_vars=["shape_id","dist"], value_vars=["taz","stop_id"]).sort_values(by=["shape_id","variable"], ascending=[True,True]).reset_index(drop=True)
     egress_df.replace(to_replace={"stop_id":0, "taz":1}, inplace=True)
     # print len(egress_df)
