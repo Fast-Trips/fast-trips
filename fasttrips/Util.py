@@ -31,6 +31,16 @@ class Util:
     #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
     SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
 
+    #: Maps timedelta columns to units for :py:meth:`Util.write_dataframe`
+    TIMEDELTA_COLUMNS_TO_UNITS      = {
+        'time enumerating'  : 'milliseconds',  # performance
+        'time labeling'     : 'milliseconds',  # performance
+        'pf_linktime'       : 'min',
+        'pf_waittime'       : 'min',
+        'new_linktime'      : 'min',
+        'new_waittime'      : 'min'
+    }
+
     @staticmethod
     def add_numeric_column(input_df, id_colname, numeric_newcolname):
         """
@@ -205,29 +215,15 @@ class Util:
             # convert timedelta untils because the string version is just awful
             if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
 
-                units = None
-
-                # figure out timedelta units
-                if header_row == None:
-                    max_timedelta = df_toprint[old_colname].abs().max()
-                    FastTripsLogger.debug("Util.write_dataframe() %s column %s has max val %s" % (name, old_colname, str(max_timedelta)))
-
-                    if max_timedelta < numpy.timedelta64(5,'m'):       # milliseconds
-                        units = numpy.timedelta64(1,'ms')
-                        new_colname = "%s milliseconds" % old_colname
-                    else:                                              # minutes
-                        units = numpy.timedelta64(1,'m')
-                        new_colname = "%s min" % old_colname
+                # lookup timedelta units
+                units_str   = Util.TIMEDELTA_COLUMNS_TO_UNITS[old_colname]
+                new_colname = "%s %s" % (old_colname, units_str)
+                if units_str == "milliseconds":
+                    units = numpy.timedelta64(1,'ms')
+                elif units_str == "min":
+                    units = numpy.timedelta64(1,'m')
                 else:
-                    # use the one we already have
-                    if "%s milliseconds" % old_colname in header_row:  # milliseconds
-                        units = numpy.timedelta64(1,'ms')
-                        new_colname = "%s milliseconds" % old_colname
-                    elif  "%s min" % old_colname in header_row:         # minutes
-                        units = numpy.timedelta64(1,'m')
-                        new_colname = "%s min" % old_colname
-                    else:
-                        raise
+                    raise
 
                 # if the column already exists, continue
                 if new_colname in df_cols: continue
@@ -235,6 +231,11 @@ class Util:
                 # otherwise make the new one and replace it
                 df_toprint[new_colname] = df_toprint[old_colname]/units
                 df_cols[col_idx] = new_colname
+
+            elif str(df_toprint.dtypes[col_idx]) == "datetime64[ns]":
+                # print as HH:MM:SS
+                df_toprint[df_cols[col_idx]] = df_toprint[df_cols[col_idx]].apply(Util.datetime64_formatter)
+
             # print df_toprint.dtypes[col_idx]
 
         # the cols have new column names instead of old
