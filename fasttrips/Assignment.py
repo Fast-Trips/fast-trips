@@ -1359,6 +1359,13 @@ class Assignment:
 
             if num_chosen == 0: break
 
+        # write the final chosen paths for this iteration
+        passengers_df = Passenger.get_chosen_links(pathset_links_df)
+        passengers_df["iteration"] = iteration
+        Util.write_dataframe(passengers_df, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"),
+                             append=(iteration>1))
+        passengers_df.drop(["iteration"], axis=1, inplace=True)
+
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
 
 
