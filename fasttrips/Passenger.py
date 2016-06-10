@@ -110,6 +110,7 @@ class Passenger:
     PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
     PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
     PF_COL_LINK_MODE                = 'linkmode'     #: link mode (Access, Trip, Egress, etc)
+    PF_COL_PATH_NUM                 = 'pathnum'      #: path number, starting from 0
     PF_COL_LINK_NUM                 = 'linknum'      #: link number, starting from access=0
     #: todo replace/rename ??
     PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
@@ -351,17 +352,17 @@ class Passenger:
 
         pathset_paths_df has path set information, where each row represents a passenger's path:
 
-        ==============  ===============  =====================================================================================================
-        column name      column type     description
-        ==============  ===============  =====================================================================================================
-        `person_id`              object  person unique ID
-        `trip_list_id`            int64  trip list numerical ID
-        `pathdir`                 int64  the :py:attr:`PathSet.direction`
-        `pathmode`               object  the :py:attr:`PathSet.mode`
-        `pathnum`                 int64  the path number for the path within the pathset
-        `cost`                  float64  the cost of the entire path
-        `probability`           float64  the probability of the path
-        ==============  ===============  =====================================================================================================
+        ================  ===============  =====================================================================================================
+        column name        column type     description
+        ================  ===============  =====================================================================================================
+        `person_id`                object  person unique ID
+        `trip_list_id`              int64  trip list numerical ID
+        `pathdir`                   int64  the :py:attr:`PathSet.direction`
+        `pathmode`                 object  the :py:attr:`PathSet.mode`
+        `pathnum`                   int64  the path number for the path within the pathset
+        `pf_cost`                 float64  the cost of the entire path
+        `pf_probability`          float64  the probability of the path
+        ================  ===============  =====================================================================================================
 
         pathset_links_df has path link information, where each row represents a link in a passenger's path:
 
@@ -517,14 +518,14 @@ class Passenger:
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
             'pathdir',  # for debugging
             'pathmode', # for output
-            'pathnum',
+            Passenger.PF_COL_PATH_NUM,
             PathSet.PATH_KEY_COST,
             PathSet.PATH_KEY_PROBABILITY ])
 
         pathset_links_df = pandas.DataFrame(linklist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-            'pathnum',
+            Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_MODE,
             Route.ROUTES_COLUMN_MODE_NUM,
             Trip.TRIPS_COLUMN_TRIP_ID_NUM,
@@ -568,192 +569,127 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def write_paths(output_dir, iteration, pathset_df, links):
+    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links):
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
         # write it
-        pathset_df["iteration"] = iteration
+        pathset_df[           "iteration"] = iteration
+        pathset_df["simulation iteration"] = simulation_iteration
         Util.write_dataframe(pathset_df,
                              "pathset_links_df" if links else "pathset_paths_df",
                              os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
-                             append=(iteration>1))
-        pathset_df.drop("iteration", axis=1, inplace=True)
+                             append=((iteration>1) or (simulation_iteration > 0)))
+        pathset_df.drop(["iteration","simulation iteration"], axis=1, inplace=True)
 
 
     @staticmethod
-    def choose_paths(iteration, pathset_paths_df):
+    def choose_paths(iteration, simulation_iteration, pathset_paths_df, pathset_links_df):
         """
-        Returns  the same dataframe as input pathset_paths_df, but with a new column, PF_COL_CHOSEN, indicating if that path was chosen.
+        Returns the same dataframes as input, but with a new column,
+        Passenger.PF_COL_CHOSEN = simulation_iteration, indicating the simulation iteration
+        the path was chosen (or -1 if not chosen).
 
+        In simulation_iteration == 0, this will attempt to choose for every passenger trip.
+        Otherwise, this will attempt to choose for just those passenger trips that still need it.
+
+        Returns (num passenger trips chosen, updated pathset_paths_df, updated pathset_links_df)
         """
-        from .PathSet import PathSet
-        # todo: do this differently?  Include iteration?
-        numpy.random.seed(iteration)
+        from .Assignment import Assignment
+        from .PathSet    import PathSet
 
-        # assume probability is correct -- create cumulative probability
-        pathset_paths_df["prob_cum"] = pathset_paths_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])[PathSet.PATH_KEY_PROBABILITY].cumsum()
+        # For simulation_iteration 0, we need to do all of them.
+        if simulation_iteration == 0:
+            pathset_paths_df[Passenger.PF_COL_CHOSEN] = -1
+        else:
+            # Otherwise, just choose for those that still need it
+
+            # first invalidate any infinite cost choices
+            pathset_paths_df.loc[ (pathset_paths_df[Passenger.PF_COL_CHOSEN] >= 0)&(pathset_paths_df[Assignment.SIM_COL_PAX_COST]==numpy.inf), Passenger.PF_COL_CHOSEN ] = -1
+
+        # group to passenger trips
+        pathset_paths_df_grouped = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                     Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                     Passenger.PF_COL_CHOSEN,
+                                                     Assignment.SIM_COL_PAX_LOGSUM]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                                              Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate("max").reset_index()
+        # count how many passenger trips have pathsets with valid paths (logsum > 0) AND no path chosen (chosen < 0)
+        # FastTripsLogger.debug("choose_paths() pathset_paths_df_grouped=\n%s" % pathset_paths_df_grouped.head().to_string())
+        pax_choose_df = pathset_paths_df_grouped.loc[ (pathset_paths_df_grouped[Assignment.SIM_COL_PAX_LOGSUM]>0)&(pathset_paths_df_grouped[Passenger.PF_COL_CHOSEN]<0) ]
+        FastTripsLogger.info("          Choosing %d paths" % len(pax_choose_df))
+
+        # If we have nothing to do, return
+        if len(pax_choose_df) == 0:
+            return (0, pathset_paths_df, pathset_links_df)
+
+        # flag it
+        pax_choose_df["to_choose"] = 1
+
+        # Choose a random number for them now
+        # todo: do this differently?
+        numpy.random.seed(iteration*1000 + simulation_iteration)
+        pax_choose_df["rand"] = numpy.random.rand(len(pax_choose_df))
+        FastTripsLogger.debug("\n%s" % pax_choose_df.head().to_string())
+
+        # add to_choose flag and rand to pathset_paths_df
+        pathset_paths_df = pandas.merge(left =pathset_paths_df,
+                                        right=pax_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "to_choose", "rand"]],
+                                        how  ="left")
+        FastTripsLogger.debug("choose_paths() pathset_paths_df=\n%s" % pathset_paths_df.head().to_string())
+
+        # select out just those pathsets we're choosing
+        paths_choose_df = pathset_paths_df.loc[pathset_paths_df["to_choose"]==1]
+
+        # Use updated probability -- create cumulative probability
+        paths_choose_df["prob_cum"] = paths_choose_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])[Assignment.SIM_COL_PAX_PROBABILITY].cumsum()
         # verify cumsum is ok
-        # FastTripsLogger.debug("Passenger.choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
-
-        # these are the Trips we'll want to choose -- pick a random number for each person/trip list id num in [0,1)
-        trip_list_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                         Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]].drop_duplicates()
-        trip_list_df["rand"] = numpy.random.rand(len(trip_list_df))
-        # FastTripsLogger.debug("Passenger.choose_path() trip_list_df=\n%s\n" % trip_list_df.head(30).to_string())
+        FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(30).to_string())
 
         # use it to choose the path based on the cumulative probability
-        pathset_paths_df = pandas.merge(left=pathset_paths_df, right=trip_list_df, how="left")
-        pathset_paths_df["rand_less"] = False
-        pathset_paths_df.loc[pathset_paths_df["rand"] < pathset_paths_df["prob_cum"], "rand_less"] = True
-        # FastTripsLogger.debug("Passenger.choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
+        paths_choose_df["rand_less"] = False
+        paths_choose_df.loc[paths_choose_df["rand"] < paths_choose_df["prob_cum"], "rand_less"] = True
+        FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(30).to_string())
 
         # this will now be person id, trip list id num, index for chosen path
-        chosen_path_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                           Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                           "rand_less"]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).idxmax(axis=0).reset_index()
+        chosen_path_df = paths_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                          "rand_less"]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).idxmax(axis=0).reset_index()
         chosen_path_df.rename(columns={"rand_less":"chosen_idx"}, inplace=True)
-        # FastTripsLogger.debug("Passenger.choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
+        FastTripsLogger.debug("choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
 
         # mark it as chosen
         pathset_paths_df = pandas.merge(left=pathset_paths_df, right=chosen_path_df, how="left")
-        pathset_paths_df[Passenger.PF_COL_CHOSEN] = 0
-        pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Passenger.PF_COL_CHOSEN] = 1
-        # FastTripsLogger.debug("Passenger.choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
+        pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Passenger.PF_COL_CHOSEN] = simulation_iteration
+        FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
 
-        # verify we chose exactly 1 for each person/trip list id num
-        trip_list_df = pathset_paths_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).agg({Passenger.PF_COL_CHOSEN:"sum"})
-        trip_list_df.rename(columns={Passenger.PF_COL_CHOSEN:"num_chosen"}, inplace=True)
-        # FastTripsLogger.debug("Passenger.choose_path() trip_list_df=\n%s\n" % trip_list_df.head(30).to_string())
-
-        bad_choice = trip_list_df.loc[trip_list_df["num_chosen"] != 1,]
-        if len(bad_choice) > 0:
-            bad_choice["bad_choice"] = True
-            pathset_paths_df = pandas.merge(left=pathset_paths_df, right=bad_choice, how="left")
-            FastTripsLogger.warn("Passenger.choose_path() had problems making choices for the following pathsets: \n%s\n" % \
-                                 pathset_paths_df.loc[pathset_paths_df["bad_choice"],].head(30).to_string())
-            raise
-        FastTripsLogger.info("  Chose %d out of %d paths from the pathsets" %
-                             (len(trip_list_df)-len(bad_choice), len(trip_list_df)))
+        FastTripsLogger.info("          Chose %d out of %d paths from the pathsets" %
+                             (len(chosen_path_df), len(pathset_paths_df_grouped)))
 
         # drop the intermediates
-        pathset_paths_df.drop(["prob_cum","rand","rand_less","chosen_idx"], axis=1, inplace=True)
-        FastTripsLogger.debug("Passenger.choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
+        pathset_paths_df.drop(["to_choose","rand","chosen_idx"], axis=1, inplace=True)
+        FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
 
-        return pathset_paths_df
+        # give the chosen index to pathset_links_df
+        if Passenger.PF_COL_CHOSEN in list(pathset_links_df.columns.values):
+            pathset_links_df.drop(Passenger.PF_COL_CHOSEN, axis=1, inplace=True)
 
-
-    @staticmethod
-    def get_chosen_links(pathset_paths_df, pathset_links_df):
-        """
-        Given the pathset paths and pathset links, returns the pathset links for the ones marked as chosen.
-        """
-        # subset the links to return
         pathset_links_df = pandas.merge(left=pathset_links_df,
                                         right=pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                                'pathnum',
+                                                                Passenger.PF_COL_PATH_NUM,
                                                                 Passenger.PF_COL_CHOSEN]],
                                         how="left")
-        # gather the links for the chosen paths
-        passengers_df = pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_CHOSEN]==1,].copy()
-        passengers_df.drop([Passenger.PF_COL_CHOSEN], axis=1, inplace=True)
 
-        return passengers_df
+        return (len(chosen_path_df), pathset_paths_df, pathset_links_df)
+
 
     @staticmethod
-    def flag_invalid_paths(iteration, passengers_df, output_dir):
+    def get_chosen_links(pathset_links_df):
         """
-        Given passenger path links with the vehicle board_time and alight_time attached to trip links,
-        add columns:
-
-        1) alight_delay_min   delay in alight_time from original pathfinding understanding of alight time
-        2) new_A_time         new A_time given the trip board/alight times for the trip links
-        3) new_B_time         new B_time given the trip board/alight times for the trip links
-        4) new_linktime       new linktime from new_B_time-new_A_time
-        5) new_waittime       new waittime given the trip board/alight times for the trip links
-        6) mixed_xfer         number of missed transfers in the path
-        6) invalid            1 if invalid, 0 otherwise.  Invalid if mixed_xfer > 0 or bump_iter >= 0
+        Given the pathset paths and pathset links, returns the pathset links for the ones marked as chosen.
         """
-        # for strings
-        from .PathSet import PathSet
+        # gather the links for the chosen paths
+        return pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_CHOSEN]>=0,].copy()
 
-        FastTripsLogger.debug("flag_invalid_paths() passengers_df (%d):\n%s" % (len(passengers_df), passengers_df.head().to_string()))
-        passengers_df["alight_delay_min"] = 0.0
-        passengers_df.loc[pandas.notnull(passengers_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "alight_delay_min"] = \
-            ((passengers_df["alight_time"]-passengers_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
-
-        #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
-        passengers_df.loc[passengers_df["alight_delay_min"]>22*60, "board_time" ] = passengers_df["board_time" ] - numpy.timedelta64(24, 'h')
-        passengers_df.loc[passengers_df["alight_delay_min"]>22*60, "alight_time"] = passengers_df["alight_time"] - numpy.timedelta64(24, 'h')
-        passengers_df.loc[passengers_df["alight_delay_min"]>22*60, "alight_delay_min"] = \
-            ((passengers_df["alight_time"]-passengers_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
-
-        FastTripsLogger.debug("Biggest alight_delay:=\n%s" % \
-                              (passengers_df.sort_values(by="alight_delay_min", ascending=False).head().to_string()))
-
-        # For trips, alight_time is the new B_time
-        # Set A_time for links AFTER trip links by joining to next leg
-        next_trips = passengers_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_LINK_NUM, "alight_time"]].copy()
-        next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
-        next_trips.rename(columns={"alight_time":"new_A_time"}, inplace=True)
-        # Add it to passenger trips.  Now new_A_time is set for links after trip links (note this will never be a trip link)
-        passengers_df = pandas.merge(left=passengers_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,  Passenger.PF_COL_LINK_NUM])
-
-        # Set the new_B_time for those links -- link time for access/egress/xfer is travel time since wait times are in trip links
-        passengers_df["new_B_time"] = passengers_df["new_A_time"] + passengers_df[Passenger.PF_COL_LINK_TIME]
-        # For trip links, it's alight time
-        passengers_df.loc[passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, "new_B_time"] = passengers_df["alight_time"]
-        # For access links, it doesn't change from the original pathfinding result
-        passengers_df.loc[passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, "new_A_time"] = passengers_df[Passenger.PF_COL_PAX_A_TIME]
-        passengers_df.loc[passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, "new_B_time"] = passengers_df[Passenger.PF_COL_PAX_B_TIME]
-
-        # Now we only need to set the trip link's A time from the previous link's new_B_time
-        next_trips = passengers_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_LINK_NUM, "new_B_time"]].copy()
-        next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
-        next_trips.rename(columns={"new_B_time":"new_trip_A_time"}, inplace=True)
-        # Add it to passenger trips.  Now new_trip_A_time is set for trip links
-        passengers_df = pandas.merge(left=passengers_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,  Passenger.PF_COL_LINK_NUM])
-        passengers_df.loc[passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, "new_A_time"] = passengers_df["new_trip_A_time"]
-        passengers_df.drop(["new_trip_A_time"], axis=1, inplace=True)
-
-        passengers_df["new_linktime"] = passengers_df["new_B_time"] - passengers_df["new_A_time"]
-
-        #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
-        #: if the linktime > 23 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
-        passengers_df.loc[passengers_df["new_linktime"] > numpy.timedelta64(22, 'h'), "new_B_time"  ] = passengers_df["new_B_time"] - numpy.timedelta64(24, 'h')
-        passengers_df.loc[passengers_df["new_linktime"] > numpy.timedelta64(22, 'h'), "new_linktime"] = passengers_df["new_B_time"] - passengers_df["new_A_time"]
-
-        # new wait time
-        passengers_df.loc[pandas.notnull(passengers_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "new_waittime"] = passengers_df["board_time"] - passengers_df["new_A_time"]
-
-        # invalid trips have negative wait time
-        passengers_df["missed_xfer"] = 0
-        passengers_df.loc[passengers_df["new_waittime"]<numpy.timedelta64(0,'m'), "missed_xfer"] = 1
-
-        # count how many are valid (sum of invalid = 0 for the trip list id)
-        passengers_df_grouped = passengers_df.groupby(Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM).aggregate({"missed_xfer":"sum",
-                                                                                                              "bump_iter":"max"})
-        passengers_df_grouped["invalid"] = 0
-        passengers_df_grouped.loc[passengers_df_grouped["missed_xfer"]> 0,"invalid"] = 1 # invalid: any missed xfers
-        passengers_df_grouped.loc[passengers_df_grouped["bump_iter"  ]>=0,"invalid"] = 1 # invalid: any bumped
-        valid_linked_trips = len(passengers_df_grouped) - passengers_df_grouped["invalid"].sum()
-        FastTripsLogger.info("  flag_invalid_paths (%d missed transfer, %d bumped) trip legs for %d linked trips" % \
-                             (passengers_df["missed_xfer"].sum(), len(passengers_df.loc[passengers_df["bump_iter"]>=0]), passengers_df_grouped["invalid"].sum()))
-
-        # add invalid to passengers_df
-        passengers_df = pandas.merge(left=passengers_df, right=passengers_df_grouped.reset_index()[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "invalid"]], how="left")
-        FastTripsLogger.debug("flag_invalid_paths() passengers_df (%d):\n%s" % (len(passengers_df), passengers_df.head(30).to_string()))
-
-        # quick and dirty -- save this
-        # todo: when we iterate, this will get smarter
-        passengers_df_to_write = passengers_df.copy()
-        passengers_df_to_write["iteration"] = iteration
-        for col in [Passenger.PF_COL_PAX_A_TIME, Passenger.PF_COL_PAX_B_TIME, 'board_time', 'alight_time', 'new_A_time', 'new_B_time']:
-            passengers_df_to_write[col] = passengers_df_to_write[col].apply(Util.datetime64_formatter)
-        Util.write_dataframe(passengers_df_to_write, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"), append=(iteration > 1))
-
-        return (valid_linked_trips, passengers_df)
