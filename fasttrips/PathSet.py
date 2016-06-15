@@ -426,7 +426,7 @@ class PathSet:
                                 sep="\t", float_format="%.2f", index=False)
 
     @staticmethod
-    def calculate_cost(simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df):
+    def calculate_cost(iteration, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -593,7 +593,7 @@ class PathSet:
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
 
-        FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.head().to_string(), str(cost_accegr_df.dtypes)))
+        # FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.head().to_string(), str(cost_accegr_df.dtypes)))
 
         missing_accegr_costs = cost_accegr_df.loc[ pandas.isnull(cost_accegr_df["var_value"]) ]
         error_accegr_msg = "Missing %d out of %d access/egress var_value values" % (len(missing_accegr_costs), len(cost_accegr_df))
@@ -611,7 +611,7 @@ class PathSet:
         else:
             cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"        , "var_value"] =  cost_trip_df[Trip.SIM_COL_VEH_OVERCAP]
 
-        FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.head().to_string(), str(cost_trip_df.dtypes)))
+        # FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.head().to_string(), str(cost_trip_df.dtypes)))
 
         missing_trip_costs = cost_trip_df.loc[ pandas.isnull(cost_trip_df["var_value"]) ]
         error_trip_msg = "Missing %d out of %d transit trip var_value values" % (len(missing_trip_costs), len(cost_trip_df))
@@ -639,7 +639,7 @@ class PathSet:
         cost_transfer_df.loc[ (cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "transfer_penalty")&
                               (pandas.isnull(cost_transfer_df["var_value"])), "var_value"] = 1.0
 
-        FastTripsLogger.debug("cost_transfer_df=\n%s\ndtypes=\n%s" % (cost_transfer_df.head().to_string(), str(cost_transfer_df.dtypes)))
+        # FastTripsLogger.debug("cost_transfer_df=\n%s\ndtypes=\n%s" % (cost_transfer_df.head().to_string(), str(cost_transfer_df.dtypes)))
 
         missing_transfer_costs = cost_transfer_df.loc[ pandas.isnull(cost_transfer_df["var_value"]) ]
         error_transfer_msg = "Missing %d out of %d transfer var_value values" % (len(missing_transfer_costs), len(cost_transfer_df))
@@ -731,7 +731,7 @@ class PathSet:
 
         FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.head(20)))
 
-        if simulation_iteration == 0:
+        if (iteration % 2 == 1) and simulation_iteration == 0:
             # verify the cost matches what came from the C++ extension
             pathset_paths_df["cost_diff"    ] = pathset_paths_df[PathSet.PATH_KEY_COST] - pathset_paths_df[Assignment.SIM_COL_PAX_COST]
             pathset_paths_df["cost_pct_diff"] = pathset_paths_df["cost_diff"]/pathset_paths_df[PathSet.PATH_KEY_COST]

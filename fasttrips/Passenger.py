@@ -343,12 +343,14 @@ class Passenger:
         return (num_paths_found, pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, output_dir, iteration, stop_id_df, trip_id_df, trips_df, modes_df):
+    def setup_passenger_pathsets(self, stop_id_df, trip_id_df, trips_df, modes_df):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
 
         Returns two :py:class:`pandas.DataFrame` instances: pathset_paths_df and pathset_links_df.
+        These only include pathsets for person trips which have just been sought (e.g. those in
+        :py:attr:`Passenger.pathfind_trip_list_df`)
 
         pathset_paths_df has path set information, where each row represents a passenger's path:
 
@@ -391,15 +393,17 @@ class Passenger:
         `pf_linktime`   timedelta64[ns]  the time spent on the link
         ==============  ===============  =====================================================================================================
 
-        Additionally, this method writes out the dataframes to csvs (specified by :py:attr:`Passenger.PATHSET_PATHS_CSV`
-        and :py:attr:`Passenger.PATHSET_LINKS_CSV`) in the given `output_dir` and labeled with the given `iteration`.
-
         """
         from .PathSet import PathSet
         pathlist = []
         linklist = []
 
+        trip_list_id_nums = self.pathfind_trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM].tolist()
+
         for trip_list_id,pathset in self.id_to_pathset.iteritems():
+            # only process if we just did pathfinding for this person trip
+            if trip_list_id not in trip_list_id_nums: continue
+
             if not pathset.goes_somewhere():   continue
             if not pathset.path_found():       continue
 
@@ -584,7 +588,7 @@ class Passenger:
 
 
     @staticmethod
-    def choose_paths(iteration, simulation_iteration, pathset_paths_df, pathset_links_df):
+    def choose_paths(choose_for_everyone, iteration, simulation_iteration, pathset_paths_df, pathset_links_df):
         """
         Returns the same dataframes as input, but with a new column,
         Passenger.PF_COL_CHOSEN = simulation_iteration, indicating the simulation iteration
@@ -598,8 +602,8 @@ class Passenger:
         from .Assignment import Assignment
         from .PathSet    import PathSet
 
-        # For simulation_iteration 0, we need to do all of them.
-        if simulation_iteration == 0:
+        # If choose_for_everyone, we need to do all of them.
+        if choose_for_everyone:
             pathset_paths_df[Passenger.PF_COL_CHOSEN] = -1
         else:
             # Otherwise, just choose for those that still need it
@@ -615,7 +619,7 @@ class Passenger:
                                                                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate("max").reset_index()
         # count how many passenger trips have pathsets with valid paths (logsum > 0) AND no path chosen (chosen < 0)
         # FastTripsLogger.debug("choose_paths() pathset_paths_df_grouped=\n%s" % pathset_paths_df_grouped.head().to_string())
-        pax_choose_df = pathset_paths_df_grouped.loc[ (pathset_paths_df_grouped[Assignment.SIM_COL_PAX_LOGSUM]>0)&(pathset_paths_df_grouped[Passenger.PF_COL_CHOSEN]<0) ]
+        pax_choose_df = pathset_paths_df_grouped.loc[ (pathset_paths_df_grouped[Assignment.SIM_COL_PAX_LOGSUM]>0)&(pathset_paths_df_grouped[Passenger.PF_COL_CHOSEN]<0) ].copy()
         FastTripsLogger.info("          Choosing %d paths" % len(pax_choose_df))
 
         # If we have nothing to do, return
@@ -629,7 +633,7 @@ class Passenger:
         # todo: do this differently?
         numpy.random.seed(iteration*1000 + simulation_iteration)
         pax_choose_df["rand"] = numpy.random.rand(len(pax_choose_df))
-        FastTripsLogger.debug("\n%s" % pax_choose_df.head().to_string())
+        # FastTripsLogger.debug("\n%s" % pax_choose_df.head().to_string())
 
         # add to_choose flag and rand to pathset_paths_df
         pathset_paths_df = pandas.merge(left =pathset_paths_df,
@@ -638,7 +642,7 @@ class Passenger:
         FastTripsLogger.debug("choose_paths() pathset_paths_df=\n%s" % pathset_paths_df.head().to_string())
 
         # select out just those pathsets we're choosing
-        paths_choose_df = pathset_paths_df.loc[pathset_paths_df["to_choose"]==1]
+        paths_choose_df = pathset_paths_df.loc[pathset_paths_df["to_choose"]==1].copy()
 
         # Use updated probability -- create cumulative probability
         paths_choose_df["prob_cum"] = paths_choose_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,

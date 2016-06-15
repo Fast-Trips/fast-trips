@@ -620,7 +620,7 @@ class Trip:
         """
         trips_df_len = len(trips_df)
         FastTripsLogger.debug("Trip.update_trip_times() trips_df has %d rows" % len(trips_df))
-        FastTripsLogger.debug("trips_df.dtypes=\n%s\n" % str(trips_df.dtypes))
+        # FastTripsLogger.debug("trips_df.dtypes=\n%s\n" % str(trips_df.dtypes))
         trip_cols = list(trips_df.columns.values)
 
         # Default to 0

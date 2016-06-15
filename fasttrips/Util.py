@@ -210,7 +210,7 @@ class Util:
 
         for col_idx in range(len(df_cols)):
             old_colname = df_cols[col_idx]
-            FastTripsLogger.debug("%s -> %s" % (old_colname, df_toprint.dtypes[col_idx]))
+            # FastTripsLogger.debug("%s -> %s" % (old_colname, df_toprint.dtypes[col_idx]))
 
             # convert timedelta untils because the string version is just awful
             if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
