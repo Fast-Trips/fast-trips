@@ -785,12 +785,14 @@ class PathSet:
             pathset_paths_df["cost_pct_diff"] = pathset_paths_df["cost_diff"]/pathset_paths_df[PathSet.PATH_KEY_COST]
             cost_differs = pathset_paths_df.loc[abs(pathset_paths_df["cost_pct_diff"])>0.01]
             FastTripsLogger.debug("calculate_cost: cost_differs for %d rows\n%s" % (len(cost_differs), cost_differs.to_string()))
-            assert(len(cost_differs) == 0)
+            if len(cost_differs) > 0:
+                FastTripsLogger.warn("calculate_cost: cost_differs for %d rows\n%s" % (len(cost_differs), cost_differs.to_string()))
 
             pathset_paths_df["prob_diff"    ] = pathset_paths_df[PathSet.PATH_KEY_PROBABILITY] - pathset_paths_df[Assignment.SIM_COL_PAX_PROBABILITY]
             prob_differs = pathset_paths_df.loc[abs(pathset_paths_df["prob_diff"])>0.01]
             FastTripsLogger.debug("calculate_cost: prob_differs for %d rows\n%s" % (len(prob_differs), prob_differs.to_string()))
-            assert(len(prob_differs) == 0)
+            if len(prob_differs) > 0:
+                FastTripsLogger.warn("calculate_cost: prob_differs for %d rows\n%s" % (len(prob_differs), prob_differs.to_string()))
 
             pathset_paths_df.drop(["cost_diff","cost_pct_diff","prob_diff"], axis=1, inplace=True)
 

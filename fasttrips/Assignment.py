@@ -486,7 +486,10 @@ class Assignment:
 
             # capacity gap stuff
             num_bumped_passengers = num_paths_found - num_passengers_arrived
-            capacity_gap = 100.0*num_bumped_passengers/num_paths_found
+            if num_paths_found > 0:
+                capacity_gap = 100.0*num_bumped_passengers/num_paths_found
+            else:
+                capacity_gap = 100
 
             FastTripsLogger.info("")
             FastTripsLogger.info("  TOTAL ASSIGNED PASSENGERS: %10d" % num_paths_found)
@@ -560,7 +563,8 @@ class Assignment:
 
         est_paths_to_find   = len(FT.passengers.pathfind_trip_list_df)
         FastTripsLogger.info("Finding pathsets for %d trips" % est_paths_to_find)
-
+        if est_paths_to_find == 0:
+            return 0
 
         info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
         if info_freq < 1: info_freq = 1
