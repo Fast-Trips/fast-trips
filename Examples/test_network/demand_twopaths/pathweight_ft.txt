@@ -3,10 +3,12 @@ real       transfer         transfer       transfer     walk_time_min         2.
 real       transfer         transfer       transfer     elevation_gain        0.2
 real       transfer         transfer       transfer     transfer_penalty      6
 real       access           walk           walk_access  preferred_delay_min   1.5
+real       access           walk           walk_access  preferred_delay_min   0.1
 real       access           walk           walk_access  time_min              2.0
 real       access           PNR            PNR_access   walk_time_min         2.0
 real       access           PNR            PNR_access   drive_travel_time_min 1.5
 real       egress           walk           walk_egress  time_min              2.0
+real       egress           walk           walk_egress  preferred_delay_min   0.1
 real       egress           PNR            PNR_egress   walk_time_min         2.0
 real       egress           PNR            PNR_egress   drive_travel_time_min 1.5
 real       transit          local_bus      local_bus    in_vehicle_time_min   1.0

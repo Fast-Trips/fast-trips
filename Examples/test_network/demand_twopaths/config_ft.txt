@@ -2,6 +2,7 @@
 number_of_processes           = 1
 trace_person_ids              = ['paperboy','marge']
 bump_one_at_a_time            = True
+time_window                   = 50
 
 [pathfinding]
 user_class_function           = user_class

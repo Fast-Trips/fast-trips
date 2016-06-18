@@ -99,7 +99,6 @@ class FastTrips:
         # Read the configuration
         Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
 
-        self.read_input_files()
 
     def read_input_files(self):
         """
@@ -142,13 +141,18 @@ class FastTrips:
 
         if not self.is_child_process:
             FastTripsLogger.info("-------- Reading demand --------")
+            FastTripsLogger.info("Capacity constraint? %x" % Assignment.CAPACITY_CONSTRAINT )
             # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger(self.input_demand_dir, self.output_dir, Util.SIMULATION_DAY, self.stops, self.routes)
+            self.passengers = Passenger(self.input_demand_dir, self.output_dir, Util.SIMULATION_DAY, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
         else:
             self.passengers = None
 
 
     def run_assignment(self, output_dir):
+        # do this here rather than in the constructor in case anybody (cough, scripts/runTest.py)
+        # altered our config from what we read in the files
+        self.read_input_files()
+
         # Initialize performance results
         self.performance = Performance()
 

@@ -317,6 +317,9 @@ namespace fasttrips {
                 link_attr["in_vehicle_time_min"]  = trip_ivt_min;
                 link_attr["wait_time_min"]        = wait_min;
                 link_attr["overcap"]              = pf.getTripStopTime(stop_state.trip_id_, stop_state.seq_).overcap_;
+                link_attr["at_capacity"]          = (link_attr["overcap"] >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
+                // overcap should be non-negative
+                if (link_attr["overcap"] < 0) { link_attr["overcap"] = 0; }
 
                 stop_state.link_cost_             = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
 

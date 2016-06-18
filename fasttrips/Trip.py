@@ -538,14 +538,14 @@ class Trip:
         df[Trip.SIM_COL_VEH_ONBOARD     ] = 0
         df[Trip.SIM_COL_VEH_FRICTION    ] = 0
         df[Trip.SIM_COL_VEH_STANDEES    ] = 0
-        df[Trip.SIM_COL_VEH_OVERCAP     ] = 0
+        df[Trip.SIM_COL_VEH_OVERCAP     ] = -1 # assume there's room
 
         df[Trip.SIM_COL_VEH_MSA_BOARDS  ] = 0.0
         df[Trip.SIM_COL_VEH_MSA_ALIGHTS ] = 0.0
         df[Trip.SIM_COL_VEH_MSA_ONBOARD ] = 0.0
         df[Trip.SIM_COL_VEH_MSA_FRICTION] = 0.0
         df[Trip.SIM_COL_VEH_MSA_STANDEES] = 0.0
-        df[Trip.SIM_COL_VEH_MSA_OVERCAP ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_OVERCAP ] =-1.0 # assume there's room
         return df
 
     def write_trips_for_extension(self):

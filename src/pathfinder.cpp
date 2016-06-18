@@ -426,7 +426,7 @@ namespace fasttrips {
             trip_stop_times_[stt.trip_id_].push_back(stt);
             stop_trip_times_[stt.stop_id_].push_back(stt);
             // if (false && (process_num <= 1) && ((i<5) || (i>num_stoptimes-5))) {
-            if (stt.overcap_ != 0) {
+            if (stt.overcap_ > 0) {
                 std::cerr << "stoptimes[" << tripStringForId(stt.trip_id_) << "," << stt.seq_ << "," << stopStringForId(stt.stop_id_) << "] = ";
                 std::cerr << " arrtime:";
                 printTime(std::cerr, stt.arrive_time_);
@@ -1050,7 +1050,9 @@ namespace fasttrips {
                 // stochastic/hyperpath: cost update
                 if (path_spec.hyperpath_) {
 
-                    int overcap = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
+                    double overcap     = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
+                    double at_capacity = (overcap >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
+                    if (overcap < 0) { overcap = 0; } // make it non-negative
 
                     if (path_spec.trace_) {
                         if (path_spec.outbound_) {
@@ -1072,6 +1074,7 @@ namespace fasttrips {
                     link_attr["in_vehicle_time_min"] = in_vehicle_time;
                     link_attr["wait_time_min"      ] = wait_time;
                     link_attr["overcap"            ] = overcap;
+                    link_attr["at_capacity"        ] = at_capacity;
 
                     link_cost = 0;
                     // If outbound, and the current link is egress, then it's as late as possible and the wait time isn't accurate.

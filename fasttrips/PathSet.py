@@ -96,7 +96,8 @@ class PathSet:
     # new
     STATE_MODE_TRIP     = "transit" # onboard
 
-    BUMP_EXPERIENCED_COST = 999999
+    BUMP_EXPERIENCED_COST    = 999999
+    HUGE_COST = 9999
 
     def __init__(self, trip_list_dict):
         """
@@ -158,12 +159,15 @@ class PathSet:
         trip_list_df[new_colname] = trip_list_df.apply(PathSet.CONFIGURED_FUNCTIONS[PathSet.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
-    def verify_weight_config(modes_df, output_dir, routes):
+    def verify_weight_config(modes_df, output_dir, routes, capacity_constraint):
         """
         Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.
 
         The parameter mode_df is a dataframe with the user_class, demand_mode_type and demand_mode combinations
         found in the demand file.
+
+        If *capacity_constraint* is true, make sure there's an at_capacity weight on the transit supply mode links
+        to enforce it.
         """
         error_str = ""
         # First, verify required columns are found
@@ -214,6 +218,34 @@ class PathSet:
             error_str += weight_check.loc[pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
             error_str += "\n\n"
 
+
+        # If *capacity_constraint* is true, make sure there's an at_capacity weight on the transit supply mode links
+        # to enforce it.
+        if capacity_constraint:
+            # see if it's here already -- we don't know how to handle that...
+            at_capacity = PathSet.WEIGHTS_DF.loc[ PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "at_capacity" ]
+            if len(at_capacity) > 0:
+                error_str += "\nFound at_capacity path weights explicitly set when about to set these for hard capacity constraints.\n"
+                error_str += at_capacity.to_string()
+                error_str += "\n\n"
+            else:
+                # set it for all user_class x transit x demand_mode x supply_mode
+                transit_weights_df = PathSet.WEIGHTS_DF.loc[PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE] == PathSet.STATE_MODE_TRIP,
+                    [PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                     PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                     PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE]].copy()
+                transit_weights_df.drop_duplicates(inplace=True)
+                transit_weights_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ] = "at_capacity"
+                transit_weights_df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] = PathSet.HUGE_COST
+                FastTripsLogger.debug("Adding capacity-constraint weights:\n%s" % transit_weights_df.to_string())
+
+                PathSet.WEIGHTS_DF = pandas.concat([PathSet.WEIGHTS_DF, transit_weights_df], axis=0)
+                PathSet.WEIGHTS_DF.sort_values(by=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                                   PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                                   PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                                   PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
+                                                   PathSet.WEIGHTS_COLUMN_WEIGHT_NAME], inplace=True)
 
         if len(error_str) > 0:
             FastTripsLogger.fatal(error_str)
@@ -606,10 +638,22 @@ class PathSet:
         ##################### Next, handle Transit Trip link costs
         cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min", "var_value"] = (cost_trip_df["alight_time"] - cost_trip_df["board_time"])/numpy.timedelta64(1,'m')
         cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min"      , "var_value"] = (cost_trip_df["board_time" ] - cost_trip_df[Passenger.PF_COL_PAX_A_TIME])/numpy.timedelta64(1,'m')
-        if Assignment.MSA_RESULTS and Trip.SIM_COL_VEH_MSA_OVERCAP in list(cost_trip_df.columns.values):
-            cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"        , "var_value"] =  cost_trip_df[Trip.SIM_COL_VEH_MSA_OVERCAP]
+
+        # which overcap column to use?
+        overcap_col = Trip.SIM_COL_VEH_OVERCAP
+        if Assignment.MSA_RESULTS and Trip.SIM_COL_VEH_MSA_OVERCAP in list(cost_trip_df.columns.values): overcap_col = Trip.SIM_COL_VEH_MSA_OVERCAP
+
+        # at cap is a binary, 1 if overcap >= 0 and they're not one of the lucky few that boarded
+        cost_trip_df["at_capacity"] = 0.0
+        if Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED in list(cost_trip_df.columns.values):
+            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)&(cost_trip_df[Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] != 1), "at_capacity" ] = 1.0
         else:
-            cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"        , "var_value"] =  cost_trip_df[Trip.SIM_COL_VEH_OVERCAP]
+            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)                                                             , "at_capacity" ] = 1.0
+
+        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "at_capacity"    , "var_value"] = cost_trip_df["at_capacity"]
+        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"        , "var_value"] = cost_trip_df[overcap_col]
+        # overcap shouldn't be negative
+        cost_trip_df.loc[ (cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap")&(cost_trip_df["var_value"]<0), "var_value"] = 0.0
 
         # FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.head().to_string(), str(cost_trip_df.dtypes)))
 
@@ -635,6 +679,9 @@ class PathSet:
             FastTripsLogger.debug("Using numeric column %s" % colname)
             cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == colname, "var_value"] = cost_transfer_df[colname]
 
+        # make zero walk transfers have default var_values 0
+        cost_transfer_df.loc[ (cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] != "transfer_penalty")&
+                              (cost_transfer_df["A_id_num"]==cost_transfer_df["B_id_num"]), "var_value"] = 0.0
         # zero walk transfers have a transfer penalty although they're not otherwise configured
         cost_transfer_df.loc[ (cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "transfer_penalty")&
                               (pandas.isnull(cost_transfer_df["var_value"])), "var_value"] = 1.0
@@ -667,27 +714,28 @@ class PathSet:
                         PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE,
                         "var_value",
-                        "missed_xfer",
+                        Assignment.SIM_COL_MISSED_XFER,
                         Assignment.SIM_COL_PAX_BUMP_ITER]
         cost_accegr_df   = cost_accegr_df[cost_columns]
         cost_trip_df     = cost_trip_df[cost_columns]
         cost_transfer_df = cost_transfer_df[cost_columns]
         cost_df          = pandas.concat([cost_accegr_df, cost_trip_df, cost_transfer_df], axis=0)
 
-        FastTripsLogger.debug("cost_df=\n%s\ndtypes=\n%s" % (cost_df.head().to_string(), str(cost_df.dtypes)))
+        # FastTripsLogger.debug("calculate_cost: cost_df=\n%s\ndtypes=\n%s" % (cost_df.to_string(), str(cost_df.dtypes)))
 
         # linkcost = weight x variable
         cost_df[Assignment.SIM_COL_PAX_COST] = cost_df["var_value"]*cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
 
         # TODO: option: make these more subtle?
-        # missed_xfer has infinite cost
-        cost_df.loc[cost_df["missed_xfer"]==1, Assignment.SIM_COL_PAX_COST] = numpy.inf
+        # missed_xfer has huge cost
+        cost_df.loc[cost_df[Assignment.SIM_COL_MISSED_XFER  ]==1, Assignment.SIM_COL_PAX_COST] = PathSet.HUGE_COST
         # bump iter means over capacity
-        cost_df.loc[cost_df[Assignment.SIM_COL_PAX_BUMP_ITER]>=0, Assignment.SIM_COL_PAX_COST] = numpy.inf
+        cost_df.loc[cost_df[Assignment.SIM_COL_PAX_BUMP_ITER]>=0, Assignment.SIM_COL_PAX_COST] = PathSet.HUGE_COST
 
-        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                                                       Passenger.PF_COL_PATH_NUM,
-                                                                                       Passenger.PF_COL_LINK_NUM]).head(30)))
+        cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                             Passenger.PF_COL_PATH_NUM,
+                             Passenger.PF_COL_LINK_NUM], inplace=True)
+        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==32]))
 
         ###################### sum linkcost to links
         cost_link_df = cost_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
