@@ -4,8 +4,8 @@
 python scripts\runTest.py deterministic 2 True Examples\test_network\input Examples\test_network\demand_twopaths Examples\test_network\output
 if errorlevel 1 goto error
 
-:: stochatic, 1 iterations, capacity constraint off
-python scripts\runTest.py stochastic 1 False Examples\test_network\input Examples\test_network\demand_twopaths Examples\test_network\output
+:: stochatic, 2 iterations, capacity constraint off
+python scripts\runTest.py stochastic 4 False Examples\test_network\input Examples\test_network\demand_twopaths Examples\test_network\output
 if errorlevel 1 goto error
 
 :: stochatic, 2 iterations, capacity constraint on
@@ -18,8 +18,8 @@ if errorlevel 1 goto error
 python scripts\runTest.py deterministic 2 True Examples\test_network\input Examples\test_network\demand_reg Examples\test_network\output
 if errorlevel 1 goto error
 
-:: stochatic, 1 iterations, capacity constraint off
-python scripts\runTest.py stochastic 1 False Examples\test_network\input Examples\test_network\demand_reg Examples\test_network\output
+:: stochatic, 2 iterations, capacity constraint off
+python scripts\runTest.py stochastic 4 False Examples\test_network\input Examples\test_network\demand_reg Examples\test_network\output
 if errorlevel 1 goto error
 
 :: stochatic, 2 iterations, capacity constraint on
