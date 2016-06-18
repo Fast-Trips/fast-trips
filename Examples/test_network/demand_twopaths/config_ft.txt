@@ -1,6 +1,6 @@
 [fasttrips]
-number_of_processes           = 1
-trace_person_ids              = ['paperboy','marge']
+number_of_processes           = 5
+trace_person_ids              = ['frogger','paperboy','marge']
 bump_one_at_a_time            = True
 time_window                   = 50
 
