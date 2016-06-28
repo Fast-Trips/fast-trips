@@ -148,6 +148,9 @@ class Assignment:
     #: Are we finding paths for everyone right now?  Or just un-arrived folks?
     PATHFINDING_EVERYONE            = True
 
+    #: How many Simulation Iterations should we do before going back to path-finding?
+    MAX_SIMULATION_ITERS            = 10
+
     #: Column names for simulation
     SIM_COL_PAX_BOARD_TIME          = 'board_time'
     SIM_COL_PAX_ALIGHT_TIME         = 'alight_time'
@@ -560,6 +563,8 @@ class Assignment:
             FT.passengers.pathfind_trip_list_df = Assignment.filter_trip_list_to_not_arrived(FT.passengers.trip_list_df, pathset_paths_df)
         else:
             PATHFINDING_EVERYONE = True
+            # we're starting over with empty vehicles
+            Trip.reset_onboard(veh_trips_df)
 
         est_paths_to_find   = len(FT.passengers.pathfind_trip_list_df)
         FastTripsLogger.info("Finding pathsets for %d trips" % est_paths_to_find)
@@ -1466,6 +1471,8 @@ class Assignment:
             simulation_iteration += 1
 
             if num_chosen == 0: break
+
+            if simulation_iteration > Assignment.MAX_SIMULATION_ITERS: break
 
         # write the final chosen paths for this iteration
         passengers_df = Passenger.get_chosen_links(pathset_links_df)

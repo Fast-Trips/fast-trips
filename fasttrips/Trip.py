@@ -597,6 +597,25 @@ class Trip:
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Trip.OUTPUT_TRIPINFO_FILE))
 
     @staticmethod
+    def reset_onboard(df):
+        """
+        Resets the onboard fields for the given vehicle trip table.
+        """
+        df[Trip.SIM_COL_VEH_BOARDS      ] = 0
+        df[Trip.SIM_COL_VEH_ALIGHTS     ] = 0
+        df[Trip.SIM_COL_VEH_ONBOARD     ] = 0
+        df[Trip.SIM_COL_VEH_FRICTION    ] = 0
+        df[Trip.SIM_COL_VEH_STANDEES    ] = 0
+        df[Trip.SIM_COL_VEH_OVERCAP     ] = -1 # assume there's room
+
+        df[Trip.SIM_COL_VEH_MSA_BOARDS  ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_ALIGHTS ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_ONBOARD ] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_FRICTION] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_STANDEES] = 0.0
+        df[Trip.SIM_COL_VEH_MSA_OVERCAP ] =-1.0 # assume there's room
+
+    @staticmethod
     def update_trip_times(trips_df, MSA_RESULTS):
         """
         Updates trip times for stops with boards and/or alights.
