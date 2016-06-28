@@ -781,7 +781,10 @@ class PathSet:
 
         FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.head(20)))
 
-        if (iteration % 2 == 1) and simulation_iteration == 0:
+        # Note: the path finding costs won't match the costs here because missed transfers are already calculated here
+        # It would be good to have some sanity checking that theyre aligned otherwise though to make sure we're
+        # calculating costs consistently
+        if False and (iteration % 2 == 1) and simulation_iteration == 0:
             # verify the cost matches what came from the C++ extension
             pathset_paths_df["cost_diff"    ] = pathset_paths_df[PathSet.PATH_KEY_COST] - pathset_paths_df[Assignment.SIM_COL_PAX_COST]
             pathset_paths_df["cost_pct_diff"] = pathset_paths_df["cost_diff"]/pathset_paths_df[PathSet.PATH_KEY_COST]
