@@ -439,6 +439,13 @@ class Assignment:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
+    def number_of_pathsets(pathset_paths_df):
+        """
+        Counts the number of passenger trips with pathsets and returns it.
+        """
+        return pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM].nunique()
+
+    @staticmethod
     def assign_paths(output_dir, FT):
         """
         Finds the paths for the passengers.
@@ -473,6 +480,7 @@ class Assignment:
                 pathset_links_df = new_pathset_links_df
             else:
                 (pathset_paths_df, pathset_links_df) = Assignment.merge_pathsets(FT.passengers.pathfind_trip_list_df, pathset_paths_df, pathset_links_df, new_pathset_paths_df, new_pathset_links_df)
+                num_paths_found = Assignment.number_of_pathsets(pathset_paths_df)
 
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
@@ -1368,7 +1376,7 @@ class Assignment:
         Returns (valid_linked_trips, pathset_paths_df, pathset_links_df, veh_loaded_df)
         """
         simulation_iteration   = 0
-        num_passengers_arrived = 0
+        num_passengers_arrived = 0 # will get returned from choose_paths
 
         while True:
             FastTripsLogger.info("Simulation Iteration %d" % simulation_iteration)
@@ -1401,11 +1409,12 @@ class Assignment:
 
             # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
             # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
-            (num_chosen, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
+            num_passengers_arrived_prev = num_passengers_arrived
+            (num_passengers_arrived, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
                 Assignment.PATHFINDING_EVERYONE and simulation_iteration==0,  # choose for everyone if we just re-found all paths
                 iteration, simulation_iteration,
                 pathset_paths_df, pathset_links_df)
-            num_passengers_arrived += num_chosen
+            num_chosen = num_passengers_arrived - num_passengers_arrived_prev
 
             ######################################################################################################
             FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
@@ -1447,7 +1456,6 @@ class Assignment:
                         pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df)
                         break
 
-                    num_passengers_arrived -= chosen_paths_bumped
                     bump_iter += 1
 
 
@@ -1470,9 +1478,13 @@ class Assignment:
 
             simulation_iteration += 1
 
-            if num_chosen == 0: break
+            if num_chosen <= 0:
+                FastTripsLogger.info("  Change in arrived passengers from previous simulation iteration: %d => Ending simulation loop" % num_chosen)
+                break
 
-            if simulation_iteration > Assignment.MAX_SIMULATION_ITERS: break
+            if simulation_iteration > Assignment.MAX_SIMULATION_ITERS:
+                FastTripsLogger.info("  Maximum simulation iterations reached (%d) => Ending simulation loop" % Assignment.MAX_SIMULATION_ITERS)
+                break
 
         # write the final chosen paths for this iteration
         passengers_df = Passenger.get_chosen_links(pathset_links_df)

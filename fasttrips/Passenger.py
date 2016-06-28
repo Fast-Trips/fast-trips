@@ -606,7 +606,7 @@ class Passenger:
         If *choose_for_everyone* is True, this will attempt to choose for every passenger trip.
         Otherwise, this will attempt to choose for just those passenger trips that still need it.
 
-        Returns (num passenger trips chosen, updated pathset_paths_df, updated pathset_links_df)
+        Returns (TOTAL num passenger trips chosen, updated pathset_paths_df, updated pathset_links_df)
         """
         from .Assignment import Assignment
         from .PathSet    import PathSet
@@ -637,6 +637,7 @@ class Passenger:
         # if there's no chosen AND one of the unchosen options is choosable then we can choose
         num_rejected = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_REJECTED       ])  # everything is rejected
         num_unchosen = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ])
+        num_chosen   = len(pathset_paths_df_grouped) - num_rejected - num_unchosen
 
         # count how many passenger trips have pathsets with valid paths (logsum > 0) AND no path chosen (chosen < 0)
         pax_choose_df = pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ].copy()
@@ -646,7 +647,7 @@ class Passenger:
 
         # If we have nothing to do, return
         if len(pax_choose_df) == 0:
-            return (0, pathset_paths_df, pathset_links_df)
+            return (num_chosen, pathset_paths_df, pathset_links_df)
 
         # flag it
         pax_choose_df["to_choose"] = 1
@@ -693,6 +694,7 @@ class Passenger:
                                                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).idxmax(axis=0).reset_index()
         chosen_path_df.rename(columns={"rand_less":"chosen_idx"}, inplace=True)
         FastTripsLogger.debug("choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
+        num_chosen += len(chosen_path_df)
 
         # mark it as chosen
         pathset_paths_df = pandas.merge(left=pathset_paths_df, right=chosen_path_df, how="left")
@@ -717,7 +719,7 @@ class Passenger:
                                                                 Assignment.SIM_COL_PAX_CHOSEN]],
                                         how="left")
 
-        return (len(chosen_path_df), pathset_paths_df, pathset_links_df)
+        return (num_chosen, pathset_paths_df, pathset_links_df)
 
 
     @staticmethod
