@@ -632,14 +632,17 @@ class Passenger:
         # group to passenger trips
         pathset_paths_df_grouped = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                      Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                     Assignment.SIM_COL_PAX_CHOSEN,
-                                                     Assignment.SIM_COL_PAX_LOGSUM]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                     Assignment.SIM_COL_PAX_CHOSEN]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate("max").reset_index()
+        # if there's no chosen AND one of the unchosen options is choosable then we can choose
+        num_rejected = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_REJECTED       ])  # everything is rejected
+        num_unchosen = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ])
+
         # count how many passenger trips have pathsets with valid paths (logsum > 0) AND no path chosen (chosen < 0)
-        # FastTripsLogger.debug("choose_paths() pathset_paths_df_grouped=\n%s" % pathset_paths_df_grouped.head().to_string())
-        pax_choose_df = pathset_paths_df_grouped.loc[ (pathset_paths_df_grouped[Assignment.SIM_COL_PAX_LOGSUM]>0)&
-                                                      (pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET) ].copy()
-        FastTripsLogger.info("          Choosing %d paths" % len(pax_choose_df))
+        pax_choose_df = pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ].copy()
+        num_unchosen  = len(pax_choose_df)
+
+        FastTripsLogger.info("          Have %6d total passenger-trips, with %6d fully rejected and %6d needing a choice" % (len(pathset_paths_df_grouped), num_rejected, num_unchosen))
 
         # If we have nothing to do, return
         if len(pax_choose_df) == 0:
@@ -660,19 +663,28 @@ class Passenger:
                                         how  ="left")
         FastTripsLogger.debug("choose_paths() pathset_paths_df=\n%s" % pathset_paths_df.head().to_string())
 
-        # select out just those pathsets we're choosing
-        paths_choose_df = pathset_paths_df.loc[pathset_paths_df["to_choose"]==1].copy()
+        # select out just those pathsets we're choosing, and eligible
+        paths_choose_df = pathset_paths_df.loc[ (pathset_paths_df["to_choose"]==1) &
+                                                (pathset_paths_df[Assignment.SIM_COL_PAX_COST] < PathSet.HUGE_COST) &
+                                                (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] == Assignment.CHOSEN_NOT_CHOSEN_YET) ].copy()
+        if len(paths_choose_df) == 0:
+            FastTripsLogger.info("No choosable paths")
+            pathset_paths_df.drop(["to_choose","rand"], axis=1, inplace=True)
+            return (0, pathset_paths_df, pathset_links_df)
 
         # Use updated probability -- create cumulative probability
         paths_choose_df["prob_cum"] = paths_choose_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])[Assignment.SIM_COL_PAX_PROBABILITY].cumsum()
         # verify cumsum is ok
-        FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(30).to_string())
+        # FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(100).to_string())
 
         # use it to choose the path based on the cumulative probability
         paths_choose_df["rand_less"] = False
         paths_choose_df.loc[paths_choose_df["rand"] < paths_choose_df["prob_cum"], "rand_less"] = True
-        FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(30).to_string())
+        if num_unchosen < 10:
+            FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.to_string())
+        else:
+            FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(100).to_string())
 
         # this will now be person id, trip list id num, index for chosen path
         chosen_path_df = paths_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,

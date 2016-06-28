@@ -565,6 +565,8 @@ class PathSet:
                 mode_list = TAZ.DRIVE_MODE_NUMS
 
             FastTripsLogger.debug("Access/egress link_df %s\n%s" % (accegr_type, link_df.head().to_string()))
+            if len(link_df) == 0:
+                continue
 
             # format these with A & B instead of TAZ and Stop
             link_df.reset_index(inplace=True)
