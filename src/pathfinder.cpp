@@ -1,6 +1,10 @@
 #include "pathfinder.h"
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/time.h>
+#endif
 
 #include <assert.h>
 #include <sstream>
@@ -378,7 +382,11 @@ namespace fasttrips {
             ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
             // append because this will happen across iterations
-            trace_file.open(ss.str().c_str(), (std::ios_base::out | (path_spec.iteration_ == 1 ? 0 : std::ios_base::app)));
+            std::ios_base::openmode omode = std::ios_base::out;
+            if (path_spec.iteration_ != 1) {
+                omode = omode | std::ios_base::app; // append
+            }
+            trace_file.open(ss.str().c_str(), omode);
             trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
             trace_file << "iteration_       = " << path_spec.iteration_ << std::endl;
             trace_file << "outbound_        = " << path_spec.outbound_  << std::endl;
@@ -396,7 +404,7 @@ namespace fasttrips {
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
             ss2 << "fasttrips_labels_ids_" << path_spec.path_id_ << ".csv";
-            stopids_file.open(ss2.str().c_str(), (std::ios_base::out | (path_spec.iteration_ == 1 ? 0 : std::ios_base::app)));
+            stopids_file.open(ss2.str().c_str(), omode);
             stopids_file << "stop_id,stop_id_label_iter" << std::endl;
         }
 
@@ -404,13 +412,18 @@ namespace fasttrips {
         LabelStopQueue       label_stop_queue;
         HyperpathStopStates  hyperpath_ss;
 
-        // TODO: make this platform-agnostic.  probably with std::chrono.
+#ifdef _WIN32
         // QueryPerformanceFrequency reference: https://msdn.microsoft.com/en-us/library/windows/desktop/dn553408(v=vs.85).aspx
         LARGE_INTEGER        frequency;
         LARGE_INTEGER        labeling_start_time, labeling_end_time, pathfind_end_time;
         LARGE_INTEGER        label_elapsed, pathfind_elapsed;
         QueryPerformanceFrequency(&frequency);
         QueryPerformanceCounter(&labeling_start_time);
+#else
+        // using gettimeofday() since std::chrono is only c++11
+        struct timeval       labeling_start_time, labeling_end_time, pathfind_end_time;
+        gettimeofday(&labeling_start_time, NULL);
+#endif
 
         // todo: handle failure
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue, hyperpath_ss);
@@ -420,10 +433,15 @@ namespace fasttrips {
         std::vector<StopState> taz_state;
         finalizeTazState(path_spec, trace_file, stop_states, label_stop_queue, performance_info.label_iterations_, hyperpath_ss);
 
+#ifdef _WIN32
         QueryPerformanceCounter(&labeling_end_time);
+#else
+        gettimeofday(&labeling_end_time, NULL);
+#endif
 
         getFoundPath(path_spec, trace_file, stop_states, hyperpath_ss, path, path_info);
 
+#ifdef _WIN32
         QueryPerformanceCounter(&pathfind_end_time);
 
         label_elapsed.QuadPart                = labeling_end_time.QuadPart - labeling_start_time.QuadPart;
@@ -441,6 +459,18 @@ namespace fasttrips {
 
         performance_info.milliseconds_labeling_    = (long)label_elapsed.QuadPart;
         performance_info.milliseconds_enumerating_ = (long)pathfind_elapsed.QuadPart;
+#else
+        gettimeofday(&pathfind_end_time, NULL);
+
+        // microseconds
+        long int diff = (labeling_end_time.tv_usec   + 1000000*labeling_end_time.tv_sec) -
+                        (labeling_start_time.tv_usec + 1000000*labeling_start_time.tv_sec);
+        performance_info.milliseconds_labeling_ = 0.001*diff;
+
+        diff = (pathfind_end_time.tv_usec   + 1000000*pathfind_end_time.tv_sec) -
+               (labeling_end_time.tv_usec   + 1000000*labeling_end_time.tv_sec);
+        performance_info.milliseconds_enumerating_ = 0.001*diff;
+#endif
 
         if (path_spec.trace_) {
 
@@ -687,7 +717,7 @@ namespace fasttrips {
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_labels_" << path_spec.path_id_ << ".csv";
-            label_file.open(ss.str().c_str(), (std::ios_base::out | (path_spec.iteration_ == 1 ? 0 : std::ios_base::app)));
+            label_file.open(ss.str().c_str(), (path_spec.iteration_ == 1 ? std::ios_base::out : std::ios_base::out | std::ios_base::app));
             label_file << "label_iteration,link,node ID,time,mode,trip_id,link_time,link_cost,cost,AB" << std::endl;
         }
 
@@ -1242,7 +1272,7 @@ namespace fasttrips {
                 }
                 // stop is processing
                 hyperpath_ss[current_label_stop.stop_id_].process_count_ += 1;
-                max_process_count = max(max_process_count, hyperpath_ss[current_label_stop.stop_id_].process_count_);
+                max_process_count = std::max(max_process_count, hyperpath_ss[current_label_stop.stop_id_].process_count_);
             }
 
             // no transfers to the stop
@@ -1399,9 +1429,9 @@ namespace fasttrips {
                                                                 ssi != current_stop_state.end(); ++ssi)
                     {
                         if (path_spec.outbound_) {
-                            earliest_dep_latest_arr = min(earliest_dep_latest_arr, ssi->deparr_time_);
+                            earliest_dep_latest_arr = std::min(earliest_dep_latest_arr, ssi->deparr_time_);
                         } else {
-                            earliest_dep_latest_arr = max(earliest_dep_latest_arr, ssi->deparr_time_);
+                            earliest_dep_latest_arr = std::max(earliest_dep_latest_arr, ssi->deparr_time_);
                         }
                     }
                     nonwalk_label = calculateNonwalkLabel(current_stop_state);
