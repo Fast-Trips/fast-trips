@@ -7,9 +7,10 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
 Follow the steps below to setup up fast-trips:
 *  Install [Git][git-url] and clone the fast-trips repository (https://github.com/MetropolitanTransportationCommission/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.
 *  Switch to the `develop` branch of the repository.
-*  Download and install a *data analytics* Python 2.7 distribution: [Anaconda][anaconda-url].
-*  Install [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url].
+*  Download and install [numpy][numpy-url] and [pandas][pandas-url].  One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url].  Windows users can also find package installers [here][python-packages-windows-url].
+*  If compiling on Windows, install [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url].  On Linux, install the python-dev package.
 *  Install the python package [transitfeed][python-transitfeed-url] for reading GTFS.
+*  Set the `PYTHONPATH` environment variable to the location of your fast-trips repo, which we're calling `<fast-trips-dir>`.
 *  To build, in the fast-trips directory `<fast-trips-dir>`, run the following in a command prompt:  `python setup.py build_ext --inplace`.
 
 ### Test Sample Input
@@ -52,7 +53,10 @@ Type of Assignment:
 [git-url]: <https://git-scm.com/>
 [git-fork-url]: <https://help.github.com/articles/fork-a-repo/>
 [python-vcpp-url]: <http://www.microsoft.com/en-us/download/details.aspx?id=44266>
+[numpy-url]:  <http://www.numpy.org/>
+[pandas-url]: <http://pandas.pydata.org/>
 [anaconda-url]: <https://www.continuum.io/downloads>
+[python-packages-windows-url]: <http://www.lfd.uci.edu/~gohlke/pythonlibs/>
 [python-transitfeed-url]: <https://github.com/google/transitfeed/wiki/TransitFeed>
 [git-repo-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips.git>
 [network-standard-url]: <https://github.com/osplanning-data-standards/GTFS-PLUS>
