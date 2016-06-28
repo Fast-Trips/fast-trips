@@ -2,6 +2,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/time.h>
 #endif
 
 #include <assert.h>
@@ -411,13 +413,16 @@ namespace fasttrips {
         HyperpathStopStates  hyperpath_ss;
 
 #ifdef _WIN32
-        // TODO: make this platform-agnostic.  probably with std::chrono.
         // QueryPerformanceFrequency reference: https://msdn.microsoft.com/en-us/library/windows/desktop/dn553408(v=vs.85).aspx
         LARGE_INTEGER        frequency;
         LARGE_INTEGER        labeling_start_time, labeling_end_time, pathfind_end_time;
         LARGE_INTEGER        label_elapsed, pathfind_elapsed;
         QueryPerformanceFrequency(&frequency);
         QueryPerformanceCounter(&labeling_start_time);
+#else
+        // using gettimeofday() since std::chrono is only c++11
+        struct timeval       labeling_start_time, labeling_end_time, pathfind_end_time;
+        gettimeofday(&labeling_start_time, NULL);
 #endif
 
         // todo: handle failure
@@ -430,6 +435,8 @@ namespace fasttrips {
 
 #ifdef _WIN32
         QueryPerformanceCounter(&labeling_end_time);
+#else
+        gettimeofday(&labeling_end_time, NULL);
 #endif
 
         getFoundPath(path_spec, trace_file, stop_states, hyperpath_ss, path, path_info);
@@ -452,6 +459,17 @@ namespace fasttrips {
 
         performance_info.milliseconds_labeling_    = (long)label_elapsed.QuadPart;
         performance_info.milliseconds_enumerating_ = (long)pathfind_elapsed.QuadPart;
+#else
+        gettimeofday(&pathfind_end_time, NULL);
+
+        // microseconds
+        long int diff = (labeling_end_time.tv_usec   + 1000000*labeling_end_time.tv_sec) -
+                        (labeling_start_time.tv_usec + 1000000*labeling_start_time.tv_sec);
+        performance_info.milliseconds_labeling_ = 0.001*diff;
+
+        diff = (pathfind_end_time.tv_usec   + 1000000*pathfind_end_time.tv_sec) -
+               (labeling_end_time.tv_usec   + 1000000*labeling_end_time.tv_sec);
+        performance_info.milliseconds_enumerating_ = 0.001*diff;
 #endif
 
         if (path_spec.trace_) {
