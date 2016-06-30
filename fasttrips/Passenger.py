@@ -272,19 +272,20 @@ class Passenger:
         # Verify that PathSet has all the configuration for these user classes + transit modes + access modes + egress modes
         # => Figure out unique user class + mode combinations
         self.modes_df = self.trip_list_df[[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                           Passenger.TRIP_LIST_COLUMN_PURPOSE,
                                            Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
                                            Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
-                                           Passenger.TRIP_LIST_COLUMN_EGRESS_MODE]].set_index(Passenger.TRIP_LIST_COLUMN_USER_CLASS)
+                                           Passenger.TRIP_LIST_COLUMN_EGRESS_MODE]].set_index([Passenger.TRIP_LIST_COLUMN_USER_CLASS, Passenger.TRIP_LIST_COLUMN_PURPOSE])
         # stack - so before we have three columns: transit_mode, access_mode, egress_mode
         # after, we have two columns: demand_mode_type and the value, demand_mode
         self.modes_df               = self.modes_df.stack().to_frame()
-        self.modes_df.index.names   = [Passenger.TRIP_LIST_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]
+        self.modes_df.index.names   = [Passenger.TRIP_LIST_COLUMN_USER_CLASS, Passenger.TRIP_LIST_COLUMN_PURPOSE, PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]
         self.modes_df.columns       = [PathSet.WEIGHTS_COLUMN_DEMAND_MODE]
         self.modes_df.reset_index(inplace=True)
         self.modes_df.drop_duplicates(inplace=True)
         # fix demand_mode_type since transit_mode is just transit, etc
         self.modes_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE] = self.modes_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE].apply(lambda x: x[:-5])
-        FastTripsLogger.debug("Demand mode types by class: \n%s" % str(self.modes_df))
+        FastTripsLogger.debug("Demand mode types by class & purpose: \n%s" % str(self.modes_df))
 
         # Make sure we have all the weights required for these user_class/mode combinations
         PathSet.verify_weight_config(self.modes_df, output_dir, routes, capacity_constraint)

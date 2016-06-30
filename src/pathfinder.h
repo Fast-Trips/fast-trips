@@ -29,20 +29,23 @@ namespace fasttrips {
     /// Weight lookup
     typedef struct {
         std::string     user_class_;
+        std::string     purpose_;
         DemandModeType  demand_mode_type_;
         std::string     demand_mode_;
-    } UserClassMode;
+    } UserClassPurposeMode;
 
     /// Comparator to enable the fasttrips::WeightLookup to use UserClassMode as a lookup
-    struct UserClassModeCompare {
+    struct UCPMCompare {
         // less than
-        bool operator()(const UserClassMode &ucm1, const UserClassMode &ucm2) const {
-            if (ucm1.user_class_       < ucm2.user_class_      ) { return true;  }
-            if (ucm1.user_class_       > ucm2.user_class_      ) { return false; }
-            if (ucm1.demand_mode_type_ < ucm2.demand_mode_type_) { return true;  }
-            if (ucm1.demand_mode_type_ > ucm2.demand_mode_type_) { return false; }
-            if (ucm1.demand_mode_      < ucm2.demand_mode_     ) { return true;  }
-            if (ucm1.demand_mode_      > ucm2.demand_mode_     ) { return false; }
+        bool operator()(const UserClassPurposeMode &ucpm1, const UserClassPurposeMode &ucpm2) const {
+            if (ucpm1.user_class_       < ucpm2.user_class_      ) { return true;  }
+            if (ucpm1.user_class_       > ucpm2.user_class_      ) { return false; }
+            if (ucpm1.purpose_          < ucpm2.purpose_         ) { return true;  }
+            if (ucpm1.purpose_          > ucpm2.purpose_         ) { return false; }
+            if (ucpm1.demand_mode_type_ < ucpm2.demand_mode_type_) { return true;  }
+            if (ucpm1.demand_mode_type_ > ucpm2.demand_mode_type_) { return false; }
+            if (ucpm1.demand_mode_      < ucpm2.demand_mode_     ) { return true;  }
+            if (ucpm1.demand_mode_      > ucpm2.demand_mode_     ) { return false; }
             return false;
         }
     };
@@ -50,7 +53,7 @@ namespace fasttrips {
     // This is a lot of naming but it does make iterator construction easier
     typedef std::map<std::string, double> NamedWeights;
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
-    typedef std::map< UserClassMode, SupplyModeToNamedWeights, struct fasttrips::UserClassModeCompare > WeightLookup;
+    typedef std::map< UserClassPurposeMode, SupplyModeToNamedWeights, struct fasttrips::UCPMCompare > WeightLookup;
 
     /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
     typedef std::map<std::string, double> Attributes;
@@ -328,6 +331,7 @@ namespace fasttrips {
          * Returns NULL if not found.
          **/
         const NamedWeights* getNamedWeights(const std::string& user_class,
+                                            const std::string& purpose,
                                             DemandModeType     demand_mode_type,
                                             const std::string& demand_mode,
                                             int                suppy_mode_num) const;

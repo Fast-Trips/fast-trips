@@ -100,9 +100,9 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
     int   hyperpath_i, outbound_i, trace_i;
-    char *user_class, *access_mode, *transit_mode, *egress_mode;
-    if (!PyArg_ParseTuple(args, "iiiissssiiidi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
-                          &user_class, &access_mode, &transit_mode, &egress_mode,
+    char *user_class, *purpose, *access_mode, *transit_mode, *egress_mode;
+    if (!PyArg_ParseTuple(args, "iiiisssssiiidi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
+                          &user_class, &purpose, &access_mode, &transit_mode, &egress_mode,
                           &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
                           &outbound_i, &path_spec.preferred_time_, &trace_i)) {
         return NULL;
@@ -111,6 +111,7 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
     path_spec.outbound_   = (outbound_i  != 0);
     path_spec.trace_      = (trace_i     != 0);
     path_spec.user_class_  = user_class;
+    path_spec.purpose_     = purpose;
     path_spec.access_mode_ = access_mode;
     path_spec.transit_mode_= transit_mode;
     path_spec.egress_mode_ = egress_mode;

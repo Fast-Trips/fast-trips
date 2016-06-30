@@ -792,7 +792,7 @@ class Assignment:
          label_iterations, max_label_process_count,
          seconds_labeling, seconds_enumerating) = \
             _fasttrips.find_pathset(iteration, pathset.person_id_num, pathset.trip_list_id_num, hyperpath,
-                                 pathset.user_class, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
+                                 pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
                                  1 if pathset.outbound() else 0, float(pathset.pref_time_min),
                                  1 if trace else 0)

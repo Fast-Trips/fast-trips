@@ -277,14 +277,15 @@ namespace fasttrips {
         ss_weights << output_dir_ << kPathSeparator << "ft_intermediate_weights.txt";
         weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
 
-        std::string user_class, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value;
+        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value;
         int supply_mode_num;
         double weight_value;
 
-        weights_file >> user_class >> demand_mode_type >> demand_mode >> string_supply_mode_num >> weight_name >> string_weight_value;
+        weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> string_supply_mode_num >> weight_name >> string_weight_value;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_weights.str() << ": ";
             std::cout << "[" << user_class              << "] ";
+            std::cout << "[" << purpose                 << "] ";
             std::cout << "[" << demand_mode_type        << "] ";
             std::cout << "[" << demand_mode             << "] ";
             std::cout << "[" << string_supply_mode_num  << "] ";
@@ -292,18 +293,18 @@ namespace fasttrips {
             std::cout << "[" << string_weight_value     << "] ";
         }
         int weights_read = 0;
-        while (weights_file >> user_class >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
-            UserClassMode ucm = { user_class, fasttrips::MODE_ACCESS, demand_mode };
-            if      (demand_mode_type == "access"  ) { ucm.demand_mode_type_ = MODE_ACCESS;  }
-            else if (demand_mode_type == "egress"  ) { ucm.demand_mode_type_ = MODE_EGRESS;  }
-            else if (demand_mode_type == "transit" ) { ucm.demand_mode_type_ = MODE_TRANSIT; }
-            else if (demand_mode_type == "transfer") { ucm.demand_mode_type_ = MODE_TRANSFER;}
+        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
+            UserClassPurposeMode ucpm = { user_class, purpose, fasttrips::MODE_ACCESS, demand_mode };
+            if      (demand_mode_type == "access"  ) { ucpm.demand_mode_type_ = MODE_ACCESS;  }
+            else if (demand_mode_type == "egress"  ) { ucpm.demand_mode_type_ = MODE_EGRESS;  }
+            else if (demand_mode_type == "transit" ) { ucpm.demand_mode_type_ = MODE_TRANSIT; }
+            else if (demand_mode_type == "transfer") { ucpm.demand_mode_type_ = MODE_TRANSFER;}
             else {
                 std::cerr << "Do not understand demand_mode_type [" << demand_mode_type << "] in " << ss_weights.str() << std::endl;
                 exit(2);
             }
 
-            weight_lookup_[ucm][supply_mode_num][weight_name] = weight_value;
+            weight_lookup_[ucpm][supply_mode_num][weight_name] = weight_value;
             weights_read++;
         }
         if (process_num_ <= 1) {
@@ -314,12 +315,13 @@ namespace fasttrips {
 
     const NamedWeights* PathFinder::getNamedWeights(
         const std::string& user_class,
+        const std::string& purpose,
         DemandModeType     demand_mode_type,
         const std::string& demand_mode,
         int                suppy_mode_num) const
     {
-        UserClassMode ucm = { user_class, demand_mode_type, demand_mode};
-        WeightLookup::const_iterator iter_wl = weight_lookup_.find(ucm);
+        UserClassPurposeMode ucpm = { user_class, purpose, demand_mode_type, demand_mode};
+        WeightLookup::const_iterator iter_wl = weight_lookup_.find(ucpm);
         if (iter_wl == weight_lookup_.end()) { return NULL; }
         SupplyModeToNamedWeights::const_iterator iter_sm2nw = iter_wl->second.find(suppy_mode_num);
         if (iter_sm2nw == iter_wl->second.end()) { return NULL; }
@@ -487,6 +489,7 @@ namespace fasttrips {
             printTime(trace_file, path_spec.preferred_time_);
             trace_file << " (" << path_spec.preferred_time_ << ")" << std::endl;
             trace_file << "user_class_      = " << path_spec.user_class_   << std::endl;
+            trace_file << "purpose_         = " << path_spec.purpose_      << std::endl;
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
             trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
             trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
@@ -696,13 +699,15 @@ namespace fasttrips {
         }
 
         // Are there any supply modes for this demand mode?
-        UserClassMode ucm = { path_spec.user_class_,
-                              path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
-                              path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_
-                            };
-        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucm);
+        UserClassPurposeMode ucpm = {
+            path_spec.user_class_,
+            path_spec.purpose_,
+            path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
+            path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_
+        };
+        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
+            std::cerr << "Couldn't find any weights configured for user class/purpose [" << path_spec.user_class_ << "," << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
             std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
             return false;
@@ -801,7 +806,7 @@ namespace fasttrips {
 
         // Lookup transfer weights
         // TODO: returning here is probably terrible and we shouldn't be silent... We should have zero weights if we don't want to penalize.
-        const NamedWeights* transfer_weights = getNamedWeights(path_spec.user_class_, MODE_TRANSFER, "transfer", transfer_supply_mode_);
+        const NamedWeights* transfer_weights = getNamedWeights(path_spec.user_class_, path_spec.purpose_, MODE_TRANSFER, "transfer", transfer_supply_mode_);
         if (transfer_weights == NULL) { return; }
 
         // add zero-walk transfer to this stop
@@ -918,8 +923,8 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // for weight lookup
-        UserClassMode ucm = { path_spec.user_class_, MODE_TRANSIT, path_spec.transit_mode_};
-        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucm);
+        UserClassPurposeMode ucpm = { path_spec.user_class_, path_spec.purpose_, MODE_TRANSIT, path_spec.transit_mode_};
+        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
             return;
         }
@@ -1091,11 +1096,12 @@ namespace fasttrips {
                         delay_attr["drive_travel_time_min"] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["preferred_delay_min"  ] = wait_time;
-                        UserClassMode delay_ucm = { path_spec.user_class_,
-                                                    path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
-                                                    path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_
-                                                  };
-                        WeightLookup::const_iterator delay_iter_weights = weight_lookup_.find(delay_ucm);
+                        UserClassPurposeMode delay_ucpm = {
+                            path_spec.user_class_, path_spec.purpose_,
+                            path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
+                            path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_
+                        };
+                        WeightLookup::const_iterator delay_iter_weights = weight_lookup_.find(delay_ucpm);
                         if (delay_iter_weights != weight_lookup_.end()) {
                             SupplyModeToNamedWeights::const_iterator delay_iter_s2w = delay_iter_weights->second.find(best_guess_link.trip_id_);
                             if (delay_iter_s2w != delay_iter_weights->second.end()) {
@@ -1261,11 +1267,13 @@ namespace fasttrips {
         }
 
         // Are there any supply modes for this demand mode?
-        UserClassMode ucm = { path_spec.user_class_,
-                              path_spec.outbound_ ? MODE_ACCESS: MODE_EGRESS,
-                              path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_
-                            };
-        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucm);
+        UserClassPurposeMode ucpm = {
+            path_spec.user_class_,
+            path_spec.purpose_,
+            path_spec.outbound_ ? MODE_ACCESS: MODE_EGRESS,
+            path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_
+        };
+        WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
             std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");

@@ -52,6 +52,8 @@ class PathSet:
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
+    #: Weights column: Purpose
+    WEIGHTS_COLUMN_PURPOSE          = "purpose"
     #: Weights column: Demand Mode Type
     WEIGHTS_COLUMN_DEMAND_MODE_TYPE = "demand_mode_type"
     #: Weights column: Demand Mode Type
@@ -172,17 +174,20 @@ class PathSet:
         error_str = ""
         # First, verify required columns are found
         weight_cols     = list(PathSet.WEIGHTS_DF.columns.values)
+        FastTripsLogger.debug("verify_weight_config:\n%s" % PathSet.WEIGHTS_DF.to_string())
         assert(PathSet.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
+        assert(PathSet.WEIGHTS_COLUMN_PURPOSE          in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_DEMAND_MODE      in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE      in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
 
-        # Join - make sure that all demand combinations (user class, demand mode type and demand mode) are configured
+        # Join - make sure that all demand combinations (user class, purpose, demand mode type and demand mode) are configured
         weight_check = pandas.merge(left=modes_df,
                                     right=PathSet.WEIGHTS_DF,
                                     on=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                        PathSet.WEIGHTS_COLUMN_PURPOSE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE],
                                     how='left')
@@ -195,7 +200,7 @@ class PathSet:
             error_str += "\n"
 
         # demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait
-        user_classes = modes_df[[PathSet.WEIGHTS_COLUMN_USER_CLASS]].drop_duplicates().reset_index()
+        user_classes = modes_df[[PathSet.WEIGHTS_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_PURPOSE]].drop_duplicates().reset_index()
         implicit_df = pandas.DataFrame({ PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:[ 'transfer'],
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE     :[ 'transfer'],
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE     :[ 'transfer'] })
@@ -207,6 +212,7 @@ class PathSet:
 
         weight_check = pandas.merge(left=implicit_df, right=PathSet.WEIGHTS_DF,
                                     on=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                        PathSet.WEIGHTS_COLUMN_PURPOSE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                         PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
@@ -232,6 +238,7 @@ class PathSet:
                 # set it for all user_class x transit x demand_mode x supply_mode
                 transit_weights_df = PathSet.WEIGHTS_DF.loc[PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE] == PathSet.STATE_MODE_TRIP,
                     [PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                     PathSet.WEIGHTS_COLUMN_PURPOSE,
                      PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                      PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                      PathSet.WEIGHTS_COLUMN_SUPPLY_MODE]].copy()
@@ -242,6 +249,7 @@ class PathSet:
 
                 PathSet.WEIGHTS_DF = pandas.concat([PathSet.WEIGHTS_DF, transit_weights_df], axis=0)
                 PathSet.WEIGHTS_DF.sort_values(by=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                                   PathSet.WEIGHTS_COLUMN_PURPOSE,
                                                    PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                                    PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                                    PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
@@ -259,6 +267,7 @@ class PathSet:
         FastTripsLogger.debug("PathSet weights: \n%s" % PathSet.WEIGHTS_DF)
         PathSet.WEIGHTS_DF.to_csv(os.path.join(output_dir,PathSet.OUTPUT_WEIGHTS_FILE),
                                columns=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                        PathSet.WEIGHTS_COLUMN_PURPOSE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                         PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,

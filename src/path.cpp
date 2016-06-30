@@ -273,7 +273,7 @@ namespace fasttrips {
                 double preference_delay           = (path_spec.outbound_ ? 0 : orig_departure_time - path_spec.preferred_time_);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id);
-                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_ACCESS, path_spec.access_mode_, stop_state.trip_id_);
+                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_ACCESS, path_spec.access_mode_, stop_state.trip_id_);
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop ));
                 attributes["preferred_delay_min"] = preference_delay;
 
@@ -287,7 +287,7 @@ namespace fasttrips {
                 double preference_delay           = (path_spec.outbound_ ? path_spec.preferred_time_ - dest_arrival_time : 0);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
-                const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
+                const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, path_spec.purpose_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop ));
                 attributes["preferred_delay_min"] = preference_delay;
 
@@ -301,7 +301,7 @@ namespace fasttrips {
                 int dest_stop                     = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
 
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
-                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
+                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
                 stop_state.link_cost_             = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
             }
             // ============= trip =============
@@ -312,7 +312,7 @@ namespace fasttrips {
 
                 const TripInfo& trip_info         = *(pf.getTripInfo(stop_state.trip_id_));
                 int supply_mode_num               = trip_info.supply_mode_num_;
-                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, MODE_TRANSIT, path_spec.transit_mode_, supply_mode_num);
+                const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_TRANSIT, path_spec.transit_mode_, supply_mode_num);
                 Attributes link_attr              = trip_info.trip_attr_;
                 link_attr["in_vehicle_time_min"]  = trip_ivt_min;
                 link_attr["wait_time_min"]        = wait_min;
