@@ -1095,6 +1095,7 @@ namespace fasttrips {
                         delay_attr["time_min"             ] = 0;
                         delay_attr["drive_travel_time_min"] = 0;
                         delay_attr["walk_time_min"        ] = 0;
+                        delay_attr["elevation_gain"       ] = 0;
                         delay_attr["preferred_delay_min"  ] = wait_time;
                         UserClassPurposeMode delay_ucpm = {
                             path_spec.user_class_, path_spec.purpose_,

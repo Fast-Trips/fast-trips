@@ -538,10 +538,12 @@ class PathSet:
                                right   =PathSet.WEIGHTS_DF,
                                # TODO: add purpose
                                left_on =[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
                                          Passenger.PF_COL_LINK_MODE,
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                          Passenger.TRIP_LIST_COLUMN_MODE],
                                right_on=[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
