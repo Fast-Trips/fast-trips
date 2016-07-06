@@ -607,7 +607,7 @@ class Passenger:
         If *choose_for_everyone* is True, this will attempt to choose for every passenger trip.
         Otherwise, this will attempt to choose for just those passenger trips that still need it.
 
-        Returns (TOTAL num passenger trips chosen, updated pathset_paths_df, updated pathset_links_df)
+        Returns (TOTAL num passenger trips chosen, NEW num passenger trips chosen, updated pathset_paths_df, updated pathset_links_df)
         """
         from .Assignment import Assignment
         from .PathSet    import PathSet
@@ -619,7 +619,7 @@ class Passenger:
             # Otherwise, just choose for those that still need it
             rejected_paths = pathset_paths_df.loc[ (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >= 0                )&
                                                    (pathset_paths_df[Assignment.SIM_COL_PAX_COST  ] >= PathSet.HUGE_COST) ]
-            FastTripsLogger.info("          Rejecting %d previously chosen paths" % len(rejected_paths))
+            FastTripsLogger.info("          Rejecting %d previously chosen paths for huge costs" % len(rejected_paths))
 
             # why doesn't this translate to pathset_links_df ?
             if len(rejected_paths) > 0:
@@ -644,11 +644,11 @@ class Passenger:
         pax_choose_df = pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ].copy()
         num_unchosen  = len(pax_choose_df)
 
-        FastTripsLogger.info("          Have %6d total passenger-trips, with %6d fully rejected and %6d needing a choice" % (len(pathset_paths_df_grouped), num_rejected, num_unchosen))
+        FastTripsLogger.info("          Have %6d total passenger-trips, with %6d chosen paths, %6d fully rejected and %6d needing a choice" % (len(pathset_paths_df_grouped), num_chosen, num_rejected, num_unchosen))
 
         # If we have nothing to do, return
         if len(pax_choose_df) == 0:
-            return (num_chosen, pathset_paths_df, pathset_links_df)
+            return (num_chosen, 0, pathset_paths_df, pathset_links_df)
 
         # flag it
         pax_choose_df["to_choose"] = 1
@@ -669,10 +669,12 @@ class Passenger:
         paths_choose_df = pathset_paths_df.loc[ (pathset_paths_df["to_choose"]==1) &
                                                 (pathset_paths_df[Assignment.SIM_COL_PAX_COST] < PathSet.HUGE_COST) &
                                                 (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] == Assignment.CHOSEN_NOT_CHOSEN_YET) ].copy()
+        FastTripsLogger.debug("choose_paths() paths_choose_df=\n%s" % pathset_paths_df.loc[ (pathset_paths_df["to_choose"]==1) ].head(30).to_string())
+
         if len(paths_choose_df) == 0:
-            FastTripsLogger.info("No choosable paths")
+            FastTripsLogger.info("          No choosable paths")
             pathset_paths_df.drop(["to_choose","rand"], axis=1, inplace=True)
-            return (0, pathset_paths_df, pathset_links_df)
+            return (num_chosen, 0, pathset_paths_df, pathset_links_df)
 
         # Use updated probability -- create cumulative probability
         paths_choose_df["prob_cum"] = paths_choose_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -702,8 +704,8 @@ class Passenger:
         pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Assignment.SIM_COL_PAX_CHOSEN] = iteration + (0.01*simulation_iteration)
         FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
 
-        FastTripsLogger.info("          Chose %d out of %d paths from the pathsets" %
-                             (len(chosen_path_df), len(pathset_paths_df_grouped)))
+        FastTripsLogger.info("          Chose %d out of %d paths from the pathsets => total chosen %d" %
+                             (len(chosen_path_df), len(pathset_paths_df_grouped), num_chosen))
 
         # drop the intermediates
         pathset_paths_df.drop(["to_choose","rand","chosen_idx"], axis=1, inplace=True)
@@ -720,7 +722,7 @@ class Passenger:
                                                                 Assignment.SIM_COL_PAX_CHOSEN]],
                                         how="left")
 
-        return (num_chosen, pathset_paths_df, pathset_links_df)
+        return (num_chosen, len(chosen_path_df), pathset_paths_df, pathset_links_df)
 
 
     @staticmethod

@@ -155,10 +155,10 @@ class Assignment:
     SIM_COL_PAX_BOARD_TIME          = 'board_time'
     SIM_COL_PAX_ALIGHT_TIME         = 'alight_time'
     SIM_COL_PAX_LINK_TIME           = 'linktime'
-    SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'  # if board at an overcap stop, fraction of boards that are overcap
+    SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'     # if board at an overcap stop, fraction of boards that are overcap
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
-    SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded'
-    SIM_COL_PAX_COST                = 'sim_cost'      # cannot be cost because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST
+    SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' # 1 if lucky enough to board at an at- or over-capacity stop
+    SIM_COL_PAX_COST                = 'sim_cost'         # cannot be cost because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST
     SIM_COL_PAX_PROBABILITY         = 'probability'
     SIM_COL_PAX_LOGSUM              = 'logsum'
 
@@ -1196,6 +1196,27 @@ class Assignment:
             veh_loaded_df[Trip.SIM_COL_VEH_MSA_OVERCAP] = veh_loaded_df[Trip.SIM_COL_VEH_MSA_ONBOARD] - veh_loaded_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY]
             veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_MSA_OVERCAP]<0, Trip.SIM_COL_VEH_MSA_OVERCAP] = 0  # negatives - don't care, set to zero
 
+        # These are the trips/stops AT capacity -- first, make sure it's clear they successfully boarded
+        atcap_df = veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP] == 0]
+        FastTripsLogger.debug("flag_bump_overcap_passengers() %d vehicle trip/stops at capacity: (showing head)\n%s" % \
+                              (len(atcap_df), atcap_df.head().to_string()))
+
+        # Join pathset links to atcap_df; now passenger links alighting at a bump stop will have Trip.STOPTIMES_COLUMN_STOP_SEQUENCE set
+        pathset_links_df = pandas.merge(left    =pathset_links_df,
+                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, "A_seq"],
+                                        right   =atcap_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
+                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                        how     ="left")
+
+        # these folks boarded
+        pathset_links_df.loc[(pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])) & \
+                             (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>=0), Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] = 1
+
+        FastTripsLogger.debug("flag_bump_overcap_passengers() pathset_links_df chosen, at capacity\n%s" % # pathset_links_df.head().to_string())
+            pathset_links_df.loc[ (pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])) & \
+                                  (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>=0) ].to_string())
+        pathset_links_df.drop(Trip.STOPTIMES_COLUMN_STOP_SEQUENCE, axis=1, inplace=True)
+
         # These are trips/stops over capacity
         overcap_df = veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP] > 0]
         FastTripsLogger.debug("flag_bump_overcap_passengers() %d vehicle trip/stops over capacity: (showing head)\n%s" % \
@@ -1258,12 +1279,12 @@ class Assignment:
                                         how     ="left")
         FastTripsLogger.debug("flag_bump_overcap_passengers() pathset_links_df (%d rows, showing head):\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string()))
 
-        # bump candidates: alighting at bump stops, chosen paths, unbumped and overcap
-        bumpstop_boards = pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])&        # alight at bump_stops_df stop
+        # bump candidates: boarding at bump stops, chosen paths, unbumped and overcap
+        bumpstop_boards = pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])&        # board at bump_stops_df stop
                                                (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]                 >=0)&        # chosen
                                                (pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER]              < 0)].copy() # unbumped
         # unchosen bump candidates (to hedge against future choosing of paths with at-capacity links)
-        unchosen_atcap_boards = pathset_links_df.loc[(pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]))&    # alight at bump_stops_df stop
+        unchosen_atcap_boards = pathset_links_df.loc[(pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]))&    # board at bump_stops_df stop
                                                      (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]                    <0)&    # path not chosen (yet)
                                                      (pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER]                 <0)]    # unbumped
 
@@ -1409,12 +1430,10 @@ class Assignment:
 
             # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
             # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
-            num_passengers_arrived_prev = num_passengers_arrived
-            (num_passengers_arrived, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
+            (num_passengers_arrived, num_chosen, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
                 Assignment.PATHFINDING_EVERYONE and simulation_iteration==0,  # choose for everyone if we just re-found all paths
                 iteration, simulation_iteration,
                 pathset_paths_df, pathset_links_df)
-            num_chosen = num_passengers_arrived - num_passengers_arrived_prev
 
             ######################################################################################################
             FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
@@ -1479,7 +1498,7 @@ class Assignment:
             simulation_iteration += 1
 
             if num_chosen <= 0:
-                FastTripsLogger.info("  Change in arrived passengers from previous simulation iteration: %d => Ending simulation loop" % num_chosen)
+                FastTripsLogger.info("  No more path choices to make => Ending simulation loop")
                 break
 
             if simulation_iteration > Assignment.MAX_SIMULATION_ITERS:
