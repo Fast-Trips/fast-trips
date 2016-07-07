@@ -209,7 +209,7 @@ class TAZ:
     #: initialize_fasttrips_extension() because of the strings involved, I think.
     OUTPUT_ACCESS_EGRESS_FILE               = "ft_intermediate_access_egress.txt"
 
-    def __init__(self, input_dir, output_dir, today, stops, transfers, routes, is_child_process):
+    def __init__(self, input_dir, output_dir, today, stops, transfers, routes):
         """
         Constructor.  Reads the TAZ data from the input files in *input_dir*.
         """
@@ -434,9 +434,8 @@ class TAZ:
             self.drive_access_df = routes.add_numeric_mode_id(self.drive_access_df,
                                                               id_colname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,
                                                               numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM)
-        if not is_child_process:
-            # write this to communicate to extension
-            self.write_access_egress_for_extension(output_dir)
+        # write this to communicate to extension
+        self.write_access_egress_for_extension(output_dir)
 
     def write_access_egress_for_extension(self, output_dir):
         """

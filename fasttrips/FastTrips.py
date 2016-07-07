@@ -40,7 +40,7 @@ class FastTrips:
     DEBUG_LOG = "ft_debug%s.log"
 
     def __init__(self, input_network_dir, input_demand_dir, output_dir,
-                 is_child_process=False, logname_append="", appendLog=False):
+                 logname_append="", appendLog=False):
         """
         Constructor.
 
@@ -53,14 +53,13 @@ class FastTrips:
         :type input_demand_dir:   string
         :param output_dir:        Location to write output and log files.
         :type output_dir:         string
-        :param is_child_process:  Is this FastTrips instance for a child process?
-        :type  is_child_process:  bool
         :param logname_append:    Modifier for info and debug log filenames.  So workers can write their own logs.
         :type logname_append:     string
         :param appendLog:         Append to info and debug logs?  When FastTrips assignment iterations (to
                                   handle capacity bumps), we'd like to append rather than overwrite.
         :type appendLog:          bool
         """
+
         #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
         self.passengers      = None
 
@@ -85,16 +84,13 @@ class FastTrips:
         #: string representing directory in which to write our output
         self.output_dir         = output_dir
 
-        #: is this instance for a child process?
-        self.is_child_process   = is_child_process
-
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
         self.gtfs_schedule      = None
 
         # setup logging
-        setupLogging(None if is_child_process else os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
+        setupLogging(os.path.join(self.output_dir, FastTrips.INFO_LOG % logname_append),
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
-                     logToConsole=False if is_child_process else True, append=appendLog)
+                     logToConsole=True, append=appendLog)
 
         # Read the configuration
         Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
@@ -106,10 +102,10 @@ class FastTrips:
         """
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        loader             = transitfeed.Loader(self.input_network_dir)
+        loader             = transitfeed.Loader(self.input_network_dir, memory_db=True)
         self.gtfs_schedule = loader.Load()
 
-        if not self.is_child_process:
+        if False:
             # Validate the GTFS
             FastTripsLogger.info("Validating GTFS schedule")
             self.gtfs_schedule.Validate()
@@ -120,33 +116,29 @@ class FastTrips:
 
         # Read routes, agencies
         self.routes = Route(self.input_network_dir, self.output_dir,
-                            self.gtfs_schedule, Util.SIMULATION_DAY, self.is_child_process)
+                            self.gtfs_schedule, Util.SIMULATION_DAY)
 
         # Read Stops (gtfs-required)
         self.stops = Stop(self.input_network_dir, self.output_dir,
-                          self.gtfs_schedule, self.is_child_process)
+                          self.gtfs_schedule)
 
         # Read Transfers
         self.transfers = Transfer(self.input_network_dir, self.output_dir,
-                                  self.gtfs_schedule, self.is_child_process)
+                                  self.gtfs_schedule)
 
         # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(self.input_network_dir, self.output_dir,
-                          self.gtfs_schedule, Util.SIMULATION_DAY, self.is_child_process,
+                          self.gtfs_schedule, Util.SIMULATION_DAY,
                           self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance
         self.tazs = TAZ(self.input_network_dir, self.output_dir, Util.SIMULATION_DAY,
-                        self.stops, self.transfers, self.routes, self.is_child_process)
+                        self.stops, self.transfers, self.routes)
 
-        if not self.is_child_process:
-            FastTripsLogger.info("-------- Reading demand --------")
-            FastTripsLogger.info("Capacity constraint? %x" % Assignment.CAPACITY_CONSTRAINT )
-            # Read the demand int passenger_id -> passenger instance
-            self.passengers = Passenger(self.input_demand_dir, self.output_dir, Util.SIMULATION_DAY, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
-        else:
-            self.passengers = None
-
+        FastTripsLogger.info("-------- Reading demand --------")
+        FastTripsLogger.info("Capacity constraint? %x" % Assignment.CAPACITY_CONSTRAINT )
+        # Read the demand int passenger_id -> passenger instance
+        self.passengers = Passenger(self.input_demand_dir, self.output_dir, Util.SIMULATION_DAY, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
 
     def run_assignment(self, output_dir):
         # do this here rather than in the constructor in case anybody (cough, scripts/runTest.py)

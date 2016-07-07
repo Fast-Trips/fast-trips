@@ -58,3 +58,4 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True, append=Fa
         consolehandler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(consolehandler)
     FastTripsLogToConsole = logToConsole
+

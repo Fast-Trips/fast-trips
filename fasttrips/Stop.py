@@ -66,14 +66,13 @@ class Stop:
     #: File with stop ID, stop ID number correspondence
     OUTPUT_STOP_ID_NUM_FILE                   = 'ft_intermediate_stop_id.txt'
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, is_child_process):
+    def __init__(self, input_dir, output_dir, gtfs_schedule):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips stops data from the input files in *input_dir*.
         """
         # keep this for later
         self.output_dir       = output_dir
-        self.is_child_process = is_child_process
 
         # Combine all gtfs Stop objects to a single pandas DataFrame
         stop_dicts = []
@@ -177,12 +176,11 @@ class Stop:
         self.stop_id_df = pandas.concat([self.stop_id_df, tazs_unique_df], axis=0)
         ##############################################################################################
 
-        if not self.is_child_process:
-            # write the stop id numbering file
-            self.stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
-                                   columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID],
-                                   sep=" ", index=False)
-            FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE))
+        # write the stop id numbering file
+        self.stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
+                               columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID],
+                               sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE))
 
 
     def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname):

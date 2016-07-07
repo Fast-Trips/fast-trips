@@ -125,13 +125,12 @@ class Route(object):
     #: File with mode, mode number correspondence
     OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips routes data from the input file in *input_dir*.
         """
         self.output_dir         = output_dir
-        self.is_child_process   = is_child_process
 
         # Combine all gtfs Route objects to a single pandas DataFrame
         route_dicts = []
@@ -180,12 +179,11 @@ class Route(object):
                                                    numeric_newcolname=Route.ROUTES_COLUMN_ROUTE_ID_NUM)
         FastTripsLogger.debug("Route ID to number correspondence\n" + str(self.route_id_df.head()))
         FastTripsLogger.debug(str(self.route_id_df.dtypes))
-        # parent process only: write intermediate files
-        if not self.is_child_process:
-            self.route_id_df.to_csv(os.path.join(output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
-                                    columns=[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID],
-                                    sep=" ", index=False)
-            FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE))
+        # write intermediate files
+        self.route_id_df.to_csv(os.path.join(output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
+                                columns=[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID],
+                                sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE))
 
         self.routes_df = self.add_numeric_route_id(self.routes_df,
                                                    id_colname=Route.ROUTES_COLUMN_ROUTE_ID,
@@ -338,12 +336,11 @@ class Route(object):
                                       egress_modes_df], axis=0)
         self.modes_df.reset_index(inplace=True)
 
-        # parent process only: write intermediate files
-        if not self.is_child_process:
-            self.modes_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE),
-                                 columns=[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE],
-                                 sep=" ", index=False)
-            FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE))
+        # write intermediate files
+        self.modes_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE),
+                             columns=[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE],
+                             sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE))
 
     def add_numeric_mode_id(self, input_df, id_colname, numeric_newcolname, warn=False):
         """

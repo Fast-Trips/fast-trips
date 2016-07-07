@@ -88,13 +88,12 @@ class Transfer:
     #: initialize_fasttrips_extension() because of the strings involved
     OUTPUT_TRANSFERS_FILE       = "ft_intermediate_transfers.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, is_child_process):
+    def __init__(self, input_dir, output_dir, gtfs_schedule):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips transfers data from the input files in *input_dir*.
         """
         self.output_dir       = output_dir
-        self.is_child_process = is_child_process
 
         # Combine all gtfs Transfer objects to a single pandas DataFrame
         transfer_dicts = []
@@ -205,8 +204,7 @@ class Transfer:
                                                          id_colname=Transfer.TRANSFERS_COLUMN_TO_STOP,
                                                          numeric_newcolname=Transfer.TRANSFERS_COLUMN_TO_STOP_NUM)
             # We're ready to write it
-            if not self.is_child_process:
-                self.write_transfers_for_extension()
+            self.write_transfers_for_extension()
 
     def write_transfers_for_extension(self):
         """
