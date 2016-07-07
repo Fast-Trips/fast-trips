@@ -200,16 +200,11 @@ class Assignment:
 
         parser = ConfigParser.RawConfigParser(
             defaults={'iterations'                      :1,
-                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
                       'simulation'                      :'True',
                       'output_passenger_trajectories'   :'True',
-                      'time_window'                     :30,
                       'create_skims'                    :'False',
                       'skim_start_time'                 :'5:00',
                       'skim_end_time'                   :'10:00',
-                      'stochastic_dispersion'           :1.0,
-                      'stochastic_max_stop_process_count':-1,
-                      'stochastic_pathset_size'         :1000,
                       'capacity_constraint'             :'False',
                       'trace_person_ids'                :'None',
                       'debug_trace_only'                :'False',
@@ -219,6 +214,11 @@ class Assignment:
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :'False',
                       # pathfinding
+                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
+                      'stochastic_dispersion'           :1.0,
+                      'stochastic_max_stop_process_count':-1,
+                      'stochastic_pathset_size'         :1000,
+                      'time_window'                     :30,
                       'user_class_function'             :'generic_user_class'
                      })
         parser.read(os.path.join(input_network_dir, config_file))
@@ -226,22 +226,13 @@ class Assignment:
             parser.read(os.path.join(input_demand_dir, config_file))
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
-        Assignment.ASSIGNMENT_TYPE               = parser.get       ('fasttrips','pathfinding_type')
-        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
-                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
-                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
         Assignment.SIMULATION_FLAG               = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
-        Assignment.TIME_WINDOW = datetime.timedelta(
-                                         minutes = parser.getfloat  ('fasttrips','time_window'))
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
         Assignment.SKIM_START_TIME = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_start_time'),'%H:%M')
         Assignment.SKIM_END_TIME   = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
-        Assignment.STOCH_DISPERSION              = parser.getfloat  ('fasttrips','stochastic_dispersion')
-        Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('fasttrips','stochastic_pathset_size')
-        Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('fasttrips','stochastic_max_stop_process_count')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
@@ -253,7 +244,16 @@ class Assignment:
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
         # pathfinding
-        PathSet.USER_CLASS_FUNCTION              = parser.get     ('pathfinding','user_class_function')
+        Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
+        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
+                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
+                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
+        Assignment.STOCH_DISPERSION              = parser.getfloat  ('pathfinding','stochastic_dispersion')
+        Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('pathfinding','stochastic_max_stop_process_count')
+        Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
+        Assignment.TIME_WINDOW = datetime.timedelta(
+                                         minutes = parser.getfloat  ('pathfinding','time_window'))
+        PathSet.USER_CLASS_FUNCTION              = parser.get       ('pathfinding','user_class_function')
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
             msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file)
             FastTripsLogger.fatal(msg)
@@ -276,16 +276,11 @@ class Assignment:
         parser = ConfigParser.SafeConfigParser()
         parser.add_section('fasttrips')
         parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
-        parser.set('fasttrips','pathfinding_type',              Assignment.ASSIGNMENT_TYPE)
         parser.set('fasttrips','simulation',                    'True' if Assignment.ASSIGNMENT_TYPE else 'False')
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
-        parser.set('fasttrips','time_window',                   '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
         parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
         parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
-        parser.set('fasttrips','stochastic_dispersion',         '%f' % Assignment.STOCH_DISPERSION)
-        parser.set('fasttrips','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
-        parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
@@ -297,6 +292,11 @@ class Assignment:
 
         #pathfinding
         parser.add_section('pathfinding')
+        parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
+        parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
+        parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
+        parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
+        parser.set('pathfinding','time_window',                 '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
         parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')

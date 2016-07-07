@@ -38,28 +38,28 @@ Option Name                         | Type   | Default | Description
 `bump_buffer`                       | float  | 5       | Not really used yet.
 `bump_one_at_a_time`                | bool   | False   |
 `capacity_constraint`               | bool   | False   | Hard capacity constraint.  When True, fasttrips forces everyone off overcapacity vehicles and disallows them from finding a new path using an overcapacity vehicle.
-`create_skims`                      | bool   | False   |
-`debug_num_trips`                   | int    | -1      |
-`debug_trace_only`                  | bool   | False   |
-`iterations`                        | int    | 1       |
-`output_passenger_trajectories`     | bool   | True    |
-`number_of_processes`               | int    | 0       |
-`pathfinding_type`                  | string | 'Deterministic Assignment' |
-`prepend_route_id_to_trip_id`       | bool   | False   |
-`simulation`                        | bool   | True    |
-`skim_start_time`                   | string | 5:00    |
-`skim_end_time`                     | string | 10:00   |
-`stochastic_dispersion`             | float  | 1.0     |
-`stochastic_max_stop_process_count` | int    | -1      |
-`stochastic_pathset_size`           | int    | 1000    |
-`time_window`                       | float  | 30      |
-`trace_person_ids`                  | string | 'None'  |
+`create_skims`                      | bool   | False   | Not implemented yet.
+`debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
+`debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
+`iterations`                        | int    | 1       | Number of pathfinding iterations to run.
+`output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
+`number_of_processes`               | int    | 0       | Number of processes to use for path finding.
+`prepend_route_id_to_trip_id`       | bool   | False   | This is for readability in debugging; if True, then route ids will be prepended to trip ids.
+`simulation`                        | bool   | True    | After path-finding, should we choose paths and assign passengers?  (Why would you ever not do this?)
+`skim_start_time`                   | string | 5:00    | Not implemented yet.
+`skim_end_time`                     | string | 10:00   | Not implemented yet.
+`trace_person_ids`                  | string | 'None'  | A list of person IDs for whom to output verbose trace information.
 
 **pathfinding configuration options**
 
 Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -----------
-`user_class_function`               | string |
+`pathfinding_type`                  | string | 'Deterministic Assignment' |
+`stochastic_dispersion`             | float  | 1.0     | Stochastic dispersion parameter. TODO: document this further.
+`stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.
+`stochastic_pathset_size`           | int    | 1000    | In path-finding, how many paths (not necessarily unique) determine a pathset?
+`time_window`                       | float  | 30      | In path-finding, the max time a passenger would wait at a stop.
+`user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
 
 #### `config_ft.py`
 
