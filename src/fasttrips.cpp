@@ -20,10 +20,14 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     int        stoch_pathset_size;
     double     stoch_dispersion;
     int        stoch_max_stop_process_count;
-    if (!PyArg_ParseTuple(args, "ddidi", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count)) {
+    int        max_num_paths;
+    double     min_path_probability;
+    if (!PyArg_ParseTuple(args, "ddidiid", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count,
+                                           &max_num_paths, &min_path_probability)) {
         return NULL;
     }
-    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion, stoch_max_stop_process_count);
+    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion, stoch_max_stop_process_count,
+                                    max_num_paths, min_path_probability);
     Py_RETURN_NONE;
 
 }

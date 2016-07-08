@@ -83,6 +83,16 @@ class Assignment:
     #: (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
     SKIM_END_TIME                   = None
 
+    #: Route choice configuration: Max number of paths in a pathset.
+    #: Used in conjuntion with :py:attr:`Assignment.MIN_PATH_PROBABILITY`
+    MAX_NUM_PATHS                   = None
+
+    #: Route choice configuration: Minimum path probability for the path to be used.
+    #: Used in conjucntion with :py:attr:`Assignment.MAX_NUM_PATHS`, so it only
+    #: kicks in if that is specified AND we hit it, then we start dropping using
+    #: this threshhold.
+    MIN_PATH_PROBABILITY            = None
+
     #: Route choice configuration: Dispersion parameter in the logit function.
     #: Higher values result in less stochasticity. Must be nonnegative. 
     #: If unknown use a value between 0.5 and 1. Float.
@@ -214,6 +224,8 @@ class Assignment:
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :'False',
                       # pathfinding
+                      'max_num_paths'                   :-1,
+                      'min_path_probability'            :0.005,
                       'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':-1,
@@ -244,6 +256,8 @@ class Assignment:
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
         # pathfinding
+        Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
+        Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
         Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
         assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
                                               Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
@@ -292,6 +306,8 @@ class Assignment:
 
         #pathfinding
         parser.add_section('pathfinding')
+        parser.set('pathfinding','max_num_paths',               '%d' % Assignment.MAX_NUM_PATHS)
+        parser.set('pathfinding','min_path_probability',        '%f' % Assignment.MIN_PATH_PROBABILITY)
         parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
@@ -334,7 +350,9 @@ class Assignment:
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
-                                         Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
+                                         Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
+                                         Assignment.MAX_NUM_PATHS,
+                                         Assignment.MIN_PATH_PROBABILITY)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):

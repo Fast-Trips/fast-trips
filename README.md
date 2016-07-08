@@ -54,6 +54,8 @@ Option Name                         | Type   | Default | Description
 
 Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -----------
+`max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than `min_path_probability`
+`min_path_probability`              | float  | 0.005   | Paths with probability less than this get dropped IF `max_num_paths` specified AND hit.
 `pathfinding_type`                  | string | 'Deterministic Assignment' |
 `stochastic_dispersion`             | float  | 1.0     | Stochastic dispersion parameter. TODO: document this further.
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.

@@ -135,6 +135,12 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT">fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT</a>
         int STOCH_MAX_STOP_PROCESS_COUNT_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.MAX_NUM_PATHS">fasttrips.Assignment.MAX_NUM_PATHS</a>
+        int MAX_NUM_PATHS_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.MIN_PATH_PROBABILITY">fasttrips.Assignment.MIN_PATH_PROBABILITY</a>
+        double MIN_PATH_PROBABILITY_;
         ///@}
 
         /// Access this through getTransferAttributes()
@@ -342,7 +348,9 @@ namespace fasttrips {
                                   double     bump_buffer,
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion,
-                                  int        stoch_max_stop_process_count);
+                                  int        stoch_max_stop_process_count,
+                                  int        max_num_paths,
+                                  double     min_path_probability);
 
         /**
          * Setup the network supply.  This should happen once, before any pathfinding.

@@ -41,11 +41,15 @@ namespace fasttrips {
         double     bump_buffer,
         int        stoch_pathset_size,
         double     stoch_dispersion,
-        int        stoch_max_stop_process_count)
+        int        stoch_max_stop_process_count,
+        int        max_num_paths,
+        double     min_path_probability)
     {
         BUMP_BUFFER_                    = bump_buffer;
         STOCH_PATHSET_SIZE_             = stoch_pathset_size;
         STOCH_MAX_STOP_PROCESS_COUNT_   = stoch_max_stop_process_count;
+        MAX_NUM_PATHS_                  = max_num_paths;
+        MIN_PATH_PROBABILITY_           = min_path_probability;
 
         Hyperlink::TIME_WINDOW_         = time_window;
         Hyperlink::STOCH_DISPERSION_    = stoch_dispersion;
@@ -1406,7 +1410,6 @@ namespace fasttrips {
 
         const Hyperlink& taz_state = stop_states.find(start_state_id)->second;
         double taz_label        = taz_state.hyperpathCost(false);
-        int    cost_cutoff      = 1;
 
         // setup access/egress probabilities
         std::vector<ProbabilityStopState> access_cum_prob;
@@ -1550,16 +1553,31 @@ namespace fasttrips {
 
             // for integerized probability*1000000
             int cum_prob    = 0;
-            int cost_cutoff = 1;
             const Path* real_low_cost_path = NULL;
             // calculate the probabilities for those paths
+
+            // if we truncate, start here
+            PathSet::iterator trunc_iter = pathset.end();
+            int path_count = 0;
+
             for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
                 paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
+                path_count += 1;
+
+                // Is this under the min path probability AND we have enough paths?
+                // Since they are sorted in decreasing probability, we only want to set it once
+                if ((trunc_iter == pathset.end()) &&
+                    (paths_iter->second.probability_ < MIN_PATH_PROBABILITY_) &&
+                    (MAX_NUM_PATHS_ > 0) &&
+                    (path_count > MAX_NUM_PATHS_))
+                {
+                    trunc_iter = paths_iter;
+                }
+
                 // why?  :p
                 int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
-                // too small to consider
-                if (prob_i < cost_cutoff) { continue; }
+
                 cum_prob += prob_i;
                 paths_iter->second.prob_i_ = cum_prob;
 
@@ -1584,6 +1602,16 @@ namespace fasttrips {
             }
 
             if (cum_prob == 0) { return false; } // fail
+
+            // if we have more than the max num paths AND some are low probability, truncate
+            if (trunc_iter != pathset.end()) {
+                if (path_spec.trace_) {
+                    trace_file << "Truncating to ";
+                    trunc_iter->first.printCompat(trace_file, path_spec, *this);
+                    trace_file << std::endl;
+                }
+                pathset.erase(trunc_iter, pathset.end());
+            }
 
             // experimental-- verify lowest cost path is low?
             if (false && real_low_cost_path)

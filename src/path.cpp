@@ -66,6 +66,10 @@ namespace fasttrips {
     /// Comparison
     bool Path::operator<(const Path& path2) const
     {
+        // sort by cost first -- lowest cost at the top of the PathSet
+        if (cost() < path2.cost()) { return true; }
+        if (cost() > path2.cost()) { return false; }
+
         if (size() < path2.size()) { return true; }
         if (size() > path2.size()) { return false; }
         // if number of stops matches, check the stop ids and deparr_mode_
