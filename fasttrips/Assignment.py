@@ -808,7 +808,7 @@ class Assignment:
         # send it to the C++ extension
         (ret_ints, ret_doubles, path_costs,
          label_iterations, max_label_process_count,
-         seconds_labeling, seconds_enumerating) = \
+         ms_labeling, ms_enumerating) = \
             _fasttrips.find_pathset(iteration, pathset.person_id_num, pathset.trip_list_id_num, hyperpath,
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
@@ -875,8 +875,8 @@ class Assignment:
         perf_dict = { \
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,
-            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : seconds_labeling,
-            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : seconds_enumerating,
+            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : ms_labeling,
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : ms_enumerating,
             Performance.PERFORMANCE_COLUMN_TRACED                : trace,
         }
         return (pathdict, perf_dict)

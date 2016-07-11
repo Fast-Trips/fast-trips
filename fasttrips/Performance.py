@@ -75,7 +75,7 @@ class Performance:
                     Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT,
                     Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS,
                     Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS]:
-            self.performance_dict[key] = perf_dict[key]
+            self.performance_dict[key].append(perf_dict[key])
 
         # convert milliseconds time to timedeltas
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING   ].append(datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS   ]))
