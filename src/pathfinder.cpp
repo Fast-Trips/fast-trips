@@ -1523,6 +1523,9 @@ namespace fasttrips {
                 bool path_found = hyperpathGeneratePath(path_spec, trace_file, stop_states, new_path);
 
                 if (path_found) {
+                    // we have to calculate the cost in order to find it, since it's ordered by cost also
+                    new_path.calculateCost(trace_file, path_spec, *this);
+
                     if (path_spec.trace_) {
                         trace_file << "----> Found path " << attempts << " ";
                         new_path.printCompat(trace_file, path_spec, *this);
@@ -1536,7 +1539,6 @@ namespace fasttrips {
                         paths_iter->second.count_ += 1;
                     } else {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
-                        new_path.calculateCost(trace_file, path_spec, *this);
                         pathset[new_path] = pi;
 
                         logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
