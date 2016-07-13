@@ -488,7 +488,7 @@ class Assignment:
 
             else:
                 num_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration)
-                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops.stop_id_df, FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df)
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops.stop_id_df, FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
                 # write performance info right away in case we crash, quit, etc
                 FT.performance.write(output_dir, iteration)
@@ -1509,7 +1509,8 @@ class Assignment:
             # update the trip times -- accel/decel rates + stops affect travel times, and boards/alights affect dwell times
             veh_trips_df   = Trip.update_trip_times(veh_trips_df, Assignment.MSA_RESULTS)
 
-            # write pathset paths and links
+            ######################################################################################################
+            FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
             Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False)
             Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True )
 
