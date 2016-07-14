@@ -256,10 +256,15 @@ namespace fasttrips {
         }
         // ========= now we have links in the hyperlink =========
 
+        // don't apply window stuff to the last labeling link (access for outbound, egress for inbound)
+        bool is_last_link = false;
+        if ( path_spec.outbound_ && (ss.deparr_mode_ == MODE_ACCESS)) { is_last_link = true; }
+        if (!path_spec.outbound_ && (ss.deparr_mode_ == MODE_EGRESS)) { is_last_link = true; }
+
         // is it too early (outbound) or too late (inbound)?
-        // don't worry about the last labeling (access for outbound, egress for inbound) -- that one is special
-        if (( path_spec.outbound_ && (ss.deparr_mode_ != MODE_ACCESS) && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
-            (!path_spec.outbound_ && (ss.deparr_mode_ != MODE_EGRESS) && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
+        if ((!is_last_link) &&
+            (( path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
+             (!path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_ + TIME_WINDOW_)))) {
             rejected = true;
 
             // log it
@@ -285,8 +290,9 @@ namespace fasttrips {
             linkset.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
             // check if the window is updated -- this is a state update
-            if (( path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_)) ||
-                (!path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_)))
+            if ((!is_last_link) &&
+                (( path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_)) ||
+                 (!path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_))))
             {
                 linkset.latest_dep_earliest_arr_  = ss.deparr_time_;
                 linkset.lder_ssk_                 = ssk;
@@ -348,8 +354,9 @@ namespace fasttrips {
         }
 
         // check if the window is updated -- this is a state update
-        if (( path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_)) ||
-            (!path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_)))
+        if ((!is_last_link) &&
+            (( path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_)) ||
+             (!path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_))))
         {
             linkset.latest_dep_earliest_arr_  = ss.deparr_time_;
             linkset.lder_ssk_                 = ssk;

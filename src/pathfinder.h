@@ -232,6 +232,21 @@ namespace fasttrips {
                                   const LabelStop& current_label_stop) const;
 
         /**
+         * Part of the labeling loop. Assuming the *current_label_stop* was just pulled off the
+         * *label_stop_queue*, this method will iterate through access links to (for outbound) or
+         * egress links from (for inbound) the current stop and update the next stop given the current stop state.
+         */
+        void updateStopStatesForFinalLinks(const PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  const std::map<int, int>& reachable_final_stops,
+                                  StopStates& stop_states,
+                                  LabelStopQueue& label_stop_queue,
+                                  int label_iteration,
+                                  const LabelStop& current_label_stop,
+                                  double& est_max_path_cost) const;
+
+
+        /**
          * Iterate through all the stops that are accessible by transit vehicle trip
          * to(outbound)/from(inbound) the *current_label_stop* and update the *stop_states*
          * with information about how accessible those stops are as a transit trip to/from
@@ -247,16 +262,30 @@ namespace fasttrips {
 
         /**
          * Label stops by:
-         * * while the label_stop_queue has stops
+         * * while the label_stop_queue has stops AND we don't think we're done*
          *     * pulling the lowest-labeled stop
          *     * adding the stops accessible by transfer (PathFinder::updateStopStatesForTransfers)
          *     * adding the stops accessible by transit trip (PathFinder::updateStopStatesForTrips)
+         *
+         * Assume we're done if we've reached the final TAZ already and the current cost is some percent bigger than
+         * threshhold based on the lowest cost and the minimum probability.
          */
         int labelStops(const PathSpecification& path_spec,
-                                  std::ofstream& trace_file,
-                                  StopStates& stop_states,
-                                  LabelStopQueue& label_stop_queue,
-                                  int& max_process_count) const;
+                       std::ofstream& trace_file,
+                       const std::map<int,int>& reachable_final_stops,
+                       StopStates& stop_states,
+                       LabelStopQueue& label_stop_queue,
+                       int& max_process_count) const;
+
+        /**
+         * This fills the reachable_final_stops map with stop_id -> number of supply links between
+         * the final stop and the final TAZ.
+         *
+         * @return True if some final stops are reachable, False if there are none
+         */
+        bool setReachableFinalStops(const PathSpecification& path_spec,
+                                    std::ofstream& trace_file,
+                                    std::map<int, int>& reachable_final_stops) const;
 
         /**
          * This is like the reverse of PathFinder::initializeStopStates.
