@@ -18,8 +18,13 @@
 
 #if __APPLE__
 #include <tr1/unordered_set>
-#elif _WIN32
+#elif __linux__
+#include <tr1/unordered_set>
+#else
 #include <unordered_set>
+#endif
+
+#if _WIN32
 // suppress warning C4503: decorated name length exceeded, name was truncated
 #pragma warning(disable:4503)
 #endif
@@ -354,12 +359,12 @@ namespace fasttrips {
          * Tally the link cost, which is the sum of the weighted attributes.
          * @return the cost.
          */
-        double PathFinder::tallyLinkCost(const int supply_mode_num,
-                                         const PathSpecification& path_spec,
-                                         std::ostream& trace_file,
-                                         const NamedWeights& weights,
-                                         const Attributes& attributes,
-                                         bool  hush = false) const;
+        double tallyLinkCost(const int supply_mode_num,
+                             const PathSpecification& path_spec,
+                             std::ostream& trace_file,
+                             const NamedWeights& weights,
+                             const Attributes& attributes,
+                             bool  hush = false) const;
 
         /**
          * Access the named weights given user/link information.
