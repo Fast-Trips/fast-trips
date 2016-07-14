@@ -478,7 +478,6 @@ namespace fasttrips {
 
         if (path_spec.user_class_ == "crash") {
             std::cerr << "Crashing to test" << std::endl;
-            Sleep(5000);
             exit(2);
         }
 

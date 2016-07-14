@@ -7,6 +7,7 @@
 #include "hyperlink.h"
 #include "pathfinder.h"
 
+#include <Python.h>
 #include <math.h>
 #include <ios>
 #include <iostream>
