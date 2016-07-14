@@ -411,7 +411,6 @@ namespace fasttrips {
     {
         output_dir_  = output_dir;
         process_num_ = process_num;
-        printf("PathFinder::initializeSupply()  trip_stop_times_.size() = %d\n", trip_stop_times_.size());
         if (trip_stop_times_.size() == 0)
         {
             readIntermediateFiles();
