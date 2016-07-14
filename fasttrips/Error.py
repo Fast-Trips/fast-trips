@@ -36,3 +36,25 @@ class NetworkInputError(Error):
         self.expr     = filename
         self.msg      = msg
 
+class ConfigurationError(Error):
+    """
+    Exception raised for errors in configuration.
+
+    Attributes:
+       expr  -- the input file in which the error occurred
+       msg   -- explanation of the error
+    """
+
+    def __init__(self, filename, msg):
+        self.expr     = filename
+        self.msg      = msg
+
+class NotImplementedError(Error):
+    """
+    Exception raised for something expected but not implemented.
+
+    Attributes:
+       msg   -- explanation of the error
+    """
+    def __init__(self, msg):
+        self.msg      = msg

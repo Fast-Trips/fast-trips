@@ -11,6 +11,7 @@ namespace fasttrips {
     typedef struct {
         double  label_;                 ///< The label during path finding
         int     stop_id_;               ///< Stop ID corresponding to this label
+        bool    is_trip_;               ///< Two labels: a trip-label and a non-trip-label
     } LabelStop;
 
 
@@ -19,8 +20,12 @@ namespace fasttrips {
         bool operator()(const LabelStop &cs1, const LabelStop &cs2) const {
             if (cs1.label_ > cs2.label_) { return true;  }
             if (cs1.label_ < cs2.label_) { return false; }
-            // if they're equal go by the stop id
-            return (cs1.stop_id_ > cs2.stop_id_);
+
+            if (cs1.stop_id_ > cs2.stop_id_) { return true;  }
+            if (cs1.stop_id_ < cs2.stop_id_) { return false; }
+
+            if (cs1.is_trip_ && !cs2.is_trip_) { return true; }
+            return false;
         }
     };
 
@@ -32,7 +37,8 @@ namespace fasttrips {
     };
 
     /**
-     * This is just like a priority queue but with the additonal constraint that each stop ID can only be in the queue once.
+     * This is just like a priority queue but with the additonal constraint that each (stop ID, is trip bool)
+     * can only be in the queue once.
      *
      * This is to save work; if we mark a stop for processing by adding it onto the queue, and then do that again shortly
      * after, we don't actually want to process twice.  We only want to process it once, for the lowest label.
@@ -42,7 +48,7 @@ namespace fasttrips {
     {
 
     private:
-        // underlying priority queue, contains (label, stop id)
+        // underlying priority queue, contains (label, stop id, is trip bool)
         std::priority_queue<LabelStop, std::vector<LabelStop>, struct LabelStopCompare> labelstop_priority_queue_;
 
         typedef struct {
@@ -51,8 +57,8 @@ namespace fasttrips {
             int    count_;  ///< number of instances of this stop in the labelstop_priority_queue_ (valid and invalid)
         } LabelCount;
 
-        /** Keep track of the lowest label and the count for each stop */
-        std::map<int, LabelCount> labelstop_map_;
+        /** Keep track of the lowest label and the count for each (stop, is_trip bool) */
+        std::map< std::pair<int, bool>, LabelCount> labelstop_map_;
 
         int valid_count_;
 
@@ -62,30 +68,32 @@ namespace fasttrips {
 
         void push(const LabelStop& val) {
             // if the stop is not in here, no problem!
-            if (labelstop_map_.find(val.stop_id_) == labelstop_map_.end()) {
+            std::pair<int,bool> full_stop_id = std::make_pair(val.stop_id_, val.is_trip_);
+
+            if (labelstop_map_.find(full_stop_id) == labelstop_map_.end()) {
                 labelstop_priority_queue_.push(val);
                 LabelCount lc = { val.label_, true, 1 };
-                labelstop_map_[val.stop_id_] = lc;
+                labelstop_map_[full_stop_id] = lc;
                 valid_count_++;
                 return;
             }
 
             // if not valid in the queue, then we've popped out all valid instances from the priority queue so it's like it's not here
-            if (!labelstop_map_[val.stop_id_].valid_) {
+            if (!labelstop_map_[full_stop_id].valid_) {
                 labelstop_priority_queue_.push(val);
-                labelstop_map_[val.stop_id_].label_     = val.label_;
-                labelstop_map_[val.stop_id_].valid_     = true;
-                labelstop_map_[val.stop_id_].count_    += 1;
+                labelstop_map_[full_stop_id].label_     = val.label_;
+                labelstop_map_[full_stop_id].valid_     = true;
+                labelstop_map_[full_stop_id].count_    += 1;
                 valid_count_++;
                 return;
             }
 
             // The stop is in the queue, valid.  Look at the label.
             // If the label is smaller, add this one and invalidate the other
-            if (val.label_ < labelstop_map_[val.stop_id_].label_) {
+            if (val.label_ < labelstop_map_[full_stop_id].label_) {
                 labelstop_priority_queue_.push(val);
-                labelstop_map_[val.stop_id_].label_ = val.label_;
-                labelstop_map_[val.stop_id_].count_ += 1;
+                labelstop_map_[full_stop_id].label_ = val.label_;
+                labelstop_map_[full_stop_id].count_ += 1;
                 // no additional valid counts
             }
             // otherwise the label is bigger -- don't add it since the smaller one will cause reprocessing
@@ -101,7 +109,9 @@ namespace fasttrips {
             while (true) {
                 // get the lowest cost stop
                 const LabelStop& ls = labelstop_priority_queue_.top();
-                std::map<int, LabelCount>::iterator ls_iter = labelstop_map_.find(ls.stop_id_);
+                std::pair<int, bool> full_stop_id = std::make_pair(ls.stop_id_, ls.is_trip_);
+
+                std::map< std::pair<int, bool>, LabelCount>::iterator ls_iter = labelstop_map_.find(full_stop_id);
 
                 // assert we have the count info
                 if (ls_iter == labelstop_map_.end()) {
@@ -118,7 +128,7 @@ namespace fasttrips {
                 // if it's not valid then continue
                 if (!ls_iter->second.valid_) {
                     if (trace) {
-                        trace_file << "Skipping stop A " << stop_num_to_str.find(ls.stop_id_)->second;
+                        trace_file << "Skipping stop A (" << stop_num_to_str.find(ls.stop_id_)->second << "," << ls.is_trip_ << ")";
                         trace_file << "; valid " << ls_iter->second.valid_;
                         trace_file << "; count " << ls_iter->second.count_;
                         trace_file << "; map label " << ls_iter->second.label_;
@@ -134,7 +144,7 @@ namespace fasttrips {
                 // but only the matching label is valid
                 if (ls_iter->second.label_ != ls.label_) {
                     if (trace) {
-                        trace_file << "Skipping stop B " << stop_num_to_str.find(ls.stop_id_)->second;
+                        trace_file << "Skipping stop B (" << stop_num_to_str.find(ls.stop_id_)->second << "," << ls.is_trip_ << ")";
                         trace_file << "; valid " << ls_iter->second.valid_;
                         trace_file << "; count " << ls_iter->second.count_;
                         trace_file << "; map label " << ls_iter->second.label_;
@@ -147,7 +157,7 @@ namespace fasttrips {
                 }
 
                 if (trace) {
-                    trace_file << "LabelStopQueue returning " << stop_num_to_str.find(ls.stop_id_)->second;
+                    trace_file << "LabelStopQueue returning (" << stop_num_to_str.find(ls.stop_id_)->second << "," << ls.is_trip_ << ")";
                     trace_file << "; valid " << ls_iter->second.valid_;
                     trace_file << "; count " << ls_iter->second.count_;
                     trace_file << "; map label " << ls_iter->second.label_;

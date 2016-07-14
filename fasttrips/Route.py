@@ -15,6 +15,7 @@ __license__   = """
 import datetime, os
 import pandas
 
+from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
 from .Util   import Util
 
@@ -43,6 +44,8 @@ class Route(object):
     ROUTES_COLUMN_ROUTE_LONG_NAME           = "route_long_name"
     #: gtfs Routes column name: Route type
     ROUTES_COLUMN_ROUTE_TYPE                = "route_type"
+    #: gtfs Routes column name: Agency ID
+    ROUTES_COLUMN_AGENCY_ID                 = "agency_id"
     #: fasttrips Routes column name: Mode
     ROUTES_COLUMN_MODE                      = "mode"
 
@@ -122,13 +125,12 @@ class Route(object):
     #: File with mode, mode number correspondence
     OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, is_child_process):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips routes data from the input file in *input_dir*.
         """
         self.output_dir         = output_dir
-        self.is_child_process   = is_child_process
 
         # Combine all gtfs Route objects to a single pandas DataFrame
         route_dicts = []
@@ -149,6 +151,15 @@ class Route(object):
         assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
         assert(Route.ROUTES_COLUMN_MODE         in routes_ft_cols)
 
+        # verify no routes_ids are duplicated
+        if routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum()>0:
+            error_msg = "Found %d duplicate %s in %s" % (routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum(),
+                                                         Route.ROUTES_COLUMN_ROUTE_ID, Route.INPUT_ROUTES_FILE)
+            FastTripsLogger.fatal(error_msg)
+            FastTripsLogger.fatal("\nFirst five duplicates:\n%s" % \
+                                  str(routes_ft_df.loc[routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID])].head()))
+            raise NetworkInputError(Route.INPUT_ROUTES_FILE, error_msg)
+
         # Join to the routes dataframe
         self.routes_df = pandas.merge(left=self.routes_df, right=routes_ft_df,
                                       how='left',
@@ -168,12 +179,11 @@ class Route(object):
                                                    numeric_newcolname=Route.ROUTES_COLUMN_ROUTE_ID_NUM)
         FastTripsLogger.debug("Route ID to number correspondence\n" + str(self.route_id_df.head()))
         FastTripsLogger.debug(str(self.route_id_df.dtypes))
-        # parent process only: write intermediate files
-        if not self.is_child_process:
-            self.route_id_df.to_csv(os.path.join(output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
-                                    columns=[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID],
-                                    sep=" ", index=False)
-            FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE))
+        # write intermediate files
+        self.route_id_df.to_csv(os.path.join(output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
+                                columns=[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID],
+                                sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE))
 
         self.routes_df = self.add_numeric_route_id(self.routes_df,
                                                    id_colname=Route.ROUTES_COLUMN_ROUTE_ID,
@@ -326,12 +336,11 @@ class Route(object):
                                       egress_modes_df], axis=0)
         self.modes_df.reset_index(inplace=True)
 
-        # parent process only: write intermediate files
-        if not self.is_child_process:
-            self.modes_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE),
-                                 columns=[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE],
-                                 sep=" ", index=False)
-            FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE))
+        # write intermediate files
+        self.modes_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE),
+                             columns=[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE],
+                             sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_MODE_NUM_FILE))
 
     def add_numeric_mode_id(self, input_df, id_colname, numeric_newcolname, warn=False):
         """

@@ -17,6 +17,7 @@ import pandas
 
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
+from .Util      import Util
 
 class Performance:
     """
@@ -44,37 +45,50 @@ class Performance:
     PERFORMANCE_COLUMN_TRACED                 = "traced"
 
     #: File with to write performance results
-    OUTPUT_PERFORMANCE_FILE                   = 'ft_output_performance.txt'
+    OUTPUT_PERFORMANCE_FILE                   = 'ft_output_performance.csv'
 
     def __init__(self):
         """
         Constructor.  Initialize empty dataframe for performance info.
         """
-        self.performance_df = pandas.DataFrame(columns=[Performance.PERFORMANCE_COLUMN_ITERATION,
-                                                        Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM,
-                                                        Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
-                                                        Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT,
-                                                        Performance.PERFORMANCE_COLUMN_TIME_LABELING,
-                                                        Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING])
+        self.performance_dict = {
+            Performance.PERFORMANCE_COLUMN_ITERATION                :[],
+            Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM         :[],
+            Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS         :[],
+            Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT   :[],
+            Performance.PERFORMANCE_COLUMN_TIME_LABELING            :[],
+            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS         :[],
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING         :[],
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS      :[]
+        }
+
 
     def add_info(self, iteration, trip_list_id_num, perf_dict):
         """
-        Add this row to the performance dataframe.
+        Add this row to the performance dict of arrays.
         Assumes time values are in milliseconds.
         """
-        perf_dict[Performance.PERFORMANCE_COLUMN_ITERATION       ] = iteration
-        perf_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM] = trip_list_id_num
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_ITERATION].append(iteration)
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM].append(trip_list_id_num)
+
+        for key in [Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
+                    Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT,
+                    Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS,
+                    Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS]:
+            self.performance_dict[key].append(perf_dict[key])
 
         # convert milliseconds time to timedeltas
-        perf_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING   ] = datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS   ])
-        perf_dict[Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING] = datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS])
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING   ].append(datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS   ]))
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING].append(datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS]))
 
-        self.performance_df = self.performance_df.append(perf_dict, ignore_index=True)
-
-    def write(self, output_dir):
+    def write(self, output_dir, iteration):
         """
         Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.
         """
-        output_filename = os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE)
-        self.performance_df.to_csv(output_filename, sep="\t", index=False, date_format="")
-        FastTripsLogger.info("Wrote performance info to %s" % output_filename)
+        performance_df = pandas.DataFrame.from_dict(self.performance_dict)
+
+        Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE), append=(iteration>1))
+
+        # reset dict to blank
+        for key in self.performance_dict.keys():
+            self.performance_dict[key] = []

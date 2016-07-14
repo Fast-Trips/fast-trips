@@ -17,9 +17,10 @@ import collections,datetime,math,multiprocessing,os,random,sys,traceback
 import numpy,pandas
 import _fasttrips
 
+from .Error       import ConfigurationError
 from .Logger      import FastTripsLogger, setupLogging
 from .Passenger   import Passenger
-from .Path        import Path
+from .PathSet     import PathSet
 from .Performance import Performance
 from .Stop        import Stop
 from .TAZ         import TAZ
@@ -82,6 +83,16 @@ class Assignment:
     #: (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
     SKIM_END_TIME                   = None
 
+    #: Route choice configuration: Max number of paths in a pathset.
+    #: Used in conjuntion with :py:attr:`Assignment.MIN_PATH_PROBABILITY`
+    MAX_NUM_PATHS                   = None
+
+    #: Route choice configuration: Minimum path probability for the path to be used.
+    #: Used in conjucntion with :py:attr:`Assignment.MAX_NUM_PATHS`, so it only
+    #: kicks in if that is specified AND we hit it, then we start dropping using
+    #: this threshhold.
+    MIN_PATH_PROBABILITY            = None
+
     #: Route choice configuration: Dispersion parameter in the logit function.
     #: Higher values result in less stochasticity. Must be nonnegative. 
     #: If unknown use a value between 0.5 and 1. Float.
@@ -100,11 +111,14 @@ class Assignment:
     #: Route choice configuration: Use vehicle capacity constraints. Boolean.
     CAPACITY_CONSTRAINT             = None
 
-    #: Use this as the date
-    TODAY                           = datetime.date.today()
-
     #: Debug mode: only run trace passengers
     DEBUG_TRACE_ONLY                = False
+
+    #: Debug mode: only run this number of trips, -1 to run all. Int.
+    DEBUG_NUM_TRIPS                 = -1
+
+    #: Skip these passengers
+    SKIP_PERSON_IDS                 = None
 
     #: Trace these passengers
     TRACE_PERSON_IDS                = None
@@ -127,11 +141,6 @@ class Assignment:
     bump_wait                       = {}
     bump_wait_df                    = None
 
-    #: This is a :py:class:`set` of bumped passenger IDs.  For multiple-iteration assignment,
-    #: this determines which passengers to assign.
-    bumped_person_ids               = set()
-    bumped_trip_list_nums           = set()
-
     #: Simulation: bump one stop at a time (slower, more accurate)
     #:
     #: When addressing capacity constraints in simulation, we look at all the (trip, stop)-pairs
@@ -146,15 +155,37 @@ class Assignment:
     #: loads, and iterate until we have no capacity issues.  Boolean.
     BUMP_ONE_AT_A_TIME              = None
 
-    #: assignment results - Passenger table
-    PASSENGERS_CSV                  = r"passengers_df_iter%d.csv"
+    #: MSA the results that affect the next iteration to avoid oscillation: boards, alights, overcap onboard at stops
+    MSA_RESULTS                     = False
+
+    #: Are we finding paths for everyone right now?  Or just un-arrived folks?
+    PATHFINDING_EVERYONE            = True
+
+    #: How many Simulation Iterations should we do before going back to path-finding?
+    MAX_SIMULATION_ITERS            = 10
 
     #: Column names for simulation
-    SIM_COL_PAX_BOARD_TIME              = 'board_time'
-    SIM_COL_PAX_ALIGHT_TIME             = 'alight_time'
-    SIM_COL_PAX_ARRIVE_TIME             = 'pax_arrive_time'
-    SIM_COL_PAX_ARRIVE_TIME_MIN         = 'pax_arrive_time_min'
-    SIM_COL_PAX_LINK_TIME               = 'linktime'
+    SIM_COL_PAX_BOARD_TIME          = 'board_time'
+    SIM_COL_PAX_ALIGHT_TIME         = 'alight_time'
+    SIM_COL_PAX_LINK_TIME           = 'linktime'
+    SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'     # if board at an overcap stop, fraction of boards that are overcap
+    SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
+    SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' # 1 if lucky enough to board at an at- or over-capacity stop
+    SIM_COL_PAX_COST                = 'sim_cost'         # cannot be cost because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST
+    SIM_COL_PAX_PROBABILITY         = 'probability'
+    SIM_COL_PAX_LOGSUM              = 'logsum'
+
+    #: Is this link/path a missed transfer?
+    #: Set in both pathset links and pathset paths, this is a 1 or 0
+    SIM_COL_MISSED_XFER             = 'missed_xfer'
+
+    #: Chosen status for path
+    #: set to -1 for not chosen
+    #: set to iteration + simulation_iteration/100 when a path is chosen
+    #: set to -2 for chosen but then rejected
+    SIM_COL_PAX_CHOSEN              = 'chosen'
+    CHOSEN_NOT_CHOSEN_YET           = -1
+    CHOSEN_REJECTED                 = -2
 
     def __init__(self):
         """
@@ -163,66 +194,66 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration(input_network_dir, input_demand_dir):
+    def read_configuration(input_network_dir, input_demand_dir, config_file=CONFIGURATION_FILE):
         """
         Read the configuration parameters.
         """
-        pandas.set_option('display.width', 1000)
+        pandas.set_option('display.width',      1000)
+        # pandas.set_option('display.height',   1000)
+        pandas.set_option('display.max_rows',   1000)
+        pandas.set_option('display.max_columns', 100)
 
         # Functions are defined in here -- read this and eval it
         func_file = os.path.join(input_demand_dir, Assignment.CONFIGURATION_FUNCTIONS_FILE)
         if os.path.exists(func_file):
             my_globals = {}
             FastTripsLogger.info("Reading %s" % func_file)
-            execfile(func_file, my_globals, Path.CONFIGURED_FUNCTIONS)
-            FastTripsLogger.info("Path.CONFIGURED_FUNCTIONS = %s" % str(Path.CONFIGURED_FUNCTIONS))
+            execfile(func_file, my_globals, PathSet.CONFIGURED_FUNCTIONS)
+            FastTripsLogger.info("PathSet.CONFIGURED_FUNCTIONS = %s" % str(PathSet.CONFIGURED_FUNCTIONS))
 
         parser = ConfigParser.RawConfigParser(
             defaults={'iterations'                      :1,
-                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
-                      'simulation'                      :True,
-                      'output_passenger_trajectories'   :True,
-                      'time_window'                     :30,
-                      'create_skims'                    :False,
+                      'simulation'                      :'True',
+                      'output_passenger_trajectories'   :'True',
+                      'create_skims'                    :'False',
                       'skim_start_time'                 :'5:00',
                       'skim_end_time'                   :'10:00',
-                      'stochastic_dispersion'           :1.0,
-                      'stochastic_max_stop_process_count':-1,
-                      'stochastic_pathset_size'         :1000,
-                      'capacity_constraint'             :False,
+                      'capacity_constraint'             :'False',
+                      'skip_person_ids'                 :'None',
                       'trace_person_ids'                :'None',
                       'debug_trace_only'                :'False',
+                      'debug_num_trips'                 :-1,
                       'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
-                      'bump_one_at_a_time'              :True,
+                      'bump_one_at_a_time'              :'False',
                       # pathfinding
+                      'max_num_paths'                   :-1,
+                      'min_path_probability'            :0.005,
+                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
+                      'stochastic_dispersion'           :1.0,
+                      'stochastic_max_stop_process_count':-1,
+                      'stochastic_pathset_size'         :1000,
+                      'time_window'                     :30,
                       'user_class_function'             :'generic_user_class'
                      })
-        parser.read(os.path.join(input_network_dir, Assignment.CONFIGURATION_FILE))
-        if input_demand_dir and os.path.exists(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE)):
-            parser.read(os.path.join(input_demand_dir,  Assignment.CONFIGURATION_FILE))
+        parser.read(os.path.join(input_network_dir, config_file))
+        if input_demand_dir and (input_demand_dir != input_network_dir) and os.path.exists(os.path.join(input_demand_dir,  config_file)):
+            parser.read(os.path.join(input_demand_dir, config_file))
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
-        Assignment.ASSIGNMENT_TYPE               = parser.get       ('fasttrips','pathfinding_type')
-        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
-                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
-                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
         Assignment.SIMULATION_FLAG               = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
-        Assignment.TIME_WINDOW = datetime.timedelta(
-                                         minutes = parser.getfloat  ('fasttrips','time_window'))
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
         Assignment.SKIM_START_TIME = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_start_time'),'%H:%M')
         Assignment.SKIM_END_TIME   = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
-        Assignment.STOCH_DISPERSION              = parser.getfloat  ('fasttrips','stochastic_dispersion')
-        Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('fasttrips','stochastic_pathset_size')
-        Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('fasttrips','stochastic_max_stop_process_count')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
+        Assignment.SKIP_PERSON_IDS          = eval(parser.get       ('fasttrips','skip_person_ids'))
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
+        Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
@@ -230,19 +261,31 @@ class Assignment:
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
         # pathfinding
-        Path.USER_CLASS_FUNCTION                 = parser.get     ('pathfinding','user_class_function')
-        if Path.USER_CLASS_FUNCTION not in Path.CONFIGURED_FUNCTIONS:
-            FastTripsLogger.fatal("User class function [%s] not defined.  Please check your function file [%s]" % (Path.USER_CLASS_FUNCTION, func_file))
-            raise
+        Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
+        Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
+        Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
+        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
+                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
+                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
+        Assignment.STOCH_DISPERSION              = parser.getfloat  ('pathfinding','stochastic_dispersion')
+        Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('pathfinding','stochastic_max_stop_process_count')
+        Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
+        Assignment.TIME_WINDOW = datetime.timedelta(
+                                         minutes = parser.getfloat  ('pathfinding','time_window'))
+        PathSet.USER_CLASS_FUNCTION              = parser.get       ('pathfinding','user_class_function')
+        if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
+            msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file)
+            FastTripsLogger.fatal(msg)
+            raise ConfigurationError(func_file, msg)
 
-        weights_file = os.path.join(input_demand_dir, Path.WEIGHTS_FILE)
+        weights_file = os.path.join(input_demand_dir, PathSet.WEIGHTS_FILE)
         if not os.path.exists(weights_file):
             FastTripsLogger.fatal("No path weights file %s" % weights_file)
             sys.exit(2)
 
-        Path.WEIGHTS_DF = pandas.read_fwf(weights_file)
-        FastTripsLogger.debug("Weights =\n%s" % str(Path.WEIGHTS_DF))
-        FastTripsLogger.debug("Weight types = \n%s" % str(Path.WEIGHTS_DF.dtypes))
+        PathSet.WEIGHTS_DF = pandas.read_fwf(weights_file)
+        FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
+        FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
 
     @staticmethod
     def write_configuration(output_dir):
@@ -252,19 +295,16 @@ class Assignment:
         parser = ConfigParser.SafeConfigParser()
         parser.add_section('fasttrips')
         parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
-        parser.set('fasttrips','pathfinding_type',              Assignment.ASSIGNMENT_TYPE)
         parser.set('fasttrips','simulation',                    'True' if Assignment.ASSIGNMENT_TYPE else 'False')
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
-        parser.set('fasttrips','time_window',                   '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
         parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
         parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
-        parser.set('fasttrips','stochastic_dispersion',         '%f' % Assignment.STOCH_DISPERSION)
-        parser.set('fasttrips','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
-        parser.set('fasttrips','stochastic_pathset_size',       '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
+        parser.set('fasttrips','skip_person_ids',               '%s' % str(Assignment.SKIP_PERSON_IDS))
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
+        parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
         parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
@@ -272,42 +312,162 @@ class Assignment:
 
         #pathfinding
         parser.add_section('pathfinding')
-        parser.set('pathfinding','user_class_function',         '%s' % Path.USER_CLASS_FUNCTION)
+        parser.set('pathfinding','max_num_paths',               '%d' % Assignment.MAX_NUM_PATHS)
+        parser.set('pathfinding','min_path_probability',        '%f' % Assignment.MIN_PATH_PROBABILITY)
+        parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
+        parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
+        parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
+        parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
+        parser.set('pathfinding','time_window',                 '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
+        parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)
         output_file.close()
 
     @staticmethod
-    def initialize_fasttrips_extension(process_number, output_dir, FT):
+    def initialize_fasttrips_extension(process_number, output_dir, stop_times_df):
         """
         Initialize the C++ fasttrips extension by passing it the network supply.
         """
         FastTripsLogger.debug("Initializing fasttrips extension for process number %d" % process_number)
 
+        # this may not be set yet if it is iter1
+        overcap_col = Trip.SIM_COL_VEH_OVERCAP
+        if Assignment.MSA_RESULTS:
+            overcap_col = Trip.SIM_COL_VEH_MSA_OVERCAP
+
+        if overcap_col not in list(stop_times_df.columns.values):
+            stop_times_df[overcap_col] = 0
+
+        FastTripsLogger.debug("initialize_fasttrips_extension() overcap sum: %d" % stop_times_df[overcap_col].sum())
+        FastTripsLogger.debug("initialize_fasttrips_extension() STOPTIMES_COLUMN_DEPARTURE_TIME_MIN len: %d mean: %f" % \
+                              (len(stop_times_df), stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN].mean()))
+
         _fasttrips.initialize_supply(output_dir, process_number,
-                                     FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                             Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                             Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                     FT.trips.stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                                                             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN]].as_matrix().astype('float64'))
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
+                                     stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+                                                    overcap_col]].as_matrix().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
-                                         Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
+                                         Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
+                                         Assignment.MAX_NUM_PATHS,
+                                         Assignment.MIN_PATH_PROBABILITY)
 
     @staticmethod
     def set_fasttrips_bump_wait(bump_wait_df):
         """
         Sends the bump wait information to the fasttrips extension
         """
+        # send a clear message?
+        if type(bump_wait_df)==type(None): return
+
+        if len(bump_wait_df) == 0: return
+
         _fasttrips.set_bump_wait(bump_wait_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                 bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN].values.astype('float64'))
+                                 bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype('float64'))
+    @staticmethod
+    def write_vehicle_trips(output_dir, iteration, veh_trips_df):
+        """
+        """
+        columns = ["iteration",                             # we'll add
+                   Trip.TRIPS_COLUMN_DIRECTION_ID,
+                   Trip.TRIPS_COLUMN_SERVICE_ID,
+                   Trip.TRIPS_COLUMN_ROUTE_ID,
+                   Trip.STOPTIMES_COLUMN_TRIP_ID,
+                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                   Trip.STOPTIMES_COLUMN_STOP_ID,
+                   Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
+                   Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+                   Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+                   Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC,
+                   Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
+                   Trip.VEHICLES_COLUMN_TOTAL_CAPACITY,
+                   Trip.SIM_COL_VEH_BOARDS,
+                   Trip.SIM_COL_VEH_ALIGHTS,
+                   Trip.SIM_COL_VEH_ONBOARD,
+                   Trip.SIM_COL_VEH_STANDEES,
+                   Trip.SIM_COL_VEH_FRICTION,
+                   Trip.SIM_COL_VEH_OVERCAP,
+                   Trip.SIM_COL_VEH_MSA_BOARDS,
+                   Trip.SIM_COL_VEH_MSA_ALIGHTS,
+                   Trip.SIM_COL_VEH_MSA_ONBOARD,
+                   Trip.SIM_COL_VEH_MSA_STANDEES,
+                   Trip.SIM_COL_VEH_MSA_FRICTION,
+                   Trip.SIM_COL_VEH_MSA_OVERCAP]
 
+        # these may not be in there since they're optional
+        for optional_col in [Trip.TRIPS_COLUMN_DIRECTION_ID,
+                             Trip.VEHICLES_COLUMN_TOTAL_CAPACITY]:
+            if optional_col not in veh_trips_df.columns.values:
+                columns.remove(optional_col)
+
+        veh_trips_df["iteration"] = iteration
+        Util.write_dataframe(veh_trips_df[columns], "veh_trips_df", os.path.join(output_dir, "veh_trips.csv"), append=(iteration>0))
+        veh_trips_df.drop("iteration", axis=1, inplace=True)
+
+    @staticmethod
+    def merge_pathsets(pathfind_trip_list_df, pathset_paths_df, pathset_links_df, new_pathset_paths_df, new_pathset_links_df):
+        """
+        Merge the given new pathset paths and links into the existing
+        """
+        FastTripsLogger.debug("merge_pathsets():     pathset_paths_df len=%d head=\n%s" % (len(    pathset_paths_df),     pathset_paths_df.head().to_string()))
+        FastTripsLogger.debug("merge_pathsets(): new_pathset_paths_df len=%d head=\n%s" % (len(new_pathset_paths_df), new_pathset_paths_df.head().to_string()))
+        FastTripsLogger.debug("merge_pathsets() dtypes=\n%s" % str(pathset_paths_df.dtypes))
+        FastTripsLogger.debug("merge_pathsets():     pathset_links_df len=%d head=\n%s" % (len(    pathset_links_df),     pathset_links_df.head().to_string()))
+        FastTripsLogger.debug("merge_pathsets(): new_pathset_links_df len=%d head=\n%s" % (len(new_pathset_links_df), new_pathset_links_df.head().to_string()))
+        FastTripsLogger.debug("merge_pathsets() dtypes=\n%s" % str(pathset_links_df.dtypes))
+
+        # TODO: This might be inefficient...
+
+        # filter out the new pathset person trips from pathset_paths_df
+        pathfind_trip_list_df["new"] = 1
+        pathset_paths_df = pandas.merge(left =pathset_paths_df,
+                                        right=pathfind_trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"new"]],
+                                        how  ="left")
+        pathset_paths_df = pathset_paths_df.loc[pandas.isnull(pathset_paths_df["new"])]
+        pathset_paths_df.drop(["new"], axis=1, inplace=True)
+        FastTripsLogger.debug("Filtered to %d pathset_paths_df rows" % len(pathset_paths_df))
+        # TODO: error prone, make this cleaner with where it's initialized elsewhere
+        new_pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN ] = Assignment.CHOSEN_NOT_CHOSEN_YET
+        new_pathset_paths_df[Assignment.SIM_COL_MISSED_XFER] = 0
+        # append
+        pathset_paths_df = pandas.concat([pathset_paths_df, new_pathset_paths_df], axis=0)
+        FastTripsLogger.debug("Concatenated so pathset_paths_df has %d rows" % len(pathset_paths_df))
+
+        # filter out the new pathset person trips from pathset_links_df
+        pathset_links_df = pandas.merge(left =pathset_links_df,
+                                        right=pathfind_trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"new"]],
+                                        how  ="left")
+        pathset_links_df = pathset_links_df.loc[pandas.isnull(pathset_links_df["new"])]
+        pathset_links_df.drop(["new"], axis=1, inplace=True)
+        FastTripsLogger.debug("Filtered to %d pathset_links_df rows" % len(pathset_links_df))
+        # append
+        pathset_links_df = pandas.concat([pathset_links_df, new_pathset_links_df], axis=0)
+        FastTripsLogger.debug("Concatenated so pathset_links_df has %d rows" % len(pathset_links_df))
+
+        FastTripsLogger.debug("merge_pathsets():     pathset_paths_df len=%d head=\n%s\ntail=\n%s" % (len(pathset_paths_df), pathset_paths_df.head().to_string(),pathset_paths_df.tail().to_string()))
+        FastTripsLogger.debug("merge_pathsets():     pathset_links_df len=%d head=\n%s\ntail=\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string(),pathset_links_df.tail().to_string()))
+
+        # done with this
+        pathfind_trip_list_df.drop(["new"], axis=1, inplace=True)
+        return (pathset_paths_df, pathset_links_df)
+
+    @staticmethod
+    def number_of_pathsets(pathset_paths_df):
+        """
+        Counts the number of passenger trips with pathsets and returns it.
+        """
+        return pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM].nunique()
 
     @staticmethod
     def assign_paths(output_dir, FT):
@@ -316,34 +476,55 @@ class Assignment:
         """
         Assignment.write_configuration(output_dir)
 
-        Assignment.bump_wait = {}
+        # write the initial load profile, iteration 0
+        veh_trips_df     = FT.trips.get_full_trips()
+        pathset_paths_df = None
+        pathset_links_df = None
+
+        # write 0-iter vehicle trips
+        Assignment.write_vehicle_trips(output_dir, 0, veh_trips_df)
+
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
             if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY and \
-               os.path.exists(os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration)):
+               os.path.exists(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration)):
                 FastTripsLogger.info("Simulation only")
-                (num_paths_found, passengers_df) = Assignment.read_assignment_results(output_dir, iteration)
+                (num_paths_found, pathset_paths_df, pathset_links_df) = FT.passengers.read_assignment_results(output_dir, iteration)
 
             else:
-                num_paths_found    = Assignment.generate_paths(FT, output_dir, iteration)
-                passengers_df      = Assignment.setup_passengers(FT, output_dir, iteration)
+                num_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration)
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops.stop_id_df, FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
-            veh_trips_df       = Assignment.setup_trips(FT)
+                # write performance info right away in case we crash, quit, etc
+                FT.performance.write(output_dir, iteration)
 
-            if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Path.write_paths(passengers_df, output_dir)
+            if Assignment.PATHFINDING_EVERYONE:
+                pathset_paths_df = new_pathset_paths_df
+                pathset_links_df = new_pathset_links_df
+            else:
+                (pathset_paths_df, pathset_links_df) = Assignment.merge_pathsets(FT.passengers.pathfind_trip_list_df, pathset_paths_df, pathset_links_df, new_pathset_paths_df, new_pathset_links_df)
+                num_paths_found = Assignment.number_of_pathsets(pathset_paths_df)
 
             if Assignment.SIMULATION_FLAG == True:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
-                (num_passengers_arrived,veh_trips_df,pax_exp_df) = Assignment.simulate(FT, passengers_df, veh_trips_df)
+                (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df) = \
+                    Assignment.simulate(FT, output_dir, iteration, pathset_paths_df, pathset_links_df, veh_trips_df)
+
+            # Set new schedule
+            FT.trips.stop_times_df = veh_trips_df
+
+            Assignment.write_vehicle_trips(output_dir, iteration, veh_trips_df)
 
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
-                Path.write_path_times(pax_exp_df, output_dir)
+                PathSet.write_path_times(Passenger.get_chosen_links(pathset_links_df), output_dir)
 
             # capacity gap stuff
             num_bumped_passengers = num_paths_found - num_passengers_arrived
-            capacity_gap = 100.0*num_bumped_passengers/num_paths_found
+            if num_paths_found > 0:
+                capacity_gap = 100.0*num_bumped_passengers/num_paths_found
+            else:
+                capacity_gap = 100
 
             FastTripsLogger.info("")
             FastTripsLogger.info("  TOTAL ASSIGNED PASSENGERS: %10d" % num_paths_found)
@@ -351,33 +532,80 @@ class Assignment:
             FastTripsLogger.info("  MISSED PASSENGERS:         %10d" % num_bumped_passengers)
             FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
 
-            if capacity_gap < 0.001 or Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_STO_ASGN:
+            if False and capacity_gap < 0.001:
                 break
 
         # end for loop
-        FastTripsLogger.info("**************************** WRITING OUTPUTS ****************************")
-        Assignment.print_load_profile(FT, veh_trips_df, output_dir)
 
     @staticmethod
-    def generate_paths(FT, output_dir, iteration):
+    def filter_trip_list_to_not_arrived(trip_list_df, pathset_paths_df):
         """
-        Generates paths ofr passengers using deterministic trip-based shortest path (TBSP) or
+        Filter the given trip list to only those that have not arrived according to *pathset_paths_df*.
+        """
+        FastTripsLogger.debug("filter_trip_list_to_not_arrived(): trip_list_df len=%d head()=\n%s"  % (len(trip_list_df), trip_list_df.head().to_string()))
+        FastTripsLogger.debug("filter_trip_list_to_not_arrived(): pathset_paths_df len=%d head()=\n%s"  % (len(pathset_paths_df), pathset_paths_df.head().to_string()))
+
+        # filter to only the chosen paths
+        chosen_paths_df = pathset_paths_df.loc[pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >= 0, [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Assignment.SIM_COL_PAX_CHOSEN]]
+
+        # add chosen index
+        trip_list_df_to_return = pandas.merge(left  =trip_list_df,
+                                              right =chosen_paths_df,
+                                              how   ="left")
+        # use it to filter to null chosen
+        trip_list_df_to_return = trip_list_df_to_return.loc[pandas.isnull(trip_list_df_to_return[Assignment.SIM_COL_PAX_CHOSEN])]
+        # remove chosen column
+        trip_list_df_to_return.drop([Assignment.SIM_COL_PAX_CHOSEN], axis=1, inplace=True)
+
+        FastTripsLogger.debug("filter_trip_list_to_not_arrived(): trip_list_df_to_return len=%d head()=\n%s"  % (len(trip_list_df_to_return), trip_list_df_to_return.head().to_string()))
+        return trip_list_df_to_return
+
+    @staticmethod
+    def generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration):
+        """
+        Figures out which person trips for whom to generate_pathsets, stored in :py:attr:`Passenger.pathfind_trip_list_df`
+
+        Generates paths sets for those person trips using deterministic trip-based shortest path (TBSP) or
         stochastic trip-based hyperpath (TBHP).
 
-        Returns the number of paths found.
+        Returns the number of pathsets found.
         """
         FastTripsLogger.info("**************************** GENERATING PATHS ****************************")
         start_time          = datetime.datetime.now()
-        process_list        = []
+        process_dict        = {}  # workernum -> {"process":process, "alive":alive bool, "done":done bool, "working_on":(person_id, trip_list_num)}
         todo_queue          = None
         done_queue          = None
 
-        if Assignment.DEBUG_TRACE_ONLY:
-            est_paths_to_find = len(Assignment.TRACE_PERSON_IDS)
+        # We only need to do this once
+        if iteration == 1:
+            if Assignment.DEBUG_TRACE_ONLY:
+                FT.passengers.trip_list_df = FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]
+            else:
+                if Assignment.DEBUG_NUM_TRIPS > 0 and len(FT.passengers.trip_list_df) > Assignment.DEBUG_NUM_TRIPS:
+                    FastTripsLogger.info("Truncating trip list to %d trips" % Assignment.DEBUG_NUM_TRIPS)
+                    FT.passengers.trip_list_df = FT.passengers.trip_list_df.iloc[:Assignment.DEBUG_NUM_TRIPS]
+
+            # Skip someone?
+            if Assignment.SKIP_PERSON_IDS and len(Assignment.SKIP_PERSON_IDS) > 0:
+                FT.passengers.trip_list_df = FT.passengers.trip_list_df.loc[~FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.SKIP_PERSON_IDS)]
+
+        # these are the trips for which we'll find paths
+        FT.passengers.pathfind_trip_list_df = FT.passengers.trip_list_df
+
+        # test: on even iterations, try to find paths for the failed passengers, e.g. passengers with chosen==0
+        if iteration % 2 == 0:
+            Assignment.PATHFINDING_EVERYONE = False
+            FastTripsLogger.info("Finding paths for trips for those that haven't arrived yet")
+            FT.passengers.pathfind_trip_list_df = Assignment.filter_trip_list_to_not_arrived(FT.passengers.trip_list_df, pathset_paths_df)
         else:
-            est_paths_to_find   = len(FT.passengers.trip_list_df)
-            if iteration > 1:
-                est_paths_to_find = len(Assignment.bumped_trip_list_nums)
+            PATHFINDING_EVERYONE = True
+            # we're starting over with empty vehicles
+            Trip.reset_onboard(veh_trips_df)
+
+        est_paths_to_find   = len(FT.passengers.pathfind_trip_list_df)
+        FastTripsLogger.info("Finding pathsets for %d trips" % est_paths_to_find)
+        if est_paths_to_find == 0:
+            return 0
 
         info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
         if info_freq < 1: info_freq = 1
@@ -386,8 +614,9 @@ class Assignment:
         num_processes       = Assignment.NUMBER_OF_PROCESSES
         if  Assignment.NUMBER_OF_PROCESSES < 1:
             num_processes   = multiprocessing.cpu_count()
-        if num_processes > est_paths_to_find:
-            num_processes = est_paths_to_find
+        # it's not worth it unless each process does 3
+        if num_processes > est_paths_to_find*3:
+            num_processes = int(est_paths_to_find/3)
 
         # this is probalby time consuming... put in a try block
         try:
@@ -397,20 +626,24 @@ class Assignment:
                 done_queue      = multiprocessing.Queue()
                 for process_idx in range(1, 1+num_processes):
                     FastTripsLogger.info("Starting worker process %2d" % process_idx)
-                    process_list.append(multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                                                                args=(iteration, process_idx, FT.input_network_dir, FT.input_demand_dir,
-                                                                      FT.output_dir, todo_queue, done_queue,
-                                                                      Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
-                                                                      Assignment.bump_wait_df)))
-                    process_list[-1].start()
+                    process_dict[process_idx] = {
+                        "process":multiprocessing.Process(target=find_trip_based_paths_process_worker,
+                            args=(iteration, process_idx, FT.input_network_dir, FT.input_demand_dir,
+                                  FT.output_dir, todo_queue, done_queue,
+                                  Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                  Assignment.bump_wait_df, veh_trips_df)),
+                        "alive":True,
+                        "done":False
+                    }
+                    process_dict[process_idx]["process"].start()
             else:
-                Assignment.initialize_fasttrips_extension(0, output_dir, FT)
+                Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
 
             # process tasks or send tasks to workers for processing
             num_paths_found_prev  = 0
             num_paths_found_now   = 0
-            path_cols             = list(FT.passengers.trip_list_df.columns.values)
-            for path_tuple in FT.passengers.trip_list_df.itertuples(index=False):
+            path_cols             = list(FT.passengers.pathfind_trip_list_df.columns.values)
+            for path_tuple in FT.passengers.pathfind_trip_list_df.itertuples(index=False):
                 path_dict         = dict(zip(path_cols, path_tuple))
                 trip_list_id      = path_dict[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
                 person_id         = path_dict[Passenger.TRIP_LIST_COLUMN_PERSON_ID]
@@ -420,33 +653,33 @@ class Assignment:
 
                 # first iteration -- create path objects
                 if iteration==1:
-                    trip_path = Path(path_dict)
-                    FT.passengers.add_path(trip_list_id, trip_path)
+                    trip_pathset = PathSet(path_dict)
+                    FT.passengers.add_pathset(trip_list_id, trip_pathset)
                 else:
-                    trip_path = FT.passengers.get_path(trip_list_id)
+                    trip_pathset = FT.passengers.get_pathset(trip_list_id)
 
-                if not trip_path.goes_somewhere(): continue
+                if not trip_pathset.goes_somewhere(): continue
 
-                if iteration > 1 and trip_list_id not in Assignment.bumped_trip_list_nums:
-                    num_paths_found_prev += 1
-                    continue
+                # find pathsets for everyone -- dwell times have changed
+                # if iteration > 1 and trip_list_id not in Assignment.bumped_trip_list_nums:
+                #    num_paths_found_prev += 1
+                #    continue
 
                 if num_processes > 1:
-                    todo_queue.put( trip_path )
+                    todo_queue.put( trip_pathset )
                 else:
                     if trace_person:
                         FastTripsLogger.debug("Tracing assignment of person_id %s" % str(person_id))
 
                     # do the work
-                    (cost, return_states, perf_dict) = \
-                        Assignment.find_trip_based_path(iteration, FT, trip_path,
+                    (pathdict, perf_dict) = \
+                        Assignment.find_trip_based_pathset(iteration, trip_pathset,
                                                         Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                         trace=trace_person)
-                    trip_path.states = return_states
-                    trip_path.cost   = cost
+                    trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, trip_list_id, perf_dict)
 
-                    if trip_path.path_found():
+                    if trip_pathset.path_found():
                         num_paths_found_now += 1
 
                     if num_paths_found_now % info_freq == 0:
@@ -460,41 +693,69 @@ class Assignment:
             # multiprocessing follow-up
             if num_processes > 1:
                 # we're done, let each process know
-                for process_idx in range(len(process_list)):
+                for process_idx in process_dict.keys():
                     todo_queue.put('DONE')
 
                 # get results
-                done_procs          = 0
-                while done_procs < len(process_list):
+                done_procs = 0  # where done means not alive
+                while done_procs < len(process_dict):
 
-                    result = done_queue.get()
-                    if result == 'DONE':
-                        FastTripsLogger.debug("Received done")
-                        done_procs += 1
+                    try:
+                        result     = done_queue.get(True, 30)
+                        worker_num = result[0]
 
-                    else:
-                        trip_list_id    = result[0]
-                        path            = FT.passengers.get_path(trip_list_id)
-                        path.cost       = result[1]
-                        path.states     = result[2]
-                        perf_dict       = result[3]
+                        # FastTripsLogger.debug("Received %s" % str(result))
+                        if result[1] == "DONE":
+                            FastTripsLogger.debug("Received done from process %d" % worker_num)
+                            process_dict[worker_num]["done"] = True
+                        elif result[1] == "STARTING":
+                            process_dict[worker_num]["working_on"] = (result[2],result[3])
+                        elif result[1] == "COMPLETED":
+                            trip_list_id    = result[2]
+                            pathset         = FT.passengers.get_pathset(trip_list_id)
+                            pathset.pathdict= result[3]
+                            perf_dict       = result[4]
 
-                        FT.performance.add_info(iteration, trip_list_id, perf_dict)
+                            FT.performance.add_info(iteration, trip_list_id, perf_dict)
 
-                        if path.path_found():
-                            num_paths_found_now += 1
+                            if pathset.path_found():
+                                num_paths_found_now += 1
 
-                        if num_paths_found_now % info_freq == 0:
-                            time_elapsed = datetime.datetime.now() - start_time
-                            FastTripsLogger.info(" %6d / %6d passenger paths found.  Time elapsed: %2dh:%2dm:%2ds" % (
-                                                 num_paths_found_now, est_paths_to_find,
-                                                 int( time_elapsed.total_seconds() / 3600),
-                                                 int( (time_elapsed.total_seconds() % 3600) / 60),
-                                                 time_elapsed.total_seconds() % 60))
+                            if num_paths_found_now % info_freq == 0:
+                                time_elapsed = datetime.datetime.now() - start_time
+                                FastTripsLogger.info(" %6d / %6d passenger paths found.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                                     num_paths_found_now, est_paths_to_find,
+                                                     int( time_elapsed.total_seconds() / 3600),
+                                                     int( (time_elapsed.total_seconds() % 3600) / 60),
+                                                     time_elapsed.total_seconds() % 60))
+
+                            del process_dict[worker_num]["working_on"]
+                        else:
+                            print "Unexpected done queue contents: " + str(result)
+
+                    except :
+                        # FastTripsLogger.debug("Error: %s" % str(sys.exc_info()))
+                        pass
+
+                    # check if any processes are not alive
+                    for process_idx in process_dict.keys():
+                        if process_dict[process_idx]["alive"] and not process_dict[process_idx]["process"].is_alive():
+                            FastTripsLogger.debug("Process %d is not alive" % process_idx)
+                            process_dict[process_idx]["alive"] = False
+                            done_procs += 1
 
                 # join up my processes
-                for proc in process_list:
-                    proc.join()
+                for process_idx in process_dict.keys():
+                    process_dict[process_idx]["process"].join()
+
+                # check if any processes crashed
+                for process_idx in process_dict.keys():
+                    if not process_dict[process_idx]["done"]:
+                        if "working_on" in process_dict[process_idx]:
+                            FastTripsLogger.info("Process %d appears to have crashed; it was working on %s" % \
+                                                 (process_idx, str(process_dict[process_idx]["working_on"])))
+                        else:
+                            FastTripsLogger.info("Process %d appears to have crashed; see ft_debug_worker%02d.log" % (process_idx, process_idx))
 
         except (KeyboardInterrupt, SystemExit):
             exc_type, exc_value, exc_tb = sys.exc_info()
@@ -503,7 +764,7 @@ class Assignment:
             for e in error_lines: FastTripsLogger.error(e)
             FastTripsLogger.error("Terminating processes")
             # terminating my processes
-            for proc in process_list:
+            for proc in process_dict:
                 proc.terminate()
             sys.exit(2)
         except:
@@ -524,16 +785,17 @@ class Assignment:
 
 
     @staticmethod
-    def find_trip_based_path(iteration, FT, path, hyperpath, trace):
+    def find_trip_based_pathset(iteration, pathset, hyperpath, trace):
         """
-        Perform trip-based path search.
+        Perform trip-based path set search.
 
-        Will do so either backwards (destination to origin) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_OUTBOUND`
-        or forwards (origin to destination) if :py:attr:`Path.direction` is :py:attr:`Path.DIR_INBOUND`.
+        Will do so either backwards (destination to origin) if :py:attr:`PathSet.direction` is :py:attr:`PathSet.DIR_OUTBOUND`
+        or forwards (origin to destination) if :py:attr:`PathSet.direction` is :py:attr:`PathSet.DIR_INBOUND`.
 
-        Returns (path cost,
-                 return_states,
+        Returns (pathdict,
                  performance_dict)
+
+        Where pathdict maps {pathnum:{PATH_KEY_COST:cost, PATH_KEY_PROBABILITY:probability, PATH_KEY_STATES:[state list]}}
 
         Where performance_dict includes:
                  number of label iterations,
@@ -543,10 +805,8 @@ class Assignment:
 
         :param iteration: The pathfinding iteration we're on
         :type  iteration: int
-        :param FT:        fasttrips data
-        :type  FT:        a :py:class:`FastTrips` instance
-        :param path:      the path to fill in
-        :type  path:      a :py:class:`Path` instance
+        :param pathset:   the path to fill in
+        :type  pathset:   a :py:class:`PathSet` instance
         :param hyperpath: pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
                           search algorithm will be use.
         :type  hyperpath: boolean
@@ -556,713 +816,736 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles, path_cost,
+        (ret_ints, ret_doubles, path_costs,
          label_iterations, max_label_process_count,
-         seconds_labeling, seconds_enumerating) = \
-            _fasttrips.find_path(iteration, path.person_id_num, path.trip_list_id_num, hyperpath,
-                                 path.user_class, path.access_mode, path.transit_mode, path.egress_mode,
-                                 path.o_taz_num, path.d_taz_num,
-                                 1 if path.outbound() else 0, float(path.pref_time_min),
+         ms_labeling, ms_enumerating) = \
+            _fasttrips.find_pathset(iteration, pathset.person_id_num, pathset.trip_list_id_num, hyperpath,
+                                 pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
+                                 pathset.o_taz_num, pathset.d_taz_num,
+                                 1 if pathset.outbound() else 0, float(pathset.pref_time_min),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
-        # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (path.person_id, path.trip_list_id_num))
+        # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (pathset.person_id, pathset.trip_list_id_num))
+        pathdict = {}
+        row_num  = 0
 
-        # Put the results into an list of (stop_id, state array)
-        return_states = []
-        midnight = datetime.datetime.combine(Assignment.TODAY, datetime.time())
+        for path_num in range(path_costs.shape[0]):
 
-        for index in range(ret_ints.shape[0]):
-            mode = ret_ints[index,1]
-            # todo
-            if mode == -100:
-                mode = Path.STATE_MODE_ACCESS
-            elif mode == -101:
-                mode = Path.STATE_MODE_EGRESS
-            elif mode == -102:
-                mode = Path.STATE_MODE_TRANSFER
-            elif mode == -103:
-                mode = Passenger.MODE_GENERIC_TRANSIT_NUM
+            pathdict[path_num] = {}
+            pathdict[path_num][PathSet.PATH_KEY_COST       ] = path_costs[path_num, 0]
+            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 1]
+            # List of (stop_id, stop_state)
+            pathdict[path_num][PathSet.PATH_KEY_STATES     ] = []
 
-            if hyperpath:
-                return_states.append( (ret_ints[index, 0], [
-                              ret_doubles[index,0],                                         # label,
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
-                              mode,                                                         # departure/arrival mode
-                              ret_ints[index,2],                                            # trip id
-                              ret_ints[index,3],                                            # successor/predecessor
-                              ret_ints[index,4],                                            # sequence
-                              ret_ints[index,5],                                            # sequence succ/pred
-                              datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
-                              ret_doubles[index,3],                                         # cost
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
-                              ] ) )
-            else:
-                return_states.append( (ret_ints[index, 0], [
-                              datetime.timedelta(minutes=ret_doubles[index,0]),              # label,
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,1]),  # departure/arrival time
-                              mode,                                                         # departure/arrival mode
-                              ret_ints[index,2],                                            # trip id
-                              ret_ints[index,3],                                            # successor/predecessor
-                              ret_ints[index,4],                                            # sequence
-                              ret_ints[index,5],                                            # sequence succ/pred
-                              datetime.timedelta(minutes=ret_doubles[index,2]),             # link time
-                              datetime.timedelta(minutes=ret_doubles[index,3]),             # cost
-                              midnight + datetime.timedelta(minutes=ret_doubles[index,4])   # arrival/departure time
-                              ] ) )
+            # print "path_num %d" % path_num
+
+            # while we have unprocessed rows and the row is still relevant for this path_num
+            while (row_num < ret_ints.shape[0]) and (ret_ints[row_num, 0] == path_num):
+                # print row_num
+
+                mode = ret_ints[row_num,2]
+                # todo
+                if mode == -100:
+                    mode = PathSet.STATE_MODE_ACCESS
+                elif mode == -101:
+                    mode = PathSet.STATE_MODE_EGRESS
+                elif mode == -102:
+                    mode = PathSet.STATE_MODE_TRANSFER
+                elif mode == -103:
+                    mode = Passenger.MODE_GENERIC_TRANSIT_NUM
+
+                if hyperpath:
+                    pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
+                        ret_doubles[row_num,0],                                                          # label,
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                        mode,                                                                            # departure/arrival mode
+                        ret_ints[row_num,3],                                                             # trip id
+                        ret_ints[row_num,4],                                                             # successor/predecessor
+                        ret_ints[row_num,5],                                                             # sequence
+                        ret_ints[row_num,6],                                                             # sequence succ/pred
+                        datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
+                        ret_doubles[row_num,3],                                                          # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
+                    ] ) )
+                else:
+                    pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
+                        datetime.timedelta(minutes=ret_doubles[row_num,0]),                              # label,
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                        mode,                                                                            # departure/arrival mode
+                        ret_ints[row_num,3],                                                             # trip id
+                        ret_ints[row_num,4],                                                             # successor/predecessor
+                        ret_ints[row_num,5],                                                             # sequence
+                        ret_ints[row_num,6],                                                             # sequence succ/pred
+                        datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
+                        datetime.timedelta(minutes=ret_doubles[row_num,3]),                              # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,4])   # arrival/departure time
+                    ] ) )
+                row_num += 1
+
         perf_dict = { \
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,
-            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : seconds_labeling,
-            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : seconds_enumerating,
+            Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : ms_labeling,
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : ms_enumerating,
             Performance.PERFORMANCE_COLUMN_TRACED                : trace,
         }
-        return (path_cost, return_states, perf_dict)
+        return (pathdict, perf_dict)
 
     @staticmethod
-    def read_assignment_results(output_dir, iteration):
+    def find_passenger_vehicle_times(pathset_links_df, veh_trips_df):
         """
-        Reads assignment results from :py:attr:`Assignment.PASSENGERS_CSV`
+        Given a dataframe of passenger links and a dataframe of vehicle trip links, adds two new columns to the passenger links for board and alight time.
 
-        :param output_dir: Location of csv files to read
-        :type output_dir: string
-        :param iteration: The iteration label for the csv files to read
-        :type iteration: integer
-        :return: The number of paths assigned, the paths.  See :py:meth:`Assignment.setup_passengers`
-                 for documentation on the passenger paths :py:class:`pandas.DataFrame`
-        :rtype: a tuple of (int, :py:class:`pandas.DataFrame`)
+        - Takes the trip links of pathset_links_df (columns: person_id, trip_list_id_num, pathnum, linkmode, trip_id_num, A_id_num, B_id_num, A_seq, B_seq, pf_A_time, pf_B_time, pf_linktime, A_id, B_id, trip_id)
+        - Joins with vehicle trips on trip id num, A_id, A_seq to add:
+          * board time   (Assignment.SIM_COL_PAX_BOARD_TIME)
+          * overcap      (Trip.SIM_COL_VEH_OVERCAP)
+          * overcap_frac (Assignment.SIM_COL_PAX_OVERCAP_FRAC)
+        - Joins with vehicle trips on trip id num, B_id, B_seq to add:
+          * alight time (Assignment.SIM_COL_PAX_ALIGHT_TIME)
+
+        Returns the same dataframe but with four additional columns (replacing them if they're already there).
         """
+        FastTripsLogger.debug("find_passenger_vehicle_times(): input pathset_links_df len=%d\n%s" % \
+                              (len(pathset_links_df), pathset_links_df.head(20).to_string(formatters={Assignment.SIM_COL_PAX_LINK_TIME:Util.timedelta_formatter})))
 
-        # read existing paths
-        passengers_df = pandas.read_csv(os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration),
-                                        parse_dates=['A_time','B_time'])
-        passengers_df['linktime'] = pandas.to_timedelta(passengers_df['linktime'])
+        if Assignment.SIM_COL_PAX_BOARD_TIME in list(pathset_links_df.columns.values):
+            pathset_links_df.drop([Assignment.SIM_COL_PAX_BOARD_TIME,
+                                   Assignment.SIM_COL_PAX_ALIGHT_TIME,
+                                   Trip.SIM_COL_VEH_OVERCAP], axis=1, inplace=True)
+        if Assignment.SIM_COL_PAX_OVERCAP_FRAC in list(pathset_links_df.columns.values):
+            pathset_links_df.drop([Assignment.SIM_COL_PAX_OVERCAP_FRAC], axis=1, inplace=True)
 
-        FastTripsLogger.info("Read %s" % os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration))
-        FastTripsLogger.debug("passengers_df.dtypes=\n%s" % str(passengers_df.dtypes))
+        # FastTripsLogger.debug("pathset_links_df:\n%s\n" % pathset_links_df.head().to_string())
+        FastTripsLogger.debug("veh_trips_df:\n%s\n" % veh_trips_df.head().to_string())
 
-        uniq_pax = passengers_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]].drop_duplicates(subset=\
-                                 [Passenger.PERSONS_COLUMN_PERSON_ID,
-                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
-        num_paths_found = len(uniq_pax)
+        veh_trip_cols = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                         Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                         Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                         Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+                         Trip.SIM_COL_VEH_OVERCAP,                # TODO: what about msa_overcap?
+                         Assignment.SIM_COL_PAX_OVERCAP_FRAC]
 
-        return (num_paths_found, passengers_df)
+        # this one may not be here -- it's only present during capacity stuff
+        if Assignment.SIM_COL_PAX_OVERCAP_FRAC not in list(veh_trips_df.columns.values):
+            veh_trip_cols.remove(Assignment.SIM_COL_PAX_OVERCAP_FRAC)
+
+        pathset_links_df = pandas.merge(
+            left    =pathset_links_df,
+            right   =veh_trips_df[veh_trip_cols],
+            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq'],
+            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                      Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                      Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+            how     ='left')
+        pathset_links_df = pandas.merge(
+            left    =pathset_links_df,
+            right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                   Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                                   Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
+            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq'],
+            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                      Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                      Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+            how     ='left',
+            suffixes=("_A","_B"))
+
+        pathset_links_df.rename(columns={
+            Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Assignment.SIM_COL_PAX_BOARD_TIME,   # transit vehicle depart time (at A) = board time for pax
+            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,  # transit vehicle arrive time (at B) = alight time for pax
+        }, inplace=True)
+
+        # redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time
+        pathset_links_df.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                               '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
+
+        FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df\n%s" % \
+                              pathset_links_df.head(20).to_string(formatters={Assignment.SIM_COL_PAX_LINK_TIME:Util.timedelta_formatter}))
+
+        return pathset_links_df
 
     @staticmethod
-    def setup_passengers(FT, output_dir, iteration):
+    def put_passengers_on_vehicles(iteration, bump_iter, pathset_paths_df, pathset_links_df, veh_trips_df):
         """
-        Converts assignment results (which is stored in each Passenger :py:class:`Path`,
-        in the :py:attr:`Path.states`) into a single :py:class:`pandas.DataFrame`.  Each row
-        represents a link in the passenger's path.  The returned :py:class:`pandas.DataFrame`
-        has the following columns:
+        Puts the chosen passenger trips specified in pathset_paths_df/pathset_links_df onto the transit vehicle trips specified by veh_trip_df.
 
-        ==============  ===============  =====================================================================================================
-        column name      column type     description
-        ==============  ===============  =====================================================================================================
-        `person_id               object  person unique ID
-        `trip_list_id`            int64  trip list numerical ID
-        `pathdir`                 int64  the :py:attr:`Path.direction`
-        `pathmode`               object  the :py:attr:`Path.mode`
-        `linkmode`               object  the mode of the link, one of :py:attr:`Path.STATE_MODE_ACCESS`, :py:attr:`Path.STATE_MODE_EGRESS`,
-                                         :py:attr:`Path.STATE_MODE_TRANSFER` or :py:attr:`Path.STATE_MODE_TRIP`.  Paths will always start with
-                                         access, followed by trips with transfers in between, and ending in an egress following the last trip.
-        `trip_id`                object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `trip_id_num`           float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `A_id`                   object  the stop ID at the start of the link, or TAZ ID for access links
-        `A_id_num`                int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
-        `B_id`                   object  the stop ID at the end of the link, or a TAZ ID for access links
-        `B_id_num`                int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
-        `A_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `B_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `A_time`         datetime64[ns]  the time the passenger arrives at `A_id`
-        `B_time`         datetime64[ns]  the time the passenger arrives at `B_id`
-        `linktime`      timedelta64[ns]  the time spent on the link
-        `cost`                  float64  the cost of the entire path
-        ==============  ===============  =====================================================================================================
-
-        Additionally, this method writes out the dataframe to a csv at :py:attr:`Assignment.PASSENGERS_CSV` in the given `output_dir`
-        and labeled with the given `iteration`.
+        Returns veh_trips_df but with updated columns
+          - :py:attr:`Trip.SIM_COL_VEH_BOARDS`
+          - :py:attr:`Trip.SIM_COL_VEH_ALIGHTS`
+          - :py:attr:`Trip.SIM_COL_VEH_ONBOARD`
         """
-        mylist = []
-        for trip_list_id,path in FT.passengers.id_to_path.iteritems():
-            if not path.goes_somewhere():   continue
-            if not path.path_found():       continue
+        # drop these -- we'll set them
+        if Trip.SIM_COL_VEH_BOARDS in list(veh_trips_df.columns.values):
+            veh_trips_df.drop([Trip.SIM_COL_VEH_BOARDS,
+                               Trip.SIM_COL_VEH_ALIGHTS,
+                               Trip.SIM_COL_VEH_ONBOARD], axis=1, inplace=True)
 
-            # OUTBOUND passengers have states like this:
-            #    stop:          label    departure   dep_mode  successor linktime
-            # orig_taz                                 Access    b stop1
-            #  b stop1                                  trip1    a stop2
-            #  a stop2                               Transfer    b stop3
-            #  b stop3                                  trip2    a stop4
-            #  a stop4                                 Egress   dest_taz
-            #
-            #  stop:         label  dep_time    dep_mode   successor  seq  suc       linktime             cost  arr_time
-            #   460:  0:20:49.4000  17:41:10      Access        3514   -1   -1   0:03:08.4000     0:03:08.4000  17:44:18
-            #  3514:  0:17:41.0000  17:44:18     5131292        4313   30   40   0:06:40.0000     0:12:21.8000  17:50:59
-            #  4313:  0:05:19.2000  17:50:59    Transfer        5728   -1   -1   0:00:19.2000     0:00:19.2000  17:51:18
-            #  5728:  0:04:60.0000  17:57:00     5154302        5726   16   17   0:07:33.8000     0:03:02.4000  17:58:51
-            #  5726:  0:01:57.6000  17:58:51      Egress         231   -1   -1   0:01:57.6000     0:01:57.6000  18:00:49
+        veh_trips_df_len = len(veh_trips_df)
 
-            # INBOUND passengers have states like this
-            #   stop:          label      arrival   arr_mode predecessor linktime
-            # dest_taz                                 Egress    a stop4
-            #  a stop4                                  trip2    b stop3
-            #  b stop3                               Transfer    a stop2
-            #  a stop2                                  trip1    b stop1
-            #  b stop1                                 Access   orig_taz
-            #
-            #  stop:         label  arr_time    arr_mode predecessor  seq pred       linktime             cost  dep_time
-            #    15:  0:36:38.4000  17:30:38      Egress        3772   -1   -1   0:02:38.4000     0:02:38.4000  17:28:00
-            #  3772:  0:34:00.0000  17:28:00     5123368        6516   22   14   0:24:17.2000     0:24:17.2000  17:05:50
-            #  6516:  0:09:42.8000  17:03:42    Transfer        4766   -1   -1   0:00:16.8000     0:00:16.8000  17:03:25
-            #  4766:  0:09:26.0000  17:03:25     5138749        5671    7    3   0:05:30.0000     0:05:33.2000  16:57:55
-            #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
-            prev_linkmode = None
-            prev_state_id = None
+        passengers_df = Passenger.get_chosen_links(pathset_links_df)
 
-            state_list = path.states
-            if not path.outbound(): state_list = list(reversed(state_list))
+        # Group to boards by counting trip_list_id_nums for a (trip_id, A_id as stop_id)
+        passenger_trips_boards = passengers_df.loc[passengers_df[Assignment.SIM_COL_PAX_BUMP_ITER]==-1,  # unbumped passengers
+                                                   [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq']].groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq']).count()
+        passenger_trips_boards.index.names = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]
 
-            for (state_id, state) in state_list:
+        # And alights by counting path_ids for a (trip_id, B_id as stop_id)
+        passenger_trips_alights = passengers_df.loc[passengers_df[Assignment.SIM_COL_PAX_BUMP_ITER]==-1,
+                                                    [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                     Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq']].groupby([Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq']).count()
+        passenger_trips_alights.index.names = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]
 
-                linkmode        = state[Path.STATE_IDX_DEPARRMODE]
-                trip_id         = None
-                if linkmode not in [Path.STATE_MODE_ACCESS, Path.STATE_MODE_TRANSFER, Path.STATE_MODE_EGRESS]:
-                    trip_id     = state[Path.STATE_IDX_TRIP]
-                    linkmode    = Path.STATE_MODE_TRIP
+        # Join them to the transit vehicle trips so we can put people on vehicles (boards)
+        veh_loaded_df = pandas.merge(left        = veh_trips_df,
+                                     right       = passenger_trips_boards,
+                                     left_on     = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                     right_index = True,
+                                     how         = 'left')
+        veh_loaded_df.rename(columns={Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM:Trip.SIM_COL_VEH_BOARDS}, inplace=True)
 
-                if path.outbound():
-                    a_id_num    = state_id
-                    b_id_num    = state[Path.STATE_IDX_SUCCPRED]
-                    a_seq       = state[Path.STATE_IDX_SEQ]
-                    b_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
-                    b_time      = state[Path.STATE_IDX_ARRDEP]
-                    a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
-                else:
-                    a_id_num    = state[Path.STATE_IDX_SUCCPRED]
-                    b_id_num    = state_id
-                    a_seq       = state[Path.STATE_IDX_SEQ_SUCCPRED]
-                    b_seq       = state[Path.STATE_IDX_SEQ]
-                    b_time      = state[Path.STATE_IDX_DEPARR]
-                    a_time      = b_time - state[Path.STATE_IDX_LINKTIME]
 
-                # two trips in a row -- this shouldn't happen
-                if linkmode == Path.STATE_MODE_TRIP and prev_linkmode == Path.STATE_MODE_TRIP:
-                    FastTripsLogger.warn("Two trip links in a row... this shouldn't happen.  trip_list_id is %s\n%s\n" % (str(trip_list_id), str(path)))
+        # Join for alights
+        veh_loaded_df = pandas.merge(left        = veh_loaded_df,
+                                     right       = passenger_trips_alights,
+                                    left_on      = [Trip.TRIPS_COLUMN_TRIP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                    right_index  = True,
+                                    how          ='left')
+        veh_loaded_df.rename(columns={Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM:Trip.SIM_COL_VEH_ALIGHTS}, inplace=True)
+        veh_loaded_df.fillna(value=0, inplace=True)
+        assert(len(veh_loaded_df)==veh_trips_df_len)
 
-                row = [path.person_id,
-                       trip_list_id,
-                       path.direction,
-                       path.mode,
-                       linkmode,
-                       trip_id,
-                       a_id_num,
-                       b_id_num,
-                       a_seq,
-                       b_seq,
-                       a_time,
-                       b_time,
-                       state[Path.STATE_IDX_LINKTIME],
-                       path.cost,
-                       ]
-                mylist.append(row)
+        # these are ints, not floats
+        veh_loaded_df[[Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]] = \
+            veh_loaded_df[[Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]].astype(int)
 
-                prev_linkmode = linkmode
-                prev_state_id = state_id
+        # MSA the boards and alights
+        # TODO figure out how this works with the multiple levels of iterations
+        if bump_iter==0:
+            msa_lambda = 1.0/iteration
+            veh_loaded_df[Trip.SIM_COL_VEH_MSA_BOARDS ] = msa_lambda*veh_loaded_df[Trip.SIM_COL_VEH_BOARDS ] + (1.0-msa_lambda)*veh_loaded_df[Trip.SIM_COL_VEH_MSA_BOARDS ]
+            veh_loaded_df[Trip.SIM_COL_VEH_MSA_ALIGHTS] = msa_lambda*veh_loaded_df[Trip.SIM_COL_VEH_ALIGHTS] + (1.0-msa_lambda)*veh_loaded_df[Trip.SIM_COL_VEH_MSA_ALIGHTS]
 
-        df =  pandas.DataFrame(mylist,
-                               columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                        Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                        'pathdir',  # for debugging
-                                        'pathmode', # for output
-                                        'linkmode', 'trip_id_num',
-                                        'A_id_num','B_id_num',
-                                        'A_seq','B_seq',
-                                        'A_time', 'B_time',
-                                        'linktime', 'cost'])
+        veh_loaded_df.set_index([Trip.TRIPS_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],inplace=True)
+        veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD    ] = veh_loaded_df[Trip.SIM_COL_VEH_BOARDS    ] - veh_loaded_df[Trip.SIM_COL_VEH_ALIGHTS    ]
+        veh_loaded_df[Trip.SIM_COL_VEH_MSA_ONBOARD] = veh_loaded_df[Trip.SIM_COL_VEH_MSA_BOARDS] - veh_loaded_df[Trip.SIM_COL_VEH_MSA_ALIGHTS]
 
-        # get A_id and B_id and trip_id
-        df = Util.add_new_id(  input_df=df,                          id_colname='A_id_num',                            newid_colname='A_id',
-                             mapping_df=FT.stops.stop_id_df, mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
-        df = Util.add_new_id(  input_df=df,                          id_colname='B_id_num',                            newid_colname='B_id',
-                             mapping_df=FT.stops.stop_id_df, mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
-        # get trip_id
-        df = Util.add_new_id(  input_df=df,                          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
-                             mapping_df=FT.trips.trip_id_df, mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
+        # on board is the cumulative sum of boards - alights
+        trips_cumsum = veh_loaded_df[[Trip.SIM_COL_VEH_ONBOARD, Trip.SIM_COL_VEH_MSA_ONBOARD]].groupby(level=[0]).cumsum()
+        veh_loaded_df.drop([Trip.SIM_COL_VEH_ONBOARD, Trip.SIM_COL_VEH_MSA_ONBOARD], axis=1, inplace=True) # replace with cumsum
+        veh_loaded_df = pandas.merge(left        = veh_loaded_df,
+                                     right       = trips_cumsum,
+                                     left_index  = True,
+                                     right_index = True,
+                                     how         = 'left')
 
-        FastTripsLogger.debug("Setup passengers dataframe:\n%s" % str(df.dtypes))
-        df.to_csv(os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration), index=False)
-        FastTripsLogger.info("Wrote passengers dataframe to %s" % os.path.join(output_dir, Assignment.PASSENGERS_CSV % iteration))
-        return df
+        assert(len(veh_loaded_df)==veh_trips_df_len)
+        # print veh_trips_df.loc[5123368]
+        veh_loaded_df.reset_index(inplace=True)
+
+        FastTripsLogger.debug("veh_loaded_df with onboard>0: (showing head)\n" + \
+                              veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD]>0].head().to_string(formatters=\
+               {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
+                Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter}))
+
+        return veh_loaded_df
 
     @staticmethod
-    def setup_trips(FT):
+    def flag_missed_transfers(pathset_paths_df, pathset_links_df):
         """
-        Sets up and returns a :py:class:`pandas.DataFrame` where each row contains a leg of a transit vehicle trip.
-        # 2015-06-22 15:42:34 DEBUG Setup vehicle trips dataframe:
-        # arrival_time          datetime64[ns]
-        # departure_time        datetime64[ns]
-        # stop_id                       object
-        # stop_sequence                  int64
-        # trip_id                       object
-        # arrival_time_min             float64
-        # departure_time_min           float64
-        # stop_id_num                    int64
-        # trip_id_num                    int64
-        # route_id                      object
-        # service_id                    object
-        # vehicle_name                  object
+        Given passenger pathset links with the vehicle board_time and alight_time attached to trip links,
+        this method will add columns to determine if there are missed transfers.
+
+        This works on all paths in the pathset rather than just the chosen paths because then we can choose
+        a path without missed transfers.
+
+        The following columns are used in pathset_links_df:
+        * Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+        * Passenger.PF_COL_PATH_NUM,
+        * Passenger.PF_COL_LINK_NUM,
+        * Assignment.SIM_COL_PAX_BOARD_TIME
+        * Assignment.SIM_COL_PAX_ALIGHT_TIME
+        * Passenger.PF_COL_PAX_B_TIME
+
+        In particular, the following columns are added (or replaced if they're already there) to pathset_links_df:
+
+        1) alight_delay_min   delay in alight_time from original pathfinding understanding of alight time
+        2) new_A_time         new A_time given the trip board/alight times for the trip links
+        3) new_B_time         new B_time given the trip board/alight times for the trip links
+        4) new_linktime       new linktime from new_B_time-new_A_time
+        5) new_waittime       new waittime given the trip board/alight times for the trip links
+        6) missed_xfer        is this link a missed xfer
+
+        And the following column is added to pathset_paths_df:
+        *  missed_xfer        1 if a transfer is missed
+
         """
-        # join with trips to get additional fields
-        df = pandas.merge(left= FT.trips.stop_times_df, right= FT.trips.trips_df,
-                          how='left',
-                          on=[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_TRIP_ID_NUM])
-        assert(len(FT.trips.stop_times_df) == len(df))
-        return df
+        # Drop these, we'll set them again
+        if "alight_delay_min" in list(pathset_links_df.columns.values):
+            pathset_links_df.drop(["alight_delay_min", "new_A_time", "new_B_time", "new_linktime", "new_waittime", Assignment.SIM_COL_MISSED_XFER], axis=1, inplace=True)
+
+        # Set alight_delay_min
+        FastTripsLogger.debug("flag_missed_transfers() pathset_links_df (%d):\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string()))
+        pathset_links_df["alight_delay_min"] = 0.0
+        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "alight_delay_min"] = \
+            ((pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]-pathset_links_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
+
+        #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
+        pathset_links_df.loc[pathset_links_df["alight_delay_min"]>22*60, Assignment.SIM_COL_PAX_BOARD_TIME ] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df["alight_delay_min"]>22*60, Assignment.SIM_COL_PAX_ALIGHT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df["alight_delay_min"]>22*60, "alight_delay_min"] = \
+            ((pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]-pathset_links_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
+
+        max_alight_delay_min = pathset_links_df["alight_delay_min"].max()
+        FastTripsLogger.debug("Biggest alight_delay = %f" % max_alight_delay_min)
+        if max_alight_delay_min > 0:
+            FastTripsLogger.debug("\n%s" % pathset_links_df.sort_values(by="alight_delay_min", ascending=False).head().to_string())
+
+        # For trips, alight_time is the new B_time
+        # Set A_time for links AFTER trip links by joining to next leg
+        next_trips = pathset_links_df[[
+            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.PF_COL_PATH_NUM,
+            Passenger.PF_COL_LINK_NUM,
+            Assignment.SIM_COL_PAX_ALIGHT_TIME]].copy()
+        next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
+        next_trips.rename(columns={Assignment.SIM_COL_PAX_ALIGHT_TIME:"new_A_time"}, inplace=True)
+        # Add it to passenger trips.  Now new_A_time is set for links after trip links (note this will never be a trip link)
+        pathset_links_df = pandas.merge(left=pathset_links_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM])
+
+        FastTripsLogger.debug(str(pathset_links_df.dtypes))
+
+        # Set the new_B_time for those links -- link time for access/egress/xfer is travel time since wait times are in trip links
+        pathset_links_df["new_B_time"] = pathset_links_df["new_A_time"] + pathset_links_df[Passenger.PF_COL_LINK_TIME]
+        # For trip links, it's alight time
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, "new_B_time"] = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]
+        # For access links, it doesn't change from the original pathfinding result
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, "new_A_time"] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, "new_B_time"] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
+
+        # Now we only need to set the trip link's A time from the previous link's new_B_time
+        next_trips = pathset_links_df[[
+            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.PF_COL_PATH_NUM,
+            Passenger.PF_COL_LINK_NUM,
+            "new_B_time"]].copy()
+        next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
+        next_trips.rename(columns={"new_B_time":"new_trip_A_time"}, inplace=True)
+        # Add it to passenger trips.  Now new_trip_A_time is set for trip links
+        pathset_links_df = pandas.merge(left=pathset_links_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM])
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, "new_A_time"] = pathset_links_df["new_trip_A_time"]
+        pathset_links_df.drop(["new_trip_A_time"], axis=1, inplace=True)
+
+        pathset_links_df["new_linktime"] = pathset_links_df["new_B_time"] - pathset_links_df["new_A_time"]
+
+        #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
+        #: if the linktime > 23 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
+        pathset_links_df.loc[pathset_links_df["new_linktime"] > numpy.timedelta64(22, 'h'), "new_B_time"  ] = pathset_links_df["new_B_time"] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df["new_linktime"] > numpy.timedelta64(22, 'h'), "new_linktime"] = pathset_links_df["new_B_time"] - pathset_links_df["new_A_time"]
+
+        # new wait time
+        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "new_waittime"] = pathset_links_df["board_time"] - pathset_links_df["new_A_time"]
+
+        # invalid trips have negative wait time
+        pathset_links_df[Assignment.SIM_COL_MISSED_XFER] = 0
+        pathset_links_df.loc[pathset_links_df["new_waittime"]<numpy.timedelta64(0,'m'), Assignment.SIM_COL_MISSED_XFER] = 1
+
+        # count how many are valid (sum of invalid = 0 for the trip list id + path)
+        pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                             Passenger.PF_COL_PATH_NUM]).aggregate({Assignment.SIM_COL_MISSED_XFER:"sum" })
+
+        pathset_links_df_grouped.loc[pathset_links_df_grouped[Assignment.SIM_COL_MISSED_XFER]> 0, Assignment.SIM_COL_MISSED_XFER] = 1
+
+        FastTripsLogger.info("          flag_missed_transfers found %d missed transfer trip legs for %d paths" % \
+                             (pathset_links_df[Assignment.SIM_COL_MISSED_XFER].sum(),
+                              pathset_links_df_grouped[Assignment.SIM_COL_MISSED_XFER].sum()))
+
+        # add missed_xfer to pathset_paths_df (replacing if it was there already)
+        if Assignment.SIM_COL_MISSED_XFER in list(pathset_paths_df.columns.values):
+            pathset_paths_df.drop([Assignment.SIM_COL_MISSED_XFER], axis=1, inplace=True)
+
+        pathset_paths_df = pandas.merge(left=pathset_paths_df, right=pathset_links_df_grouped.reset_index()[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Assignment.SIM_COL_MISSED_XFER]], how="left")
+        FastTripsLogger.debug("flag_missed_transfers() pathset_paths_df (%d):\n%s" % (len(pathset_paths_df), pathset_paths_df.head(30).to_string()))
+
+        return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def get_passenger_trips(passengers_df, veh_trips_df):
+    def flag_bump_overcap_passengers(iteration, simulation_iteration, bump_iter, pathset_paths_df, pathset_links_df, veh_loaded_df):
         """
-        Creates a list of passenger trips with passenger arrive, board and alight times.
+        Check if we have boards on over-capacity vehicles.  Mark them and mark the boards.
 
-        - Takes the trip links of passengers_df
-        - Joins with vehicle trips on trip id num, A_id, A_seq to get board time (Assignment.SIM_COL_PAX_BOARD_TIME)
-        - Joins with vehicle trips on trip id num, B_id, B_seq to get alight time (Assignment.SIM_COL_PAX_ALIGHT_TIME)
-        - Renames A_time to passenger arrival time (Assignment.SIM_COL_PAX_ARRIVE)
-        returns DataFrame
+        If :py:attr:`Assignment.CAPACITY_CONSTRAINT`, then bump off overcapacity passengers.
+
+        The process is:
+
+        1) Look at which vehicle links are over capacity, adding columns named :py:attr:`Trip.SIM_COL_VEH_OVERCAP`
+           and py:attr:`Trip.SIM_COL_VEH_OVERCAP_FRAC` to *veh_loaded_df*
+
+        2) Look at the stops where the first people board after we're at capacity (impossible boards) if any
+
+        3) If :py:attr:`Assignment.BUMP_ONE_AT_A_TIME`, select the first such stop by arrival time
+           Otherwise, select the first such stop for each vehicle trip
+
+        4) Join these stops to pathset_links_df, so pathset_links_df now has column Assignment.SIM_COL_PAX_OVERCAP_FRAC
+
+        5) If not :py:attr:`Assignment.CAPACITY_CONSTRAINT`, return (and drop the column named :py:attr:`Trip.SIM_COL_VEH_OVERCAP` from veh_loaded_df)
+
+        6) Figure out which passenger trips are actually getting bumped.  Some people can get on at these stops, but not all, so let the first
+           ones that arrive at the stop get on and filter to the ones we'll actually bump.  Update the column named :py:attr:`Assignmment.SIM_COL_PAX_BUMP_ITER`.
+           If non-negative, this represents the iteration the passenger got bumped.
+
+        Return (chosen_paths_bumped, pathset_paths_df, pathset_links_df, veh_loaded_df)
         """
-        passenger_trips = passengers_df.loc[passengers_df.linkmode=='Trip'].copy()
-        FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
 
-        passenger_trips = pandas.merge(left    =passenger_trips,
-                                       right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                              Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]],
-                                       left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq'],
-                                       right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                 Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                 Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                                       how     ='left')
-        passenger_trips = pandas.merge(left    =passenger_trips,
-                                       right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                              Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                              Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
-                                       left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq'],
-                                       right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                 Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                 Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                                       how     ='left',
-                                       suffixes=("_A","_B"))
+        # 1) Look at which vehicle links are over capacity
+        # overcap = how many people are problematic
+        # overcap_frac = what percentage of boards are problematic
+        veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP           ] = veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD] - veh_loaded_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY]
+        veh_loaded_df[Assignment.SIM_COL_PAX_OVERCAP_FRAC] = 0.0
 
-        passenger_trips.rename(columns=
-           {Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Assignment.SIM_COL_PAX_BOARD_TIME,      # transit vehicle depart time (at A) = board time for pax
-            'A_time'                            :Assignment.SIM_COL_PAX_ARRIVE_TIME,     # passenger arrival at the stop
-            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,     # transit vehicle arrive time (at B) = alight time for pax
-            }, inplace=True)
+        # Keep negatives - that means we have space
+        # veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP]<0, Trip.SIM_COL_VEH_OVERCAP           ] = 0  # negatives - don't care, set to zero
+        veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_BOARDS ]>0, Assignment.SIM_COL_PAX_OVERCAP_FRAC] = veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP]/veh_loaded_df[Trip.SIM_COL_VEH_BOARDS]
 
-        # redundant with A_id, B_id, A_seq, B_seq
-        passenger_trips.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                              '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                              '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
-        FastTripsLogger.debug("       Have %d passenger trips" % len(passenger_trips))
+        # only need to do this once
+        # TODO: figure out MSA with iteration/simulation_iteration/bump_iter
+        if iteration==1 and simulation_iteration==0 and bump_iter==0:
+            veh_loaded_df[Trip.SIM_COL_VEH_MSA_OVERCAP] = veh_loaded_df[Trip.SIM_COL_VEH_MSA_ONBOARD] - veh_loaded_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY]
+            veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_MSA_OVERCAP]<0, Trip.SIM_COL_VEH_MSA_OVERCAP] = 0  # negatives - don't care, set to zero
 
-        # FastTripsLogger.debug("passenger_trips\n%s" % \
-        #                (passenger_trips.to_string(formatters=\
-        #                {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_min_formatter,
-        #                 Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_min_formatter,
-        #                 Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_min_formatter,
-        #                 'B_time'                            :Util.datetime64_min_formatter,
-        #                 Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter})))
-        return passenger_trips
+        # These are the trips/stops AT capacity -- first, make sure it's clear they successfully boarded
+        atcap_df = veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP] == 0]
+        FastTripsLogger.debug("flag_bump_overcap_passengers() %d vehicle trip/stops at capacity: (showing head)\n%s" % \
+                              (len(atcap_df), atcap_df.head().to_string()))
 
-    @staticmethod
-    def simulate(FT, passengers_df, veh_trips_df):
-        """
-        Actually assign the passengers trips to the vehicles.
-        """
-        passengers_df_len       = len(passengers_df)
-        veh_trips_df_len        = len(veh_trips_df)
+        # Join pathset links to atcap_df; now passenger links alighting at a bump stop will have Trip.STOPTIMES_COLUMN_STOP_SEQUENCE set
+        pathset_links_df = pandas.merge(left    =pathset_links_df,
+                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, "A_seq"],
+                                        right   =atcap_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
+                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                        how     ="left")
 
-        # veh_trips_df.set_index(['trip_id','stop_seq','stop_id'],verify_integrity=True,inplace=True)
-        # FastTripsLogger.debug("veh_trips_df types = \n%s" % str(veh_trips_df.dtypes))
-        FastTripsLogger.debug("veh_trips_df: \n%s" % veh_trips_df.head().to_string(formatters=
-            {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter,
-             'waitqueue_start_time'               :Util.datetime64_formatter}))
+        # these folks boarded
+        pathset_links_df.loc[(pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])) & \
+                             (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>=0), Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] = 1
 
-        for trace_pax in Assignment.TRACE_PERSON_IDS:
-            FastTripsLogger.debug("Initial passengers_df for %s\n%s" % \
-               (str(trace_pax),
-                passengers_df.loc[passengers_df.person_id==trace_pax].to_string(formatters=\
-               {'A_time'               :Util.datetime64_min_formatter,
-                'B_time'               :Util.datetime64_min_formatter,
-                'linktime'             :Util.timedelta_formatter})))
+        FastTripsLogger.debug("flag_bump_overcap_passengers() pathset_links_df chosen, at capacity\n%s" % # pathset_links_df.head().to_string())
+            pathset_links_df.loc[ (pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])) & \
+                                  (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>=0) ].to_string())
+        pathset_links_df.drop(Trip.STOPTIMES_COLUMN_STOP_SEQUENCE, axis=1, inplace=True)
 
-        ######################################################################################################
-        FastTripsLogger.info("Step 1. Find out board/alight times for passengers from vehicle times")
+        # These are trips/stops over capacity
+        overcap_df = veh_loaded_df.loc[veh_loaded_df[Trip.SIM_COL_VEH_OVERCAP] > 0]
+        FastTripsLogger.debug("flag_bump_overcap_passengers() %d vehicle trip/stops over capacity: (showing head)\n%s" % \
+                              (len(overcap_df), overcap_df.head().to_string()))
 
-        passenger_trips     = Assignment.get_passenger_trips(passengers_df, veh_trips_df)
-        passenger_trips_len = len(passenger_trips)
+        # If none, we're done
+        if len(overcap_df) == 0:
+            FastTripsLogger.info("          No over-capacity vehicles")
+            return (0, pathset_paths_df, pathset_links_df, veh_loaded_df)
 
-        ######################################################################################################
-        bump_iter = 0
-        Assignment.bumped_person_ids.clear()
-        Assignment.bumped_trip_list_nums.clear()
-        while True: # loop for capacity constraint
-            FastTripsLogger.info("Step 2. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
+        # 2) Look at the trip-stops where the *first people* board after we're at capacity (impossible boards) if any
+        bump_stops_df = overcap_df.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID]).aggregate('first').reset_index()
+        FastTripsLogger.debug("flag_bump_overcap_passengers() bump_stops_df iter=%d sim_iter=%d bump_iter=%d (%d rows, showing head):\n%s" %
+                              (iteration, simulation_iteration, bump_iter, len(bump_stops_df), bump_stops_df.head().to_string()))
 
-            # Group to boards by counting trip_list_id_nums for a (trip_id, A_id as stop_id)
-            passenger_trips_boards = passenger_trips[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                      Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']].groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']).count()
-            passenger_trips_boards.index.names = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                  Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]
 
-            # And alights by counting path_ids for a (trip_id, B_id as stop_id)
-            passenger_trips_alights = passenger_trips[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                       Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id','B_seq']].groupby([Trip.TRIPS_COLUMN_TRIP_ID_NUM,'B_id','B_seq']).count()
-            passenger_trips_alights.index.names = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                   Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]
+        if Assignment.CAPACITY_CONSTRAINT:
+            # One stop at a time -- slower but more accurate
+            # 3) If Assignment.BUMP_ONE_AT_A_TIME, select the first such stop by arrival time
+            #    Otherwise, select the first such stop for each vehicle trip
+            if Assignment.BUMP_ONE_AT_A_TIME:
+                bump_stops_df.sort_values(by=[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME], inplace=True)
+                bump_stops_df = bump_stops_df.iloc[:1]
 
-            # Join them to the transit vehicle trips so we can put people on vehicles
-            veh_loaded_df = pandas.merge(left        = veh_trips_df,
-                                         right       = passenger_trips_boards,
-                                         left_on     = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                        Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                        Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                                         right_index = True,
-                                         how         = 'left')
-            veh_loaded_df.rename(columns={Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM:'boards'}, inplace=True)
+            FastTripsLogger.info("          Need to bump %d passengers from %d trip-stops" % (bump_stops_df.overcap.sum(), len(bump_stops_df)))
 
-            veh_loaded_df = pandas.merge(left        = veh_loaded_df,
-                                         right       = passenger_trips_alights,
-                                        left_on      = [Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-                                                        Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                        Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                                        right_index  = True,
-                                        how          ='left')
-            veh_loaded_df.rename(columns={Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM:'alights'}, inplace=True)
-            veh_loaded_df.fillna(value=0, inplace=True)
-            assert(len(veh_loaded_df)==veh_trips_df_len)
-
-            # these are ints, not floats
-            veh_loaded_df[['boards','alights']] = veh_loaded_df[['boards','alights']].astype(int)
-
-            veh_loaded_df.set_index([Trip.TRIPS_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],inplace=True)
-            veh_loaded_df['onboard'] = veh_loaded_df.boards - veh_loaded_df.alights
-
-            # on board is the cumulative sum of boards - alights
-            trips_cumsum = veh_loaded_df[['onboard']].groupby(level=[0]).cumsum()
-            veh_loaded_df.drop('onboard', axis=1, inplace=True) # replace with cumsum
-            veh_loaded_df = pandas.merge(left        = veh_loaded_df,
-                                         right       = trips_cumsum,
-                                         left_index  = True,
-                                         right_index = True,
-                                         how         = 'left')
-            assert(len(veh_loaded_df)==veh_trips_df_len)
-            # print veh_trips_df.loc[5123368]
-            veh_loaded_df.reset_index(inplace=True)
-
-            FastTripsLogger.debug("veh_trips_loaded with onboard>0: (showing head)\n" + \
-                                  veh_loaded_df.loc[veh_loaded_df.onboard>0].head().to_string(formatters=\
-                   {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter}))
-
-            if not Assignment.CAPACITY_CONSTRAINT or not FT.trips.has_capacity_configured():
-                # No need to loop
-                break
-
-            else:
-                ######################################################################################################
-                FastTripsLogger.info("Step 3. Capacity constraints on transit vehicles.")
-                if bump_iter == 0:
-                    FastTripsLogger.info("        Bumping one at a time? %s" % ("true" if Assignment.BUMP_ONE_AT_A_TIME else "false"))
-                # This needs to run at this point because the arrival times for the passengers are accurate here
-
-                # Who gets bumped?
-                # overcap = how many people are problematic
-                veh_loaded_df['overcap'] = veh_loaded_df.onboard - veh_loaded_df.capacity
-                overcap_df     = veh_loaded_df.loc[veh_loaded_df.overcap > 0]
-
-                FastTripsLogger.debug("%d vehicle trip/stops over capacity: (showing head)\n%s" % \
-                                      (len(overcap_df),
-                                      overcap_df.head().to_string(formatters=\
-                   {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
-
-                # If none, we're done
-                if len(overcap_df) == 0:
-                    FastTripsLogger.info("        No overcapacity vehicles")
-                    break
-
-                # start by bumping the first ones who board after at capacity - which stops are they?
-                bump_stops_df  = overcap_df.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID]).aggregate('first')
-                FastTripsLogger.debug("Bump stops (%d rows, showing head):\n%s" %
-                                      (len(bump_stops_df),
-                                      bump_stops_df.head().to_string(formatters=\
-                   {Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
-
-                # One stop at a time -- slower but more accurate
-                if Assignment.BUMP_ONE_AT_A_TIME:
-                    bump_stops_df.sort([Trip.STOPTIMES_COLUMN_ARRIVAL_TIME], inplace=True)
-                    bump_stops_df = bump_stops_df.iloc[:1]
-
-                FastTripsLogger.info("        Need to bump %d passengers from %d stops" % (bump_stops_df.overcap.sum(), len(bump_stops_df)))
-
-                # FastTripsLogger.debug("passenger_trips\n%s" % \
-                #                (passenger_trips.to_string(formatters=\
-                #                {Assignment.SIM_COL_PAX_BOARD_TIME   :Util.datetime64_min_formatter,
-                #                 Assignment.SIM_COL_PAX_ARRIVE_TIME  :Util.datetime64_min_formatter,
-                #                 Assignment.SIM_COL_PAX_ALIGHT_TIME  :Util.datetime64_min_formatter,
-                #                 'B_time'                            :Util.datetime64_min_formatter,
-                #                 Assignment.SIM_COL_PAX_LINK_TIME    :Util.timedelta_formatter})))
-
-                # who boards at those stops?
-                bumped_pax_boards = pandas.merge(left    =passenger_trips[[ \
-                                                            Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id',
-                                                            Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,'A_seq',
-                                                            Assignment.SIM_COL_PAX_ARRIVE_TIME]],
-                                                 left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq'],
-                                                 right   =bump_stops_df.reset_index()[[ \
-                                                            Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                            Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                            Trip.STOPTIMES_COLUMN_STOP_ID,
-                                                            Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                            Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
-                                                            Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,'overcap']],
-                                                 right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                           Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                           Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                                                 how     ='inner')
-                # bump off later arrivals, later trip_list_num
-                bumped_pax_boards.sort([Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
+        # debug -- see the whole trip
+        if True:
+            FastTripsLogger.debug("flag_bump_overcap_passengers() Trips with bump stops:\n%s\n" % \
+                pandas.merge(
+                    left=veh_loaded_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                         Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                         Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                        Trip.STOPTIMES_COLUMN_STOP_ID,
                                         Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                        Assignment.SIM_COL_PAX_ARRIVE_TIME,
-                                        Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM],
-                                       ascending=[True, True, True, True, False, False], inplace=True)
-                bumped_pax_boards.reset_index(drop=True, inplace=True)
+                                        Trip.VEHICLES_COLUMN_TOTAL_CAPACITY,
+                                        Trip.SIM_COL_VEH_BOARDS,
+                                        Trip.SIM_COL_VEH_ALIGHTS,
+                                        Trip.SIM_COL_VEH_ONBOARD,
+                                        Trip.SIM_COL_VEH_OVERCAP,
+                                        Assignment.SIM_COL_PAX_OVERCAP_FRAC]],
+                    right=bump_stops_df[[Trip.STOPTIMES_COLUMN_TRIP_ID]],
+                    how='inner').to_string())
 
-                # For each trip_id, stop_seq, stop_id, we want the first *overcap* rows
-                # group to trip_id, stop_seq, stop_id and count off
-                bpb_count = bumped_pax_boards.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                       Trip.STOPTIMES_COLUMN_STOP_ID_NUM]).cumcount()
-                bpb_count.name = 'bump_index'
+        # 4) Join these stops to pathset_links_df, so pathset_links_df now has column Assignment.SIM_COL_PAX_OVERCAP_FRAC
+        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_loaded_df)
 
-                # Add the bump index to our passenger-paths/stops
-                bumped_pax_boards = pandas.concat([bumped_pax_boards, bpb_count], axis=1)
+        # 5) If not Assignment.CAPACITY_CONSTRAINT, return (and drop the column named Trip.SIM_COL_VEH_OVERCAP from veh_loaded_df)
+        #    (If we're not actually bumping passengers, we're done; the pathset_links_df have overcap and overcap_frac information)
+        if not Assignment.CAPACITY_CONSTRAINT:
 
-                FastTripsLogger.debug("bumped_pax_boards (%d rows, showing head):\n%s" % (len(bumped_pax_boards),
-                    bumped_pax_boards.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
+            veh_loaded_df.drop(Assignment.SIM_COL_PAX_OVERCAP_FRAC, axis=1, inplace=True)
+            return (0, pathset_paths_df, pathset_links_df, veh_loaded_df)
 
-                # use it to filter to those we bump
-                bumped_pax_boards = bumped_pax_boards.loc[bumped_pax_boards.bump_index < bumped_pax_boards.overcap]
+        # join pathset links to bump_stops_df; now passenger links alighting at a bump stop will have Trip.STOPTIMES_COLUMN_STOP_SEQUENCE set
+        pathset_links_df = pandas.merge(left    =pathset_links_df,
+                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, "A_seq"],
+                                        right   =bump_stops_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
+                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                        how     ="left")
+        FastTripsLogger.debug("flag_bump_overcap_passengers() pathset_links_df (%d rows, showing head):\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string()))
 
-                FastTripsLogger.debug("filtered bumped_pax_boards (%d rows, showing head):\n%s" % (len(bumped_pax_boards),
-                    bumped_pax_boards.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
+        # bump candidates: boarding at bump stops, chosen paths, unbumped and overcap
+        bumpstop_boards = pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])&        # board at bump_stops_df stop
+                                               (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]                 >=0)&        # chosen
+                                               (pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER]              < 0)].copy() # unbumped
+        # unchosen bump candidates (to hedge against future choosing of paths with at-capacity links)
+        unchosen_atcap_boards = pathset_links_df.loc[(pandas.notnull(pathset_links_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]))&    # board at bump_stops_df stop
+                                                     (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]                    <0)&    # path not chosen (yet)
+                                                     (pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER]                 <0)]    # unbumped
 
-                # filter to unique passengers/paths
-                bumped_pax_boards.drop_duplicates(subset=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM],inplace=True)
-                bumped_pax_boards['bump'] = True
+        # bump off later arrivals, later trip_list_num
+        bumpstop_boards.sort_values(by=[ \
+            "new_A_time", # I think this is correct
+            Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+            "A_seq",
+            Passenger.PF_COL_PAX_A_TIME,
+            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM],
+            ascending=[True, True, True, False, False], inplace=True)
+        bumpstop_boards.reset_index(drop=True, inplace=True)
 
-                # keep track of these
-                Assignment.bumped_person_ids.update(bumped_pax_boards[Passenger.TRIP_LIST_COLUMN_PERSON_ID].tolist())
-                Assignment.bumped_trip_list_nums.update(bumped_pax_boards[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM].tolist())
+        # For each trip_id, stop_seq, stop_id, we want the first *overcap* rows
+        # group to trip_id, stop_seq, stop_id and count off
+        bpb_count = bumpstop_boards.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                             "A_seq",
+                                             "A_id_num"]).cumcount()
+        bpb_count.name = 'bump_index'
 
-                FastTripsLogger.debug("bumped_pax_boards without duplicate passengers (%d rows, showing head):\n%s" % \
-                    (len(bumped_pax_boards),
-                     bumped_pax_boards.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_ARRIVAL_TIME   :Util.datetime64_formatter,
-                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME :Util.datetime64_formatter})))
+        # Add the bump index to our passenger-paths/stops
+        bumpstop_boards = pandas.concat([bumpstop_boards, bpb_count], axis=1)
 
-                # Kick out the bumped passengers
-                passengers_df = pandas.merge(left     =passengers_df,
-                                             right    =bumped_pax_boards[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                                          'bump']],
-                                             on       =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                        Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM],
-                                             how      ='left')
-                assert(passengers_df_len == len(passengers_df))
-                passengers_df = passengers_df[passengers_df.bump != True]
-                FastTripsLogger.info("        Bumped %d passengers; passenger_df length %d -> %d" %
-                                     (len(bumped_pax_boards), passengers_df_len, len(passengers_df)))
-                passengers_df.drop('bump', axis=1, inplace=True)
-                passengers_df_len = len(passengers_df)
+        # 1 mean boarded, 0 means we got bumped
+        bumpstop_boards["new_bumpstop_boarded"] = 1
+        bumpstop_boards.loc[ bumpstop_boards["bump_index"] < bumpstop_boards[Trip.SIM_COL_VEH_OVERCAP], "new_bumpstop_boarded"] = 0  # these folks got bumped
 
-                # recreate
-                passenger_trips     = Assignment.get_passenger_trips(passengers_df, veh_trips_df)
-                passenger_trips_len = len(passenger_trips)
+        FastTripsLogger.debug("flag_bump_overcap_passengers() bumpstop_boards (%d rows, showing head):\n%s" % 
+                              (len(bumpstop_boards), bumpstop_boards.head(50).to_string()))
 
-                new_bump_wait = bumped_pax_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                   Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                   Trip.STOPTIMES_COLUMN_STOP_ID,
-                                                   'A_id','A_seq',
-                                                   Assignment.SIM_COL_PAX_ARRIVE_TIME]].groupby([\
-                                                     Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id','A_seq']).first()
-                new_bump_wait.reset_index(drop=False, inplace=True)
-                new_bump_wait.rename(columns={'A_id' :Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                              'A_seq':Trip.STOPTIMES_COLUMN_STOP_SEQUENCE}, inplace=True)
+        # filter to unique passengers/paths who got bumped
+        bump_paths = bumpstop_boards.loc[ bumpstop_boards["new_bumpstop_boarded"] == 0,
+            [Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM]].drop_duplicates()
+        chosen_paths_bumped = len(bump_paths)
 
-                FastTripsLogger.debug("new_bump_wait (%d rows, showing head):\n%s" %
-                    (len(new_bump_wait), new_bump_wait.head().to_string(formatters=\
-                   {Assignment.SIM_COL_PAX_ARRIVE_TIME:Util.datetime64_formatter})))
+        # if we have unchosen paths that board here, add those too
+        if len(unchosen_atcap_boards) > 0:
 
-                # incorporate it into the bump wait df
-                if type(Assignment.bump_wait_df) == type(None):
-                    Assignment.bump_wait_df = new_bump_wait
-                else:
-                    Assignment.bump_wait_df = Assignment.bump_wait_df.append(new_bump_wait)
-                    Assignment.bump_wait_df.drop_duplicates([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                             Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
+            FastTripsLogger.debug("flag_bump_overcap_passengers() unchosen_atcap_boards (%d rows, showing head):\n%s" % \
+                (len(unchosen_atcap_boards), unchosen_atcap_boards.head().to_string()))
+            unchosen_atcap_boards = unchosen_atcap_boards[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                           Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                           Passenger.PF_COL_PATH_NUM]].drop_duplicates()
+            bump_paths = pandas.concat([bump_paths, unchosen_atcap_boards], axis=0)
 
-                # incorporate it into the bump wait
-                # This is (trip_id, stop_id) -> Timestamp
-                bump_wait_dict  = Assignment.bump_wait_df.set_index([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                                                                     Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                                                                     Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]).to_dict()[Assignment.SIM_COL_PAX_ARRIVE_TIME]
-                bump_wait_dict2 = {k: v.to_datetime() for k, v in bump_wait_dict.iteritems()}
-                Assignment.bump_wait.update(bump_wait_dict2)
+        bump_paths['bump_iter_new'] = bump_iter
 
-                # FastTripsLogger.debug("Bump wait ---------")
-                # for key,val in Assignment.bump_wait.iteritems():
-                #     FastTripsLogger.debug("(%10s, %10s, %10s) -> %s" %
-                #                           (str(key[0]), str(key[1]), str(key[2]), val.strftime("%H:%M:%S")))
+        FastTripsLogger.debug("flag_bump_overcap_passengers() bump_paths (%d rows, showing head):\n%s" % \
+            (len(bump_paths), bump_paths.head().to_string()))
 
-                bump_iter += 1
-                FastTripsLogger.info("        -> complete loop iter %d" % bump_iter)
+        # Kick out the bumped passengers -- update bump_iter on all pathset_links_df
+        pathset_links_df = pandas.merge(left =pathset_links_df, right=bump_paths, how  ="left")
+        pathset_links_df.loc[ pandas.notnull(pathset_links_df['bump_iter_new']), Assignment.SIM_COL_PAX_BUMP_ITER] = pathset_links_df['bump_iter_new']
 
-        if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
-            Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME_MIN] = \
-                Assignment.bump_wait_df[Assignment.SIM_COL_PAX_ARRIVE_TIME].map(lambda x: (60.0*x.hour) + x.minute + (x.second/60.0))
+        # Keep record of if they boarded at a bumpstop
+        pathset_links_df = pandas.merge(left=pathset_links_df,
+                                        right=bumpstop_boards[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                               Passenger.PF_COL_PATH_NUM,
+                                                               Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                               "A_seq","new_bumpstop_boarded"]],
+                                        how="left")
+        pathset_links_df.loc[ pandas.notnull(pathset_links_df['new_bumpstop_boarded']), Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] = pathset_links_df["new_bumpstop_boarded"]
 
-        FastTripsLogger.debug("Bumped passenger ids: %s" % str(Assignment.bumped_person_ids))
-        FastTripsLogger.debug("Bumped path ids: %s" % str(Assignment.bumped_trip_list_nums))
-        if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
-            FastTripsLogger.debug("Bump_wait_df:\n%s" % Assignment.bump_wait_df.to_string(formatters=\
-                {Assignment.SIM_COL_PAX_ARRIVE_TIME :Util.datetime64_formatter}))
+        new_bump_wait = bumpstop_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                           Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                           "A_id_num",
+                                           Passenger.PF_COL_PAX_A_TIME]].groupby( \
+                        [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,"A_id_num"]).first()
+        new_bump_wait.reset_index(drop=False, inplace=True)
+        new_bump_wait.rename(columns={"A_id_num":Trip.STOPTIMES_COLUMN_STOP_ID_NUM}, inplace=True)
 
-        ######################################################################################################
-        FastTripsLogger.info("Step 4. Convert times to strings")
+        FastTripsLogger.debug("new_bump_wait (%d rows, showing head):\n%s" %
+            (len(new_bump_wait), new_bump_wait.head().to_string(formatters=\
+           {Passenger.PF_COL_PAX_A_TIME:Util.datetime64_formatter})))
 
-        ######         TODO: this is really catering to output format; an alternative might be more appropriate
-        passenger_trips.loc[:,  'board_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_BOARD_TIME ].apply(Util.datetime64_formatter)
-        passenger_trips.loc[:,'arrival_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ARRIVE_TIME].apply(Util.datetime64_formatter)
-        passenger_trips.loc[:, 'alight_time_str'] = passenger_trips[Assignment.SIM_COL_PAX_ALIGHT_TIME].apply(Util.datetime64_formatter)
-        assert(len(passenger_trips) == passenger_trips_len)
+        # incorporate it into the bump wait df
+        if type(Assignment.bump_wait_df) == type(None):
+            Assignment.bump_wait_df = new_bump_wait
+        else:
+            Assignment.bump_wait_df = pandas.concat([Assignment.bump_wait_df, new_bump_wait], axis=0)
 
-        # Aggregate (by joining) across each passenger + path
-        ptrip_group = passenger_trips.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
-        # these are Series
-        board_time_str   = ptrip_group['board_time_str'  ].apply(lambda x:','.join(x))
-        arrival_time_str = ptrip_group['arrival_time_str'].apply(lambda x:','.join(x))
-        alight_time_str  = ptrip_group['alight_time_str' ].apply(lambda x:','.join(x))
+            FastTripsLogger.debug("flag_bump_overcap_passengers() bump_wait_df (%d rows, showing head):\n%s" %
+                (len(Assignment.bump_wait_df), Assignment.bump_wait_df.head().to_string()))
 
-        # Aggregate other fields across each passenger + path
-        pax_exp_df = passengers_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).agg(
-            {'pathmode'     :'first',  # path mode
-             'A_id'         :'first',  # origin
-             'B_id'         :'last',   # destination
-             'A_time'       :'first',  # start time
-             'B_time'       :'last',   # end time
-             'cost'         :'first',  # total travel cost is calculated for the whole path
-            })
+            Assignment.bump_wait_df.drop_duplicates(subset=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                            Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
 
-        # Put them together and return
-        assert(len(pax_exp_df) == len(board_time_str))
-        pax_exp_df = pandas.concat([pax_exp_df,
-                                    board_time_str,
-                                    arrival_time_str,
-                                    alight_time_str], axis=1)
-        # print pax_exp_df.to_string(formatters={'A_time':Assignment.datetime64_min_formatter,
-        #                                        'B_time':Assignment.datetime64_min_formatter})
+        # drop unnecessary columns before returning
+        pathset_links_df.drop([ \
+            Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,  # adding this
+            'bump_iter_new',
+            'new_bumpstop_boarded'
+            ], axis=1, inplace=True)
 
-        if len(Assignment.TRACE_PERSON_IDS) > 0:
-            simulated_person_ids = passengers_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].values
+        veh_loaded_df.drop(Assignment.SIM_COL_PAX_OVERCAP_FRAC, axis=1, inplace=True)
 
-        for trace_pax in Assignment.TRACE_PERSON_IDS:
-            if trace_pax not in simulated_person_ids:
-                FastTripsLogger.debug("Passenger %s not in final simulated list" % trace_pax)
-            else:
-                FastTripsLogger.debug("Final passengers_df for %s\n%s" % \
-                   (str(trace_pax),
-                    passengers_df.loc[passengers_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]==trace_pax].to_string(formatters=\
-                   {'A_time'               :Util.datetime64_min_formatter,
-                    'B_time'               :Util.datetime64_min_formatter,
-                    'linktime'             :Util.timedelta_formatter,
-                    'board_time'           :Util.datetime64_min_formatter,
-                    'alight_time'          :Util.datetime64_min_formatter,
-                    'board_time_prev'      :Util.datetime64_min_formatter,
-                    'alight_time_prev'     :Util.datetime64_min_formatter,
-                    'B_time_prev'          :Util.datetime64_min_formatter,
-                    'A_time_next'          :Util.datetime64_min_formatter,})))
+        FastTripsLogger.debug("flag_bump_overcap_passengers(): return pathset_links_df.head():\n%s\n" % pathset_links_df.head().to_string())
+        FastTripsLogger.debug("flag_bump_overcap_passengers(): return veh_loaded_df.head():\n%s\n" % veh_loaded_df.head().to_string())
 
-                FastTripsLogger.debug("Passengers experienced times for %s\n%s" % \
-                   (str(trace_pax),
-                    pax_exp_df.loc[trace_pax].to_string(formatters=\
-                   {'A_time'               :Util.datetime64_min_formatter,
-                    'B_time'               :Util.datetime64_min_formatter})))
+        return (chosen_paths_bumped, pathset_paths_df, pathset_links_df, veh_loaded_df)
 
-        return (len(pax_exp_df), veh_loaded_df, pax_exp_df)
 
     @staticmethod
-    def print_load_profile(FT, veh_trips_df, output_dir):
+    def simulate(FT, output_dir, iteration, pathset_paths_df, pathset_links_df, veh_trips_df):
         """
-        Print the load profile output
+        Given a pathset for each passenger, choose a path (if relevant) and then
+        actually assign the passengers trips to the vehicles.
+
+        Returns (valid_linked_trips, pathset_paths_df, pathset_links_df, veh_loaded_df)
         """
-        # reset columns
-        print_veh_trips_df = veh_trips_df
+        simulation_iteration   = 0
+        num_passengers_arrived = 0 # will get returned from choose_paths
 
-        Trip.calculate_dwell_times(print_veh_trips_df)
-        print_veh_trips_df = FT.trips.calculate_headways(print_veh_trips_df)
+        while True:
+            FastTripsLogger.info("Simulation Iteration %d" % simulation_iteration)
+            for trace_pax in Assignment.TRACE_PERSON_IDS:
+                FastTripsLogger.debug("Initial pathset_links_df for %s\n%s" % \
+                   (str(trace_pax), pathset_links_df.loc[pathset_links_df.person_id==trace_pax].to_string()))
 
-        # recode/reformat
-        print_veh_trips_df['traveledDist']  = -1
-        print_veh_trips_df['departureTime'] = print_veh_trips_df.departure_time.apply(Util.datetime64_min_formatter)
-        # reorder
-        columns = [Trip.TRIPS_COLUMN_ROUTE_ID,
-                   Trip.TRIPS_COLUMN_TRIP_ID,
-                   Trip.TRIPS_COLUMN_DIRECTION_ID,
-                   Trip.STOPTIMES_COLUMN_STOP_ID,
-                   'traveledDist',
-                   'departureTime',
-                   'headway',
-                   'dwell_time',
-                   'boards',
-                   'alights',
-                   'onboard']
-        # this one may not be in their; direction_id is optional
-        if Trip.TRIPS_COLUMN_DIRECTION_ID not in print_veh_trips_df.columns.values:
-            columns.remove(Trip.TRIPS_COLUMN_DIRECTION_ID)
-        print_veh_trips_df = print_veh_trips_df[columns]
+                FastTripsLogger.debug("Initial pathset_paths_df for %s\n%s" % \
+                   (str(trace_pax), pathset_paths_df.loc[pathset_paths_df.person_id==trace_pax].to_string()))
 
-        load_file = open(os.path.join(output_dir, "ft_output_loadProfile.txt"), 'w')
-        print_veh_trips_df.to_csv(load_file,
-                              float_format="%.2f",
-                              index=False)
-        load_file.close()
+            ######################################################################################################
+            FastTripsLogger.info("  Step 1. Find out board/alight times for all pathset links from vehicle times")
+
+            # could do this just to chosen path links but let's do this to the whole pathset
+            pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df)
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 2. Flag missed transfer links and paths in the pathsets")
+            (pathset_paths_df, pathset_links_df) = Assignment.flag_missed_transfers(pathset_paths_df, pathset_links_df)
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
+            (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
+                iteration, simulation_iteration, Assignment.STOCH_DISPERSION,
+                pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df,
+                FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df)
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")
+
+            # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
+            # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
+            (num_passengers_arrived, num_chosen, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
+                Assignment.PATHFINDING_EVERYONE and simulation_iteration==0,  # choose for everyone if we just re-found all paths
+                iteration, simulation_iteration,
+                pathset_paths_df, pathset_links_df)
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load")
+
+            # no one is bumped yet
+            bump_iter = 0
+            pathset_links_df[Assignment.SIM_COL_PAX_OVERCAP_FRAC] = numpy.NaN
+
+            if simulation_iteration==0:
+                # For those we just found paths for, no one is bumped or going on overcap vehicles yet
+                pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_ITERATION]==iteration, Assignment.SIM_COL_PAX_BUMP_ITER ] = -1
+
+            while True: # loop for capacity constraint
+
+                # Put passengers on vehicles, updating the vehicle's boards, alights, onboard
+                veh_trips_df = Assignment.put_passengers_on_vehicles(iteration, bump_iter, pathset_paths_df, pathset_links_df, veh_trips_df)
+
+                if not FT.trips.has_capacity_configured():
+                    # We can't do anything about capacity
+                    break
+
+                else:
+                    ######################################################################################################
+                    FastTripsLogger.info("  Step 6. Capacity constraints on transit vehicles.")
+
+                    if bump_iter == 0:
+                        FastTripsLogger.info("          Bumping one at a time? %s" % ("true" if Assignment.BUMP_ONE_AT_A_TIME else "false"))
+
+                    # This needs to run at this point because the arrival times for the passengers are accurate here
+                    (chosen_paths_bumped, pathset_paths_df, pathset_links_df, veh_trips_df) = \
+                        Assignment.flag_bump_overcap_passengers(iteration, simulation_iteration, bump_iter,
+                                                                pathset_paths_df, pathset_links_df, veh_trips_df)
+
+
+                    FastTripsLogger.info("        -> completed loop bump_iter %d and bumped %d chosen paths" % (bump_iter, chosen_paths_bumped))
+
+                    if chosen_paths_bumped == 0:
+                        # do one final update of overcap to passengers
+                        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df)
+                        break
+
+                    bump_iter += 1
+
+
+            if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
+                Assignment.bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN] = \
+                    Assignment.bump_wait_df[Passenger.PF_COL_PAX_A_TIME].map(lambda x: (60.0*x.hour) + x.minute + (x.second/60.0))
+
+            if type(Assignment.bump_wait_df) == pandas.DataFrame and len(Assignment.bump_wait_df) > 0:
+                FastTripsLogger.debug("Bump_wait_df:\n%s" % Assignment.bump_wait_df.to_string(formatters=\
+                    {Passenger.PF_COL_PAX_A_TIME :Util.datetime64_formatter}))
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 7. Update dwell and travel times for transit vehicles")
+            # update the trip times -- accel/decel rates + stops affect travel times, and boards/alights affect dwell times
+            veh_trips_df   = Trip.update_trip_times(veh_trips_df, Assignment.MSA_RESULTS)
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False)
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True )
+
+            simulation_iteration += 1
+
+            if num_chosen <= 0:
+                FastTripsLogger.info("  No more path choices to make => Ending simulation loop")
+                break
+
+            if simulation_iteration > Assignment.MAX_SIMULATION_ITERS:
+                FastTripsLogger.info("  Maximum simulation iterations reached (%d) => Ending simulation loop" % Assignment.MAX_SIMULATION_ITERS)
+                break
+
+        # write the final chosen paths for this iteration
+        passengers_df = Passenger.get_chosen_links(pathset_links_df)
+        passengers_df["iteration"] = iteration
+        Util.write_dataframe(passengers_df, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"),
+                             append=(iteration>1))
+        passengers_df.drop(["iteration"], axis=1, inplace=True)
+
+        return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
+
 
 def find_trip_based_paths_process_worker(iteration, worker_num, input_network_dir, input_demand_dir,
-                                         output_dir, todo_path_queue, done_queue, hyperpath, bump_wait_df):
+                                         output_dir, todo_pathset_queue, done_queue, hyperpath, bump_wait_df, stop_times_df):
     """
     Process worker function.  Processes all the paths in queue.
 
@@ -1270,46 +1553,50 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
     """
     worker_str = "_worker%02d" % worker_num
 
-    # Setup a new FT instance for this worker.
-    # This is just for reading input files into the FT structures,
-    # but it won't change the FT structures themselves (so it's a read-only instance).
-    #
-    # You'd think we could have just passed the FT structure to this method but that would involve pickling/unpickling the
-    # data and ends up meaning it takes a *really long time* to start the new process ~ 2 minutes per process.
-    # Simply reading the input files again is faster.  No need to read the demand tho.
     from .FastTrips import FastTrips
-    worker_FT = FastTrips(input_network_dir=input_network_dir, input_demand_dir=input_demand_dir, output_dir=output_dir, 
-                          is_child_process=True, logname_append=worker_str, appendLog=True if iteration > 1 else False)
-
+    setupLogging(infoLogFilename  = None,
+                 debugLogFilename = os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str), 
+                 logToConsole     = False,
+                 append           = True if iteration > 1 else False)
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))
 
-    Assignment.initialize_fasttrips_extension(worker_num, output_dir, worker_FT)
+    # the child process doesn't have these set to read them
+    Assignment.read_configuration(output_dir, input_demand_dir, Assignment.CONFIGURATION_OUTPUT_FILE)
+
+    # this passes those read parameters and the stop times to the C++ extension
+    Assignment.initialize_fasttrips_extension(worker_num, output_dir, stop_times_df)
+
+    # the extension has it now, so we're done
+    stop_times_df = None
+
     if iteration > 1:
         Assignment.set_fasttrips_bump_wait(bump_wait_df)
 
     while True:
         # go through my queue -- check if we're done
-        todo = todo_path_queue.get()
+        todo = todo_pathset_queue.get()
         if todo == 'DONE':
-            done_queue.put('DONE')
-            FastTripsLogger.debug("Received DONE from the todo_path_queue")
+            done_queue.put( (worker_num, 'DONE') )
+            FastTripsLogger.debug("Received DONE from the todo_pathset_queue")
             return
 
         # do the work
-        path = todo
+        pathset = todo
 
-        FastTripsLogger.info("Processing person %20s path %d" % (path.person_id, path.trip_list_id_num))
+        FastTripsLogger.info("Processing person %20s path %d" % (pathset.person_id, pathset.trip_list_id_num))
+        # communicate it to the parent
+        done_queue.put( (worker_num, "STARTING", pathset.person_id, pathset.trip_list_id_num ))
 
         trace_person = False
-        if path.person_id in Assignment.TRACE_PERSON_IDS:
-            FastTripsLogger.debug("Tracing assignment of person %s" % path.person_id)
+        if pathset.person_id in Assignment.TRACE_PERSON_IDS:
+            FastTripsLogger.debug("Tracing assignment of person %s" % pathset.person_id)
             trace_person = True
 
         try:
-            (cost, return_states, perf_dict) = Assignment.find_trip_based_path(iteration, worker_FT, path, hyperpath, trace=trace_person)
-            done_queue.put( (path.trip_list_id_num, cost, return_states, perf_dict) )
+            (pathdict, perf_dict) = Assignment.find_trip_based_pathset(iteration, pathset, hyperpath, trace=trace_person)
+            done_queue.put( (worker_num, "COMPLETED", pathset.trip_list_id_num, pathdict, perf_dict) )
         except:
-            FastTripsLogger.exception('Exception')
+            FastTripsLogger.exception("Exception")
             # call it a day
-            done_queue.put('DONE')
+            done_queue.put( (worker_num, "EXCEPTION", str(sys.exc_info()) ) )
             return

@@ -27,7 +27,7 @@ fast-trips Classes
    FastTripsLogger
    Passenger
    Performance
-   Path
+   PathSet
    Route
    Stop
    Transfer

@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 
-import datetime, logging
+import csv, datetime, logging, os
 
 import numpy
 import pandas
@@ -26,6 +26,20 @@ class Util:
 
     Collect useful stuff here that doesn't belong in any particular existing class.
     """
+    #: Use this as the date
+    SIMULATION_DAY                  = datetime.date(2016,1,1)
+    #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
+    SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
+
+    #: Maps timedelta columns to units for :py:meth:`Util.write_dataframe`
+    TIMEDELTA_COLUMNS_TO_UNITS      = {
+        'time enumerating'  : 'milliseconds',  # performance
+        'time labeling'     : 'milliseconds',  # performance
+        'pf_linktime'       : 'min',
+        'pf_waittime'       : 'min',
+        'new_linktime'      : 'min',
+        'new_waittime'      : 'min'
+    }
 
     @staticmethod
     def add_numeric_column(input_df, id_colname, numeric_newcolname):
@@ -82,8 +96,8 @@ class Util:
 
             FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
             FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].head() = \n%s\n" % (mapping_newid_colname_chk,
-                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].head())))
+            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].drop_duplicates() = \n%s\n" % (mapping_newid_colname_chk,
+                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates())))
             FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
 
 
@@ -135,7 +149,7 @@ class Util:
         """
         Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM:SS`
         """
-        return pandas.to_datetime(x).strftime('%H:%M:%S')
+        return pandas.to_datetime(x).strftime('%H:%M:%S') if pandas.notnull(x) else ""
 
     @staticmethod
     def datetime64_min_formatter(x):
@@ -156,7 +170,7 @@ class Util:
         minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
-    
+
     @staticmethod
     def read_time(x, end_of_day=False):
         try:
@@ -167,9 +181,74 @@ class Util:
                 x = '23:59:59' if end_of_day else '00:00:00'
         time_split = x.split(':')
         hour = int(time_split[0])
-        day = datetime.datetime.today()
+        day = Util.SIMULATION_DAY
         if hour >= 24: 
             time_split[0] = '%02d' %(hour-24)
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
+
+    @staticmethod
+    def write_dataframe(df, name, output_file, append=False):
+        """
+        Convenience method to write a dataframe but make some of the fields more usable.
+
+        If a column named colname is a timedelta64 fields, instead of writing "0 days 00:12:00.000000000",
+         writes colname_min with the minutes.
+        """
+        df_cols = list(df.columns.values)
+        df_toprint = df.copy()
+
+        # if we're appending, figure out the header row
+        header_row = None
+        if append and os.path.exists(output_file):
+            # get the columns
+            df_file = open(output_file, 'rb')
+            df_reader = csv.reader(df_file, delimiter=",")
+            header_row = df_reader.next()
+            df_file.close()
+
+        for col_idx in range(len(df_cols)):
+            old_colname = df_cols[col_idx]
+            # FastTripsLogger.debug("%s -> %s" % (old_colname, df_toprint.dtypes[col_idx]))
+
+            # convert timedelta untils because the string version is just awful
+            if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
+
+                # lookup timedelta units
+                units_str   = Util.TIMEDELTA_COLUMNS_TO_UNITS[old_colname]
+                new_colname = "%s %s" % (old_colname, units_str)
+                if units_str == "milliseconds":
+                    units = numpy.timedelta64(1,'ms')
+                elif units_str == "min":
+                    units = numpy.timedelta64(1,'m')
+                else:
+                    raise
+
+                # if the column already exists, continue
+                if new_colname in df_cols: continue
+
+                # otherwise make the new one and replace it
+                df_toprint[new_colname] = df_toprint[old_colname]/units
+                df_cols[col_idx] = new_colname
+
+            elif str(df_toprint.dtypes[col_idx]) == "datetime64[ns]":
+                # print as HH:MM:SS
+                df_toprint[df_cols[col_idx]] = df_toprint[df_cols[col_idx]].apply(Util.datetime64_formatter)
+
+            # print df_toprint.dtypes[col_idx]
+
+        # the cols have new column names instead of old
+        df_toprint = df_toprint[df_cols]
+
+        # append
+        if header_row:
+            df_file = open(output_file, "a")
+            df_toprint[header_row].to_csv(df_file, index=False, header=False)
+            df_file.close()
+
+            FastTripsLogger.info("Appended %s dataframe to %s" % (name, output_file))
+
+        else:
+            df_toprint.to_csv(output_file, index=False)
+            FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))
