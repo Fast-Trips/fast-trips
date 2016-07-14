@@ -550,7 +550,7 @@ class Passenger:
             Passenger.PF_COL_WAIT_TIME,
             Passenger.PF_COL_LINK_NUM ])
 
-        FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
+        FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (len(pathset_paths_df), len(pathset_links_df)))
 
         # get A_id and B_id and trip_id
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='A_id_num',                            newid_colname='A_id',
@@ -579,25 +579,28 @@ class Passenger:
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())
 
-        # create path description
-        pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[Route.ROUTES_COLUMN_MODE]
-        if prepend_route_id_to_trip_id:
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df[Trip.TRIPS_COLUMN_ROUTE_ID] + "_"
-        else:
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
-        pathset_links_df.loc[ pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]),     Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
-        pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
+        if len(pathset_paths_df) > 0:
+            # create path description
+            pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[Route.ROUTES_COLUMN_MODE]
+            if prepend_route_id_to_trip_id:
+                pathset_links_df.loc[ pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df[Trip.TRIPS_COLUMN_ROUTE_ID] + "_"
+            else:
+                pathset_links_df.loc[ pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
+            pathset_links_df.loc[ pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]),     Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
+            pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
 
-        descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                     Passenger.PF_COL_ITERATION,
-                                     Passenger.PF_COL_PATH_NUM,
-                                     Passenger.PF_COL_DESCRIPTION]].groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                                             Passenger.PF_COL_ITERATION,
-                                                                             Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x:" ".join(x))
-        descr_df = descr_df.to_frame().reset_index()
-        # join it to pathset_paths and drop from pathset_links
-        pathset_paths_df = pandas.merge(left=pathset_paths_df, right=descr_df, how="left")
-        pathset_links_df.drop([Passenger.PF_COL_DESCRIPTION], axis=1, inplace=True)
+            descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                         Passenger.PF_COL_ITERATION,
+                                         Passenger.PF_COL_PATH_NUM,
+                                         Passenger.PF_COL_DESCRIPTION]].groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                                                                 Passenger.PF_COL_ITERATION,
+                                                                                 Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x:" ".join(x))
+            descr_df = descr_df.to_frame().reset_index()
+            # join it to pathset_paths and drop from pathset_links
+            pathset_paths_df = pandas.merge(left=pathset_paths_df, right=descr_df, how="left")
+            pathset_links_df.drop([Passenger.PF_COL_DESCRIPTION], axis=1, inplace=True)
+        else:
+            pathset_paths_df[Passenger.PF_COL_DESCRIPTION] = ""
 
         return (pathset_paths_df, pathset_links_df)
 
