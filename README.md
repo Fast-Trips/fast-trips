@@ -48,6 +48,7 @@ Option Name                         | Type   | Default | Description
 `simulation`                        | bool   | True    | After path-finding, should we choose paths and assign passengers?  (Why would you ever not do this?)
 `skim_start_time`                   | string | 5:00    | Not implemented yet.
 `skim_end_time`                     | string | 10:00   | Not implemented yet.
+`skip_person_ids`                   | string | 'None'  | A list of person IDs to skip.
 `trace_person_ids`                  | string | 'None'  | A list of person IDs for whom to output verbose trace information.
 
 **pathfinding configuration options**

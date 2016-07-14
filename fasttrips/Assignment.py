@@ -117,6 +117,9 @@ class Assignment:
     #: Debug mode: only run this number of trips, -1 to run all. Int.
     DEBUG_NUM_TRIPS                 = -1
 
+    #: Skip these passengers
+    SKIP_PERSON_IDS                 = None
+
     #: Trace these passengers
     TRACE_PERSON_IDS                = None
 
@@ -216,6 +219,7 @@ class Assignment:
                       'skim_start_time'                 :'5:00',
                       'skim_end_time'                   :'10:00',
                       'capacity_constraint'             :'False',
+                      'skip_person_ids'                 :'None',
                       'trace_person_ids'                :'None',
                       'debug_trace_only'                :'False',
                       'debug_num_trips'                 :-1,
@@ -246,6 +250,7 @@ class Assignment:
         Assignment.SKIM_END_TIME   = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
+        Assignment.SKIP_PERSON_IDS          = eval(parser.get       ('fasttrips','skip_person_ids'))
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
@@ -296,6 +301,7 @@ class Assignment:
         parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
+        parser.set('fasttrips','skip_person_ids',               '%s' % str(Assignment.SKIP_PERSON_IDS))
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
         parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
@@ -578,6 +584,10 @@ class Assignment:
                 if Assignment.DEBUG_NUM_TRIPS > 0 and len(FT.passengers.trip_list_df) > Assignment.DEBUG_NUM_TRIPS:
                     FastTripsLogger.info("Truncating trip list to %d trips" % Assignment.DEBUG_NUM_TRIPS)
                     FT.passengers.trip_list_df = FT.passengers.trip_list_df.iloc[:Assignment.DEBUG_NUM_TRIPS]
+
+            # Skip someone?
+            if Assignment.SKIP_PERSON_IDS and len(Assignment.SKIP_PERSON_IDS) > 0:
+                FT.passengers.trip_list_df = FT.passengers.trip_list_df.loc[~FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.SKIP_PERSON_IDS)]
 
         # these are the trips for which we'll find paths
         FT.passengers.pathfind_trip_list_df = FT.passengers.trip_list_df
