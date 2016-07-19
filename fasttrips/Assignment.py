@@ -66,6 +66,10 @@ class Assignment:
     #: passengers' time.  Boolean.
     OUTPUT_PASSENGER_TRAJECTORIES   = None
 
+    #: Configuration: If true, outputs pathset every simulation iteration.  If false,
+    #: outputs pathset every path-finding iteration.
+    OUTPUT_PATHSET_PER_SIM_ITER     = None
+
     #: Configuration: Path time-window. This is the time in which the paths are generated.
     #: E.g. with a typical 30 min window, any path within 30 min of the
     #: departure time will be checked.  A :py:class:`datetime.timedelta` instance.
@@ -214,6 +218,7 @@ class Assignment:
         parser = ConfigParser.RawConfigParser(
             defaults={'iterations'                      :1,
                       'simulation'                      :'True',
+                      'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
                       'create_skims'                    :'False',
                       'skim_start_time'                 :'5:00',
@@ -244,6 +249,7 @@ class Assignment:
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
         Assignment.SIMULATION_FLAG               = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
+        Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
         Assignment.SKIM_START_TIME = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_start_time'),'%H:%M')
@@ -297,6 +303,7 @@ class Assignment:
         parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
         parser.set('fasttrips','simulation',                    'True' if Assignment.ASSIGNMENT_TYPE else 'False')
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
+        parser.set('fasttrips','output_pathset_per_sim_iter',   'True' if Assignment.OUTPUT_PATHSET_PER_SIM_ITER else 'False')
         parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
         parser.set('fasttrips','skim_start_time',               Assignment.SKIM_START_TIME.strftime('%H:%M'))
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
@@ -1520,9 +1527,10 @@ class Assignment:
             veh_trips_df   = Trip.update_trip_times(veh_trips_df, Assignment.MSA_RESULTS)
 
             ######################################################################################################
-            FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
-            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False)
-            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True )
+            if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
+                FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
+                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False)
+                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True )
 
             simulation_iteration += 1
 
@@ -1534,12 +1542,21 @@ class Assignment:
                 FastTripsLogger.info("  Maximum simulation iterations reached (%d) => Ending simulation loop" % Assignment.MAX_SIMULATION_ITERS)
                 break
 
+        # Write the pathsets (if we haven't been already)
+        if Assignment.OUTPUT_PATHSET_PER_SIM_ITER == False:
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False)
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True )
+
         # write the final chosen paths for this iteration
-        passengers_df = Passenger.get_chosen_links(pathset_links_df)
-        passengers_df["iteration"] = iteration
-        Util.write_dataframe(passengers_df, "passengers_df", os.path.join(output_dir, "ft_output_passenger_paths.csv"),
-                             append=(iteration>1))
-        passengers_df.drop(["iteration"], axis=1, inplace=True)
+        chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
+        chosen_links_df["iteration"] = iteration
+        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosen_links_df.csv"), append=(iteration>1))
+        chosen_links_df.drop(["iteration"], axis=1, inplace=True)
+
+        chosen_paths_df = Passenger.get_chosen_links(pathset_paths_df)
+        chosen_paths_df["iteration"] = iteration
+        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosen_paths_df.csv"), append=(iteration>1))
+        chosen_paths_df.drop(["iteration"], axis=1, inplace=True)
 
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
 
