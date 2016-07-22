@@ -1550,12 +1550,12 @@ class Assignment:
         # write the final chosen paths for this iteration
         chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
         chosen_links_df["iteration"] = iteration
-        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosen_links_df.csv"), append=(iteration>1))
+        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosenpaths_links.csv"), append=(iteration>1))
         chosen_links_df.drop(["iteration"], axis=1, inplace=True)
 
         chosen_paths_df = Passenger.get_chosen_links(pathset_paths_df)
         chosen_paths_df["iteration"] = iteration
-        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosen_paths_df.csv"), append=(iteration>1))
+        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=(iteration>1))
         chosen_paths_df.drop(["iteration"], axis=1, inplace=True)
 
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
