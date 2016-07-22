@@ -43,9 +43,9 @@ Option Name                         | Type   | Default | Description
 `debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
 `iterations`                        | int    | 1       | Number of pathfinding iterations to run.
+`number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
 `output_pathset_per_sim_iter`       | bool   | False   | Output pathsets for each simulation iteration?  If false, just outputs once per path-finding iteration.
-`number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `prepend_route_id_to_trip_id`       | bool   | False   | This is for readability in debugging; if True, then route ids will be prepended to trip ids.
 `simulation`                        | bool   | True    | After path-finding, should we choose paths and assign passengers?  (Why would you ever not do this?)
 `skim_start_time`                   | string | 5:00    | Not implemented yet.
@@ -59,6 +59,7 @@ Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -----------
 `max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than `min_path_probability`
 `min_path_probability`              | float  | 0.005   | Paths with probability less than this get dropped IF `max_num_paths` specified AND hit.
+`min_transfer_penalty`              | float  | 1       | Minimum transfer penalty. Safeguard against having no transfer penalty which can result in terrible paths with excessive transfers.
 `pathfinding_type`                  | string | 'Deterministic Assignment' |
 `stochastic_dispersion`             | float  | 1.0     | Stochastic dispersion parameter. TODO: document this further.
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.

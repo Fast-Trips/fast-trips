@@ -235,6 +235,7 @@ class Assignment:
                       # pathfinding
                       'max_num_paths'                   :-1,
                       'min_path_probability'            :0.005,
+                      'min_transfer_penalty'            :1.0,
                       'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':-1,
@@ -269,6 +270,7 @@ class Assignment:
         # pathfinding
         Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
         Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
+        PathSet.MIN_TRANSFER_PENALTY             = parser.getfloat  ('pathfinding','min_transfer_penalty')
         Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
         assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
                                               Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
@@ -321,6 +323,7 @@ class Assignment:
         parser.add_section('pathfinding')
         parser.set('pathfinding','max_num_paths',               '%d' % Assignment.MAX_NUM_PATHS)
         parser.set('pathfinding','min_path_probability',        '%f' % Assignment.MIN_PATH_PROBABILITY)
+        parser.set('pathfinding','min_transfer_penalty',        '%f' % PathSet.MIN_TRANSFER_PENALTY)
         parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)

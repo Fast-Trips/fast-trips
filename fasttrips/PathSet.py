@@ -50,6 +50,10 @@ class PathSet:
     #: Path weights
     WEIGHTS_DF                      = None
 
+    #: Configuration: Minimum transfer penalty. Safeguard against having no transfer penalty
+    #: which can result in terrible paths with excessive transfers.
+    MIN_TRANSFER_PENALTY        = None
+
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
     #: Weights column: Purpose
@@ -208,7 +212,7 @@ class PathSet:
         implicit_df['key'] = 1
         implicit_df = pandas.merge(left=user_classes, right=implicit_df, on='key')
         implicit_df.drop(['index','key'], axis=1, inplace=True)
-        # print implicit_df
+        # FastTripsLogger.debug("implicit_df: \n%s" % implicit_df)
 
         weight_check = pandas.merge(left=implicit_df, right=PathSet.WEIGHTS_DF,
                                     on=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
@@ -220,10 +224,36 @@ class PathSet:
         FastTripsLogger.debug("implicit demand_modes x weights: \n%s" % weight_check.to_string())
 
         if pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]).sum() > 0:
-            error_str += "\nThe following user_class, demand_mode_type, demand_mode, supply_mode combinations exist in the demand file but are missing from the weight configuration:\n"
+            error_str += "\nThe following user_class, purpose, demand_mode_type, demand_mode, supply_mode combinations exist in the demand file but are missing from the weight configuration:\n"
             error_str += weight_check.loc[pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
             error_str += "\n\n"
 
+        # transfer penalty check
+        tp_index = pandas.DataFrame({ PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE:['transfer'],
+                                      PathSet.WEIGHTS_COLUMN_DEMAND_MODE     :['transfer'],
+                                      PathSet.WEIGHTS_COLUMN_SUPPLY_MODE     :['transfer'],
+                                      PathSet.WEIGHTS_COLUMN_WEIGHT_NAME     :['transfer_penalty']})
+        uc_purp_index = PathSet.WEIGHTS_DF[[PathSet.WEIGHTS_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_PURPOSE]].drop_duplicates()
+        FastTripsLogger.debug("uc_purp_index: \n%s" % uc_purp_index)
+
+        # these are all the transfer penalties we have
+        transfer_penaltes = pandas.merge(left=tp_index, right=PathSet.WEIGHTS_DF, how='left')
+        FastTripsLogger.debug("transfer_penaltes: \n%s" % transfer_penaltes)
+
+        transfer_penalty_check = pandas.merge(left=uc_purp_index, right=transfer_penaltes, how='left')
+        FastTripsLogger.debug("transfer_penalty_check: \n%s" % transfer_penalty_check)
+
+        # missing transfer penalty
+        if pandas.isnull(transfer_penalty_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]).sum() > 0:
+            error_str += "\nThe following user class x purpose are missing a transfer penalty:\n"
+            error_str += transfer_penalty_check.loc[pandas.isnull(transfer_penalty_check[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME])].to_string()
+            error_str += "\n\n"
+
+        bad_pen = transfer_penalty_check.loc[transfer_penalty_check[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] < PathSet.MIN_TRANSFER_PENALTY]
+        if len(bad_pen) > 0:
+            error_str += "\nThe following user cass x purpose path weights have invalid (too small) transfer penalties. MIN=(%f)\n" % PathSet.MIN_TRANSFER_PENALTY
+            error_str += bad_pen.to_string()
+            error_str += "\nConfigure smaller min_transfer_penalty AT YOUR OWN RISK since this will make path generation slow/unreliable.\n\n"
 
         # If *capacity_constraint* is true, make sure there's an at_capacity weight on the transit supply mode links
         # to enforce it.
