@@ -743,9 +743,9 @@ namespace fasttrips {
         };
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class/purpose [" << path_spec.user_class_ << "," << path_spec.purpose_ << "], ";
+            std::cerr << "Couldn't find any weights configured for user class/purpose (1) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return false;
         }
 
@@ -1001,9 +1001,9 @@ namespace fasttrips {
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
             // this shouldn't happen because of the shortcut
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
-            std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << "Couldn't find any weights configured for user class/purpose (2) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+            std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return;
         }
 
@@ -1473,9 +1473,9 @@ namespace fasttrips {
         };
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
-            std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << "Couldn't find any weights configured for user class/purpose (3) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+            std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return false;
         }
 
@@ -1547,9 +1547,9 @@ namespace fasttrips {
         };
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
-            std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << "Couldn't find any weights configured for user class/purpose (4) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+            std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return false;
         }
 
