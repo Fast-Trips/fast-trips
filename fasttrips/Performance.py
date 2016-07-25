@@ -31,6 +31,8 @@ class Performance:
     PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM       = Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM
     #: Performance column: Number of label iterations
     PERFORMANCE_COLUMN_LABEL_ITERATIONS       = "label iterations"
+    #: Performance column: Number of labeled stops
+    PERFORMANCE_COLUMN_NUM_LABELED_STOPS      = "num labeled stops"
     #: Performance column: Maximum number of times a stop was processed
     PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT = "max stop process count"
     #: Performance column: Time spent labeling (timedelta)
@@ -43,6 +45,10 @@ class Performance:
     PERFORMANCE_COLUMN_TIME_ENUMERATING_MS    = "time enumerating milliseconds"
     #: Performance column: Traced, since this affects performance
     PERFORMANCE_COLUMN_TRACED                 = "traced"
+    #: Performance column: Working set in memory, in bytes
+    PERFORMANCE_COLUMN_WORKING_SET_BYTES      = "working set bytes"
+    #: Performance column: Private usage in memroy, in bytes
+    PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES    = "private usage bytes"
 
     #: File with to write performance results
     OUTPUT_PERFORMANCE_FILE                   = 'ft_output_performance.csv'
@@ -53,13 +59,16 @@ class Performance:
         """
         self.performance_dict = {
             Performance.PERFORMANCE_COLUMN_ITERATION                :[],
+            Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS        :[],
             Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM         :[],
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS         :[],
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT   :[],
             Performance.PERFORMANCE_COLUMN_TIME_LABELING            :[],
             Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS         :[],
             Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING         :[],
-            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS      :[]
+            Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS      :[],
+            Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES        :[],
+            Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES      :[]
         }
 
 
@@ -72,9 +81,12 @@ class Performance:
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM].append(trip_list_id_num)
 
         for key in [Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
+                    Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS,
                     Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT,
                     Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS,
-                    Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS]:
+                    Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS,
+                    Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES,
+                    Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES]:
             self.performance_dict[key].append(perf_dict[key])
 
         # convert milliseconds time to timedeltas

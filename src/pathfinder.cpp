@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#include <psapi.h>
 #else
 #include <sys/time.h>
 #endif
@@ -539,6 +540,7 @@ namespace fasttrips {
 
         performance_info.label_iterations_ = labelStops(path_spec, trace_file, reachable_final_stops,
                                                         stop_states, label_stop_queue, performance_info.max_process_count_);
+        performance_info.num_labeled_stops_ = stop_states.size();
 
 #ifdef _WIN32
         QueryPerformanceCounter(&labeling_end_time);
@@ -566,6 +568,13 @@ namespace fasttrips {
 
         performance_info.milliseconds_labeling_    = (long)label_elapsed.QuadPart;
         performance_info.milliseconds_enumerating_ = (long)pathfind_elapsed.QuadPart;
+
+        PROCESS_MEMORY_COUNTERS_EX pmc;
+        if ( GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)) )
+        {
+            performance_info.workingset_bytes_   = pmc.WorkingSetSize;
+            performance_info.privateusage_bytes_ = pmc.PrivateUsage;
+        }
 #else
         gettimeofday(&pathfind_end_time, NULL);
 

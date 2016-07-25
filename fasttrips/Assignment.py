@@ -827,8 +827,9 @@ class Assignment:
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
         (ret_ints, ret_doubles, path_costs,
-         label_iterations, max_label_process_count,
-         ms_labeling, ms_enumerating) = \
+         label_iterations, num_labeled_stops, max_label_process_count,
+         ms_labeling, ms_enumerating,
+         bytes_workingset, bytes_privateusage) = \
             _fasttrips.find_pathset(iteration, pathset.person_id_num, pathset.trip_list_id_num, hyperpath,
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
@@ -894,10 +895,13 @@ class Assignment:
 
         perf_dict = { \
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
+            Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS     : num_labeled_stops,
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,
             Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS      : ms_labeling,
             Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : ms_enumerating,
             Performance.PERFORMANCE_COLUMN_TRACED                : trace,
+            Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES     : bytes_workingset,
+            Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES   : bytes_privateusage
         }
         return (pathdict, perf_dict)
 
