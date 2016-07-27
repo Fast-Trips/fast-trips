@@ -826,7 +826,7 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles, path_costs,
+        (ret_ints, ret_doubles, path_costs, process_num,
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
          bytes_workingset, bytes_privateusage) = \
@@ -894,6 +894,7 @@ class Assignment:
                 row_num += 1
 
         perf_dict = { \
+            Performance.PERFORMANCE_COLUMN_PROCESS_NUM           : process_num,
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
             Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS     : num_labeled_stops,
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,

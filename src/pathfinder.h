@@ -348,6 +348,7 @@ namespace fasttrips {
         /// PathFinder constructor.
         PathFinder();
 
+        int processNumber() const { return process_num_; }
         /// This is the transfer supply mode number
         int transferSupplyMode() const { return transfer_supply_mode_; }
         /// Accessor for access link attributes

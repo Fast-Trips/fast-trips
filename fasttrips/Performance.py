@@ -29,6 +29,8 @@ class Performance:
     PERFORMANCE_COLUMN_ITERATION              = "iteration"
     #: Performance column: Trip list ID num
     PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM       = Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM
+    #: Performance column: Process number
+    PERFORMANCE_COLUMN_PROCESS_NUM            = "process number"
     #: Performance column: Number of label iterations
     PERFORMANCE_COLUMN_LABEL_ITERATIONS       = "label iterations"
     #: Performance column: Number of labeled stops
@@ -59,8 +61,10 @@ class Performance:
         """
         self.performance_dict = {
             Performance.PERFORMANCE_COLUMN_ITERATION                :[],
-            Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS        :[],
             Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM         :[],
+            Performance.PERFORMANCE_COLUMN_PROCESS_NUM              :[],
+            Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS        :[],
+            Performance.PERFORMANCE_COLUMN_TRACED                   :[],
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS         :[],
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT   :[],
             Performance.PERFORMANCE_COLUMN_TIME_LABELING            :[],
@@ -80,8 +84,10 @@ class Performance:
         self.performance_dict[Performance.PERFORMANCE_COLUMN_ITERATION].append(iteration)
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM].append(trip_list_id_num)
 
-        for key in [Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
+        for key in [Performance.PERFORMANCE_COLUMN_PROCESS_NUM,
+                    Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
                     Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS,
+                    Performance.PERFORMANCE_COLUMN_TRACED,
                     Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT,
                     Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS,
                     Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS,
