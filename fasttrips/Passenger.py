@@ -312,6 +312,9 @@ class Passenger:
         # print self.id_to_path
         return self.id_to_pathset[trip_list_id]
 
+    def get_person_id(self, trip_list_id):
+        return self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, Passenger.TRIP_LIST_COLUMN_PERSON_ID].iloc[0]
+
     def read_passenger_pathsets(self, output_dir, iteration):
         """
         Reads the dataframes described in :py:meth:`Passenger.setup_passenger_pathsets` and returns them.

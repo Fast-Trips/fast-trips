@@ -687,7 +687,7 @@ class Assignment:
                                                         Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
                                                         trace=trace_person)
                     trip_pathset.pathdict = pathdict
-                    FT.performance.add_info(iteration, trip_list_id, perf_dict)
+                    FT.performance.add_info(iteration, person_id, trip_list_id, perf_dict)
 
                     if trip_pathset.path_found():
                         num_paths_found_now += 1
@@ -725,8 +725,9 @@ class Assignment:
                             pathset         = FT.passengers.get_pathset(trip_list_id)
                             pathset.pathdict= result[3]
                             perf_dict       = result[4]
+                            person_id       = FT.passengers.get_person_id(trip_list_id)
 
-                            FT.performance.add_info(iteration, trip_list_id, perf_dict)
+                            FT.performance.add_info(iteration, person_id, trip_list_id, perf_dict)
 
                             if pathset.path_found():
                                 num_paths_found_now += 1
@@ -744,7 +745,7 @@ class Assignment:
                             print "Unexpected done queue contents: " + str(result)
 
                     except :
-                        # FastTripsLogger.debug("Error: %s" % str(sys.exc_info()))
+                        print("Error: %s" % str(sys.exc_info()))
                         pass
 
                     # check if any processes are not alive

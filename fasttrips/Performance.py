@@ -27,6 +27,8 @@ class Performance:
     """
     #: Performance column: Iteration
     PERFORMANCE_COLUMN_ITERATION              = "iteration"
+    #: Performance column: Person ID
+    PERFORMANCE_COLUMN_PERSON_ID              = Passenger.TRIP_LIST_COLUMN_PERSON_ID
     #: Performance column: Trip list ID num
     PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM       = Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM
     #: Performance column: Process number
@@ -61,6 +63,7 @@ class Performance:
         """
         self.performance_dict = {
             Performance.PERFORMANCE_COLUMN_ITERATION                :[],
+            Performance.PERFORMANCE_COLUMN_PERSON_ID                :[],
             Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM         :[],
             Performance.PERFORMANCE_COLUMN_PROCESS_NUM              :[],
             Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS        :[],
@@ -76,12 +79,13 @@ class Performance:
         }
 
 
-    def add_info(self, iteration, trip_list_id_num, perf_dict):
+    def add_info(self, iteration, person_id, trip_list_id_num, perf_dict):
         """
         Add this row to the performance dict of arrays.
         Assumes time values are in milliseconds.
         """
         self.performance_dict[Performance.PERFORMANCE_COLUMN_ITERATION].append(iteration)
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_PERSON_ID].append(person_id)
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM].append(trip_list_id_num)
 
         for key in [Performance.PERFORMANCE_COLUMN_PROCESS_NUM,
