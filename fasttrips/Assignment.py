@@ -176,6 +176,7 @@ class Assignment:
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' # 1 if lucky enough to board at an at- or over-capacity stop
     SIM_COL_PAX_COST                = 'sim_cost'         # cannot be cost because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST
+    SIM_COL_PAX_LNPS                = 'ln_PS'            # log(PathSize)
     SIM_COL_PAX_PROBABILITY         = 'probability'
     SIM_COL_PAX_LOGSUM              = 'logsum'
 
@@ -236,6 +237,8 @@ class Assignment:
                       'max_num_paths'                   :-1,
                       'min_path_probability'            :0.005,
                       'min_transfer_penalty'            :1.0,
+                      'overlap_scale_parameter'         :1.0,
+                      'overlap_variable'                :'count',
                       'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':-1,
@@ -271,6 +274,8 @@ class Assignment:
         Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
         Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
         PathSet.MIN_TRANSFER_PENALTY             = parser.getfloat  ('pathfinding','min_transfer_penalty')
+        PathSet.OVERLAP_SCALE_PARAMETER          = parser.getfloat  ('pathfinding','overlap_scale_parameter')
+        PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
         Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
         assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
                                               Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
@@ -281,6 +286,11 @@ class Assignment:
         Assignment.TIME_WINDOW = datetime.timedelta(
                                          minutes = parser.getfloat  ('pathfinding','time_window'))
         PathSet.USER_CLASS_FUNCTION              = parser.get       ('pathfinding','user_class_function')
+
+        if PathSet.OVERLAP_VARIABLE not in PathSet.OVERLAP_VARIABLE_OPTIONS:
+            msg = "pathfinding.overlap_variable [%s] not defined. Expected values: %s" % (PathSet.OVERLAP_VARIABLE, str(PathSet.OVERLAP_VARIABLE_OPTIONS))
+            FastTripsLogger.fatal(msg)
+            raise ConfigurationError(func_file, msg)
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
             msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file)
             FastTripsLogger.fatal(msg)
@@ -324,6 +334,8 @@ class Assignment:
         parser.set('pathfinding','max_num_paths',               '%d' % Assignment.MAX_NUM_PATHS)
         parser.set('pathfinding','min_path_probability',        '%f' % Assignment.MIN_PATH_PROBABILITY)
         parser.set('pathfinding','min_transfer_penalty',        '%f' % PathSet.MIN_TRANSFER_PENALTY)
+        parser.set('pathfinding','overlap_scale_parameter',     '%f' % PathSet.OVERLAP_SCALE_PARAMETER)
+        parser.set('pathfinding','overlap_variable',            '%s' % PathSet.OVERLAP_VARIABLE)
         parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)

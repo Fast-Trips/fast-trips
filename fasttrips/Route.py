@@ -156,8 +156,8 @@ class Route(object):
             error_msg = "Found %d duplicate %s in %s" % (routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum(),
                                                          Route.ROUTES_COLUMN_ROUTE_ID, Route.INPUT_ROUTES_FILE)
             FastTripsLogger.fatal(error_msg)
-            FastTripsLogger.fatal("\nFirst five duplicates:\n%s" % \
-                                  str(routes_ft_df.loc[routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID])].head()))
+            FastTripsLogger.fatal("\nDuplicates:\n%s" % \
+                                  str(routes_ft_df.loc[routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID])]))
             raise NetworkInputError(Route.INPUT_ROUTES_FILE, error_msg)
 
         # Join to the routes dataframe
