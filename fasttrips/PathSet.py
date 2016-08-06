@@ -521,7 +521,7 @@ class PathSet:
 
         I think if we can do it using vectorized pandas operations, it should be fast, but we can compare/test.
 
-        It's also messier to have this in two places.
+        It's also messier to have this in two places.  Maybe we should delete it from the C++; the overlap calcs are only in here right now.
 
         Returns pathset_paths_df with additional column, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
         And pathset_links_df with additional column, Assignment.SIM_COL_PAX_COST
@@ -685,7 +685,7 @@ class PathSet:
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
 
-        # FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.head().to_string(), str(cost_accegr_df.dtypes)))
+        FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.head().to_string(), str(cost_accegr_df.dtypes)))
 
         missing_accegr_costs = cost_accegr_df.loc[ pandas.isnull(cost_accegr_df["var_value"]) ]
         error_accegr_msg = "Missing %d out of %d access/egress var_value values" % (len(missing_accegr_costs), len(cost_accegr_df))
@@ -823,11 +823,12 @@ class PathSet:
                                                Passenger.PF_COL_LINK_NUM,
                                                "A_id_num","B_id_num",
                                                Route.ROUTES_COLUMN_MODE_NUM,
-                                               "new_linktime"]].copy()
+                                               "new_linktime",
+                                               Assignment.SIM_COL_PAX_DISTANCE]].copy()
             # sum count, time, dist(TODO) to path and add path sum version to overlap_one_df -- this is L
             overlap_one_df["count"] = 1
-            overlap_path_df = overlap_one_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum'}).reset_index()
-            overlap_path_df.rename(columns={"count":"path_count", "new_linktime":"path_time"}, inplace=True)
+            overlap_path_df = overlap_one_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index()
+            overlap_path_df.rename(columns={"count":"path_count", "new_linktime":"path_time", Assignment.SIM_COL_PAX_DISTANCE:"path_distance"}, inplace=True)
             overlap_one_df.drop(["count"], axis=1, inplace=True)
             overlap_one_df = pandas.merge(overlap_one_df, overlap_path_df, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM])
 
@@ -848,9 +849,8 @@ class PathSet:
                 overlap_df["link_prop_x"] = overlap_df["new_linktime_x"]/overlap_df["path_time_x"] # l_a/L_i
                 overlap_df["pathlen_x_y"] = overlap_df["path_time_x"]/overlap_df["path_time_y"]    # L_i/L_j
             elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_DISTANCE:
-                error_msg = "OVERLAP_VARIABLE [%s] not implemented" % PathSet.OVERLAP_VARIABLE
-                FastTripsLogger.fatal(error_msg)
-                raise NotImplementedError(error_msg)
+                overlap_df["link_prop_x"] = overlap_df["distance_x"]/overlap_df["path_distance_x"] # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_distance_x"]/overlap_df["path_distance_y"]    # L_i/L_j
 
             overlap_df["pathlen_x_y_scale"] = overlap_df[["pathlen_x_y"]].pow(PathSet.OVERLAP_SCALE_PARAMETER)  # (L_i/L_j)^gamma
             # zero it out if it's not a match

@@ -206,6 +206,30 @@ class Transfer:
             # We're ready to write it
             self.write_transfers_for_extension()
 
+    def add_distance(self, links_df, dist_col):
+        """
+        Sets distance column value for transfer links.
+        """
+        transfer_dists = self.transfers_df[[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                            Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
+                                            Transfer.TRANSFERS_COLUMN_DISTANCE]].copy()
+        transfer_dists.rename(columns={Transfer.TRANSFERS_COLUMN_DISTANCE:"transfer_dist"}, inplace=True)
+
+        links_df = pandas.merge(left    =links_df,
+                                left_on =["A_id_num","B_id_num"],
+                                right   =transfer_dists,
+                                right_on=[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
+                                how     ="left")
+
+        links_df.loc[links_df["linkmode"]=="transfer", dist_col] = links_df["transfer_dist"]
+        links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                       Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
+                       "transfer_dist"], axis=1, inplace=True)
+
+        # 0-distance transfers
+        links_df.loc[ (links_df["linkmode"]=="transfer")&(links_df["A_id_num"]==links_df["B_id_num"]), dist_col ] = 0.0
+        return links_df
+
     def write_transfers_for_extension(self):
         """
         This writes to an intermediate file a formatted file for the C++ extension.

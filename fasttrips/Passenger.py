@@ -348,7 +348,8 @@ class Passenger:
         return (num_paths_found, pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, iteration, stop_id_df, trip_id_df, trips_df, modes_df, prepend_route_id_to_trip_id):
+    def setup_passenger_pathsets(self, iteration, stop_id_df, stops_df, trip_id_df, trips_df, modes_df, 
+                                 transfers, tazs, prepend_route_id_to_trip_id):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -399,6 +400,11 @@ class Passenger:
         `pf_A_time`      datetime64[ns]  the time the passenger arrives at `A_id`
         `pf_B_time`      datetime64[ns]  the time the passenger arrives at `B_id`
         `pf_linktime`   timedelta64[ns]  the time spent on the link
+        `A_lat`                 float64  the latitude of A (if it's a stop)
+        `A_lon`                 float64  the longitude of A (if it's a stop)
+        `B_lat`                 float64  the latitude of B (if it's a stop)
+        `B_lon`                 float64  the longitude of B (if it's a stop)
+        `dist`                  float64  the distance of the link, in miles
         ==============  ===============  =====================================================================================================
 
         """
@@ -560,6 +566,24 @@ class Passenger:
                                            mapping_df=stop_id_df,        mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='B_id_num',                            newid_colname='B_id',
                                            mapping_df=stop_id_df,        mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        # get A_lat, A_lon, B_lat, B_lon
+        pathset_links_df = pandas.merge(left    =pathset_links_df,
+                                        right   =stops_df[[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]],
+                                        how     ="left",
+                                        left_on ="A_id_num",
+                                        right_on=Stop.STOPS_COLUMN_STOP_ID_NUM)
+        pathset_links_df.drop(Stop.STOPS_COLUMN_STOP_ID_NUM, axis=1, inplace=True)
+        pathset_links_df.rename(columns={Stop.STOPS_COLUMN_STOP_LATITUDE :"A_lat",
+                                         Stop.STOPS_COLUMN_STOP_LONGITUDE:"A_lon"}, inplace=True)
+        pathset_links_df = pandas.merge(left    =pathset_links_df,
+                                        right   =stops_df[[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]],
+                                        how     ="left",
+                                        left_on ="B_id_num",
+                                        right_on=Stop.STOPS_COLUMN_STOP_ID_NUM)
+        pathset_links_df.rename(columns={Stop.STOPS_COLUMN_STOP_LATITUDE :"B_lat",
+                                         Stop.STOPS_COLUMN_STOP_LONGITUDE:"B_lon"}, inplace=True)
+        pathset_links_df.drop(Stop.STOPS_COLUMN_STOP_ID_NUM, axis=1, inplace=True)
+
         # get trip_id
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
                                            mapping_df=trip_id_df,        mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
@@ -578,6 +602,16 @@ class Passenger:
 
         # get supply mode
         pathset_links_df = pandas.merge(left=pathset_links_df, right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]], how="left")
+
+        # get dist for the trip links, transfer links, and access/egress links
+        Util.calculate_distance_miles(pathset_links_df, "A_lat","A_lon","B_lat","B_lon", "distance")
+        pathset_links_df = transfers.add_distance(pathset_links_df, "distance")
+        pathset_links_df = tazs.add_distance(pathset_links_df, "distance")
+
+        null_distance = pathset_links_df.loc[ pandas.isnull(pathset_links_df["distance"]) ]
+        if len(null_distance) > 0:
+            FastTripsLogger.fatal("setup_passenger_pathsets() null distances:\n%s" % null_distance.to_string())
+            raise
 
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())

@@ -175,6 +175,7 @@ class Assignment:
     SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'     # if board at an overcap stop, fraction of boards that are overcap
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' # 1 if lucky enough to board at an at- or over-capacity stop
+    SIM_COL_PAX_DISTANCE            = "distance"         # distance in miles
     SIM_COL_PAX_COST                = 'sim_cost'         # cannot be cost because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST
     SIM_COL_PAX_LNPS                = 'ln_PS'            # log(PathSize)
     SIM_COL_PAX_PROBABILITY         = 'probability'
@@ -516,7 +517,9 @@ class Assignment:
 
             else:
                 num_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration)
-                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops.stop_id_df, FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops.stop_id_df, FT.stops.stops_df,
+                                                                                                      FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
+                                                                                                      FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
                 # write performance info right away in case we crash, quit, etc
                 FT.performance.write(output_dir, iteration)
