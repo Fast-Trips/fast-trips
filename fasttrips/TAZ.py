@@ -474,39 +474,40 @@ class TAZ:
 
         ############## drive ##############
         FastTripsLogger.debug("drive_access_df=\n%s" % self.drive_access_df.head())
-        drive_dists = self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
-                                            TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
-                                            TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                                            TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE,
-                                            TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE]].copy()
-        drive_dists["drive_total_dist"] = drive_dists[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE] + drive_dists[TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE]
-        drive_dists.drop([TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE, TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE], axis=1, inplace=True)
+        if len(self.drive_access_df) > 0:
+            drive_dists = self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
+                                                TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
+                                                TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                                                TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE,
+                                                TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE]].copy()
+            drive_dists["drive_total_dist"] = drive_dists[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE] + drive_dists[TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE]
+            drive_dists.drop([TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE, TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE], axis=1, inplace=True)
 
-        # drive access
-        links_df = pandas.merge(left    =links_df,
-                                left_on =["A_id_num","B_id_num","mode_num"],
-                                right   =drive_dists,
-                                right_on=[TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
-                                how     ="left")
-        links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
-        links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
-                       TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
-                       TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                       "drive_total_dist"], axis=1, inplace=True)
+            # drive access
+            links_df = pandas.merge(left    =links_df,
+                                    left_on =["A_id_num","B_id_num","mode_num"],
+                                    right   =drive_dists,
+                                    right_on=[TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
+                                    how     ="left")
+            links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
+            links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
+                           TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
+                           TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                           "drive_total_dist"], axis=1, inplace=True)
 
-        # drive egress
-        links_df = pandas.merge(left    =links_df,
-                                left_on =["A_id_num","B_id_num","mode_num"],
-                                right   =drive_dists,
-                                right_on=[TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
-                                how     ="left")
-        links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
-        links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
-                       TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
-                       TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                       "drive_total_dist"], axis=1, inplace=True)
+            # drive egress
+            links_df = pandas.merge(left    =links_df,
+                                    left_on =["A_id_num","B_id_num","mode_num"],
+                                    right   =drive_dists,
+                                    right_on=[TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
+                                    how     ="left")
+            links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
+            links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
+                           TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
+                           TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                           "drive_total_dist"], axis=1, inplace=True)
 
-        FastTripsLogger.debug("links_df=\n%s" % links_df.head(30).to_string())
+            FastTripsLogger.debug("links_df=\n%s" % links_df.head(30).to_string())
         return links_df
 
     def write_access_egress_for_extension(self, output_dir):
