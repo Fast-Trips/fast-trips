@@ -145,7 +145,8 @@ class Passenger:
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].fillna(value='', inplace=True)
         if non_null_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
 
-            self.persons_df     = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE))
+            self.persons_df     = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE),
+                                                  dtype={Passenger.PERSONS_COLUMN_PERSON_ID:object})
             self.persons_id_df  = Util.add_numeric_column(self.persons_df[[Passenger.PERSONS_COLUMN_PERSON_ID]],
                                                           id_colname=Passenger.PERSONS_COLUMN_PERSON_ID,
                                                           numeric_newcolname=Passenger.PERSONS_COLUMN_PERSON_ID_NUM)
