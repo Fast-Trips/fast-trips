@@ -239,6 +239,7 @@ class Assignment:
                       'min_path_probability'            :0.005,
                       'min_transfer_penalty'            :1.0,
                       'overlap_scale_parameter'         :1.0,
+                      'overlap_split_transit'           :'False',
                       'overlap_variable'                :'count',
                       'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
                       'stochastic_dispersion'           :1.0,
@@ -276,6 +277,7 @@ class Assignment:
         Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
         PathSet.MIN_TRANSFER_PENALTY             = parser.getfloat  ('pathfinding','min_transfer_penalty')
         PathSet.OVERLAP_SCALE_PARAMETER          = parser.getfloat  ('pathfinding','overlap_scale_parameter')
+        PathSet.OVERLAP_SPLIT_TRANSIT            = parser.getboolean('pathfinding','overlap_split_transit')
         PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
         Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
         assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
@@ -336,6 +338,7 @@ class Assignment:
         parser.set('pathfinding','min_path_probability',        '%f' % Assignment.MIN_PATH_PROBABILITY)
         parser.set('pathfinding','min_transfer_penalty',        '%f' % PathSet.MIN_TRANSFER_PENALTY)
         parser.set('pathfinding','overlap_scale_parameter',     '%f' % PathSet.OVERLAP_SCALE_PARAMETER)
+        parser.set('pathfinding','overlap_split_transit',       'True' if PathSet.OVERLAP_SPLIT_TRANSIT else 'False')
         parser.set('pathfinding','overlap_variable',            '%s' % PathSet.OVERLAP_VARIABLE)
         parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
@@ -517,7 +520,7 @@ class Assignment:
 
             else:
                 num_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration)
-                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops.stop_id_df, FT.stops.stops_df,
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, FT.stops,
                                                                                                       FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
                                                                                                       FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
@@ -1482,7 +1485,7 @@ class Assignment:
             (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
                 iteration, simulation_iteration, Assignment.STOCH_DISPERSION,
                 pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df,
-                FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df)
+                FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df, veh_trips_df, FT.stops)
 
             ######################################################################################################
             FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")

@@ -15,7 +15,7 @@ __license__   = """
 import collections,datetime,os,string,sys
 import numpy,pandas
 
-from .Error     import NotImplementedError
+from .Error     import NotImplementedError, UnexpectedError
 from .Logger    import FastTripsLogger
 from .Passenger import Passenger
 from .Route     import Route
@@ -70,6 +70,10 @@ class PathSet:
                                        OVERLAP_COUNT,
                                        OVERLAP_DISTANCE,
                                        OVERLAP_TIME]
+
+    #: Overlap option: Split transit leg into component parts?  e.g. split A-E
+    #: into A-B-C-D-E for overlap calculations?
+    OVERLAP_SPLIT_TRANSIT           = None
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
@@ -514,7 +518,128 @@ class PathSet:
                                 sep="\t", float_format="%.2f", index=False)
 
     @staticmethod
-    def calculate_cost(iteration, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df):
+    def split_transit_links(pathset_links_df, veh_trips_df, stops):
+        """
+        Splits the transit links to their component links and returns.
+        * person_id                    object               person_id                    object
+        * trip_list_id_num              int64               trip_list_id_num              int64
+        * pf_iteration                  int64               pf_iteration                  int64
+        * pathnum                       int64               pathnum                       int64
+        * linkmode                     object               linkmode                     object
+        * trip_id_num                 float64               trip_id_num                 float64
+        * A_id_num                      int64               A_id_num                      int32
+        * B_id_num                      int64               B_id_num                      int32
+        * A_seq                         int64               A_seq                         int32
+        * B_seq                         int64               B_seq                         int32
+        * pf_A_time            datetime64[ns]               pf_A_time            datetime64[ns]
+        * pf_B_time            datetime64[ns]               pf_B_time            datetime64[ns]
+        * pf_linktime         timedelta64[ns]               pf_linktime         timedelta64[ns]
+        * pf_waittime         timedelta64[ns]               pf_waittime         timedelta64[ns]
+        * linknum                       int64               linknum                       int64
+        * A_id                         object               A_id                         object
+        * B_id                         object               B_id                         object
+        * A_lat                       float64               A_lat                       float64
+        * A_lon                       float64               A_lon                       float64
+        * B_lat                       float64               B_lat                       float64
+        * B_lon                       float64               B_lon                       float64
+        * trip_id                      object               trip_id                      object
+        * route_id                     object               route_id                     object
+        * mode_num                    float64               mode_num                    float64
+        * mode                         object               mode                         object
+        * distance                    float64               distance                    float64
+        * board_time           datetime64[ns]               board_time           datetime64[ns]
+        * overcap                     float64               overcap                     float64
+        * alight_time          datetime64[ns]               alight_time          datetime64[ns]
+        * alight_delay_min            float64               alight_delay_min            float64
+        * new_A_time           datetime64[ns]               new_A_time           datetime64[ns]
+        * new_B_time           datetime64[ns]               new_B_time           datetime64[ns]
+        * new_linktime        timedelta64[ns]               new_linktime        timedelta64[ns]
+        * new_waittime        timedelta64[ns]               new_waittime        timedelta64[ns]
+        * missed_xfer                   int64               missed_xfer                   int64
+
+
+        """
+        from .Assignment import Assignment
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("split_transit_links: pathset_links_df (%d)\n%s" % (len(pathset_links_df),
+                                  pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
+            FastTripsLogger.debug("split_transit_links: pathset_links_df columns\n%s" % str(pathset_links_df.dtypes))
+
+        veh_links_df = Trip.linkify_vehicle_trips(veh_trips_df, stops)
+        veh_links_df["linkmode"] = "transit"
+
+        FastTripsLogger.debug("split_transit_links: veh_links_df\n%s" % veh_links_df.head(20).to_string())
+
+        # join the pathset links with the vehicle links
+        path2 = pandas.merge(left    =pathset_links_df,
+                             right   =veh_links_df,
+                             on      =["linkmode","mode","mode_num",Trip.TRIPS_COLUMN_ROUTE_ID,Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_TRIP_ID_NUM],
+                             how     ="left",
+                             suffixes=["","_veh"])
+        # delete anything irrelevant -- so keep non-transit links, and transit links WITH valid sequences
+        path2 = path2.loc[ (path2["linkmode"]!="transit") | ( (path2["linkmode"]=="transit") & (path2["A_seq_veh"]>=path2["A_seq"]) & (path2["B_seq_veh"]<=path2["B_seq"]) ) ]
+        # These are the new columns -- incorporate them
+
+        # A_arrival_time       datetime64[ns] => new_A_time for intermediate links
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "new_A_time"]   = path2["A_arrival_time"]
+        # no waittime, boardtime, missed_xfer except on first link
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "new_waittime"] = None
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "board_time"  ] = None
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "missed_xfer" ] = 0
+        # no alighttime except on last link
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["B_id"]!=path2["B_id_veh"]), "alight_time" ] = None
+
+        # route_id_num                float64 => ignore
+        # A_id_veh                     object => A_id
+        path2.loc[path2["linkmode"]=="transit", "A_id"       ] = path2["A_id_veh"]
+        # A_id_num_veh                float64 => A_id_num
+        path2.loc[path2["linkmode"]=="transit", "A_id_num"   ] = path2["A_id_num_veh"]
+        # A_seq_veh                   float64 => A_seq
+        path2.loc[path2["linkmode"]=="transit", "A_seq"      ] = path2["A_seq_veh"]
+        # A_lat_veh                   float64 => A_lat
+        path2.loc[path2["linkmode"]=="transit", "A_lat"      ] = path2["A_lat_veh"]
+        # A_lon_veh                   float64 => A_lon
+        path2.loc[path2["linkmode"]=="transit", "A_lon"      ] = path2["A_lon_veh"]
+
+        # B_id_veh                     object => B_id
+        path2.loc[path2["linkmode"]=="transit", "B_id"       ] = path2["B_id_veh"]
+        # B_id_num_veh                float64 => B_id_num
+        path2.loc[path2["linkmode"]=="transit", "B_id_num"   ] = path2["B_id_num_veh"]
+        # B_seq_veh                   float64 => B_seq
+        path2.loc[path2["linkmode"]=="transit", "B_seq"      ] = path2["B_seq_veh"]
+        # B_arrival_time       datetime64[ns] => new_B_time
+        path2.loc[path2["linkmode"]=="transit", "new_B_time" ] = path2["B_arrival_time"]
+        # B_departure_time     datetime64[ns] => ignore
+        # B_lat_veh                   float64 => B_lat
+        path2.loc[path2["linkmode"]=="transit", "B_lat"      ] = path2["B_lat_veh"]
+        # B_lon_veh                   float64 => B_lon
+        path2.loc[path2["linkmode"]=="transit", "B_lon"      ] = path2["B_lon_veh"]
+
+        # update the link time
+        path2.loc[path2["linkmode"]=="transit","new_linktime"] = path2["new_B_time"] - path2["new_A_time"]
+        # update transit distance
+        Util.calculate_distance_miles(path2, "A_lat","A_lon","B_lat","B_lon", "transit_distance")
+        path2.loc[path2["linkmode"]=="transit","distance"    ] = path2["transit_distance"]
+
+        # revert these back to ints
+        path2[["A_id_num","B_id_num","A_seq","B_seq"]] = path2[["A_id_num","B_id_num","A_seq","B_seq"]].astype(int)
+
+        # we're done with the fields - drop them
+        path2.drop(["transit_distance", "route_id_num",
+                    "A_id_veh","A_id_num_veh","A_seq_veh","A_arrival_time","A_departure_time","A_lat_veh","A_lon_veh",
+                    "B_id_veh","B_id_num_veh","B_seq_veh","B_arrival_time","B_departure_time","B_lat_veh","B_lon_veh"], axis=1, inplace=True)
+
+        # renumber linknum?  Let's not bother
+
+        # trace
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("split_transit_links: path2 (%d)\n%s" % (len(path2),
+                                  path2.loc[path2[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
+        FastTripsLogger.debug("split_transit_links: path2 columns\n%s" % str(path2.dtypes))
+        return path2
+
+    @staticmethod
+    def calculate_cost(iteration, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df, veh_trips_df, stops):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -541,11 +666,16 @@ class PathSet:
             pathset_paths_df.drop(["logsum_component"], axis=1, inplace=True)
 
 
-        FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.head(20)))
-        FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.head(10)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+            FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.loc[trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+
+        pathset_links_to_use = pathset_links_df
+        if PathSet.OVERLAP_SPLIT_TRANSIT:
+            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)
 
         # First, we need user class, purpose, and demand modes
-        pathset_links_cost_df = pandas.merge(left =pathset_links_df,
+        pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
                                              right=trip_list_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
                                                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                                  Passenger.TRIP_LIST_COLUMN_USER_CLASS,
@@ -559,7 +689,7 @@ class PathSet:
         # todo: add Value of time
         # Passenger.TRIP_LIST_COLUMN_VOT
 
-        # linkmode = demand_mode_type.  Set demand_mode to for the links
+        # linkmode = demand_mode_type.  Set demand_mode for the links
         pathset_links_cost_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = None
         pathset_links_cost_df.loc[ pathset_links_cost_df[Passenger.PF_COL_LINK_MODE]== PathSet.STATE_MODE_ACCESS  , PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE ]
         pathset_links_cost_df.loc[ pathset_links_cost_df[Passenger.PF_COL_LINK_MODE]== PathSet.STATE_MODE_EGRESS  , PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE ]
@@ -578,7 +708,8 @@ class PathSet:
         if simulation_iteration == 0:
             pathset_links_cost_df[Assignment.SIM_COL_PAX_BUMP_ITER] = -1
 
-        FastTripsLogger.debug("calculate_cost: pathset_links_cost_df\n%s" % str(pathset_links_cost_df.head(20)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: pathset_links_cost_df\n%s" % str(pathset_links_cost_df.loc[pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         # Inner join with the weights - now each weight has a row
         cost_df = pandas.merge(left    =pathset_links_cost_df,
@@ -595,7 +726,9 @@ class PathSet:
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
                                how     ="inner")
-        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM,Passenger.PF_COL_LINK_NUM]).head(20)))
+
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM,Passenger.PF_COL_LINK_NUM]).head(20)))
 
         # NOW we split it into 3 lists -- access/egress, transit, and transfer
         # This is because they will each be joined to tables specific to those kinds of mode categories, and so we don't want all the transit nulls on the other tables, etc.
@@ -685,7 +818,8 @@ class PathSet:
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
 
-        FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.head().to_string(), str(cost_accegr_df.dtypes)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.loc[cost_accegr_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_accegr_df.dtypes)))
 
         missing_accegr_costs = cost_accegr_df.loc[ pandas.isnull(cost_accegr_df["var_value"]) ]
         error_accegr_msg = "Missing %d out of %d access/egress var_value values" % (len(missing_accegr_costs), len(cost_accegr_df))
@@ -696,8 +830,15 @@ class PathSet:
             FastTripsLogger.fatal(error_accegr_msg)
 
         ##################### Next, handle Transit Trip link costs
-        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min", "var_value"] = (cost_trip_df["alight_time"] - cost_trip_df["board_time"])/numpy.timedelta64(1,'m')
-        cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min"      , "var_value"] = (cost_trip_df["board_time" ] - cost_trip_df[Passenger.PF_COL_PAX_A_TIME])/numpy.timedelta64(1,'m')
+        # if there's a board time, in_vehicle_time = new_B_time - board_time
+        #               otherwise, in_vehicle_time = new_b_time - new_A_time (for when we split)
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&pandas.notnull(cost_trip_df["board_time"]), "var_value"] = (cost_trip_df["new_B_time"] - cost_trip_df["board_time"])/numpy.timedelta64(1,'m')
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")& pandas.isnull(cost_trip_df["board_time"]), "var_value"] = (cost_trip_df["new_B_time"] - cost_trip_df["new_A_time"])/numpy.timedelta64(1,'m')
+
+        # if there's a board time, wait time = board_time - new_A_time
+        #               otherwise, wait time = 0 (for when we split transit links)
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")&pandas.notnull(cost_trip_df["board_time"]), "var_value"] = (cost_trip_df["board_time" ] - cost_trip_df["new_A_time"])/numpy.timedelta64(1,'m')
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")& pandas.isnull(cost_trip_df["board_time"]), "var_value"] = 0
 
         # which overcap column to use?
         overcap_col = Trip.SIM_COL_VEH_OVERCAP
@@ -715,7 +856,8 @@ class PathSet:
         # overcap shouldn't be negative
         cost_trip_df.loc[ (cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap")&(cost_trip_df["var_value"]<0), "var_value"] = 0.0
 
-        # FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.head().to_string(), str(cost_trip_df.dtypes)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.loc[cost_trip_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_trip_df.dtypes)))
 
         missing_trip_costs = cost_trip_df.loc[ pandas.isnull(cost_trip_df["var_value"]) ]
         error_trip_msg = "Missing %d out of %d transit trip var_value values" % (len(missing_trip_costs), len(cost_trip_df))
@@ -795,30 +937,42 @@ class PathSet:
         cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                              Passenger.PF_COL_PATH_NUM,
                              Passenger.PF_COL_LINK_NUM], inplace=True)
-        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==32]))
+        FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+
+        # verify all costs are non-negative
+        if cost_df[Assignment.SIM_COL_PAX_COST].min() < 0:
+            msg = "calculate_cost: Negative costs found:\n%s" % cost_df.loc[ cost_df[Assignment.SIM_COL_PAX_COST]<0 ].to_string()
+            FastTripsLogger.fatal(msg)
+            raise UnexpectedError(msg)
 
         ###################### sum linkcost to links
-        cost_link_df = cost_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+        cost_link_df = cost_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                 Passenger.PF_COL_PATH_NUM,
                                 Passenger.PF_COL_LINK_NUM,
                                 Assignment.SIM_COL_PAX_COST]].groupby(
-                                    [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                   [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                    Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                     Passenger.PF_COL_PATH_NUM,
                                     Passenger.PF_COL_LINK_NUM]).aggregate('sum').reset_index()
-        FastTripsLogger.debug("calculate_cost: cost_link_df\n%s" % str(cost_link_df.head(20)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: cost_link_df\n%s" % str(cost_link_df.loc[cost_link_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
         # join to pathset_links_df
         pathset_links_df = pandas.merge(left =pathset_links_df,
                                         right=cost_link_df,
                                         how  ="left",
-                                        on   =[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                        on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                Passenger.PF_COL_PATH_NUM,
                                                Passenger.PF_COL_LINK_NUM])
-        FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.head(20)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         ###################### overlap calcs
         overlap_df = None
         if PathSet.OVERLAP_VARIABLE != PathSet.OVERLAP_NONE:
-            overlap_one_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            overlap_one_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                Passenger.PF_COL_PATH_NUM,
                                                Passenger.PF_COL_LINK_NUM,
                                                "A_id_num","B_id_num",
@@ -827,14 +981,13 @@ class PathSet:
                                                Assignment.SIM_COL_PAX_DISTANCE]].copy()
             # sum count, time, dist(TODO) to path and add path sum version to overlap_one_df -- this is L
             overlap_one_df["count"] = 1
-            overlap_path_df = overlap_one_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index()
+            overlap_path_df = overlap_one_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index()
             overlap_path_df.rename(columns={"count":"path_count", "new_linktime":"path_time", Assignment.SIM_COL_PAX_DISTANCE:"path_distance"}, inplace=True)
             overlap_one_df.drop(["count"], axis=1, inplace=True)
-            overlap_one_df = pandas.merge(overlap_one_df, overlap_path_df, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM])
+            overlap_one_df = pandas.merge(overlap_one_df, overlap_path_df, how="left", on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM])
 
-            overlap_two_df = overlap_one_df.copy()
             # outer join on trip_list_id_num means when they match, we'll get a cartesian product of the links
-            overlap_df = pandas.merge(overlap_one_df, overlap_one_df.copy(), on=Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, how="outer")
+            overlap_df = pandas.merge(overlap_one_df, overlap_one_df.copy(), on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM], how="outer")
 
             # count matches -- matching A,B,mode
             overlap_df["match"] = 0
@@ -857,20 +1010,22 @@ class PathSet:
             overlap_df.loc[overlap_df["match"]==0, "pathlen_x_y_scale"] = 0
             # now pathlen_x_y_scale = (L_i/L_j)^gamma x delta_aj
 
-            FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.head(50)))
+            if len(Assignment.TRACE_PERSON_IDS) > 0:
+                FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
             # debug
             # overlap_df_temp = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum_x","linknum_x","link_prop_x","pathnum_y"]).aggregate({"match":"sum", "pathlen_x_y_scale":"sum"})
             # FastTripsLogger.debug("calculate_cost: overlap_df_temp\n%s" % str(overlap_df_temp.head(50)))
 
             # group by pathnum_x, linknum_x -- so this sums over paths P_j in equation (or pathnum_y here)
-            overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum_x","linknum_x","link_prop_x"]).aggregate({"pathlen_x_y_scale":"sum"}).reset_index()
+            overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum_x","linknum_x","link_prop_x"]).aggregate({"pathlen_x_y_scale":"sum"}).reset_index()
             # now pathlen_x_y_scale = SUM_j (L_i/L_j)^gamma x delta_aj
             overlap_df["PS"] = overlap_df["link_prop_x"]/overlap_df["pathlen_x_y_scale"]  # l_a/L_i * 1/(SUM_j (L_i/L_j)^gamma x delta_aj)
-            FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.head(50)))
+            if len(Assignment.TRACE_PERSON_IDS) > 0:
+                FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
             # sum across link in path
-            overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum_x"]).aggregate({"PS":"sum"}).reset_index()
+            overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "pathnum_x"]).aggregate({"PS":"sum"}).reset_index()
 
             # Check all pathsizes are in [0,1]
             min_PS = overlap_df["PS"].min()
@@ -882,7 +1037,8 @@ class PathSet:
                 FastTripsLogger.fatal("Max pathsize = %f > 1:\n%s" % (max_PS, overlap_df.loc[overlap_df["PS"]==max_PS].to_string()))
 
             overlap_df[Assignment.SIM_COL_PAX_LNPS] = numpy.log(overlap_df["PS"])
-            FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.head(50)))
+            if len(Assignment.TRACE_PERSON_IDS) > 0:
+                FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
             # rename pathnum_x to pathnum and drop PS.  Now overlap_df has columns trip_list_id_num, pathnum, ln_PS
             overlap_df.rename(columns={"pathnum_x":Passenger.PF_COL_PATH_NUM}, inplace=True)
@@ -890,13 +1046,15 @@ class PathSet:
 
         ###################### sum linkcost to paths
         cost_link_df.drop([Passenger.PF_COL_LINK_NUM], axis=1, inplace=True)
-        cost_path_df = cost_link_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate('sum').reset_index()
-        FastTripsLogger.debug("calculate_cost: cost_path_df\n%s" % str(cost_path_df.head(20)))
+        cost_path_df = cost_link_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate('sum').reset_index()
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: cost_path_df\n%s" % str(cost_path_df.loc[cost_path_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
         # join to pathset_paths_df
         pathset_paths_df = pandas.merge(left =pathset_paths_df,
                                         right=cost_path_df,
                                         how  ="left",
-                                        on   =[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                        on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                Passenger.PF_COL_PATH_NUM])
 
         if PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_NONE:
@@ -905,22 +1063,26 @@ class PathSet:
             pathset_paths_df = pandas.merge(left =pathset_paths_df,
                                             right=overlap_df,
                                             how  ="left",
-                                            on   =[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                            on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                   Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                    Passenger.PF_COL_PATH_NUM])
-        FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.head(20)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         ###################### logsum and probabilities
         pathset_paths_df["logsum_component"] = numpy.exp((-1.0*STOCH_DISPERSION)*(pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS]))
 
         # sum across all paths
-        pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "logsum_component"]].groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate('sum').reset_index()
+        pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "logsum_component"]].groupby(
+                                [Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate('sum').reset_index()
         pathset_logsum_df.rename(columns={"logsum_component":"logsum"}, inplace=True)
         pathset_paths_df = pandas.merge(left=pathset_paths_df,
                                         right=pathset_logsum_df,
                                         how="left")
         pathset_paths_df[Assignment.SIM_COL_PAX_PROBABILITY] = pathset_paths_df["logsum_component"]/pathset_paths_df["logsum"]
 
-        FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.head(20)))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         # Note: the path finding costs won't match the costs here because missed transfers are already calculated here
         # It would be good to have some sanity checking that theyre aligned otherwise though to make sure we're

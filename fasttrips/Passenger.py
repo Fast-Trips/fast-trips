@@ -349,7 +349,7 @@ class Passenger:
         return (num_paths_found, pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, iteration, stop_id_df, stops_df, trip_id_df, trips_df, modes_df, 
+    def setup_passenger_pathsets(self, iteration, stops, trip_id_df, trips_df, modes_df, 
                                  transfers, tazs, prepend_route_id_to_trip_id):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
@@ -564,26 +564,12 @@ class Passenger:
 
         # get A_id and B_id and trip_id
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='A_id_num',                            newid_colname='A_id',
-                                           mapping_df=stop_id_df,        mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+                                           mapping_df=stops.stop_id_df,  mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='B_id_num',                            newid_colname='B_id',
-                                           mapping_df=stop_id_df,        mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+                                           mapping_df=stops.stop_id_df,  mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
         # get A_lat, A_lon, B_lat, B_lon
-        pathset_links_df = pandas.merge(left    =pathset_links_df,
-                                        right   =stops_df[[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]],
-                                        how     ="left",
-                                        left_on ="A_id_num",
-                                        right_on=Stop.STOPS_COLUMN_STOP_ID_NUM)
-        pathset_links_df.drop(Stop.STOPS_COLUMN_STOP_ID_NUM, axis=1, inplace=True)
-        pathset_links_df.rename(columns={Stop.STOPS_COLUMN_STOP_LATITUDE :"A_lat",
-                                         Stop.STOPS_COLUMN_STOP_LONGITUDE:"A_lon"}, inplace=True)
-        pathset_links_df = pandas.merge(left    =pathset_links_df,
-                                        right   =stops_df[[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]],
-                                        how     ="left",
-                                        left_on ="B_id_num",
-                                        right_on=Stop.STOPS_COLUMN_STOP_ID_NUM)
-        pathset_links_df.rename(columns={Stop.STOPS_COLUMN_STOP_LATITUDE :"B_lat",
-                                         Stop.STOPS_COLUMN_STOP_LONGITUDE:"B_lon"}, inplace=True)
-        pathset_links_df.drop(Stop.STOPS_COLUMN_STOP_ID_NUM, axis=1, inplace=True)
+        pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="A_id", new_lat_colname="A_lat", new_lon_colname="A_lon")
+        pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="B_id", new_lat_colname="B_lat", new_lon_colname="B_lon")
 
         # get trip_id
         pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,

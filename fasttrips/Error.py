@@ -58,3 +58,13 @@ class NotImplementedError(Error):
     """
     def __init__(self, msg):
         self.msg      = msg
+
+class UnexpectedError(Error):
+    """
+    Exception raised for something unexpected.
+
+    Attributes:
+       msg   -- explanation of the error
+    """
+    def __init__(self, msg):
+        self.msg      = msg
