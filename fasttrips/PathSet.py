@@ -971,7 +971,8 @@ class PathSet:
         ###################### overlap calcs
         overlap_df = None
         if PathSet.OVERLAP_VARIABLE != PathSet.OVERLAP_NONE:
-            overlap_one_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+            FastTripsLogger.debug("calculate_cost: mem_use=%s pathset_links_df has length %d" % (Util.get_process_mem_use_str(), len(pathset_links_df)))
+            overlap_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                Passenger.PF_COL_PATH_NUM,
                                                Passenger.PF_COL_LINK_NUM,
@@ -979,15 +980,21 @@ class PathSet:
                                                Route.ROUTES_COLUMN_MODE_NUM,
                                                "new_linktime",
                                                Assignment.SIM_COL_PAX_DISTANCE]].copy()
-            # sum count, time, dist(TODO) to path and add path sum version to overlap_one_df -- this is L
-            overlap_one_df["count"] = 1
-            overlap_path_df = overlap_one_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index()
+            # sum count, time, dist(TODO) to path and add path sum version to overlap_df -- this is L
+
+            # path aggregate
+            overlap_df["count"] = 1
+            overlap_path_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index()
             overlap_path_df.rename(columns={"count":"path_count", "new_linktime":"path_time", Assignment.SIM_COL_PAX_DISTANCE:"path_distance"}, inplace=True)
-            overlap_one_df.drop(["count"], axis=1, inplace=True)
-            overlap_one_df = pandas.merge(overlap_one_df, overlap_path_df, how="left", on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM])
+            overlap_df.drop(["count"], axis=1, inplace=True)
+
+            # get the path variables
+            overlap_df = pandas.merge(overlap_df, overlap_path_df, how="left", on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM])
+            del overlap_path_df
 
             # outer join on trip_list_id_num means when they match, we'll get a cartesian product of the links
-            overlap_df = pandas.merge(overlap_one_df, overlap_one_df.copy(), on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM], how="outer")
+            overlap_df = pandas.merge(overlap_df, overlap_df.copy(), on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM], how="outer")
+            FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_df has length %d" % (Util.get_process_mem_use_str(), len(overlap_df)))
 
             # count matches -- matching A,B,mode
             overlap_df["match"] = 0
@@ -1043,6 +1050,8 @@ class PathSet:
             # rename pathnum_x to pathnum and drop PS.  Now overlap_df has columns trip_list_id_num, pathnum, ln_PS
             overlap_df.rename(columns={"pathnum_x":Passenger.PF_COL_PATH_NUM}, inplace=True)
             overlap_df.drop(["PS"], axis=1, inplace=True) # we have ln_PS
+
+            FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_df has length %d" % (Util.get_process_mem_use_str(), len(overlap_df)))
 
         ###################### sum linkcost to paths
         cost_link_df.drop([Passenger.PF_COL_LINK_NUM], axis=1, inplace=True)

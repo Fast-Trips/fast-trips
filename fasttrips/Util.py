@@ -280,3 +280,24 @@ class Util:
             FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[dataframe[distance_colname]>1000].to_string())
 
         dataframe.drop(["dist_lat","dist_lon","dist_hava","dist_havc"], axis=1, inplace=True)
+
+    @staticmethod
+    def get_process_mem_use_str():
+        """
+        Returns a string representing the process memory use.
+        """
+        try:
+            import psutil
+
+        except ImportError:
+            return "Uknown; please install python package psutil"
+
+        p = psutil.Process()
+        bytes = p.memory_info().rss
+        if bytes < 1024:
+            return "%d bytes" % bytes
+        if bytes < 1024*1024:
+            return "%.1f KB" % (bytes/1024.0)
+        if bytes < 1024*1024*1024:
+            return "%.1f MB" % (bytes/(1024.0*1024.0))
+        return "%.1f GB" % (bytes/(1024*1024*1024))
