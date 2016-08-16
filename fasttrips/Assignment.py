@@ -762,8 +762,11 @@ class Assignment:
                         else:
                             print "Unexpected done queue contents: " + str(result)
 
-                    except :
-                        print("Error: %s" % str(sys.exc_info()))
+                    except Queue.Empty:
+                        # This is normal
+                        pass
+                    except:
+                        FastTripsLogger.error("Caught exception: %s" % str(sys.exc_info()))
                         pass
 
                     # check if any processes are not alive
