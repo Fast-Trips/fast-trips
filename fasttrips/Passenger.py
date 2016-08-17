@@ -54,6 +54,8 @@ class Passenger:
     INPUT_TRIP_LIST_FILE                        = "trip_list.txt"
     #: Trip list column: Person ID
     TRIP_LIST_COLUMN_PERSON_ID                  = PERSONS_COLUMN_PERSON_ID
+    #: Trip list column: Person Trip ID
+    TRIP_LIST_COLUMN_PERSON_TRIP_ID             = "person_trip_id"
     #: Trip list column: Origin TAZ ID
     TRIP_LIST_COLUMN_ORIGIN_TAZ_ID              = "o_taz"
     #: Trip list column: Destination TAZ ID
@@ -127,11 +129,13 @@ class Passenger:
 
         self.trip_list_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE),
                                              dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
+                                                    Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID    :object,
                                                     Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :object,
                                                     Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object})
         trip_list_cols     = list(self.trip_list_df.columns.values)
 
         assert(Passenger.TRIP_LIST_COLUMN_PERSON_ID          in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID     in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID      in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID in trip_list_cols)
 
@@ -169,6 +173,18 @@ class Passenger:
         else:
             self.persons_df     = pandas.DataFrame()
             self.households_df  = pandas.DataFrame()
+
+        # make sure that each tuple TRIP_LIST_COLUMN_PERSON_ID, TRIP_LIST_COLUMN_PERSON_TRIP_ID is unique
+        self.trip_list_df["ID_dupes"] = self.trip_list_df.duplicated(subset=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID],
+                                                                     keep=False)
+        if self.trip_list_df["ID_dupes"].sum() > 0:
+            error_msg = "Duplicate IDs (%s, %s) found:\n%s" % \
+                (Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                 self.trip_list_df.loc[self.trip_list_df["ID_dupes"]==True].to_string())
+            FastTripsLogger.fatal(error_msg)
+            raise NetworkInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
         # Create unique numeric index
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = self.trip_list_df.index + 1
@@ -364,7 +380,8 @@ class Passenger:
         ================  ===============  =====================================================================================================
         column name        column type     description
         ================  ===============  =====================================================================================================
-        `person_id`                object  person unique ID
+        `person_id`                object  person ID
+        `person_trip_id`           object  person trip ID
         `trip_list_id`              int64  trip list numerical ID
         `pathdir`                   int64  the :py:attr:`PathSet.direction`
         `pathmode`                 object  the :py:attr:`PathSet.mode`
@@ -380,7 +397,8 @@ class Passenger:
         ==============  ===============  =====================================================================================================
         column name      column type     description
         ==============  ===============  =====================================================================================================
-        `person_id`              object  person unique ID
+        `person_id`              object  person ID
+        `person_trip_id`         object  person trip ID
         `trip_list_id`            int64  trip list numerical ID
         `iteration`               int64  iteration in which these paths were found
         `pathnum`                 int64  the path number for the path within the pathset
@@ -460,6 +478,7 @@ class Passenger:
 
                 pathlist.append([\
                     pathset.person_id,
+                    pathset.person_trip_id,
                     trip_list_id,
                     pathset.direction,
                     pathset.mode,
@@ -512,6 +531,7 @@ class Passenger:
 
                     linklist.append([\
                         pathset.person_id,
+                        pathset.person_trip_id,
                         trip_list_id,
                         iteration,
                         pathnum,
@@ -536,6 +556,7 @@ class Passenger:
 
         pathset_paths_df = pandas.DataFrame(pathlist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
             'pathdir',  # for debugging
             'pathmode', # for output
@@ -546,6 +567,7 @@ class Passenger:
 
         pathset_links_df = pandas.DataFrame(linklist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
             Passenger.PF_COL_ITERATION,
             Passenger.PF_COL_PATH_NUM,
@@ -681,8 +703,9 @@ class Passenger:
 
         # group to passenger trips
         pathset_paths_df_grouped = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                     Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                      Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                     Assignment.SIM_COL_PAX_CHOSEN]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                     Assignment.SIM_COL_PAX_CHOSEN]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate("max").reset_index()
         # if there's no chosen AND one of the unchosen options is choosable then we can choose
         num_rejected = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_REJECTED       ])  # everything is rejected
@@ -710,7 +733,7 @@ class Passenger:
 
         # add to_choose flag and rand to pathset_paths_df
         pathset_paths_df = pandas.merge(left =pathset_paths_df,
-                                        right=pax_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "to_choose", "rand"]],
+                                        right=pax_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "to_choose", "rand"]],
                                         how  ="left")
         FastTripsLogger.debug("choose_paths() pathset_paths_df=\n%s" % pathset_paths_df.head().to_string())
 
@@ -727,6 +750,7 @@ class Passenger:
 
         # Use updated probability -- create cumulative probability
         paths_choose_df["prob_cum"] = paths_choose_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])[Assignment.SIM_COL_PAX_PROBABILITY].cumsum()
         # verify cumsum is ok
         # FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(100).to_string())
@@ -741,8 +765,10 @@ class Passenger:
 
         # this will now be person id, trip list id num, index for chosen path
         chosen_path_df = paths_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                           Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                           "rand_less"]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).idxmax(axis=0).reset_index()
         chosen_path_df.rename(columns={"rand_less":"chosen_idx"}, inplace=True)
         FastTripsLogger.debug("choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
@@ -766,6 +792,7 @@ class Passenger:
 
         pathset_links_df = pandas.merge(left=pathset_links_df,
                                         right=pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                                 Passenger.PF_COL_PATH_NUM,
                                                                 Assignment.SIM_COL_PAX_CHOSEN]],

@@ -521,43 +521,11 @@ class PathSet:
     def split_transit_links(pathset_links_df, veh_trips_df, stops):
         """
         Splits the transit links to their component links and returns.
-        * person_id                    object               person_id                    object
-        * trip_list_id_num              int64               trip_list_id_num              int64
-        * pf_iteration                  int64               pf_iteration                  int64
-        * pathnum                       int64               pathnum                       int64
-        * linkmode                     object               linkmode                     object
-        * trip_id_num                 float64               trip_id_num                 float64
-        * A_id_num                      int64               A_id_num                      int32
-        * B_id_num                      int64               B_id_num                      int32
-        * A_seq                         int64               A_seq                         int32
-        * B_seq                         int64               B_seq                         int32
-        * pf_A_time            datetime64[ns]               pf_A_time            datetime64[ns]
-        * pf_B_time            datetime64[ns]               pf_B_time            datetime64[ns]
-        * pf_linktime         timedelta64[ns]               pf_linktime         timedelta64[ns]
-        * pf_waittime         timedelta64[ns]               pf_waittime         timedelta64[ns]
-        * linknum                       int64               linknum                       int64
-        * A_id                         object               A_id                         object
-        * B_id                         object               B_id                         object
-        * A_lat                       float64               A_lat                       float64
-        * A_lon                       float64               A_lon                       float64
-        * B_lat                       float64               B_lat                       float64
-        * B_lon                       float64               B_lon                       float64
-        * trip_id                      object               trip_id                      object
-        * route_id                     object               route_id                     object
-        * mode_num                    float64               mode_num                    float64
-        * mode                         object               mode                         object
-        * distance                    float64               distance                    float64
-        * board_time           datetime64[ns]               board_time           datetime64[ns]
-        * overcap                     float64               overcap                     float64
-        * alight_time          datetime64[ns]               alight_time          datetime64[ns]
-        * alight_delay_min            float64               alight_delay_min            float64
-        * new_A_time           datetime64[ns]               new_A_time           datetime64[ns]
-        * new_B_time           datetime64[ns]               new_B_time           datetime64[ns]
-        * new_linktime        timedelta64[ns]               new_linktime        timedelta64[ns]
-        * new_waittime        timedelta64[ns]               new_waittime        timedelta64[ns]
-        * missed_xfer                   int64               missed_xfer                   int64
 
+        So if a transit trip goes from stop A to D but passes stop B and C in between, the
+        row A->D will now be replaced by rows A->B, B->C, and C->D.
 
+        Note that this does *not* renumber the linknum field.
         """
         from .Assignment import Assignment
         if len(Assignment.TRACE_PERSON_IDS) > 0:
