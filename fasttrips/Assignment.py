@@ -56,10 +56,10 @@ class Assignment:
     #: 'Stochastic Assignment'
     ASSIGNMENT_TYPE                 = None
 
-    #: Configuration: Simulation flag. It should be True for iterative assignment. In a one shot
+    #: Configuration: Do simulation? It should be True for iterative assignment. In a one shot
     #: assignment with simulation flag off, the passengers are assigned to
     #: paths but are not loaded to the network.  Boolean.
-    SIMULATION_FLAG                 = None
+    SIMULATION                      = None
 
     #: Configuration: Passenger trajectory output flag. Passengers' path and time will be
     #: reported if this flag is on. Note that the simulation flag should be on for
@@ -169,17 +169,24 @@ class Assignment:
     MAX_SIMULATION_ITERS            = 10
 
     #: Column names for simulation
-    SIM_COL_PAX_BOARD_TIME          = 'board_time'
-    SIM_COL_PAX_ALIGHT_TIME         = 'alight_time'
-    SIM_COL_PAX_LINK_TIME           = 'linktime'
-    SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'     # if board at an overcap stop, fraction of boards that are overcap
+    SIM_COL_PAX_BOARD_TIME          = 'board_time'       #: Board time on the transit vehicle
+    SIM_COL_PAX_ALIGHT_TIME         = 'alight_time'      #: Alight time from the transit vehicle
+
+    SIM_COL_PAX_ALIGHT_DELAY_MIN    = 'alight_delay_min' #: Delay in alight_time from original pathfinding understanding of alight time
+    SIM_COL_PAX_A_TIME              = 'new_A_time'       #: Time of arrival at A
+    SIM_COL_PAX_B_TIME              = 'new_B_time'       #: Time of arrival at B
+    SIM_COL_PAX_LINK_TIME           = 'new_linktime'     #: Link time (SIM_COL_PAX_B_TIME - SIM_COL_PAX_A_TIME)
+    SIM_COL_PAX_WAIT_TIME           = 'new_waittime'     #: Wait time
+    SIM_COL_PAX_MISSED_XFER         = 'missed_xfer'      #: Is this link a missed transfer
+
+    SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'     #: If board at an overcap stop, fraction of boards that are overcap
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
-    SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' # 1 if lucky enough to board at an at- or over-capacity stop
-    SIM_COL_PAX_DISTANCE            = "distance"         # distance in miles
-    SIM_COL_PAX_COST                = 'sim_cost'         # cannot be cost because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST
-    SIM_COL_PAX_LNPS                = 'ln_PS'            # log(PathSize)
-    SIM_COL_PAX_PROBABILITY         = 'probability'
-    SIM_COL_PAX_LOGSUM              = 'logsum'
+    SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' #: 1 if lucky enough to board at an at- or over-capacity stop
+    SIM_COL_PAX_DISTANCE            = "distance"         #: Link distance in miles
+    SIM_COL_PAX_COST                = 'sim_cost'         #: Link cost. (Cannot be `cost` because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST)
+    SIM_COL_PAX_LNPS                = 'ln_PS'            #: log(PathSize)
+    SIM_COL_PAX_PROBABILITY         = 'probability'      #: Probability of this path
+    SIM_COL_PAX_LOGSUM              = 'logsum'           #: Logsum of all paths
 
     #: Is this link/path a missed transfer?
     #: Set in both pathset links and pathset paths, this is a 1 or 0
@@ -253,7 +260,7 @@ class Assignment:
             parser.read(os.path.join(input_demand_dir, config_file))
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
-        Assignment.SIMULATION_FLAG               = parser.getboolean('fasttrips','simulation')
+        Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
@@ -534,10 +541,15 @@ class Assignment:
                 (pathset_paths_df, pathset_links_df) = Assignment.merge_pathsets(FT.passengers.pathfind_trip_list_df, pathset_paths_df, pathset_links_df, new_pathset_paths_df, new_pathset_links_df)
                 num_paths_found = Assignment.number_of_pathsets(pathset_paths_df)
 
-            if Assignment.SIMULATION_FLAG == True:
+            if Assignment.SIMULATION:
                 FastTripsLogger.info("****************************** SIMULATING *****************************")
                 (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df) = \
                     Assignment.simulate(FT, output_dir, iteration, pathset_paths_df, pathset_links_df, veh_trips_df)
+            else:
+                # if we're not simulating, we can still calculate costs and choose paths
+                FastTripsLogger.info("****************************** CHOOSING PATHS WITHOUT SIMULATING *****************************")
+                (num_passengers_arrived, pathset_paths_df, pathset_links_df) = \
+                    Assignment.choose_paths_without_simulation(FT, output_dir, iteration, pathset_paths_df, pathset_links_df, veh_trips_df)
 
             # Set new schedule
             FT.trips.stop_times_df = veh_trips_df
@@ -943,8 +955,9 @@ class Assignment:
 
         Returns the same dataframe but with four additional columns (replacing them if they're already there).
         """
-        FastTripsLogger.debug("find_passenger_vehicle_times(): input pathset_links_df len=%d\n%s" % \
-                              (len(pathset_links_df), pathset_links_df.head(20).to_string(formatters={Assignment.SIM_COL_PAX_LINK_TIME:Util.timedelta_formatter})))
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("find_passenger_vehicle_times(): input pathset_links_df len=%d\n%s" % \
+                                  (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
 
         if Assignment.SIM_COL_PAX_BOARD_TIME in list(pathset_links_df.columns.values):
             pathset_links_df.drop([Assignment.SIM_COL_PAX_BOARD_TIME,
@@ -999,9 +1012,9 @@ class Assignment:
                                '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
 
-        FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df\n%s" % \
-                              pathset_links_df.head(20).to_string(formatters={Assignment.SIM_COL_PAX_LINK_TIME:Util.timedelta_formatter}))
-
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df len=%d\n%s" % \
+                                  (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
         return pathset_links_df
 
     @staticmethod
@@ -1115,39 +1128,47 @@ class Assignment:
         * Assignment.SIM_COL_PAX_ALIGHT_TIME
         * Passenger.PF_COL_PAX_B_TIME
 
-        In particular, the following columns are added (or replaced if they're already there) to pathset_links_df:
+        In particular, the following columns are added (or replaced if they're already there) to *pathset_links_df*:
 
-        1) alight_delay_min   delay in alight_time from original pathfinding understanding of alight time
-        2) new_A_time         new A_time given the trip board/alight times for the trip links
-        3) new_B_time         new B_time given the trip board/alight times for the trip links
-        4) new_linktime       new linktime from new_B_time-new_A_time
-        5) new_waittime       new waittime given the trip board/alight times for the trip links
-        6) missed_xfer        is this link a missed xfer
+        ======================================================= ==============================================================================
+        Column Name                                             Column Description
+        ======================================================= ==============================================================================
+        :py:attr:`Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN`      Delay in alight_time from original pathfinding understanding of alight time
+        :py:attr:`Assignment.SIM_COL_PAX_A_TIME`                New A time given the trip board/alight times for the trip links
+        :py:attr:`Assignment.SIM_COL_PAX_B_TIME`                New B time given the trip board/alight times for the trip links
+        :py:attr:`Assignment.SIM_COL_PAX_LINK_TIME`             New link time from B time - A time
+        :py:attr:`Assignment.SIM_COL_PAX_WAIT_TIME`             New waittime given the trip board/alight times for the trip links
+        :py:attr:`Assignment.SIM_COL_PAX_MISSED_XFER`           Is this link a missed xfer
+        ======================================================= ==============================================================================
 
-        And the following column is added to pathset_paths_df:
-        *  missed_xfer        1 if a transfer is missed
+        The column, :py:attr:`AssignmentSIM_COL_PAX_MISSED_XFER`, is also added to *pathset_paths_df*.
 
         """
         # Drop these, we'll set them again
-        if "alight_delay_min" in list(pathset_links_df.columns.values):
-            pathset_links_df.drop(["alight_delay_min", "new_A_time", "new_B_time", "new_linktime", "new_waittime", Assignment.SIM_COL_MISSED_XFER], axis=1, inplace=True)
+        if Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN in list(pathset_links_df.columns.values):
+            pathset_links_df.drop([Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN,
+                                   Assignment.SIM_COL_PAX_A_TIME,
+                                   Assignment.SIM_COL_PAX_B_TIME,
+                                   Assignment.SIM_COL_PAX_LINK_TIME,
+                                   Assignment.SIM_COL_PAX_WAIT_TIME,
+                                   Assignment.SIM_COL_MISSED_XFER], axis=1, inplace=True)
 
-        # Set alight_delay_min
+        # Set alight delay (min)
         FastTripsLogger.debug("flag_missed_transfers() pathset_links_df (%d):\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string()))
-        pathset_links_df["alight_delay_min"] = 0.0
-        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "alight_delay_min"] = \
+        pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0.0
+        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = \
             ((pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]-pathset_links_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
 
         #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
-        pathset_links_df.loc[pathset_links_df["alight_delay_min"]>22*60, Assignment.SIM_COL_PAX_BOARD_TIME ] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - numpy.timedelta64(24, 'h')
-        pathset_links_df.loc[pathset_links_df["alight_delay_min"]>22*60, Assignment.SIM_COL_PAX_ALIGHT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME] - numpy.timedelta64(24, 'h')
-        pathset_links_df.loc[pathset_links_df["alight_delay_min"]>22*60, "alight_delay_min"] = \
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN]>22*60, Assignment.SIM_COL_PAX_BOARD_TIME ] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN]>22*60, Assignment.SIM_COL_PAX_ALIGHT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN]>22*60, Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = \
             ((pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]-pathset_links_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
 
-        max_alight_delay_min = pathset_links_df["alight_delay_min"].max()
+        max_alight_delay_min = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN].max()
         FastTripsLogger.debug("Biggest alight_delay = %f" % max_alight_delay_min)
         if max_alight_delay_min > 0:
-            FastTripsLogger.debug("\n%s" % pathset_links_df.sort_values(by="alight_delay_min", ascending=False).head().to_string())
+            FastTripsLogger.debug("\n%s" % pathset_links_df.sort_values(by=Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN, ascending=False).head().to_string())
 
         # For trips, alight_time is the new B_time
         # Set A_time for links AFTER trip links by joining to next leg
@@ -1157,46 +1178,46 @@ class Assignment:
             Passenger.PF_COL_LINK_NUM,
             Assignment.SIM_COL_PAX_ALIGHT_TIME]].copy()
         next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
-        next_trips.rename(columns={Assignment.SIM_COL_PAX_ALIGHT_TIME:"new_A_time"}, inplace=True)
-        # Add it to passenger trips.  Now new_A_time is set for links after trip links (note this will never be a trip link)
+        next_trips.rename(columns={Assignment.SIM_COL_PAX_ALIGHT_TIME:Assignment.SIM_COL_PAX_A_TIME}, inplace=True)
+        # Add it to passenger trips.  Now A time is set for links after trip links (note this will never be a trip link)
         pathset_links_df = pandas.merge(left=pathset_links_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM])
 
         FastTripsLogger.debug(str(pathset_links_df.dtypes))
 
-        # Set the new_B_time for those links -- link time for access/egress/xfer is travel time since wait times are in trip links
-        pathset_links_df["new_B_time"] = pathset_links_df["new_A_time"] + pathset_links_df[Passenger.PF_COL_LINK_TIME]
+        # Set the new B time for those links -- link time for access/egress/xfer is travel time since wait times are in trip links
+        pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] + pathset_links_df[Passenger.PF_COL_LINK_TIME]
         # For trip links, it's alight time
-        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, "new_B_time"] = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP,   Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]
         # For access links, it doesn't change from the original pathfinding result
-        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, "new_A_time"] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
-        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, "new_B_time"] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS, Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
 
         # Now we only need to set the trip link's A time from the previous link's new_B_time
         next_trips = pathset_links_df[[
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
             Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_NUM,
-            "new_B_time"]].copy()
+            Assignment.SIM_COL_PAX_B_TIME]].copy()
         next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
-        next_trips.rename(columns={"new_B_time":"new_trip_A_time"}, inplace=True)
+        next_trips.rename(columns={Assignment.SIM_COL_PAX_B_TIME:"new_trip_A_time"}, inplace=True)
         # Add it to passenger trips.  Now new_trip_A_time is set for trip links
         pathset_links_df = pandas.merge(left=pathset_links_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM])
-        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, "new_A_time"] = pathset_links_df["new_trip_A_time"]
+        pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df["new_trip_A_time"]
         pathset_links_df.drop(["new_trip_A_time"], axis=1, inplace=True)
 
-        pathset_links_df["new_linktime"] = pathset_links_df["new_B_time"] - pathset_links_df["new_A_time"]
+        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
         #: if the linktime > 23 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
-        pathset_links_df.loc[pathset_links_df["new_linktime"] > numpy.timedelta64(22, 'h'), "new_B_time"  ] = pathset_links_df["new_B_time"] - numpy.timedelta64(24, 'h')
-        pathset_links_df.loc[pathset_links_df["new_linktime"] > numpy.timedelta64(22, 'h'), "new_linktime"] = pathset_links_df["new_B_time"] - pathset_links_df["new_A_time"]
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > numpy.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_B_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > numpy.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         # new wait time
-        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), "new_waittime"] = pathset_links_df["board_time"] - pathset_links_df["new_A_time"]
+        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         # invalid trips have negative wait time
         pathset_links_df[Assignment.SIM_COL_MISSED_XFER] = 0
-        pathset_links_df.loc[pathset_links_df["new_waittime"]<numpy.timedelta64(0,'m'), Assignment.SIM_COL_MISSED_XFER] = 1
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME]<numpy.timedelta64(0,'m'), Assignment.SIM_COL_MISSED_XFER] = 1
 
         # count how many are valid (sum of invalid = 0 for the trip list id + path)
         pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
@@ -1355,7 +1376,7 @@ class Assignment:
 
         # bump off later arrivals, later trip_list_num
         bumpstop_boards.sort_values(by=[ \
-            "new_A_time", # I think this is correct
+            Assignment.SIM_COL_PAX_A_TIME, # I think this is correct
             Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
             "A_seq",
             Passenger.PF_COL_PAX_A_TIME,
@@ -1452,6 +1473,61 @@ class Assignment:
 
         return (chosen_paths_bumped, pathset_paths_df, pathset_links_df, veh_loaded_df)
 
+    @staticmethod
+    def choose_paths_without_simulation(FT, output_dir, iteration, pathset_paths_df, pathset_links_df, veh_trips_df):
+        """
+        Given a pathset for each passernger, choose a path (if relevant).  That's it.
+
+        Returns (valid_linked_trips, pathset_paths_df, pathset_links_df)
+        """
+        simulation_iteration = 0
+        ######################################################################################################
+        FastTripsLogger.info("  Step 1. Find out board/alight times for all pathset links from vehicle times")
+
+        # could do this just to chosen path links but let's do this to the whole pathset
+        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df)
+
+        # instead of flag_missed_transfers(), set these to pathfinding results
+        pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
+        pathset_links_df[Assignment.SIM_COL_PAX_A_TIME          ] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_B_TIME          ] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME       ] = pathset_links_df[Passenger.PF_COL_LINK_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME       ] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER     ] = 0
+
+        ######################################################################################################
+        FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
+        (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
+            iteration, simulation_iteration, Assignment.STOCH_DISPERSION,
+            pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df,
+            FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df, veh_trips_df, FT.stops)
+
+        ######################################################################################################
+        FastTripsLogger.info("  Step 3. Choose a path for each passenger from their pathset")
+
+        # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
+        # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
+        (num_passengers_arrived, num_chosen, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
+            True,  # choose for everyone
+            iteration, simulation_iteration,
+            pathset_paths_df, pathset_links_df)
+
+        # Write the pathsets
+        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False)
+        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True )
+
+        # write the final chosen paths for this iteration
+        chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
+        chosen_links_df["iteration"] = iteration
+        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosenpaths_links.csv"), append=(iteration>1))
+        chosen_links_df.drop(["iteration"], axis=1, inplace=True)
+
+        chosen_paths_df = Passenger.get_chosen_links(pathset_paths_df)
+        chosen_paths_df["iteration"] = iteration
+        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=(iteration>1))
+        chosen_paths_df.drop(["iteration"], axis=1, inplace=True)
+
+        return (num_passengers_arrived, pathset_paths_df, pathset_links_df)
 
     @staticmethod
     def simulate(FT, output_dir, iteration, pathset_paths_df, pathset_links_df, veh_trips_df):

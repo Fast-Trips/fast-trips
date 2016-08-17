@@ -548,14 +548,14 @@ class PathSet:
         path2 = path2.loc[ (path2["linkmode"]!="transit") | ( (path2["linkmode"]=="transit") & (path2["A_seq_veh"]>=path2["A_seq"]) & (path2["B_seq_veh"]<=path2["B_seq"]) ) ]
         # These are the new columns -- incorporate them
 
-        # A_arrival_time       datetime64[ns] => new_A_time for intermediate links
-        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "new_A_time"]   = path2["A_arrival_time"]
+        # A_arrival_time       datetime64[ns] => A time for intermediate links
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_A_TIME     ] = path2["A_arrival_time"]
         # no waittime, boardtime, missed_xfer except on first link
-        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "new_waittime"] = None
-        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "board_time"  ] = None
-        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), "missed_xfer" ] = 0
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_WAIT_TIME  ] = None
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_BOARD_TIME ] = None
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_MISSED_XFER] = 0
         # no alighttime except on last link
-        path2.loc[ (path2["linkmode"]=="transit")&(path2["B_id"]!=path2["B_id_veh"]), "alight_time" ] = None
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["B_id"]!=path2["B_id_veh"]), Assignment.SIM_COL_PAX_ALIGHT_TIME] = None
 
         # route_id_num                float64 => ignore
         # A_id_veh                     object => A_id
@@ -584,10 +584,10 @@ class PathSet:
         path2.loc[path2["linkmode"]=="transit", "B_lon"      ] = path2["B_lon_veh"]
 
         # update the link time
-        path2.loc[path2["linkmode"]=="transit","new_linktime"] = path2["new_B_time"] - path2["new_A_time"]
+        path2.loc[path2["linkmode"]=="transit",Assignment.SIM_COL_PAX_LINK_TIME] = path2[Assignment.SIM_COL_PAX_B_TIME] - path2[Assignment.SIM_COL_PAX_A_TIME]
         # update transit distance
         Util.calculate_distance_miles(path2, "A_lat","A_lon","B_lat","B_lon", "transit_distance")
-        path2.loc[path2["linkmode"]=="transit","distance"    ] = path2["transit_distance"]
+        path2.loc[path2["linkmode"]=="transit",Assignment.SIM_COL_PAX_DISTANCE ] = path2["transit_distance"]
 
         # revert these back to ints
         path2[["A_id_num","B_id_num","A_seq","B_seq"]] = path2[["A_id_num","B_id_num","A_seq","B_seq"]].astype(int)
@@ -798,15 +798,21 @@ class PathSet:
             FastTripsLogger.fatal(error_accegr_msg)
 
         ##################### Next, handle Transit Trip link costs
-        # if there's a board time, in_vehicle_time = new_B_time - board_time
-        #               otherwise, in_vehicle_time = new_b_time - new_A_time (for when we split)
-        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&pandas.notnull(cost_trip_df["board_time"]), "var_value"] = (cost_trip_df["new_B_time"] - cost_trip_df["board_time"])/numpy.timedelta64(1,'m')
-        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")& pandas.isnull(cost_trip_df["board_time"]), "var_value"] = (cost_trip_df["new_B_time"] - cost_trip_df["new_A_time"])/numpy.timedelta64(1,'m')
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.loc[cost_trip_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_trip_df.dtypes)))
 
-        # if there's a board time, wait time = board_time - new_A_time
+        # if there's a board time, in_vehicle_time = new_B_time - board_time
+        #               otherwise, in_vehicle_time = B time - A time (for when we split)
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&pandas.notnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = \
+            (cost_trip_df["new_B_time"] - cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME])/numpy.timedelta64(1,'m')
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")& pandas.isnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = \
+            (cost_trip_df["new_B_time"] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME])/numpy.timedelta64(1,'m')
+
+        # if there's a board time, wait time = board_time - A time
         #               otherwise, wait time = 0 (for when we split transit links)
-        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")&pandas.notnull(cost_trip_df["board_time"]), "var_value"] = (cost_trip_df["board_time" ] - cost_trip_df["new_A_time"])/numpy.timedelta64(1,'m')
-        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")& pandas.isnull(cost_trip_df["board_time"]), "var_value"] = 0
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")&pandas.notnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = \
+            (cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME])/numpy.timedelta64(1,'m')
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")& pandas.isnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = 0
 
         # which overcap column to use?
         overcap_col = Trip.SIM_COL_VEH_OVERCAP
