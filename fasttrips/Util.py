@@ -65,7 +65,7 @@ class Util:
     @staticmethod
     def add_new_id(input_df,   id_colname,         newid_colname,
                    mapping_df, mapping_id_colname, mapping_newid_colname,
-                   warn=False):
+                   warn=False, warn_msg=None):
         """
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
@@ -86,19 +86,20 @@ class Util:
         # print "RETURN_DF=================="
         # print return_df.head()
 
-        # make sure all ids were mapped to numbers
-        # first check if mapping_newid_colname was already in input_df; if it was, check needs to be performed on "_mapping" 
-        mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname    
+        # first check if mapping_newid_colname was already in input_df; if it was, check needs to be performed on "_mapping"
+        mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname
+
+        # Make sure all ids were mapped to numbers.  If not warn or error
         if pandas.isnull(return_df[mapping_newid_colname_chk]).sum() != pandas.isnull(input_df[id_colname]).sum():
 
             msg_level = logging.CRITICAL
             if warn: msg_level = logging.WARN
 
+            if warn_msg: FastTripsLogger.log(msg_level, warn_msg)
             FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
-            FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].drop_duplicates() = \n%s\n" % (mapping_newid_colname_chk,
-                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates())))
-            FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
+            # FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
+            FastTripsLogger.log(msg_level,"\n%s\n" % str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates()))
+            # FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
 
 
             if warn:

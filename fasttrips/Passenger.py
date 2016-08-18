@@ -228,17 +228,18 @@ class Passenger:
             self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM] = self.trip_list_df.index + 1
 
         # add TAZ numeric ids (stored in the stop mapping)
-        try:
-            self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
-                id_colname        =Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID,
-                numeric_newcolname=Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM)
-            self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
-                id_colname        =Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID,
-                numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM)
-        except:
-            error_msg = "TAZ numbers configured as origins and/or destinations in demand file are not found in the network"
-            FastTripsLogger.fatal(error_msg)
-            raise NetworkInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+        self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
+            id_colname        =Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID,
+            numeric_newcolname=Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+            warn              =True,
+            warn_msg          ="TAZ numbers configured as origins in demand file are not found in the network")
+        self.trip_list_df = stops.add_numeric_stop_id(self.trip_list_df,
+            id_colname        =Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID,
+            numeric_newcolname=Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM,
+            warn              =True,
+            warn_msg          ="TAZ numbers configured as destinations in demand file are not found in the network")
+        # trips with invalid TAZs have been dropped
+        FastTripsLogger.debug("Have %d person trips" % len(self.trip_list_df))
 
         # figure out modes:
         if Passenger.TRIP_LIST_COLUMN_MODE not in trip_list_cols:
@@ -306,12 +307,11 @@ class Passenger:
         FastTripsLogger.debug("Demand mode types by class & purpose: \n%s" % str(self.modes_df))
 
         # Make sure we have all the weights required for these user_class/mode combinations
-        PathSet.verify_weight_config(self.modes_df, output_dir, routes, capacity_constraint)
+        self.trip_list_df = PathSet.verify_weight_config(self.modes_df, output_dir, routes, capacity_constraint, self.trip_list_df)
 
+        FastTripsLogger.info("Have %d person trips" % len(self.trip_list_df))
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
-        FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string(formatters=
-            {Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME:Util.datetime64_formatter,
-             Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME  :Util.datetime64_formatter}))
+        FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string())
 
         #: Maps trip list ID num to :py:class:`PathSet` instance
         self.id_to_pathset = collections.OrderedDict()

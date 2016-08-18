@@ -186,15 +186,19 @@ class PathSet:
         trip_list_df[new_colname] = trip_list_df.apply(PathSet.CONFIGURED_FUNCTIONS[PathSet.USER_CLASS_FUNCTION], axis=1)
 
     @staticmethod
-    def verify_weight_config(modes_df, output_dir, routes, capacity_constraint):
+    def verify_weight_config(modes_df, output_dir, routes, capacity_constraint, trip_list_df):
         """
         Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.
+
+        Trips with invalid weight configurations will be dropped from the trip list and warned about.
 
         The parameter mode_df is a dataframe with the user_class, demand_mode_type and demand_mode combinations
         found in the demand file.
 
         If *capacity_constraint* is true, make sure there's an at_capacity weight on the transit supply mode links
         to enforce it.
+
+        Returns updated trip_list_df.
         """
         error_str = ""
         # First, verify required columns are found
@@ -218,11 +222,38 @@ class PathSet:
                                     how='left')
         FastTripsLogger.debug("demand_modes x weights: \n%s" % weight_check.to_string())
 
-        # If something is missing, complain
-        if pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE]).sum() > 0:
-            error_str += "\nThe following user_class, demand_mode_type, demand_mode combinations exist in the demand file but are missing from the weight configuration:\n"
-            error_str += weight_check.loc[pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE])].to_string()
-            error_str += "\n"
+        FastTripsLogger.debug("trip_list_df head=\n%s" % str(trip_list_df.head()))
+
+        # If something is missing, warn and remove those trips
+        null_supply_mode_weights = weight_check.loc[pandas.isnull(weight_check[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE])]
+        if len(null_supply_mode_weights) > 0:
+            # warn
+            FastTripsLogger.warn("The following user_class, demand_mode_type, demand_mode combinations exist in the demand file but are missing from the weight configuration:")
+            FastTripsLogger.warn("\n%s" % null_supply_mode_weights.to_string())
+
+            # remove those trips -- need to do it one demand mode type at a time
+            null_supply_mode_weights = null_supply_mode_weights[[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                                                 PathSet.WEIGHTS_COLUMN_PURPOSE,
+                                                                 PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                                                 PathSet.WEIGHTS_COLUMN_DEMAND_MODE]]
+            null_supply_mode_weights["to_remove"] = 1
+            for demand_mode_type in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_EGRESS, PathSet.STATE_MODE_TRIP]:
+                remove_trips = null_supply_mode_weights.loc[null_supply_mode_weights[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]==demand_mode_type].copy()
+                if len(remove_trips) == 0: continue
+
+                remove_trips.rename(columns={PathSet.WEIGHTS_COLUMN_DEMAND_MODE:"%s_mode" % demand_mode_type}, inplace=True)
+                remove_trips.drop([PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE], axis=1, inplace=True)
+                FastTripsLogger.debug("Removing for \n%s" % remove_trips)
+
+                trip_list_df = pandas.merge(left  = trip_list_df,
+                                            right = remove_trips,
+                                            how   = "left")
+                FastTripsLogger.debug("Removing\n%s" % trip_list_df.loc[pandas.notnull(trip_list_df["to_remove"])])
+
+                # keep only those not flagged to_remove
+                trip_list_df = trip_list_df.loc[pandas.isnull(trip_list_df["to_remove"])]
+                trip_list_df.drop(["to_remove"], axis=1, inplace=True)
+
 
         # demand_mode_type and demand_modes implicit to all travel    :   xfer walk,  xfer wait, initial wait
         user_classes = modes_df[[PathSet.WEIGHTS_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_PURPOSE]].drop_duplicates().reset_index()
@@ -272,7 +303,7 @@ class PathSet:
 
         bad_pen = transfer_penalty_check.loc[transfer_penalty_check[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] < PathSet.MIN_TRANSFER_PENALTY]
         if len(bad_pen) > 0:
-            error_str += "\nThe following user cass x purpose path weights have invalid (too small) transfer penalties. MIN=(%f)\n" % PathSet.MIN_TRANSFER_PENALTY
+            error_str += "\nThe following user class x purpose path weights have invalid (too small) transfer penalties. MIN=(%f)\n" % PathSet.MIN_TRANSFER_PENALTY
             error_str += bad_pen.to_string()
             error_str += "\nConfigure smaller min_transfer_penalty AT YOUR OWN RISK since this will make path generation slow/unreliable.\n\n"
 
@@ -325,6 +356,7 @@ class PathSet:
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
                                sep=" ", index=False)
+        return trip_list_df
 
     def __str__(self):
         """
