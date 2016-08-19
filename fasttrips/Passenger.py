@@ -123,7 +123,11 @@ class Passenger:
     #: todo replace/rename ??
     PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
 
-    #: pathfinding results - Pathsets
+    #: pathfinding results
+    PF_PATHS_CSV                    = r"pf_paths.csv"
+    PF_LINKS_CSV                    = r"pf_links.csv"
+
+    #: results - PathSets
     PATHSET_PATHS_CSV               = r"pathset_paths.csv"
     PATHSET_LINKS_CSV               = r"pathset_links.csv"
 
@@ -691,7 +695,15 @@ class Passenger:
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
-        # write it
+        # if iteration == 0, then this is the pathfinding result
+        if iteration==0:
+            Util.write_dataframe(df=pathset_df,
+                                 name="pathset_links_df" if links else "pathset_paths_df",
+                                 output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
+                                 append=False)
+            return
+
+        # otherwise, add columns and write it
         pathset_df[           "iteration"] = iteration
         pathset_df["simulation_iteration"] = simulation_iteration
 
