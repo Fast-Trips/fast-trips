@@ -92,13 +92,15 @@ class FastTrips:
                      os.path.join(self.output_dir, FastTrips.DEBUG_LOG % logname_append),
                      logToConsole=True, append=appendLog)
 
-        # Read the configuration
+    def read_configuration(self):
+        """
+        Read the fast-trips assignment and path-finding configuration
+        """
         Assignment.read_configuration(self.input_network_dir, self.input_demand_dir)
-
 
     def read_input_files(self):
         """
-        Reads in the input files files from *input_network_dir* and initializes the relevant data structures.
+        Reads in the input network and demand files and initializes the relevant data structures.
         """
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
@@ -135,15 +137,10 @@ class FastTrips:
         self.tazs = TAZ(self.input_network_dir, self.output_dir, Util.SIMULATION_DAY,
                         self.stops, self.transfers, self.routes)
 
-        FastTripsLogger.info("-------- Reading demand --------")
-        FastTripsLogger.info("Capacity constraint? %x" % Assignment.CAPACITY_CONSTRAINT )
         # Read the demand int passenger_id -> passenger instance
         self.passengers = Passenger(self.input_demand_dir, self.output_dir, Util.SIMULATION_DAY, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
 
     def run_assignment(self, output_dir):
-        # do this here rather than in the constructor in case anybody (cough, scripts/runTest.py)
-        # altered our config from what we read in the files
-        self.read_input_files()
 
         # Initialize performance results
         self.performance = Performance()

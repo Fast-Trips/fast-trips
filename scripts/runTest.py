@@ -51,6 +51,9 @@ if __name__ == "__main__":
 
     ft = fasttrips.FastTrips(args.input_network_dir, args.input_demand_dir, full_output_dir)
 
+    # Read the configuration here so we can overwrite options below
+    ft.read_configuration()
+
     if args.asgn_type == "deterministic":
         fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN
     elif args.asgn_type == "stochastic":
@@ -74,5 +77,8 @@ if __name__ == "__main__":
             sys.exit(2)
         fasttrips.Assignment.DEBUG_TRACE_ONLY    = True
         fasttrips.Assignment.NUMBER_OF_PROCESSES = 1
+
+    # Readthe networks and demand
+    ft.read_input_files()
 
     ft.run_assignment(full_output_dir)
