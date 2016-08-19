@@ -144,10 +144,17 @@ class Passenger:
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.trip_list_df), "person trips", Passenger.INPUT_TRIP_LIST_FILE))
 
-        non_null_person_ids = pandas.notnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]).sum()
-        # Make null person ids 'None'
-        self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].fillna(value='', inplace=True)
-        if non_null_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
+        # Error on missing person ids or person_trip_ids
+        missing_person_ids = self.trip_list_df[pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID])|
+                                               pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])]
+        if len(missing_person_ids)>0:
+            error_msg = "Missing person_id or person_trip_id fields:\n%s\n" % str(missing_person_ids)
+            error_msg += "Use 0 for person_id for trips without corresponding person."
+            FastTripsLogger.fatal(error_msg)
+            raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+
+        non_zero_person_ids = len(self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]!="0"])
+        if non_zero_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
 
             self.persons_df     = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE),
                                                   dtype={Passenger.PERSONS_COLUMN_PERSON_ID:object})
@@ -184,7 +191,7 @@ class Passenger:
                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                  self.trip_list_df.loc[self.trip_list_df["ID_dupes"]==True].to_string())
             FastTripsLogger.fatal(error_msg)
-            raise NetworkInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+            raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
         # Create unique numeric index
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = self.trip_list_df.index + 1
@@ -217,7 +224,7 @@ class Passenger:
                 error_msg = "Even though a person list is given, failed to find person information for %d trips" % len(no_person_ids)
                 FastTripsLogger.fatal(error_msg)
                 FastTripsLogger.fatal("\n%s\n" % no_person_ids.to_string())
-                raise NetworkInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+                raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
             # And then to households
             self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.households_df,

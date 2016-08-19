@@ -36,6 +36,19 @@ class NetworkInputError(Error):
         self.expr     = filename
         self.msg      = msg
 
+class DemandInputErorr(Error):
+    """
+    Exception raised for errors in the demand input.
+
+    Attributes:
+       expr  -- the input file in which the error occurred
+       msg   -- explanation of the error
+    """
+
+    def __init__(self, filename, msg):
+        self.expr     = filename
+        self.msg      = msg
+
 class ConfigurationError(Error):
     """
     Exception raised for errors in configuration.
