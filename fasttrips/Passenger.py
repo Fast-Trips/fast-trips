@@ -16,7 +16,7 @@ import collections,datetime,os,sys
 import numpy
 import pandas
 
-from .Error  import NetworkInputError
+from .Error  import DemandInputErorr
 from .Logger import FastTripsLogger
 from .Route  import Route
 from .Stop   import Stop
@@ -106,15 +106,20 @@ class Passenger:
     TRIP_LIST_COLUMN_VOT                        = "vot"
 
     #: Column names from pathfinding
-    PF_COL_ITERATION                = 'pf_iteration' #: iteration during which this path was found
+    PF_COL_PF_ITERATION             = 'pf_iteration' #: iteration during which this path was found
     PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
     PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
     PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
     PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
-    PF_COL_LINK_MODE                = 'linkmode'     #: link mode (Access, Trip, Egress, etc)
+
     PF_COL_PATH_NUM                 = 'pathnum'      #: path number, starting from 0
-    PF_COL_LINK_NUM                 = 'linknum'      #: link number, starting from access=0
-    PF_COL_DESCRIPTION              = 'description'  #: path text description
+    PF_COL_LINK_NUM                 = 'linknum'      #: link number, starting from access
+    PF_COL_LINK_MODE                = 'linkmode'     #: link mode (Access, Trip, Egress, etc)
+
+    PF_COL_MODE                     = TRIP_LIST_COLUMN_MODE        #: supply mode
+    PF_COL_ROUTE_ID                 = Trip.TRIPS_COLUMN_ROUTE_ID   #: link route ID
+    PF_COL_TRIP_ID                  = Trip.TRIPS_COLUMN_TRIP_ID    #: link trip ID
+    PF_COL_DESCRIPTION              = 'description'                #: path text description
     #: todo replace/rename ??
     PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
 
@@ -126,6 +131,12 @@ class Passenger:
         """
         Constructor from dictionary mapping attribute to value.
         """
+
+        # if no demand dir, nothing to do
+        if input_dir == None: return
+
+        FastTripsLogger.info("-------- Reading demand --------")
+        FastTripsLogger.info("Capacity constraint? %x" % capacity_constraint )
 
         self.trip_list_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE),
                                              dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
@@ -339,37 +350,55 @@ class Passenger:
     def get_person_id(self, trip_list_id):
         return self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, Passenger.TRIP_LIST_COLUMN_PERSON_ID].iloc[0]
 
-    def read_passenger_pathsets(self, output_dir, iteration):
+    @staticmethod
+    def read_passenger_pathsets(pathset_dir):
         """
         Reads the dataframes described in :py:meth:`Passenger.setup_passenger_pathsets` and returns them.
 
-        :param output_dir: Location of csv files to read
-        :type output_dir: string
-        :param iteration: The iteration label for the csv files to read
-        :type iteration: integer
-        :return: The number of paths assigned, the paths.  See :py:meth:`Assignment.setup_passengers`
+        :param pathset_dir: Location of csv files to read
+        :type pathset_dir: string
+
+        :return: See :py:meth:`Assignment.setup_passengers`
                  for documentation on the passenger paths :py:class:`pandas.DataFrame`
-        :rtype: a tuple of (int, :py:class:`pandas.DataFrame`, :py:class:`pandas.DataFrame`)
+        :rtype: a tuple of (:py:class:`pandas.DataFrame`, :py:class:`pandas.DataFrame`)
         """
         # read existing paths
-        pathset_paths_df = pandas.read_csv(os.path.join(output_dir, Passenger.PATHSET_PATHS_CSV % iteration))
-        FastTripsLogger.info("Read %s" % os.path.join(output_dir, Passenger.PATHSET_PATHS_CSV % iteration))
+        pathset_paths_df = pandas.read_csv(os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV))
+        FastTripsLogger.info("Read %s" % os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV))
         FastTripsLogger.debug("pathset_paths_df.dtypes=\n%s" % str(pathset_paths_df.dtypes))
 
-        pathset_links_df = pandas.read_csv(os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV % iteration),
-                                        parse_dates=['A_time','B_time'])
+        from .Assignment import Assignment
+        pathset_links_df = pandas.read_csv(os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV),
+                                           dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
+                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object,
+                                                  "A_id"                                   :object,
+                                                  "B_id"                                   :object,
+                                                  Passenger.PF_COL_ROUTE_ID                :object,
+                                                  Passenger.PF_COL_TRIP_ID                 :object},
+                                           parse_dates=[Passenger.PF_COL_PAX_A_TIME,
+                                                        Passenger.PF_COL_PAX_B_TIME,
+                                                        Assignment.SIM_COL_PAX_BOARD_TIME,
+                                                        Assignment.SIM_COL_PAX_ALIGHT_TIME,
+                                                        Assignment.SIM_COL_PAX_A_TIME,
+                                                        Assignment.SIM_COL_PAX_B_TIME])
 
-        pathset_links_df[Passenger.PF_COL_LINK_TIME] = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_LINK_TIME])
-        FastTripsLogger.info("Read %s" % os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV % iteration))
+        # convert time duration columns to time durations
+        pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_LINK_TIME])
+        pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_WAIT_TIME])
+        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_LINK_TIME])
+        pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME])
+
+        # and drop the numeric version
+        pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
+                               "%s min" % Passenger.PF_COL_WAIT_TIME,
+                               "%s min" % Assignment.SIM_COL_PAX_LINK_TIME,
+                               "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], 
+                               axis=1, inplace=True)
+
+        FastTripsLogger.info("Read %s" % os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV))
         FastTripsLogger.debug("pathset_links_df.dtypes=\n%s" % str(pathset_links_df.dtypes))
 
-        uniq_pax = passengers_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]].drop_duplicates(subset=\
-                                 [Passenger.PERSONS_COLUMN_PERSON_ID,
-                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
-        num_paths_found = len(uniq_pax)
-
-        return (num_paths_found, pathset_paths_df, pathset_links_df)
+        return (pathset_paths_df, pathset_links_df)
 
 
     def setup_passenger_pathsets(self, iteration, stops, trip_id_df, trips_df, modes_df, 
@@ -389,10 +418,10 @@ class Passenger:
         ================  ===============  =====================================================================================================
         `person_id`                object  person ID
         `person_trip_id`           object  person trip ID
-        `trip_list_id`              int64  trip list numerical ID
+        `trip_list_id_num`          int64  trip list numerical ID
         `pathdir`                   int64  the :py:attr:`PathSet.direction`
         `pathmode`                 object  the :py:attr:`PathSet.mode`
-        `iteration`                 int64  iteration in which these paths were found
+        `pf_iteration`              int64  iteration in which these paths were found
         `pathnum`                   int64  the path number for the path within the pathset
         `pf_cost`                 float64  the cost of the entire path
         `pf_probability`          float64  the probability of the path
@@ -406,7 +435,7 @@ class Passenger:
         ==============  ===============  =====================================================================================================
         `person_id`              object  person ID
         `person_trip_id`         object  person trip ID
-        `trip_list_id`            int64  trip list numerical ID
+        `trip_list_id_num`        int64  trip list numerical ID
         `iteration`               int64  iteration in which these paths were found
         `pathnum`                 int64  the path number for the path within the pathset
         `linkmode`               object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
