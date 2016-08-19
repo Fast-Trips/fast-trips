@@ -125,7 +125,7 @@ class Assignment:
     SKIP_PERSON_IDS                 = None
 
     #: Trace these passengers
-    TRACE_PERSON_IDS                = None
+    TRACE_PERSON_IDS                = []
 
     #: Prepend the route id to the trip id?  This is for readability in debugging, since
     #: route IDs are typically more readable and trip ids are inscrutable
