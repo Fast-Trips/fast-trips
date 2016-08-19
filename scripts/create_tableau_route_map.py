@@ -3,7 +3,7 @@ import pandas
 
 USAGE = r"""
 
-    python create_tableau_map.py input_network_dir
+    python create_tableau_route_map.py input_network_dir
 
     Reads from input_network_dir
       shapes.txt         (gtfs file)
