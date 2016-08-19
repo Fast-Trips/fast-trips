@@ -841,7 +841,7 @@ class PathSet:
             (cost_trip_df[Assignment.SIM_COL_PAX_B_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME])/numpy.timedelta64(1,'m')
 
         # if in vehicle time is less than 0 then off by 1 day error
-        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&(cost_trip_df["var_value"]<0), "var_value"] = cost_trip_df["var_value"] + numpy.timedelta64(1,'D')
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&(cost_trip_df["var_value"]<0), "var_value"] = cost_trip_df["var_value"] + (24*60)
 
         # if there's a board time, wait time = board_time - A time
         #               otherwise, wait time = 0 (for when we split transit links)
