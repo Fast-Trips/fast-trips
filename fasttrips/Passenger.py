@@ -560,7 +560,7 @@ class Passenger:
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
             'pathdir',  # for debugging
             'pathmode', # for output
-            Passenger.PF_COL_ITERATION,
+            Passenger.PF_COL_PF_ITERATION,
             Passenger.PF_COL_PATH_NUM,
             PathSet.PATH_KEY_COST,
             PathSet.PATH_KEY_PROBABILITY ])
@@ -569,7 +569,7 @@ class Passenger:
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-            Passenger.PF_COL_ITERATION,
+            Passenger.PF_COL_PF_ITERATION,
             Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_MODE,
             Route.ROUTES_COLUMN_MODE_NUM,
@@ -636,10 +636,10 @@ class Passenger:
             pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
 
             descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                         Passenger.PF_COL_ITERATION,
+                                         Passenger.PF_COL_PF_ITERATION,
                                          Passenger.PF_COL_PATH_NUM,
                                          Passenger.PF_COL_DESCRIPTION]].groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                                                 Passenger.PF_COL_ITERATION,
+                                                                                 Passenger.PF_COL_PF_ITERATION,
                                                                                  Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x:" ".join(x))
             descr_df = descr_df.to_frame().reset_index()
             # join it to pathset_paths and drop from pathset_links

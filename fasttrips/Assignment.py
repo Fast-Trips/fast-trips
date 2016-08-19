@@ -1585,7 +1585,7 @@ class Assignment:
 
             if simulation_iteration==0:
                 # For those we just found paths for, no one is bumped or going on overcap vehicles yet
-                pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_ITERATION]==iteration, Assignment.SIM_COL_PAX_BUMP_ITER ] = -1
+                pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_PF_ITERATION]==iteration, Assignment.SIM_COL_PAX_BUMP_ITER ] = -1
 
             while True: # loop for capacity constraint
 
