@@ -651,18 +651,27 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links):
+    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter):
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
         # write it
         pathset_df[           "iteration"] = iteration
-        pathset_df["simulation iteration"] = simulation_iteration
+        pathset_df["simulation_iteration"] = simulation_iteration
+
+        # mostly we append
+        do_append = True
+        # but sometimes we ovewrite
+        if output_pathset_per_sim_iter:
+            if (iteration == 1) and (simulation_iter == 0): do_append = False
+        else:
+            if iteration == 1: do_append = False
+
         Util.write_dataframe(pathset_df,
                              "pathset_links_df" if links else "pathset_paths_df",
                              os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
-                             append=((iteration>1) or (simulation_iteration > 0)))
-        pathset_df.drop(["iteration","simulation iteration"], axis=1, inplace=True)
+                             append=do_append)
+        pathset_df.drop(["iteration","simulation_iteration"], axis=1, inplace=True)
 
 
     @staticmethod
