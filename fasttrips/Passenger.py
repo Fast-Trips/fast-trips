@@ -367,7 +367,9 @@ class Passenger:
         :rtype: a tuple of (:py:class:`pandas.DataFrame`, :py:class:`pandas.DataFrame`)
         """
         # read existing paths
-        pathset_paths_df = pandas.read_csv(os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV))
+        pathset_paths_df = pandas.read_csv(os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV),
+                                           dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
+                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object})
         FastTripsLogger.info("Read %s" % os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV))
         FastTripsLogger.debug("pathset_paths_df.dtypes=\n%s" % str(pathset_paths_df.dtypes))
 

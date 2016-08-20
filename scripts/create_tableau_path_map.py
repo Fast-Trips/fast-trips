@@ -1,48 +1,46 @@
-import os, sys
+import argparse, os, sys
 import fasttrips
 import pandas
 
 USAGE = r"""
 
-    python create_tableau_path_map.py input_network_dir input_demand_dir paths.csv
-
-    Creates a tableau file to map paths by path description.
+    Creates a tableau file with points for pathset paths.
 
     """
 
 if __name__ == "__main__":
 
     pandas.set_option('display.width',      1000)
-    # pandas.set_option('display.height',   1000)
     pandas.set_option('display.max_rows',   1000)
     pandas.set_option('display.max_columns', 100)
 
-    if len(sys.argv) != 3:
-        print USAGE
-        sys.exit(2)
+    parser = argparse.ArgumentParser(description=USAGE)
+    parser.add_argument('input_network_dir', type=str, nargs=1, help="Directory with input network")
+    parser.add_argument('input_path_dir',    type=str, nargs=1, help="Directory with pathset_[links,paths].csv files")
+    parser.add_argument('--description', dest='use_description', action='store_true', 
+        help="Specify this to use path description as ID.  Otherwise will use standard pathset fields (person_id, person_trip_id, trip_list_id_num, iteration, simulation_iteration, pathnum)")
 
-    NETWORK_DIR = sys.argv[1]
-    PATHS_DIR   = sys.argv[2]
-    OUTPUT_DIR  = "create_tableau_path_map"
+    args = parser.parse_args()
+    LOG_DIR = "create_tableau_path_map"
 
-    if not os.path.exists(OUTPUT_DIR):
-        os.mkdir(OUTPUT_DIR)
+    if not os.path.exists(LOG_DIR):
+        os.mkdir(LOG_DIR)
 
     # Use fasttrips to read the network
-    ft = fasttrips.FastTrips(input_network_dir= NETWORK_DIR,
+    ft = fasttrips.FastTrips(input_network_dir= args.input_network_dir[0],
                              input_demand_dir = None,
-                             output_dir       = OUTPUT_DIR)
+                             output_dir       = LOG_DIR)
     ft.read_input_files()
 
     # and the pathset files
-    (pathset_paths_df, pathset_links_df) = fasttrips.Passenger.read_passenger_pathsets(PATHS_DIR)
+    (pathset_paths_df, pathset_links_df) = fasttrips.Passenger.read_passenger_pathsets(args.input_path_dir[0])
 
     # split the pathset links into component bits
     veh_trips_df     = ft.trips.get_full_trips()
     pathset_links_df = fasttrips.PathSet.split_transit_links(pathset_links_df, veh_trips_df, ft.stops)
 
     # just need the taz coords
-    taz_coords_file = os.path.join(NETWORK_DIR, "taz_coords.txt")
+    taz_coords_file = os.path.join(args.input_network_dir[0], "taz_coords.txt")
     taz_coords_df = pandas.read_csv(taz_coords_file, dtype={"taz":object})
     fasttrips.FastTripsLogger.debug("taz_coords_df=\n%s" % str(taz_coords_df))
 
@@ -80,6 +78,10 @@ if __name__ == "__main__":
     map_points_df = pathset_links_df[["person_id","person_trip_id","trip_list_id_num","iteration","simulation_iteration","pathnum",
                                       "linknum","linkmode","mode","route_id","trip_id",
                                       "A_id","A_seq","A_lat","A_lon"]].copy()
+
+    pathset_paths_df = pathset_paths_df[["person_id","person_trip_id","trip_list_id_num","iteration","simulation_iteration","pathnum",
+                                         "description"]]
+    pathset_paths_df[["trip_list_id_num", "pathnum"]] = pathset_paths_df[["trip_list_id_num", "pathnum"]].astype(int)
 
     # Each link will be it's own map line.  A split link is a single map line but with a bunch of points.
     # Access, egresss and transit map lines will just be two points: A and B
@@ -121,8 +123,27 @@ if __name__ == "__main__":
 
     map_points_df[["pathnum","linknum","trip_list_id_num"]] = map_points_df[["pathnum","linknum","trip_list_id_num"]].astype(int)
     fasttrips.FastTripsLogger.debug("map_points_df head=\n%s\ntail=\n%s" % (str(map_points_df.head(100)), str(map_points_df.tail(100))))
+    fasttrips.FastTripsLogger.info("Have %d map points" % len(map_points_df))
+
+    if args.use_description:
+        fasttrips.FastTripsLogger.info("Using description as ID")
+        # get unique descriptions
+        num_paths = len(pathset_paths_df)
+        pathset_paths_df.drop_duplicates(subset=["description"], keep="first", inplace=True)
+        fasttrips.FastTripsLogger.info("Dropping duplicate path descriptions.  Went from %d to %d paths" % (num_paths, len(pathset_paths_df)))
+
+        # join map points to them
+        map_points_df = pandas.merge(left    =pathset_paths_df,
+                                     left_on =["person_id","person_trip_id","trip_list_id_num","iteration","simulation_iteration","pathnum"],
+                                     right   =map_points_df,
+                                     right_on=["person_id","person_trip_id","trip_list_id_num","iteration","simulation_iteration","pathnum"],
+                                     how     ="inner")
+        fasttrips.FastTripsLogger.info("Have %d map points" % len(map_points_df))
+
+        # drop the non-descript columns
+        map_points_df.drop(["person_id","person_trip_id","trip_list_id_num","iteration","simulation_iteration","pathnum"], axis=1, inplace=True)
 
     # write it
-    output_file = os.path.join(PATHS_DIR, "pathset_map_points.csv")
+    output_file = os.path.join(args.input_path_dir[0], "pathset_map_points.csv")
     map_points_df.to_csv(output_file, sep=",", index=False)
     fasttrips.FastTripsLogger.info("Wrote %s" % output_file)
