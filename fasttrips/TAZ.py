@@ -434,6 +434,10 @@ class TAZ:
             self.drive_access_df = routes.add_numeric_mode_id(self.drive_access_df,
                                                               id_colname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,
                                                               numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM)
+
+        # warn on stops that have no walk access
+        self.warn_on_stops_without_walk_access(stops)
+
         # write this to communicate to extension
         self.write_access_egress_for_extension(output_dir)
 
@@ -509,6 +513,21 @@ class TAZ:
 
             FastTripsLogger.debug("links_df=\n%s" % links_df.head(30).to_string())
         return links_df
+
+    def warn_on_stops_without_walk_access(self, stops):
+        """
+        Do any stops lack *any* walk access?
+        """
+        # FastTripsLogger.debug("warn_on_stops_without_walk_access: \n%s", stops.stops_df.head() )
+        # FastTripsLogger.debug("warn_on_stops_without_walk_access: \n%s", self.walk_access_df.head() )
+
+        # join stops to walk access
+        no_access_stops = pandas.merge(left  = stops.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
+                                       right = self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_STOP, TAZ.WALK_ACCESS_COLUMN_TAZ]],
+                                       how   = "left")
+        no_access_stops = no_access_stops.loc[pandas.isnull(no_access_stops[TAZ.WALK_ACCESS_COLUMN_TAZ])]
+        if len(no_access_stops) > 0:
+            FastTripsLogger.warn("The following %d stop ids have no walk access: \n%s" % (len(no_access_stops), no_access_stops.to_string()))
 
     def write_access_egress_for_extension(self, output_dir):
         """
