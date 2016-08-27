@@ -124,8 +124,8 @@ class Passenger:
     PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
 
     #: pathfinding results
-    PF_PATHS_CSV                    = r"pf_paths.csv"
-    PF_LINKS_CSV                    = r"pf_links.csv"
+    PF_PATHS_CSV                    = r"pathsfound_paths.csv"
+    PF_LINKS_CSV                    = r"pathsfound_links.csv"
 
     #: results - PathSets
     PATHSET_PATHS_CSV               = r"pathset_paths.csv"
@@ -355,53 +355,68 @@ class Passenger:
         return self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, Passenger.TRIP_LIST_COLUMN_PERSON_ID].iloc[0]
 
     @staticmethod
-    def read_passenger_pathsets(pathset_dir):
+    def read_passenger_pathsets(pathset_dir, include_asgn=True):
         """
         Reads the dataframes described in :py:meth:`Passenger.setup_passenger_pathsets` and returns them.
 
         :param pathset_dir: Location of csv files to read
         :type pathset_dir: string
+        :param include_asgn: If true, read from files called :py:attr:`Passenger.PF_PATHS_CSV` and :py:attr:`Passenger.PF_LINKS_CSV`.
+                             Otherwise read from files called :py:attr:`Passenger.PATHSET_PATHS_CSV` and :py:attr:`Passenger.PATHSET_LINKS_CSV` which include assignment results.
 
         :return: See :py:meth:`Assignment.setup_passengers`
                  for documentation on the passenger paths :py:class:`pandas.DataFrame`
         :rtype: a tuple of (:py:class:`pandas.DataFrame`, :py:class:`pandas.DataFrame`)
         """
         # read existing paths
-        pathset_paths_df = pandas.read_csv(os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV),
+        paths_file = os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV if include_asgn else Passenger.PF_PATHS_CSV)
+        pathset_paths_df = pandas.read_csv(paths_file,
                                            dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
                                                   Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object})
-        FastTripsLogger.info("Read %s" % os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV))
+        FastTripsLogger.info("Read %s" % paths_file)
         FastTripsLogger.debug("pathset_paths_df.dtypes=\n%s" % str(pathset_paths_df.dtypes))
 
         from .Assignment import Assignment
-        pathset_links_df = pandas.read_csv(os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV),
-                                           dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
-                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object,
-                                                  "A_id"                                   :object,
-                                                  "B_id"                                   :object,
-                                                  Passenger.PF_COL_ROUTE_ID                :object,
-                                                  Passenger.PF_COL_TRIP_ID                 :object},
-                                           parse_dates=[Passenger.PF_COL_PAX_A_TIME,
-                                                        Passenger.PF_COL_PAX_B_TIME,
-                                                        Assignment.SIM_COL_PAX_BOARD_TIME,
-                                                        Assignment.SIM_COL_PAX_ALIGHT_TIME,
-                                                        Assignment.SIM_COL_PAX_A_TIME,
-                                                        Assignment.SIM_COL_PAX_B_TIME])
+
+        date_cols = [Passenger.PF_COL_PAX_A_TIME, Passenger.PF_COL_PAX_B_TIME]
+        if include_asgn:
+            date_cols.extend([Assignment.SIM_COL_PAX_BOARD_TIME,
+                              Assignment.SIM_COL_PAX_ALIGHT_TIME,
+                              Assignment.SIM_COL_PAX_A_TIME,
+                              Assignment.SIM_COL_PAX_B_TIME])
+        links_dtypes = {Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
+                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object,
+                        "A_id"                                   :object,
+                        "B_id"                                   :object,
+                        Passenger.PF_COL_ROUTE_ID                :object,
+                        Passenger.PF_COL_TRIP_ID                 :object}
+        # read datetimes as string initially
+        for date_col in date_cols:
+            links_dtypes[date_col] = object
+
+        links_file = os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV if include_asgn else Passenger.PF_LINKS_CSV)
+        pathset_links_df = pandas.read_csv(links_file, dtype=links_dtypes)
+
+        # convert time strings to datetimes
+        for date_col in date_cols:
+            pathset_links_df[date_col] = pathset_links_df[date_col].map(lambda x: Util.read_time(x))
 
         # convert time duration columns to time durations
         pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_LINK_TIME])
         pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_WAIT_TIME])
-        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_LINK_TIME])
-        pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME])
+        if include_asgn:
+            pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_LINK_TIME])
+            pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME])
 
         # and drop the numeric version
         pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
-                               "%s min" % Passenger.PF_COL_WAIT_TIME,
-                               "%s min" % Assignment.SIM_COL_PAX_LINK_TIME,
-                               "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], 
-                               axis=1, inplace=True)
+                               "%s min" % Passenger.PF_COL_WAIT_TIME], axis=1, inplace=True)
+        if include_asgn:
+            pathset_links_df.drop(["%s min" % Assignment.SIM_COL_PAX_LINK_TIME,
+                                   "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], axis=1, inplace=True)
 
-        FastTripsLogger.info("Read %s" % os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV))
+        FastTripsLogger.info("Read %s" % links_file)
+        FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.head()))
         FastTripsLogger.debug("pathset_links_df.dtypes=\n%s" % str(pathset_links_df.dtypes))
 
         return (pathset_paths_df, pathset_links_df)

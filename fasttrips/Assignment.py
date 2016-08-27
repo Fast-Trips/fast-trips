@@ -47,14 +47,14 @@ class Assignment:
     #: relaxed the model will terminate after the first iteration
     ITERATION_FLAG                  = None
 
-    ASSIGNMENT_TYPE_SIM_ONLY        = 'Simulation Only'
-    ASSIGNMENT_TYPE_DET_ASGN        = 'Deterministic Assignment'
-    ASSIGNMENT_TYPE_STO_ASGN        = 'Stochastic Assignment'
-    #: Configuration: Assignment Type
-    #: 'Simulation Only' - No Assignment (only simulation, given paths in the input)
-    #: 'Deterministic Assignment'
-    #: 'Stochastic Assignment'
-    ASSIGNMENT_TYPE                 = None
+    #: Find paths deterministically, using shortest path search based on travel time.
+    PATHFINDING_TYPE_DETERMINISTIC  = 'deterministic'
+    #: Find paths stochastically using trip-based hyperpath
+    PATHFINDING_TYPE_STOCHASTIC     = 'stochastic'
+    #: Don't find paths; read :py:attr:`Passenger.PF_PATHS_CSV` and :py:attr:`Passenger.PF_LINKS_CSV`.
+    PATHFINDING_TYPE_READ_FILE      = 'file'
+    #: Configuration: Pathfinding Type.  Should be one of `Deterministic`, `Stochastic` or `File`
+    PATHFINDING_TYPE                = None
 
     #: Configuration: Do simulation? It should be True for iterative assignment. In a one shot
     #: assignment with simulation flag off, the passengers are assigned to
@@ -248,7 +248,7 @@ class Assignment:
                       'overlap_scale_parameter'         :1.0,
                       'overlap_split_transit'           :'False',
                       'overlap_variable'                :'count',
-                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
+                      'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
@@ -286,10 +286,10 @@ class Assignment:
         PathSet.OVERLAP_SCALE_PARAMETER          = parser.getfloat  ('pathfinding','overlap_scale_parameter')
         PathSet.OVERLAP_SPLIT_TRANSIT            = parser.getboolean('pathfinding','overlap_split_transit')
         PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
-        Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
-        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
-                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
-                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
+        Assignment.PATHFINDING_TYPE              = parser.get       ('pathfinding','pathfinding_type')
+        assert(Assignment.PATHFINDING_TYPE in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
+                                               Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
+                                               Assignment.PATHFINDING_TYPE_READ_FILE])
         Assignment.STOCH_DISPERSION              = parser.getfloat  ('pathfinding','stochastic_dispersion')
         Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('pathfinding','stochastic_max_stop_process_count')
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
@@ -323,7 +323,7 @@ class Assignment:
         parser = ConfigParser.SafeConfigParser()
         parser.add_section('fasttrips')
         parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
-        parser.set('fasttrips','simulation',                    'True' if Assignment.ASSIGNMENT_TYPE else 'False')
+        parser.set('fasttrips','simulation',                    'True' if Assignment.SIMULATION else 'False')
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
         parser.set('fasttrips','output_pathset_per_sim_iter',   'True' if Assignment.OUTPUT_PATHSET_PER_SIM_ITER else 'False')
         parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
@@ -347,7 +347,7 @@ class Assignment:
         parser.set('pathfinding','overlap_scale_parameter',     '%f' % PathSet.OVERLAP_SCALE_PARAMETER)
         parser.set('pathfinding','overlap_split_transit',       'True' if PathSet.OVERLAP_SPLIT_TRANSIT else 'False')
         parser.set('pathfinding','overlap_variable',            '%s' % PathSet.OVERLAP_VARIABLE)
-        parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
+        parser.set('pathfinding','pathfinding_type',            Assignment.PATHFINDING_TYPE)
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
@@ -520,10 +520,11 @@ class Assignment:
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
-            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY and \
-               os.path.exists(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration)):
-                FastTripsLogger.info("Simulation only")
-                (num_paths_found, pathset_paths_df, pathset_links_df) = FT.passengers.read_assignment_results(output_dir, iteration)
+            if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and \
+               (iteration == 1) and (os.path.exists(os.path.join(output_dir, Passenger.PF_LINKS_CSV))):
+                FastTripsLogger.info("Reading paths from file")
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, include_asgn=False)
+                num_paths_found = Assignment.number_of_pathsets(new_pathset_paths_df)
 
             else:
                 num_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration)
@@ -674,7 +675,7 @@ class Assignment:
                         "process":multiprocessing.Process(target=find_trip_based_paths_process_worker,
                             args=(iteration, process_idx, FT.input_network_dir, FT.input_demand_dir,
                                   FT.output_dir, todo_queue, done_queue,
-                                  Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                  Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
                                   Assignment.bump_wait_df, veh_trips_df)),
                         "alive":True,
                         "done":False
@@ -718,7 +719,7 @@ class Assignment:
                     # do the work
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, trip_pathset,
-                                                        Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                        Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
                                                         trace=trace_person)
                     trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, person_id, trip_list_id, perf_dict)
