@@ -15,6 +15,7 @@ __license__   = """
 import collections,datetime,os,sys
 import pandas
 
+from .Error import NetworkInputError
 from .Logger import FastTripsLogger
 from .Trip import Trip
 from .Util import Util
@@ -142,7 +143,12 @@ class Stop:
                                        how="left",
                                        left_on=dap_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
         # there should be only NaNs since DAP lot IDs need to be unique from Stop IDs
-        assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
+        # non_unique_lots = join_daps_stops.loc[ pandas.notnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]) ]
+        # if len(non_unique_lots) > 0:
+        #     error_str = "These drive access lot IDs are also stop IDs: \n%s" % str(non_unique_lots)
+        #     FastTripsLogger.warn(error_str)
+        #     raise NetworkInputError("drive_access_ft.txt", error_str)
+        # assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
 
         # number them starting at self.max_stop_id_num
         daps_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = daps_unique_df.index + self.max_stop_id_num + 1

@@ -754,6 +754,8 @@ class PathSet:
             else:
                 link_df   = drive_df.copy()
                 mode_list = TAZ.DRIVE_MODE_NUMS
+                # broken
+                continue
 
             FastTripsLogger.debug("Access/egress link_df %s\n%s" % (accegr_type, link_df.head().to_string()))
             if len(link_df) == 0:
