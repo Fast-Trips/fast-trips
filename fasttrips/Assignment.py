@@ -42,6 +42,13 @@ class Assignment:
     #: (Hmm naming conventions are a bit awkward here)
     CONFIGURATION_OUTPUT_FILE       = 'ft_output_config.txt'
 
+    #: Configuration: Input network directory
+    INPUT_NETWORK_DIR               = None
+    #: Configuration: Input demand directory
+    INPUT_DEMAND_DIR                = None
+    #: Configuration: Output directory
+    OUTPUT_DIR                      = None
+
     #: Configuration: Maximum number of iterations to remove capacity violations. When
     #: the transit system is not crowded or when capacity constraint is
     #: relaxed the model will terminate after the first iteration
@@ -207,9 +214,9 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration(input_network_dir, input_demand_dir, config_file=CONFIGURATION_FILE):
+    def read_configuration(config_file=CONFIGURATION_FILE):
         """
-        Read the configuration parameters.
+        Read the configuration parameters from :py:attr:`Assignment.INPUT_NETWORK_DIR` and then :py:attr:`Assignment.INPUT_DEMAND_DIR`
         """
         pandas.set_option('display.width',      1000)
         # pandas.set_option('display.height',   1000)
@@ -217,7 +224,7 @@ class Assignment:
         pandas.set_option('display.max_columns', 100)
 
         # Functions are defined in here -- read this and eval it
-        func_file = os.path.join(input_demand_dir, Assignment.CONFIGURATION_FUNCTIONS_FILE)
+        func_file = os.path.join(Assignment.INPUT_DEMAND_DIR, Assignment.CONFIGURATION_FUNCTIONS_FILE)
         if os.path.exists(func_file):
             my_globals = {}
             FastTripsLogger.info("Reading %s" % func_file)
@@ -255,9 +262,16 @@ class Assignment:
                       'time_window'                     :30,
                       'user_class_function'             :'generic_user_class'
                      })
-        parser.read(os.path.join(input_network_dir, config_file))
-        if input_demand_dir and (input_demand_dir != input_network_dir) and os.path.exists(os.path.join(input_demand_dir,  config_file)):
-            parser.read(os.path.join(input_demand_dir, config_file))
+        # First, read configuration from network directory
+        config_fullpath = os.path.join(Assignment.INPUT_NETWORK_DIR, config_file)
+        FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
+        parser.read(config_fullpath)
+
+        # Then, read configuration from demand directory (if specified and different from network directory)
+        config_fullpath = os.path.join(Assignment.INPUT_DEMAND_DIR, config_file)
+        if Assignment.INPUT_DEMAND_DIR and (Assignment.INPUT_DEMAND_DIR != Assignment.INPUT_NETWORK_DIR) and os.path.exists(config_fullpath):
+            FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
+            parser.read(config_fullpath)
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
@@ -306,7 +320,7 @@ class Assignment:
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(func_file, msg)
 
-        weights_file = os.path.join(input_demand_dir, PathSet.WEIGHTS_FILE)
+        weights_file = os.path.join(Assignment.INPUT_DEMAND_DIR, PathSet.WEIGHTS_FILE)
         if not os.path.exists(weights_file):
             FastTripsLogger.fatal("No path weights file %s" % weights_file)
             sys.exit(2)
@@ -322,8 +336,11 @@ class Assignment:
         """
         parser = ConfigParser.SafeConfigParser()
         parser.add_section('fasttrips')
+        parser.set('fasttrips','input_demand_dir',              Assignment.INPUT_DEMAND_DIR)
+        parser.set('fasttrips','input_network_dir',             Assignment.INPUT_NETWORK_DIR)
         parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
         parser.set('fasttrips','simulation',                    'True' if Assignment.SIMULATION else 'False')
+        parser.set('fasttrips','output_dir',                    Assignment.OUTPUT_DIR)
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
         parser.set('fasttrips','output_pathset_per_sim_iter',   'True' if Assignment.OUTPUT_PATHSET_PER_SIM_ITER else 'False')
         parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
