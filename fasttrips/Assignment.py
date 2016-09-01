@@ -214,7 +214,7 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration(config_file=CONFIGURATION_FILE):
+    def read_configuration(override_input_network_dir=None, override_input_demand_dir=None, config_file=CONFIGURATION_FILE):
         """
         Read the configuration parameters from :py:attr:`Assignment.INPUT_NETWORK_DIR` and then :py:attr:`Assignment.INPUT_DEMAND_DIR`
         """
@@ -222,6 +222,11 @@ class Assignment:
         # pandas.set_option('display.height',   1000)
         pandas.set_option('display.max_rows',   1000)
         pandas.set_option('display.max_columns', 100)
+
+        if override_input_network_dir:
+            Assignment.INPUT_NETWORK_DIR = override_input_network_dir
+        if override_input_demand_dir:
+            Assignment.INPUT_DEMAND_DIR = override_input_demand_dir
 
         # Functions are defined in here -- read this and eval it
         func_file = os.path.join(Assignment.INPUT_DEMAND_DIR, Assignment.CONFIGURATION_FUNCTIONS_FILE)
@@ -1705,7 +1710,9 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))
 
     # the child process doesn't have these set to read them
-    Assignment.read_configuration(output_dir, input_demand_dir, Assignment.CONFIGURATION_OUTPUT_FILE)
+    Assignment.read_configuration(override_input_network_dir=output_dir,
+                                  override_input_demand_dir=input_demand_dir,
+                                  config_file=Assignment.CONFIGURATION_OUTPUT_FILE)
 
     # this passes those read parameters and the stop times to the C++ extension
     Assignment.initialize_fasttrips_extension(worker_num, output_dir, stop_times_df)
