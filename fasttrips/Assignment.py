@@ -690,7 +690,7 @@ class Assignment:
                     process_dict[process_idx] = {
                         "process":multiprocessing.Process(target=find_trip_based_paths_process_worker,
                             args=(iteration, process_idx, Assignment.INPUT_NETWORK_DIR, Assignment.INPUT_DEMAND_DIR,
-                                  Assignment.output_dir, todo_queue, done_queue,
+                                  Assignment.OUTPUT_DIR, todo_queue, done_queue,
                                   Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
                                   Assignment.bump_wait_df, veh_trips_df)),
                         "alive":True,
