@@ -190,7 +190,7 @@ class Util:
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
 
     @staticmethod
-    def write_dataframe(df, name, output_file, append=False):
+    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False):
         """
         Convenience method to write a dataframe but make some of the fields more usable.
 
@@ -229,9 +229,12 @@ class Util:
                 # if the column already exists, continue
                 if new_colname in df_cols: continue
 
-                # otherwise make the new one and replace it
+                # otherwise make the new one and add or replace it
                 df_toprint[new_colname] = df_toprint[old_colname]/units
-                df_cols[col_idx] = new_colname
+                if keep_duration_columns:           # add
+                    df_cols.append(new_colname)
+                else:                               # replace
+                    df_cols[col_idx] = new_colname
 
             elif str(df_toprint.dtypes[col_idx]) == "datetime64[ns]":
                 # print as HH:MM:SS
@@ -245,13 +248,13 @@ class Util:
         # append
         if header_row:
             df_file = open(output_file, "a")
-            df_toprint[header_row].to_csv(df_file, index=False, header=False)
+            df_toprint[header_row].to_csv(df_file, index=False, header=False, float_format="%.10f")
             df_file.close()
 
             FastTripsLogger.info("Appended %s dataframe to %s" % (name, output_file))
 
         else:
-            df_toprint.to_csv(output_file, index=False)
+            df_toprint.to_csv(output_file, index=False, float_format="%.10f")
             FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))
 
     @staticmethod

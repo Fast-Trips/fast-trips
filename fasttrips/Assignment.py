@@ -520,8 +520,7 @@ class Assignment:
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
-            if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and \
-               (iteration == 1) and (os.path.exists(os.path.join(output_dir, Passenger.PF_LINKS_CSV))):
+            if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and (iteration == 1):
                 FastTripsLogger.info("Reading paths from file")
                 (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, include_asgn=False)
                 num_paths_found = Assignment.number_of_pathsets(new_pathset_paths_df)

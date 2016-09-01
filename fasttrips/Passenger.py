@@ -402,11 +402,27 @@ class Passenger:
             pathset_links_df[date_col] = pathset_links_df[date_col].map(lambda x: Util.read_time(x))
 
         # convert time duration columns to time durations
-        pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_LINK_TIME])
-        pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_WAIT_TIME])
-        if include_asgn:
-            pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_LINK_TIME])
-            pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME])
+        link_cols = list(pathset_links_df.columns.values)
+        if Passenger.PF_COL_LINK_TIME in link_cols:
+            pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_LINK_TIME])
+        else:
+            pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_LINK_TIME], unit='m')
+
+        if Passenger.PF_COL_WAIT_TIME in link_cols:
+            pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_WAIT_TIME])
+        else:
+            pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_WAIT_TIME], unit='m')
+
+        # if simulation results are available
+        if Assignment.SIM_COL_PAX_LINK_TIME in link_cols:
+            pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pandas.to_timedelta(pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME])
+        elif "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME in link_cols:
+            pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_LINK_TIME], unit='m')
+
+        if Assignment.SIM_COL_PAX_WAIT_TIME in link_cols:
+            pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME])
+        elif "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME in link_cols:
+            pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], unit='m')
 
         # and drop the numeric version
         pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
@@ -717,7 +733,8 @@ class Passenger:
             Util.write_dataframe(df=pathset_df,
                                  name="pathset_links_df" if links else "pathset_paths_df",
                                  output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
-                                 append=False)
+                                 append=False,
+                                 keep_duration_columns=True)
             return
 
         # otherwise, add columns and write it
