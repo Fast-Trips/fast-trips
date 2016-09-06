@@ -1699,6 +1699,9 @@ namespace fasttrips {
                      taz_state.chooseState(path_spec, trace_file, access_cum_prob),
                      trace_file, path_spec, *this);
 
+        // trip_id shouldn't repeat
+        int last_trip_id = -1;
+
         // moving on, ss is now the previous link
         while (true)
         {
@@ -1720,7 +1723,7 @@ namespace fasttrips {
             // setup probabilities
             std::vector<ProbabilityStopState> stop_cum_prob;
             const Hyperlink& current_hyperlink = ssi->second;
-            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss);
+            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss, last_trip_id);
 
             if (stop_cum_prob.size() == 0) { return false; }
 
@@ -1734,6 +1737,10 @@ namespace fasttrips {
             if (( path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_EGRESS) ||
                 (!path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_ACCESS)) {
                 break;
+            }
+
+            if (isTrip(path.back().second.deparr_mode_)) {
+                last_trip_id = path.back().second.trip_id_;
             }
 
         }

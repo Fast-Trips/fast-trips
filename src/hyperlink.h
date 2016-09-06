@@ -168,7 +168,7 @@ namespace fasttrips {
         /// Setup probabilities for hyperlink's stop states (links)
         void setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
                                 const PathFinder& pf, std::vector<ProbabilityStopState>& probabilities,
-                                const StopState* prev_link = NULL) const;
+                                const StopState* prev_link = NULL, const int last_trip_id = -1) const;
 
         /**
          * Given a vector of fasttrips::ProbabilityStopState instances,

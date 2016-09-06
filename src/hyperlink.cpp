@@ -667,7 +667,7 @@ namespace fasttrips {
     // Choose a link from this hyperlink based on the probabilities
     void Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
                                        const PathFinder& pf, std::vector<ProbabilityStopState>& probabilities,
-                                       const StopState* prev_link) const
+                                       const StopState* prev_link, const int last_trip_id) const
     {
         const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
 
@@ -699,6 +699,9 @@ namespace fasttrips {
                 if ( path_spec.outbound_ && ss.deparr_time_ < prev_link->arrdep_time_) { continue; }
                 // inbound: we cannot arrive after we depart
                 if (!path_spec.outbound_ && ss.deparr_time_ > prev_link->arrdep_time_) { continue; }
+
+                // don't repeat the same trip
+                if (isTrip(ss.deparr_mode_) && (ss.trip_id_ == last_trip_id)) { continue; }
 
                 // calculating denominator
                 sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
