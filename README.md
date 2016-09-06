@@ -93,7 +93,7 @@ When the pathsize overlap is penalized (pathfinding `overlap_variable` is not `N
 
 Where
   * *i* is the path alternative for individual *n*
-  * &Lambda;<sub>*i*</sub> is the set of legs of path alternative *i*
+  * &Gamma;<sub>*i*</sub> is the set of legs of path alternative *i*
   * *l<sub>a</sub>* is the value of the `overlap_variable` for leg *a*.  So it is either 1, the distance or the time of leg *a* depending of if `overlap_scale_parameter` is `count`, `distance` or `time`, respectively.
   * *L<sub>i</sub> is the total sum of the `overlap_variable` over all legs *l<sub>a</sub>* that make up path alternative *i*
   * *C<sub>in</sub> is the choice set of path alternatives for individual *n* that overlap with alternative *i*
