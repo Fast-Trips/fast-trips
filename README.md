@@ -8,6 +8,9 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
 * [Setup](#setup)
 * [Input](#input)
   * [`config_ft.txt`](#config_fttxt)
+    * [Configuration Options: fasttrips](#configuration-options-fasttrips)
+    * [Configuration Options: pathfinding](#configuration-options-pathfinding)
+    * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
 * [Test Sample Input](#test-sample-input)
@@ -83,7 +86,7 @@ Option Name                         | Type   | Default | Description
 `time_window`                       | float  | 30      | In path-finding, the max time a passenger would wait at a stop.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
 
-#### More on Overlap Path Penalties
+#### More on Overlap Path Size Penalties
 
 The path size overlap penalty is formulated by Ramming and discussed in Hoogendoorn-Lanser et al. (see [References](#references) ).
 
