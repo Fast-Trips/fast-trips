@@ -31,7 +31,7 @@
 
   
     <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
-        <link rel="next" title="fasttrips.Path" href="fasttrips.Path.html"/>
+        <link rel="next" title="fasttrips.PathSet" href="fasttrips.PathSet.html"/>
         <link rel="prev" title="fasttrips.Passenger" href="fasttrips.Passenger.html"/> 
 
   
@@ -78,12 +78,13 @@
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.Performance</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.PathSet.html">fasttrips.PathSet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
@@ -148,10 +149,10 @@ in Fast-Trips.</p>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>()</td>
 <td>Constructor.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_info</span></code>(iteration,&nbsp;trip_list_id_num,&nbsp;perf_dict)</td>
-<td>Add this row to the performance dataframe.</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_info</span></code>(iteration,&nbsp;person_id,&nbsp;...)</td>
+<td>Add this row to the performance dict of arrays.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write</span></code>(output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write</span></code>(output_dir,&nbsp;iteration)</td>
 <td>Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.</td>
 </tr>
 </tbody>
@@ -175,6 +176,18 @@ in Fast-Trips.</p>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT</span></code></td>
 <td>Performance column: Maximum number of times a stop was processed</td>
 </tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_NUM_LABELED_STOPS</span></code></td>
+<td>Performance column: Number of labeled stops</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_PERSON_ID</span></code></td>
+<td>Performance column: Person ID</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES</span></code></td>
+<td>Performance column: Private usage in memroy, in bytes</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_PROCESS_NUM</span></code></td>
+<td>Performance column: Process number</td>
+</tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TIME_ENUMERATING</span></code></td>
 <td>Performance column: Time spent enumerating (timedelta)</td>
 </tr>
@@ -193,24 +206,27 @@ in Fast-Trips.</p>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM</span></code></td>
 <td>Performance column: Trip list ID num</td>
 </tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PERFORMANCE_COLUMN_WORKING_SET_BYTES</span></code></td>
+<td>Performance column: Working set in memory, in bytes</td>
+</tr>
 </tbody>
 </table>
 <dl class="method">
 <dt id="fasttrips.Performance.add_info">
-<code class="descname">add_info</code><span class="sig-paren">(</span><em>iteration</em>, <em>trip_list_id_num</em>, <em>perf_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.add_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.add_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add this row to the performance dataframe.
+<code class="descname">add_info</code><span class="sig-paren">(</span><em>iteration</em>, <em>person_id</em>, <em>trip_list_id_num</em>, <em>perf_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.add_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.add_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add this row to the performance dict of arrays.
 Assumes time values are in milliseconds.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="fasttrips.Performance.write">
-<code class="descname">write</code><span class="sig-paren">(</span><em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.write" title="Permalink to this definition">¶</a></dt>
+<code class="descname">write</code><span class="sig-paren">(</span><em>output_dir</em>, <em>iteration</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.Performance.OUTPUT_PERFORMANCE_FILE">
-<code class="descname">OUTPUT_PERFORMANCE_FILE</code><em class="property"> = 'ft_output_performance.txt'</em><a class="headerlink" href="#fasttrips.Performance.OUTPUT_PERFORMANCE_FILE" title="Permalink to this definition">¶</a></dt>
+<code class="descname">OUTPUT_PERFORMANCE_FILE</code><em class="property"> = 'ft_output_performance.csv'</em><a class="headerlink" href="#fasttrips.Performance.OUTPUT_PERFORMANCE_FILE" title="Permalink to this definition">¶</a></dt>
 <dd><p>File with to write performance results</p>
 </dd></dl>
 
@@ -230,6 +246,30 @@ Assumes time values are in milliseconds.</p>
 <dt id="fasttrips.Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT">
 <code class="descname">PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT</code><em class="property"> = 'max stop process count'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performance column: Maximum number of times a stop was processed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS">
+<code class="descname">PERFORMANCE_COLUMN_NUM_LABELED_STOPS</code><em class="property"> = 'num labeled stops'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Number of labeled stops</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_PERSON_ID">
+<code class="descname">PERFORMANCE_COLUMN_PERSON_ID</code><em class="property"> = 'person_id'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_PERSON_ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Person ID</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES">
+<code class="descname">PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES</code><em class="property"> = 'private usage bytes'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Private usage in memroy, in bytes</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_PROCESS_NUM">
+<code class="descname">PERFORMANCE_COLUMN_PROCESS_NUM</code><em class="property"> = 'process number'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_PROCESS_NUM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Process number</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -268,6 +308,12 @@ Assumes time values are in milliseconds.</p>
 <dd><p>Performance column: Trip list ID num</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="fasttrips.Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES">
+<code class="descname">PERFORMANCE_COLUMN_WORKING_SET_BYTES</code><em class="property"> = 'working set bytes'</em><a class="headerlink" href="#fasttrips.Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performance column: Working set in memory, in bytes</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -278,7 +324,7 @@ Assumes time values are in milliseconds.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="fasttrips.Path.html" class="btn btn-neutral float-right" title="fasttrips.Path" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="fasttrips.PathSet.html" class="btn btn-neutral float-right" title="fasttrips.PathSet" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="fasttrips.Passenger.html" class="btn btn-neutral" title="fasttrips.Passenger" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -290,7 +336,7 @@ Assumes time values are in milliseconds.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Lisa Zorn.
+        &copy; Copyright 2015-2016, Lisa Zorn.
     </p>
   </div>
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.

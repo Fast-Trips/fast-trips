@@ -54,6 +54,7 @@ fasttrips.Route
       ~Route.MODE_TYPE_TRANSIT
       ~Route.OUTPUT_MODE_NUM_FILE
       ~Route.OUTPUT_ROUTE_ID_NUM_FILE
+      ~Route.ROUTES_COLUMN_AGENCY_ID
       ~Route.ROUTES_COLUMN_FARE_CLASS
       ~Route.ROUTES_COLUMN_MODE
       ~Route.ROUTES_COLUMN_MODE_NUM

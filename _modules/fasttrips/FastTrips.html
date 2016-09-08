@@ -77,12 +77,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.PathSet.html">fasttrips.PathSet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
@@ -152,6 +153,7 @@
 <span class="kn">from</span> <span class="nn">.TAZ</span>         <span class="kn">import</span> <span class="n">TAZ</span>
 <span class="kn">from</span> <span class="nn">.Transfer</span>    <span class="kn">import</span> <span class="n">Transfer</span>
 <span class="kn">from</span> <span class="nn">.Trip</span>        <span class="kn">import</span> <span class="n">Trip</span>
+<span class="kn">from</span> <span class="nn">.Util</span>        <span class="kn">import</span> <span class="n">Util</span>
 
 <div class="viewcode-block" id="FastTrips"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips">[docs]</a><span class="k">class</span> <span class="nc">FastTrips</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -164,11 +166,8 @@
     <span class="c">#: Debug log filename.  Detailed output goes here, including trace information.</span>
     <span class="n">DEBUG_LOG</span> <span class="o">=</span> <span class="s">&quot;ft_debug</span><span class="si">%s</span><span class="s">.log&quot;</span>
 
-    <span class="c">#: Pathset debug filename.  Writes pathset here.</span>
-    <span class="n">PATHSET_LOG</span> <span class="o">=</span> <span class="s">&quot;ft_pathset</span><span class="si">%s</span><span class="s">.txt&quot;</span>
-
 <div class="viewcode-block" id="FastTrips.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_network_dir</span><span class="p">,</span> <span class="n">input_demand_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span>
-                 <span class="n">is_child_process</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">logname_append</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">appendLog</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+                 <span class="n">logname_append</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="n">appendLog</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.</span>
 
@@ -181,14 +180,13 @@
 <span class="sd">        :type input_demand_dir:   string</span>
 <span class="sd">        :param output_dir:        Location to write output and log files.</span>
 <span class="sd">        :type output_dir:         string</span>
-<span class="sd">        :param is_child_process:  Is this FastTrips instance for a child process?</span>
-<span class="sd">        :type  is_child_process:  bool</span>
 <span class="sd">        :param logname_append:    Modifier for info and debug log filenames.  So workers can write their own logs.</span>
 <span class="sd">        :type logname_append:     string</span>
 <span class="sd">        :param appendLog:         Append to info and debug logs?  When FastTrips assignment iterations (to</span>
 <span class="sd">                                  handle capacity bumps), we&#39;d like to append rather than overwrite.</span>
 <span class="sd">        :type appendLog:          bool</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="c">#: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger&#39;s path ID</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">passengers</span>      <span class="o">=</span> <span class="bp">None</span>
 
@@ -205,134 +203,77 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">trips</span>           <span class="o">=</span> <span class="bp">None</span>
 
         <span class="c">#: string representing directory with input network data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span>  <span class="o">=</span> <span class="n">input_network_dir</span>
+        <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span> <span class="o">=</span> <span class="n">input_network_dir</span>
 
         <span class="c">#: string representing directory with input demand data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_demand_dir</span>   <span class="o">=</span> <span class="n">input_demand_dir</span>
+        <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_DEMAND_DIR</span>  <span class="o">=</span> <span class="n">input_demand_dir</span>
 
         <span class="c">#: string representing directory in which to write our output</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span>         <span class="o">=</span> <span class="n">output_dir</span>
-
-        <span class="c">#: is this instance for a child process?</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span>   <span class="o">=</span> <span class="n">is_child_process</span>
+        <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span>        <span class="o">=</span> <span class="n">output_dir</span>
 
         <span class="c">#: transitfeed schedule instance.  See https://github.com/google/transitfeed</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span>      <span class="o">=</span> <span class="bp">None</span>
 
         <span class="c"># setup logging</span>
-        <span class="n">setupLogging</span><span class="p">(</span><span class="bp">None</span> <span class="k">if</span> <span class="n">is_child_process</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">INFO_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">),</span>
-                     <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">DEBUG_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">),</span>
-                     <span class="n">logToConsole</span><span class="o">=</span><span class="bp">False</span> <span class="k">if</span> <span class="n">is_child_process</span> <span class="k">else</span> <span class="bp">True</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="n">appendLog</span><span class="p">)</span>
-
-        <span class="c"># clear pathset files if we&#39;re starting out -- reset them to just a header</span>
-        <span class="c"># there will be one for the parent process, and one each for workers</span>
-        <span class="n">pathset_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">PATHSET_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">appendLog</span><span class="p">:</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Writing </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">pathset_filename</span><span class="p">)</span>
-            <span class="n">pathset_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">pathset_filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
-            <span class="n">pathset_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;iteration passenger_id_num trip_list_id_num path_cost path_probability path_board_stops path_trips path_alight_stops</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
-            <span class="n">pathset_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-        <span class="c"># Read the configuration</span>
-        <span class="n">Assignment</span><span class="o">.</span><span class="n">read_configuration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_demand_dir</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">read_input_files</span><span class="p">()</span>
+        <span class="n">setupLogging</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">INFO_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">),</span>
+                     <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">DEBUG_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">),</span>
+                     <span class="n">logToConsole</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="n">appendLog</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="FastTrips.read_configuration"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.read_configuration">[docs]</a>    <span class="k">def</span> <span class="nf">read_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the fast-trips assignment and path-finding configuration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Assignment</span><span class="o">.</span><span class="n">read_configuration</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="FastTrips.read_input_files"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.read_input_files">[docs]</a>    <span class="k">def</span> <span class="nf">read_input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reads in the input files files from *input_network_dir* and initializes the relevant data structures.</span>
+<span class="sd">        Reads in the input network and demand files and initializes the relevant data structures.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># Read the gtfs files first</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Reading GTFS schedule&quot;</span><span class="p">)</span>
-        <span class="n">loader</span>             <span class="o">=</span> <span class="n">transitfeed</span><span class="o">.</span><span class="n">Loader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">)</span>
+        <span class="n">loader</span>             <span class="o">=</span> <span class="n">transitfeed</span><span class="o">.</span><span class="n">Loader</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">memory_db</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">Load</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">False</span><span class="p">:</span>
             <span class="c"># Validate the GTFS</span>
             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Validating GTFS schedule&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="o">.</span><span class="n">Validate</span><span class="p">()</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Done validating GTFS schedule&quot;</span><span class="p">)</span>
 
         <span class="c"># Required: Trips, Routes, Stops, Stop Times, Agency, Calendar</span>
         <span class="c"># Optional: Transfers, Shapes, Calendar Dates...</span>
 
         <span class="c"># Read routes, agencies</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">TODAY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span><span class="p">)</span>
 
         <span class="c"># Read Stops (gtfs-required)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span> <span class="o">=</span> <span class="n">Stop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
-                          <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span> <span class="o">=</span> <span class="n">Stop</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">)</span>
 
         <span class="c"># Read Transfers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span> <span class="o">=</span> <span class="n">Transfer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
-                                  <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span> <span class="o">=</span> <span class="n">Transfer</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">)</span>
 
         <span class="c"># Read trips, vehicles, calendar and stoptimes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">trips</span> <span class="o">=</span> <span class="n">Trip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
-                          <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">TODAY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trips</span> <span class="o">=</span> <span class="n">Trip</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span><span class="p">,</span>
                           <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">PREPEND_ROUTE_ID_TO_TRIP_ID</span><span class="p">)</span>
 
         <span class="c"># read the TAZs into a TAZ instance</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tazs</span> <span class="o">=</span> <span class="n">TAZ</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_network_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">TODAY</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tazs</span> <span class="o">=</span> <span class="n">TAZ</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">:</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;-------- Reading demand --------&quot;</span><span class="p">)</span>
-            <span class="c"># Read the demand int passenger_id -&gt; passenger instance</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">passengers</span> <span class="o">=</span> <span class="n">Passenger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_demand_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">TODAY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">passengers</span> <span class="o">=</span> <span class="bp">None</span>
-</div>
-<div class="viewcode-block" id="FastTrips.combine_pathset_files"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.combine_pathset_files">[docs]</a>    <span class="k">def</span> <span class="nf">combine_pathset_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Since the pathset files are output by worker, let&#39;s combine them into a single file.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">procnum</span>      <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">pathset_init</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="n">pathsets_df</span>  <span class="o">=</span> <span class="bp">None</span>
-        <span class="c"># if we don&#39;t have one, no worries</span>
-
-        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="n">logname_append</span> <span class="o">=</span> <span class="s">&quot;_worker</span><span class="si">%02d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">procnum</span>
-            <span class="n">pathset_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">PATHSET_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pathset_filename</span><span class="p">):</span>
-                <span class="k">break</span>
-
-            <span class="c"># read the pathset</span>
-            <span class="n">pathset_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">pathset_filename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;[ ]+&quot;</span><span class="p">)</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Read </span><span class="si">%d</span><span class="s"> lines from </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pathset_df</span><span class="p">),</span> <span class="n">pathset_filename</span><span class="p">))</span>
-            <span class="c"># remove it</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">pathset_filename</span><span class="p">)</span>
-
-            <span class="c"># append to ours</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">pathset_init</span><span class="p">:</span>
-                <span class="n">pathsets_df</span> <span class="o">=</span> <span class="n">pathset_df</span>
-                <span class="n">pathset_init</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">pathsets_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">pathsets_df</span><span class="p">,</span> <span class="n">pathset_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-            <span class="c"># see if we have more</span>
-            <span class="n">procnum</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="k">if</span> <span class="n">pathset_init</span><span class="p">:</span>
-            <span class="c"># sort it by iteration, trip_id_num</span>
-            <span class="n">pathsets_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;iteration&#39;</span><span class="p">,</span><span class="s">&#39;trip_list_id_num&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="c"># write it</span>
-            <span class="n">pathset_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">PATHSET_LOG</span> <span class="o">%</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
-            <span class="n">pathsets_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">pathset_filename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Wrote </span><span class="si">%d</span><span class="s"> lines to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pathsets_df</span><span class="p">),</span> <span class="n">pathset_filename</span><span class="p">))</span>
-
+        <span class="c"># Read the demand int passenger_id -&gt; passenger instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">passengers</span> <span class="o">=</span> <span class="n">Passenger</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_DEMAND_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">CAPACITY_CONSTRAINT</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="FastTrips.run_assignment"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.run_assignment">[docs]</a>    <span class="k">def</span> <span class="nf">run_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+
         <span class="c"># Initialize performance results</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">performance</span> <span class="o">=</span> <span class="n">Performance</span><span class="p">()</span>
 
         <span class="c"># Do it!</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">assign_paths</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">combine_pathset_files</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">performance</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
 </pre></div></div></div>
 
           </div>
@@ -343,7 +284,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Lisa Zorn.
+        &copy; Copyright 2015-2016, Lisa Zorn.
     </p>
   </div>
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.

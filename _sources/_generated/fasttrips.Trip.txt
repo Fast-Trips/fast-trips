@@ -15,12 +15,17 @@ fasttrips.Trip
    
       ~Trip.__init__
       ~Trip.add_numeric_trip_id
-      ~Trip.calculate_dwell_times
+      ~Trip.add_original_travel_time_and_dwell
+      ~Trip.add_trip_attrs_from_stoptimes
       ~Trip.calculate_headways
+      ~Trip.get_full_trips
       ~Trip.get_scheduled_departure
       ~Trip.get_stop_times
       ~Trip.has_capacity_configured
+      ~Trip.linkify_vehicle_trips
       ~Trip.number_of_stops
+      ~Trip.reset_onboard
+      ~Trip.update_trip_times
       ~Trip.write_trips_for_extension
    
    
@@ -41,31 +46,54 @@ fasttrips.Trip
       ~Trip.SERVICE_COLUMN_END_DATE_STR
       ~Trip.SERVICE_COLUMN_START_DATE
       ~Trip.SERVICE_COLUMN_START_DATE_STR
+      ~Trip.SIM_COL_VEH_ALIGHTS
+      ~Trip.SIM_COL_VEH_BOARDS
+      ~Trip.SIM_COL_VEH_FRICTION
+      ~Trip.SIM_COL_VEH_MSA_ALIGHTS
+      ~Trip.SIM_COL_VEH_MSA_BOARDS
+      ~Trip.SIM_COL_VEH_MSA_FRICTION
+      ~Trip.SIM_COL_VEH_MSA_ONBOARD
+      ~Trip.SIM_COL_VEH_MSA_OVERCAP
+      ~Trip.SIM_COL_VEH_MSA_STANDEES
+      ~Trip.SIM_COL_VEH_ONBOARD
+      ~Trip.SIM_COL_VEH_OVERCAP
+      ~Trip.SIM_COL_VEH_STANDEES
       ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME
       ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN
       ~Trip.STOPTIMES_COLUMN_DEPARTURE_TIME
       ~Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN
       ~Trip.STOPTIMES_COLUMN_DROP_OFF_TYPE
+      ~Trip.STOPTIMES_COLUMN_DWELL_TIME
+      ~Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC
       ~Trip.STOPTIMES_COLUMN_HEADSIGN
+      ~Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME
       ~Trip.STOPTIMES_COLUMN_PICKUP_TYPE
       ~Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED
       ~Trip.STOPTIMES_COLUMN_STOP_ID
       ~Trip.STOPTIMES_COLUMN_STOP_ID_NUM
       ~Trip.STOPTIMES_COLUMN_STOP_SEQUENCE
       ~Trip.STOPTIMES_COLUMN_TIMEPOINT
+      ~Trip.STOPTIMES_COLUMN_TRAVEL_TIME
+      ~Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC
       ~Trip.STOPTIMES_COLUMN_TRIP_ID
       ~Trip.STOPTIMES_COLUMN_TRIP_ID_NUM
       ~Trip.TRIPS_COLUMN_DIRECTION_ID
+      ~Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE
       ~Trip.TRIPS_COLUMN_MODE_NUM
       ~Trip.TRIPS_COLUMN_ROUTE_ID
       ~Trip.TRIPS_COLUMN_ROUTE_ID_NUM
       ~Trip.TRIPS_COLUMN_SERVICE_ID
       ~Trip.TRIPS_COLUMN_SHAPE_ID
+      ~Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME
       ~Trip.TRIPS_COLUMN_TRIP_ID
       ~Trip.TRIPS_COLUMN_TRIP_ID_NUM
       ~Trip.TRIPS_COLUMN_VEHICLE_NAME
+      ~Trip.VEHICLES_COLUMN_ACCELERATION
       ~Trip.VEHICLES_COLUMN_BICYCLE_CAPACITY
+      ~Trip.VEHICLES_COLUMN_DECELERATION
+      ~Trip.VEHICLES_COLUMN_DWELL_FORMULA
       ~Trip.VEHICLES_COLUMN_MAXIMUM_SPEED
+      ~Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS
       ~Trip.VEHICLES_COLUMN_NUMBER_OF_DOORS
       ~Trip.VEHICLES_COLUMN_PLATFORM_HEIGHT
       ~Trip.VEHICLES_COLUMN_PROPULSION_TYPE

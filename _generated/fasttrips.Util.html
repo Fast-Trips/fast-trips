@@ -1,0 +1,348 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.Util &mdash; fasttrips 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
+        <link rel="prev" title="fasttrips.Trip" href="fasttrips.Trip.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> fasttrips
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Error.html">fasttrips.Error</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.PathSet.html">fasttrips.PathSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.Util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">fasttrips</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>fasttrips.Util</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_generated/fasttrips.Util.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="fasttrips-util">
+<h1>fasttrips.Util<a class="headerlink" href="#fasttrips-util" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fasttrips.Util">
+<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Util</code><a class="reference internal" href="../_modules/fasttrips/Util.html#Util"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util" title="Permalink to this definition">¶</a></dt>
+<dd><p>Util class.</p>
+<p>Collect useful stuff here that doesn&#8217;t belong in any particular existing class.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">add_new_id</span></code>(input_df,&nbsp;id_colname,&nbsp;...[,&nbsp;...])</td>
+<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>, adds the numeric id as a column named <em>newid_colname</em> and returns it.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_numeric_column</span></code>(input_df,&nbsp;id_colname,&nbsp;...)</td>
+<td>Method to create numerical ID to map to an existing ID.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_distance_miles</span></code>(dataframe,&nbsp;...)</td>
+<td>Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance in miles between origin and destination based on Haversine.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_formatter</span></code>(x)</td>
+<td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM:SS</cite></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_min_formatter</span></code>(x)</td>
+<td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to minutes after midnight</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_process_mem_use_str</span></code>()</td>
+<td>Returns a string representing the process memory use.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_time</span></code>(x[,&nbsp;end_of_day])</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">remove_null_columns</span></code>(input_df[,&nbsp;inplace])</td>
+<td>Remove columns from the dataframe if they&#8217;re <em>all</em> null since they&#8217;re not useful and make thinks harder to look at.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">timedelta_formatter</span></code>(x)</td>
+<td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.timedelta64</span></code> to string that looks like <cite>4m 35.6s</cite></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_dataframe</span></code>(df,&nbsp;name,&nbsp;output_file[,&nbsp;...])</td>
+<td>Convenience method to write a dataframe but make some of the fields more usable.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">SIMULATION_DAY</span></code></td>
+<td>Use this as the date</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">SIMULATION_DAY_START</span></code></td>
+<td>Use this for the start time - the start of <a class="reference internal" href="#fasttrips.Util.SIMULATION_DAY" title="fasttrips.Util.SIMULATION_DAY"><code class="xref py py-attr docutils literal"><span class="pre">Util.SIMULATION_DAY</span></code></a></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">TIMEDELTA_COLUMNS_TO_UNITS</span></code></td>
+<td>Maps timedelta columns to units for <a class="reference internal" href="#fasttrips.Util.write_dataframe" title="fasttrips.Util.write_dataframe"><code class="xref py py-meth docutils literal"><span class="pre">Util.write_dataframe()</span></code></a></td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="fasttrips.Util.add_new_id">
+<em class="property">static </em><code class="descname">add_new_id</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>newid_colname</em>, <em>mapping_df</em>, <em>mapping_id_colname</em>, <em>mapping_newid_colname</em>, <em>warn=False</em>, <em>warn_msg=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.add_new_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.add_new_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>,
+adds the numeric id as a column named <em>newid_colname</em> and returns it.</p>
+<p><em>mapping_df</em> is defines the mapping from an ID (<em>mapping_id_colname</em>) 
+to a numeric ID (<em>mapping_newid_colname</em>).</p>
+<p>If <em>warn</em> is True, then don&#8217;t worry if some fail.  Just log and move on.  Otherwise, raise an exception.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.add_numeric_column">
+<em class="property">static </em><code class="descname">add_numeric_column</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>numeric_newcolname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.add_numeric_column"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.add_numeric_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to create numerical ID to map to an existing ID.
+Pass in a dataframe with JUST an ID column and we&#8217;ll add a numeric ID column for ya!</p>
+<p>Returns the dataframe with the new column.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.calculate_distance_miles">
+<em class="property">static </em><code class="descname">calculate_distance_miles</code><span class="sig-paren">(</span><em>dataframe</em>, <em>origin_lat</em>, <em>origin_lon</em>, <em>destination_lat</em>, <em>destination_lon</em>, <em>distance_colname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.calculate_distance_miles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.calculate_distance_miles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
+in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called dist.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.datetime64_formatter">
+<em class="property">static </em><code class="descname">datetime64_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.datetime64_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.datetime64_formatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM:SS</cite></p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.datetime64_min_formatter">
+<em class="property">static </em><code class="descname">datetime64_min_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.datetime64_min_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.datetime64_min_formatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to minutes after midnight
+(with two decimal places)</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.get_process_mem_use_str">
+<em class="property">static </em><code class="descname">get_process_mem_use_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.get_process_mem_use_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.get_process_mem_use_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string representing the process memory use.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.read_time">
+<em class="property">static </em><code class="descname">read_time</code><span class="sig-paren">(</span><em>x</em>, <em>end_of_day=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.read_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.read_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.remove_null_columns">
+<em class="property">static </em><code class="descname">remove_null_columns</code><span class="sig-paren">(</span><em>input_df</em>, <em>inplace=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.remove_null_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.remove_null_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove columns from the dataframe if they&#8217;re <em>all</em> null since they&#8217;re not useful and make thinks harder to look at.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.timedelta_formatter">
+<em class="property">static </em><code class="descname">timedelta_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.timedelta_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.timedelta_formatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.timedelta64</span></code> to string that looks like <cite>4m 35.6s</cite></p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.write_dataframe">
+<em class="property">static </em><code class="descname">write_dataframe</code><span class="sig-paren">(</span><em>df</em>, <em>name</em>, <em>output_file</em>, <em>append=False</em>, <em>keep_duration_columns=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.write_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.write_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method to write a dataframe but make some of the fields more usable.</p>
+<dl class="docutils">
+<dt>If a column named colname is a timedelta64 fields, instead of writing &#8220;0 days 00:12:00.000000000&#8221;,</dt>
+<dd>writes colname_min with the minutes.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Util.SIMULATION_DAY">
+<code class="descname">SIMULATION_DAY</code><em class="property"> = datetime.date(2016, 1, 1)</em><a class="headerlink" href="#fasttrips.Util.SIMULATION_DAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this as the date</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Util.SIMULATION_DAY_START">
+<code class="descname">SIMULATION_DAY_START</code><em class="property"> = datetime.datetime(2016, 1, 1, 0, 0)</em><a class="headerlink" href="#fasttrips.Util.SIMULATION_DAY_START" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this for the start time - the start of <a class="reference internal" href="#fasttrips.Util.SIMULATION_DAY" title="fasttrips.Util.SIMULATION_DAY"><code class="xref py py-attr docutils literal"><span class="pre">Util.SIMULATION_DAY</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Util.TIMEDELTA_COLUMNS_TO_UNITS">
+<code class="descname">TIMEDELTA_COLUMNS_TO_UNITS</code><em class="property"> = {'new_waittime': 'min', 'time labeling': 'milliseconds', 'new_linktime': 'min', 'time enumerating': 'milliseconds', 'pf_waittime': 'min', 'pf_linktime': 'min'}</em><a class="headerlink" href="#fasttrips.Util.TIMEDELTA_COLUMNS_TO_UNITS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maps timedelta columns to units for <a class="reference internal" href="#fasttrips.Util.write_dataframe" title="fasttrips.Util.write_dataframe"><code class="xref py py-meth docutils literal"><span class="pre">Util.write_dataframe()</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="fasttrips.Trip.html" class="btn btn-neutral" title="fasttrips.Trip" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2016, Lisa Zorn.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

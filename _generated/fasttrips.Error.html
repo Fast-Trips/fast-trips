@@ -78,12 +78,13 @@
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.PathSet.html">fasttrips.PathSet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
@@ -134,14 +135,70 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#fasttrips.Error.ConfigurationError" title="fasttrips.Error.ConfigurationError"><code class="xref py py-obj docutils literal"><span class="pre">ConfigurationError</span></code></a>(filename,&nbsp;msg)</td>
+<td>Exception raised for errors in configuration.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#fasttrips.Error.DemandInputErorr" title="fasttrips.Error.DemandInputErorr"><code class="xref py py-obj docutils literal"><span class="pre">DemandInputErorr</span></code></a>(filename,&nbsp;msg)</td>
+<td>Exception raised for errors in the demand input.</td>
+</tr>
 <tr class="row-odd"><td><a class="reference internal" href="#fasttrips.Error.Error" title="fasttrips.Error.Error"><code class="xref py py-obj docutils literal"><span class="pre">Error</span></code></a></td>
 <td>Base class for exceptions in fast-trips.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#fasttrips.Error.NetworkInputError" title="fasttrips.Error.NetworkInputError"><code class="xref py py-obj docutils literal"><span class="pre">NetworkInputError</span></code></a>(filename,&nbsp;msg)</td>
 <td>Exception raised for errors in the network input.</td>
 </tr>
+<tr class="row-odd"><td><a class="reference internal" href="#fasttrips.Error.NotImplementedError" title="fasttrips.Error.NotImplementedError"><code class="xref py py-obj docutils literal"><span class="pre">NotImplementedError</span></code></a>(msg)</td>
+<td>Exception raised for something expected but not implemented.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#fasttrips.Error.UnexpectedError" title="fasttrips.Error.UnexpectedError"><code class="xref py py-obj docutils literal"><span class="pre">UnexpectedError</span></code></a>(msg)</td>
+<td>Exception raised for something unexpected.</td>
+</tr>
 </tbody>
 </table>
+<dl class="exception">
+<dt id="fasttrips.Error.ConfigurationError">
+<em class="property">exception </em><code class="descclassname">fasttrips.Error.</code><code class="descname">ConfigurationError</code><span class="sig-paren">(</span><em>filename</em>, <em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Error.html#ConfigurationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Error.ConfigurationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fasttrips.Error.Error" title="fasttrips.Error.Error"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Error.Error</span></code></a></p>
+<p>Exception raised for errors in configuration.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>expr  &#8211; the input file in which the error occurred
+msg   &#8211; explanation of the error</dd>
+</dl>
+<dl class="attribute">
+<dt id="fasttrips.Error.ConfigurationError.args">
+<code class="descname">args</code><a class="headerlink" href="#fasttrips.Error.ConfigurationError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Error.ConfigurationError.message">
+<code class="descname">message</code><a class="headerlink" href="#fasttrips.Error.ConfigurationError.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="fasttrips.Error.DemandInputErorr">
+<em class="property">exception </em><code class="descclassname">fasttrips.Error.</code><code class="descname">DemandInputErorr</code><span class="sig-paren">(</span><em>filename</em>, <em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Error.html#DemandInputErorr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Error.DemandInputErorr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fasttrips.Error.Error" title="fasttrips.Error.Error"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Error.Error</span></code></a></p>
+<p>Exception raised for errors in the demand input.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>expr  &#8211; the input file in which the error occurred
+msg   &#8211; explanation of the error</dd>
+</dl>
+<dl class="attribute">
+<dt id="fasttrips.Error.DemandInputErorr.args">
+<code class="descname">args</code><a class="headerlink" href="#fasttrips.Error.DemandInputErorr.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Error.DemandInputErorr.message">
+<code class="descname">message</code><a class="headerlink" href="#fasttrips.Error.DemandInputErorr.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="exception">
 <dt id="fasttrips.Error.Error">
 <em class="property">exception </em><code class="descclassname">fasttrips.Error.</code><code class="descname">Error</code><a class="reference internal" href="../_modules/fasttrips/Error.html#Error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Error.Error" title="Permalink to this definition">¶</a></dt>
@@ -181,6 +238,48 @@ msg   &#8211; explanation of the error</dd>
 
 </dd></dl>
 
+<dl class="exception">
+<dt id="fasttrips.Error.NotImplementedError">
+<em class="property">exception </em><code class="descclassname">fasttrips.Error.</code><code class="descname">NotImplementedError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Error.html#NotImplementedError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Error.NotImplementedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fasttrips.Error.Error" title="fasttrips.Error.Error"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Error.Error</span></code></a></p>
+<p>Exception raised for something expected but not implemented.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>msg   &#8211; explanation of the error</dd>
+</dl>
+<dl class="attribute">
+<dt id="fasttrips.Error.NotImplementedError.args">
+<code class="descname">args</code><a class="headerlink" href="#fasttrips.Error.NotImplementedError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Error.NotImplementedError.message">
+<code class="descname">message</code><a class="headerlink" href="#fasttrips.Error.NotImplementedError.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="fasttrips.Error.UnexpectedError">
+<em class="property">exception </em><code class="descclassname">fasttrips.Error.</code><code class="descname">UnexpectedError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Error.html#UnexpectedError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Error.UnexpectedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fasttrips.Error.Error" title="fasttrips.Error.Error"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Error.Error</span></code></a></p>
+<p>Exception raised for something unexpected.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>msg   &#8211; explanation of the error</dd>
+</dl>
+<dl class="attribute">
+<dt id="fasttrips.Error.UnexpectedError.args">
+<code class="descname">args</code><a class="headerlink" href="#fasttrips.Error.UnexpectedError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Error.UnexpectedError.message">
+<code class="descname">message</code><a class="headerlink" href="#fasttrips.Error.UnexpectedError.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 
 
@@ -201,7 +300,7 @@ msg   &#8211; explanation of the error</dd>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Lisa Zorn.
+        &copy; Copyright 2015-2016, Lisa Zorn.
     </p>
   </div>
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.

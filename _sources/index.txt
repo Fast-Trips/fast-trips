@@ -27,12 +27,13 @@ fast-trips Classes
    FastTripsLogger
    Passenger
    Performance
-   Path
+   PathSet
    Route
    Stop
    Transfer
    TAZ
    Trip
+   Util
 
 fast-trips C++ Extension Classes
 --------------------------------

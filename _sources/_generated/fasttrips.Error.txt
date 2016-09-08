@@ -17,7 +17,11 @@ fasttrips.Error
 
    .. autosummary::
    
+      ConfigurationError
+      DemandInputErorr
       Error
       NetworkInputError
+      NotImplementedError
+      UnexpectedError
    
    

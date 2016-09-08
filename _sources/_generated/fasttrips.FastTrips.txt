@@ -14,7 +14,7 @@ fasttrips.FastTrips
    .. autosummary::
    
       ~FastTrips.__init__
-      ~FastTrips.combine_pathset_files
+      ~FastTrips.read_configuration
       ~FastTrips.read_input_files
       ~FastTrips.run_assignment
    
@@ -28,6 +28,5 @@ fasttrips.FastTrips
    
       ~FastTrips.DEBUG_LOG
       ~FastTrips.INFO_LOG
-      ~FastTrips.PATHSET_LOG
    
    

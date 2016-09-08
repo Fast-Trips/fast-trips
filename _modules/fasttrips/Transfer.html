@@ -77,12 +77,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.PathSet.html">fasttrips.PathSet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
@@ -214,13 +215,12 @@
     <span class="c">#: initialize_fasttrips_extension() because of the strings involved</span>
     <span class="n">OUTPUT_TRANSFERS_FILE</span>       <span class="o">=</span> <span class="s">&quot;ft_intermediate_transfers.txt&quot;</span>
 
-<div class="viewcode-block" id="Transfer.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">is_child_process</span><span class="p">):</span>
+<div class="viewcode-block" id="Transfer.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">gtfs_schedule</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional</span>
 <span class="sd">        fast-trips transfers data from the input files in *input_dir*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span>       <span class="o">=</span> <span class="n">output_dir</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span> <span class="o">=</span> <span class="n">is_child_process</span>
 
         <span class="c"># Combine all gtfs Transfer objects to a single pandas DataFrame</span>
         <span class="n">transfer_dicts</span> <span class="o">=</span> <span class="p">[]</span>
@@ -278,6 +278,9 @@
                                             <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TRANSFER_TYPE</span><span class="p">:</span><span class="mi">0</span><span class="p">},</span>
                                      <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
+        <span class="c"># SPECIAL -- we rely on this in the extension</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="s">&quot;transfer_penalty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;=========== TRANSFERS ===========</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">head</span><span class="p">()))</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">))</span>
 
@@ -328,8 +331,31 @@
                                                          <span class="n">id_colname</span><span class="o">=</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">,</span>
                                                          <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP_NUM</span><span class="p">)</span>
             <span class="c"># We&#39;re ready to write it</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">write_transfers_for_extension</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_transfers_for_extension</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Transfer.add_distance"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer.add_distance">[docs]</a>    <span class="k">def</span> <span class="nf">add_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">links_df</span><span class="p">,</span> <span class="n">dist_col</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets distance column value for transfer links.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">transfer_dists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP_NUM</span><span class="p">,</span>
+                                            <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP_NUM</span><span class="p">,</span>
+                                            <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_DISTANCE</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">transfer_dists</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_DISTANCE</span><span class="p">:</span><span class="s">&quot;transfer_dist&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>    <span class="o">=</span><span class="n">links_df</span><span class="p">,</span>
+                                <span class="n">left_on</span> <span class="o">=</span><span class="p">[</span><span class="s">&quot;A_id_num&quot;</span><span class="p">,</span><span class="s">&quot;B_id_num&quot;</span><span class="p">],</span>
+                                <span class="n">right</span>   <span class="o">=</span><span class="n">transfer_dists</span><span class="p">,</span>
+                                <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP_NUM</span><span class="p">,</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP_NUM</span><span class="p">],</span>
+                                <span class="n">how</span>     <span class="o">=</span><span class="s">&quot;left&quot;</span><span class="p">)</span>
+
+        <span class="n">links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">links_df</span><span class="p">[</span><span class="s">&quot;linkmode&quot;</span><span class="p">]</span><span class="o">==</span><span class="s">&quot;transfer&quot;</span><span class="p">,</span> <span class="n">dist_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">links_df</span><span class="p">[</span><span class="s">&quot;transfer_dist&quot;</span><span class="p">]</span>
+        <span class="n">links_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP_NUM</span><span class="p">,</span>
+                       <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP_NUM</span><span class="p">,</span>
+                       <span class="s">&quot;transfer_dist&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># 0-distance transfers</span>
+        <span class="n">links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span> <span class="p">(</span><span class="n">links_df</span><span class="p">[</span><span class="s">&quot;linkmode&quot;</span><span class="p">]</span><span class="o">==</span><span class="s">&quot;transfer&quot;</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">links_df</span><span class="p">[</span><span class="s">&quot;A_id_num&quot;</span><span class="p">]</span><span class="o">==</span><span class="n">links_df</span><span class="p">[</span><span class="s">&quot;B_id_num&quot;</span><span class="p">]),</span> <span class="n">dist_col</span> <span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="n">links_df</span>
 </div>
 <div class="viewcode-block" id="Transfer.write_transfers_for_extension"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer.write_transfers_for_extension">[docs]</a>    <span class="k">def</span> <span class="nf">write_transfers_for_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -376,7 +402,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Lisa Zorn.
+        &copy; Copyright 2015-2016, Lisa Zorn.
     </p>
   </div>
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.

@@ -1,0 +1,773 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.PathSet &mdash; fasttrips 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="fasttrips 1.0 documentation" href="../index.html"/>
+        <link rel="next" title="fasttrips.Route" href="fasttrips.Route.html"/>
+        <link rel="prev" title="fasttrips.Performance" href="fasttrips.Performance.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../index.html" class="icon icon-home"> fasttrips
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Error.html">fasttrips.Error</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.PathSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Util.html">fasttrips.Util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">fasttrips</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>fasttrips.PathSet</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_generated/fasttrips.PathSet.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="fasttrips-pathset">
+<h1>fasttrips.PathSet<a class="headerlink" href="#fasttrips-pathset" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fasttrips.PathSet">
+<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">PathSet</code><span class="sig-paren">(</span><em>trip_list_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a path set for a passenger from an origin <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal"><span class="pre">TAZ</span></code></a> to a destination <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal"><span class="pre">TAZ</span></code></a>
+through a set of stops.</p>
+<dl class="method">
+<dt id="fasttrips.PathSet.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>trip_list_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor from dictionary mapping attribute to value.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(trip_list_dict)</td>
+<td>Constructor from dictionary mapping attribute to value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_cost</span></code>(iteration,&nbsp;...)</td>
+<td>This is equivalent to the C++ Path::calculateCost() method.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">goes_somewhere</span></code>()</td>
+<td>Does this path go somewhere?  Does the destination differ from the origin?</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">num_paths</span></code>()</td>
+<td>Number of paths in the PathSet</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">outbound</span></code>()</td>
+<td>Quick accessor to see if <code class="xref py py-attr docutils literal"><span class="pre">PathSet.direction</span></code> is <a class="reference internal" href="#fasttrips.PathSet.DIR_OUTBOUND" title="fasttrips.PathSet.DIR_OUTBOUND"><code class="xref py py-attr docutils literal"><span class="pre">PathSet.DIR_OUTBOUND</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">path_found</span></code>()</td>
+<td>Was a a transit path found from the origin to the destination with the constraints?</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">reset</span></code>()</td>
+<td>Delete my states, something went wrong and it won&#8217;t work out.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_user_class</span></code>(trip_list_df,&nbsp;new_colname)</td>
+<td>Adds a column called user_class by applying the configured user class function.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">split_transit_links</span></code>(pathset_links_df,&nbsp;...)</td>
+<td>Splits the transit links to their component links and returns.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">verify_weight_config</span></code>(modes_df,&nbsp;output_dir,&nbsp;...)</td>
+<td>Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
+<td>Write the assigned path times to the given output file.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
+<td>Write the assigned paths to the given output file.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">BUMP_EXPERIENCED_COST</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">CONFIGURED_FUNCTIONS</span></code></td>
+<td>Configured functions, indexed by name</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">DIR_INBOUND</span></code></td>
+<td>Trips inbound to home have preferred departure times</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">DIR_OUTBOUND</span></code></td>
+<td>Trips outbound from home have preferred arrival times</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">HUGE_COST</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">MIN_TRANSFER_PENALTY</span></code></td>
+<td>Configuration: Minimum transfer penalty.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OUTPUT_WEIGHTS_FILE</span></code></td>
+<td>File with weights for c++</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_COUNT</span></code></td>
+<td>Overlap variable option: count.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_DISTANCE</span></code></td>
+<td>Overlap variable option: distance.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_NONE</span></code></td>
+<td>Overlap variable option: None.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_SCALE_PARAMETER</span></code></td>
+<td>Configuration: Overlap scale parameter.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_SPLIT_TRANSIT</span></code></td>
+<td>Overlap option: Split transit leg into component parts?  e.g.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_TIME</span></code></td>
+<td>Overlap variable option: time.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_VARIABLE</span></code></td>
+<td>Configuration: Overlap variable.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">OVERLAP_VARIABLE_OPTIONS</span></code></td>
+<td>Valid values for OVERLAP_VARAIBLE</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PATHS_OUTPUT_FILE</span></code></td>
+<td>Paths output file</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PATH_KEY_COST</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PATH_KEY_PROBABILITY</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">PATH_KEY_STATES</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">PATH_TIMES_OUTPUT_FILE</span></code></td>
+<td>Path times output file</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_ARRDEP</span></code></td>
+<td><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Arrival if outbound/backwards, departure if inbound/forwards.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_COST</span></code></td>
+<td>cost float, for hyperpath/stochastic assignment</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_DEPARR</span></code></td>
+<td><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Departure if outbound/backwards, arrival if inbound/forwards.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_DEPARRMODE</span></code></td>
+<td>mode id</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_LABEL</span></code></td>
+<td><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_LINKTIME</span></code></td>
+<td><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_SEQ</span></code></td>
+<td>sequence (for trip)</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_SEQ_SUCCPRED</span></code></td>
+<td>sequence for successor/predecessor</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_SUCCPRED</span></code></td>
+<td>stop identifier or TAZ identifier</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_IDX_TRIP</span></code></td>
+<td>trip id</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_ACCESS</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_EGRESS</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_TRANSFER</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">STATE_MODE_TRIP</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">USER_CLASS_FUNCTION</span></code></td>
+<td>Path configuration: Name of the function that defines user class</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_DEMAND_MODE</span></code></td>
+<td>Weights column: Demand Mode Type</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span></code></td>
+<td>Weights column: Demand Mode Type</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_PURPOSE</span></code></td>
+<td>Weights column: Purpose</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_SUPPLY_MODE</span></code></td>
+<td>Weights column: Supply Mode</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</span></code></td>
+<td>Weights column: Supply Mode number</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_USER_CLASS</span></code></td>
+<td>Weights column: User Class</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_WEIGHT_NAME</span></code></td>
+<td>Weights column: Weight Name</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_COLUMN_WEIGHT_VALUE</span></code></td>
+<td>Weights column: Weight Value</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_DF</span></code></td>
+<td>Path weights</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">WEIGHTS_FILE</span></code></td>
+<td>File with weights file.</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="fasttrips.PathSet.calculate_cost">
+<em class="property">static </em><code class="descname">calculate_cost</code><span class="sig-paren">(</span><em>iteration</em>, <em>simulation_iteration</em>, <em>STOCH_DISPERSION</em>, <em>pathset_paths_df</em>, <em>pathset_links_df</em>, <em>trip_list_df</em>, <em>transfers_df</em>, <em>walk_df</em>, <em>drive_df</em>, <em>veh_trips_df</em>, <em>stops</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.calculate_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.calculate_cost" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
+It would require us to package up the networks and paths and send back and forth.  :p</p>
+<p>I think if we can do it using vectorized pandas operations, it should be fast, but we can compare/test.</p>
+<p>It&#8217;s also messier to have this in two places.  Maybe we should delete it from the C++; the overlap calcs are only in here right now.</p>
+<p>Returns pathset_paths_df with additional column, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
+And pathset_links_df with additional column, Assignment.SIM_COL_PAX_COST</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.PathSet.goes_somewhere">
+<code class="descname">goes_somewhere</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.goes_somewhere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.goes_somewhere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does this path go somewhere?  Does the destination differ from the origin?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.PathSet.num_paths">
+<code class="descname">num_paths</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.num_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.num_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of paths in the PathSet</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.PathSet.outbound">
+<code class="descname">outbound</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.outbound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.outbound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quick accessor to see if <code class="xref py py-attr docutils literal"><span class="pre">PathSet.direction</span></code> is <a class="reference internal" href="#fasttrips.PathSet.DIR_OUTBOUND" title="fasttrips.PathSet.DIR_OUTBOUND"><code class="xref py py-attr docutils literal"><span class="pre">PathSet.DIR_OUTBOUND</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.PathSet.path_found">
+<code class="descname">path_found</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.path_found"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.path_found" title="Permalink to this definition">¶</a></dt>
+<dd><p>Was a a transit path found from the origin to the destination with the constraints?</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.PathSet.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete my states, something went wrong and it won&#8217;t work out.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.PathSet.set_user_class">
+<em class="property">static </em><code class="descname">set_user_class</code><span class="sig-paren">(</span><em>trip_list_df</em>, <em>new_colname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.set_user_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.set_user_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a column called user_class by applying the configured user class function.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.PathSet.split_transit_links">
+<em class="property">static </em><code class="descname">split_transit_links</code><span class="sig-paren">(</span><em>pathset_links_df</em>, <em>veh_trips_df</em>, <em>stops</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.split_transit_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.split_transit_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits the transit links to their component links and returns.</p>
+<p>So if a transit trip goes from stop A to D but passes stop B and C in between, the
+row A-&gt;D will now be replaced by rows A-&gt;B, B-&gt;C, and C-&gt;D.</p>
+<p>Note that this does <em>not</em> renumber the linknum field.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.PathSet.verify_weight_config">
+<em class="property">static </em><code class="descname">verify_weight_config</code><span class="sig-paren">(</span><em>modes_df</em>, <em>output_dir</em>, <em>routes</em>, <em>capacity_constraint</em>, <em>trip_list_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.verify_weight_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.verify_weight_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.</p>
+<p>Trips with invalid weight configurations will be dropped from the trip list and warned about.</p>
+<p>The parameter mode_df is a dataframe with the user_class, demand_mode_type and demand_mode combinations
+found in the demand file.</p>
+<p>If <em>capacity_constraint</em> is true, make sure there&#8217;s an at_capacity weight on the transit supply mode links
+to enforce it.</p>
+<p>Returns updated trip_list_df.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.PathSet.write_path_times">
+<em class="property">static </em><code class="descname">write_path_times</code><span class="sig-paren">(</span><em>passengers_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.write_path_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.write_path_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the assigned path times to the given output file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) &#8211; Passenger path links</li>
+<li><strong>output_dir</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Output directory</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.PathSet.write_paths">
+<em class="property">static </em><code class="descname">write_paths</code><span class="sig-paren">(</span><em>passengers_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.write_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.write_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the assigned paths to the given output file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) &#8211; Passenger paths assignment results</li>
+<li><strong>output_dir</strong> (<a class="reference external" href="http://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; Output directory</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.BUMP_EXPERIENCED_COST">
+<code class="descname">BUMP_EXPERIENCED_COST</code><em class="property"> = 999999</em><a class="headerlink" href="#fasttrips.PathSet.BUMP_EXPERIENCED_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.CONFIGURED_FUNCTIONS">
+<code class="descname">CONFIGURED_FUNCTIONS</code><em class="property"> = {'generic_user_class': &lt;function generic_user_class at 0x0000000006E5D668&gt;}</em><a class="headerlink" href="#fasttrips.PathSet.CONFIGURED_FUNCTIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configured functions, indexed by name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.DIR_INBOUND">
+<code class="descname">DIR_INBOUND</code><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.PathSet.DIR_INBOUND" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trips inbound to home have preferred departure times</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.DIR_OUTBOUND">
+<code class="descname">DIR_OUTBOUND</code><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.PathSet.DIR_OUTBOUND" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trips outbound from home have preferred arrival times</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.HUGE_COST">
+<code class="descname">HUGE_COST</code><em class="property"> = 9999</em><a class="headerlink" href="#fasttrips.PathSet.HUGE_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.MIN_TRANSFER_PENALTY">
+<code class="descname">MIN_TRANSFER_PENALTY</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.MIN_TRANSFER_PENALTY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration: Minimum transfer penalty. Safeguard against having no transfer penalty
+which can result in terrible paths with excessive transfers.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OUTPUT_WEIGHTS_FILE">
+<code class="descname">OUTPUT_WEIGHTS_FILE</code><em class="property"> = 'ft_intermediate_weights.txt'</em><a class="headerlink" href="#fasttrips.PathSet.OUTPUT_WEIGHTS_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with weights for c++</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_COUNT">
+<code class="descname">OVERLAP_COUNT</code><em class="property"> = 'count'</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_COUNT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overlap variable option: count. Use leg count overlap pathsize correction.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_DISTANCE">
+<code class="descname">OVERLAP_DISTANCE</code><em class="property"> = 'distance'</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_DISTANCE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overlap variable option: distance. Use leg distance overlap pathsize correction.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_NONE">
+<code class="descname">OVERLAP_NONE</code><em class="property"> = 'None'</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_NONE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overlap variable option: None.  Don&#8217;t use overlap pathsize correction.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_SCALE_PARAMETER">
+<code class="descname">OVERLAP_SCALE_PARAMETER</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_SCALE_PARAMETER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration: Overlap scale parameter.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_SPLIT_TRANSIT">
+<code class="descname">OVERLAP_SPLIT_TRANSIT</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_SPLIT_TRANSIT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overlap option: Split transit leg into component parts?  e.g. split A-E
+into A-B-C-D-E for overlap calculations?</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_TIME">
+<code class="descname">OVERLAP_TIME</code><em class="property"> = 'time'</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overlap variable option: time. Use leg time overlap pathsize correction.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_VARIABLE">
+<code class="descname">OVERLAP_VARIABLE</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_VARIABLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configuration: Overlap variable. Can be &#8220;None&#8221;, &#8220;count&#8221;, &#8220;distance&#8221;, &#8220;time&#8221;.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.OVERLAP_VARIABLE_OPTIONS">
+<code class="descname">OVERLAP_VARIABLE_OPTIONS</code><em class="property"> = ['None', 'count', 'distance', 'time']</em><a class="headerlink" href="#fasttrips.PathSet.OVERLAP_VARIABLE_OPTIONS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Valid values for OVERLAP_VARAIBLE</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.PATHS_OUTPUT_FILE">
+<code class="descname">PATHS_OUTPUT_FILE</code><em class="property"> = 'ft_output_passengerPaths.txt'</em><a class="headerlink" href="#fasttrips.PathSet.PATHS_OUTPUT_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Paths output file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.PATH_KEY_COST">
+<code class="descname">PATH_KEY_COST</code><em class="property"> = 'pf_cost'</em><a class="headerlink" href="#fasttrips.PathSet.PATH_KEY_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.PATH_KEY_PROBABILITY">
+<code class="descname">PATH_KEY_PROBABILITY</code><em class="property"> = 'pf_probability'</em><a class="headerlink" href="#fasttrips.PathSet.PATH_KEY_PROBABILITY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.PATH_KEY_STATES">
+<code class="descname">PATH_KEY_STATES</code><em class="property"> = 'states'</em><a class="headerlink" href="#fasttrips.PathSet.PATH_KEY_STATES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.PATH_TIMES_OUTPUT_FILE">
+<code class="descname">PATH_TIMES_OUTPUT_FILE</code><em class="property"> = 'ft_output_passengerTimes.txt'</em><a class="headerlink" href="#fasttrips.PathSet.PATH_TIMES_OUTPUT_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path times output file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_ARRDEP">
+<code class="descname">STATE_IDX_ARRDEP</code><em class="property"> = 9</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_ARRDEP" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Arrival if outbound/backwards, departure if inbound/forwards.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_COST">
+<code class="descname">STATE_IDX_COST</code><em class="property"> = 8</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_COST" title="Permalink to this definition">¶</a></dt>
+<dd><p>cost float, for hyperpath/stochastic assignment</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_DEPARR">
+<code class="descname">STATE_IDX_DEPARR</code><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_DEPARR" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Departure if outbound/backwards, arrival if inbound/forwards.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_DEPARRMODE">
+<code class="descname">STATE_IDX_DEPARRMODE</code><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_DEPARRMODE" title="Permalink to this definition">¶</a></dt>
+<dd><p>mode id</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_LABEL">
+<code class="descname">STATE_IDX_LABEL</code><em class="property"> = 0</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_LABEL" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_LINKTIME">
+<code class="descname">STATE_IDX_LINKTIME</code><em class="property"> = 7</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_LINKTIME" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_SEQ">
+<code class="descname">STATE_IDX_SEQ</code><em class="property"> = 5</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_SEQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>sequence (for trip)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_SEQ_SUCCPRED">
+<code class="descname">STATE_IDX_SEQ_SUCCPRED</code><em class="property"> = 6</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_SEQ_SUCCPRED" title="Permalink to this definition">¶</a></dt>
+<dd><p>sequence for successor/predecessor</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_SUCCPRED">
+<code class="descname">STATE_IDX_SUCCPRED</code><em class="property"> = 4</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_SUCCPRED" title="Permalink to this definition">¶</a></dt>
+<dd><p>stop identifier or TAZ identifier</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_IDX_TRIP">
+<code class="descname">STATE_IDX_TRIP</code><em class="property"> = 3</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_TRIP" title="Permalink to this definition">¶</a></dt>
+<dd><p>trip id</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_MODE_ACCESS">
+<code class="descname">STATE_MODE_ACCESS</code><em class="property"> = 'access'</em><a class="headerlink" href="#fasttrips.PathSet.STATE_MODE_ACCESS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_MODE_EGRESS">
+<code class="descname">STATE_MODE_EGRESS</code><em class="property"> = 'egress'</em><a class="headerlink" href="#fasttrips.PathSet.STATE_MODE_EGRESS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_MODE_TRANSFER">
+<code class="descname">STATE_MODE_TRANSFER</code><em class="property"> = 'transfer'</em><a class="headerlink" href="#fasttrips.PathSet.STATE_MODE_TRANSFER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.STATE_MODE_TRIP">
+<code class="descname">STATE_MODE_TRIP</code><em class="property"> = 'transit'</em><a class="headerlink" href="#fasttrips.PathSet.STATE_MODE_TRIP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.USER_CLASS_FUNCTION">
+<code class="descname">USER_CLASS_FUNCTION</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.USER_CLASS_FUNCTION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path configuration: Name of the function that defines user class</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_DEMAND_MODE">
+<code class="descname">WEIGHTS_COLUMN_DEMAND_MODE</code><em class="property"> = 'demand_mode'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_DEMAND_MODE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Demand Mode Type</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE">
+<code class="descname">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</code><em class="property"> = 'demand_mode_type'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Demand Mode Type</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_PURPOSE">
+<code class="descname">WEIGHTS_COLUMN_PURPOSE</code><em class="property"> = 'purpose'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_PURPOSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Purpose</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_SUPPLY_MODE">
+<code class="descname">WEIGHTS_COLUMN_SUPPLY_MODE</code><em class="property"> = 'supply_mode'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_SUPPLY_MODE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Supply Mode</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM">
+<code class="descname">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</code><em class="property"> = 'supply_mode_num'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Supply Mode number</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_USER_CLASS">
+<code class="descname">WEIGHTS_COLUMN_USER_CLASS</code><em class="property"> = 'user_class'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_USER_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: User Class</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_WEIGHT_NAME">
+<code class="descname">WEIGHTS_COLUMN_WEIGHT_NAME</code><em class="property"> = 'weight_name'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_WEIGHT_NAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Weight Name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE">
+<code class="descname">WEIGHTS_COLUMN_WEIGHT_VALUE</code><em class="property"> = 'weight_value'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Weight Value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_DF">
+<code class="descname">WEIGHTS_DF</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_DF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path weights</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_FILE">
+<code class="descname">WEIGHTS_FILE</code><em class="property"> = 'pathweight_ft.txt'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_FILE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File with weights file.  Space delimited table.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.pathdict">
+<code class="descname">pathdict</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.PathSet.pathdict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dict of path-num -&gt; { cost:, probability:, states: [List of (stop_id, stop_state)]}</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="fasttrips.Route.html" class="btn btn-neutral float-right" title="fasttrips.Route" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fasttrips.Performance.html" class="btn btn-neutral" title="fasttrips.Performance" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2016, Lisa Zorn.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

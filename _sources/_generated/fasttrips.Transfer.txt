@@ -14,6 +14,7 @@ fasttrips.Transfer
    .. autosummary::
    
       ~Transfer.__init__
+      ~Transfer.add_distance
       ~Transfer.add_numeric_stop_id
       ~Transfer.write_transfers_for_extension
    

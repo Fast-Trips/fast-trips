@@ -16,6 +16,7 @@ fasttrips.Stop
       ~Stop.__init__
       ~Stop.add_daps_tazs_to_stops
       ~Stop.add_numeric_stop_id
+      ~Stop.add_stop_lat_lon
       ~Stop.add_trips
       ~Stop.get_transfers
       ~Stop.get_trips_arriving_within_time

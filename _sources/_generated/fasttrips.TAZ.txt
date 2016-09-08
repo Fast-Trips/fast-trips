@@ -14,6 +14,8 @@ fasttrips.TAZ
    .. autosummary::
    
       ~TAZ.__init__
+      ~TAZ.add_distance
+      ~TAZ.warn_on_stops_without_walk_access
       ~TAZ.write_access_egress_for_extension
    
    
@@ -26,6 +28,7 @@ fasttrips.TAZ
    
       ~TAZ.ACCESS_EGRESS_MODES
       ~TAZ.ACCESS_MODE_NUMS
+      ~TAZ.BIKE_MODE_NUMS
       ~TAZ.DAP_COLUMN_CAPACITY
       ~TAZ.DAP_COLUMN_DROP_OFF
       ~TAZ.DAP_COLUMN_HOURLY_COST
@@ -61,6 +64,7 @@ fasttrips.TAZ
       ~TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE
       ~TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME
       ~TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN
+      ~TAZ.DRIVE_MODE_NUMS
       ~TAZ.EGRESS_MODE_NUMS
       ~TAZ.INPUT_DAP_FILE
       ~TAZ.INPUT_DRIVE_ACCESS_FILE
@@ -94,5 +98,6 @@ fasttrips.TAZ
       ~TAZ.WALK_ACCESS_COLUMN_TAZ_NUM
       ~TAZ.WALK_ACCESS_COLUMN_TIME
       ~TAZ.WALK_ACCESS_COLUMN_TIME_MIN
+      ~TAZ.WALK_MODE_NUMS
    
    

@@ -1,0 +1,39 @@
+fasttrips.Util
+==============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Util
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Util.add_new_id
+      ~Util.add_numeric_column
+      ~Util.calculate_distance_miles
+      ~Util.datetime64_formatter
+      ~Util.datetime64_min_formatter
+      ~Util.get_process_mem_use_str
+      ~Util.read_time
+      ~Util.remove_null_columns
+      ~Util.timedelta_formatter
+      ~Util.write_dataframe
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Util.SIMULATION_DAY
+      ~Util.SIMULATION_DAY_START
+      ~Util.TIMEDELTA_COLUMNS_TO_UNITS
+   
+   

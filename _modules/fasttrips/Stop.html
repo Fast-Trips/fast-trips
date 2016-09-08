@@ -77,12 +77,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.PathSet.html">fasttrips.PathSet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
@@ -141,6 +142,7 @@
 <span class="kn">import</span> <span class="nn">collections</span><span class="o">,</span><span class="nn">datetime</span><span class="o">,</span><span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 
+<span class="kn">from</span> <span class="nn">.Error</span> <span class="kn">import</span> <span class="n">NetworkInputError</span>
 <span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span>
 <span class="kn">from</span> <span class="nn">.Trip</span> <span class="kn">import</span> <span class="n">Trip</span>
 <span class="kn">from</span> <span class="nn">.Util</span> <span class="kn">import</span> <span class="n">Util</span>
@@ -192,14 +194,13 @@
     <span class="c">#: File with stop ID, stop ID number correspondence</span>
     <span class="n">OUTPUT_STOP_ID_NUM_FILE</span>                   <span class="o">=</span> <span class="s">&#39;ft_intermediate_stop_id.txt&#39;</span>
 
-<div class="viewcode-block" id="Stop.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">is_child_process</span><span class="p">):</span>
+<div class="viewcode-block" id="Stop.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">gtfs_schedule</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional</span>
 <span class="sd">        fast-trips stops data from the input files in *input_dir*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># keep this for later</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span>       <span class="o">=</span> <span class="n">output_dir</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span> <span class="o">=</span> <span class="n">is_child_process</span>
 
         <span class="c"># Combine all gtfs Stop objects to a single pandas DataFrame</span>
         <span class="n">stop_dicts</span> <span class="o">=</span> <span class="p">[]</span>
@@ -269,7 +270,12 @@
                                        <span class="n">how</span><span class="o">=</span><span class="s">&quot;left&quot;</span><span class="p">,</span>
                                        <span class="n">left_on</span><span class="o">=</span><span class="n">dap_id_colname</span><span class="p">,</span>  <span class="n">right_on</span><span class="o">=</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">)</span>
         <span class="c"># there should be only NaNs since DAP lot IDs need to be unique from Stop IDs</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">join_daps_stops</span><span class="p">[</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">join_daps_stops</span><span class="p">))</span>
+        <span class="c"># non_unique_lots = join_daps_stops.loc[ pandas.notnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]) ]</span>
+        <span class="c"># if len(non_unique_lots) &gt; 0:</span>
+        <span class="c">#     error_str = &quot;These drive access lot IDs are also stop IDs: \n%s&quot; % str(non_unique_lots)</span>
+        <span class="c">#     FastTripsLogger.warn(error_str)</span>
+        <span class="c">#     raise NetworkInputError(&quot;drive_access_ft.txt&quot;, error_str)</span>
+        <span class="c"># assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))</span>
 
         <span class="c"># number them starting at self.max_stop_id_num</span>
         <span class="n">daps_unique_df</span><span class="p">[</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID_NUM</span><span class="p">]</span> <span class="o">=</span> <span class="n">daps_unique_df</span><span class="o">.</span><span class="n">index</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_stop_id_num</span> <span class="o">+</span> <span class="mi">1</span>
@@ -303,15 +309,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">stop_id_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_id_df</span><span class="p">,</span> <span class="n">tazs_unique_df</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="c">##############################################################################################</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_child_process</span><span class="p">:</span>
-            <span class="c"># write the stop id numbering file</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stop_id_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">OUTPUT_STOP_ID_NUM_FILE</span><span class="p">),</span>
-                                   <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID_NUM</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">],</span>
-                                   <span class="n">sep</span><span class="o">=</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Wrote </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">OUTPUT_STOP_ID_NUM_FILE</span><span class="p">))</span>
+        <span class="c"># write the stop id numbering file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_id_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">OUTPUT_STOP_ID_NUM_FILE</span><span class="p">),</span>
+                               <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID_NUM</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">],</span>
+                               <span class="n">sep</span><span class="o">=</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;Wrote </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">OUTPUT_STOP_ID_NUM_FILE</span><span class="p">))</span>
 
 </div>
-<div class="viewcode-block" id="Stop.add_numeric_stop_id"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop.add_numeric_stop_id">[docs]</a>    <span class="k">def</span> <span class="nf">add_numeric_stop_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_df</span><span class="p">,</span> <span class="n">id_colname</span><span class="p">,</span> <span class="n">numeric_newcolname</span><span class="p">):</span>
+<div class="viewcode-block" id="Stop.add_numeric_stop_id"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop.add_numeric_stop_id">[docs]</a>    <span class="k">def</span> <span class="nf">add_numeric_stop_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_df</span><span class="p">,</span> <span class="n">id_colname</span><span class="p">,</span> <span class="n">numeric_newcolname</span><span class="p">,</span> <span class="n">warn</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">warn_msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,</span>
 <span class="sd">        adds the numeric stop id as a column named *numeric_newcolname* and returns it.</span>
@@ -319,8 +324,34 @@
         <span class="k">return</span> <span class="n">Util</span><span class="o">.</span><span class="n">add_new_id</span><span class="p">(</span><span class="n">input_df</span><span class="p">,</span> <span class="n">id_colname</span><span class="p">,</span> <span class="n">numeric_newcolname</span><span class="p">,</span>
                                    <span class="n">mapping_df</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stop_id_df</span><span class="p">,</span>
                                    <span class="n">mapping_id_colname</span><span class="o">=</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">,</span>
-                                   <span class="n">mapping_newid_colname</span><span class="o">=</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID_NUM</span><span class="p">)</span>
+                                   <span class="n">mapping_newid_colname</span><span class="o">=</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID_NUM</span><span class="p">,</span>
+                                   <span class="n">warn</span><span class="o">=</span><span class="n">warn</span><span class="p">,</span> <span class="n">warn_msg</span><span class="o">=</span><span class="n">warn_msg</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Stop.add_stop_lat_lon"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop.add_stop_lat_lon">[docs]</a>    <span class="k">def</span> <span class="nf">add_stop_lat_lon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_df</span><span class="p">,</span> <span class="n">id_colname</span><span class="p">,</span> <span class="n">new_lat_colname</span><span class="p">,</span> <span class="n">new_lon_colname</span><span class="p">,</span> <span class="n">new_stop_name_colname</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,</span>
+<span class="sd">        adds the stop latitude and longitude as columns named *new_lat_colname* and *new_lon_colname*</span>
+<span class="sd">        and returns it.</span>
 
+<span class="sd">        Pass *new_stop_name_colname* to also get the stop name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stop_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_LATITUDE</span><span class="p">,</span> <span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_LONGITUDE</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">new_stop_name_colname</span><span class="p">:</span> <span class="n">stop_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_NAME</span><span class="p">)</span>
+
+        <span class="n">input_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>    <span class="o">=</span><span class="n">input_df</span><span class="p">,</span>
+                                <span class="n">right</span>   <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stops_df</span><span class="p">[</span><span class="n">stop_cols</span><span class="p">],</span>
+                                <span class="n">how</span>     <span class="o">=</span><span class="s">&quot;left&quot;</span><span class="p">,</span>
+                                <span class="n">left_on</span> <span class="o">=</span><span class="n">id_colname</span><span class="p">,</span>
+                                <span class="n">right_on</span><span class="o">=</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">)</span>
+        <span class="c"># don&#39;t want to add this column</span>
+        <span class="k">if</span> <span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span> <span class="o">!=</span> <span class="n">id_colname</span><span class="p">:</span>
+            <span class="n">input_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_ID</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">rename_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_LATITUDE</span> <span class="p">:</span><span class="n">new_lat_colname</span><span class="p">,</span>
+                       <span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_LONGITUDE</span><span class="p">:</span><span class="n">new_lon_colname</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">new_stop_name_colname</span><span class="p">:</span> <span class="n">rename_dict</span><span class="p">[</span><span class="n">Stop</span><span class="o">.</span><span class="n">STOPS_COLUMN_STOP_NAME</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_stop_name_colname</span>
+        <span class="n">input_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">rename_dict</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">input_df</span>
 </div>
 <div class="viewcode-block" id="Stop.add_trips"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop.add_trips">[docs]</a>    <span class="k">def</span> <span class="nf">add_trips</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_times_df</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -414,7 +445,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Lisa Zorn.
+        &copy; Copyright 2015-2016, Lisa Zorn.
     </p>
   </div>
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.

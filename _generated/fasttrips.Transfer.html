@@ -78,12 +78,13 @@
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fasttrips.Path.html">fasttrips.Path</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.PathSet.html">fasttrips.PathSet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../fasttrips_c_extension.html">fasttrips C++ Extension</a></li>
@@ -128,14 +129,14 @@
 <h1>fasttrips.Transfer<a class="headerlink" href="#fasttrips-transfer" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="fasttrips.Transfer">
-<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Transfer</code><span class="sig-paren">(</span><em>input_dir</em>, <em>output_dir</em>, <em>gtfs_schedule</em>, <em>is_child_process</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Transfer.html#Transfer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Transfer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Transfer</code><span class="sig-paren">(</span><em>input_dir</em>, <em>output_dir</em>, <em>gtfs_schedule</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Transfer.html#Transfer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Transfer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transfer class.</p>
 <p>One instance represents all of the Transfer links.</p>
 <p>Stores transfer link information in <code class="xref py py-attr docutils literal"><span class="pre">Transfer.transfers_df</span></code>, an
-instance of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>.</p>
+instance of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>.</p>
 <dl class="method">
 <dt id="fasttrips.Transfer.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>input_dir</em>, <em>output_dir</em>, <em>gtfs_schedule</em>, <em>is_child_process</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Transfer.html#Transfer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Transfer.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>input_dir</em>, <em>output_dir</em>, <em>gtfs_schedule</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Transfer.html#Transfer.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Transfer.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
 fast-trips transfers data from the input files in <em>input_dir</em>.</p>
 </dd></dl>
@@ -147,13 +148,16 @@ fast-trips transfers data from the input files in <em>input_dir</em>.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(input_dir,&nbsp;output_dir,&nbsp;...)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(input_dir,&nbsp;output_dir,&nbsp;gtfs_schedule)</td>
 <td>Constructor.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_numeric_stop_id</span></code>(stops)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_distance</span></code>(links_df,&nbsp;dist_col)</td>
+<td>Sets distance column value for transfer links.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">add_numeric_stop_id</span></code>(stops)</td>
 <td>Stops are now equipped to add numeric ID (DAPs are in) so grab them</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_transfers_for_extension</span></code>()</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_transfers_for_extension</span></code>()</td>
 <td>This writes to an intermediate file a formatted file for the C++ extension.</td>
 </tr>
 </tbody>
@@ -230,6 +234,12 @@ fast-trips transfers data from the input files in <em>input_dir</em>.</p>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="fasttrips.Transfer.add_distance">
+<code class="descname">add_distance</code><span class="sig-paren">(</span><em>links_df</em>, <em>dist_col</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Transfer.html#Transfer.add_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Transfer.add_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets distance column value for transfer links.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="fasttrips.Transfer.add_numeric_stop_id">
 <code class="descname">add_numeric_stop_id</code><span class="sig-paren">(</span><em>stops</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Transfer.html#Transfer.add_numeric_stop_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Transfer.add_numeric_stop_id" title="Permalink to this definition">¶</a></dt>
@@ -404,7 +414,7 @@ initialize_fasttrips_extension() because of the strings involved</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, Lisa Zorn.
+        &copy; Copyright 2015-2016, Lisa Zorn.
     </p>
   </div>
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
