@@ -33,6 +33,7 @@ fast-trips Classes
    Transfer
    TAZ
    Trip
+   Util
 
 fast-trips C++ Extension Classes
 --------------------------------
