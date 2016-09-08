@@ -11,7 +11,7 @@ number_of_processes           = 2
 bump_buffer                   = 5
 
 [pathfinding]
-pathfinding_type                  = Deterministic Assignment
+pathfinding_type                  = deterministic
 stochastic_dispersion             = 0.8
 stochastic_max_stop_process_count = 1
 stochastic_pathset_size           = 1000

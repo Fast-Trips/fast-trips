@@ -42,19 +42,26 @@ class Assignment:
     #: (Hmm naming conventions are a bit awkward here)
     CONFIGURATION_OUTPUT_FILE       = 'ft_output_config.txt'
 
+    #: Configuration: Input network directory
+    INPUT_NETWORK_DIR               = None
+    #: Configuration: Input demand directory
+    INPUT_DEMAND_DIR                = None
+    #: Configuration: Output directory
+    OUTPUT_DIR                      = None
+
     #: Configuration: Maximum number of iterations to remove capacity violations. When
     #: the transit system is not crowded or when capacity constraint is
     #: relaxed the model will terminate after the first iteration
     ITERATION_FLAG                  = None
 
-    ASSIGNMENT_TYPE_SIM_ONLY        = 'Simulation Only'
-    ASSIGNMENT_TYPE_DET_ASGN        = 'Deterministic Assignment'
-    ASSIGNMENT_TYPE_STO_ASGN        = 'Stochastic Assignment'
-    #: Configuration: Assignment Type
-    #: 'Simulation Only' - No Assignment (only simulation, given paths in the input)
-    #: 'Deterministic Assignment'
-    #: 'Stochastic Assignment'
-    ASSIGNMENT_TYPE                 = None
+    #: Find paths deterministically, using shortest path search based on travel time.
+    PATHFINDING_TYPE_DETERMINISTIC  = 'deterministic'
+    #: Find paths stochastically using trip-based hyperpath
+    PATHFINDING_TYPE_STOCHASTIC     = 'stochastic'
+    #: Don't find paths; read :py:attr:`Passenger.PF_PATHS_CSV` and :py:attr:`Passenger.PF_LINKS_CSV`.
+    PATHFINDING_TYPE_READ_FILE      = 'file'
+    #: Configuration: Pathfinding Type.  Should be one of `Deterministic`, `Stochastic` or `File`
+    PATHFINDING_TYPE                = None
 
     #: Configuration: Do simulation? It should be True for iterative assignment. In a one shot
     #: assignment with simulation flag off, the passengers are assigned to
@@ -207,17 +214,22 @@ class Assignment:
         pass
 
     @staticmethod
-    def read_configuration(input_network_dir, input_demand_dir, config_file=CONFIGURATION_FILE):
+    def read_configuration(override_input_network_dir=None, override_input_demand_dir=None, config_file=CONFIGURATION_FILE):
         """
-        Read the configuration parameters.
+        Read the configuration parameters from :py:attr:`Assignment.INPUT_NETWORK_DIR` and then :py:attr:`Assignment.INPUT_DEMAND_DIR`
         """
         pandas.set_option('display.width',      1000)
         # pandas.set_option('display.height',   1000)
         pandas.set_option('display.max_rows',   1000)
         pandas.set_option('display.max_columns', 100)
 
+        if override_input_network_dir:
+            Assignment.INPUT_NETWORK_DIR = override_input_network_dir
+        if override_input_demand_dir:
+            Assignment.INPUT_DEMAND_DIR = override_input_demand_dir
+
         # Functions are defined in here -- read this and eval it
-        func_file = os.path.join(input_demand_dir, Assignment.CONFIGURATION_FUNCTIONS_FILE)
+        func_file = os.path.join(Assignment.INPUT_DEMAND_DIR, Assignment.CONFIGURATION_FUNCTIONS_FILE)
         if os.path.exists(func_file):
             my_globals = {}
             FastTripsLogger.info("Reading %s" % func_file)
@@ -248,16 +260,23 @@ class Assignment:
                       'overlap_scale_parameter'         :1.0,
                       'overlap_split_transit'           :'False',
                       'overlap_variable'                :'count',
-                      'pathfinding_type'                :Assignment.ASSIGNMENT_TYPE_DET_ASGN,
+                      'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
                       'time_window'                     :30,
                       'user_class_function'             :'generic_user_class'
                      })
-        parser.read(os.path.join(input_network_dir, config_file))
-        if input_demand_dir and (input_demand_dir != input_network_dir) and os.path.exists(os.path.join(input_demand_dir,  config_file)):
-            parser.read(os.path.join(input_demand_dir, config_file))
+        # First, read configuration from network directory
+        config_fullpath = os.path.join(Assignment.INPUT_NETWORK_DIR, config_file)
+        FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
+        parser.read(config_fullpath)
+
+        # Then, read configuration from demand directory (if specified and different from network directory)
+        config_fullpath = os.path.join(Assignment.INPUT_DEMAND_DIR, config_file)
+        if Assignment.INPUT_DEMAND_DIR and (Assignment.INPUT_DEMAND_DIR != Assignment.INPUT_NETWORK_DIR) and os.path.exists(config_fullpath):
+            FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
+            parser.read(config_fullpath)
 
         Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
@@ -286,10 +305,10 @@ class Assignment:
         PathSet.OVERLAP_SCALE_PARAMETER          = parser.getfloat  ('pathfinding','overlap_scale_parameter')
         PathSet.OVERLAP_SPLIT_TRANSIT            = parser.getboolean('pathfinding','overlap_split_transit')
         PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
-        Assignment.ASSIGNMENT_TYPE               = parser.get       ('pathfinding','pathfinding_type')
-        assert(Assignment.ASSIGNMENT_TYPE in [Assignment.ASSIGNMENT_TYPE_SIM_ONLY, \
-                                              Assignment.ASSIGNMENT_TYPE_DET_ASGN, \
-                                              Assignment.ASSIGNMENT_TYPE_STO_ASGN])
+        Assignment.PATHFINDING_TYPE              = parser.get       ('pathfinding','pathfinding_type')
+        assert(Assignment.PATHFINDING_TYPE in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
+                                               Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
+                                               Assignment.PATHFINDING_TYPE_READ_FILE])
         Assignment.STOCH_DISPERSION              = parser.getfloat  ('pathfinding','stochastic_dispersion')
         Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('pathfinding','stochastic_max_stop_process_count')
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
@@ -306,7 +325,7 @@ class Assignment:
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(func_file, msg)
 
-        weights_file = os.path.join(input_demand_dir, PathSet.WEIGHTS_FILE)
+        weights_file = os.path.join(Assignment.INPUT_DEMAND_DIR, PathSet.WEIGHTS_FILE)
         if not os.path.exists(weights_file):
             FastTripsLogger.fatal("No path weights file %s" % weights_file)
             sys.exit(2)
@@ -322,8 +341,11 @@ class Assignment:
         """
         parser = ConfigParser.SafeConfigParser()
         parser.add_section('fasttrips')
+        parser.set('fasttrips','input_demand_dir',              Assignment.INPUT_DEMAND_DIR)
+        parser.set('fasttrips','input_network_dir',             Assignment.INPUT_NETWORK_DIR)
         parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
-        parser.set('fasttrips','simulation',                    'True' if Assignment.ASSIGNMENT_TYPE else 'False')
+        parser.set('fasttrips','simulation',                    'True' if Assignment.SIMULATION else 'False')
+        parser.set('fasttrips','output_dir',                    Assignment.OUTPUT_DIR)
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
         parser.set('fasttrips','output_pathset_per_sim_iter',   'True' if Assignment.OUTPUT_PATHSET_PER_SIM_ITER else 'False')
         parser.set('fasttrips','create_skims',                  'True' if Assignment.CREATE_SKIMS else 'False')
@@ -347,7 +369,7 @@ class Assignment:
         parser.set('pathfinding','overlap_scale_parameter',     '%f' % PathSet.OVERLAP_SCALE_PARAMETER)
         parser.set('pathfinding','overlap_split_transit',       'True' if PathSet.OVERLAP_SPLIT_TRANSIT else 'False')
         parser.set('pathfinding','overlap_variable',            '%s' % PathSet.OVERLAP_VARIABLE)
-        parser.set('pathfinding','pathfinding_type',            Assignment.ASSIGNMENT_TYPE)
+        parser.set('pathfinding','pathfinding_type',            Assignment.PATHFINDING_TYPE)
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
@@ -520,10 +542,10 @@ class Assignment:
         for iteration in range(1,Assignment.ITERATION_FLAG+1):
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
-            if Assignment.ASSIGNMENT_TYPE == Assignment.ASSIGNMENT_TYPE_SIM_ONLY and \
-               os.path.exists(os.path.join(output_dir, Passenger.PASSENGERS_CSV % iteration)):
-                FastTripsLogger.info("Simulation only")
-                (num_paths_found, pathset_paths_df, pathset_links_df) = FT.passengers.read_assignment_results(output_dir, iteration)
+            if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and (iteration == 1):
+                FastTripsLogger.info("Reading paths from file")
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, include_asgn=False)
+                num_paths_found = Assignment.number_of_pathsets(new_pathset_paths_df)
 
             else:
                 num_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration)
@@ -672,9 +694,9 @@ class Assignment:
                     FastTripsLogger.info("Starting worker process %2d" % process_idx)
                     process_dict[process_idx] = {
                         "process":multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                            args=(iteration, process_idx, FT.input_network_dir, FT.input_demand_dir,
-                                  FT.output_dir, todo_queue, done_queue,
-                                  Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                            args=(iteration, process_idx, Assignment.INPUT_NETWORK_DIR, Assignment.INPUT_DEMAND_DIR,
+                                  Assignment.OUTPUT_DIR, todo_queue, done_queue,
+                                  Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
                                   Assignment.bump_wait_df, veh_trips_df)),
                         "alive":True,
                         "done":False
@@ -718,7 +740,7 @@ class Assignment:
                     # do the work
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, trip_pathset,
-                                                        Assignment.ASSIGNMENT_TYPE==Assignment.ASSIGNMENT_TYPE_STO_ASGN,
+                                                        Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
                                                         trace=trace_person)
                     trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, person_id, trip_list_id, perf_dict)
@@ -1688,7 +1710,9 @@ def find_trip_based_paths_process_worker(iteration, worker_num, input_network_di
     FastTripsLogger.info("Iteration %d Worker %2d starting" % (iteration, worker_num))
 
     # the child process doesn't have these set to read them
-    Assignment.read_configuration(output_dir, input_demand_dir, Assignment.CONFIGURATION_OUTPUT_FILE)
+    Assignment.read_configuration(override_input_network_dir=output_dir,
+                                  override_input_demand_dir=input_demand_dir,
+                                  config_file=Assignment.CONFIGURATION_OUTPUT_FILE)
 
     # this passes those read parameters and the stop times to the C++ extension
     Assignment.initialize_fasttrips_extension(worker_num, output_dir, stop_times_df)

@@ -15,6 +15,7 @@ __license__   = """
 import collections,datetime,os,sys
 import pandas
 
+from .Error import NetworkInputError
 from .Logger import FastTripsLogger
 from .Trip import Trip
 from .Util import Util
@@ -142,7 +143,12 @@ class Stop:
                                        how="left",
                                        left_on=dap_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
         # there should be only NaNs since DAP lot IDs need to be unique from Stop IDs
-        assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
+        # non_unique_lots = join_daps_stops.loc[ pandas.notnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]) ]
+        # if len(non_unique_lots) > 0:
+        #     error_str = "These drive access lot IDs are also stop IDs: \n%s" % str(non_unique_lots)
+        #     FastTripsLogger.warn(error_str)
+        #     raise NetworkInputError("drive_access_ft.txt", error_str)
+        # assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
 
         # number them starting at self.max_stop_id_num
         daps_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = daps_unique_df.index + self.max_stop_id_num + 1
@@ -194,22 +200,30 @@ class Stop:
                                    mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
                                    warn=warn, warn_msg=warn_msg)
 
-    def add_stop_lat_lon(self, input_df, id_colname, new_lat_colname, new_lon_colname):
+    def add_stop_lat_lon(self, input_df, id_colname, new_lat_colname, new_lon_colname, new_stop_name_colname=None):
         """
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
         adds the stop latitude and longitude as columns named *new_lat_colname* and *new_lon_colname*
         and returns it.
+
+        Pass *new_stop_name_colname* to also get the stop name.
         """
+        stop_cols = [Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]
+        if new_stop_name_colname: stop_cols.append(Stop.STOPS_COLUMN_STOP_NAME)
+
         input_df = pandas.merge(left    =input_df,
-                                right   =self.stops_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]],
+                                right   =self.stops_df[stop_cols],
                                 how     ="left",
                                 left_on =id_colname,
                                 right_on=Stop.STOPS_COLUMN_STOP_ID)
         # don't want to add this column
         if Stop.STOPS_COLUMN_STOP_ID != id_colname:
             input_df.drop(Stop.STOPS_COLUMN_STOP_ID, axis=1, inplace=True)
-        input_df.rename(columns={Stop.STOPS_COLUMN_STOP_LATITUDE :new_lat_colname,
-                                 Stop.STOPS_COLUMN_STOP_LONGITUDE:new_lon_colname}, inplace=True)
+
+        rename_dict = {Stop.STOPS_COLUMN_STOP_LATITUDE :new_lat_colname,
+                       Stop.STOPS_COLUMN_STOP_LONGITUDE:new_lon_colname}
+        if new_stop_name_colname: rename_dict[Stop.STOPS_COLUMN_STOP_NAME] = new_stop_name_colname
+        input_df.rename(columns=rename_dict, inplace=True)
         return input_df
 
     def add_trips(self, stop_times_df):

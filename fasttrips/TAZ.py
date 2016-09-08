@@ -620,6 +620,14 @@ class TAZ:
         FastTripsLogger.debug("\n" + str(access_df.head()))
         FastTripsLogger.debug("\n" + str(access_df.tail()))
 
+        # Check for null stop ids null
+        null_stop_ids = access_df.loc[pandas.isnull(access_df["stop_id_num"])]
+        FastTripsLogger.warn("write_access_egress_for_extension null_stop_ids:\n%s" % str(null_stop_ids))
+
+        # for now, drop rows with null stop id nums
+        access_df = access_df.loc[ pandas.notnull(access_df["stop_id_num"]) ]
+        access_df["stop_id_num"] = access_df["stop_id_num"].astype(int)
+
         access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
                          sep=" ", index=False)
         FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE))

@@ -8,6 +8,9 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
 * [Setup](#setup)
 * [Input](#input)
   * [`config_ft.txt`](#config_fttxt)
+    * [Configuration Options: fasttrips](#configuration-options-fasttrips)
+    * [Configuration Options: pathfinding](#configuration-options-pathfinding)
+    * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
 * [Test Sample Input](#test-sample-input)
@@ -45,7 +48,7 @@ The configuration files are parsed by python's [ConfigParser module](https://doc
 adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
 (See [Network Example](Examples/test_network/input/config_ft.txt) ) (See [Demand Example](Examples/test_network/demand_twopaths/config_ft.txt) )
 
-**fasttrips configuration options**
+#### Configuration Options: fasttrips
 
 Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -------------------------
@@ -66,7 +69,7 @@ Option Name                         | Type   | Default | Description
 `skip_person_ids`                   | string | 'None'  | A list of person IDs to skip.
 `trace_person_ids`                  | string | 'None'  | A list of person IDs for whom to output verbose trace information.
 
-**pathfinding configuration options**
+#### Configuration Options: pathfinding
 
 Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -----------
@@ -76,12 +79,33 @@ Option Name                         | Type   | Default | Description
 `overlap_scale_parameter`           | float  | 1       | Scale parameter for overlap path size variable.
 `overlap_split_transit`             | bool   | False   | For overlap calcs, split transit leg into component legs (A to E becauses A-B-C-D-E)
 `overlap_variable`                  | string | 'count' | The variable upon which to base the overlap path size variable.  Can be one of `None`, `count`, `distance`, `time`.
-`pathfinding_type`                  | string | 'Deterministic Assignment' |
+`pathfinding_type`                  | string | 'stochastic' | Pathfinding method.  Can be `stochastic`, `deterministic`, or `file`.
 `stochastic_dispersion`             | float  | 1.0     | Stochastic dispersion parameter. TODO: document this further.
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.
 `stochastic_pathset_size`           | int    | 1000    | In path-finding, how many paths (not necessarily unique) determine a pathset?
 `time_window`                       | float  | 30      | In path-finding, the max time a passenger would wait at a stop.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
+
+#### More on Overlap Path Size Penalties
+
+The path size overlap penalty is formulated by Ramming and discussed in Hoogendoorn-Lanser et al. (see [References](#references) ).
+
+When the pathsize overlap is penalized (pathfinding `overlap_variable` is not `None`), then the following equation is used to calculate the path size overlap penalty:
+
+![Path Overlap Penalty Equation](/doc/overlap_function.png "Path Overlap Penalty Equation")
+
+Where
+  * *i* is the path alternative for individual *n*
+  * &Gamma;<sub>*i*</sub> is the set of legs of path alternative *i*
+  * *l<sub>a</sub>* is the value of the `overlap_variable` for leg *a*.  So it is either 1, the distance or the time of leg *a* depending of if `overlap_scale_parameter` is `count`, `distance` or `time`, respectively.
+  * *L<sub>i</sub> is the total sum of the `overlap_variable` over all legs *l<sub>a</sub>* that make up path alternative *i*
+  * *C<sub>in</sub> is the choice set of path alternatives for individual *n* that overlap with alternative *i*
+  * &gamma; is the `overlap_scale_parameter`
+  * &delta;<sub>*ai*</sub> = 1 and &delta;<sub>*aj*</sub> = 0 &forall; *j* &ne; *i*
+
+From Hoogendoor-Lanser et al.:
+
+> Consequently, if leg *a* for alternative *i* is unique, then [the denominator is equal to 1] and the path size contribution of leg *a* is equal to its proportional length *l<sub>a</sub>/L<sub>i</sub>*. If leg *l<sub>a</sub>* is also used by alternative *j*, then the contribution of leg *l<sub>a</sub>* to path size PS<sub>*i*</sub> is smaller than *l<sub>a</sub>/L<sub>i</sub>*. If &gamma; = 0 or if routes *i* and *j* have equal length, then the contribution of leg *a* to PS<sub>*i*</sub> is equal to *l<sub>a</sub>/2L<sub>i</sub>*. If &gamma; &gt; 0 and routes *i* and *j* differ in length, then the contribution of leg *a* to PS<sub>*i*</sub> depends on the ratio of *L<sub>i</sub>* to *L<sub>j</sub>*. If route *i* is longer than route *j* and &gamma; &gt; 1, then the contribution of leg *a* to PS<sub>*i*</sub> is larger than *l<sub>a</sub>/2L<sub>i</sub>*; otherwise, the contribution is smaller than *l<sub>a</sub>/2L<sub>i</sub>*. If &gamma; &gt; 1 in the exponential path size formulation, then long routes are penalized in favor of short routes. The use of parameter &gamma; is questionable if overlapping routes have more or less equal length and should therefore be set to 0. Overlap between those alternatives should not affect their choice probabilities differently. The degree to which long routes should be penalized might be determined by estimating &gamma;. If &gamma; is not estimated, then an educated guess with respect to &gamma; should be made. To this end, differences in route length between alternatives in a choice set should be considered.
 
 ### `config_ft.py`
 
@@ -131,6 +155,12 @@ There are a total of six test runs in `\scripts\runAllTests.bat`. Type of assign
 Type of Assignment:
  *  "Deterministic" indicates use of a deterministic trip-based shortest path search algorithm
  *  "Stochastic" indicates use of a stochastic hyperpath-finding algorithm
+
+## References
+
+ * Ramming, M. S. *Network Knowledge and Route Choice.* Ph.D. Thesis. Massachusetts Institute of Technology, Cambridge, Mass., 2002.
+
+ * Hoogendoorn-Lanser, S., R. Nes, and P. Bovy. Path Size Modeling in Multinomial Route Choice Analysis. 27 In *Transportation Research Record: Journal of the transportation Research Board, No 1921*, 28 Transportation Research Board of the National Academies, Washington, D.C., 2005, pp. 27-34.
 
 ## Changelog
 

@@ -3,9 +3,9 @@ import argparse, os, pandas, re, sys
 
 USAGE = r"""
 
-  python runTest.py [--trace_only|-t] [--num_trips|-n #trips] [-c|--capacity] [-o|--output_dir dir] asgn_type iters input_network_dir input_demand_dir output_loc
+  python runTest.py [--trace_only|-t] [--num_trips|-n #trips] [-c|--capacity] [-o|--output_dir dir] pathfinding_type iters input_network_dir input_demand_dir output_loc
 
-  Where asgn_type is one of 'deterministic','stochastic' or 'simulation'
+  Where pathfinding_type is one of 'deterministic','stochastic' or 'file'
 
   e.g.
 
@@ -26,7 +26,9 @@ if __name__ == "__main__":
     parser.add_argument('-d','--dispersion', type=float,help="Stochastic dispersion parameter")
     parser.add_argument('-c','--capacity',   action='store_true', help="Enable capacity constraint")
     parser.add_argument('-o','--output_dir', type=str,  help="Directory within output_loc to write fasttrips outtput.  If none specified, will construct one.")
-    parser.add_argument("asgn_type",         choices=['deterministic','stochastic','simulation'], help="Type of pathfinding")
+    parser.add_argument('--overlap_variable',      choices=['None','count','distance','time'], help="Variable to use for overlap penalty calculation")
+    parser.add_argument('--overlap_split_transit', action='store_true', help="Split transit for path overlap penalty calculation")
+    parser.add_argument("pathfinding_type",  choices=['deterministic','stochastic','file'], help="Type of pathfinding")
     parser.add_argument("iters",             type=int,  help="Number of iterations to run")
     parser.add_argument("input_network_dir", type=str,  help="Location of the input network")
     parser.add_argument("input_demand_dir",  type=str,  help="Location of the input demand")
@@ -41,7 +43,7 @@ if __name__ == "__main__":
         test_dir = args.output_dir
     else:
         test_dir = "%s%s_iter%d_%s" % ("" if args.input_network_dir == args.input_demand_dir else "%s_" % os.path.basename(args.input_demand_dir),
-                                       args.asgn_type, args.iters,
+                                       args.pathfinding_type, args.iters,
                                       "cap" if args.capacity else "nocap")
 
         # don't override full run results
@@ -58,14 +60,14 @@ if __name__ == "__main__":
     # Read the configuration here so we can overwrite options below
     ft.read_configuration()
 
-    if args.asgn_type == "deterministic":
-        fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_DET_ASGN
-    elif args.asgn_type == "stochastic":
-        fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_STO_ASGN
-    elif args.asgn_type == "simulation":
-        fasttrips.Assignment.ASSIGNMENT_TYPE     = fasttrips.Assignment.ASSIGNMENT_TYPE_SIM_ONLY
-
+    fasttrips.Assignment.PATHFINDING_TYPE        = args.pathfinding_type
     fasttrips.Assignment.ITERATION_FLAG          = int(args.iters)
+
+    if args.overlap_variable:
+        fasttrips.PathSet.OVERLAP_VARIABLE       = args.overlap_variable
+
+    if args.overlap_split_transit:
+        fasttrips.PathSet.OVERLAP_SPLIT_TRANSIT  = args.overlap_split_transit
 
     if args.dispersion:
         fasttrips.Assignment.STOCH_DISPERSION    = args.dispersion
