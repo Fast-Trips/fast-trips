@@ -304,4 +304,4 @@ class Util:
             return "%.1f KB" % (bytes/1024.0)
         if bytes < 1024*1024*1024:
             return "%.1f MB" % (bytes/(1024.0*1024.0))
-        return "%.1f GB" % (bytes/(1024*1024*1024))
+        return "%.1f GB" % (bytes/(1024.0*1024.0*1024.0))
