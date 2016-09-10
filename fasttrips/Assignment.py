@@ -893,7 +893,7 @@ class Assignment:
             _fasttrips.find_pathset(iteration, pathset.person_id_num, pathset.trip_list_id_num, hyperpath,
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
-                                 1 if pathset.outbound() else 0, float(pathset.pref_time_min),
+                                 1 if pathset.outbound() else 0, float(pathset.pref_time_min), float(pathset.vot),
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
         # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (pathset.person_id, pathset.trip_list_id_num))

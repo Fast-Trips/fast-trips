@@ -176,10 +176,10 @@ class Util:
     def read_time(x, end_of_day=False):
         try:
             if x=='' or x.lower()=='default':
-                x = '23:59:59' if end_of_day else '00:00:00'
+                x = '24:00:00' if end_of_day else '00:00:00'
         except:
             if pandas.isnull(x):
-                x = '23:59:59' if end_of_day else '00:00:00'
+                x = '24:00:00' if end_of_day else '00:00:00'
         time_split = x.split(':')
         hour = int(time_split[0])
         day = Util.SIMULATION_DAY

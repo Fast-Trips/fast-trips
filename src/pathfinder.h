@@ -115,6 +115,17 @@ namespace fasttrips {
         }
     };
 
+    /// For fare lookups: FarePeriod definition
+    typedef struct {
+        std::string fare_period_; ///< Name of the fare period
+        double      start_time_;  ///< Start time of the fare period
+        double      end_time_;    ///< End time of the fare period
+        double      price_;       ///< Currency unspecified but matches value_of_time_
+        int         transfers_;   ///< Number of transfers allowed
+    } FarePeriod;
+
+    typedef std::multimap<int, FarePeriod> RouteToFarePeriod;
+
     /** Performance information to return. */
     typedef struct {
         int     label_iterations_;              ///< Number of label iterations performed
@@ -176,6 +187,10 @@ namespace fasttrips {
         std::map<int, std::vector<TripStopTime> > trip_stop_times_;
         /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time, overcap]
         std::map<int, std::vector<TripStopTime> > stop_trip_times_;
+        // Fare information: route id -> fare id
+        std::map<int, int> route_fares_;
+        // Fare information: fare id -> fare period
+        RouteToFarePeriod fare_periods_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
@@ -202,6 +217,7 @@ namespace fasttrips {
         void readTripIds();
         void readStopIds();
         void readRouteIds();
+        void readFarePeriods();
         void readModeIds();
         void readAccessLinks();
         void readTransferLinks();
@@ -440,6 +456,8 @@ namespace fasttrips {
             PerformanceInfo   &performance_info) const;
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
+
+        const FarePeriod* getFarePeriod(int route_id, double trip_depart_time) const;
 
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 

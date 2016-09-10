@@ -105,10 +105,10 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
     fasttrips::PathSpecification path_spec;
     int   hyperpath_i, outbound_i, trace_i;
     char *user_class, *purpose, *access_mode, *transit_mode, *egress_mode;
-    if (!PyArg_ParseTuple(args, "iiiisssssiiidi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
+    if (!PyArg_ParseTuple(args, "iiiisssssiiiddi", &path_spec.iteration_, &path_spec.passenger_id_, &path_spec.path_id_, &hyperpath_i,
                           &user_class, &purpose, &access_mode, &transit_mode, &egress_mode,
                           &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
-                          &outbound_i, &path_spec.preferred_time_, &trace_i)) {
+                          &outbound_i, &path_spec.preferred_time_, &path_spec.value_of_time_, &trace_i)) {
         return NULL;
     }
     path_spec.hyperpath_  = (hyperpath_i != 0);

@@ -21,6 +21,7 @@ namespace fasttrips {
         int     destination_taz_id_;    ///< Destination of path
         bool    outbound_;              ///< If true, the preferred time is for arrival, otherwise it's departure
         double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
+        double  value_of_time_;         ///< Value of time, in currency_type/hour
         bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
         std::string user_class_;        ///< User class string
         std::string purpose_;           ///< Purpose string

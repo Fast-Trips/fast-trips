@@ -1,4 +1,5 @@
 fare_id,fare_class,start_time,end_time
-bus_local_fare_id,bus_local_fare_class,00:00:00,23:59:59
-bus_express_fare_id,bus_express_fare_class,00:00:00,23:59:59
-rail_fare_id,rail_fare_class,00:00:00,23:59:59
+bus_local_fare_id,bus_local_fare_default,default,default
+bus_local_fare_id,bus_local_fare_am,06:00:00,09:00:00
+bus_local_fare_id,bus_local_fare_pm,13:00:00,17:00:00
+rail_fare_id,rail_fare_class,default,default

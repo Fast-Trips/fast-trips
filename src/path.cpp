@@ -325,6 +325,11 @@ namespace fasttrips {
                 // overcap should be non-negative
                 if (link_attr["overcap"] < 0) { link_attr["overcap"] = 0; }
 
+                const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_);
+                if (fp) {
+                    link_attr["fare"]             = fp->price_;
+                }
+
                 stop_state.link_cost_             = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
 
                 first_trip = false;

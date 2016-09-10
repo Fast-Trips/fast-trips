@@ -66,6 +66,7 @@ namespace fasttrips {
         readTripIds();
         readStopIds();
         readRouteIds();
+        readFarePeriods();
         readModeIds();
         readAccessLinks();
         readTransferLinks();
@@ -127,28 +128,59 @@ namespace fasttrips {
 
     void PathFinder::readRouteIds() {
         // Routes have been renumbered by fasttrips. Read string IDs.
-        // Route num -> id
+        // Route num -> id, fare_id
         std::ifstream route_id_file;
         std::ostringstream ss_route;
         ss_route << output_dir_ << kPathSeparator << "ft_intermediate_route_id.txt";
         route_id_file.open(ss_route.str().c_str(), std::ios_base::in);
 
-        std::string string_route_id_num, string_route_id;
-        int route_id_num;
+        std::string string_route_id_num, string_route_id, string_fare_id_num;
+        int route_id_num, fare_id_num;
 
-        route_id_file >> string_route_id_num >> string_route_id;
+        route_id_file >> string_route_id_num >> string_route_id >> string_fare_id_num;
         if (process_num_ <= 1) { 
             std::cout << "Reading " << ss_route.str() << ": ";
             std::cout << "[" << string_route_id_num   << "] ";
             std::cout << "[" << string_route_id       << "] ";
+            std::cout << "[" << string_fare_id_num    << "] ";
         }
-        while (route_id_file >> route_id_num >> string_route_id) {
+        while (route_id_file >> route_id_num >> string_route_id >> fare_id_num) {
             route_num_to_str_[route_id_num] = string_route_id;
+            route_fares_[route_id_num]      = fare_id_num;
         }
         if (process_num_ <= 1) {
             std::cout << " => Read " << route_num_to_str_.size() << " lines" << std::endl;
         }
         route_id_file.close();
+    }
+
+    void PathFinder::readFarePeriods() {
+        std::ifstream fare_period_file;
+        std::ostringstream ss_fare;
+        ss_fare << output_dir_ << kPathSeparator << "ft_intermediate_fare.txt";
+        fare_period_file.open(ss_fare.str().c_str(), std::ios_base::in);
+
+        std::string string_fare_id_num, string_fare_id, string_fare_period, string_fare_price, string_fare_transfers, string_fare_start_time, string_fare_end_time;
+        int fare_id_num, transfers_num;
+
+        fare_period_file >> string_fare_id_num >> string_fare_id >> string_fare_period >> string_fare_start_time >> string_fare_end_time >> string_fare_price >> string_fare_transfers;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_fare.str()   << ": ";
+            std::cout << "[" << string_fare_id_num     << "] ";
+            std::cout << "[" << string_fare_id         << "] ";
+            std::cout << "[" << string_fare_period     << "] ";
+            std::cout << "[" << string_fare_start_time << "] ";
+            std::cout << "[" << string_fare_end_time   << "] ";
+            std::cout << "[" << string_fare_price      << "] ";
+            std::cout << "[" << string_fare_transfers  << "] ";
+        }
+        FarePeriod fp;
+        while (fare_period_file >> fare_id_num >> string_fare_id >> fp.fare_period_ >> fp.start_time_ >> fp.end_time_ >> fp.price_ >> fp.transfers_) {
+            fare_periods_.insert(std::pair<int,FarePeriod>(fare_id_num,fp));
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << fare_periods_.size() << " fare periods" << std::endl;
+        }
     }
 
     void PathFinder::readModeIds() {
@@ -500,6 +532,7 @@ namespace fasttrips {
             trace_file << "preferred_time_  = ";
             printTime(trace_file, path_spec.preferred_time_);
             trace_file << " (" << path_spec.preferred_time_ << ")" << std::endl;
+            trace_file << "value_of_time_   = " << path_spec.value_of_time_<< std::endl;
             trace_file << "user_class_      = " << path_spec.user_class_   << std::endl;
             trace_file << "purpose_         = " << path_spec.purpose_      << std::endl;
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
@@ -638,6 +671,19 @@ namespace fasttrips {
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
                 trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
                 trace_file << " x " << iter_attr->second << std::endl;
+            }
+        }
+        // fare
+        static const std::string fare_str("fare");
+        Attributes::const_iterator fare_attr = attributes.find(fare_str);
+        if (fare_attr != attributes.end()) {
+            //       (60 min/hour)*(hours/vot currency) x (currency)
+            cost += (60.0/path_spec.value_of_time_) * fare_attr->second;
+
+            if (true && path_spec.trace_ && !hush) {
+                trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
+                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (60.0/path_spec.value_of_time_);
+                trace_file << " x " << fare_attr->second << std::endl;
             }
         }
         if (true && path_spec.trace_ && !hush) {
@@ -1246,19 +1292,24 @@ namespace fasttrips {
                     double overcap     = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
                     double at_capacity = (overcap >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
                     if (overcap < 0) { overcap = 0; } // make it non-negative
+                    const FarePeriod* fp = getFarePeriod(trip_info.route_id_, path_spec.outbound_ ? deparr_time : arrdep_time);
 
                     if (path_spec.trace_) {
                         if (path_spec.outbound_) {
                             trace_file << "trip " << tripStringForId(possible_board_alight.trip_id_)
                                        << ", stop " << stopStringForId(possible_board_alight.stop_id_)
                                        << ", seq " << possible_board_alight.seq_
-                                       << ", overcap " << possible_board_alight.overcap_ << std::endl;
+                                       << ", overcap " << possible_board_alight.overcap_
+                                       << ", fare " << (fp ? fp->price_ : -1)
+                                       << std::endl;
                         }
                         else {
                             trace_file << "trip " << tripStringForId(it->trip_id_)
                                        << ", stop " << stopStringForId(it->stop_id_)
                                        << ", seq " << it->seq_
-                                       << ", overcap " << tst.overcap_ << std::endl;
+                                       << ", overcap " << tst.overcap_
+                                       << ", fare " << (fp ? fp->price_ : -1)
+                                       << std::endl;
                         }
                     }
 
@@ -1268,6 +1319,9 @@ namespace fasttrips {
                     link_attr["wait_time_min"      ] = wait_time;
                     link_attr["overcap"            ] = overcap;
                     link_attr["at_capacity"        ] = at_capacity;
+                    if (fp) {
+                        link_attr["fare"           ] = fp->price_;
+                    }
 
                     link_cost = 0;
                     // If outbound, and the current link is egress, then it's as late as possible and the wait time isn't accurate.
@@ -1968,6 +2022,24 @@ namespace fasttrips {
         }
         return -1;
     }
+
+    /**
+     * Returns the fare for the transit vehicle of the given route.
+     */
+    const FarePeriod* PathFinder::getFarePeriod(int route_id, double trip_depart_time) const
+    {
+        // find the right fare period
+        std::pair<RouteToFarePeriod::const_iterator, RouteToFarePeriod::const_iterator> iter_range = fare_periods_.equal_range(route_id);
+        RouteToFarePeriod::const_iterator fp_iter = iter_range.first;
+        while (fp_iter != iter_range.second) {
+            if ((trip_depart_time >= fp_iter->second.start_time_) && (trip_depart_time < fp_iter->second.end_time_)) {
+                return &(fp_iter->second);
+            }
+            ++fp_iter;
+        }
+        return (const FarePeriod*)0;
+    }
+
 
     /**
      * If outbound, then we're searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint (timepoint-TIME_WINDOW_, timepoint]
