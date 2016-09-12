@@ -356,6 +356,20 @@ class PathSet:
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
                                sep=" ", index=False)
+
+        # add placeholder weights (-1) for fares - one for each user_class, purpose, transit demand mode
+        # these will be updated based on the person's value of time in calculate_cost()
+        fare_weights = PathSet.WEIGHTS_DF.loc[ PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]==PathSet.STATE_MODE_TRIP]
+        fare_weights = fare_weights[[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                     PathSet.WEIGHTS_COLUMN_PURPOSE,
+                                     PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                     PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
+                                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM]].copy().drop_duplicates()
+        fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ] = "fare"  # SIM_COL_PAX_FARE
+        fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] = -1.0
+        PathSet.WEIGHTS_DF = PathSet.WEIGHTS_DF.append(fare_weights)
+        FastTripsLogger.debug("PathSet.WEIGHTS_DF with fare weights: \n%s" % PathSet.WEIGHTS_DF)
         return trip_list_df
 
     def __str__(self):
@@ -639,7 +653,7 @@ class PathSet:
         return path2
 
     @staticmethod
-    def calculate_cost(iteration, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df, veh_trips_df, stops):
+    def calculate_cost(iteration, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df, veh_trips_df, stops, routes):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -648,19 +662,21 @@ class PathSet:
 
         It's also messier to have this in two places.  Maybe we should delete it from the C++; the overlap calcs are only in here right now.
 
-        Returns pathset_paths_df with additional column, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
-        And pathset_links_df with additional column, Assignment.SIM_COL_PAX_COST
+        Returns pathset_paths_df with additional columns, Assignment.SIM_COL_PAX_FARE, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
+        And pathset_links_df with additional columns, Assignment.SIM_COL_PAX_FARE and Assignment.SIM_COL_PAX_COST
 
         """
         from .Assignment import Assignment
 
         # if these are here already, remove them since we'll recalculate them
         if Assignment.SIM_COL_PAX_COST in list(pathset_paths_df.columns.values):
-            pathset_paths_df.drop([Assignment.SIM_COL_PAX_COST,
+            pathset_paths_df.drop([Assignment.SIM_COL_PAX_FARE,
+                                   Assignment.SIM_COL_PAX_COST,
                                    Assignment.SIM_COL_PAX_LNPS,
                                    Assignment.SIM_COL_PAX_PROBABILITY,
-                                   Assignment.SIM_COL_PAX_LOGSUM     ], axis=1, inplace=True)
-            pathset_links_df.drop([Assignment.SIM_COL_PAX_COST       ], axis=1, inplace=True)
+                                   Assignment.SIM_COL_PAX_LOGSUM], axis=1, inplace=True)
+            pathset_links_df.drop([Assignment.SIM_COL_PAX_COST,
+                                   Assignment.SIM_COL_PAX_FARE], axis=1, inplace=True)
 
             # leaving this in for writing to CSV for debugging but I could take it out
             pathset_paths_df.drop(["logsum_component"], axis=1, inplace=True)
@@ -674,12 +690,13 @@ class PathSet:
         if PathSet.OVERLAP_SPLIT_TRANSIT:
             pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)
 
-        # First, we need user class, purpose, and demand modes
+        # First, we need user class, purpose, demand modes, and valud of time
         pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
                                              right=trip_list_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
                                                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                                  Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                                                                  Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                                                                 Passenger.TRIP_LIST_COLUMN_VOT,
                                                                  Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
                                                                  Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
                                                                  Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE
@@ -726,6 +743,10 @@ class PathSet:
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
                                how     ="inner")
+
+        # update the fare weight placeholder based on value of time (currency per hour)
+        # since generalized cost is roughly in minutes, (60 min/1 hour)x(hour/vot currency) is the weight (minutes/currency)
+        cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] = 60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT]
 
         if len(Assignment.TRACE_PERSON_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].sort_values([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,Passenger.PF_COL_PATH_NUM,Passenger.PF_COL_LINK_NUM]).head(20)))
@@ -803,6 +824,10 @@ class PathSet:
                                       how  ="left",
                                       on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
 
+
+        # for now, no fares associated with this
+        cost_accegr_df[Assignment.SIM_COL_PAX_FARE] = 0.0
+
         # preferred delay_min - arrival means want to arrive before that time
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
@@ -830,6 +855,14 @@ class PathSet:
             FastTripsLogger.fatal(error_accegr_msg)
 
         ##################### Next, handle Transit Trip link costs
+        # get the fares
+        cost_trip_df = routes.add_fares(cost_trip_df)
+        # only set it once per link since we'll sum to links
+        cost_trip_df.loc[ (cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] != "fare"), Assignment.SIM_COL_PAX_FARE] = 0
+
+        # set the fare var_values
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "fare"), "var_value"] = cost_trip_df[Assignment.SIM_COL_PAX_FARE]
+
         if len(Assignment.TRACE_PERSON_IDS) > 0:
             FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.loc[cost_trip_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_trip_df.dtypes)))
 
@@ -877,6 +910,9 @@ class PathSet:
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
+        # for now, no fares associated with this
+        cost_transfer_df[Assignment.SIM_COL_PAX_FARE] = 0.0
+
         FastTripsLogger.debug("cost_transfer_df head = \n%s\ntransfers_df head=\n%s" % (cost_transfer_df.head().to_string(), transfers_df.head().to_string()))
         cost_transfer_df = pandas.merge(left     = cost_transfer_df,
                                         left_on  = ["A_id_num","B_id_num"],
@@ -915,6 +951,7 @@ class PathSet:
         cost_columns = [Passenger.PERSONS_COLUMN_PERSON_ID,
                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                        Passenger.TRIP_LIST_COLUMN_VOT,
                         Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                         Passenger.PF_COL_PATH_NUM,
                         Passenger.PF_COL_LINK_NUM,
@@ -926,7 +963,8 @@ class PathSet:
                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE,
                         "var_value",
                         Assignment.SIM_COL_MISSED_XFER,
-                        Assignment.SIM_COL_PAX_BUMP_ITER]
+                        Assignment.SIM_COL_PAX_BUMP_ITER,
+                        Assignment.SIM_COL_PAX_FARE]
         cost_accegr_df   = cost_accegr_df[cost_columns]
         cost_trip_df     = cost_trip_df[cost_columns]
         cost_transfer_df = cost_transfer_df[cost_columns]
@@ -959,7 +997,8 @@ class PathSet:
                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                 Passenger.PF_COL_PATH_NUM,
                                 Passenger.PF_COL_LINK_NUM,
-                                Assignment.SIM_COL_PAX_COST]].groupby(
+                                Assignment.SIM_COL_PAX_COST,
+                                Assignment.SIM_COL_PAX_FARE]].groupby(
                                    [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                     Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                     Passenger.PF_COL_PATH_NUM,

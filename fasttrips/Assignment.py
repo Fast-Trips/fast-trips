@@ -190,6 +190,7 @@ class Assignment:
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' #: 1 if lucky enough to board at an at- or over-capacity stop
     SIM_COL_PAX_DISTANCE            = "distance"         #: Link distance in miles
+    SIM_COL_PAX_FARE                = "fare"             #: Link fare in currency
     SIM_COL_PAX_COST                = 'sim_cost'         #: Link cost. (Cannot be `cost` because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST)
     SIM_COL_PAX_LNPS                = 'ln_PS'            #: log(PathSize)
     SIM_COL_PAX_PROBABILITY         = 'probability'      #: Probability of this path
@@ -1526,7 +1527,7 @@ class Assignment:
         (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
             iteration, simulation_iteration, Assignment.STOCH_DISPERSION,
             pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df,
-            FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df, veh_trips_df, FT.stops)
+            FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df, veh_trips_df, FT.stops, FT.routes)
 
         ######################################################################################################
         FastTripsLogger.info("  Step 3. Choose a path for each passenger from their pathset")
@@ -1590,7 +1591,7 @@ class Assignment:
             (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
                 iteration, simulation_iteration, Assignment.STOCH_DISPERSION,
                 pathset_paths_df, pathset_links_df, FT.passengers.trip_list_df,
-                FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df, veh_trips_df, FT.stops)
+                FT.transfers.transfers_df, FT.tazs.walk_df, FT.tazs.drive_df, veh_trips_df, FT.stops, FT.routes)
 
             ######################################################################################################
             FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")

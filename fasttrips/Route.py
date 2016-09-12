@@ -94,6 +94,8 @@ class Route(object):
     INPUT_FARE_RULES_FILE                   = "fare_rules_ft.txt"
     #: fasttrips Fare rules column name: Fare ID
     FARE_RULES_COLUMN_FARE_ID               = "fare_id"
+    #: GTFS fare rules column name: Route ID
+    FARE_RULES_COLUMN_ROUTE_ID              = ROUTES_COLUMN_ROUTE_ID
     #: fasttrips Fare rules column name: Fare class
     FARE_RULES_COLUMN_FARE_CLASS            = FARE_ATTR_COLUMN_FARE_CLASS
     #: fasttrips Fare rules column name: Start time for the fare. A DateTime
@@ -488,9 +490,11 @@ class Route(object):
         # convert it back to int
         route_id_df[Route.FARE_RULES_COLUMN_FARE_ID_NUM] = route_id_df[Route.FARE_RULES_COLUMN_FARE_ID_NUM].astype(int)
 
+        # just route id -> fare id
+        route_id_df = route_id_df[[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID, Route.FARE_RULES_COLUMN_FARE_ID_NUM]].drop_duplicates()
+
         # write intermediate file -- route id num, route id, and fare_id_num ('None' if not applicable)
         route_id_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
-                           columns=[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID, Route.FARE_RULES_COLUMN_FARE_ID_NUM],
                            sep=" ", index=False)
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE))
 
@@ -521,3 +525,43 @@ class Route(object):
             FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE))
         else:
             FastTripsLogger.debug("No fare rules so no file %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE))
+
+    def add_fares(self, trip_links_df):
+        """
+        Adds fare column to a DataFrame with trip links called :py:attr:`Assignment.SIM_COL_PAX_FARE`
+        """
+        from .Assignment import Assignment
+
+        return_columns = list(trip_links_df.columns.values)
+        return_columns.append(Assignment.SIM_COL_PAX_FARE)
+
+        num_trip_links = len(trip_links_df)
+        FastTripsLogger.debug("add_fares (%d):\n%s\n%s" % (num_trip_links, str(trip_links_df.head()), str(self.fare_rules_df)))
+
+        # join on route id if it's there
+        if Route.FARE_RULES_COLUMN_ROUTE_ID in list(self.fare_rules_df.columns.values):
+            trip_links_df = pandas.merge(left =trip_links_df,
+                                         right=self.fare_rules_df,
+                                         how  ="left",
+                                         on   =Route.FARE_RULES_COLUMN_ROUTE_ID)
+            FastTripsLogger.debug("add_fares (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head())))
+
+            # delete rows where the board time is not within the fare period
+            trip_links_df = trip_links_df.loc[ pandas.isnull(trip_links_df[Route.FARE_ATTR_COLUMN_PRICE])|
+                                               ((trip_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_df[Route.FARE_RULES_COLUMN_START_TIME])&
+                                                (trip_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_df[Route.FARE_RULES_COLUMN_END_TIME])) ]
+            FastTripsLogger.debug("add_fares (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head())))
+
+            # rename price to frae
+            trip_links_df.rename(columns={Route.FARE_ATTR_COLUMN_PRICE:Assignment.SIM_COL_PAX_FARE}, inplace=True)
+
+            # join fails mean 0
+            trip_links_df.fillna(value={Assignment.SIM_COL_PAX_FARE:0.0}, inplace=True)
+
+            # drop other columns
+            trip_links_df = trip_links_df[return_columns]
+
+        # make sure we didn't lose or add any
+        assert len(trip_links_df) == num_trip_links
+
+        return trip_links_df
