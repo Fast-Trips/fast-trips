@@ -1300,6 +1300,7 @@ namespace fasttrips {
                                        << ", stop " << stopStringForId(possible_board_alight.stop_id_)
                                        << ", seq " << possible_board_alight.seq_
                                        << ", overcap " << possible_board_alight.overcap_
+                                       << ", route_id " << trip_info.route_id_
                                        << ", fare " << (fp ? fp->price_ : -1)
                                        << std::endl;
                         }
@@ -1308,6 +1309,7 @@ namespace fasttrips {
                                        << ", stop " << stopStringForId(it->stop_id_)
                                        << ", seq " << it->seq_
                                        << ", overcap " << tst.overcap_
+                                       << ", route_id " << trip_info.route_id_
                                        << ", fare " << (fp ? fp->price_ : -1)
                                        << std::endl;
                         }
@@ -2028,9 +2030,16 @@ namespace fasttrips {
      */
     const FarePeriod* PathFinder::getFarePeriod(int route_id, double trip_depart_time) const
     {
+        // get the fare id
+        std::map<int, int>::const_iterator iter = route_fares_.find(route_id);
+        if (iter == route_fares_.end()) {
+            return (const FarePeriod*)0;
+        }
+        const int fare_id = iter->second;
+
         // find the right fare period
-        std::pair<RouteToFarePeriod::const_iterator, RouteToFarePeriod::const_iterator> iter_range = fare_periods_.equal_range(route_id);
-        RouteToFarePeriod::const_iterator fp_iter = iter_range.first;
+        std::pair<FareIdToFarePeriod::const_iterator, FareIdToFarePeriod::const_iterator> iter_range = fare_periods_.equal_range(fare_id);
+        FareIdToFarePeriod::const_iterator fp_iter = iter_range.first;
         while (fp_iter != iter_range.second) {
             if ((trip_depart_time >= fp_iter->second.start_time_) && (trip_depart_time < fp_iter->second.end_time_)) {
                 return &(fp_iter->second);

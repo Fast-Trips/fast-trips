@@ -124,7 +124,7 @@ namespace fasttrips {
         int         transfers_;   ///< Number of transfers allowed
     } FarePeriod;
 
-    typedef std::multimap<int, FarePeriod> RouteToFarePeriod;
+    typedef std::multimap<int, FarePeriod> FareIdToFarePeriod;
 
     /** Performance information to return. */
     typedef struct {
@@ -190,7 +190,7 @@ namespace fasttrips {
         // Fare information: route id -> fare id
         std::map<int, int> route_fares_;
         // Fare information: fare id -> fare period
-        RouteToFarePeriod fare_periods_;
+        FareIdToFarePeriod fare_periods_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
