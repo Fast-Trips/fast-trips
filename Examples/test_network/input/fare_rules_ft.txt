@@ -3,3 +3,5 @@ bus_local_fare_id,bus_local_fare_default,default,default
 bus_local_fare_id,bus_local_fare_am,06:00:00,09:00:00
 bus_local_fare_id,bus_local_fare_pm,13:00:00,17:00:00
 rail_fare_id,rail_fare_class,default,default
+b2_to_b1_fare_id,b2_to_b1_fare_id_beforenoon,00:00:00,12:00:00
+b2_to_b1_fare_id,b2_to_b1_fare_id_afternoon,12:00:00,24:00:00

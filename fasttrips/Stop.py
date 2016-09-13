@@ -41,6 +41,8 @@ class Stop:
     STOPS_COLUMN_STOP_LATITUDE              = 'stop_lat'
     #: gtfs Stops column name: Longitude
     STOPS_COLUMN_STOP_LONGITUDE             = 'stop_lon'
+    #: gtfs Stops column name: Zone ID
+    STOPS_COLUMN_ZONE_ID                    = 'zone_id'
 
     #: fasttrips Stops column name: Shelter
     STOPS_COLUMN_SHELTER                    = 'shelter'
@@ -62,6 +64,8 @@ class Stop:
     # ========== Added by fasttrips =======================================================
     #: fasttrips Stops column name: Stop Numerical Identifier. Int.
     STOPS_COLUMN_STOP_ID_NUM                = 'stop_id_num'
+    #: fasttrips Stops column name: Zone Numerical Identifier. Int.
+    STOPS_COLUMN_ZONE_ID_NUM                = 'zone_id_num'
 
 
     #: File with stop ID, stop ID number correspondence
@@ -98,8 +102,6 @@ class Stop:
                                          how='left',
                                          on=Stop.STOPS_COLUMN_STOP_ID)
 
-        # skipping index setting for now -- it's annoying for joins
-        # self.stops_df.set_index(Stop.STOPS_COLUMN_STOP_ID, inplace=True, verify_integrity=True)
 
         # Stop IDs are strings. Create a unique numeric stop ID.
         self.stop_id_df = Util.add_numeric_column(self.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
@@ -115,6 +117,28 @@ class Stop:
         self.stops_df = self.add_numeric_stop_id(self.stops_df,
                                                  id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                                  numeric_newcolname=Stop.STOPS_COLUMN_STOP_ID_NUM)
+
+        # Zone IDs are strings.  Add numeric zone ID.
+        self.zone_id_df = pandas.DataFrame()
+        if Stop.STOPS_COLUMN_ZONE_ID in list(self.stops_df.columns.values):
+            # Blank zone IDs should be null
+            self.stops_df.loc[ self.stops_df[Stop.STOPS_COLUMN_ZONE_ID]=="", Stop.STOPS_COLUMN_ZONE_ID] = None
+            zones_df = self.stops_df.loc[ pandas.notnull(self.stops_df[Stop.STOPS_COLUMN_ZONE_ID]) ]
+            if len(zones_df) > 0:
+                self.zone_id_df = Util.add_numeric_column(zones_df[[Stop.STOPS_COLUMN_ZONE_ID]],
+                                                          id_colname=Stop.STOPS_COLUMN_ZONE_ID,
+                                                          numeric_newcolname=Stop.STOPS_COLUMN_ZONE_ID_NUM)
+                # add it to the stops
+                self.stops_df = pandas.merge(left=self.stops_df, right=self.zone_id_df, how="left", on=Stop.STOPS_COLUMN_ZONE_ID)
+
+                # and the stop_id_df
+                self.stop_id_df = pandas.merge(left =self.stops_df,
+                                               right=self.stops_df[[Stop.STOPS_COLUMN_STOP_ID_NUM,
+                                                                    Stop.STOPS_COLUMN_ZONE_ID,
+                                                                    Stop.STOPS_COLUMN_ZONE_ID_NUM]].drop_duplicates(),
+                                               how="left")
+
+        FastTripsLogger.debug("Zone ID to number correspondence\n" + str(self.zone_id_df.head()))
 
         FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
         FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
@@ -182,10 +206,15 @@ class Stop:
         self.stop_id_df = pandas.concat([self.stop_id_df, tazs_unique_df], axis=0)
         ##############################################################################################
 
-        # write the stop id numbering file
-        self.stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
-                               columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID],
-                               sep=" ", index=False)
+        # write the stop ids and zone ids to numbering file
+        stop_id_df = self.stop_id_df  # local copy with filled NA
+        stop_id_df.fillna(value={Stop.STOPS_COLUMN_ZONE_ID_NUM:-1,
+                                 Stop.STOPS_COLUMN_ZONE_ID:"None"}, inplace=True)
+        stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM].astype(int)
+        stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
+                          columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID,
+                                   Stop.STOPS_COLUMN_ZONE_ID_NUM, Stop.STOPS_COLUMN_ZONE_ID],
+                          sep=" ", index=False)
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE))
 
 
@@ -195,10 +224,21 @@ class Stop:
         adds the numeric stop id as a column named *numeric_newcolname* and returns it.
         """
         return Util.add_new_id(input_df, id_colname, numeric_newcolname,
-                                   mapping_df=self.stop_id_df,
+                                   mapping_df=self.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]],
                                    mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                    mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
                                    warn=warn, warn_msg=warn_msg)
+
+    def add_stop_id_for_numeric_id(self, input_df, numeric_id, id_colname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop ID num column called *numeric_id*,
+        adds the string stop id as a column named *id_colname* and returns it.
+        """
+        return Util.add_new_id(input_df, id_colname=numeric_id, newid_colname=id_colname,
+                               mapping_df=self.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]],
+                               mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
+                               mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID,
+                               warn=True, warn_msg=None)
 
     def add_stop_lat_lon(self, input_df, id_colname, new_lat_colname, new_lon_colname, new_stop_name_colname=None):
         """

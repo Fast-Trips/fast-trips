@@ -194,7 +194,7 @@ namespace fasttrips {
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
-        std::map<int, std::string> stop_num_to_str_;
+        std::map<int, Stop>        stop_num_to_stop_;
         std::map<int, std::string> route_num_to_str_;
         std::map<int, std::string> mode_num_to_str_; // supply modes
         int transfer_supply_mode_;
@@ -466,7 +466,7 @@ namespace fasttrips {
         void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
 
         /// Accessor for stop strings.  Assumes valid stop id.
-        const std::string& stopStringForId(int stop_id) const { return stop_num_to_str_.find(stop_id)->second; }
+        const std::string& stopStringForId(int stop_id) const { return stop_num_to_stop_.find(stop_id)->second.stop_str_; }
         /// Accessor for trip strings.  Assumes valid trip id.
         const std::string& tripStringForId(int trip_id) const { return trip_num_to_str_.find(trip_id)->second; }
         /// Accessor for mode strings.  Assumes valid mode number.

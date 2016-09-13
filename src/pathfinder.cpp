@@ -108,20 +108,23 @@ namespace fasttrips {
         ss_stop << output_dir_ << kPathSeparator << "ft_intermediate_stop_id.txt";
         stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
 
-        std::string string_stop_id_num, string_stop_id;
-        int stop_id_num;
+        std::string string_stop_id_num, string_stop_id, string_zone_num, string_zone_id;
+        int stop_id_num, zone_num;
 
-        stop_id_file >> string_stop_id_num >> string_stop_id;
-        if (process_num_ <= 1) { 
+        stop_id_file >> string_stop_id_num >> string_stop_id >> string_zone_num >> string_zone_id;
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_stop.str() << ": ";
             std::cout << "[" << string_stop_id_num   << "] ";
             std::cout << "[" << string_stop_id       << "] ";
+            std::cout << "[" << string_zone_num      << "] ";
+            std::cout << "[" << string_zone_id       << "] ";
         }
-        while (stop_id_file >> stop_id_num >> string_stop_id) {
-            stop_num_to_str_[stop_id_num] = string_stop_id;
+        while (stop_id_file >> stop_id_num >> string_stop_id >> zone_num >> string_zone_id) {
+            stop_num_to_stop_[stop_id_num].stop_str_ = string_stop_id;
+            stop_num_to_stop_[stop_id_num].zone_num_ = zone_num;  // -1 means none
         }
         if (process_num_ <= 1) {
-            std::cout << " => Read " << stop_num_to_str_.size() << " lines" << std::endl;
+            std::cout << " => Read " << stop_num_to_stop_.size() << " lines" << std::endl;
         }
         stop_id_file.close();
     }
@@ -538,8 +541,8 @@ namespace fasttrips {
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
             trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
             trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
-            trace_file << "orig_taz_id_     = " << stop_num_to_str_.find(path_spec.origin_taz_id_     )->second << std::endl;
-            trace_file << "dest_taz_id_     = " << stop_num_to_str_.find(path_spec.destination_taz_id_)->second << std::endl;
+            trace_file << "orig_taz_id_     = " << stopStringForId(path_spec.origin_taz_id_     ) << std::endl;
+            trace_file << "dest_taz_id_     = " << stopStringForId(path_spec.destination_taz_id_)<< std::endl;
 
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
@@ -748,8 +751,8 @@ namespace fasttrips {
             label_file << ss.iteration_ << ",";
             label_file << link_num      << ",";
 
-            if (o_d == 0) { label_file << stop_num_to_str_.find(stop_id)->second << ","; }
-            else          { label_file << stop_num_to_str_.find(ss.stop_succpred_)->second << ","; }
+            if (o_d == 0) { label_file << stopStringForId(stop_id) << ","; }
+            else          { label_file << stopStringForId(ss.stop_succpred_) << ","; }
 
             if (o_d == 0) { label_file << ss.deparr_time_ << ","; }
             else          { label_file << ss.arrdep_time_ << ","; }
@@ -806,7 +809,7 @@ namespace fasttrips {
 
         if (path_spec.trace_) {
             // stop_id,stop_id_label_iter,is_trip,label_stop_cost
-            stopids_file << stop_num_to_str_.find(start_taz_id)->second << ",0,0,0" << std::endl;
+            stopids_file << stopStringForId(start_taz_id) << ",0,0,0" << std::endl;
         }
 
         // Iterate through valid supply modes
@@ -1424,7 +1427,7 @@ namespace fasttrips {
             *                     from stop *predecessor*
             *                     and the total cost from the origin TAZ to the *stop_id* is *label*
             **************************************************************************************/
-            LabelStop current_label_stop = label_stop_queue.pop_top(stop_num_to_str_, path_spec.trace_, trace_file);
+            LabelStop current_label_stop = label_stop_queue.pop_top(stop_num_to_stop_, path_spec.trace_, trace_file);
 
             // if we just processed this one, then skip since it'll be a no-op
             if ((current_label_stop.stop_id_ == last_label_stop.stop_id_) && (current_label_stop.is_trip_ == last_label_stop.is_trip_)) { continue; }
@@ -1435,7 +1438,7 @@ namespace fasttrips {
                 if ((STOCH_MAX_STOP_PROCESS_COUNT_ > 0) &&
                     (stop_states[current_label_stop.stop_id_].processCount(current_label_stop.is_trip_) == STOCH_MAX_STOP_PROCESS_COUNT_)) {
                     if (path_spec.trace_) {
-                        trace_file << "Pulling from label_stop_queue but stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
+                        trace_file << "Pulling from label_stop_queue but stop " << stopStringForId(current_label_stop.stop_id_);
                         trace_file << " is_trip " << current_label_stop.is_trip_;
                         trace_file << " has been processed the limit " << STOCH_MAX_STOP_PROCESS_COUNT_ << " times so skipping." << std::endl;
                     }
@@ -1451,7 +1454,7 @@ namespace fasttrips {
 
             if (path_spec.trace_) {
                 trace_file << "Pulling from label_stop_queue (iteration " << std::setw( 6) << std::setfill(' ') << label_iterations;
-                trace_file << ", stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
+                trace_file << ", stop " << stopStringForId(current_label_stop.stop_id_);
                 trace_file << ", is_trip " << current_label_stop.is_trip_;
                 if (path_spec.hyperpath_) {
                     trace_file << ", label ";
@@ -1463,7 +1466,7 @@ namespace fasttrips {
                 trace_file << "==============================" << std::endl;
 
                 // stop_id,stop_id_label_iter,is_trip,label_stop_cost
-                stopids_file << stop_num_to_str_.find(current_label_stop.stop_id_)->second << "," << label_iterations << ",";
+                stopids_file << stopStringForId(current_label_stop.stop_id_) << "," << label_iterations << ",";
                 stopids_file << current_label_stop.is_trip_ << "," << current_label_stop.label_ << std::endl;
             }
 
@@ -1620,7 +1623,7 @@ namespace fasttrips {
 
         if (path_spec.trace_) {
             // stop_id,stop_id_label_iter,is_trip,label_stop_cost
-            stopids_file << stop_num_to_str_.find(end_taz_id)->second << "," << label_iteration << ",0,";
+            stopids_file << stopStringForId(end_taz_id) << "," << label_iteration << ",0,";
         }
 
         // Iterate through valid supply modes
@@ -1768,7 +1771,7 @@ namespace fasttrips {
             if (ssi == stop_states.end()) { return false; }
 
             if (path_spec.trace_) {
-                trace_file << "current_stop=" << stop_num_to_str_.find(current_stop_id)->second;
+                trace_file << "current_stop=" << stopStringForId(current_stop_id);
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
                 printTime(trace_file, ss.arrdep_time_);
                 trace_file << "; prev_mode=";
