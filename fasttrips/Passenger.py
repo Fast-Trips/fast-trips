@@ -658,10 +658,9 @@ class Passenger:
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (len(pathset_paths_df), len(pathset_links_df)))
 
         # get A_id and B_id and trip_id
-        pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='A_id_num',                            newid_colname='A_id',
-                                           mapping_df=stops.stop_id_df,  mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
-        pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='B_id_num',                            newid_colname='B_id',
-                                           mapping_df=stops.stop_id_df,  mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df,'A_id_num','A_id')
+        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df,'B_id_num','B_id')
+
         # get A_lat, A_lon, B_lat, B_lon
         pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="A_id", new_lat_colname="A_lat", new_lon_colname="A_lon")
         pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="B_id", new_lat_colname="B_lat", new_lon_colname="B_lon")
