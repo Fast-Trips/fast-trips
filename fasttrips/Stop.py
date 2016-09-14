@@ -240,6 +240,17 @@ class Stop:
                                mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID,
                                warn=True, warn_msg=None)
 
+    def add_numeric_stop_zone_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop zone ID column called *id_colname*,
+        adds the numeric stop zone id as a column named *numeric_newcolname* and returns it.
+        """
+        return Util.add_new_id(input_df, id_colname, numeric_newcolname,
+                               mapping_df=self.zone_id_df[[Stop.STOPS_COLUMN_ZONE_ID, Stop.STOPS_COLUMN_ZONE_ID_NUM]],
+                               mapping_id_colname=Stop.STOPS_COLUMN_ZONE_ID,
+                               mapping_newid_colname=Stop.STOPS_COLUMN_ZONE_ID_NUM,
+                               warn=warn, warn_msg=warn_msg)
+
     def add_stop_lat_lon(self, input_df, id_colname, new_lat_colname, new_lon_colname, new_stop_name_colname=None):
         """
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,

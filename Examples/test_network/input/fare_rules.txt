@@ -1,4 +1,4 @@
 fare_id,route_id,origin_id,destination_id
 bus_local_fare_id,A,,
 rail_fare_id,C,,
-b2_to_b1_fare_id,,B2_zone,B1_zone
+b3_to_b1_fare_id,,B3_zone,B1_zone

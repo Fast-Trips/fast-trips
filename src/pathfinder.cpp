@@ -137,19 +137,17 @@ namespace fasttrips {
         ss_route << output_dir_ << kPathSeparator << "ft_intermediate_route_id.txt";
         route_id_file.open(ss_route.str().c_str(), std::ios_base::in);
 
-        std::string string_route_id_num, string_route_id, string_fare_id_num;
-        int route_id_num, fare_id_num;
+        std::string string_route_id_num, string_route_id;
+        int route_id_num;
 
-        route_id_file >> string_route_id_num >> string_route_id >> string_fare_id_num;
+        route_id_file >> string_route_id_num >> string_route_id;
         if (process_num_ <= 1) { 
             std::cout << "Reading " << ss_route.str() << ": ";
             std::cout << "[" << string_route_id_num   << "] ";
             std::cout << "[" << string_route_id       << "] ";
-            std::cout << "[" << string_fare_id_num    << "] ";
         }
-        while (route_id_file >> route_id_num >> string_route_id >> fare_id_num) {
+        while (route_id_file >> route_id_num >> string_route_id) {
             route_num_to_str_[route_id_num] = string_route_id;
-            route_fares_[route_id_num]      = fare_id_num;
         }
         if (process_num_ <= 1) {
             std::cout << " => Read " << route_num_to_str_.size() << " lines" << std::endl;
@@ -163,23 +161,30 @@ namespace fasttrips {
         ss_fare << output_dir_ << kPathSeparator << "ft_intermediate_fare.txt";
         fare_period_file.open(ss_fare.str().c_str(), std::ios_base::in);
 
-        std::string string_fare_id_num, string_fare_id, string_fare_period, string_fare_price, string_fare_transfers, string_fare_start_time, string_fare_end_time;
-        int fare_id_num, transfers_num;
+        //          fare_id_num         fare_id         fare_class          route_id_num         origin_id_num         destination_id_num, start_time              end_time              price              transfers
+        std::string string_fare_id_num, string_fare_id, string_fare_period, string_route_id_num, string_origin_id_num, string_dest_id_num, string_fare_start_time, string_fare_end_time, string_fare_price, string_fare_transfers;
+        int fare_id_num;
 
-        fare_period_file >> string_fare_id_num >> string_fare_id >> string_fare_period >> string_fare_start_time >> string_fare_end_time >> string_fare_price >> string_fare_transfers;
+        fare_period_file >> string_fare_id_num >> string_fare_id >> string_fare_period
+                         >> string_route_id_num >> string_origin_id_num >> string_dest_id_num
+                         >> string_fare_start_time >> string_fare_end_time >> string_fare_price >> string_fare_transfers;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_fare.str()   << ": ";
             std::cout << "[" << string_fare_id_num     << "] ";
             std::cout << "[" << string_fare_id         << "] ";
             std::cout << "[" << string_fare_period     << "] ";
+            std::cout << "[" << string_route_id_num    << "] ";
+            std::cout << "[" << string_origin_id_num   << "] ";
+            std::cout << "[" << string_dest_id_num     << "] ";
             std::cout << "[" << string_fare_start_time << "] ";
             std::cout << "[" << string_fare_end_time   << "] ";
             std::cout << "[" << string_fare_price      << "] ";
             std::cout << "[" << string_fare_transfers  << "] ";
         }
+        RouteStopZone rsz;
         FarePeriod fp;
-        while (fare_period_file >> fare_id_num >> string_fare_id >> fp.fare_period_ >> fp.start_time_ >> fp.end_time_ >> fp.price_ >> fp.transfers_) {
-            fare_periods_.insert(std::pair<int,FarePeriod>(fare_id_num,fp));
+        while (fare_period_file >> fare_id_num >> fp.fare_id_ >> fp.fare_period_ >> rsz.route_id_ >> rsz.origin_zone_ >> rsz.destination_zone_ >> fp.start_time_ >> fp.end_time_ >> fp.price_ >> fp.transfers_) {
+            fare_periods_.insert(std::pair<RouteStopZone,FarePeriod>(rsz,fp));
         }
         if (process_num_ <= 1) {
             std::cout << " => Read " << fare_periods_.size() << " fare periods" << std::endl;
@@ -1295,7 +1300,10 @@ namespace fasttrips {
                     double overcap     = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
                     double at_capacity = (overcap >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
                     if (overcap < 0) { overcap = 0; } // make it non-negative
-                    const FarePeriod* fp = getFarePeriod(trip_info.route_id_, path_spec.outbound_ ? deparr_time : arrdep_time);
+                    const FarePeriod* fp = getFarePeriod(trip_info.route_id_,
+                                                         path_spec.outbound_ ? possible_board_alight.stop_id_ : current_label_stop.stop_id_,
+                                                         path_spec.outbound_ ? current_label_stop.stop_id_ : possible_board_alight.stop_id_,
+                                                         path_spec.outbound_ ? deparr_time : arrdep_time);
 
                     if (path_spec.trace_) {
                         if (path_spec.outbound_) {
@@ -2031,23 +2039,48 @@ namespace fasttrips {
     /**
      * Returns the fare for the transit vehicle of the given route.
      */
-    const FarePeriod* PathFinder::getFarePeriod(int route_id, double trip_depart_time) const
+    const FarePeriod* PathFinder::getFarePeriod(int route_id, int board_stop_id, int alight_stop_id, double trip_depart_time) const
     {
-        // get the fare id
-        std::map<int, int>::const_iterator iter = route_fares_.find(route_id);
-        if (iter == route_fares_.end()) {
-            return (const FarePeriod*)0;
-        }
-        const int fare_id = iter->second;
+        int board_stop_zone  = stop_num_to_stop_.find(board_stop_id)->second.zone_num_;
+        int alight_stop_zone = stop_num_to_stop_.find(alight_stop_id)->second.zone_num_;
+        RouteStopZone rsz;
 
-        // find the right fare period
-        std::pair<FareIdToFarePeriod::const_iterator, FareIdToFarePeriod::const_iterator> iter_range = fare_periods_.equal_range(fare_id);
-        FareIdToFarePeriod::const_iterator fp_iter = iter_range.first;
-        while (fp_iter != iter_range.second) {
-            if ((trip_depart_time >= fp_iter->second.start_time_) && (trip_depart_time < fp_iter->second.end_time_)) {
-                return &(fp_iter->second);
+        for (int search_type = 0; search_type < 4; ++search_type) {
+            // search for route + origin zone, dest zone
+            if (search_type == 0) {
+                if (board_stop_zone  < 0) { continue; }
+                if (alight_stop_zone < 0) { continue; }
+                rsz.route_id_         = route_id;
+                rsz.origin_zone_      = board_stop_zone;
+                rsz.destination_zone_ = alight_stop_zone;
+            } else if (search_type == 1) {
+                // search for route only
+                rsz.route_id_         = route_id;
+                rsz.origin_zone_      = -1;
+                rsz.destination_zone_ = -1;
+            } else if (search_type == 2) {
+                if (board_stop_zone  < 0) { continue; }
+                if (alight_stop_zone < 0) { continue; }
+                // search for origin zone, dest zone
+                rsz.route_id_         = -1;
+                rsz.origin_zone_      = board_stop_zone;
+                rsz.destination_zone_ = alight_stop_zone;
+            } else if (search_type == 3) {
+                // search for general fare
+                rsz.route_id_         = -1;
+                rsz.origin_zone_      = -1;
+                rsz.destination_zone_ = -1;
             }
-            ++fp_iter;
+
+            // find the right fare period
+            std::pair<FarePeriodMmap::const_iterator, FarePeriodMmap::const_iterator> iter_range = fare_periods_.equal_range(rsz);
+            FarePeriodMmap::const_iterator fp_iter = iter_range.first;
+            while (fp_iter != iter_range.second) {
+                if ((trip_depart_time >= fp_iter->second.start_time_) && (trip_depart_time < fp_iter->second.end_time_)) {
+                    return &(fp_iter->second);
+                }
+                ++fp_iter;
+            }
         }
         return (const FarePeriod*)0;
     }

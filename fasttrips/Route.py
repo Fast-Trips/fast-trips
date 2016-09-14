@@ -96,14 +96,28 @@ class Route(object):
     FARE_RULES_COLUMN_FARE_ID               = "fare_id"
     #: GTFS fare rules column name: Route ID
     FARE_RULES_COLUMN_ROUTE_ID              = ROUTES_COLUMN_ROUTE_ID
+    #: GTFS fare rules column name: Origin Zone ID
+    FARE_RULES_COLUMN_ORIGIN_ID             = "origin_id"
+    #: GTFS fare rules column name: Destination Zone ID
+    FARE_RULES_COLUMN_DESTINATION_ID        = "destination_id"
+    #: GTFS fare rules column name: Contains ID
+    FARE_RULES_COLUMN_CONTAINS_ID           = "contains_id"
     #: fasttrips Fare rules column name: Fare class
     FARE_RULES_COLUMN_FARE_CLASS            = FARE_ATTR_COLUMN_FARE_CLASS
     #: fasttrips Fare rules column name: Start time for the fare. A DateTime
     FARE_RULES_COLUMN_START_TIME            = "start_time"
     #: fasttrips Fare rules column name: End time for the fare rule. A DateTime.
     FARE_RULES_COLUMN_END_TIME              = "end_time"
+
+    # ========== Added by fasttrips =======================================================
     #: fasttrips Fare rules column name: Fare ID num
     FARE_RULES_COLUMN_FARE_ID_NUM           = "fare_id_num"
+    #: fasttrips Fare rules column name: Route ID num
+    FARE_RULES_COLUMN_ROUTE_ID_NUM           = ROUTES_COLUMN_ROUTE_ID_NUM
+    #: fasttrips fare rules column name: Origin Zone ID number
+    FARE_RULES_COLUMN_ORIGIN_ID_NUM         = "origin_id_num"
+    #: fasttrips fare rules column name: Destination ID number
+    FARE_RULES_COLUMN_DESTINATION_ID_NUM    = "destination_id_num"
 
     #: File with fasttrips fare transfer rules information.
     #: See `fare_transfer_rules specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md>`_.
@@ -124,7 +138,7 @@ class Route(object):
     #: File with mode, mode number correspondence
     OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today):
+    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
         fast-trips routes data from the input file in *input_dir*.
@@ -284,6 +298,22 @@ class Route(object):
                                               how='left',
                                               on=Route.FARE_RULES_COLUMN_FARE_ID)
 
+            # add route id numbering if applicable
+            if Route.FARE_RULES_COLUMN_ROUTE_ID in list(self.fare_rules_df.columns.values):
+                self.fare_rules_df = self.add_numeric_route_id(self.fare_rules_df,
+                                                               Route.FARE_RULES_COLUMN_ROUTE_ID,
+                                                               Route.FARE_RULES_COLUMN_ROUTE_ID_NUM)
+            # add origin zone numbering if applicable
+            if Route.FARE_RULES_COLUMN_ORIGIN_ID in list(self.fare_rules_df.columns.values):
+                self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
+                                                                    Route.FARE_RULES_COLUMN_ORIGIN_ID,
+                                                                    Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM)
+            # add destination zone numbering if applicable
+            if Route.FARE_RULES_COLUMN_DESTINATION_ID in list(self.fare_rules_df.columns.values):
+                self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
+                                                                    Route.FARE_RULES_COLUMN_DESTINATION_ID,
+                                                                    Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM)
+
             # join to fare_attributes on fare_class if we have it, or fare_id if we don't
 
             #: Fare ID/class (fare period)/attribute mapping.
@@ -295,7 +325,9 @@ class Route(object):
             #: `fare_id_num`        Numbered fare_id
             #: `route_id`           (optional) Route(s) associated with this fare ID. (See `fare_rules`_)
             #: `origin_id`          (optional) Origin fare zone ID(s) for fare ID. (See `fare_rules`_)
+            #: `origin_id_num`      (optional) Origin fare zone number for fare ID.
             #: `destination_id`     (optional) Destination fare zone ID(s) for fare ID. (See `fare_rules`_)
+            #: `destination_id_num` (optional) Destination fare zone number for fare ID.
             #: `contains_id`        (optional) Contains fare zone ID(s) for fare ID. (See `fare_rules`_)
             #: `fare_class`         GTFS-plus fare_class (See `fare_rules_ft`_)
             #: `start_time`         Fare class start time (See `fare_rules_ft`_)
@@ -317,7 +349,7 @@ class Route(object):
                                               on   = Route.FARE_RULES_COLUMN_FARE_CLASS if self.fare_by_class else Route.FARE_RULES_COLUMN_FARE_ID)
 
 
-        FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head().to_string(formatters=\
+        FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head(10).to_string(formatters=\
                               {Route.FARE_RULES_COLUMN_START_TIME:Util.datetime64_formatter,
                                Route.FARE_RULES_COLUMN_END_TIME  :Util.datetime64_formatter})))
         FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
@@ -481,21 +513,10 @@ class Route(object):
         Write to an intermediate formatted file for the C++ extension.
         Since there are strings involved, it's easier than passing it to the extension.
         """
-        # add fare_id columns
-        route_id_df = pandas.merge(left =self.route_id_df,
-                                   right=self.fare_rules_df,
-                                   how  ="left",
-                                   on   =Route.ROUTES_COLUMN_ROUTE_ID)
-        route_id_df.fillna(value={Route.FARE_RULES_COLUMN_FARE_ID_NUM:-1}, inplace=True)
-        # convert it back to int
-        route_id_df[Route.FARE_RULES_COLUMN_FARE_ID_NUM] = route_id_df[Route.FARE_RULES_COLUMN_FARE_ID_NUM].astype(int)
 
-        # just route id -> fare id
-        route_id_df = route_id_df[[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID, Route.FARE_RULES_COLUMN_FARE_ID_NUM]].drop_duplicates()
-
-        # write intermediate file -- route id num, route id, and fare_id_num ('None' if not applicable)
-        route_id_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE),
-                           sep=" ", index=False)
+        # write intermediate file -- route id num, route id
+        self.route_id_df[[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID]].to_csv(
+            os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE), sep=" ", index=False)
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE))
 
 
@@ -508,6 +529,14 @@ class Route(object):
             fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
             fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
 
+            # fillna with -1
+            for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM]:
+                if num_col in list(fare_rules_df.columns.values):
+                    fare_rules_df.loc[ pandas.isnull(fare_rules_df[num_col]), num_col] = -1
+                    fare_rules_df[num_col] = fare_rules_df[num_col].astype(int)
+                else:
+                    fare_rules_df[num_col] = -1
+
             # temp column: duraton; sort by this so the smallest duration is found first
             fare_rules_df["duration"] = fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME]
             fare_rules_df.sort_values(by=[Route.FARE_RULES_COLUMN_FARE_ID_NUM,"duration"], ascending=True, inplace=True)
@@ -517,6 +546,9 @@ class Route(object):
                                 columns=[Route.FARE_RULES_COLUMN_FARE_ID_NUM,
                                          Route.FARE_RULES_COLUMN_FARE_ID,
                                          Route.FARE_ATTR_COLUMN_FARE_CLASS,
+                                         Route.FARE_RULES_COLUMN_ROUTE_ID_NUM,
+                                         Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM,
+                                         Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM,
                                          Route.FARE_RULES_COLUMN_START_TIME,
                                          Route.FARE_RULES_COLUMN_END_TIME,
                                          Route.FARE_ATTR_COLUMN_PRICE,

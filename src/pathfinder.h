@@ -115,16 +115,36 @@ namespace fasttrips {
         }
     };
 
+    /// For fare lookups FarePeriod index
+    typedef struct {
+        int         route_id_;          ///< Route id number, if applicable
+        int         origin_zone_;       ///< Origin stop zone number, if applicable
+        int         destination_zone_;  ///< Destination stop zone number, if applicable
+    } RouteStopZone;
+
+    struct RouteStopZoneCompare {
+        bool operator()(const RouteStopZone& rsz1, const RouteStopZone& rsz2) const {
+            if (rsz1.route_id_         < rsz2.route_id_        ) { return true;  }
+            if (rsz1.route_id_         > rsz2.route_id_        ) { return false; }
+            if (rsz1.origin_zone_      < rsz2.origin_zone_     ) { return true;  }
+            if (rsz1.origin_zone_      > rsz2.origin_zone_     ) { return false; }
+            if (rsz1.destination_zone_ < rsz2.destination_zone_) { return true;  }
+            if (rsz1.destination_zone_ > rsz2.destination_zone_) { return false; }
+            return false;
+        }
+    };
+
     /// For fare lookups: FarePeriod definition
     typedef struct {
-        std::string fare_period_; ///< Name of the fare period
-        double      start_time_;  ///< Start time of the fare period
-        double      end_time_;    ///< End time of the fare period
-        double      price_;       ///< Currency unspecified but matches value_of_time_
-        int         transfers_;   ///< Number of transfers allowed
+        std::string fare_id_;           ///< Fare ID
+        std::string fare_period_;       ///< Name of the fare period
+        double      start_time_;        ///< Start time of the fare period
+        double      end_time_;          ///< End time of the fare period
+        double      price_;             ///< Currency unspecified but matches value_of_time_
+        int         transfers_;         ///< Number of transfers allowed
     } FarePeriod;
 
-    typedef std::multimap<int, FarePeriod> FareIdToFarePeriod;
+    typedef std::multimap<RouteStopZone, FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
 
     /** Performance information to return. */
     typedef struct {
@@ -189,8 +209,8 @@ namespace fasttrips {
         std::map<int, std::vector<TripStopTime> > stop_trip_times_;
         // Fare information: route id -> fare id
         std::map<int, int> route_fares_;
-        // Fare information: fare id -> fare period
-        FareIdToFarePeriod fare_periods_;
+        // Fare information: route/origin zone/dest zone -> fare period
+        FarePeriodMmap fare_periods_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
@@ -457,7 +477,7 @@ namespace fasttrips {
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
 
-        const FarePeriod* getFarePeriod(int route_id, double trip_depart_time) const;
+        const FarePeriod* getFarePeriod(int route_id, int board_stop_id, int alight_stop_id, double trip_depart_time) const;
 
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 

@@ -16,8 +16,8 @@ namespace fasttrips {
 
     /// Supply data: Stops
     typedef struct {
-        std::string stop_str_;
-        int         zone_num_;
+        std::string stop_str_;          ///< stop id string
+        int         zone_num_;          ///< stop zone number for fare lookup
     } Stop;
 
     /// Comparator to enable the fasttrips::LabelStopQueue to return the lowest labeled stop.

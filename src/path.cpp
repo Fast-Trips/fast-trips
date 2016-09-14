@@ -269,6 +269,8 @@ namespace fasttrips {
             int stop_id             = links_[index].first;
             StopState& stop_state   = links_[index].second;
 
+            int orig_stop           = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
+            int dest_stop           = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
             {
@@ -301,9 +303,6 @@ namespace fasttrips {
             // ============= transfer =============
             else if (stop_state.deparr_mode_ == MODE_TRANSFER)
             {
-                int orig_stop                     = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
-                int dest_stop                     = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
-
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
                 stop_state.link_cost_             = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
@@ -325,7 +324,8 @@ namespace fasttrips {
                 // overcap should be non-negative
                 if (link_attr["overcap"] < 0) { link_attr["overcap"] = 0; }
 
-                const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_);
+                const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, orig_stop, dest_stop,
+                                                        path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_);
                 if (fp) {
                     link_attr["fare"]             = fp->price_;
                 }
