@@ -168,6 +168,15 @@ class Passenger:
             FastTripsLogger.fatal(error_msg)
             raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
+        # Drop (warn) on missing origins or destinations
+        missing_ods = self.trip_list_df[ pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID])|
+                                         pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID]) ]
+        if len(missing_ods)>0:
+            FastTripsLogger.warn("Missing origin or destination for the following trips. Dropping.\n%s" % str(missing_ods))
+            self.trip_list_df = self.trip_list_df.loc[ pandas.notnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     ])&
+                                                       pandas.notnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID]) ].reset_index(drop=True)
+            FastTripsLogger.warn("=> Have %d person trips" % len(self.trip_list_df))
+
         non_zero_person_ids = len(self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]!="0"])
         if non_zero_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
 
