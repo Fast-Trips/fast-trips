@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument('-t','--trace_only', action='store_true', help="Run only the trace persons?")
     parser.add_argument('-n','--num_trips',  type=int,  help="Number of person trips to run, if you don't want to run the whole demand.")
     parser.add_argument('-d','--dispersion', type=float,help="Stochastic dispersion parameter")
+    parser.add_argument('-m','--max_stop_process_count', type=int, help="Max times to process a stop in stochastic pathfinding")
     parser.add_argument('-c','--capacity',   action='store_true', help="Enable capacity constraint")
     parser.add_argument('-o','--output_dir', type=str,  help="Directory within output_loc to write fasttrips outtput.  If none specified, will construct one.")
     parser.add_argument('--overlap_variable',      choices=['None','count','distance','time'], help="Variable to use for overlap penalty calculation")
@@ -62,6 +63,9 @@ if __name__ == "__main__":
 
     fasttrips.Assignment.PATHFINDING_TYPE        = args.pathfinding_type
     fasttrips.Assignment.ITERATION_FLAG          = int(args.iters)
+
+    if args.max_stop_process_count:
+        fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT = args.max_stop_process_count
 
     if args.overlap_variable:
         fasttrips.PathSet.OVERLAP_VARIABLE       = args.overlap_variable
