@@ -119,7 +119,7 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE       = 'drive_dist'
     DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME    = 'drive_travel_time'
     #: Drive access links column name: Driving time in minutes between TAZ and lot (float)
-    DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN= 'drive_travel_time_min'
+    DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN= 'drive_time_min'
     #: fasttrips Drive access links column name: TAZ Numerical Identifier. Int.
     DRIVE_ACCESS_COLUMN_TAZ_NUM              = WALK_ACCESS_COLUMN_TAZ_NUM
     #: fasttrips Drive access links column name: Stop Numerical Identifier. Int.
