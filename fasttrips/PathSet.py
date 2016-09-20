@@ -587,7 +587,7 @@ class PathSet:
         # join the pathset links with the vehicle links
         path2 = pandas.merge(left    =pathset_links_df,
                              right   =veh_links_df,
-                             on      =["linkmode","mode","mode_num",Trip.TRIPS_COLUMN_ROUTE_ID,Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_TRIP_ID_NUM],
+                             on      =["linkmode","mode",Trip.TRIPS_COLUMN_ROUTE_ID,Trip.TRIPS_COLUMN_TRIP_ID],
                              how     ="left",
                              suffixes=["","_veh"])
         # delete anything irrelevant -- so keep non-transit links, and transit links WITH valid sequences
@@ -596,10 +596,12 @@ class PathSet:
 
         # A_arrival_time       datetime64[ns] => A time for intermediate links
         path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_A_TIME     ] = path2["A_arrival_time"]
-        # no waittime, boardtime, missed_xfer except on first link
+        # no waittime, boardtime, missed_xfer, fare, fare_class except on first link
         path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_WAIT_TIME  ] = None
         path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_BOARD_TIME ] = None
         path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_MISSED_XFER] = 0
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_FARE       ] = 0
+        path2.loc[ (path2["linkmode"]=="transit")&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_FARE_PERIOD] = None
         # no alighttime except on last link
         path2.loc[ (path2["linkmode"]=="transit")&(path2["B_id"]!=path2["B_id_veh"]), Assignment.SIM_COL_PAX_ALIGHT_TIME] = None
 
