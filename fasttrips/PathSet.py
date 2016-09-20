@@ -671,6 +671,7 @@ class PathSet:
         # if these are here already, remove them since we'll recalculate them
         if Assignment.SIM_COL_PAX_COST in list(pathset_paths_df.columns.values):
             pathset_paths_df.drop([Assignment.SIM_COL_PAX_FARE,
+                                   Assignment.SIM_COL_PAX_FARE_PERIOD,
                                    Assignment.SIM_COL_PAX_COST,
                                    Assignment.SIM_COL_PAX_LNPS,
                                    Assignment.SIM_COL_PAX_PROBABILITY,
@@ -686,11 +687,17 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
             FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.loc[trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
+        # add fares -- need stop zones first
+        # todo -- could remove non-transit links for this?
+        pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+        pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+        pathset_links_df = routes.add_fares(pathset_links_df)
+
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:
             pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)
 
-        # First, we need user class, purpose, demand modes, and valud of time
+        # First, we need user class, purpose, demand modes, and value of time
         pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
                                              right=trip_list_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
                                                                  Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
@@ -821,10 +828,6 @@ class PathSet:
                                       how  ="left",
                                       on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
 
-
-        # for now, no fares associated with this
-        cost_accegr_df[Assignment.SIM_COL_PAX_FARE] = 0.0
-
         # preferred delay_min - arrival means want to arrive before that time
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
@@ -852,13 +855,7 @@ class PathSet:
             FastTripsLogger.fatal(error_accegr_msg)
 
         ##################### Next, handle Transit Trip link costs
-        # get the stop zone ids
-        cost_trip_df = stops.add_stop_zone_id(cost_trip_df, "A_id", "A_zone_id")
-        cost_trip_df = stops.add_stop_zone_id(cost_trip_df, "B_id", "B_zone_id")
-        # get the fares
-        cost_trip_df = routes.add_fares(cost_trip_df)
-        # only set it once per link since we'll sum to links
-        cost_trip_df.loc[ (cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] != "fare"), Assignment.SIM_COL_PAX_FARE] = 0
+
 
         # set the fare var_values
         cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "fare"), "var_value"] = cost_trip_df[Assignment.SIM_COL_PAX_FARE]
@@ -910,9 +907,6 @@ class PathSet:
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
-        # for now, no fares associated with this
-        cost_transfer_df[Assignment.SIM_COL_PAX_FARE] = 0.0
-
         FastTripsLogger.debug("cost_transfer_df head = \n%s\ntransfers_df head=\n%s" % (cost_transfer_df.head().to_string(), transfers_df.head().to_string()))
         cost_transfer_df = pandas.merge(left     = cost_transfer_df,
                                         left_on  = ["A_id_num","B_id_num"],
@@ -997,8 +991,7 @@ class PathSet:
                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                 Passenger.PF_COL_PATH_NUM,
                                 Passenger.PF_COL_LINK_NUM,
-                                Assignment.SIM_COL_PAX_COST,
-                                Assignment.SIM_COL_PAX_FARE]].groupby(
+                                Assignment.SIM_COL_PAX_COST]].groupby(
                                    [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                     Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                     Passenger.PF_COL_PATH_NUM,

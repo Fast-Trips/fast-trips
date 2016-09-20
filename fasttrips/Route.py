@@ -584,12 +584,13 @@ class Route(object):
 
     def add_fares(self, trip_links_df):
         """
-        Adds fare column to a DataFrame with trip links called :py:attr:`Assignment.SIM_COL_PAX_FARE`
+        Adds fare columns to the given :py:class:`pandas.DataFrame`.  New columns are :py:attr:`Assignment.SIM_COL_PAX_FARE` and :py:attr:`Assignment.SIM_COL_PAX_FARE_PERIOD`.
         """
         from .Assignment import Assignment
 
         return_columns = list(trip_links_df.columns.values)
         return_columns.append(Assignment.SIM_COL_PAX_FARE)
+        return_columns.append(Assignment.SIM_COL_PAX_FARE_PERIOD)
 
         # give them a unique index and store it for later
         trip_links_df.reset_index(drop=True, inplace=True)
