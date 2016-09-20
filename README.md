@@ -119,7 +119,7 @@ To use a function in this file, specify it in the *pathfinding* configuration as
 
 TBD
 
-## Setup
+## Fares
 
 GTFS-plus fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.
 
