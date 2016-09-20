@@ -243,7 +243,8 @@ class Passenger:
                                              on=Passenger.TRIP_LIST_COLUMN_PERSON_ID)
 
             # are any null?
-            no_person_ids = self.trip_list_df.loc[pandas.isnull(self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM])]
+            no_person_ids = self.trip_list_df.loc[ pandas.isnull(self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM])&
+                                                   (self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID]!="0")]
             if len(no_person_ids) > 0:
                 error_msg = "Even though a person list is given, failed to find person information for %d trips" % len(no_person_ids)
                 FastTripsLogger.fatal(error_msg)
