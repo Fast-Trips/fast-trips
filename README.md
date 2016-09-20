@@ -13,6 +13,7 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
     * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
+* [Fares](#fares)
 * [Test Sample Input](#test-sample-input)
   * [Test Network](#test-network)
   * [Test Demand](#test-demand)
@@ -117,6 +118,20 @@ To use a function in this file, specify it in the *pathfinding* configuration as
 ###  `pathweight_ft.txt`
 
 TBD
+
+## Setup
+
+GTFS-plus fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.
+
+However, since the columns `route_id`, `origin_id`, `destination_id` and `contains_id` are all optional in [fare_rules.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md) and therefore may be specified in different combinations, fast-trips implements fares with the following rules:
+
+* `contains_id` is not implemented in fast-trips, and its inclusion will result in an error
+* Specifying `origin_id` and not `destination_id` or vice versa will result in an error.  Each fare rule must specify both or neither.
+* These combinations of `route_id`, `origin_id`, and `destination_id` will be used to match a `fare_id` to a transit trip, in this order. The first match will win.
+  * Matching `route_id`, `origin_id` and `destination_id`
+  * Matching `route_id` only (no `origin_id` or `destination_id` specified)
+  * Matching `origin_id` and `destination_id` only (no `route_id` specified)
+  * No match (e.g. `fare_id` specified with no other columns)
 
 ## Test Sample Input
 

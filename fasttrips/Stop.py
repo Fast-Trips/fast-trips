@@ -277,6 +277,23 @@ class Stop:
         input_df.rename(columns=rename_dict, inplace=True)
         return input_df
 
+    def add_stop_zone_id(self, input_df, id_colname, zone_colname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
+        adds the stop zone id as a column named *zone_colname* and returns it.
+        """
+        input_df = pandas.merge(left    =input_df,
+                                right   = self.stops_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_ZONE_ID]],
+                                how     ="left",
+                                left_on =id_colname,
+                                right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # don't want to add this column
+        if Stop.STOPS_COLUMN_STOP_ID != id_colname:
+            input_df.drop(Stop.STOPS_COLUMN_STOP_ID, axis=1, inplace=True)
+
+        input_df.rename(columns={Stop.STOPS_COLUMN_ZONE_ID:zone_colname}, inplace=True)
+        return input_df
+
     def add_trips(self, stop_times_df):
         """
         Add myself to the given trip.

@@ -703,8 +703,6 @@ class PathSet:
                                                                 ]],
                                              how  ="left",
                                              on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])
-        # todo: add Value of time
-        # Passenger.TRIP_LIST_COLUMN_VOT
 
         # linkmode = demand_mode_type.  Set demand_mode for the links
         pathset_links_cost_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = None
@@ -731,7 +729,6 @@ class PathSet:
         # Inner join with the weights - now each weight has a row
         cost_df = pandas.merge(left    =pathset_links_cost_df,
                                right   =PathSet.WEIGHTS_DF,
-                               # TODO: add purpose
                                left_on =[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                                          Passenger.TRIP_LIST_COLUMN_PURPOSE,
                                          Passenger.PF_COL_LINK_MODE,
@@ -855,6 +852,9 @@ class PathSet:
             FastTripsLogger.fatal(error_accegr_msg)
 
         ##################### Next, handle Transit Trip link costs
+        # get the stop zone ids
+        cost_trip_df = stops.add_stop_zone_id(cost_trip_df, "A_id", "A_zone_id")
+        cost_trip_df = stops.add_stop_zone_id(cost_trip_df, "B_id", "B_zone_id")
         # get the fares
         cost_trip_df = routes.add_fares(cost_trip_df)
         # only set it once per link since we'll sum to links
