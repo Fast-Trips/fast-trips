@@ -612,6 +612,7 @@ class Route(object):
                                              how      ="left",
                                              left_on  =[Route.FARE_RULES_COLUMN_ROUTE_ID,"A_zone_id","B_zone_id"],
                                              right_on =[Route.FARE_RULES_COLUMN_ROUTE_ID,Route.FARE_RULES_COLUMN_ORIGIN_ID,Route.FARE_RULES_COLUMN_DESTINATION_ID],
+                                             suffixes =["","_fare_rules"],
                                              indicator=True)
             # keep only full matches
             trip_links_match0 = trip_links_match0.loc[ trip_links_match0["_merge"] == "both"]
@@ -634,6 +635,7 @@ class Route(object):
                                              right    =fare_rules1,
                                              how      ="left",
                                              on       =Route.FARE_RULES_COLUMN_ROUTE_ID,
+                                             suffixes =["","_fare_rules"],
                                              indicator=True)
             # keep only full matches
             trip_links_match1 = trip_links_match1.loc[ trip_links_match1["_merge"] == "both"]
@@ -657,6 +659,7 @@ class Route(object):
                                              how      ="left",
                                              left_on  =["A_zone_id","B_zone_id"],
                                              right_on =[Route.FARE_RULES_COLUMN_ORIGIN_ID,Route.FARE_RULES_COLUMN_DESTINATION_ID],
+                                             suffixes =["","_fare_rules"],
                                              indicator=True)
             # keep only full matches
             trip_links_match2 = trip_links_match2.loc[ trip_links_match2["_merge"] == "both"]
@@ -686,6 +689,7 @@ class Route(object):
                                              right    =fare_rules3,
                                              how      ="left",
                                              on       =merge_column,
+                                             suffixes =["","_fare_rules"],
                                              indicator=True)
             # keep only full matches
             trip_links_match3 = trip_links_match3.loc[ trip_links_match3["_merge"] == "both"]
@@ -707,6 +711,8 @@ class Route(object):
         # groupby trip_links_df index and use match_level idx min
         trip_links_match_all.reset_index(drop=True, inplace=True)
         trip_links_match_all = trip_links_match_all.loc[ trip_links_match_all.groupby("trip_links_df index")["match_level"].idxmin()]
+        trip_links_match_all.sort_values(by="trip_links_df index", inplace=True)
+        trip_links_match_all.reset_index(drop=True, inplace=True)
 
         FastTripsLogger.debug("trip_links_match_all (%d):\n%s\n%s" % (len(trip_links_match_all), str(trip_links_match_all.head()),
                               str(trip_links_match_all["match_level"].value_counts())))
