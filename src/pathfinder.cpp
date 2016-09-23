@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
+#include <psapi.h>
 #else
 #include <sys/time.h>
 #endif
@@ -539,6 +540,7 @@ namespace fasttrips {
 
         performance_info.label_iterations_ = labelStops(path_spec, trace_file, reachable_final_stops,
                                                         stop_states, label_stop_queue, performance_info.max_process_count_);
+        performance_info.num_labeled_stops_ = stop_states.size();
 
 #ifdef _WIN32
         QueryPerformanceCounter(&labeling_end_time);
@@ -566,6 +568,13 @@ namespace fasttrips {
 
         performance_info.milliseconds_labeling_    = (long)label_elapsed.QuadPart;
         performance_info.milliseconds_enumerating_ = (long)pathfind_elapsed.QuadPart;
+
+        PROCESS_MEMORY_COUNTERS_EX pmc;
+        if ( GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)) )
+        {
+            performance_info.workingset_bytes_   = pmc.WorkingSetSize;
+            performance_info.privateusage_bytes_ = pmc.PrivateUsage;
+        }
 #else
         gettimeofday(&pathfind_end_time, NULL);
 
@@ -605,7 +614,7 @@ namespace fasttrips {
         // iterate through the weights
         double cost = 0;
         if (true && path_spec.trace_ && !hush) {
-            trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << mode_num_to_str_.find(supply_mode_num)->second;
+            trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << modeStringForNum(supply_mode_num);
             trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
         }
 
@@ -618,9 +627,9 @@ namespace fasttrips {
             if (iter_attr == attributes.end()) {
                 // error out??
                 if (path_spec.trace_) {
-                    trace_file << " => NO ATTRIBUTE CALLED " << iter_weights->first << std::endl;
+                    trace_file << " => NO ATTRIBUTE CALLED " << iter_weights->first << " for " << modeStringForNum(supply_mode_num) << std::endl;
                 }
-                std::cerr << " => NO ATTRIBUTE CALLED " << iter_weights->first << std::endl;
+                std::cerr << " => NO ATTRIBUTE CALLED " << iter_weights->first << " for " << modeStringForNum(supply_mode_num) << std::endl;
                 continue;
             }
 
@@ -743,9 +752,9 @@ namespace fasttrips {
         };
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class/purpose [" << path_spec.user_class_ << "," << path_spec.purpose_ << "], ";
+            std::cerr << "Couldn't find any weights configured for user class/purpose (1) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return false;
         }
 
@@ -1001,9 +1010,9 @@ namespace fasttrips {
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
             // this shouldn't happen because of the shortcut
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
-            std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << "Couldn't find any weights configured for user class/purpose (2) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+            std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return;
         }
 
@@ -1272,7 +1281,7 @@ namespace fasttrips {
                         // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
                         Attributes delay_attr;
                         delay_attr["time_min"             ] = 0;
-                        delay_attr["drive_travel_time_min"] = 0;
+                        delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
                         delay_attr["preferred_delay_min"  ] = wait_time;
@@ -1473,9 +1482,9 @@ namespace fasttrips {
         };
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
-            std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << "Couldn't find any weights configured for user class/purpose (3) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+            std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return false;
         }
 
@@ -1547,9 +1556,9 @@ namespace fasttrips {
         };
         WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
         if (iter_weights == weight_lookup_.end()) {
-            std::cerr << "Couldn't find any weights configured for user class [" << path_spec.user_class_ << "], ";
-            std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "]" << std::endl;
+            std::cerr << "Couldn't find any weights configured for user class/purpose (4) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+            std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
             return false;
         }
 
@@ -1690,6 +1699,9 @@ namespace fasttrips {
                      taz_state.chooseState(path_spec, trace_file, access_cum_prob),
                      trace_file, path_spec, *this);
 
+        // trip_id shouldn't repeat
+        int last_trip_id = -1;
+
         // moving on, ss is now the previous link
         while (true)
         {
@@ -1711,7 +1723,7 @@ namespace fasttrips {
             // setup probabilities
             std::vector<ProbabilityStopState> stop_cum_prob;
             const Hyperlink& current_hyperlink = ssi->second;
-            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss);
+            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss, last_trip_id);
 
             if (stop_cum_prob.size() == 0) { return false; }
 
@@ -1725,6 +1737,10 @@ namespace fasttrips {
             if (( path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_EGRESS) ||
                 (!path_spec.outbound_ && path.back().second.deparr_mode_ == MODE_ACCESS)) {
                 break;
+            }
+
+            if (isTrip(path.back().second.deparr_mode_)) {
+                last_trip_id = path.back().second.trip_id_;
             }
 
         }

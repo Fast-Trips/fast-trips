@@ -818,6 +818,75 @@ class Trip:
         return trips_df
 
     @staticmethod
+    def linkify_vehicle_trips(veh_trips_df, stops):
+        """
+        Given a vehicle trips table with columns:
+
+        Transforms and returns a link-version more relevant to passengers.
+        The columns will be:
+        * mode, mode_num, route_id, route_id_num, trip_id, trip_id_num
+        * A_id, A_id_num, A_seq
+        * B_id, B_id_num, B_seq
+        * A_lat, A_lon
+        * B_lat, B_lon
+        * A_arrival_time, A_departure_time, B_arrival_time, B_departure_time
+        """
+        # FastTripsLogger.debug("linkify_vehicle_trips: veh_trips_df (%d)\n%s\n%s" % (len(veh_trips_df), veh_trips_df.head(), str(veh_trips_df.dtypes)))
+
+        veh_temp_df = veh_trips_df[[Route.ROUTES_COLUMN_MODE,
+                                    Trip.TRIPS_COLUMN_MODE_NUM,
+                                    Trip.TRIPS_COLUMN_ROUTE_ID,
+                                    Trip.TRIPS_COLUMN_ROUTE_ID_NUM,
+                                    Trip.TRIPS_COLUMN_TRIP_ID,
+                                    Trip.TRIPS_COLUMN_TRIP_ID_NUM,
+                                    Trip.STOPTIMES_COLUMN_STOP_ID,
+                                    "stop_id_num",
+                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                    Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
+                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]].copy()
+        veh_temp_df = stops.add_stop_lat_lon(veh_temp_df, id_colname=Trip.STOPTIMES_COLUMN_STOP_ID, new_lat_colname="lat", new_lon_colname="lon")
+        veh_temp_df["next_stop_seq"] = veh_temp_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] + 1
+
+        # merge with next stop
+        veh_temp_df = pandas.merge(left     = veh_temp_df,
+                                   left_on  = [Route.ROUTES_COLUMN_MODE, Trip.TRIPS_COLUMN_MODE_NUM,
+                                               Trip.TRIPS_COLUMN_ROUTE_ID, Trip.TRIPS_COLUMN_ROUTE_ID_NUM,
+                                               Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_TRIP_ID_NUM, "next_stop_seq"],
+                                   right    = veh_temp_df,
+                                   right_on = [Route.ROUTES_COLUMN_MODE, Trip.TRIPS_COLUMN_MODE_NUM,
+                                               Trip.TRIPS_COLUMN_ROUTE_ID, Trip.TRIPS_COLUMN_ROUTE_ID_NUM,
+                                               Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                   how      = "left",
+                                   suffixes = ["_A","_B"])
+        # drop the ones that have NA - those are last links
+        veh_temp_df = veh_temp_df.loc[ pandas.notnull(veh_temp_df["stop_id_B"])]
+
+        # rename -- maybe our convention should have put A and B as suffixes, eh?
+        rename_cols = {"%s_A" % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE:"A_seq",
+                       "%s_B" % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE:"B_seq",
+                       "%s_A" % Trip.STOPTIMES_COLUMN_STOP_ID:"A_id",
+                       "%s_B" % Trip.STOPTIMES_COLUMN_STOP_ID:"B_id",
+                       "stop_id_num_A":"A_id_num",
+                       "stop_id_num_B":"B_id_num"}
+        for colname in ["lat", "lon",
+                        Trip.STOPTIMES_COLUMN_ARRIVAL_TIME,
+                        Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]:
+            rename_cols["%s_A" % colname] = "A_%s" % colname
+            rename_cols["%s_B" % colname] = "B_%s" % colname
+        veh_temp_df.rename(columns=rename_cols, inplace=True)
+
+        # drop the next_stop_seq
+        veh_temp_df.drop(["next_stop_seq_A", "next_stop_seq_B"], axis=1, inplace=True)
+
+        # B_seq, B_id_num are ints.  they shouldn't be null
+        veh_temp_df["B_seq"]    = veh_temp_df["B_seq"].astype(int)
+        veh_temp_df["B_id_num"] = veh_temp_df["B_id_num"].astype(int)
+
+        # FastTripsLogger.debug("linkify_vehicle_trips: veh_temp_df (%d)\n%s\n%s" % (len(veh_temp_df), veh_temp_df.head(30), str(veh_temp_df.dtypes)))
+
+        return veh_temp_df
+
+    @staticmethod
     def calculate_headways(trips_df):
         """
         Calculates headways and sets them into the given

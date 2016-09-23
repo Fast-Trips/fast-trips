@@ -6,6 +6,8 @@
 
 Examples/*/output
 Examples/*/output_bak
+Examples/simplest
+create_tableau_path_map/*
 
 # Distribution / packaging
 build/

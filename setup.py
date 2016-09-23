@@ -1,4 +1,5 @@
 from setuptools import setup, Extension
+import sys
 import numpy
 
 setup(name          = 'fasttrips',
@@ -14,6 +15,7 @@ setup(name          = 'fasttrips',
                                           'src/pathfinder.cpp',
                                           ],
                                  include_dirs=[numpy.get_include()],
+                                 libraries=['psapi'] if sys.platform=='win32' else []
                                  )
                       ],
       )

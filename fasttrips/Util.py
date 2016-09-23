@@ -65,7 +65,7 @@ class Util:
     @staticmethod
     def add_new_id(input_df,   id_colname,         newid_colname,
                    mapping_df, mapping_id_colname, mapping_newid_colname,
-                   warn=False):
+                   warn=False, warn_msg=None):
         """
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
@@ -86,19 +86,20 @@ class Util:
         # print "RETURN_DF=================="
         # print return_df.head()
 
-        # make sure all ids were mapped to numbers
-        # first check if mapping_newid_colname was already in input_df; if it was, check needs to be performed on "_mapping" 
-        mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname    
+        # first check if mapping_newid_colname was already in input_df; if it was, check needs to be performed on "_mapping"
+        mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname
+
+        # Make sure all ids were mapped to numbers.  If not warn or error
         if pandas.isnull(return_df[mapping_newid_colname_chk]).sum() != pandas.isnull(input_df[id_colname]).sum():
 
             msg_level = logging.CRITICAL
             if warn: msg_level = logging.WARN
 
+            if warn_msg: FastTripsLogger.log(msg_level, warn_msg)
             FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
-            FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.log(msg_level,"return_df.loc[pandas.isnull(return_df[%s])].drop_duplicates() = \n%s\n" % (mapping_newid_colname_chk,
-                                  str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates())))
-            FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
+            # FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
+            FastTripsLogger.log(msg_level,"\n%s\n" % str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates()))
+            # FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
 
 
             if warn:
@@ -189,7 +190,7 @@ class Util:
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
 
     @staticmethod
-    def write_dataframe(df, name, output_file, append=False):
+    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False):
         """
         Convenience method to write a dataframe but make some of the fields more usable.
 
@@ -228,9 +229,12 @@ class Util:
                 # if the column already exists, continue
                 if new_colname in df_cols: continue
 
-                # otherwise make the new one and replace it
+                # otherwise make the new one and add or replace it
                 df_toprint[new_colname] = df_toprint[old_colname]/units
-                df_cols[col_idx] = new_colname
+                if keep_duration_columns:           # add
+                    df_cols.append(new_colname)
+                else:                               # replace
+                    df_cols[col_idx] = new_colname
 
             elif str(df_toprint.dtypes[col_idx]) == "datetime64[ns]":
                 # print as HH:MM:SS
@@ -244,11 +248,60 @@ class Util:
         # append
         if header_row:
             df_file = open(output_file, "a")
-            df_toprint[header_row].to_csv(df_file, index=False, header=False)
+            df_toprint[header_row].to_csv(df_file, index=False, header=False, float_format="%.10f")
             df_file.close()
 
             FastTripsLogger.info("Appended %s dataframe to %s" % (name, output_file))
 
         else:
-            df_toprint.to_csv(output_file, index=False)
+            df_toprint.to_csv(output_file, index=False, float_format="%.10f")
             FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))
+
+    @staticmethod
+    def calculate_distance_miles(dataframe, origin_lat, origin_lon, destination_lat, destination_lon, distance_colname):
+        """
+        Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
+        in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called dist.
+        """
+        radius = 3959.0 # mi
+
+        # assume these aren't in here
+        dataframe["dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
+        dataframe["dist_lon" ] = numpy.radians(dataframe[destination_lon]-dataframe[origin_lon])
+        dataframe["dist_hava"] = (numpy.sin(dataframe["dist_lat"]/2) * numpy.sin(dataframe["dist_lat"]/2)) + \
+                                 (numpy.cos(numpy.radians(dataframe[origin_lat])) * numpy.cos(numpy.radians(dataframe[destination_lat])) * numpy.sin(dataframe["dist_lon"]/2.0) * numpy.sin(dataframe["dist_lon"]/2.0))
+        dataframe["dist_havc"] = 2.0*numpy.arctan2(numpy.sqrt(dataframe["dist_hava"]), numpy.sqrt(1.0-dataframe["dist_hava"]))
+        dataframe[distance_colname] = radius * dataframe["dist_havc"]
+
+        # FastTripsLogger.debug("calculate_distance_miles\n%s", dataframe.to_string())
+
+        # check
+        min_dist = dataframe[distance_colname].min()
+        max_dist = dataframe[distance_colname].max()
+        if min_dist < 0:
+            FastTripsLogger.warn("calculate_distance_miles: min is negative\n%s" % dataframe.loc[dataframe[distance_colname]<0].to_string())
+        if max_dist > 1000:
+            FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[dataframe[distance_colname]>1000].to_string())
+
+        dataframe.drop(["dist_lat","dist_lon","dist_hava","dist_havc"], axis=1, inplace=True)
+
+    @staticmethod
+    def get_process_mem_use_str():
+        """
+        Returns a string representing the process memory use.
+        """
+        try:
+            import psutil
+
+        except ImportError:
+            return "Uknown; please install python package psutil"
+
+        p = psutil.Process()
+        bytes = p.memory_info().rss
+        if bytes < 1024:
+            return "%d bytes" % bytes
+        if bytes < 1024*1024:
+            return "%.1f KB" % (bytes/1024.0)
+        if bytes < 1024*1024*1024:
+            return "%.1f MB" % (bytes/(1024.0*1024.0))
+        return "%.1f GB" % (bytes/(1024.0*1024.0*1024.0))

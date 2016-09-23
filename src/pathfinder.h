@@ -118,9 +118,12 @@ namespace fasttrips {
     /** Performance information to return. */
     typedef struct {
         int     label_iterations_;              ///< Number of label iterations performed
+        int     num_labeled_stops_;             ///< Number of stops labeled
         int     max_process_count_;             ///< Maximum number of times a stop was processed
         long    milliseconds_labeling_;         ///< Number of seconds spent in labeling
         long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
+        long    workingset_bytes_;              ///< Working set size, in bytes
+        long    privateusage_bytes_;            ///< Private memory usage, in bytes
     } PerformanceInfo;
 
     /**
@@ -345,6 +348,7 @@ namespace fasttrips {
         /// PathFinder constructor.
         PathFinder();
 
+        int processNumber() const { return process_num_; }
         /// This is the transfer supply mode number
         int transferSupplyMode() const { return transfer_supply_mode_; }
         /// Accessor for access link attributes

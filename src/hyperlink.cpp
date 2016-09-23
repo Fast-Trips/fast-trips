@@ -236,7 +236,7 @@ namespace fasttrips {
             linkset.latest_dep_earliest_arr_ = ss.deparr_time_;
             linkset.lder_ssk_                = ssk;
             linkset.sum_exp_cost_            = exp(-1.0*STOCH_DISPERSION_*ss.cost_);
-            linkset.hyperpath_cost_          = ss.cost_;
+            linkset.hyperpath_cost_          = std::max(ss.cost_, MIN_COST);
 
             // add to the map
             linkset.stop_state_map_[ssk] = ss;
@@ -306,7 +306,7 @@ namespace fasttrips {
             }
 
             // check if the hyperpath cost is affected -- this would be a state update
-            double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
+            double hyperpath_cost  = std::max((-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_), MIN_COST);
             if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
             {
                 std::ostringstream oss;
@@ -367,7 +367,7 @@ namespace fasttrips {
             pruneWindow(trace_file, path_spec, pf, isTrip(ssk.deparr_mode_));
         }
 
-        double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
+        double hyperpath_cost  = std::max((-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_),MIN_COST);
         if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
         {
             std::ostringstream oss;
@@ -667,7 +667,7 @@ namespace fasttrips {
     // Choose a link from this hyperlink based on the probabilities
     void Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
                                        const PathFinder& pf, std::vector<ProbabilityStopState>& probabilities,
-                                       const StopState* prev_link) const
+                                       const StopState* prev_link, const int last_trip_id) const
     {
         const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
 
@@ -699,6 +699,9 @@ namespace fasttrips {
                 if ( path_spec.outbound_ && ss.deparr_time_ < prev_link->arrdep_time_) { continue; }
                 // inbound: we cannot arrive after we depart
                 if (!path_spec.outbound_ && ss.deparr_time_ > prev_link->arrdep_time_) { continue; }
+
+                // don't repeat the same trip
+                if (isTrip(ss.deparr_mode_) && (ss.trip_id_ == last_trip_id)) { continue; }
 
                 // calculating denominator
                 sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
