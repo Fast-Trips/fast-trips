@@ -41,6 +41,18 @@ class Util:
         'new_waittime'      : 'min'
     }
 
+    #: Debug columns to drop
+    DROP_DEBUG_COLUMNS = [
+        # drop these?
+        "A_lat","A_lon","B_lat","B_lon",# "distance",
+        # numeric versions of other columns
+        "trip_list_id_num","trip_id_num","A_id_num","B_id_num","mode_num",
+        # pathfinding debugging
+        "pf_iteration","pf_A_time","pf_B_time","pf_linktime","pf_waittime",
+        # simulation debugging
+        "bump_iter","bumpstop_boarded","alight_delay_min"
+    ]
+
     @staticmethod
     def add_numeric_column(input_df, id_colname, numeric_newcolname):
         """
@@ -190,15 +202,40 @@ class Util:
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
 
     @staticmethod
-    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False):
+    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True):
         """
         Convenience method to write a dataframe but make some of the fields more usable.
 
-        If a column named colname is a timedelta64 fields, instead of writing "0 days 00:12:00.000000000",
-         writes colname_min with the minutes.
+        :param df:          The dataframe to write
+        :type  df:          :py:class:`pandas.DataFrame`
+        :param name:        Name of the dataframe. Just used for logging.
+        :type  name:        str
+        :param output_file: The name of the file to which the dataframe will be written
+        :type  output_file: str
+        :param append:      Pass true to append to the existing output file, false otherwise
+        :type  append:      bool
+        :param keep_duration_columns: Pass True to keep the original duration columns (e.g. "0 days 00:12:00.000000000")
+        :type  keep_duration_columns: bool
+        :param drop_debug_columns:    Pass True to drop debug columns specified in :py:attr:`Util.DROP_DEBUG_COLUMNS`
+        :type  drop_debug_columns:    bool
+
+        For columns that are :py:class:`numpy.timedelta64` fields, instead of writing "0 days 00:12:00.000000000",
+        times will be converted to the units specified in :py:attr:`Util.TIMEDELTA_COLUMNS_TO_UNITS`.  The original
+        duration columns will be kept if *keep_duration_columns* is True.
+
         """
+        if len(df) == 0:
+            FastTripsLogger.info("No rows of %s dataframe to write to %s" % (name, output_file))
+            return
+
         df_cols = list(df.columns.values)
-        df_toprint = df.copy()
+
+        if drop_debug_columns:
+            # drop the columns from the list
+            for debug_col in Util.DROP_DEBUG_COLUMNS:
+                if debug_col in df_cols: df_cols.remove(debug_col)
+
+        df_toprint = df[df_cols].copy()
 
         # if we're appending, figure out the header row
         header_row = None

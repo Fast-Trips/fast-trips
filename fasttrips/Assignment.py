@@ -128,6 +128,9 @@ class Assignment:
     #: Debug mode: only run this number of trips, -1 to run all. Int.
     DEBUG_NUM_TRIPS                 = -1
 
+    #: Debug: include debug columns in output
+    DEBUG_OUTPUT_COLUMNS            = False
+
     #: Skip these passengers
     SKIP_PERSON_IDS                 = None
 
@@ -249,6 +252,7 @@ class Assignment:
                       'trace_person_ids'                :'None',
                       'debug_trace_only'                :'False',
                       'debug_num_trips'                 :-1,
+                      'debug_output_columns'            :'False',
                       'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
@@ -292,6 +296,7 @@ class Assignment:
         Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
+        Assignment.DEBUG_OUTPUT_COLUMNS          = parser.getboolean('fasttrips','debug_output_columns')
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
@@ -356,6 +361,7 @@ class Assignment:
         parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
         parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
+        parser.set('fasttrips','debug_output_columns',          'True' if Assignment.DEBUG_OUTPUT_COLUMNS else 'False')
         parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
@@ -553,8 +559,8 @@ class Assignment:
                                                                                                       FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
                                                                                                       FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
                 # write pathfinding results to special PF results file
-                Passenger.write_paths(output_dir, 0, 0, new_pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
-                Passenger.write_paths(output_dir, 0, 0, new_pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
+                Passenger.write_paths(output_dir, iteration, -1, new_pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                Passenger.write_paths(output_dir, iteration, -1, new_pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
 
                 # write performance info right away in case we crash, quit, etc
                 FT.performance.write(output_dir, iteration)
@@ -879,9 +885,9 @@ class Assignment:
         :type  pathset:   a :py:class:`PathSet` instance
         :param hyperpath: pass True to use a stochastic hyperpath-finding algorithm, otherwise a deterministic shortest path
                           search algorithm will be use.
-        :type  hyperpath: boolean
+        :type  hyperpath: bool
         :param trace:     pass True if this path should be traced to the debug log
-        :type  trace:     boolean
+        :type  trace:     bool
 
         """
         # FastTripsLogger.debug("C++ extension start")
@@ -1545,12 +1551,14 @@ class Assignment:
         # write the final chosen paths for this iteration
         chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
         chosen_links_df["iteration"] = iteration
-        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosenpaths_links.csv"), append=(iteration>1))
+        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosenpaths_links.csv"), append=(iteration>1),
+                             drop_debug_columns=not Assignment.DEBUG_OUTPUT_COLUMNS)
         chosen_links_df.drop(["iteration"], axis=1, inplace=True)
 
         chosen_paths_df = Passenger.get_chosen_links(pathset_paths_df)
         chosen_paths_df["iteration"] = iteration
-        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=(iteration>1))
+        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=(iteration>1),
+                             drop_debug_columns=not Assignment.DEBUG_OUTPUT_COLUMNS)
         chosen_paths_df.drop(["iteration"], axis=1, inplace=True)
 
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df)
@@ -1661,8 +1669,8 @@ class Assignment:
             ######################################################################################################
             if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
                 FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
-                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
-                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
+                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
 
             simulation_iteration += 1
 
@@ -1676,18 +1684,20 @@ class Assignment:
 
         # Write the pathsets (if we haven't been already)
         if Assignment.OUTPUT_PATHSET_PER_SIM_ITER == False:
-            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
-            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
 
         # write the final chosen paths for this iteration
         chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
         chosen_links_df["iteration"] = iteration
-        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosenpaths_links.csv"), append=(iteration>1))
+        Util.write_dataframe(chosen_links_df, "chosen_links_df", os.path.join(output_dir, "chosenpaths_links.csv"), append=(iteration>1),
+                             drop_debug_columns=not Assignment.DEBUG_OUTPUT_COLUMNS)
         chosen_links_df.drop(["iteration"], axis=1, inplace=True)
 
         chosen_paths_df = Passenger.get_chosen_links(pathset_paths_df)
         chosen_paths_df["iteration"] = iteration
-        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=(iteration>1))
+        Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=(iteration>1),
+                             drop_debug_columns=not Assignment.DEBUG_OUTPUT_COLUMNS)
         chosen_paths_df.drop(["iteration"], axis=1, inplace=True)
 
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)

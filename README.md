@@ -2,7 +2,7 @@
 
 fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:
  * Project Website: http://fast-trips.mtc.ca.gov/
- * Full Technical Documentation (API): http://metropolitantransportationcommission.github.io/fast-trips/
+ * Full Technical Documentation (API): http://data.mtc.ca.gov/fast-trips/
 
 ## Contents
 * [Setup](#setup)
@@ -58,6 +58,7 @@ Option Name                         | Type   | Default | Description
 `create_skims`                      | bool   | False   | Not implemented yet.
 `debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
+`debug_output_columns`              | bool   | False   | If True, will write internal & debug columns into output.
 `iterations`                        | int    | 1       | Number of pathfinding iterations to run.
 `number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
@@ -73,7 +74,7 @@ Option Name                         | Type   | Default | Description
 
 Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -----------
-`max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than `min_path_probability`
+`max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than ``
 `min_path_probability`              | float  | 0.005   | Paths with probability less than this get dropped IF `max_num_paths` specified AND hit.
 `min_transfer_penalty`              | float  | 1       | Minimum transfer penalty. Safeguard against having no transfer penalty which can result in terrible paths with excessive transfers.
 `overlap_scale_parameter`           | float  | 1       | Scale parameter for overlap path size variable.
