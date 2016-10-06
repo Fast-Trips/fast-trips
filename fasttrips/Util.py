@@ -36,6 +36,7 @@ class Util:
         'time enumerating'  : 'milliseconds',  # performance
         'time labeling'     : 'milliseconds',  # performance
         'pf_linktime'       : 'min',
+        'pf_linkcost'       : 'min',
         'pf_waittime'       : 'min',
         'new_linktime'      : 'min',
         'new_waittime'      : 'min'
@@ -47,10 +48,12 @@ class Util:
         "A_lat","A_lon","B_lat","B_lon",# "distance",
         # numeric versions of other columns
         "trip_list_id_num","trip_id_num","A_id_num","B_id_num","mode_num",
-        # pathfinding debugging
-        "pf_iteration","pf_A_time","pf_B_time","pf_linktime","pf_waittime",
         # simulation debugging
         "bump_iter","bumpstop_boarded","alight_delay_min"
+    ]
+    DROP_PATHFINDING_COLUMNS = [
+        # pathfinding debugging
+        "pf_iteration","pf_A_time","pf_B_time","pf_linktime","pf_linkcost","pf_linkdist","pf_waittime"
     ]
 
     @staticmethod

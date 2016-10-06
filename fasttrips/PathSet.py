@@ -112,8 +112,10 @@ class PathSet:
     STATE_IDX_SEQ           = 5  #: sequence (for trip)
     STATE_IDX_SEQ_SUCCPRED  = 6  #: sequence for successor/predecessor
     STATE_IDX_LINKTIME      = 7  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_COST          = 8  #: cost float, for hyperpath/stochastic assignment
-    STATE_IDX_ARRDEP        = 9  #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
+    STATE_IDX_LINKCOST      = 8  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_LINKDIST      = 9  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_COST          = 10 #: cost float, for hyperpath/stochastic assignment
+    STATE_IDX_ARRDEP        = 11 #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
 
     # these are also the demand_mode_type values
     STATE_MODE_ACCESS   = "access"

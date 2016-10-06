@@ -110,6 +110,8 @@ class Passenger:
     PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
     PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
     PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
+    PF_COL_LINK_COST                = 'pf_linkcost'  #: cost path-finder thinks passenger spent on link
+    PF_COL_LINK_DIST                = 'pf_linkdist'  #: dist path-finder thinks passenger spent on link
     PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
 
     PF_COL_PATH_NUM                 = 'pathnum'      #: path number, starting from 0
@@ -502,6 +504,8 @@ class Passenger:
         `pf_A_time`      datetime64[ns]  the time the passenger arrives at `A_id`
         `pf_B_time`      datetime64[ns]  the time the passenger arrives at `B_id`
         `pf_linktime`   timedelta64[ns]  the time spent on the link
+        `pf_linkcost`           float64  the cost of the link
+        `pf_linkdist`           float64  the distance for the link
         `A_lat`                 float64  the latitude of A (if it's a stop)
         `A_lon`                 float64  the longitude of A (if it's a stop)
         `B_lat`                 float64  the latitude of B (if it's a stop)
@@ -628,6 +632,8 @@ class Passenger:
                         a_time,
                         b_time,
                         state[PathSet.STATE_IDX_LINKTIME],
+                        state[PathSet.STATE_IDX_LINKCOST],
+                        state[PathSet.STATE_IDX_LINKDIST],
                         waittime,
                         link_num ])
 
@@ -662,6 +668,8 @@ class Passenger:
             Passenger.PF_COL_PAX_A_TIME,
             Passenger.PF_COL_PAX_B_TIME,
             Passenger.PF_COL_LINK_TIME,
+            Passenger.PF_COL_LINK_COST,
+            Passenger.PF_COL_LINK_DIST,
             Passenger.PF_COL_WAIT_TIME,
             Passenger.PF_COL_LINK_NUM ])
 
