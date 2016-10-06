@@ -650,8 +650,8 @@ class PathSet:
 
         It's also messier to have this in two places.  Maybe we should delete it from the C++; the overlap calcs are only in here right now.
 
-        Returns pathset_paths_df with additional column, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
-        And pathset_links_df with additional column, Assignment.SIM_COL_PAX_COST
+        Returns pathset_paths_df with additional columns, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
+        And pathset_links_df with additional column, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_DISTANCE
 
         """
         from .Assignment import Assignment
@@ -662,7 +662,8 @@ class PathSet:
                                    Assignment.SIM_COL_PAX_LNPS,
                                    Assignment.SIM_COL_PAX_PROBABILITY,
                                    Assignment.SIM_COL_PAX_LOGSUM     ], axis=1, inplace=True)
-            pathset_links_df.drop([Assignment.SIM_COL_PAX_COST       ], axis=1, inplace=True)
+            pathset_links_df.drop([Assignment.SIM_COL_PAX_COST,
+                                   Assignment.SIM_COL_PAX_DISTANCE], axis=1, inplace=True)
 
             # leaving this in for writing to CSV for debugging but I could take it out
             pathset_paths_df.drop(["logsum_component"], axis=1, inplace=True)
@@ -672,6 +673,8 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
             FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.loc[trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
+        # base this on pathfinding distance
+        pathset_links_df[Assignment.SIM_COL_PAX_DISTANCE] = pathset_links_df[Passenger.PF_COL_LINK_DIST]
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:
             pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)

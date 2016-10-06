@@ -510,7 +510,6 @@ class Passenger:
         `A_lon`                 float64  the longitude of A (if it's a stop)
         `B_lat`                 float64  the latitude of B (if it's a stop)
         `B_lon`                 float64  the longitude of B (if it's a stop)
-        `dist`                  float64  the distance of the link, in miles
         ==============  ===============  =====================================================================================================
 
         """
@@ -702,16 +701,6 @@ class Passenger:
 
         # get supply mode
         pathset_links_df = pandas.merge(left=pathset_links_df, right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]], how="left")
-
-        # get dist for the trip links, transfer links, and access/egress links
-        Util.calculate_distance_miles(pathset_links_df, "A_lat","A_lon","B_lat","B_lon", "distance")
-        pathset_links_df = transfers.add_distance(pathset_links_df, "distance")
-        pathset_links_df = tazs.add_distance(pathset_links_df, "distance")
-
-        null_distance = pathset_links_df.loc[ pandas.isnull(pathset_links_df["distance"]) ]
-        if len(null_distance) > 0:
-            FastTripsLogger.fatal("setup_passenger_pathsets() null distances:\n%s" % null_distance.to_string())
-            raise
 
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())
