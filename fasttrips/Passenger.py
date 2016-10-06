@@ -731,7 +731,7 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns):
+    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns, drop_pathfinding_columns):
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
@@ -743,7 +743,8 @@ class Passenger:
                                  output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
                                  append=True if iteration > 1 else False,
                                  keep_duration_columns=True,
-                                 drop_debug_columns=drop_debug_columns)
+                                 drop_debug_columns=drop_debug_columns,
+                                 drop_pathfinding_columns=drop_pathfinding_columns)
             pathset_df.drop(["iteration"], axis=1, inplace=True)
             return
 
@@ -763,7 +764,8 @@ class Passenger:
                              name="pathset_links_df" if links else "pathset_paths_df",
                              output_file=os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
                              append=do_append,
-                             drop_debug_columns=drop_debug_columns)
+                             drop_debug_columns=drop_debug_columns,
+                             drop_pathfinding_columns=drop_pathfinding_columns)
         pathset_df.drop(["iteration","simulation_iteration"], axis=1, inplace=True)
 
 

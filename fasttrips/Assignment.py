@@ -192,7 +192,7 @@ class Assignment:
     SIM_COL_PAX_OVERCAP_FRAC        = 'overcap_frac'     #: If board at an overcap stop, fraction of boards that are overcap
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BUMPSTOP_BOARDED    = 'bumpstop_boarded' #: 1 if lucky enough to board at an at- or over-capacity stop
-    SIM_COL_PAX_DISTANCE            = "distance"         #: Link distance in miles
+    SIM_COL_PAX_DISTANCE            = "distance"         #: Link distance
     SIM_COL_PAX_COST                = 'sim_cost'         #: Link cost. (Cannot be `cost` because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST)
     SIM_COL_PAX_LNPS                = 'ln_PS'            #: log(PathSize)
     SIM_COL_PAX_PROBABILITY         = 'probability'      #: Probability of this path
@@ -560,8 +560,8 @@ class Assignment:
                                                                                                       FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
                                                                                                       FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
                 # write pathfinding results to special PF results file
-                Passenger.write_paths(output_dir, iteration, -1, new_pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
-                Passenger.write_paths(output_dir, iteration, -1, new_pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                Passenger.write_paths(output_dir, iteration, -1, new_pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
+                Passenger.write_paths(output_dir, iteration, -1, new_pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
 
                 # write performance info right away in case we crash, quit, etc
                 FT.performance.write(output_dir, iteration)
@@ -1550,8 +1550,8 @@ class Assignment:
             pathset_paths_df, pathset_links_df)
 
         # Write the pathsets
-        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
-        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER)
+        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, True)
+        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, True)
 
         # write the final chosen paths for this iteration
         chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
@@ -1674,8 +1674,8 @@ class Assignment:
             ######################################################################################################
             if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
                 FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
-                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
-                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, True)
+                Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, True)
 
             simulation_iteration += 1
 
@@ -1689,8 +1689,8 @@ class Assignment:
 
         # Write the pathsets (if we haven't been already)
         if Assignment.OUTPUT_PATHSET_PER_SIM_ITER == False:
-            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
-            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS)
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, True)
+            Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, True)
 
         # write the final chosen paths for this iteration
         chosen_links_df = Passenger.get_chosen_links(pathset_links_df)

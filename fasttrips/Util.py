@@ -205,7 +205,7 @@ class Util:
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
 
     @staticmethod
-    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True):
+    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True, drop_pathfinding_columns=True):
         """
         Convenience method to write a dataframe but make some of the fields more usable.
 
@@ -221,6 +221,8 @@ class Util:
         :type  keep_duration_columns: bool
         :param drop_debug_columns:    Pass True to drop debug columns specified in :py:attr:`Util.DROP_DEBUG_COLUMNS`
         :type  drop_debug_columns:    bool
+        :param drop_pathfinding_columns: Pass True to drop pathfinding columns specified in :py:attr:`Util.DROP_PATHFINDING_COLUMNS`
+        :type  drop_pathfinding_columns: bool
 
         For columns that are :py:class:`numpy.timedelta64` fields, instead of writing "0 days 00:12:00.000000000",
         times will be converted to the units specified in :py:attr:`Util.TIMEDELTA_COLUMNS_TO_UNITS`.  The original
@@ -236,6 +238,11 @@ class Util:
         if drop_debug_columns:
             # drop the columns from the list
             for debug_col in Util.DROP_DEBUG_COLUMNS:
+                if debug_col in df_cols: df_cols.remove(debug_col)
+
+        if drop_pathfinding_columns:
+            # drop the columns from the list
+            for debug_col in Util.DROP_PATHFINDING_COLUMNS:
                 if debug_col in df_cols: df_cols.remove(debug_col)
 
         df_toprint = df[df_cols].copy()
@@ -301,7 +308,7 @@ class Util:
     def calculate_distance_miles(dataframe, origin_lat, origin_lon, destination_lat, destination_lon, distance_colname):
         """
         Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
-        in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called dist.
+        in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.
         """
         radius = 3959.0 # mi
 
