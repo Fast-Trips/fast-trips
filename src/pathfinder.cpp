@@ -438,9 +438,10 @@ namespace fasttrips {
                 stoptime_index[3*i],    // trip id
                 stoptime_index[3*i+1],  // sequence
                 stoptime_index[3*i+2],  // stop id
-                stoptime_times[3*i],    // arrive time
-                stoptime_times[3*i+1],  // depart time
-                stoptime_times[3*i+2]   // overcap
+                stoptime_times[4*i],    // arrive time
+                stoptime_times[4*i+1],  // depart time
+                stoptime_times[4*i+2],  // shape_dist_traveled
+                stoptime_times[4*i+3]   // overcap
             };
             // verify the sequence number makes sense: sequential, starts with 1
             assert(stt.sequence_ == trip_stop_times_[stt.trip_id_].size()+1);
@@ -837,6 +838,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     attr_time,                                                                  // link time
                     cost,                                                                       // link cost
+                    0.0,                                                                        // link distance
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_                                                   // arrival/departure time
@@ -901,6 +903,7 @@ namespace fasttrips {
             -1,                             // sequence succ/pred
             transfer_time,                  // link time
             link_cost,                      // link cost
+            0.0,                            // link distance
             cost,                           // cost
             label_iteration,                // label iteration
             current_deparr_time             // arrival/departure time
@@ -971,6 +974,7 @@ namespace fasttrips {
                 -1,                             // sequence succ/pred
                 transfer_time,                  // link time
                 link_cost,                      // link cost
+                0.0,                            // link distance
                 cost,                           // cost
                 label_iteration,                // label iteration
                 current_deparr_time             // arrival/departure time
@@ -1114,6 +1118,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     link_cost,                                                                  // link cost
+                    0.0,                                                                        // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
@@ -1265,6 +1270,7 @@ namespace fasttrips {
                 double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
                 double  cost      = 0;
                 double  link_cost = 0;
+                double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
 
                 if (in_vehicle_time < 0) {
                     printf("in_vehicle_time < 0 -- this shouldn't happen\n");
@@ -1358,6 +1364,7 @@ namespace fasttrips {
                     it->seq_,                       // sequence succ/pred
                     in_vehicle_time+wait_time,      // link time
                     link_cost,                      // link cost
+                    link_dist,                      // link distance
                     cost,                           // cost
                     label_iteration,                // label iteration
                     arrdep_time                     // arrival/departure time
@@ -1704,6 +1711,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     link_cost,                                                                  // link cost
+                    0.0,                                                                        // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time

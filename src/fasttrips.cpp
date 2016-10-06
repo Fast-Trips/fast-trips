@@ -51,12 +51,12 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     int num_stop_ind    = PyArray_DIMS(pyo)[0];
     assert(3 == PyArray_DIMS(pyo)[1]);
 
-    // trip stop times data: arrival time, departure time, overcap
+    // trip stop times data: arrival time, departure time, shape_dist_traveled, overcap
     pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input4, NPY_DOUBLE, 2, 2);
     if (pyo == NULL) return NULL;
     double* stop_times  = (double*)PyArray_DATA(pyo);
     int num_stop_times  = PyArray_DIMS(pyo)[0];
-    assert(3 == PyArray_DIMS(pyo)[1]);
+    assert(4 == PyArray_DIMS(pyo)[1]);
 
     // these better be the same length
     assert(num_stop_ind == num_stop_times);

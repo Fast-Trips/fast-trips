@@ -411,6 +411,7 @@ class Assignment:
                                                     Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
                                                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+                                                    Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
                                                     overcap_col]].as_matrix().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,

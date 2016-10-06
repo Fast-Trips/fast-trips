@@ -111,12 +111,13 @@ namespace fasttrips {
 
     /// Supply data: Transit vehicle schedules
     typedef struct {
-        int     trip_id_;
-        int     seq_;           // start at 1
-        int     stop_id_;
-        double  arrive_time_;   // minutes after midnight
-        double  depart_time_;   // minutes after midnight
-        double  overcap_;       // number of passengers overcap
+        int     trip_id_;         /// trip ID
+        int     seq_;             /// stop sequence, starts at 1
+        int     stop_id_;         /// stop ID
+        double  arrive_time_;     /// minutes after midnight
+        double  depart_time_;     /// minutes after midnight
+        double  shape_dist_trav_; /// shape distance traveled
+        double  overcap_;         /// number of passengers overcap
     } TripStopTime;
 
     /// For capacity lookups: TripStop definition
