@@ -719,3 +719,9 @@ tracey,trip_2,Z4,Z2,transit,work,15:15:10,15:45:10,departure,1.519007606,
 0,trip_718,Z3,Z4,transit,other,17:14:30,17:44:30,arrival,1.472785255,
 0,trip_719,Z4,Z2,transit,other,17:14:40,17:44:40,arrival,10.55836544,
 0,trip_720,Z2,Z3,transit,work,17:14:50,17:44:50,departure,25.50477456,
+0,pnr_1,Z4,Z2,walk-transit-PNR,work,15:05:00,15:05:00,departure,10.0
+0,pnr_2,Z4,Z2,walk-transit-PNR,work,15:35:00,15:35:00,departure,10.0
+0,pnr_3,Z4,Z2,walk-transit-PNR,work,16:05:00,16:05:00,departure,10.0
+0,pnr_4,Z4,Z2,walk-transit-PNR,work,16:35:00,16:35:00,departure,10.0
+0,pnr_5,Z4,Z2,walk-transit-PNR,work,17:05:00,17:05:00,departure,10.0
+0,pnr_6,Z4,Z2,walk-transit-PNR,work,17:45:00,17:45:00,departure,10.0

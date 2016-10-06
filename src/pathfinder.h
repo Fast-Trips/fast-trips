@@ -60,13 +60,32 @@ namespace fasttrips {
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
     typedef std::map< UserClassPurposeMode, SupplyModeToNamedWeights, struct fasttrips::UCPMCompare > WeightLookup;
 
-    /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
+    /// Duration struct.  Goes from [start_time_,end_time_), so end_time is not included
+    typedef struct {
+        double start_time_;     /// minutes past midnight, included
+        double end_time_;       /// minutes past midnight, not included
+    } TimePeriod;
+
+    struct TimePeriodCompare {
+        // less than
+        bool operator()(const TimePeriod& tp1, const TimePeriod& tp2) const {
+            if (tp1.start_time_ < tp2.start_time_) { return true;  }
+            if (tp1.start_time_ > tp2.start_time_) { return false; }
+            if (tp1.end_time_   < tp2.end_time_  ) { return true;  }
+            if (tp1.end_time_   > tp2.end_time_  ) { return false; }
+            return false;
+        }
+    };
+
     typedef std::map<std::string, double> Attributes;
-    typedef std::map<int, Attributes> StopToAttr;
-    typedef std::map<int, StopToAttr> SupplyStopToAttr;
-    typedef std::map<int, SupplyStopToAttr> TAZSupplyStopToAttr;
+    typedef std::map<TimePeriod, Attributes, struct fasttrips::TimePeriodCompare > TimePeriodToAttr;
+    typedef std::map<int, TimePeriodToAttr> StopTpToAttr;
+    typedef std::map<int, StopTpToAttr> SupStopTpToAttr;
+    /// Access/Egress information: taz id -> supply_mode -> stop id -> (start time, end time) -> attribute map
+    typedef std::map<int, SupStopTpToAttr> TAZSupStopTpToAttr;
 
     // Transfer information: stop id -> stop id -> attribute map
+    typedef std::map<int, Attributes> StopToAttr;
     typedef std::map<int, StopToAttr> StopStopToAttr;
 
 
@@ -164,8 +183,8 @@ namespace fasttrips {
         WeightLookup weight_lookup_;
 
         // ================ Network supply ================
-        /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
-        TAZSupplyStopToAttr taz_access_links_;
+        /// Access/Egress information: taz id -> supply_mode -> stop id -> (start time, end time) -> attribute map
+        TAZSupStopTpToAttr taz_access_links_;
 
         /// Transfer information: stop id -> stop id -> attributes
         StopStopToAttr transfer_links_o_d_;
@@ -352,7 +371,7 @@ namespace fasttrips {
         /// This is the transfer supply mode number
         int transferSupplyMode() const { return transfer_supply_mode_; }
         /// Accessor for access link attributes
-        const Attributes* getAccessAttributes(int taz_id, int supply_mode_num, int stop_id) const;
+        const Attributes* getAccessAttributes(int taz_id, int supply_mode_num, int stop_id, double tp_time) const;
         /// Accessor for transfer link attributes
         const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
         /// Accessor for trip info

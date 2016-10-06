@@ -82,6 +82,7 @@ class Transfer:
     #: Transfers column name: Link walk time in minutes.  This is a float.
     TRANSFERS_COLUMN_TIME_MIN   = 'time_min'
     #: Transfers column name: Link generic cost.  Float.
+    TRANSFERS_COLUMN_PENALTY    = 'transfer_penalty'
 
     #: File with transfer links for C++ extension
     #: It's easier to pass it via file rather than through the
@@ -152,7 +153,7 @@ class Transfer:
                                      inplace=True)
 
         # SPECIAL -- we rely on this in the extension
-        self.transfers_df["transfer_penalty"] = 1.0
+        self.transfers_df[Transfer.TRANSFERS_COLUMN_PENALTY] = 1.0
 
         FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))

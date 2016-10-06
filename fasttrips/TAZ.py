@@ -381,7 +381,7 @@ class TAZ:
             # some may have no lot to stop connections -- check for null stop ids
             null_stop_ids =  self.drive_access_df.loc[pandas.isnull( self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
             if len(null_stop_ids) > 0:
-                FastTripsLogger.warn("Dropping drive links that don't connect to stops:\n%s" % str(null_stop_ids))
+                FastTripsLogger.warn("Dropping %d drive links that don't connect to stops:\n%s" % (len(null_stop_ids), str(null_stop_ids)))
                 # drop them
                 self.drive_access_df = self.drive_access_df.loc[ pandas.notnull(self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
 
@@ -393,7 +393,7 @@ class TAZ:
                     Transfer.TRANSFERS_COLUMN_TIME_MIN:TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN},
                 inplace=True)
 
-            FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
+            FastTripsLogger.debug("Final (%d) types:\n%s\nhead:\n%s" % (len(self.drive_access_df), str(self.drive_access_df.dtypes), str(self.drive_access_df.head())))
             FastTripsLogger.info("Read %7d %15s from %25s" %
                                  (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
             self.has_drive_access = True
@@ -556,7 +556,7 @@ class TAZ:
         # start with all walk columns
         self.walk_df = self.walk_access_df.copy()
         # drop the redundant columns
-        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,         # use numerical version
+        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,        # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_STOP,        # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE, # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_TIME,        # use numerical version
@@ -568,11 +568,16 @@ class TAZ:
             if field in walk_fields: valid_drop_fields.append(field)
 
         self.walk_df.drop(valid_drop_fields, axis=1, inplace=True)
+        # make walk access valid all times -- need this for consistency
+        self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = 0.0
+        self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN  ] = 60.0*24.0
 
         # the index is TAZ num, supply mode num, and stop num
         self.walk_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
                            TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                           TAZ.WALK_ACCESS_COLUMN_STOP_NUM], inplace=True)
+                           TAZ.WALK_ACCESS_COLUMN_STOP_NUM,
+                           TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN,
+                           TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN], inplace=True)
 
         # ========== Drive access/egres =================================================
         self.drive_df = self.drive_access_df.copy()
@@ -610,8 +615,10 @@ class TAZ:
         # the index is TAZ num, supply mode num, and stop num
         if len(self.drive_df) > 0:
             self.drive_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
-                                TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                                TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM], inplace=True)
+                                     TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                                     TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
+                                     TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN,
+                                     TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN], inplace=True)
 
             # stack() this will make it so beyond taz num, supply mode num, and stop num
             # the remaining columns collapse to variable name, variable value
