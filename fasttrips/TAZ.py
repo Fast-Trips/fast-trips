@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
-import pandas
+import numpy,pandas
 
 from .Error    import NetworkInputError
 from .Logger   import FastTripsLogger
@@ -312,11 +312,10 @@ class TAZ:
 
             # lot open/close time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
-                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
-                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+
 
             # convert time column from number to timedelta
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME] = \

@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import datetime, os
-import pandas
+import numpy,pandas
 
 from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
@@ -274,11 +274,10 @@ class Route(object):
 
             # float version
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME_MIN] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: \
-                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+                (fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
             fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME_MIN] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: \
-                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+                (fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+
 
             # join to fare rules dataframe
             self.fare_rules_df = pandas.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
