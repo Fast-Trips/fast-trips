@@ -815,6 +815,7 @@ namespace fasttrips {
                 int stop_id = link_iter->first;
                 Attributes link_attr = tp2a_iter->second;
                 double attr_time = link_attr.find("time_min")->second;
+                double attr_dist = link_attr.find("dist")->second;
 
                 // outbound: departure time = destination - access
                 // inbound:  arrival time   = origin      + access
@@ -838,7 +839,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     attr_time,                                                                  // link time
                     cost,                                                                       // link cost
-                    0.0,                                                                        // link distance
+                    attr_dist,                                                                  // link distance
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_                                                   // arrival/departure time
@@ -884,7 +885,7 @@ namespace fasttrips {
         const Attributes* zerowalk_xfer = getTransferAttributes(xfer_stop_id, xfer_stop_id);
         double            transfer_time = zerowalk_xfer->find("walk_time_min")->second;  // todo: make this a different time?
         double            deparr_time   = current_deparr_time - (transfer_time*dir_factor);
-        double            link_cost, cost;
+        double            link_cost, cost, transfer_dist;
         if (path_spec.hyperpath_)
         {
             link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, *zerowalk_xfer);
@@ -924,6 +925,7 @@ namespace fasttrips {
         {
             xfer_stop_id    = transfer_it->first;
             transfer_time   = transfer_it->second.find("time_min")->second;
+            transfer_dist   = transfer_it->second.find("dist")->second;
             // outbound: departure time = latest departure - transfer
             //  inbound: arrival time   = earliest arrival + transfer
             deparr_time     = current_deparr_time - (transfer_time*dir_factor);
@@ -974,7 +976,7 @@ namespace fasttrips {
                 -1,                             // sequence succ/pred
                 transfer_time,                  // link time
                 link_cost,                      // link cost
-                0.0,                            // link distance
+                transfer_dist,                  // link distance
                 cost,                           // cost
                 label_iteration,                // label iteration
                 current_deparr_time             // arrival/departure time
@@ -1074,6 +1076,7 @@ namespace fasttrips {
                 link_attr["preferred_delay_min"]= 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
+                double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
 
                 if (path_spec.hyperpath_)
@@ -1118,7 +1121,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     link_cost,                                                                  // link cost
-                    0.0,                                                                        // link distance
+                    access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
@@ -1647,6 +1650,7 @@ namespace fasttrips {
                 link_attr["preferred_delay_min"]= 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
+                double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
 
                 StopStates::const_iterator stop_states_iter = stop_states.find(stop_id);
@@ -1711,7 +1715,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     link_cost,                                                                  // link cost
-                    0.0,                                                                        // link distance
+                    access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
