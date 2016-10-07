@@ -51,12 +51,12 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
     int num_stop_ind    = PyArray_DIMS(pyo)[0];
     assert(3 == PyArray_DIMS(pyo)[1]);
 
-    // trip stop times data: arrival time, departure time, overcap
+    // trip stop times data: arrival time, departure time, shape_dist_traveled, overcap
     pyo                 = (PyArrayObject*)PyArray_ContiguousFromObject(input4, NPY_DOUBLE, 2, 2);
     if (pyo == NULL) return NULL;
     double* stop_times  = (double*)PyArray_DATA(pyo);
     int num_stop_times  = PyArray_DIMS(pyo)[0];
-    assert(3 == PyArray_DIMS(pyo)[1]);
+    assert(4 == PyArray_DIMS(pyo)[1]);
 
     // these better be the same length
     assert(num_stop_ind == num_stop_times);
@@ -138,7 +138,7 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
 
     npy_intp dims_double[2];
     dims_double[0] = num_links;
-    dims_double[1] = 5; // label_, deparr_time_, link_time_, cost_, arrdep_time_
+    dims_double[1] = 7; // label_, deparr_time_, link_time_, link_cost_, link_dist_, cost_, arrdep_time_
     PyArrayObject *ret_double = (PyArrayObject *)PyArray_SimpleNew(2, dims_double, NPY_DOUBLE);
 
     // costs and probability
@@ -167,8 +167,10 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
             *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = 0.0; // TODO: label
             *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path[link_num].second.deparr_time_;
             *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path[link_num].second.link_time_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[link_num].second.cost_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[link_num].second.arrdep_time_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[link_num].second.link_cost_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[link_num].second.link_dist_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 5) = path[link_num].second.cost_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 6) = path[link_num].second.arrdep_time_;
 
             ind += 1;
         }

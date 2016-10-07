@@ -13,7 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
-import pandas
+import numpy,pandas
 
 from .Error    import NetworkInputError
 from .Logger   import FastTripsLogger
@@ -312,11 +312,10 @@ class TAZ:
 
             # lot open/close time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: \
-                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: \
-                    60*x.time().hour + x.time().minute + x.time().second/60.0 )
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+
 
             # convert time column from number to timedelta
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME] = \
@@ -376,12 +375,20 @@ class TAZ:
                                        Transfer.TRANSFERS_COLUMN_TO_STOP,
                                        Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE,
                                        Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,
-                                       Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE], axis=1, inplace=True)
+                                       Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE,
+                                       Transfer.TRANSFERS_COLUMN_PENALTY], axis=1, inplace=True)
+            # not relevant for drive access
+            if Transfer.TRANSFERS_COLUMN_FROM_ROUTE in list(self.drive_access_df.columns.values):
+                self.drive_access_df.drop([Transfer.TRANSFERS_COLUMN_FROM_ROUTE], axis=1, inplace=True)
+            if Transfer.TRANSFERS_COLUMN_TO_ROUTE in list(self.drive_access_df.columns.values):
+                self.drive_access_df.drop([Transfer.TRANSFERS_COLUMN_TO_ROUTE], axis=1, inplace=True)
+            if Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN in list(self.drive_access_df.columns.values):
+                self.drive_access_df.drop([Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN], axis=1, inplace=True)
 
             # some may have no lot to stop connections -- check for null stop ids
             null_stop_ids =  self.drive_access_df.loc[pandas.isnull( self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
             if len(null_stop_ids) > 0:
-                FastTripsLogger.warn("Dropping drive links that don't connect to stops:\n%s" % str(null_stop_ids))
+                FastTripsLogger.warn("Dropping %d drive links that don't connect to stops:\n%s" % (len(null_stop_ids), str(null_stop_ids)))
                 # drop them
                 self.drive_access_df = self.drive_access_df.loc[ pandas.notnull(self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
 
@@ -393,7 +400,14 @@ class TAZ:
                     Transfer.TRANSFERS_COLUMN_TIME_MIN:TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN},
                 inplace=True)
 
-            FastTripsLogger.debug("Final\n"+str(self.drive_access_df.dtypes))
+            # add generic distance and time
+            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DISTANCE] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE] + \
+                                                                     self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE]
+
+            self.drive_access_df["time_min"] = self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN] + \
+                                               self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN]
+
+            FastTripsLogger.debug("Final (%d) types:\n%s\nhead:\n%s" % (len(self.drive_access_df), str(self.drive_access_df.dtypes), str(self.drive_access_df.head())))
             FastTripsLogger.info("Read %7d %15s from %25s" %
                                  (len(self.drive_access_df), "drive access", TAZ.INPUT_DRIVE_ACCESS_FILE))
             self.has_drive_access = True
@@ -454,6 +468,9 @@ class TAZ:
     def add_distance(self, links_df, dist_col):
         """
         Sets distance column value for access and egress links.
+
+        .. todo:: This neglects the start_time/end_time issue.  Don't use without fixing.
+
         """
         ############## walk ##############
         walk_dists = self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
@@ -493,7 +510,9 @@ class TAZ:
                                                 TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
                                                 TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
                                                 TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE,
-                                                TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE]].copy()
+                                                TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE,
+                                                TAZ.DRIVE_ACCESS_COLUMN_START_TIME,
+                                                TAZ.DRIVE_ACCESS_COLUMN_END_TIME]].copy()
             drive_dists["drive_total_dist"] = drive_dists[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE] + drive_dists[TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE]
             drive_dists.drop([TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE, TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE], axis=1, inplace=True)
 
@@ -503,6 +522,7 @@ class TAZ:
                                     right   =drive_dists,
                                     right_on=[TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
                                     how     ="left")
+            # TODO: drop those with drive access links covering different times
             links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
             links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
                            TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
@@ -556,7 +576,7 @@ class TAZ:
         # start with all walk columns
         self.walk_df = self.walk_access_df.copy()
         # drop the redundant columns
-        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,         # use numerical version
+        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,        # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_STOP,        # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE, # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_TIME,        # use numerical version
@@ -568,11 +588,16 @@ class TAZ:
             if field in walk_fields: valid_drop_fields.append(field)
 
         self.walk_df.drop(valid_drop_fields, axis=1, inplace=True)
+        # make walk access valid all times -- need this for consistency
+        self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = 0.0
+        self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN  ] = 60.0*24.0
 
         # the index is TAZ num, supply mode num, and stop num
         self.walk_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
                            TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                           TAZ.WALK_ACCESS_COLUMN_STOP_NUM], inplace=True)
+                           TAZ.WALK_ACCESS_COLUMN_STOP_NUM,
+                           TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN,
+                           TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN], inplace=True)
 
         # ========== Drive access/egres =================================================
         self.drive_df = self.drive_access_df.copy()
@@ -581,12 +606,6 @@ class TAZ:
 
         # TEMP
         drive_fields = list(self.drive_df.columns.values)
-        if TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN in drive_fields and \
-           TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN in drive_fields:
-            self.drive_df['time_min'] = self.drive_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] + \
-                                        self.drive_df[TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME_MIN]
-        else:
-            self.drive_df['time_min'] = 0
 
         # drop some of the attributes
         drop_fields = [TAZ.DRIVE_ACCESS_COLUMN_TAZ,               # use numerical version
@@ -610,8 +629,10 @@ class TAZ:
         # the index is TAZ num, supply mode num, and stop num
         if len(self.drive_df) > 0:
             self.drive_df.set_index([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
-                                TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                                TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM], inplace=True)
+                                     TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                                     TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
+                                     TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN,
+                                     TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN], inplace=True)
 
             # stack() this will make it so beyond taz num, supply mode num, and stop num
             # the remaining columns collapse to variable name, variable value

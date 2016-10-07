@@ -112,8 +112,10 @@ class PathSet:
     STATE_IDX_SEQ           = 5  #: sequence (for trip)
     STATE_IDX_SEQ_SUCCPRED  = 6  #: sequence for successor/predecessor
     STATE_IDX_LINKTIME      = 7  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_COST          = 8  #: cost float, for hyperpath/stochastic assignment
-    STATE_IDX_ARRDEP        = 9  #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
+    STATE_IDX_LINKCOST      = 8  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_LINKDIST      = 9  #: :py:class:`datetime.timedelta` instance
+    STATE_IDX_COST          = 10 #: cost float, for hyperpath/stochastic assignment
+    STATE_IDX_ARRDEP        = 11 #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
 
     # these are also the demand_mode_type values
     STATE_MODE_ACCESS   = "access"
@@ -665,21 +667,22 @@ class PathSet:
         It's also messier to have this in two places.  Maybe we should delete it from the C++; the overlap calcs are only in here right now.
 
         Returns pathset_paths_df with additional columns, Assignment.SIM_COL_PAX_FARE, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
-        And pathset_links_df with additional columns, Assignment.SIM_COL_PAX_FARE and Assignment.SIM_COL_PAX_COST
+        And pathset_links_df with additional columns, Assignment.SIM_COL_PAX_FARE, Assignment.SIM_COL_PAX_FARE_PERIOD, Assignment.SIM_COL_PAX_COST and Assignment.SIM_COL_PAX_DISTANCE
 
         """
         from .Assignment import Assignment
 
         # if these are here already, remove them since we'll recalculate them
         if Assignment.SIM_COL_PAX_COST in list(pathset_paths_df.columns.values):
-            pathset_paths_df.drop([Assignment.SIM_COL_PAX_FARE,
-                                   Assignment.SIM_COL_PAX_FARE_PERIOD,
+            pathset_paths_df.drop([# Assignment.SIM_COL_PAX_FARE,
                                    Assignment.SIM_COL_PAX_COST,
                                    Assignment.SIM_COL_PAX_LNPS,
                                    Assignment.SIM_COL_PAX_PROBABILITY,
                                    Assignment.SIM_COL_PAX_LOGSUM], axis=1, inplace=True)
             pathset_links_df.drop([Assignment.SIM_COL_PAX_COST,
-                                   Assignment.SIM_COL_PAX_FARE], axis=1, inplace=True)
+                                   Assignment.SIM_COL_PAX_FARE,
+                                   Assignment.SIM_COL_PAX_FARE_PERIOD,
+                                   Assignment.SIM_COL_PAX_DISTANCE], axis=1, inplace=True)
 
             # leaving this in for writing to CSV for debugging but I could take it out
             pathset_paths_df.drop(["logsum_component"], axis=1, inplace=True)
@@ -694,6 +697,9 @@ class PathSet:
         pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
         pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
         pathset_links_df = routes.add_fares(pathset_links_df)
+
+        # base this on pathfinding distance
+        pathset_links_df[Assignment.SIM_COL_PAX_DISTANCE] = pathset_links_df[Passenger.PF_COL_LINK_DIST]
 
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:

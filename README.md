@@ -183,6 +183,8 @@ Type of Assignment:
 Major changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
 
 To be filled in further but including:
+* Added time-period based drive access links (10/2016)
+* Added link distance to extension as part of StopState (10/2016)
 * Implemented overlap pathsize correction (8/2016)
 * Add purpose segmentation to cost weighting (7/2016)
 * Output pathsets in addition to chosen paths (4/2016)

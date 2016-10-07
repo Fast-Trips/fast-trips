@@ -378,6 +378,8 @@ class Trip:
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(self.stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))
 
+        self.add_shape_dist_traveled(stops)
+
         # datetime version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
@@ -392,9 +394,6 @@ class Trip:
             self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
                 60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
-        # skipping index setting for now -- it's annoying for joins
-        # self.stop_times_df.set_index([Trip.STOPTIMES_COLUMN_TRIP_ID,
-        #                              Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True, verify_integrity=True)
 
         # Add numeric stop and trip ids
         self.stop_times_df = stops.add_numeric_stop_id(self.stop_times_df,
@@ -517,6 +516,68 @@ class Trip:
         self.trips_df = pandas.merge(left=self.trips_df, right=stops_by_trip)
         # make sure we didn't change the length
         assert(trips_len == len(self.trips_df))
+
+    def add_shape_dist_traveled(self, stops):
+        """
+        For any trips in :py:attr:`Trip.stop_times_df` with rows that are missing column `shape_dist_traveled`,
+        this method will fill in the column from the stop longitude & latitude.  *stops* is a :py:class:`Stop` instance.
+
+        .. todo:: this will be in miles, but should be configurable
+
+        """
+        # temp column: null_shape_dist_traveled
+        self.stop_times_df["null_shape_dist_traveled"] = pandas.isnull(self.stop_times_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED])
+        FastTripsLogger.debug("add_shape_dist_traveled: missing %d out of %d shape_dist_traveled values in the stop times dataframe" %
+                              (self.stop_times_df["null_shape_dist_traveled"].sum(), len(self.stop_times_df["null_shape_dist_traveled"])))
+
+        # if they're all set, nothing to do
+        if self.stop_times_df["null_shape_dist_traveled"].sum() == 0:
+            self.stop_times_df.drop(["null_shape_dist_traveled"], axis=1, inplace=True)
+            return
+        FastTripsLogger.warn("Adding shape_dist_traveled in miles")
+
+        # aggregate to trip to find which trips are missing this field
+        stop_times_trips = self.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID, "null_shape_dist_traveled"]].groupby([Trip.STOPTIMES_COLUMN_TRIP_ID]).sum()
+        stop_times_trips["null_shape_dist_traveled"] = stop_times_trips["null_shape_dist_traveled"] > 0
+        stop_times_trips.reset_index(drop=False, inplace=True)
+        # FastTripsLogger.debug("add_shape_dist_traveled() stop_times_trips\n%s" % str(stop_times_trips))
+
+        # join this back to the stop_times dataframe
+        self.stop_times_df.drop(["null_shape_dist_traveled"], axis=1, inplace=True)
+        self.stop_times_df = pandas.merge(left =self.stop_times_df,
+                                          right=stop_times_trips,
+                                          on   =Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                          how  ="left")
+
+        # join stop information
+        self.stop_times_df = stops.add_stop_lat_lon(self.stop_times_df, Trip.STOPTIMES_COLUMN_STOP_ID, "stop_lat", "stop_lon")
+
+        # convert to links by adding prev_stop_seq -- this goes from 0 to max-1
+        self.stop_times_df["stop_seq_prev"] = self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] - 1
+        self.stop_times_df = pandas.merge(left    =self.stop_times_df,
+                                          left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID, "stop_seq_prev"],
+                                          right   =self.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                                       "stop_lat","stop_lon"]],
+                                          right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                          how     ="left",
+                                          suffixes=["","_prev"])
+        Util.calculate_distance_miles(self.stop_times_df, "stop_lat","stop_lon","stop_lat_prev","stop_lon_prev","calc shape_dist_traveled")
+
+        # incorporate it
+        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"])&
+                                (self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]==1), Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = 0.0
+        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"])&
+                                (self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1),  Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = self.stop_times_df["calc shape_dist_traveled"]
+
+        FastTripsLogger.debug("add_shape_dist_traveled() stop_times_df\n%s" % str(self.stop_times_df.head()))
+
+        # drop the temp fields
+        self.stop_times_df.drop(["null_shape_dist_traveled",
+                                 "stop_lat", "stop_lon",
+                                 "stop_seq_prev", "stop_sequence_prev",
+                                 "stop_lat_prev", "stop_lon_prev", "calc shape_dist_traveled"], axis=1, inplace=True)
+        FastTripsLogger.debug("add_shape_dist_traveled() stop_times_df\n%s" % str(self.stop_times_df.head()))
 
     def get_full_trips(self):
         """

@@ -104,6 +104,7 @@ namespace fasttrips {
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
         double  link_cost_;             ///< Link cost.
+        double  link_dist_;             ///< Link distance, in units of shape_dist_traveled.
         double  cost_;                  ///< Cost from previous link(s) and this link together.
         int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
@@ -119,6 +120,7 @@ namespace fasttrips {
             seq_succpred_ (0),
             link_time_    (0),
             link_cost_    (0),
+            link_dist_    (0),
             cost_         (0),
             iteration_    (-1),
             arrdep_time_  (0),
@@ -133,6 +135,7 @@ namespace fasttrips {
             int    seq_succpred,
             double link_time,
             double link_cost,
+            double link_dist,
             double cost,
             int    iteration,
             double arrdep_time) :
@@ -144,6 +147,7 @@ namespace fasttrips {
             seq_succpred_ (seq_succpred),
             link_time_    (link_time),
             link_cost_    (link_cost),
+            link_dist_    (link_dist),
             cost_         (cost),
             iteration_    (iteration),
             arrdep_time_  (arrdep_time),

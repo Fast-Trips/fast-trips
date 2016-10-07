@@ -226,22 +226,26 @@ namespace fasttrips {
         acceggr_file.open(ss_accegr.str().c_str(), std::ios_base::in);
 
 
-        std::string string_taz_num, string_supply_mode_num, string_stop_id_num, attr_name, string_attr_value;
+        std::string string_taz_num, string_supply_mode_num, string_stop_id_num, string_start_time, string_end_time, attr_name, string_attr_value;
         int taz_num, supply_mode_num, stop_id_num;
         double attr_value;
 
-        acceggr_file >> string_taz_num >> string_supply_mode_num >> string_stop_id_num >> attr_name >> string_attr_value;
+        acceggr_file >> string_taz_num >> string_supply_mode_num >> string_stop_id_num
+                     >> string_start_time >> string_end_time >> attr_name >> string_attr_value;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_accegr.str() << ": ";
             std::cout << "[" << string_taz_num         << "] ";
             std::cout << "[" << string_supply_mode_num << "] ";
             std::cout << "[" << string_stop_id_num     << "] ";
+            std::cout << "[" << string_start_time      << "] ";
+            std::cout << "[" << string_end_time        << "] ";
             std::cout << "[" << attr_name              << "] ";
             std::cout << "[" << string_attr_value      << "] ";
         }
         int attrs_read = 0;
-        while (acceggr_file >> taz_num >> supply_mode_num >> stop_id_num >> attr_name >> attr_value) {
-            taz_access_links_[taz_num][supply_mode_num][stop_id_num][attr_name] = attr_value;
+        TimePeriod time_period;
+        while (acceggr_file >> taz_num >> supply_mode_num >> stop_id_num >> time_period.start_time_ >> time_period.end_time_ >> attr_name >> attr_value) {
+            taz_access_links_[taz_num][supply_mode_num][stop_id_num][time_period][attr_name] = attr_value;
             attrs_read++;
         }
         if (process_num_ <= 1) {
@@ -382,21 +386,28 @@ namespace fasttrips {
     const Attributes* PathFinder::getAccessAttributes(
         int taz_id,
         int supply_mode_num,
-        int stop_id) const
+        int stop_id,
+        double tp_time) const
     {
-        TAZSupplyStopToAttr::const_iterator tssa_iter = taz_access_links_.find(taz_id);
+        TAZSupStopTpToAttr::const_iterator tssa_iter = taz_access_links_.find(taz_id);
         if (tssa_iter == taz_access_links_.end()) { return NULL; }
 
-        //  tssa_iter->second is a SupplyStopToAttr
-        SupplyStopToAttr::const_iterator ssa_iter = tssa_iter->second.find(supply_mode_num);
+        //  tssa_iter->second is a SupStopTpToAttr
+        SupStopTpToAttr::const_iterator ssa_iter = tssa_iter->second.find(supply_mode_num);
         if (ssa_iter == tssa_iter->second.end()) { return NULL; }
 
-        // ssa_iter->second is a StopToAttr
-        StopToAttr::const_iterator sa_iter = ssa_iter->second.find(stop_id);
+        // ssa_iter->second is a StopTpToAttr
+        StopTpToAttr::const_iterator sa_iter = ssa_iter->second.find(stop_id);
         if (sa_iter == ssa_iter->second.end()) { return NULL; }
 
-        // sa_iter->second is Attributes
-        return &(sa_iter->second);
+        // sa_iter->second is a TimePeriodToAttr which we have to loop through
+        const TimePeriodToAttr& tp2a = sa_iter->second;
+        for (TimePeriodToAttr::const_iterator tp2a_iter = tp2a.begin(); tp2a_iter != tp2a.end(); ++tp2a_iter) {
+            if ((tp_time >= tp2a_iter->first.start_time_) && (tp_time < tp2a_iter->first.end_time_)) {
+                return &(tp2a_iter->second);
+            }
+        }
+        return NULL;
     }
 
     const Attributes* PathFinder::getTransferAttributes(
@@ -467,9 +478,10 @@ namespace fasttrips {
                 stoptime_index[3*i],    // trip id
                 stoptime_index[3*i+1],  // sequence
                 stoptime_index[3*i+2],  // stop id
-                stoptime_times[3*i],    // arrive time
-                stoptime_times[3*i+1],  // depart time
-                stoptime_times[3*i+2]   // overcap
+                stoptime_times[4*i],    // arrive time
+                stoptime_times[4*i+1],  // depart time
+                stoptime_times[4*i+2],  // shape_dist_traveled
+                stoptime_times[4*i+3]   // overcap
             };
             // verify the sequence number makes sense: sequential, starts with 1
             assert(stt.sequence_ == trip_stop_times_[stt.trip_id_].size()+1);
@@ -792,7 +804,7 @@ namespace fasttrips {
         double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links for this TAZ?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(start_taz_id);
+        TAZSupStopTpToAttr::const_iterator iter_tss2a = taz_access_links_.find(start_taz_id);
         if (iter_tss2a == taz_access_links_.end()) {
             return false;
         }
@@ -829,7 +841,7 @@ namespace fasttrips {
             }
 
             // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
+            SupStopTpToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
             if (iter_ss2a == iter_tss2a->second.end()) {
                 if (path_spec.trace_) {
                     trace_file << "No links for this supply mode" << std::endl;
@@ -838,13 +850,26 @@ namespace fasttrips {
             }
 
             // Iterate through the links for the given supply mode
-            StopToAttr::const_iterator link_iter;
+            StopTpToAttr::const_iterator link_iter;
             for (link_iter  = iter_ss2a->second.begin();
                  link_iter != iter_ss2a->second.end(); ++link_iter)
             {
+                // find the one for the given time period
+                const TimePeriodToAttr& tp2a = link_iter->second;
+                TimePeriodToAttr::const_iterator tp2a_iter = tp2a.end();
+
+                for (tp2a_iter = tp2a.begin(); tp2a_iter != tp2a.end(); ++tp2a_iter) {
+                    if ((tp2a_iter->first.start_time_ <= path_spec.preferred_time_) && (tp2a_iter->first.end_time_ > path_spec.preferred_time_)) {
+                        break;  // found it
+                    }
+                }
+                // no link found for the departure/arrival time
+                if (tp2a_iter == tp2a.end()) { continue; }
+
                 int stop_id = link_iter->first;
-                Attributes link_attr = link_iter->second;
+                Attributes link_attr = tp2a_iter->second;
                 double attr_time = link_attr.find("time_min")->second;
+                double attr_dist = link_attr.find("dist")->second;
 
                 // outbound: departure time = destination - access
                 // inbound:  arrival time   = origin      + access
@@ -868,6 +893,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     attr_time,                                                                  // link time
                     cost,                                                                       // link cost
+                    attr_dist,                                                                  // link distance
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_                                                   // arrival/departure time
@@ -913,7 +939,7 @@ namespace fasttrips {
         const Attributes* zerowalk_xfer = getTransferAttributes(xfer_stop_id, xfer_stop_id);
         double            transfer_time = zerowalk_xfer->find("walk_time_min")->second;  // todo: make this a different time?
         double            deparr_time   = current_deparr_time - (transfer_time*dir_factor);
-        double            link_cost, cost;
+        double            link_cost, cost, transfer_dist;
         if (path_spec.hyperpath_)
         {
             link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, *zerowalk_xfer);
@@ -932,6 +958,7 @@ namespace fasttrips {
             -1,                             // sequence succ/pred
             transfer_time,                  // link time
             link_cost,                      // link cost
+            0.0,                            // link distance
             cost,                           // cost
             label_iteration,                // label iteration
             current_deparr_time             // arrival/departure time
@@ -952,6 +979,7 @@ namespace fasttrips {
         {
             xfer_stop_id    = transfer_it->first;
             transfer_time   = transfer_it->second.find("time_min")->second;
+            transfer_dist   = transfer_it->second.find("dist")->second;
             // outbound: departure time = latest departure - transfer
             //  inbound: arrival time   = earliest arrival + transfer
             deparr_time     = current_deparr_time - (transfer_time*dir_factor);
@@ -1002,6 +1030,7 @@ namespace fasttrips {
                 -1,                             // sequence succ/pred
                 transfer_time,                  // link time
                 link_cost,                      // link cost
+                transfer_dist,                  // link distance
                 cost,                           // cost
                 label_iteration,                // label iteration
                 current_deparr_time             // arrival/departure time
@@ -1048,7 +1077,7 @@ namespace fasttrips {
         }
 
         // are there any egress/access links?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
+        TAZSupStopTpToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
         if (iter_tss2a == taz_access_links_.end()) {
             // this shouldn't happen because of the shortcut
             return;
@@ -1077,23 +1106,32 @@ namespace fasttrips {
             int supply_mode_num = iter_s2w->first;
 
             // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
+            SupStopTpToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
             if (iter_ss2a == iter_tss2a->second.end()) {
                 continue;
             }
 
             // If this supply mode reaches the given stop
-            StopToAttr::const_iterator link_iter = iter_ss2a->second.find(current_label_stop.stop_id_);
+            StopTpToAttr::const_iterator link_iter = iter_ss2a->second.find(current_label_stop.stop_id_);
             if (link_iter != iter_ss2a->second.end()) {
 
-                Attributes link_attr            = link_iter->second;
+                // find the one for the right time period
+                const TimePeriodToAttr& tp2a = link_iter->second;
+                TimePeriodToAttr::const_iterator tp2a_iter = tp2a.end();
+                for (tp2a_iter = tp2a.begin(); tp2a_iter != tp2a.end(); ++tp2a_iter) {
+                    if ((earliest_dep_latest_arr >= tp2a_iter->first.start_time_) && (earliest_dep_latest_arr < tp2a_iter->first.end_time_)) {
+                        break;
+                    }
+                }
+                // none found for this time
+                if (tp2a_iter == tp2a.end()) { continue; }
+
+                Attributes link_attr            = tp2a_iter->second;
                 link_attr["preferred_delay_min"]= 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
-
-                bool    use_new_state           = false;
+                double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
-
 
                 if (path_spec.hyperpath_)
                 {
@@ -1137,6 +1175,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     link_cost,                                                                  // link cost
+                    access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time
@@ -1288,6 +1327,7 @@ namespace fasttrips {
                 double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
                 double  cost      = 0;
                 double  link_cost = 0;
+                double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
 
                 if (in_vehicle_time < 0) {
                     printf("in_vehicle_time < 0 -- this shouldn't happen\n");
@@ -1394,6 +1434,7 @@ namespace fasttrips {
                     it->seq_,                       // sequence succ/pred
                     in_vehicle_time+wait_time,      // link time
                     link_cost,                      // link cost
+                    link_dist,                      // link distance
                     cost,                           // cost
                     label_iteration,                // label iteration
                     arrdep_time                     // arrival/departure time
@@ -1535,7 +1576,7 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
+        TAZSupStopTpToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
         if (iter_tss2a == taz_access_links_.end()) {
             return false;
         }
@@ -1567,7 +1608,7 @@ namespace fasttrips {
             }
 
             // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
+            SupStopTpToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
             if (iter_ss2a == iter_tss2a->second.end()) {
                 if (path_spec.trace_) {
                     trace_file << "No links for this supply mode" << std::endl;
@@ -1576,11 +1617,11 @@ namespace fasttrips {
             }
 
             // Iterate through the links for the given supply mode
-            StopToAttr::const_iterator link_iter;
+            StopTpToAttr::const_iterator link_iter;
             for (link_iter  = iter_ss2a->second.begin();
                  link_iter != iter_ss2a->second.end(); ++link_iter)
             {
-                int     stop_id                 = link_iter->first;
+                int stop_id = link_iter->first;
                 if (reachable_final_stops.count(stop_id) == 0) {
                     reachable_final_stops[stop_id] = 0;
                 } else {
@@ -1609,7 +1650,7 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
+        TAZSupStopTpToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
         if (iter_tss2a == taz_access_links_.end()) {
             return false;
         }
@@ -1646,7 +1687,7 @@ namespace fasttrips {
             }
 
             // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
+            SupStopTpToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
             if (iter_ss2a == iter_tss2a->second.end()) {
                 if (path_spec.trace_) {
                     trace_file << "No links for this supply mode" << std::endl;
@@ -1655,19 +1696,28 @@ namespace fasttrips {
             }
 
             // Iterate through the links for the given supply mode
-            StopToAttr::const_iterator link_iter;
+            StopTpToAttr::const_iterator link_iter;
             for (link_iter  = iter_ss2a->second.begin();
                  link_iter != iter_ss2a->second.end(); ++link_iter)
             {
                 int     stop_id                 = link_iter->first;
-                Attributes link_attr            = link_iter->second;
+                double  earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
+
+                // find the one for the right time period
+                const TimePeriodToAttr& tp2a = link_iter->second;
+                TimePeriodToAttr::const_iterator tp2a_iter = tp2a.end();
+                for (tp2a_iter = tp2a.begin(); tp2a_iter != tp2a.end(); ++tp2a_iter) {
+                    if ((earliest_dep_latest_arr >= tp2a_iter->first.start_time_) && (earliest_dep_latest_arr < tp2a_iter->first.end_time_)) {
+                        break;
+                    }
+                }
+                if (tp2a_iter == tp2a.end()) { continue; }
+
+                Attributes link_attr            = tp2a_iter->second;
                 link_attr["preferred_delay_min"]= 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
-
-                double  earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
-
-                bool    use_new_state           = false;
+                double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
 
                 StopStates::const_iterator stop_states_iter = stop_states.find(stop_id);
@@ -1732,6 +1782,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
                     link_cost,                                                                  // link cost
+                    access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr                                                     // arrival/departure time

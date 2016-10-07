@@ -110,6 +110,8 @@ class Passenger:
     PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
     PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
     PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
+    PF_COL_LINK_COST                = 'pf_linkcost'  #: cost path-finder thinks passenger spent on link
+    PF_COL_LINK_DIST                = 'pf_linkdist'  #: dist path-finder thinks passenger spent on link
     PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
 
     PF_COL_PATH_NUM                 = 'pathnum'      #: path number, starting from 0
@@ -502,11 +504,12 @@ class Passenger:
         `pf_A_time`          datetime64[ns]  the time the passenger arrives at `A_id`
         `pf_B_time`          datetime64[ns]  the time the passenger arrives at `B_id`
         `pf_linktime`       timedelta64[ns]  the time spent on the link
+        `pf_linkcost`           float64  the cost of the link
+        `pf_linkdist`           float64  the distance for the link
         `A_lat`                     float64  the latitude of A (if it's a stop)
         `A_lon`                     float64  the longitude of A (if it's a stop)
         `B_lat`                     float64  the latitude of B (if it's a stop)
         `B_lon`                     float64  the longitude of B (if it's a stop)
-        `dist`                      float64  the distance of the link, in miles
         ==================  ===============  =====================================================================================================
 
         """
@@ -628,6 +631,8 @@ class Passenger:
                         a_time,
                         b_time,
                         state[PathSet.STATE_IDX_LINKTIME],
+                        state[PathSet.STATE_IDX_LINKCOST],
+                        state[PathSet.STATE_IDX_LINKDIST],
                         waittime,
                         link_num ])
 
@@ -662,6 +667,8 @@ class Passenger:
             Passenger.PF_COL_PAX_A_TIME,
             Passenger.PF_COL_PAX_B_TIME,
             Passenger.PF_COL_LINK_TIME,
+            Passenger.PF_COL_LINK_COST,
+            Passenger.PF_COL_LINK_DIST,
             Passenger.PF_COL_WAIT_TIME,
             Passenger.PF_COL_LINK_NUM ])
 
@@ -694,16 +701,6 @@ class Passenger:
         # get supply mode
         pathset_links_df = pandas.merge(left=pathset_links_df, right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]], how="left")
 
-        # get dist for the trip links, transfer links, and access/egress links
-        Util.calculate_distance_miles(pathset_links_df, "A_lat","A_lon","B_lat","B_lon", "distance")
-        pathset_links_df = transfers.add_distance(pathset_links_df, "distance")
-        pathset_links_df = tazs.add_distance(pathset_links_df, "distance")
-
-        null_distance = pathset_links_df.loc[ pandas.isnull(pathset_links_df["distance"]) ]
-        if len(null_distance) > 0:
-            FastTripsLogger.fatal("setup_passenger_pathsets() null distances:\n%s" % null_distance.to_string())
-            raise
-
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())
 
@@ -733,7 +730,7 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns):
+    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns, drop_pathfinding_columns):
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
@@ -745,7 +742,8 @@ class Passenger:
                                  output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
                                  append=True if iteration > 1 else False,
                                  keep_duration_columns=True,
-                                 drop_debug_columns=drop_debug_columns)
+                                 drop_debug_columns=drop_debug_columns,
+                                 drop_pathfinding_columns=drop_pathfinding_columns)
             pathset_df.drop(["iteration"], axis=1, inplace=True)
             return
 
@@ -765,7 +763,8 @@ class Passenger:
                              name="pathset_links_df" if links else "pathset_paths_df",
                              output_file=os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
                              append=do_append,
-                             drop_debug_columns=drop_debug_columns)
+                             drop_debug_columns=drop_debug_columns,
+                             drop_pathfinding_columns=drop_pathfinding_columns)
         pathset_df.drop(["iteration","simulation_iteration"], axis=1, inplace=True)
 
 

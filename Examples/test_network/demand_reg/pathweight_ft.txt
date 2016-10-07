@@ -19,3 +19,7 @@ all        work    transit          transit        rapid_bus    in_vehicle_time_
 all        work    transit          transit        rapid_bus    wait_time_min       1.77
 all        work    transit          transit        heavy_rail   in_vehicle_time_min 1.0
 all        work    transit          transit        heavy_rail   wait_time_min       1.77
+all        work    access           PNR            PNR_access   walk_time_min       2.0
+all        work    access           PNR            PNR_access   drive_time_min      1.5
+all        work    egress           PNR            PNR_egress   walk_time_min       2.0
+all        work    egress           PNR            PNR_egress   drive_time_min      1.5
