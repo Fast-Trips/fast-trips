@@ -199,10 +199,14 @@ class Transfer:
         if len(self.transfers_df) > 0:
             self.transfers_df = stops.add_numeric_stop_id(self.transfers_df,
                                                          id_colname=Transfer.TRANSFERS_COLUMN_FROM_STOP,
-                                                         numeric_newcolname=Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM)
+                                                         numeric_newcolname=Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                         warn=True,
+                                                         warn_msg="Numeric stop id not found for transfer from_stop_id")
             self.transfers_df = stops.add_numeric_stop_id(self.transfers_df,
                                                          id_colname=Transfer.TRANSFERS_COLUMN_TO_STOP,
-                                                         numeric_newcolname=Transfer.TRANSFERS_COLUMN_TO_STOP_NUM)
+                                                         numeric_newcolname=Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
+                                                         warn=True,
+                                                         warn_msg="Numeric stop id not found for transfer to_stop_id")
             # We're ready to write it
             self.write_transfers_for_extension()
 

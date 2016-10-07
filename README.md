@@ -2,7 +2,7 @@
 
 fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:
  * Project Website: http://fast-trips.mtc.ca.gov/
- * Full Technical Documentation (API): http://metropolitantransportationcommission.github.io/fast-trips/
+ * Full Technical Documentation (API): http://data.mtc.ca.gov/fast-trips/
 
 ## Contents
 * [Setup](#setup)
@@ -59,6 +59,7 @@ Option Name                         | Type   | Default | Description
 `create_skims`                      | bool   | False   | Not implemented yet.
 `debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
+`debug_output_columns`              | bool   | False   | If True, will write internal & debug columns into output.
 `iterations`                        | int    | 1       | Number of pathfinding iterations to run.
 `number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
@@ -74,7 +75,7 @@ Option Name                         | Type   | Default | Description
 
 Option Name                         | Type   | Default | Description
 -----------                         | ----   | --------| -----------
-`max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than `min_path_probability`
+`max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than ``
 `min_path_probability`              | float  | 0.005   | Paths with probability less than this get dropped IF `max_num_paths` specified AND hit.
 `min_transfer_penalty`              | float  | 1       | Minimum transfer penalty. Safeguard against having no transfer penalty which can result in terrible paths with excessive transfers.
 `overlap_scale_parameter`           | float  | 1       | Scale parameter for overlap path size variable.
@@ -179,11 +180,21 @@ Type of Assignment:
 
 ## Changelog
 
-Changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
+Major changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
 
 To be filled in further but including:
 * Implemented overlap pathsize correction (8/2016)
-
+* Add purpose segmentation to cost weighting (7/2016)
+* Output pathsets in addition to chosen paths (4/2016)
+* Update transit trip vehicle times based on boards, alights and vehicle-configured accleration, deceleration and dwell formulas (4/2016)
+* Output performance measures (pathfinding and path enumeration times, number of stops processed) (3/2016)
+* Stop order update to pathfinding: when a stop state is updated, mark other reachable stops for reprocessing (3/2016) [details][stop-order-details-url]
+* Support KNR and PNR access (11/2015)
+* Read user-class based cost weighting (11/2015)
+* Switch input format to GTFS-plus network (10/2015)
+* Move path finding to C++ extension (9/2015)
+* Parallelized path finding with multiprocessing (7/2015)
+* Port original FAST-TrIPs codebase to python with debug tracing (5/2015)
 
 [git-url]: <https://git-scm.com/>
 [git-fork-url]: <https://help.github.com/articles/fork-a-repo/>
@@ -196,3 +207,4 @@ To be filled in further but including:
 [git-repo-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips.git>
 [network-standard-url]: <https://github.com/osplanning-data-standards/GTFS-PLUS>
 [demand-standard-url]: <https://github.com/osplanning-data-standards/dyno-demand>
+[stop-order-details-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22>

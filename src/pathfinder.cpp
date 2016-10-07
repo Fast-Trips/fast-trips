@@ -655,7 +655,7 @@ namespace fasttrips {
         // iterate through the weights
         double cost = 0;
         if (true && path_spec.trace_ && !hush) {
-            trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << mode_num_to_str_.find(supply_mode_num)->second;
+            trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << modeStringForNum(supply_mode_num);
             trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
         }
 
@@ -668,9 +668,9 @@ namespace fasttrips {
             if (iter_attr == attributes.end()) {
                 // error out??
                 if (path_spec.trace_) {
-                    trace_file << " => NO ATTRIBUTE CALLED " << iter_weights->first << std::endl;
+                    trace_file << " => NO ATTRIBUTE CALLED " << iter_weights->first << " for " << modeStringForNum(supply_mode_num) << std::endl;
                 }
-                std::cerr << " => NO ATTRIBUTE CALLED " << iter_weights->first << std::endl;
+                std::cerr << " => NO ATTRIBUTE CALLED " << iter_weights->first << " for " << modeStringForNum(supply_mode_num) << std::endl;
                 continue;
             }
 
@@ -1348,7 +1348,7 @@ namespace fasttrips {
                         // TODO: this is awkward... setting this all up again.  Plus we don't have all the attributes set.  Cache something?
                         Attributes delay_attr;
                         delay_attr["time_min"             ] = 0;
-                        delay_attr["drive_travel_time_min"] = 0;
+                        delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
                         delay_attr["preferred_delay_min"  ] = wait_time;

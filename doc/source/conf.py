@@ -66,7 +66,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'fasttrips'
-copyright = u'2015, Lisa Zorn'
+copyright = u'2015-2016, Lisa Zorn'
 author = u'Lisa Zorn'
 
 # The version info for the project you're documenting, acts as replacement for

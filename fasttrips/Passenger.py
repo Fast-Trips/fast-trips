@@ -168,6 +168,15 @@ class Passenger:
             FastTripsLogger.fatal(error_msg)
             raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
+        # Drop (warn) on missing origins or destinations
+        missing_ods = self.trip_list_df[ pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID])|
+                                         pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID]) ]
+        if len(missing_ods)>0:
+            FastTripsLogger.warn("Missing origin or destination for the following trips. Dropping.\n%s" % str(missing_ods))
+            self.trip_list_df = self.trip_list_df.loc[ pandas.notnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     ])&
+                                                       pandas.notnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID]) ].reset_index(drop=True)
+            FastTripsLogger.warn("=> Have %d person trips" % len(self.trip_list_df))
+
         non_zero_person_ids = len(self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID]!="0"])
         if non_zero_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
 
@@ -234,7 +243,8 @@ class Passenger:
                                              on=Passenger.TRIP_LIST_COLUMN_PERSON_ID)
 
             # are any null?
-            no_person_ids = self.trip_list_df.loc[pandas.isnull(self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM])]
+            no_person_ids = self.trip_list_df.loc[ pandas.isnull(self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID_NUM])&
+                                                   (self.trip_list_df[Passenger.PERSONS_COLUMN_PERSON_ID]!="0")]
             if len(no_person_ids) > 0:
                 error_msg = "Even though a person list is given, failed to find person information for %d trips" % len(no_person_ids)
                 FastTripsLogger.fatal(error_msg)
@@ -723,17 +733,20 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter):
+    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns):
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
-        # if iteration == 0, then this is the pathfinding result
-        if iteration==0:
+        # if simulation_iteration < 0, then this is the pathfinding result
+        if simulation_iteration < 0:
+            pathset_df["iteration"] = iteration
             Util.write_dataframe(df=pathset_df,
                                  name="pathset_links_df" if links else "pathset_paths_df",
                                  output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
-                                 append=False,
-                                 keep_duration_columns=True)
+                                 append=True if iteration > 1 else False,
+                                 keep_duration_columns=True,
+                                 drop_debug_columns=drop_debug_columns)
+            pathset_df.drop(["iteration"], axis=1, inplace=True)
             return
 
         # otherwise, add columns and write it
@@ -748,10 +761,11 @@ class Passenger:
         else:
             if iteration == 1: do_append = False
 
-        Util.write_dataframe(pathset_df,
-                             "pathset_links_df" if links else "pathset_paths_df",
-                             os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
-                             append=do_append)
+        Util.write_dataframe(df=pathset_df,
+                             name="pathset_links_df" if links else "pathset_paths_df",
+                             output_file=os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
+                             append=do_append,
+                             drop_debug_columns=drop_debug_columns)
         pathset_df.drop(["iteration","simulation_iteration"], axis=1, inplace=True)
 
 
