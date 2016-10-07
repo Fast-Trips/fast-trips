@@ -692,11 +692,13 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
             FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.loc[trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
-        # add fares -- need stop zones first
+        # add fares -- need stop zones first if they're not there
         # todo -- could remove non-transit links for this?
-        pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
-        pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+        if "A_zone_id" not in list(pathset_links_df.columns.values):
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
         pathset_links_df = routes.add_fares(pathset_links_df)
+
 
         # base this on pathfinding distance
         pathset_links_df[Assignment.SIM_COL_PAX_DISTANCE] = pathset_links_df[Passenger.PF_COL_LINK_DIST]
