@@ -148,7 +148,9 @@ class Passenger:
                                              dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
                                                     Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID    :object,
                                                     Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :object,
-                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object})
+                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object,
+                                                    Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME    :object,
+                                                    Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME      :object})
         trip_list_cols     = list(self.trip_list_df.columns.values)
 
         assert(Passenger.TRIP_LIST_COLUMN_PERSON_ID          in trip_list_cols)
