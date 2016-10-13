@@ -450,7 +450,7 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, iteration, stops, trip_id_df, trips_df, modes_df, 
+    def setup_passenger_pathsets(self, iteration, stops, trip_id_df, trips_df, modes_df,
                                  transfers, tazs, prepend_route_id_to_trip_id):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two

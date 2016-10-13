@@ -1,7 +1,8 @@
-from_fare_class,to_fare_class,is_flat_fee,transfer_rule
-bus_local_fare_default,bus_express_fare_class,TRUE,2.5
-bus_local_fare_default,rail_fare_class,TRUE,3.5
-bus_express_fare_class,bus_local_fare_default,TRUE,1.5
-bus_express_fare_class,rail_fare_class,TRUE,3.5
-rail_fare_class,bus_local_fare_default,TRUE,1.5
-rail_fare_class,bus_express_fare_class,TRUE,2.5
+from_fare_class,to_fare_class,type,amount
+bus_local_fare_default,bus_express_fare_class,discount_flat,0.25
+bus_local_fare_default,rail_fare_class,discount_flat,0.50
+bus_local_fare_default,bus_local_fare_default,discount_percent,1.00
+bus_express_fare_class,bus_local_fare_default,discount_flat,0.50
+bus_express_fare_class,rail_fare_class,discount_flat,0.6
+rail_fare_class,bus_local_fare_default,transfer_fare,0.7
+rail_fare_class,bus_express_fare_class,transfer_fare,0.8

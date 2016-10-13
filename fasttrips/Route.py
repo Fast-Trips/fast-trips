@@ -126,10 +126,22 @@ class Route(object):
     FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS  = "from_fare_class"
     #: fasttrips Fare transfer rules column name: To Fare Class
     FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS    = "to_fare_class"
-    #: fasttrips Fare transfer rules column name: Is flat fee?
-    FARE_TRANSFER_RULES_COLUMN_IS_FLAT_FEE      = "is_flat_fee"
-    #: fasttrips Fare transfer rules column name: Transfer Rule
-    FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE    = "transfer_rule"
+    #: fasttrips Fare transfer rules column name: Transfer type?
+    FARE_TRANSFER_RULES_COLUMN_TYPE             = "type"
+    #: fasttrips Fare transfer rules column name: Transfer amount (discount or fare)
+    FARE_TRANSFER_RULES_COLUMN_AMOUNT           = "amount"
+
+    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: flat discount
+    TRANSFER_TYPE_DISCOUNT_FLAT    = "discount_flat"
+    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: percent discount
+    TRANSFER_TYPE_DISCOUNT_PERCENT = "discount_percent"
+    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: transfer fare
+    TRANSFER_TYPE_TRANSFER_FARE    = "transfer_fare"
+
+    #: Valid options for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
+    TRANSFER_TYPE_OPTIONS = [TRANSFER_TYPE_DISCOUNT_FLAT,
+                             TRANSFER_TYPE_DISCOUNT_PERCENT,
+                             TRANSFER_TYPE_TRANSFER_FARE]
 
     #: File with route ID, route ID number correspondence (and fare id num)
     OUTPUT_ROUTE_ID_NUM_FILE                    = "ft_intermediate_route_id.txt"
@@ -381,13 +393,28 @@ class Route(object):
                              (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_RULES_FILE))
 
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE)):
-            self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE))
+            self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE),
+                                                          dtype={Route.FARE_TRANSFER_RULES_COLUMN_TYPE:object})
             # verify required columns are present
             fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)
             assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS in fare_transfer_rules_cols)
             assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS   in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_IS_FLAT_FEE     in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE   in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_TYPE            in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT          in fare_transfer_rules_cols)
+
+            # verify valid values for transfer type
+            invalid_type = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE].isin(Route.TRANSFER_TYPE_OPTIONS)==False ]
+            if len(invalid_type) > 0:
+                error_msg = "Invalid value for %s:\n%s" % (Route.FARE_TRANSFER_RULES_COLUMN_TYPE, str(invalid_type))
+                FastTripsLogger.fatal(error_msg)
+                raise NetworkInputError(Route.INPUT_FARE_TRANSFER_RULES_FILE, error_msg)
+
+            # verify the amount is positive
+            negative_amount = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT] < 0]
+            if len(negative_amount) > 0:
+                error_msg = "Negative transfer amounts are invalid:\n%s" % str(negative_amount)
+                FastTripsLogger.fatal(error_msg)
+                raise NetworkInputError(Route.INPUT_FARE_TRANSFER_RULES_FILE, error_msg)
 
             FastTripsLogger.debug("=========== FARE TRANSFER RULES ===========\n" + str(self.fare_transfer_rules_df.head()))
             FastTripsLogger.debug("\n"+str(self.fare_transfer_rules_df.dtypes))
@@ -584,9 +611,16 @@ class Route(object):
 
     def add_fares(self, trip_links_df):
         """
-        Adds fare columns to the given :py:class:`pandas.DataFrame`.  New columns are :py:attr:`Assignment.SIM_COL_PAX_FARE` and :py:attr:`Assignment.SIM_COL_PAX_FARE_PERIOD`.
+        Adds (or replaces) fare columns to the given :py:class:`pandas.DataFrame`.
+
+        New columns are :py:attr:`Assignment.SIM_COL_PAX_FARE` and :py:attr:`Assignment.SIM_COL_PAX_FARE_PERIOD`.
         """
+        FastTripsLogger.info("          Adding fares to pathset")
+
         from .Assignment import Assignment
+        if Assignment.SIM_COL_PAX_FARE in list(trip_links_df.columns.values):
+            trip_links_df.drop([Assignment.SIM_COL_PAX_FARE,
+                                Assignment.SIM_COL_PAX_FARE_PERIOD], axis=1, inplace=True)
 
         return_columns = list(trip_links_df.columns.values)
         return_columns.append(Assignment.SIM_COL_PAX_FARE)
@@ -729,4 +763,82 @@ class Route(object):
         # make sure we didn't lose or add any
         assert len(trip_links_match_all) == num_trip_links
 
-        return trip_links_match_all
+        # apply fare transfers
+        return self.apply_fare_transfers(trip_links_match_all)
+
+    def apply_fare_transfers(self, trip_links_df):
+        """
+        Applies fare transfers by attaching previous fare period.
+
+        Adds (or replaces) columns :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS`, :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
+        and :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT` and adjusts the values in
+        :py:attr:`Assignment.SIM_COL_PAX_FARE`.
+
+        """
+        from .Passenger import Passenger
+        from .Assignment import Assignment
+
+        if Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS in list(trip_links_df.columns.values):
+            trip_links_df.drop([Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS,
+                                Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
+                                Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT], axis=1, inplace=True)
+
+        # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
+
+        # previous trip link
+        trip_links_df["%s prev" % Passenger.PF_COL_LINK_NUM] = trip_links_df[Passenger.PF_COL_LINK_NUM] - 2
+        trip_links_df = pandas.merge(left    =trip_links_df,
+                                     right   =trip_links_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
+                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                             Passenger.PF_COL_PATH_NUM,
+                                                             Passenger.PF_COL_LINK_NUM,
+                                                             Assignment.SIM_COL_PAX_FARE_PERIOD]],
+                                     left_on =[Passenger.PERSONS_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                               Passenger.PF_COL_PATH_NUM,
+                                               "%s prev" % Passenger.PF_COL_LINK_NUM],
+                                     right_on=[Passenger.PERSONS_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                               Passenger.PF_COL_PATH_NUM,
+                                               Passenger.PF_COL_LINK_NUM],
+                                     suffixes=["","_prev"],
+                                     how     ="left")
+        # extra columns are linknum prev, linknum_prev, fare_prev, fare_class_prev,
+
+        # join with transfers table
+        trip_links_df = pandas.merge(left    =trip_links_df,
+                                     right   =self.fare_transfer_rules_df,
+                                     left_on =["fare_class_prev","fare_class"],
+                                     right_on=[Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS,
+                                               Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS],
+                                     how     ="left")
+        # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
+
+        # keep Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS, Route.FARE_TRANSFER_RULES_COLUMN_TYPE, Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT
+        # so lose the rest
+        trip_links_df.drop(["%s prev" % Passenger.PF_COL_LINK_NUM,
+                            "%s_prev" % Passenger.PF_COL_LINK_NUM,
+                            "%s_prev" % Assignment.SIM_COL_PAX_FARE_PERIOD,
+                            Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS], axis=1, inplace=True)
+        # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
+
+        # apply discount_flat
+        trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
+                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_DISCOUNT_FLAT),
+                           Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Assignment.SIM_COL_PAX_FARE] - trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]
+
+        # apply discount_percent
+        trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
+                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_DISCOUNT_PERCENT),
+                           Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Assignment.SIM_COL_PAX_FARE]*(1.0- trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT])
+
+        # apply transfer fare
+        trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
+                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_FARE),
+                           Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]
+
+        # make sure it's not negative
+        trip_links_df.loc[ trip_links_df[Assignment.SIM_COL_PAX_FARE] < 0, Assignment.SIM_COL_PAX_FARE] = 0.0
+        FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
+
+        return trip_links_df

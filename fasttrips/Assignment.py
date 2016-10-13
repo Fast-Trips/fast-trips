@@ -673,7 +673,7 @@ class Assignment:
             FastTripsLogger.info("Finding paths for trips for those that haven't arrived yet")
             FT.passengers.pathfind_trip_list_df = Assignment.filter_trip_list_to_not_arrived(FT.passengers.trip_list_df, pathset_paths_df)
         else:
-            PATHFINDING_EVERYONE = True
+            Assignment.PATHFINDING_EVERYONE = True
             # we're starting over with empty vehicles
             Trip.reset_onboard(veh_trips_df)
 
