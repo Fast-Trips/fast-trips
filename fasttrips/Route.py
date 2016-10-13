@@ -127,21 +127,21 @@ class Route(object):
     #: fasttrips Fare transfer rules column name: To Fare Class
     FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS    = "to_fare_class"
     #: fasttrips Fare transfer rules column name: Transfer type?
-    FARE_TRANSFER_RULES_COLUMN_TYPE             = "type"
+    FARE_TRANSFER_RULES_COLUMN_TYPE             = "transfer_fare_type"
     #: fasttrips Fare transfer rules column name: Transfer amount (discount or fare)
-    FARE_TRANSFER_RULES_COLUMN_AMOUNT           = "amount"
+    FARE_TRANSFER_RULES_COLUMN_AMOUNT           = "transfer_fare_amount"
 
-    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: flat discount
-    TRANSFER_TYPE_DISCOUNT_FLAT    = "discount_flat"
-    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: percent discount
-    TRANSFER_TYPE_DISCOUNT_PERCENT = "discount_percent"
-    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: transfer fare
-    TRANSFER_TYPE_TRANSFER_FARE    = "transfer_fare"
+    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: transfer discount
+    TRANSFER_TYPE_TRANSFER_DISCOUNT = "transfer_discount"
+    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: free transfer
+    TRANSFER_TYPE_TRANSFER_FREE     = "transfer_free"
+    #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: transfer fare cost
+    TRANSFER_TYPE_TRANSFER_COST     = "transfer_cost"
 
     #: Valid options for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
-    TRANSFER_TYPE_OPTIONS = [TRANSFER_TYPE_DISCOUNT_FLAT,
-                             TRANSFER_TYPE_DISCOUNT_PERCENT,
-                             TRANSFER_TYPE_TRANSFER_FARE]
+    TRANSFER_TYPE_OPTIONS = [TRANSFER_TYPE_TRANSFER_DISCOUNT,
+                             TRANSFER_TYPE_TRANSFER_FREE,
+                             TRANSFER_TYPE_TRANSFER_COST]
 
     #: File with route ID, route ID number correspondence (and fare id num)
     OUTPUT_ROUTE_ID_NUM_FILE                    = "ft_intermediate_route_id.txt"
@@ -822,19 +822,19 @@ class Route(object):
                             Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS], axis=1, inplace=True)
         # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
 
-        # apply discount_flat
+        # apply transfer discount
         trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
-                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_DISCOUNT_FLAT),
+                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_DISCOUNT),
                            Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Assignment.SIM_COL_PAX_FARE] - trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]
 
-        # apply discount_percent
+        # apply transfer free
         trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
-                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_DISCOUNT_PERCENT),
-                           Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Assignment.SIM_COL_PAX_FARE]*(1.0- trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT])
+                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_FREE),
+                           Assignment.SIM_COL_PAX_FARE ] = 0.0
 
         # apply transfer fare
         trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
-                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_FARE),
+                           (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_COST),
                            Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]
 
         # make sure it's not negative
