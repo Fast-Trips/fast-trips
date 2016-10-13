@@ -103,7 +103,8 @@ namespace fasttrips {
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
-        double  link_cost_;             ///< Link cost.
+        double  link_fare_;             ///< Link fare. Financial cost of the link.
+        double  link_cost_;             ///< Link generalized cost.
         double  link_dist_;             ///< Link distance, in units of shape_dist_traveled.
         double  cost_;                  ///< Cost from previous link(s) and this link together.
         int     iteration_;             ///< Labeling iteration that generated this stop state.
@@ -119,6 +120,7 @@ namespace fasttrips {
             seq_          (0),
             seq_succpred_ (0),
             link_time_    (0),
+            link_fare_    (0),
             link_cost_    (0),
             link_dist_    (0),
             cost_         (0),
@@ -134,6 +136,7 @@ namespace fasttrips {
             int    seq,
             int    seq_succpred,
             double link_time,
+            double link_fare,
             double link_cost,
             double link_dist,
             double cost,
@@ -146,6 +149,7 @@ namespace fasttrips {
             seq_          (seq),
             seq_succpred_ (seq_succpred),
             link_time_    (link_time),
+            link_fare_    (link_fare),
             link_cost_    (link_cost),
             link_dist_    (link_dist),
             cost_         (cost),

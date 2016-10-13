@@ -138,7 +138,7 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
 
     npy_intp dims_double[2];
     dims_double[0] = num_links;
-    dims_double[1] = 7; // label_, deparr_time_, link_time_, link_cost_, link_dist_, cost_, arrdep_time_
+    dims_double[1] = 8; // label_, deparr_time_, link_time_, link_cost_, link_dist_, cost_, arrdep_time_
     PyArrayObject *ret_double = (PyArrayObject *)PyArray_SimpleNew(2, dims_double, NPY_DOUBLE);
 
     // costs and probability
@@ -167,10 +167,11 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
             *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = 0.0; // TODO: label
             *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path[link_num].second.deparr_time_;
             *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path[link_num].second.link_time_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[link_num].second.link_cost_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[link_num].second.link_dist_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 5) = path[link_num].second.cost_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 6) = path[link_num].second.arrdep_time_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[link_num].second.link_fare_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[link_num].second.link_cost_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 5) = path[link_num].second.link_dist_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 6) = path[link_num].second.cost_;
+            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 7) = path[link_num].second.arrdep_time_;
 
             ind += 1;
         }

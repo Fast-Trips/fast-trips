@@ -524,6 +524,7 @@ namespace fasttrips {
         ostr << std::setw( 5) << "seq";
         ostr << std::setw( 5) << (path_spec.outbound_ ? "suc" : "pred");
         ostr << std::setw(12) << "linktime";
+        ostr << std::setw(10) << "linkfare";
         ostr << std::setw(14) << "linkcost";
         ostr << std::setw(12) << "linkdist";
         ostr << std::setw(13) << "cost";
@@ -553,6 +554,8 @@ namespace fasttrips {
         ostr << std::setw(3) << std::setfill(' ') << ss.seq_succpred_;
         ostr << "  ";
         pf.printTimeDuration(ostr, ss.link_time_);
+        ostr << "  ";
+        ostr << std::setw(8) << std::setprecision(2) << std::fixed << std::setfill(' ') << ss.link_fare_;
         ostr << "  ";
         if (path_spec.hyperpath_) {
             ostr << std::setw(12) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.link_cost_;

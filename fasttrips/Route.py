@@ -147,6 +147,8 @@ class Route(object):
     OUTPUT_ROUTE_ID_NUM_FILE                    = "ft_intermediate_route_id.txt"
     #: File with fare id num, fare id, fare class, price, xfers
     OUTPUT_FARE_ID_FILE                         = "ft_intermediate_fare.txt"
+    #: File with fare transfer rules
+    OUTPUT_FARE_TRANSFER_FILE                   = "ft_intermediate_fare_transfers.txt"
     #: File with mode, mode number correspondence
     OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
@@ -606,6 +608,12 @@ class Route(object):
                                          Route.FARE_ATTR_COLUMN_TRANSFERS],
                                 sep=" ", index=False)
             FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE))
+
+            if len(self.fare_transfer_rules_df) > 0:
+                # File with fare transfer rules
+                self.fare_transfer_rules_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_FARE_TRANSFER_FILE),
+                                                   sep=" ", index=False)
+                FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_TRANSFER_FILE))
         else:
             FastTripsLogger.debug("No fare rules so no file %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE))
 

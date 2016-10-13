@@ -96,12 +96,6 @@ namespace fasttrips {
         double  egress_cost_;   ///< general cost units
     } TazStopCost;
 
-    /// Supply data: transfer time and cost between stops
-    typedef struct {
-        double  time_;          ///< in minutes
-        double  cost_;          ///< general cost units
-    } TransferCost;
-
     /// Supply data: Transit trip data, indexed by trip ID
     typedef struct {
         int        supply_mode_num_;
@@ -165,6 +159,23 @@ namespace fasttrips {
     } FarePeriod;
 
     typedef std::multimap<RouteStopZone, FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
+
+    /// Fare transfer types
+    enum FareTransferType {
+      TRANSFER_FREE     = 1,            ///< free transfer
+      TRANSFER_DISCOUNT = 2,            ///< discount transfer
+      TRANSFER_COST     = 3             ///< set price transfer
+    };
+
+    /// For fare transfer rules
+    typedef struct {
+      std::string       to_fare_period_;  ///< second fare period
+      FareTransferType  type_;            ///< what type of transfer is this
+      double            amount_;          ///< fare transfer type
+    } FareTransfer;
+
+    /// Fare Transfer Rules
+    typedef std::multimap<std::string, FareTransfer> FareTransferMmap;
 
     /** Performance information to return. */
     typedef struct {
@@ -231,6 +242,8 @@ namespace fasttrips {
         std::map<int, int> route_fares_;
         // Fare information: route/origin zone/dest zone -> fare period
         FarePeriodMmap fare_periods_;
+        // Fare transfer rules: from_fare_period -> FareTransfer
+        FareTransferMmap fare_transfer_rules_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;

@@ -189,6 +189,42 @@ namespace fasttrips {
         if (process_num_ <= 1) {
             std::cout << " => Read " << fare_periods_.size() << " fare periods" << std::endl;
         }
+        fare_period_file.close();
+
+        // read fare transfer rules
+        std::ifstream fare_transfer_file;
+        std::ostringstream ss_transfer_fare;
+        ss_transfer_fare << output_dir_ << kPathSeparator << "ft_intermediate_fare_transfers.txt";
+        fare_transfer_file.open(ss_transfer_fare.str().c_str(), std::ios_base::in);
+
+        std::string string_xferfrom, string_xferto, string_xfertype, string_xferamount;
+        fare_transfer_file >> string_xferfrom >> string_xferto >> string_xfertype >> string_xferamount;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_transfer_fare.str() << ": ";
+            std::cout << "[" << string_xferfrom   << "]";
+            std::cout << "[" << string_xferto     << "]";
+            std::cout << "[" << string_xfertype   << "]";
+            std::cout << "[" << string_xferamount << "]";
+        }
+
+        FareTransfer faretransfer;
+        while (fare_transfer_file >> string_xferfrom >> faretransfer.to_fare_period_ >> string_xfertype >> faretransfer.amount_) {
+            if (string_xfertype == "transfer_free") {
+                faretransfer.type_ = TRANSFER_FREE;
+            } else  if (string_xfertype == "transfer_discount") {
+                faretransfer.type_ = TRANSFER_DISCOUNT;
+            } else if (string_xfertype == "transfer_cost") {
+                faretransfer.type_ = TRANSFER_COST;
+            } else {
+                std::cerr << "Don't understand trasnfer_fare_type [" << string_xfertype << "]" << std::endl;
+                exit(2);
+            }
+            fare_transfer_rules_.insert(std::pair<std::string,FareTransfer>(string_xferfrom,faretransfer));
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << fare_transfer_rules_.size() << " fare transfer rules" << std::endl;
+        }
+        fare_transfer_file.close();
     }
 
     void PathFinder::readModeIds() {
@@ -892,6 +928,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     attr_time,                                                                  // link time
+                    0.0,                                                                        // link fare
                     cost,                                                                       // link cost
                     attr_dist,                                                                  // link distance
                     cost,                                                                       // cost
@@ -957,6 +994,7 @@ namespace fasttrips {
             -1,                             // sequence
             -1,                             // sequence succ/pred
             transfer_time,                  // link time
+            0.0,                            // link fare
             link_cost,                      // link cost
             0.0,                            // link distance
             cost,                           // cost
@@ -1029,6 +1067,7 @@ namespace fasttrips {
                 -1,                             // sequence
                 -1,                             // sequence succ/pred
                 transfer_time,                  // link time
+                0.0,                            // link fare
                 link_cost,                      // link cost
                 transfer_dist,                  // link distance
                 cost,                           // cost
@@ -1174,6 +1213,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
+                    0.0,                                                                        // link fare
                     link_cost,                                                                  // link cost
                     access_dist,                                                                // link distance
                     cost,                                                                       // cost
@@ -1328,6 +1368,7 @@ namespace fasttrips {
                 double  cost      = 0;
                 double  link_cost = 0;
                 double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
+                const FarePeriod* fp = 0;
 
                 if (in_vehicle_time < 0) {
                     printf("in_vehicle_time < 0 -- this shouldn't happen\n");
@@ -1340,10 +1381,10 @@ namespace fasttrips {
                     double overcap     = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
                     double at_capacity = (overcap >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
                     if (overcap < 0) { overcap = 0; } // make it non-negative
-                    const FarePeriod* fp = getFarePeriod(trip_info.route_id_,
-                                                         path_spec.outbound_ ? possible_board_alight.stop_id_ : current_label_stop.stop_id_,
-                                                         path_spec.outbound_ ? current_label_stop.stop_id_ : possible_board_alight.stop_id_,
-                                                         path_spec.outbound_ ? deparr_time : arrdep_time);
+                    fp = getFarePeriod(trip_info.route_id_,
+                                       path_spec.outbound_ ? possible_board_alight.stop_id_ : current_label_stop.stop_id_,
+                                       path_spec.outbound_ ? current_label_stop.stop_id_ : possible_board_alight.stop_id_,
+                                       path_spec.outbound_ ? deparr_time : arrdep_time);
 
                     if (path_spec.trace_) {
                         if (path_spec.outbound_) {
@@ -1433,6 +1474,7 @@ namespace fasttrips {
                     possible_board_alight.seq_,     // sequence
                     it->seq_,                       // sequence succ/pred
                     in_vehicle_time+wait_time,      // link time
+                    (fp ? fp->price_ : 0.0),        // link fare
                     link_cost,                      // link cost
                     link_dist,                      // link distance
                     cost,                           // cost
@@ -1781,6 +1823,7 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
+                    0.0,                                                                        // link fare
                     link_cost,                                                                  // link cost
                     access_dist,                                                                // link distance
                     cost,                                                                       // cost

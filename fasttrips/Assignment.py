@@ -944,10 +944,11 @@ class Assignment:
                         ret_ints[row_num,5],                                                             # sequence
                         ret_ints[row_num,6],                                                             # sequence succ/pred
                         datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
-                        ret_doubles[row_num,3],                                                          # link cost
-                        ret_doubles[row_num,4],                                                          # link distance
-                        ret_doubles[row_num,5],                                                          # cost
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,6])   # arrival/departure time
+                        ret_doubles[row_num,3],                                                          # link fare
+                        ret_doubles[row_num,4],                                                          # link cost
+                        ret_doubles[row_num,5],                                                          # link distance
+                        ret_doubles[row_num,6],                                                          # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
                     ] ) )
                 else:
                     pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
@@ -959,10 +960,11 @@ class Assignment:
                         ret_ints[row_num,5],                                                             # sequence
                         ret_ints[row_num,6],                                                             # sequence succ/pred
                         datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
-                        datetime.timedelta(minutes=ret_doubles[row_num,3]),                              # link cost
-                        ret_doubles[row_num,4],                                                          # link dist
-                        datetime.timedelta(minutes=ret_doubles[row_num,5]),                              # cost
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,6])   # arrival/departure time
+                        ret_doubles[row_num,3],                                                          # link fare
+                        datetime.timedelta(minutes=ret_doubles[row_num,4]),                              # link cost
+                        ret_doubles[row_num,5],                                                          # link dist
+                        datetime.timedelta(minutes=ret_doubles[row_num,6]),                              # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
                     ] ) )
                 row_num += 1
 
