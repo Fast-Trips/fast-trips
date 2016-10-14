@@ -149,16 +149,16 @@ namespace fasttrips {
     };
 
     /// For fare lookups: FarePeriod definition
-    typedef struct {
+    struct FarePeriod {
         std::string fare_id_;           ///< Fare ID
         std::string fare_period_;       ///< Name of the fare period
         double      start_time_;        ///< Start time of the fare period
         double      end_time_;          ///< End time of the fare period
         double      price_;             ///< Currency unspecified but matches value_of_time_
         int         transfers_;         ///< Number of transfers allowed
-    } FarePeriod;
+    };
 
-    typedef std::multimap<RouteStopZone, FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
+    typedef std::multimap<RouteStopZone, struct FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
 
     /// Fare transfer types
     enum FareTransferType {
@@ -169,13 +169,12 @@ namespace fasttrips {
 
     /// For fare transfer rules
     typedef struct {
-      std::string       to_fare_period_;  ///< second fare period
       FareTransferType  type_;            ///< what type of transfer is this
       double            amount_;          ///< fare transfer type
     } FareTransfer;
 
     /// Fare Transfer Rules
-    typedef std::multimap<std::string, FareTransfer> FareTransferMmap;
+    typedef std::map< std::pair<std::string,std::string>, FareTransfer> FareTransferMap;
 
     /** Performance information to return. */
     typedef struct {
@@ -242,8 +241,8 @@ namespace fasttrips {
         std::map<int, int> route_fares_;
         // Fare information: route/origin zone/dest zone -> fare period
         FarePeriodMmap fare_periods_;
-        // Fare transfer rules: from_fare_period -> FareTransfer
-        FareTransferMmap fare_transfer_rules_;
+        // Fare transfer rules: (from_fare_period,to_fare_period) -> FareTransfer
+        FareTransferMap fare_transfer_rules_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
@@ -511,6 +510,8 @@ namespace fasttrips {
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
 
         const FarePeriod* getFarePeriod(int route_id, int board_stop_id, int alight_stop_id, double trip_depart_time) const;
+
+        const FareTransfer* getFareTransfer(const std::string from_fare_period, const std::string to_fare_period) const;
 
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 

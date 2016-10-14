@@ -234,6 +234,42 @@ namespace fasttrips {
         return feasible;
     }
 
+    // Returns the fare given the relevant fare period, adjusting for transfer from last fare period as applicable
+    double Path::getFareWithTransfer(const PathFinder&  pf,
+                                     const std::string& last_fare_period,
+                                     const FarePeriod*  fare_period) const
+    {
+        // no fare period --> no fare
+        if (fare_period == 0) {
+            return 0.0;
+        }
+
+        double fare = fare_period->price_;
+        // no previous fare period -> no adjustment
+        if (last_fare_period == "") {
+            return fare;
+        }
+
+        // get the transfer info
+        const FareTransfer* ft = pf.getFareTransfer(last_fare_period, fare_period->fare_period_);
+        if (ft == (const FareTransfer*)0) {
+            return fare;
+        }
+
+        if (ft->type_ == TRANSFER_FREE) {
+            fare = 0.0;
+        } else if (ft->type_ == TRANSFER_DISCOUNT) {
+            fare = fare - ft->amount_;
+        } else if (ft->type_ == TRANSFER_COST) {
+            fare = ft->amount_;
+        }
+
+        // must be non-negative
+        if (fare < 0) { fare = 0; }
+
+        return fare;
+    }
+
     /**
      * Calculate the path cost now that we know all the links.  This may result in different
      * costs than the original costs.  This updates the path's StopState.cost_ attributes
@@ -264,6 +300,8 @@ namespace fasttrips {
         int inc             = chrono_order ? 1 : -1;
 
         cost_               = 0;
+        std::string last_fare_period;
+
         for (int index = start_ind; index != end_ind; index += inc)
         {
             int stop_id             = links_[index].first;
@@ -327,7 +365,13 @@ namespace fasttrips {
                 const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, orig_stop, dest_stop,
                                                         path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_);
                 if (fp) {
-                    link_attr["fare"]             = fp->price_;
+                    // adjust fare
+                    stop_state.link_fare_         = getFareWithTransfer(pf, last_fare_period, fp);
+                    link_attr["fare"]             = stop_state.link_fare_;
+                    // store last fare period
+                    last_fare_period              = fp->fare_period_;
+                } else {
+                    last_fare_period              = "";
                 }
 
                 stop_state.link_cost_             = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);

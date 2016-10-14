@@ -208,7 +208,7 @@ namespace fasttrips {
         }
 
         FareTransfer faretransfer;
-        while (fare_transfer_file >> string_xferfrom >> faretransfer.to_fare_period_ >> string_xfertype >> faretransfer.amount_) {
+        while (fare_transfer_file >> string_xferfrom >> string_xferto >> string_xfertype >> faretransfer.amount_) {
             if (string_xfertype == "transfer_free") {
                 faretransfer.type_ = TRANSFER_FREE;
             } else  if (string_xfertype == "transfer_discount") {
@@ -219,7 +219,7 @@ namespace fasttrips {
                 std::cerr << "Don't understand trasnfer_fare_type [" << string_xfertype << "]" << std::endl;
                 exit(2);
             }
-            fare_transfer_rules_.insert(std::pair<std::string,FareTransfer>(string_xferfrom,faretransfer));
+            fare_transfer_rules_[ std::make_pair(string_xferfrom, string_xferto)] = faretransfer;
         }
         if (process_num_ <= 1) {
             std::cout << " => Read " << fare_transfer_rules_.size() << " fare transfer rules" << std::endl;
@@ -2179,6 +2179,17 @@ namespace fasttrips {
         return (const FarePeriod*)0;
     }
 
+    /**
+     * Returns the fare transfer given two fare periods.
+     */
+    const FareTransfer* PathFinder::getFareTransfer(const std::string from_fare_period, const std::string to_fare_period) const
+    {
+        FareTransferMap::const_iterator ftm_iter = fare_transfer_rules_.find( std::make_pair(from_fare_period, to_fare_period) );
+        if (ftm_iter != fare_transfer_rules_.end()) {
+            return &(ftm_iter->second);
+        }
+        return (const FareTransfer*)0;
+    }
 
     /**
      * If outbound, then we're searching backwards, so this returns trips that arrive at the stop in time to depart at timepoint (timepoint-TIME_WINDOW_, timepoint]

@@ -24,6 +24,7 @@ namespace fasttrips {
 
     // Forward declarations
     class PathFinder;
+    struct FarePeriod;
 
     /**
      * This class represents a concrete path.
@@ -63,6 +64,11 @@ namespace fasttrips {
 
         /// Comparison operator; determines ordering in PathSet
         bool operator<(const Path& other) const;
+
+        /// Returns the fare given the relevant fare period, adjusting for transfer from last fare period as applicable
+        double getFareWithTransfer(const PathFinder&  pf,
+                                   const std::string& last_fare_period,
+                                   const FarePeriod*  fare_period) const;
 
         /// Add link to the path, modifying if necessary
         /// Return feasibility (infeasible if two out of order trips)
