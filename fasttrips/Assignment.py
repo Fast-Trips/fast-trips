@@ -529,7 +529,7 @@ class Assignment:
         """
         Counts the number of passenger trips with pathsets and returns it.
         """
-        return pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM].nunique()
+        return len(pathset_paths_df.groupby([Passenger.PERSONS_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]))
 
     @staticmethod
     def assign_paths(output_dir, FT):
@@ -551,7 +551,7 @@ class Assignment:
 
             if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and (iteration == 1):
                 FastTripsLogger.info("Reading paths from file")
-                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, include_asgn=False)
+                (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, FT.stops, include_asgn=False)
                 num_paths_found = Assignment.number_of_pathsets(new_pathset_paths_df)
 
             else:
@@ -1006,9 +1006,9 @@ class Assignment:
         # FastTripsLogger.debug("pathset_links_df:\n%s\n" % pathset_links_df.head().to_string())
         FastTripsLogger.debug("veh_trips_df:\n%s\n" % veh_trips_df.head().to_string())
 
-        veh_trip_cols = [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+        veh_trip_cols = [Trip.STOPTIMES_COLUMN_TRIP_ID,
                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                         Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                         Trip.STOPTIMES_COLUMN_STOP_ID,
                          Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
                          Trip.SIM_COL_VEH_OVERCAP,                # TODO: what about msa_overcap?
                          Assignment.SIM_COL_PAX_OVERCAP_FRAC]
@@ -1020,20 +1020,20 @@ class Assignment:
         pathset_links_df = pandas.merge(
             left    =pathset_links_df,
             right   =veh_trips_df[veh_trip_cols],
-            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'A_id_num','A_seq'],
-            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                      Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq'],
+            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                      Trip.STOPTIMES_COLUMN_STOP_ID,
                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
             how     ='left')
         pathset_links_df = pandas.merge(
             left    =pathset_links_df,
-            right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+            right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                   Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+                                   Trip.STOPTIMES_COLUMN_STOP_ID,
                                    Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
-            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,'B_id_num','B_seq'],
-            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                      Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID,'B_id','B_seq'],
+            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                      Trip.STOPTIMES_COLUMN_STOP_ID,
                       Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
             how     ='left',
             suffixes=("_A","_B"))
@@ -1044,8 +1044,8 @@ class Assignment:
         }, inplace=True)
 
         # redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time
-        pathset_links_df.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
-                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID_NUM,
+        pathset_links_df.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID,
+                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID,
                                '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
 
@@ -1193,7 +1193,7 @@ class Assignment:
         # Set alight delay (min)
         FastTripsLogger.debug("flag_missed_transfers() pathset_links_df (%d):\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string()))
         pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0.0
-        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = \
+        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = \
             ((pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_TIME]-pathset_links_df[Passenger.PF_COL_PAX_B_TIME])/numpy.timedelta64(1, 'm'))
 
         #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
@@ -1210,14 +1210,21 @@ class Assignment:
         # For trips, alight_time is the new B_time
         # Set A_time for links AFTER trip links by joining to next leg
         next_trips = pathset_links_df[[
-            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_NUM,
             Assignment.SIM_COL_PAX_ALIGHT_TIME]].copy()
         next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
         next_trips.rename(columns={Assignment.SIM_COL_PAX_ALIGHT_TIME:Assignment.SIM_COL_PAX_A_TIME}, inplace=True)
         # Add it to passenger trips.  Now A time is set for links after trip links (note this will never be a trip link)
-        pathset_links_df = pandas.merge(left=pathset_links_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM])
+        pathset_links_df = pandas.merge(left =pathset_links_df, 
+                                        right=next_trips,
+                                        how  ="left",
+                                        on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                               Passenger.PF_COL_PATH_NUM,
+                                               Passenger.PF_COL_LINK_NUM])
 
         FastTripsLogger.debug(str(pathset_links_df.dtypes))
 
@@ -1231,14 +1238,21 @@ class Assignment:
 
         # Now we only need to set the trip link's A time from the previous link's new_B_time
         next_trips = pathset_links_df[[
-            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_NUM,
             Assignment.SIM_COL_PAX_B_TIME]].copy()
         next_trips[Passenger.PF_COL_LINK_NUM] = next_trips[Passenger.PF_COL_LINK_NUM] + 1
         next_trips.rename(columns={Assignment.SIM_COL_PAX_B_TIME:"new_trip_A_time"}, inplace=True)
         # Add it to passenger trips.  Now new_trip_A_time is set for trip links
-        pathset_links_df = pandas.merge(left=pathset_links_df, right=next_trips, how="left", on=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM])
+        pathset_links_df = pandas.merge(left  =pathset_links_df,
+                                        right =next_trips,
+                                        how   ="left",
+                                        on    =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                Passenger.PF_COL_PATH_NUM,
+                                                Passenger.PF_COL_LINK_NUM])
         pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRIP, Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df["new_trip_A_time"]
         pathset_links_df.drop(["new_trip_A_time"], axis=1, inplace=True)
 
@@ -1250,14 +1264,15 @@ class Assignment:
         pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > numpy.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         # new wait time
-        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM]), Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
+        pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         # invalid trips have negative wait time
         pathset_links_df[Assignment.SIM_COL_MISSED_XFER] = 0
         pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME]<numpy.timedelta64(0,'m'), Assignment.SIM_COL_MISSED_XFER] = 1
 
         # count how many are valid (sum of invalid = 0 for the trip list id + path)
-        pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+        pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                              Passenger.PF_COL_PATH_NUM]).aggregate({Assignment.SIM_COL_MISSED_XFER:"sum" })
 
         pathset_links_df_grouped.loc[pathset_links_df_grouped[Assignment.SIM_COL_MISSED_XFER]> 0, Assignment.SIM_COL_MISSED_XFER] = 1
@@ -1270,7 +1285,9 @@ class Assignment:
         if Assignment.SIM_COL_MISSED_XFER in list(pathset_paths_df.columns.values):
             pathset_paths_df.drop([Assignment.SIM_COL_MISSED_XFER], axis=1, inplace=True)
 
-        pathset_paths_df = pandas.merge(left=pathset_paths_df, right=pathset_links_df_grouped.reset_index()[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM, Assignment.SIM_COL_MISSED_XFER]], how="left")
+        pathset_paths_df = pandas.merge(left  =pathset_paths_df,
+                                        right =pathset_links_df_grouped.reset_index()[[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, Passenger.PF_COL_PATH_NUM, Assignment.SIM_COL_MISSED_XFER]],
+                                        how   ="left")
         FastTripsLogger.debug("flag_missed_transfers() pathset_paths_df (%d):\n%s" % (len(pathset_paths_df), pathset_paths_df.head(30).to_string()))
 
         return (pathset_paths_df, pathset_links_df)
@@ -1326,9 +1343,9 @@ class Assignment:
 
         # Join pathset links to atcap_df; now passenger links alighting at a bump stop will have Trip.STOPTIMES_COLUMN_STOP_SEQUENCE set
         pathset_links_df = pandas.merge(left    =pathset_links_df,
-                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, "A_seq"],
-                                        right   =atcap_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
-                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID, "A_seq"],
+                                        right   =atcap_df[[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
+                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
                                         how     ="left")
 
         # these folks boarded
@@ -1396,9 +1413,9 @@ class Assignment:
 
         # join pathset links to bump_stops_df; now passenger links alighting at a bump stop will have Trip.STOPTIMES_COLUMN_STOP_SEQUENCE set
         pathset_links_df = pandas.merge(left    =pathset_links_df,
-                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, "A_seq"],
-                                        right   =bump_stops_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
-                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                        left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID, "A_seq"],
+                                        right   =bump_stops_df[[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]],
+                                        right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
                                         how     ="left")
         FastTripsLogger.debug("flag_bump_overcap_passengers() pathset_links_df (%d rows, showing head):\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string()))
 
@@ -1414,7 +1431,7 @@ class Assignment:
         # bump off later arrivals, later trip_list_num
         bumpstop_boards.sort_values(by=[ \
             Assignment.SIM_COL_PAX_A_TIME, # I think this is correct
-            Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+            Trip.STOPTIMES_COLUMN_TRIP_ID,
             "A_seq",
             Passenger.PF_COL_PAX_A_TIME,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM],
@@ -1423,7 +1440,7 @@ class Assignment:
 
         # For each trip_id, stop_seq, stop_id, we want the first *overcap* rows
         # group to trip_id, stop_seq, stop_id and count off
-        bpb_count = bumpstop_boards.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+        bpb_count = bumpstop_boards.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID,
                                              "A_seq",
                                              "A_id_num"]).cumcount()
         bpb_count.name = 'bump_index'
@@ -1467,16 +1484,16 @@ class Assignment:
                                         right=bumpstop_boards[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                                Passenger.PF_COL_PATH_NUM,
-                                                               Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                               Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                                "A_seq","new_bumpstop_boarded"]],
                                         how="left")
         pathset_links_df.loc[ pandas.notnull(pathset_links_df['new_bumpstop_boarded']), Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] = pathset_links_df["new_bumpstop_boarded"]
 
-        new_bump_wait = bumpstop_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+        new_bump_wait = bumpstop_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                            Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                            "A_id_num",
                                            Passenger.PF_COL_PAX_A_TIME]].groupby( \
-                        [Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,"A_id_num"]).first()
+                        [Trip.STOPTIMES_COLUMN_TRIP_ID,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,"A_id_num"]).first()
         new_bump_wait.reset_index(drop=False, inplace=True)
         new_bump_wait.rename(columns={"A_id_num":Trip.STOPTIMES_COLUMN_STOP_ID_NUM}, inplace=True)
 
@@ -1493,7 +1510,7 @@ class Assignment:
             FastTripsLogger.debug("flag_bump_overcap_passengers() bump_wait_df (%d rows, showing head):\n%s" %
                 (len(Assignment.bump_wait_df), Assignment.bump_wait_df.head().to_string()))
 
-            Assignment.bump_wait_df.drop_duplicates(subset=[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+            Assignment.bump_wait_df.drop_duplicates(subset=[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                             Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
 
         # drop unnecessary columns before returning
