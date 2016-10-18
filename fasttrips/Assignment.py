@@ -195,6 +195,7 @@ class Assignment:
     SIM_COL_PAX_DISTANCE            = "distance"         #: Link distance
     SIM_COL_PAX_FARE                = "fare"             #: Link fare in currency
     SIM_COL_PAX_FARE_PERIOD         = "fare_class"       #: Fare period id
+    SIM_COL_PAX_FREE_TRANSFER       = "free_transfer"    #: Free transfer?  NaN, 0.0 or 1.0, only free based on `fare_attributes_ft.txt`
     SIM_COL_PAX_COST                = 'sim_cost'         #: Link cost. (Cannot be `cost` because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST)
     SIM_COL_PAX_LNPS                = 'ln_PS'            #: log(PathSize)
     SIM_COL_PAX_PROBABILITY         = 'probability'      #: Probability of this path
