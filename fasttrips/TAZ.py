@@ -245,6 +245,14 @@ class TAZ:
         self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME] = \
             self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
+        # make sure WALK_ACCESS_COLUMN_TAZ/WALK_ACCESS_COLUMN_DIST is unique
+        walk_access_dupes = self.walk_access_df.duplicated(subset=[TAZ.WALK_ACCESS_COLUMN_TAZ,TAZ.WALK_ACCESS_COLUMN_STOP], keep=False)
+        if walk_access_dupes.sum() > 0:
+            self.walk_access_df["duplicates"] = walk_access_dupes
+            error_msg = "Duplicate taz/stop pairs in walk access links: \n%s" % str(self.walk_access_df.loc[ self.walk_access_df["duplicates"]])
+            FastTripsLogger.fatal(error_msg)
+            raise NetworkInputError(TAZ.INPUT_WALK_ACCESS_FILE, error_msg)
+
         FastTripsLogger.debug("Final\n"+str(self.walk_access_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.walk_access_df), "walk access", TAZ.INPUT_WALK_ACCESS_FILE))
