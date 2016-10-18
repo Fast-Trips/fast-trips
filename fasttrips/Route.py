@@ -599,6 +599,9 @@ class Route(object):
             fare_rules_df["duration"] = fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME]
             fare_rules_df.sort_values(by=[Route.FARE_RULES_COLUMN_FARE_ID_NUM,"duration"], ascending=True, inplace=True)
 
+            # transfer_duration fillna with -1
+            fare_rules_df.fillna({Route.FARE_ATTR_COLUMN_TRANSFER_DURATION:-1}, inplace=True)
+
             # File with fare id num, fare id, fare class, price, xfers
             fare_rules_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE),
                                 columns=[Route.FARE_RULES_COLUMN_FARE_ID_NUM,
@@ -610,7 +613,8 @@ class Route(object):
                                          Route.FARE_RULES_COLUMN_START_TIME,
                                          Route.FARE_RULES_COLUMN_END_TIME,
                                          Route.FARE_ATTR_COLUMN_PRICE,
-                                         Route.FARE_ATTR_COLUMN_TRANSFERS],
+                                         Route.FARE_ATTR_COLUMN_TRANSFERS,
+                                         Route.FARE_ATTR_COLUMN_TRANSFER_DURATION],
                                 sep=" ", index=False)
             FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE))
 

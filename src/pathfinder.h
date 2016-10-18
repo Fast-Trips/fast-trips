@@ -155,7 +155,8 @@ namespace fasttrips {
         double      start_time_;        ///< Start time of the fare period
         double      end_time_;          ///< End time of the fare period
         double      price_;             ///< Currency unspecified but matches value_of_time_
-        int         transfers_;         ///< Number of transfers allowed
+        int         transfers_;         ///< Number of free transfers allowed on this fare.
+        double      transfer_duration_; ///< Transfer duration, in seconds. -1 if no requirement.
     };
 
     typedef std::multimap<RouteStopZone, struct FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;

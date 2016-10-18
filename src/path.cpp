@@ -302,6 +302,10 @@ namespace fasttrips {
         cost_               = 0;
         std::string last_fare_period;
 
+        // for free transfer calculations -- fare_period -> (first board time, board count)
+        typedef std::map< std::string, std::pair<double,int> > FarePeriodForFreeTransfers;
+        FarePeriodForFreeTransfers fp_for_freexfers;
+
         for (int index = start_ind; index != end_ind; index += inc)
         {
             int stop_id             = links_[index].first;
@@ -309,6 +313,7 @@ namespace fasttrips {
 
             int orig_stop           = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
             int dest_stop           = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
+
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
             {
@@ -349,6 +354,7 @@ namespace fasttrips {
             else
             {
                 double trip_ivt_min               = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
+                double trip_depart_time           = path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_;
                 double wait_min                   = stop_state.link_time_ - trip_ivt_min;
 
                 const TripInfo& trip_info         = *(pf.getTripInfo(stop_state.trip_id_));
@@ -362,11 +368,33 @@ namespace fasttrips {
                 // overcap should be non-negative
                 if (link_attr["overcap"] < 0) { link_attr["overcap"] = 0; }
 
-                const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, orig_stop, dest_stop,
-                                                        path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_);
+                const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, orig_stop, dest_stop, trip_depart_time);
                 if (fp) {
                     // adjust fare
                     stop_state.link_fare_         = getFareWithTransfer(pf, last_fare_period, fp);
+
+                    // check if free transfer based on fare attributes
+                    FarePeriodForFreeTransfers::iterator fpft_iter = fp_for_freexfers.find(fp->fare_period_);
+                    if (fpft_iter == fp_for_freexfers.end()) {
+                        // initialize
+                        fp_for_freexfers[fp->fare_period_] = std::make_pair(trip_depart_time, 1);
+                    } else {
+                        // time since first board, in seconds
+                        double transfer_time_sec = (trip_depart_time - fp_for_freexfers[fp->fare_period_].first)*60.0;
+
+                        // check if free transfer
+                        if ((fp->transfers_ > 0) &&                                          // free transfer allowed
+                            (fp_for_freexfers[fp->fare_period_].second <= fp->transfers_) && // this one qualifies
+                            ((fp->transfer_duration_ < 0) ||                                 // no max transfer duration or
+                             (transfer_time_sec <= fp->transfer_duration_)))                 //   transfer time <= transfer duration
+                        {
+                            stop_state.link_fare_ = 0.0;
+                        }
+
+                        // bump the count
+                        fp_for_freexfers[fp->fare_period_].second += 1;
+                    }
+
                     link_attr["fare"]             = stop_state.link_fare_;
                     // store last fare period
                     last_fare_period              = fp->fare_period_;

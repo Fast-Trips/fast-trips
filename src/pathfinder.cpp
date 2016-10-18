@@ -161,13 +161,15 @@ namespace fasttrips {
         ss_fare << output_dir_ << kPathSeparator << "ft_intermediate_fare.txt";
         fare_period_file.open(ss_fare.str().c_str(), std::ios_base::in);
 
-        //          fare_id_num         fare_id         fare_class          route_id_num         origin_id_num         destination_id_num, start_time              end_time              price              transfers
-        std::string string_fare_id_num, string_fare_id, string_fare_period, string_route_id_num, string_origin_id_num, string_dest_id_num, string_fare_start_time, string_fare_end_time, string_fare_price, string_fare_transfers;
+        //          fare_id_num         fare_id         fare_class          route_id_num         origin_id_num         destination_id_num, start_time              end_time
+        std::string string_fare_id_num, string_fare_id, string_fare_period, string_route_id_num, string_origin_id_num, string_dest_id_num, string_fare_start_time, string_fare_end_time;
+        //          price              transfers,             transfer_duration
+        std::string string_fare_price, string_fare_transfers, string_tdur;
         int fare_id_num;
 
         fare_period_file >> string_fare_id_num >> string_fare_id >> string_fare_period
                          >> string_route_id_num >> string_origin_id_num >> string_dest_id_num
-                         >> string_fare_start_time >> string_fare_end_time >> string_fare_price >> string_fare_transfers;
+                         >> string_fare_start_time >> string_fare_end_time >> string_fare_price >> string_fare_transfers >> string_tdur;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_fare.str()   << ": ";
             std::cout << "[" << string_fare_id_num     << "] ";
@@ -180,10 +182,13 @@ namespace fasttrips {
             std::cout << "[" << string_fare_end_time   << "] ";
             std::cout << "[" << string_fare_price      << "] ";
             std::cout << "[" << string_fare_transfers  << "] ";
+            std::cout << "[" << string_tdur            << "] ";
         }
         RouteStopZone rsz;
         FarePeriod fp;
-        while (fare_period_file >> fare_id_num >> fp.fare_id_ >> fp.fare_period_ >> rsz.route_id_ >> rsz.origin_zone_ >> rsz.destination_zone_ >> fp.start_time_ >> fp.end_time_ >> fp.price_ >> fp.transfers_) {
+        while (fare_period_file >> fare_id_num >> fp.fare_id_ >> fp.fare_period_ >> rsz.route_id_ >> rsz.origin_zone_ >> rsz.destination_zone_ >> fp.start_time_ >> fp.end_time_
+                                >> fp.price_ >> fp.transfers_ >> fp.transfer_duration_)
+        {
             fare_periods_.insert(std::pair<RouteStopZone,FarePeriod>(rsz,fp));
         }
         if (process_num_ <= 1) {
