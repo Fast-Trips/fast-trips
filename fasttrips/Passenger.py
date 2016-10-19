@@ -149,7 +149,9 @@ class Passenger:
                                              dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
                                                     Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID    :object,
                                                     Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :object,
-                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object})
+                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object,
+                                                    Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME    :object,
+                                                    Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME      :object})
         trip_list_cols     = list(self.trip_list_df.columns.values)
 
         assert(Passenger.TRIP_LIST_COLUMN_PERSON_ID          in trip_list_cols)
@@ -368,7 +370,7 @@ class Passenger:
         return self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, Passenger.TRIP_LIST_COLUMN_PERSON_ID].iloc[0]
 
     @staticmethod
-    def read_passenger_pathsets(pathset_dir, include_asgn=True):
+    def read_passenger_pathsets(pathset_dir, stops, include_asgn=True):
         """
         Reads the dataframes described in :py:meth:`Passenger.setup_passenger_pathsets` and returns them.
 
@@ -443,6 +445,12 @@ class Passenger:
         if include_asgn:
             pathset_links_df.drop(["%s min" % Assignment.SIM_COL_PAX_LINK_TIME,
                                    "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], axis=1, inplace=True)
+
+        # if A_id_num isn't there, add it
+        if "A_id_num" not in pathset_links_df.columns.values:
+            pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="A_id", numeric_newcolname="A_id_num")
+        if "B_id_num" not in pathset_links_df.columns.values:
+            pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="B_id", numeric_newcolname="B_id_num")
 
         FastTripsLogger.info("Read %s" % links_file)
         FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.head()))
@@ -811,9 +819,8 @@ class Passenger:
         # group to passenger trips
         pathset_paths_df_grouped = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                      Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                     Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                                     Assignment.SIM_COL_PAX_CHOSEN]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                                              Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).aggregate("max").reset_index()
+                                                     Assignment.SIM_COL_PAX_CHOSEN]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]).aggregate("max").reset_index()
         # if there's no chosen AND one of the unchosen options is choosable then we can choose
         num_rejected = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_REJECTED       ])  # everything is rejected
         num_unchosen = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ])
@@ -840,7 +847,9 @@ class Passenger:
 
         # add to_choose flag and rand to pathset_paths_df
         pathset_paths_df = pandas.merge(left =pathset_paths_df,
-                                        right=pax_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, "to_choose", "rand"]],
+                                        right=pax_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                             "to_choose", "rand"]],
                                         how  ="left")
         FastTripsLogger.debug("choose_paths() pathset_paths_df=\n%s" % pathset_paths_df.head().to_string())
 
@@ -857,8 +866,7 @@ class Passenger:
 
         # Use updated probability -- create cumulative probability
         paths_choose_df["prob_cum"] = paths_choose_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM])[Assignment.SIM_COL_PAX_PROBABILITY].cumsum()
+                                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])[Assignment.SIM_COL_PAX_PROBABILITY].cumsum()
         # verify cumsum is ok
         # FastTripsLogger.debug("choose_path() paths_choose_df=\n%s\n" % paths_choose_df.head(100).to_string())
 
@@ -873,10 +881,8 @@ class Passenger:
         # this will now be person id, trip list id num, index for chosen path
         chosen_path_df = paths_choose_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                           "rand_less"]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]).idxmax(axis=0).reset_index()
+                                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]).idxmax(axis=0).reset_index()
         chosen_path_df.rename(columns={"rand_less":"chosen_idx"}, inplace=True)
         FastTripsLogger.debug("choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
         num_chosen += len(chosen_path_df)
@@ -900,7 +906,6 @@ class Passenger:
         pathset_links_df = pandas.merge(left=pathset_links_df,
                                         right=pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                                 Passenger.PF_COL_PATH_NUM,
                                                                 Assignment.SIM_COL_PAX_CHOSEN]],
                                         how="left")
