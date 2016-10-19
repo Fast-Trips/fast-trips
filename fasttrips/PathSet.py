@@ -175,12 +175,6 @@ class PathSet:
         """
         self.pathdict = []
 
-    def outbound(self):
-        """
-        Quick accessor to see if :py:attr:`PathSet.direction` is :py:attr:`PathSet.DIR_OUTBOUND`.
-        """
-        return self.direction == PathSet.DIR_OUTBOUND
-
     @staticmethod
     def set_user_class(trip_list_df, new_colname):
         """
@@ -740,7 +734,7 @@ class PathSet:
                                                                  Passenger.TRIP_LIST_COLUMN_VOT,
                                                                  Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
                                                                  Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
-                                                                 Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE
+                                                                 Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
                                                                 ]],
                                              how  ="left",
                                              on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
@@ -861,6 +855,24 @@ class PathSet:
                                                         ]],
                                       how  ="left",
                                       on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+
+        # drop links that are irrelevant based on departure time for access links, or arrival time for egress links
+        cost_accegr_df["check_time"] = cost_accegr_df[Assignment.SIM_COL_PAX_A_TIME]  # departure time for access
+        cost_accegr_df.loc[ cost_accegr_df[TAZ.MODE_COLUMN_MODE_NUM].isin(TAZ.EGRESS_MODE_NUMS), "check_time" ] = cost_accegr_df[Assignment.SIM_COL_PAX_B_TIME] # arrival time for egress
+        cost_accegr_df["check_time"] = (cost_accegr_df["check_time"] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+
+        # it's only drive links we need to check
+        cost_accegr_df["to_drop"]    = False
+        cost_accegr_df.loc[ cost_accegr_df[TAZ.MODE_COLUMN_MODE_NUM].isin(TAZ.DRIVE_MODE_NUMS)&
+                           ((cost_accegr_df["check_time"] <  cost_accegr_df["%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN, "drive")])|
+                            (cost_accegr_df["check_time"] >= cost_accegr_df["%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN,   "drive")])), "to_drop"] = True
+
+        # if len(Assignment.TRACE_PERSON_IDS) > 0:
+        #     FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.loc[cost_accegr_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_accegr_df.dtypes)))
+
+        FastTripsLogger.debug("Dropping %d rows from cost_accegr_df" % cost_accegr_df["to_drop"].sum())
+        cost_accegr_df = cost_accegr_df.loc[ cost_accegr_df["to_drop"]==False ]
+        cost_accegr_df.drop(["check_time","to_drop"], axis=1, inplace=True)
 
         # preferred delay_min - arrival means want to arrive before that time
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \

@@ -81,16 +81,17 @@ class Passenger:
     TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN           = 'arrival_time_min'
     #: Trip list column: Transit Mode
     TRIP_LIST_COLUMN_TRANSIT_MODE               = "transit_mode"
-    #: Trip list column: Numeric Transit Mode
-    TRIP_LIST_COLUMN_TRANSIT_MODE_NUM           = "transit_mode_num"
     #: Trip list column: Access Mode
     TRIP_LIST_COLUMN_ACCESS_MODE                = "access_mode"
-    #: Trip list column: Numeric Access Mode
-    TRIP_LIST_COLUMN_ACCESS_MODE_NUM            = "access_mode_num"
     #: Trip list column: Egress Mode
     TRIP_LIST_COLUMN_EGRESS_MODE                = "egress_mode"
-    #: Trip list column: Numeric Egress Mode
-    TRIP_LIST_COLUMN_EGRESS_MODE_NUM            = "egress_mode_num"
+    #: Trip list column: Outbound (bool), true iff time target is arrival
+    TRIP_LIST_COLUMN_OUTBOUND                   = "outbound"
+
+    #: Option for :py:attr:`Passenger.TRIP_LIST_COLUMN_TIME_TARGET` (arrival time)
+    TIME_TARGET_ARRIVAL                         = "arrival"
+    #: Option for :py:attr:`Passenger.TRIP_LIST_COLUMN_TIME_TARGET` (departure time)
+    TIME_TARGET_DEPARTURE                       = "departure"
 
     #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
     #: TODO: get rid of this?  Maybe user should always specify.
@@ -158,6 +159,9 @@ class Passenger:
         assert(Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID     in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID      in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME     in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME       in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_TIME_TARGET        in trip_list_cols)
 
         FastTripsLogger.debug("=========== TRIP LIST ===========\n" + str(self.trip_list_df.head()))
         FastTripsLogger.debug("\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
@@ -320,6 +324,17 @@ class Passenger:
 
         # We're done with mode_dash_count, thanks for your service
         self.trip_list_df.drop('mode_dash_count', axis=1, inplace=True) # replace with cumsum
+
+        # validate time_target
+        invalid_time_target = self.trip_list_df.loc[ self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET].isin(
+                                                        [Passenger.TIME_TARGET_ARRIVAL, Passenger.TIME_TARGET_DEPARTURE])==False ]
+        if len(invalid_time_target) > 0:
+            error_msg = "Invalid value in column %s:\n%s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(invalid_time_target))
+            FastTripsLogger.fatal(error_msg)
+            raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+
+        # set outbound
+        self.trip_list_df[Passenger.TRIP_LIST_COLUMN_OUTBOUND] = (self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_ARRIVAL)
 
         # Set the user class for each trip
         from .PathSet import PathSet
@@ -570,7 +585,7 @@ class Passenger:
                 prev_state_id = None
 
                 state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
-                if not pathset.outbound(): state_list = list(reversed(state_list))
+                if not pathset.outbound: state_list = list(reversed(state_list))
 
                 pathlist.append([\
                     pathset.person_id,
@@ -599,7 +614,7 @@ class Passenger:
                         trip_id     = state[PathSet.STATE_IDX_TRIP]
                         linkmode    = PathSet.STATE_MODE_TRIP
 
-                    if pathset.outbound():
+                    if pathset.outbound:
                         a_id_num    = state_id
                         b_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
                         a_seq       = state[PathSet.STATE_IDX_SEQ]
