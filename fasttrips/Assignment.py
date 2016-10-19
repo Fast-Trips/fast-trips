@@ -1298,7 +1298,7 @@ class Assignment:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def flag_bump_overcap_passengers(iteration, simulation_iteration, bump_iter, pathset_paths_df, pathset_links_df, veh_loaded_df):
+    def flag_bump_overcap_passengers(iteration, simulation_iteration, bump_iter, pathset_paths_df, pathset_links_df, veh_loaded_df, trips):
         """
         Check if we have boards on over-capacity vehicles.  Mark them and mark the boards.
 
@@ -1495,12 +1495,14 @@ class Assignment:
         pathset_links_df.loc[ pandas.notnull(pathset_links_df['new_bumpstop_boarded']), Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] = pathset_links_df["new_bumpstop_boarded"]
 
         new_bump_wait = bumpstop_boards[[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                           Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                           "A_id_num",
-                                           Passenger.PF_COL_PAX_A_TIME]].groupby( \
+                                         Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                         "A_id_num",
+                                         Passenger.PF_COL_PAX_A_TIME]].groupby( \
                         [Trip.STOPTIMES_COLUMN_TRIP_ID,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,"A_id_num"]).first()
         new_bump_wait.reset_index(drop=False, inplace=True)
         new_bump_wait.rename(columns={"A_id_num":Trip.STOPTIMES_COLUMN_STOP_ID_NUM}, inplace=True)
+
+        new_bump_wait = trips.add_numeric_trip_id(new_bump_wait, id_colname=Trip.STOPTIMES_COLUMN_TRIP_ID, numeric_newcolname=Trip.STOPTIMES_COLUMN_TRIP_ID_NUM)
 
         FastTripsLogger.debug("new_bump_wait (%d rows, showing head):\n%s" %
             (len(new_bump_wait), new_bump_wait.head().to_string(formatters=\
@@ -1667,7 +1669,7 @@ class Assignment:
                     # This needs to run at this point because the arrival times for the passengers are accurate here
                     (chosen_paths_bumped, pathset_paths_df, pathset_links_df, veh_trips_df) = \
                         Assignment.flag_bump_overcap_passengers(iteration, simulation_iteration, bump_iter,
-                                                                pathset_paths_df, pathset_links_df, veh_trips_df)
+                                                                pathset_paths_df, pathset_links_df, veh_trips_df, FT.trips)
 
 
                     FastTripsLogger.info("        -> completed loop bump_iter %d and bumped %d chosen paths" % (bump_iter, chosen_paths_bumped))
