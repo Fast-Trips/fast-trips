@@ -1350,16 +1350,6 @@ namespace fasttrips {
                 int board_alight_stop = possible_board_alight.stop_id_;
                 StopStates::const_iterator possible_stop_state_iter = stop_states.find(board_alight_stop);
 
-                // hyperpath: potential successor/predessor can't be access or egress
-                /*
-                if (path_spec.hyperpath_) {
-                    if (possible_stop_state_iter != stop_states.end() && possible_stop_state_iter->second.size()>0) {
-                        int possible_mode = possible_stop_state_iter->second.lowestCostStopState().deparr_mode_; // first mode; why 0 index?
-                        if ((possible_mode == MODE_ACCESS) || (possible_mode == MODE_EGRESS)) { continue; }
-                    }
-                }
-                */
-
                 double  deparr_time     = path_spec.outbound_ ? possible_board_alight.depart_time_ : possible_board_alight.arrive_time_;
                 // the schedule crossed midnight
                 if (path_spec.outbound_ && arrdep_time < deparr_time) {

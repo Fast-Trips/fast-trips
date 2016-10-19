@@ -185,8 +185,6 @@ namespace fasttrips {
 
     /**
      * The path finding algorithm stores StopState data in this structure.
-     * For the stochastic algorithm, a stop ID maps to a vector of StopState instances.
-     * For the deterministic algorithm, the vector only has a single instance of StopState.
      */
     typedef std::map<int, Hyperlink> StopStates;
 

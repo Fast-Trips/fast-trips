@@ -134,6 +134,10 @@ However, since the columns `route_id`, `origin_id`, `destination_id` and `contai
   * Matching `origin_id` and `destination_id` only (no `route_id` specified)
   * No match (e.g. `fare_id` specified with no other columns)
 
+Discount and free transfers specified in [fare_transfer_rules_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) are applied to transfers from one fare period to another fare period, and these links need to be *back-to-back*.  So if a passenger transfers from A to B to C and the discount is specified for fare period A to fare period C, they will not receive the discount.
+
+Free transfers are also specified *within* fare periods (possibly time-bounded) in [fare_attributes_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md). These free transfers are applied *after* the discounts from [fare_transfer_rules_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) and they do not need to be back-to-back.  So if a passenger transfers from A to B to A and fare period A has 1 free transfer specified, but a transfer from B to A has a transfer fare of $.50, the passenger will receive the free transfer since these rules are applied last (and override).
+
 ## Test Sample Input
 
 Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical test network and also example transit demand data.
