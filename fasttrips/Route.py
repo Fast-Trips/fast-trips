@@ -634,6 +634,9 @@ class Route(object):
 
         * :py:attr:`Assignment.SIM_COL_PAX_FARE`
         * :py:attr:`Assignment.SIM_COL_PAX_FARE_PERIOD`
+        * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS`
+        * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
+        * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT`
         * :py:attr:`Assignment.SIM_COL_PAX_FREE_TRANSFER`
 
         """
@@ -643,11 +646,17 @@ class Route(object):
         if Assignment.SIM_COL_PAX_FARE in list(trip_links_df.columns.values):
             trip_links_df.drop([Assignment.SIM_COL_PAX_FARE,
                                 Assignment.SIM_COL_PAX_FARE_PERIOD,
+                                Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS,
+                                Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
+                                Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
                                 Assignment.SIM_COL_PAX_FREE_TRANSFER], axis=1, inplace=True)
 
         return_columns = list(trip_links_df.columns.values)
         return_columns.append(Assignment.SIM_COL_PAX_FARE)
         return_columns.append(Assignment.SIM_COL_PAX_FARE_PERIOD)
+        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS)
+        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_TYPE)
+        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT)
         return_columns.append(Assignment.SIM_COL_PAX_FREE_TRANSFER)
 
         # give them a unique index and store it for later
