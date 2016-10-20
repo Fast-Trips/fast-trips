@@ -61,9 +61,11 @@ class Transfer:
     TRANSFERS_COLUMN_INDIRECTNESS           = 'indirectness'
 
     # ========== Added by fasttrips =======================================================
-    #: fasttrips Stops column name: Origin Stop Numerical Identifier. Int.
+    #: fasttrips Transfers column name: Is this a stop-to-stop transfer?  (e.g. from transfers.txt, and not involving a lot)
+    TRANSFERS_COLUMN_STOP_TO_STOP           = "stop2stop"
+    #: fasttrips Transfers column name: Origin Stop Numerical Identifier. Int.
     TRANSFERS_COLUMN_FROM_STOP_NUM          = 'from_stop_id_num'
-    #: fasttrips Stops column name: Destination Stop Numerical Identifier. Int.
+    #: fasttrips Transfers column name: Destination Stop Numerical Identifier. Int.
     TRANSFERS_COLUMN_TO_STOP_NUM            = 'to_stop_id_num'
     #: gtfs Transfers column name: Minimum transfer time for transfer_type=2.  Float, min.
     TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN  = 'min_transfer_time_min'
@@ -118,6 +120,9 @@ class Transfer:
             self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
                                   Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
 
+            # these are from transfers.txt so they don't involve lots
+            self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
+
         else:
             self.transfers_df = pandas.DataFrame(columns=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                                           Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
@@ -125,6 +130,8 @@ class Transfer:
                                                           Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
                                                           Transfer.TRANSFERS_COLUMN_TIME,
                                                           Transfer.TRANSFERS_COLUMN_TIME_MIN])
+            # set this up as a boolean column
+            self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
 
         # Read the fast-trips supplemental transfers data file
         transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Transfer.INPUT_TRANSFERS_FILE), 
@@ -149,7 +156,8 @@ class Transfer:
 
             # fill in NAN
             self.transfers_df.fillna(value={Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME:0,
-                                            Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE:0},
+                                            Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE:0,
+                                            Transfer.TRANSFERS_COLUMN_STOP_TO_STOP:False},
                                      inplace=True)
 
         # SPECIAL -- we rely on this in the extension
@@ -239,8 +247,10 @@ class Transfer:
         """
         This writes to an intermediate file a formatted file for the C++ extension.
         Since there are strings involved, it's easier than passing it to the extension.
+
+        Only write the stop/stop transfers since lot/stop transfers are only used for creating drive access links.
         """
-        transfers_df = self.transfers_df.copy()
+        transfers_df = self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP]==True].copy()
 
         # drop transfer_type==3 => that means no transfer possible
         # https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers.md
@@ -252,6 +262,7 @@ class Transfer:
                            Transfer.TRANSFERS_COLUMN_TO_STOP,             # use numerical version
                            Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,   # minute version is sufficient
                            Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE, # don't know what to do with this
+                           Transfer.TRANSFERS_COLUMN_STOP_TO_STOP,        # not needed
                            Transfer.TRANSFERS_COLUMN_FROM_ROUTE,          # TODO?
                            Transfer.TRANSFERS_COLUMN_TO_ROUTE             # TODO?
                           ], axis=1, inplace=True)
