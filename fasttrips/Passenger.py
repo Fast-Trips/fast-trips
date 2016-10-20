@@ -99,6 +99,9 @@ class Passenger:
     #: Generic transit - Numeric mode number
     MODE_GENERIC_TRANSIT_NUM                    = 1000
 
+    #: Minumum Value of Time: 1 dollar shouldn't be worth 180 minutes
+    MIN_VALUE_OF_TIME                           = 60.0/180.0
+
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
     #: Trip list column: Purpose. String.
@@ -162,6 +165,7 @@ class Passenger:
         assert(Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME     in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME       in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_TIME_TARGET        in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_VOT                in trip_list_cols)
 
         FastTripsLogger.debug("=========== TRIP LIST ===========\n" + str(self.trip_list_df.head()))
         FastTripsLogger.debug("\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
@@ -244,6 +248,14 @@ class Passenger:
                 60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
         # TODO: validate fields?
+
+        # value of time must be greater than a threshhold or any fare becomes prohibitively expensive
+        low_vot = self.trip_list_df.loc[ self.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT] < Passenger.MIN_VALUE_OF_TIME ]
+        if len(low_vot) > 0:
+            FastTripsLogger.warn("These trips have value of time lower than the minimum threshhhold (%f): raising to minimum.\n%s" %
+                (Passenger.MIN_VALUE_OF_TIME, str(low_vot) ))
+        self.trip_list_df.loc[ self.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT] < Passenger.MIN_VALUE_OF_TIME,
+            Passenger.TRIP_LIST_COLUMN_VOT] = Passenger.MIN_VALUE_OF_TIME
 
         if len(self.persons_df) > 0:
             # Join trips to persons
