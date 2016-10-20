@@ -428,18 +428,19 @@ class Passenger:
 
         # convert time strings to datetimes
         for date_col in date_cols:
-            pathset_links_df[date_col] = pathset_links_df[date_col].map(lambda x: Util.read_time(x))
+            if date_col in pathset_links_df.columns.values:
+                pathset_links_df[date_col] = pathset_links_df[date_col].map(lambda x: Util.read_time(x))
 
         # convert time duration columns to time durations
         link_cols = list(pathset_links_df.columns.values)
         if Passenger.PF_COL_LINK_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_LINK_TIME])
-        else:
+        elif "%s min" % Passenger.PF_COL_LINK_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_LINK_TIME], unit='m')
 
         if Passenger.PF_COL_WAIT_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_WAIT_TIME])
-        else:
+        elif "%s min" % Passenger.PF_COL_WAIT_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_WAIT_TIME], unit='m')
 
         # if simulation results are available
@@ -454,8 +455,9 @@ class Passenger:
             pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], unit='m')
 
         # and drop the numeric version
-        pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
-                               "%s min" % Passenger.PF_COL_WAIT_TIME], axis=1, inplace=True)
+        if "%s min" % Passenger.PF_COL_LINK_TIME in link_cols:
+            pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
+                                   "%s min" % Passenger.PF_COL_WAIT_TIME], axis=1, inplace=True)
         if include_asgn:
             pathset_links_df.drop(["%s min" % Assignment.SIM_COL_PAX_LINK_TIME,
                                    "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], axis=1, inplace=True)
