@@ -715,6 +715,8 @@ namespace fasttrips {
             // some checks if we have a previous link -- this will be a two-pass :p
             if (prev_link != NULL)
             {
+                // infinite cost is invalid
+                if (ss.cost_ >= fasttrips::MAX_COST) { continue; }
                 // outbound: we cannot depart before we arrive
                 if ( path_spec.outbound_ && ss.deparr_time_ < prev_link->arrdep_time_) { continue; }
                 // inbound: we cannot arrive after we depart
@@ -730,10 +732,9 @@ namespace fasttrips {
             }
             else
             {
-
                 // infinitite cost
-                if (ss.cost_ != ss.cost_) {
-                    // leave it as is -- invalid
+                if (ss.cost_ >= fasttrips::MAX_COST) {
+                    // leave it as is -- invalid -- but still log it
                 }
                 else {
                     // we have no additional information so we trust the hyperpath cost and can go ahead
