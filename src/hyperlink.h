@@ -31,14 +31,6 @@ namespace fasttrips {
 
     bool isTrip(const int& mode);
 
-
-    /// Structure used in PathFinder::hyperpathChoosePath
-    typedef struct {
-        double         probability_;   ///< Probability of this stop
-        int            prob_i_;        ///< Cumulative probability * 1000
-        StopStateKey   ssk_;           ///< Pointer to relevant stop state
-    } ProbabilityStopState;
-
     typedef std::map<StopStateKey, StopState> StopStateMap;
     // cost to stop state key
     typedef std::multimap< double, StopStateKey> CostToStopState;
@@ -49,6 +41,7 @@ namespace fasttrips {
         double          sum_exp_cost_;             ///< sum of the exponentiated cost
         double          hyperpath_cost_;           ///< hyperpath cost for this stop state
         int             process_count_;            ///< increment this every time the stop is processed
+        int             max_cum_prob_i_;           ///< Set by setupProbabilities()
 
         StopStateMap    stop_state_map_;           ///< the links.  (or a set of stop states where compare means the key is unique)
         CostToStopState cost_map_;                 ///< multimap of cost -> stop state pointers into the stop_state_set_ above
@@ -165,21 +158,22 @@ namespace fasttrips {
         /// Go through stop states (links) and remove any outside the time window
         void pruneWindow(std::ostream& trace_file, const PathSpecification& path_spec, const PathFinder& pf, bool of_trip_links);
 
-        /// Setup probabilities for hyperlink's stop states (links)
-        void setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
-                                const PathFinder& pf, std::vector<ProbabilityStopState>& probabilities,
-                                const StopState* prev_link = NULL, const int last_trip_id = -1) const;
+        /**
+         * Setup probabilities for hyperlink's stop states (links)
+         * Return the max cum probability for the linkset
+         */
+        int setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
+                                 const PathFinder& pf, bool trip_linkset,
+                                 const StopState* prev_link = NULL, const int last_trip_id = -1);
 
         /**
-         * Given a vector of fasttrips::ProbabilityStopState instances,
-         * randomly selects one based on the cumulative probability
-         * (fasttrips::ProbabilityStopState.prob_i_)
+         * Randomly selects one of the links in this hyperlink based on the cumulative probability
+         * set by Hyperlink::setupProbabilities()
          *
          * @return a const reference to the chosen StopState.
          */
         const StopState& chooseState(const PathSpecification& path_spec,
                                      std::ostream& trace_file,
-                                     const std::vector<ProbabilityStopState>& prob_stops,
                                      const StopState* prev_link = NULL) const;
     };
 

@@ -240,6 +240,7 @@ namespace fasttrips {
 
             // add to the map
             linkset.stop_state_map_[ssk] = ss;
+            linkset.stop_state_map_[ssk].probability_ = 1.0;
 
             // assume success
             linkset.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
@@ -247,7 +248,7 @@ namespace fasttrips {
             // log it
             if (path_spec.trace_) {
                 trace_file << "  + new ";
-                Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+                Hyperlink::printStopState(trace_file, stop_id_, linkset.stop_state_map_[ssk], path_spec, pf);
                 trace_file << std::endl;
             }
 
@@ -262,7 +263,7 @@ namespace fasttrips {
         if ( path_spec.outbound_ && (ss.deparr_mode_ == MODE_ACCESS)) { is_last_link = true; }
         if (!path_spec.outbound_ && (ss.deparr_mode_ == MODE_EGRESS)) { is_last_link = true; }
 
-        // is it too early (outbound) or too late (inbound)?
+        // is it too early (outbound) or too late (inbound)? => reject
         if ((!is_last_link) &&
             (( path_spec.outbound_ && (ss.deparr_time_ < linkset.latest_dep_earliest_arr_ - TIME_WINDOW_)) ||
              (!path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_ + TIME_WINDOW_)))) {
@@ -316,10 +317,13 @@ namespace fasttrips {
                 linkset.hyperpath_cost_  = hyperpath_cost;
             }
 
+            // update probabilities
+            setupProbabilities(path_spec, trace_file, pf, isTrip(ssk.deparr_mode_));
+
             // log it
             if (path_spec.trace_) {
                 trace_file << "  + new ";
-                Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+                Hyperlink::printStopState(trace_file, stop_id_, linkset.stop_state_map_[ssk], path_spec, pf);
                 trace_file << notes << std::endl;
             }
 
@@ -377,10 +381,13 @@ namespace fasttrips {
             linkset.hyperpath_cost_  = hyperpath_cost;
         }
 
+        // updating probabilities
+        setupProbabilities(path_spec, trace_file, pf, isTrip(ssk.deparr_mode_));
+
         // log it
         if (path_spec.trace_) {
             trace_file << "  + new ";
-            Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
+            Hyperlink::printStopState(trace_file, stop_id_, linkset.stop_state_map_[ssk], path_spec, pf);
             trace_file << notes << std::endl;
         }
 
@@ -530,6 +537,8 @@ namespace fasttrips {
         ostr << std::setw(13) << "cost";
         ostr << std::setw( 9) << "iter";
         ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
+        ostr << std::setw( 8) << "prob";
+        ostr << std::setw( 8) << "cumprob";
     }
 
     void Hyperlink::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec, const PathFinder& pf)
@@ -573,6 +582,10 @@ namespace fasttrips {
         ostr << std::setw(7) << std::setfill(' ') << ss.iteration_;
         ostr << "  ";
         pf.printTime(ostr, ss.arrdep_time_);
+        ostr << "  ";
+        ostr << std::setw(6) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.probability_;
+        ostr << "  ";
+        ostr << std::setw(6) << ss.cum_prob_i_;
     }
 
     void Hyperlink::printLinkSet(std::ostream& ostr, int stop_id, bool is_trip, const LinkSet& linkset, const PathSpecification& path_spec, const PathFinder& pf)
@@ -670,37 +683,38 @@ namespace fasttrips {
 
     }
 
-    // Choose a link from this hyperlink based on the probabilities
-    void Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
-                                       const PathFinder& pf, std::vector<ProbabilityStopState>& probabilities,
-                                       const StopState* prev_link, const int last_trip_id) const
+    // Set up probabilities for the links in the hyperlink
+    // Return the max cum probability for the linkset
+    int Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
+                                        const PathFinder& pf, bool trip_linkset,
+                                        const StopState* prev_link, const int last_trip_id)
     {
-        const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
-
-        static int COST_CUTOFF = 1;
+        LinkSet& linkset = (trip_linkset ? linkset_trip_ : linkset_nontrip_);
 
         // Build a vector of probabilities in order of the costmap iteration
-        if (path_spec.trace_) { Hyperlink::printStopStateHeader(trace_file, path_spec);  trace_file << std::endl; }
+        if (path_spec.trace_) {
+            trace_file << "setupProbabilities() cost_map_.size = " << linkset.cost_map_.size() << std::endl;
+            Hyperlink::printStopStateHeader(trace_file, path_spec);
+            trace_file << std::endl;
+        }
 
-        double sum_exp     = 0;
+        int    valid_links      = 0;
+        double sum_exp          = 0;
+        linkset.max_cum_prob_i_ = 0;
 
         // Setup the probabilities
-        for (CostToStopState::const_iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
+        for (CostToStopState::iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
         {
             const StopStateKey& ssk   = iter->second;
-            const StopState&     ss   = linkset.stop_state_map_.find(ssk)->second;
-            ProbabilityStopState pss  = { 0.0, 0, ssk };
+            StopState&           ss   = linkset.stop_state_map_[ssk];
+
+            // reset
+            ss.probability_ = 0;
+            ss.cum_prob_i_  = -1; // this means invalid
 
             // some checks if we have a previous link -- this will be a two-pass :p
             if (prev_link != NULL)
             {
-                // these are ready to log
-                if (path_spec.trace_) {
-                    trace_file << "checking: ";
-                    Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
-                    trace_file << std::endl;
-                }
-
                 // outbound: we cannot depart before we arrive
                 if ( path_spec.outbound_ && ss.deparr_time_ < prev_link->arrdep_time_) { continue; }
                 // inbound: we cannot arrive after we depart
@@ -710,65 +724,87 @@ namespace fasttrips {
                 if (isTrip(ss.deparr_mode_) && (ss.trip_id_ == last_trip_id)) { continue; }
 
                 // calculating denominator
+                ss.cum_prob_i_ = 0;
                 sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                valid_links += 1;
             }
             else
             {
-                // we have no additional information so we trust the hyperpath cost and can go ahead
-                pss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) /
-                                   exp(-1.0*STOCH_DISPERSION_*linkset.hyperpath_cost_);
-                pss.prob_i_      = static_cast<int>(RAND_MAX*pss.probability_);
 
-                // too small to consider
-                if (pss.prob_i_ < COST_CUTOFF) { continue; }
+                // infinitite cost
+                if (ss.cost_ != ss.cost_) {
+                    // leave it as is -- invalid
+                }
+                else {
+                    // we have no additional information so we trust the hyperpath cost and can go ahead
+                    ss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) /
+                                      exp(-1.0*STOCH_DISPERSION_*linkset.hyperpath_cost_);
+                    // this will be true if it's not a real number -- e.g. the denom was too small and we ended up doing 0/0
+                    if (ss.probability_ != ss.probability_) {
+                        ss.probability_ = 0;
+                    }
+                    else {
+                        int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
+                        valid_links    += 1;
 
-                // make prob_i_ cumulative
-                if (probabilities.size() != 0) { pss.prob_i_ += probabilities.back().prob_i_; }
+                        // make cum_prob_i_ cumulative
+                        ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
+                        linkset.max_cum_prob_i_ = ss.cum_prob_i_;
+                    }
+                }
 
                 // these are ready to log
                 if (path_spec.trace_) {
                     Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
-                    trace_file << " prob "     << std::setw(6) << pss.probability_;
-                    trace_file << " cum_prob " << std::setw(6) << pss.prob_i_;
                     trace_file << std::endl;
                 }
             }
-
-            probabilities.push_back(pss);
         }
-        // fail
-        if (probabilities.size() == 0) { return; }
+        if (path_spec.trace_) {
+            trace_file << "valid_links=" << valid_links << "; sum_exp=" << sum_exp << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << std::endl;
+        }
+
+        // fail -- nothing is valid
+        if (valid_links == 0) { return linkset.max_cum_prob_i_; }
 
         // this set is ready
-        if (prev_link == NULL) { return; }
+        if (prev_link == NULL) { return linkset.max_cum_prob_i_; }
 
-        // the two-pass version -- this could fail too
-        if (sum_exp == 0) { probabilities.clear(); return; }
+        // fail -- nothing is valid because costs are too big
+        if (sum_exp != sum_exp) {
+            printf("infinity\n");
+            return linkset.max_cum_prob_i_;
+        }
 
         // fix up the probabilities
-        for (int idx = 0; idx < probabilities.size(); ++idx)
+        for (CostToStopState::iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
         {
-            const StopState& ss = linkset.stop_state_map_.find(probabilities[idx].ssk_)->second;
-            probabilities[idx].probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) / sum_exp;
-            probabilities[idx].prob_i_      = static_cast<int>(RAND_MAX*probabilities[idx].probability_);
+            const StopStateKey& ssk   = iter->second;
+            StopState&           ss   = linkset.stop_state_map_[ssk];
 
-            // make it cumulative
-            if (idx > 0) { probabilities[idx].prob_i_ += probabilities[idx-1].prob_i_; }
+            if (ss.cum_prob_i_ == -1) {
+                // marked as invalid
+            } else {
+                ss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) / sum_exp;
+                int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
+
+                // make cum_prob_i_ cumulative
+                ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
+                linkset.max_cum_prob_i_ = ss.cum_prob_i_;
+            }
 
             // ready to log
             if (path_spec.trace_) {
                 Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
-                trace_file << " prob "     << std::setw(6) << probabilities[idx].probability_;
-                trace_file << " cum_prob " << std::setw(6) << probabilities[idx].prob_i_;
                 trace_file << std::endl;
             }
         } // finish second pass
+        return linkset.max_cum_prob_i_;
     }
 
     const StopState& Hyperlink::chooseState(
         const PathSpecification& path_spec,
         std::ostream& trace_file,
-        const std::vector<ProbabilityStopState>& prob_stops,
         const StopState* prev_link) const
     {
         const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
@@ -777,16 +813,20 @@ namespace fasttrips {
         if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
 
         // mod it by max prob
-        random_num = random_num % (prob_stops.back().prob_i_);
+        random_num = random_num % linkset.max_cum_prob_i_;
         if (path_spec.trace_) { trace_file << random_num << std::endl; }
 
-        for (size_t ind = 0; ind < prob_stops.size(); ++ind)
+        for (CostToStopState::const_iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
         {
-            if (prob_stops[ind].prob_i_==0) { continue; }
-            if (random_num <= prob_stops[ind].prob_i_) { return linkset.stop_state_map_.find(prob_stops[ind].ssk_)->second; }
+            const StopStateKey& ssk   = iter->second;
+            const StopState&     ss   = linkset.stop_state_map_.find(ssk)->second;
+
+            if (ss.cum_prob_i_ == 0) { continue; }
+            if (random_num <= ss.cum_prob_i_) { return ss; }
         }
         // shouldn't get here
-        printf("PathFinder::chooseState() This should never happen!\n");
+        printf("PathFinder::chooseState() This should never happen! path_id_=%d\n", path_spec.path_id_);
+        if (path_spec.trace_) { trace_file << "Fatal: PathFinder::chooseState() This should never happen!" << std::endl; }
         return linkset.stop_state_map_.begin()->second;
     }
 }

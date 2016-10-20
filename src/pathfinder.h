@@ -386,7 +386,7 @@ namespace fasttrips {
          */
         bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
-                                  const StopStates& stop_states,
+                                  StopStates& stop_states,
                                   Path& path) const;
 
         /**
@@ -402,7 +402,7 @@ namespace fasttrips {
 
         bool getPathSet(const PathSpecification&      path_spec,
                         std::ofstream&                trace_file,
-                        const StopStates&             stop_states,
+                        StopStates&                   stop_states,
                         PathSet&                      pathset) const;
 
         /**

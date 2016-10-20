@@ -63,6 +63,11 @@ namespace fasttrips {
         return links_.back();
     }
 
+    std::pair<int, StopState>& Path::back()
+    {
+        return links_.back();
+    }
+
     /// Comparison
     bool Path::operator<(const Path& path2) const
     {

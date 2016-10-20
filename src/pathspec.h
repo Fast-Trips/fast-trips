@@ -110,6 +110,11 @@ namespace fasttrips {
         int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
 
+        // previously in ProbabilityStopState
+        double  probability_;           ///< The probability of this link
+        int     cum_prob_i_;            ///< Cumulative integer version of probability
+
+
         Path*   low_cost_path_;         ///< Lowest cost path that includes this link.  Only set in labeling.
 
         StopState() :
@@ -126,6 +131,8 @@ namespace fasttrips {
             cost_         (0),
             iteration_    (-1),
             arrdep_time_  (0),
+            probability_  (0),
+            cum_prob_i_   (0),
             low_cost_path_(NULL) {}
 
         StopState(
@@ -155,6 +162,8 @@ namespace fasttrips {
             cost_         (cost),
             iteration_    (iteration),
             arrdep_time_  (arrdep_time),
+            probability_  (0),
+            cum_prob_i_   (0),
             low_cost_path_(NULL) {}
     };
 }

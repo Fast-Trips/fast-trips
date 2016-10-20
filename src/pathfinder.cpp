@@ -1835,24 +1835,23 @@ namespace fasttrips {
     bool PathFinder::hyperpathGeneratePath(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        const StopStates& stop_states,
+        StopStates& stop_states,
         Path& path) const
     {
         int    start_state_id   = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor       = path_spec.outbound_ ? 1 : -1;
 
-        const Hyperlink& taz_state = stop_states.find(start_state_id)->second;
+        Hyperlink& taz_state    = stop_states.find(start_state_id)->second;
         double taz_label        = taz_state.hyperpathCost(false);
 
         // setup access/egress probabilities
-        std::vector<ProbabilityStopState> access_cum_prob;
-        taz_state.setupProbabilities(path_spec, trace_file, *this, access_cum_prob);
-        if (access_cum_prob.size() == 0) { return false; }
+        int maxcumi = taz_state.setupProbabilities(path_spec, trace_file, *this, false);
+        if (maxcumi == 0) { return false; }
 
         // choose the state and store it
         if (path_spec.trace_) { trace_file << " -> Chose access/egress " << std::endl; }
         path.addLink(start_state_id,
-                     taz_state.chooseState(path_spec, trace_file, access_cum_prob),
+                     taz_state.chooseState(path_spec, trace_file),
                      trace_file, path_spec, *this);
 
         // trip_id shouldn't repeat
@@ -1861,10 +1860,10 @@ namespace fasttrips {
         // moving on, ss is now the previous link
         while (true)
         {
-            const StopState& ss = path.back().second;
+            StopState& ss = path.back().second;
             int current_stop_id = ss.stop_succpred_;
 
-            StopStates::const_iterator ssi = stop_states.find(current_stop_id);
+            StopStates::iterator ssi = stop_states.find(current_stop_id);
             if (ssi == stop_states.end()) { return false; }
 
             if (path_spec.trace_) {
@@ -1877,16 +1876,15 @@ namespace fasttrips {
             }
 
             // setup probabilities
-            std::vector<ProbabilityStopState> stop_cum_prob;
-            const Hyperlink& current_hyperlink = ssi->second;
-            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss, last_trip_id);
+            Hyperlink& current_hyperlink = ssi->second;
+            maxcumi = current_hyperlink.setupProbabilities(path_spec, trace_file, *this, !isTrip(ss.deparr_mode_), &ss, last_trip_id);
 
-            if (stop_cum_prob.size() == 0) { return false; }
+            if (maxcumi == 0) { return false; }
 
             // choose next link and add it to the path
             if (path_spec.trace_) { trace_file << " -> Chose stop link " << std::endl; }
             path.addLink(current_stop_id,
-                         current_hyperlink.chooseState(path_spec, trace_file, stop_cum_prob, &ss),
+                         current_hyperlink.chooseState(path_spec, trace_file, &ss),
                          trace_file, path_spec, *this);
 
             // are we done?
@@ -1928,7 +1926,7 @@ namespace fasttrips {
     bool PathFinder::getPathSet(
         const PathSpecification&    path_spec,
         std::ofstream&              trace_file,
-        const StopStates&           stop_states,
+        StopStates&                 stop_states,
         PathSet&                    pathset) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
@@ -2223,7 +2221,7 @@ namespace fasttrips {
         ostr << std::setw( 2) << std::setfill(' ') << std::right << hours << ":"; // hours
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)      << ":"; // minutes
         int width = 3;
-        if (secpart < 10) { ostr << "0"; width = 2; }
+        if (secpart < 9.95) { ostr << "0"; width = 2; }
         ostr << std::left << std::setw(width) << std::setprecision( 1) << std::fixed << std::setfill(' ') << secpart << std::right; // seconds
     }
 
