@@ -1474,7 +1474,8 @@ namespace fasttrips {
                     link_dist,                      // link distance
                     cost,                           // cost
                     label_iteration,                // label iteration
-                    arrdep_time                     // arrival/departure time
+                    arrdep_time,                    // arrival/departure time
+                    fp                              // fare period
                 );
                 addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
 

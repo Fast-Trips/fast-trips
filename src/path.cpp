@@ -373,7 +373,7 @@ namespace fasttrips {
                 // overcap should be non-negative
                 if (link_attr["overcap"] < 0) { link_attr["overcap"] = 0; }
 
-                const FarePeriod* fp = pf.getFarePeriod(trip_info.route_id_, orig_stop, dest_stop, trip_depart_time);
+                const FarePeriod* fp              = stop_state.fare_period_;
                 if (fp) {
                     // adjust fare
                     stop_state.link_fare_         = getFareWithTransfer(pf, last_fare_period, fp);

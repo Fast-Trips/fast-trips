@@ -539,6 +539,7 @@ namespace fasttrips {
         ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
         ostr << std::setw( 8) << "prob";
         ostr << std::setw( 8) << "cumprob";
+        ostr << std::setw(22) << "fareperiod";
     }
 
     void Hyperlink::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec, const PathFinder& pf)
@@ -586,6 +587,8 @@ namespace fasttrips {
         ostr << std::setw(6) << std::setprecision(4) << std::fixed << std::setfill(' ') << ss.probability_;
         ostr << "  ";
         ostr << std::setw(6) << ss.cum_prob_i_;
+        ostr << "  ";
+        ostr << std::setw(20) << (ss.fare_period_ ? ss.fare_period_->fare_period_ : "");
     }
 
     void Hyperlink::printLinkSet(std::ostream& ostr, int stop_id, bool is_trip, const LinkSet& linkset, const PathSpecification& path_spec, const PathFinder& pf)

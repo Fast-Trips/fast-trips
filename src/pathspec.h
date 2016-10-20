@@ -91,6 +91,7 @@ namespace fasttrips {
 
     // forward dec
     class Path;
+    class FarePeriod;
 
     struct StopState {
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
@@ -109,6 +110,8 @@ namespace fasttrips {
         double  cost_;                  ///< Cost from previous link(s) and this link together.
         int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
+
+        const FarePeriod* fare_period_; ///< Trip links may have a FarePeriod
 
         // previously in ProbabilityStopState
         double  probability_;           ///< The probability of this link
@@ -131,6 +134,7 @@ namespace fasttrips {
             cost_         (0),
             iteration_    (-1),
             arrdep_time_  (0),
+            fare_period_  (NULL),
             probability_  (0),
             cum_prob_i_   (0),
             low_cost_path_(NULL) {}
@@ -148,7 +152,8 @@ namespace fasttrips {
             double link_dist,
             double cost,
             int    iteration,
-            double arrdep_time) :
+            double arrdep_time,
+            const FarePeriod* fp=NULL) :
             deparr_time_  (deparr_time),
             deparr_mode_  (deparr_mode),
             trip_id_      (trip_id),
@@ -162,6 +167,7 @@ namespace fasttrips {
             cost_         (cost),
             iteration_    (iteration),
             arrdep_time_  (arrdep_time),
+            fare_period_  (fp),
             probability_  (0),
             cum_prob_i_   (0),
             low_cost_path_(NULL) {}
