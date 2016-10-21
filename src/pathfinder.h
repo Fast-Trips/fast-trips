@@ -426,6 +426,8 @@ namespace fasttrips {
         const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
         /// Accessor for trip info
         const TripInfo* getTripInfo(int trip_id_num) const;
+        /// Accessor for route id
+        int getRouteIdForTripId(int trip_id_num) const;
         /// Accessor for TripStopTime for given trip id, stop sequence
         const TripStopTime& getTripStopTime(int trip_id, int stop_seq) const;
         /**

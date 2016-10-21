@@ -91,7 +91,7 @@ namespace fasttrips {
 
     // forward dec
     class Path;
-    class FarePeriod;
+    struct FarePeriod;
 
     struct StopState {
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound

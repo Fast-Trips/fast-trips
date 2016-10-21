@@ -735,7 +735,7 @@ namespace fasttrips {
             }
             else
             {
-                // infinitite cost
+                // infinite cost
                 if (ss.cost_ >= fasttrips::MAX_COST) {
                     // leave it as is -- invalid -- but still log it
                 }
@@ -765,7 +765,7 @@ namespace fasttrips {
             }
         }
         if (path_spec.trace_) {
-            trace_file << "valid_links=" << valid_links << "; sum_exp=" << sum_exp << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << std::endl;
+            trace_file << "valid_links=" << valid_links << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << std::endl;
         }
 
         // fail -- nothing is valid
@@ -832,5 +832,170 @@ namespace fasttrips {
         printf("PathFinder::chooseState() This should never happen! path_id_=%d\n", path_spec.path_id_);
         if (path_spec.trace_) { trace_file << "Fatal: PathFinder::chooseState() This should never happen!" << std::endl; }
         return linkset.stop_state_map_.begin()->second;
+    }
+
+    void Hyperlink::collectFarePeriodProbabilities(
+        const PathSpecification& path_spec,
+        std::ostream& trace_file,
+        const PathFinder& pf,
+        double transfer_probability,
+        std::map<const FarePeriod*, double>& fp_probs) const
+    {
+        // Iterate through the trips in this hyperlink
+        for (StopStateMap::const_iterator ssm_iter  = linkset_trip_.stop_state_map_.begin();
+                                          ssm_iter != linkset_trip_.stop_state_map_.end();
+                                          ++ssm_iter)
+        {
+            const StopState& ss = ssm_iter->second;
+            // only worry about non-negligible probabilities
+            if (ss.probability_ < 0.0001) { continue; }
+
+            const FarePeriod* fp = pf.getFarePeriod(pf.getRouteIdForTripId(ss.trip_id_),                 // route id
+                                                    path_spec.outbound_ ? stop_id_ : ss.stop_succpred_,  // board stop id
+                                                    path_spec.outbound_ ? ss.stop_succpred_ : stop_id_,  // alight stop id
+                                                    path_spec.outbound_ ? ss.deparr_time_ : ss.arrdep_time_);
+            if (fp) {
+                fp_probs[fp] += transfer_probability*ss.probability_;
+            }
+
+        }
+    }
+
+    double Hyperlink::getFareWithTransfer(
+        const PathSpecification& path_spec,
+        std::ostream& trace_file,
+        const PathFinder& pf,
+        const FarePeriod& fare_period,
+        const std::map<int, Hyperlink>& stop_states) const
+    {
+        // Figure out the probability of another previous fare period
+        std::map<const FarePeriod*, double> fare_period_probabilities;
+
+        // Iterate through the transfers in this hyperlink
+        for (StopStateMap::const_iterator ssm_iter  = linkset_nontrip_.stop_state_map_.begin();
+                                          ssm_iter != linkset_nontrip_.stop_state_map_.end();
+                                          ++ssm_iter)
+        {
+            // only transfers are relevant
+            const StopState& ss = ssm_iter->second;
+            // with non-negligible probabilities
+            if (ss.probability_ < 0.0001) { continue; }
+
+            if (ss.deparr_mode_ == fasttrips::MODE_TRANSFER) {
+                // this is a transfer we may have used
+                // we have to look at the trips that feed into it
+                int stop_succpred = ss.stop_succpred_;
+                const Hyperlink& succ_pred_hyperlink = stop_states.find(ss.stop_succpred_)->second;
+                succ_pred_hyperlink.collectFarePeriodProbabilities(path_spec, trace_file, pf, ss.probability_, fare_period_probabilities);
+            }
+        }
+
+        // no transfer interference
+        if (fare_period_probabilities.size() == 0) {
+            return fare_period.price_;
+        }
+
+        if (path_spec.trace_) {
+            trace_file << "getFareWithTransfer() -- original fareperiod " << fare_period.fare_period_ << "; original fare price " << fare_period.price_ << std::endl;
+            if (path_spec.outbound_) {
+                trace_file << "              next_fare_period nextfar    fare    prob  transfer => new_nextfar => prob x new_nextfar" << std::endl;
+            } else {
+                trace_file << "              prev_fare_period prevfar    fare    prob  transfer =>    new_fare => prob x    new_fare" << std::endl;
+            }
+            // print(trace_file, path_spec, pf);
+        }
+
+        double remaining_prob      = 1.0;
+        // this represents the price for the latter fare period
+        double new_price_adj       = 0.0;
+        // this represents our guess at the price for the next/prev fare
+        double est_price_nextprev  = 0.0;
+
+        // estimate the fare by looking at the transfer rules given the previous fare period possibilities
+        for (std::map<const FarePeriod*, double>::const_iterator fp_iter  = fare_period_probabilities.begin();
+                                                                 fp_iter != fare_period_probabilities.end();
+                                                               ++fp_iter)
+        {
+            const FarePeriod* other_fp = fp_iter->first;
+            // is there a transfer rule?
+            // for outbound, pathfinding goes backwards so other_fp is the *next* fare period
+            // for inbound,  pathfinding goes forwards  so other_fp is the *previous* fare period
+            const FareTransfer* ft = pf.getFareTransfer(path_spec.outbound_ ? fare_period.fare_period_ : other_fp->fare_period_,
+                                                        path_spec.outbound_ ? other_fp->fare_period_ : fare_period.fare_period_);
+            // start with the price of this fare period and the other fare period
+            double price = fare_period.price_;
+            // this is the price of the next (outbound) or previous (inbound) fare period
+            double price_nextprev = other_fp->price_;
+            // adjust the latter fare period
+            double* price_adj = (path_spec.outbound_ ? &price_nextprev : &price);
+            // this is just for trace
+            std::string trace_xfer_type = "-";
+            // if there's a fare transfer
+            if (ft) {
+                if (ft->type_ == TRANSFER_FREE) {
+                    trace_xfer_type = "free";
+                    *price_adj = 0;
+                } else if (ft->type_ == TRANSFER_COST) {
+                    trace_xfer_type = "discount";
+                    *price_adj = ft->amount_;
+                } else if (ft->type_ == TRANSFER_DISCOUNT) {
+                    trace_xfer_type = "cost";
+                    *price_adj = *price_adj - ft->amount_;
+                }
+            }
+
+            // add it to the combined -- new price x probability
+            new_price_adj       += (*price_adj)*fp_iter->second;
+            est_price_nextprev  += (other_fp->price_)*fp_iter->second;
+
+            // probability not accounted for by transfer
+            remaining_prob -= fp_iter->second;
+
+            if (path_spec.trace_) {
+                trace_file << std::setw(30) << std::setfill(' ') << other_fp->fare_period_ << "  ";
+                trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << other_fp->price_ << "  ";
+                trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << fare_period.price_ << "  ";
+                trace_file << std::setw( 6) << std::setprecision(4) << std::fixed << std::setfill(' ') << fp_iter->second << "  ";
+                trace_file << std::setw( 8) << trace_xfer_type << "  ";
+                trace_file << std::setw(13) << std::setprecision(2) << std::fixed << *price_adj << "  ";
+                trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << new_price_adj << "  ";
+                trace_file << std::endl;
+            }
+        }
+        // if there's any remaining probability
+        if (remaining_prob > 0.001) {
+            double price_adj = (path_spec.outbound_ ? 0 : fare_period.price_);
+            new_price_adj += price_adj*remaining_prob;
+
+            if (path_spec.trace_) {
+                trace_file << std::setw(30) << std::setfill(' ') << "none" << "  ";
+                trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << 0.0 << "  ";
+                trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << fare_period.price_ << "  ";
+                trace_file << std::setw( 6) << std::setprecision(4) << std::fixed << std::setfill(' ') << remaining_prob << "  ";
+                trace_file << std::setw( 8) << "-" << "  ";
+                trace_file << std::setw(13) << std::setprecision(2) << std::fixed << price_adj << "  ";
+                trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << new_price_adj << "  ";
+                trace_file << std::endl;
+            }
+        }
+
+        // new_price_adj is now the new value of either the fare price or the next_fare price (if outbound)
+        // if inbound, just use this best guess as the fare
+        if (path_spec.outbound_ == false) {
+            if (path_spec.trace_) { trace_file << "Returning adjusted fare " << new_price_adj << std::endl; }
+            return new_price_adj;
+        }
+        // if outbound, new_price_adj is for the next fare period, which we can't change
+        // so see what the effective discount is an apply it
+        double effective_discount = est_price_nextprev - new_price_adj;
+        if (effective_discount > 0) {
+            // apply it to the fare
+            new_price_adj = fare_period.price_ - effective_discount;
+            // make sure it's non-negative
+            if (new_price_adj < 0) { new_price_adj = 0; }
+            if (path_spec.trace_) { trace_file << "Applied effective discount " <<  effective_discount << " to fare, returning " << new_price_adj << std::endl; }
+            return new_price_adj;
+        }
+        return fare_period.price_;
     }
 }

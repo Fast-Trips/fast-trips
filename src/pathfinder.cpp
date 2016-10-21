@@ -485,6 +485,12 @@ namespace fasttrips {
         return &(it->second);
     }
 
+    int PathFinder::getRouteIdForTripId(int trip_id_num) const
+    {
+        const TripInfo* ti = getTripInfo(trip_id_num);
+        return ti->route_id_;
+    }
+
     // Accessor for TripStopTime for given trip id, stop sequence
     const TripStopTime& PathFinder::getTripStopTime(int trip_id, int stop_seq) const
     {
@@ -1363,6 +1369,7 @@ namespace fasttrips {
                 double  cost      = 0;
                 double  link_cost = 0;
                 double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
+                double  fare      = 0; // only calculate for hyperpath
                 const FarePeriod* fp = 0;
 
                 if (in_vehicle_time < 0) {
@@ -1380,6 +1387,8 @@ namespace fasttrips {
                                        path_spec.outbound_ ? possible_board_alight.stop_id_ : current_label_stop.stop_id_,
                                        path_spec.outbound_ ? current_label_stop.stop_id_ : possible_board_alight.stop_id_,
                                        path_spec.outbound_ ? deparr_time : arrdep_time);
+                    // this is where it gets painful... if we have a fareperiod, try to check transfer fare rules and guess the right fare
+                    if (fp) { fare     = current_stop_state.getFareWithTransfer(path_spec, trace_file, *this, *fp, stop_states); }
 
                     if (path_spec.trace_) {
                         if (path_spec.outbound_) {
@@ -1388,7 +1397,7 @@ namespace fasttrips {
                                        << ", seq " << possible_board_alight.seq_
                                        << ", overcap " << possible_board_alight.overcap_
                                        << ", route_id " << trip_info.route_id_
-                                       << ", fare " << (fp ? fp->price_ : -1)
+                                       << ", fare " << fare
                                        << std::endl;
                         }
                         else {
@@ -1397,7 +1406,7 @@ namespace fasttrips {
                                        << ", seq " << it->seq_
                                        << ", overcap " << tst.overcap_
                                        << ", route_id " << trip_info.route_id_
-                                       << ", fare " << (fp ? fp->price_ : -1)
+                                       << ", fare " << fare
                                        << std::endl;
                         }
                     }
@@ -1408,9 +1417,7 @@ namespace fasttrips {
                     link_attr["wait_time_min"      ] = wait_time;
                     link_attr["overcap"            ] = overcap;
                     link_attr["at_capacity"        ] = at_capacity;
-                    if (fp) {
-                        link_attr["fare"           ] = fp->price_;
-                    }
+                    link_attr["fare"               ] = fare;
 
                     link_cost = 0;
                     // If outbound, and the current link is egress, then it's as late as possible and the wait time isn't accurate.
@@ -1469,7 +1476,7 @@ namespace fasttrips {
                     possible_board_alight.seq_,     // sequence
                     it->seq_,                       // sequence succ/pred
                     in_vehicle_time+wait_time,      // link time
-                    (fp ? fp->price_ : 0.0),        // link fare
+                    fare,                           // link fare
                     link_cost,                      // link cost
                     link_dist,                      // link distance
                     cost,                           // cost

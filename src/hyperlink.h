@@ -175,6 +175,26 @@ namespace fasttrips {
         const StopState& chooseState(const PathSpecification& path_spec,
                                      std::ostream& trace_file,
                                      const StopState* prev_link = NULL) const;
+
+        /**
+         * Iterates through the trip links and multiplies transer_probability x probability and sums
+         * to the fare period in fp_probs.
+         */
+        void collectFarePeriodProbabilities(const PathSpecification& path_spec,
+                                            std::ostream& trace_file,
+                                            const PathFinder& pf,
+                                            double transfer_probability,
+                                            std::map<const FarePeriod*, double>& fp_probs) const;
+        /**
+         * Estimate the fare during pathfinding given transfer possibilities.
+         * This is called on the previous (transfer) link by PathFinder::updateStopStatesForTrips().
+         */
+        double getFareWithTransfer(const PathSpecification& path_spec,
+                                   std::ostream& trace_file,
+                                   const PathFinder& pf,
+                                   const FarePeriod& fare_period,
+                                   const std::map<int, Hyperlink>& stop_states) const;
+
     };
 
     /**
