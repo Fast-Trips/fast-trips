@@ -147,10 +147,11 @@ There are three places where fares factor into the fast-trips.
 
 2. During path-enumeration (C++ extension), when the paths are being constructed by choosing links from the hyperpath graph, at the point where each link is added to the path, the [fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) *could be applied* to adjust fares with more certainty of the the path so far.  This is currently not being done but it would be in [`Path::addLink()`](src/path.cpp) and/or [`Hyperlink::setupProbabilities()`](src/hyperlink.cpp).  It may be valuable since it may affect the probability of the next link being chosen since the fare could be set with more certainty and then the potential link costs could be updated along with their probabilities.
 
-   Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are also addressed here.
-
+   Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are not addressed here yet but could be also.
+   
 3. During path-enumeration (C++ extension), after the path is constructed, the trip cost is re-calculated at the end using [`Path::calculateCost()`](src/path.cpp).  At this moment in the process, the path is complete and final, so the fare transfer rules are relatively easy to apply given that links are certain.  The initial fare and cost are saved and passed back to python to show the effect of step 1.
 
+   Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are also addressed here.
 
 4. During simulation (python), while the path is being adjusted due to vehicle times, the fares are calculated via [`Route.add_fares()`](fasttrips/Route.py).  This is unlikely to change anything unless the fare periods changed due to the slow-down of vehicles -- so consider deprecating this in favor of using the pathfinding results?  For now, it's a good test that the C++ code is working as expected; running with simulation off should result in identical fare and cost results from pathfinding and the (non-vehicle-updating) python simulation.
 
