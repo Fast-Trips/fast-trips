@@ -509,7 +509,10 @@ class Passenger:
         `pf_iteration`                int64  iteration in which these paths were found
         `pathnum`                     int64  the path number for the path within the pathset
         `pf_cost`                   float64  the cost of the entire path
+        `pf_fare`                   float64  the fare of the entire path
         `pf_probability`            float64  the probability of the path
+        `pf_initcost`               float64  the initial cost of the entire path
+        `pf_initfare`               float64  the initial fare of the entire path
         `description`                object  string representation of the path
         ==================  ===============  =====================================================================================================
 
@@ -608,7 +611,10 @@ class Passenger:
                     iteration,
                     pathnum,
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY]
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY],
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_COST],
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_FARE]
                 ])
 
                 link_num   = 0
@@ -689,7 +695,10 @@ class Passenger:
             Passenger.PF_COL_PF_ITERATION,
             Passenger.PF_COL_PATH_NUM,
             PathSet.PATH_KEY_COST,
-            PathSet.PATH_KEY_PROBABILITY ])
+            PathSet.PATH_KEY_FARE,
+            PathSet.PATH_KEY_PROBABILITY,
+            PathSet.PATH_KEY_INIT_COST,
+            PathSet.PATH_KEY_INIT_FARE])
 
         pathset_links_df = pandas.DataFrame(linklist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,

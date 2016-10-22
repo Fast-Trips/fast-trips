@@ -142,10 +142,10 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
     dims_double[1] = 8; // label_, deparr_time_, link_time_, link_cost_, link_dist_, cost_, arrdep_time_
     PyArrayObject *ret_double = (PyArrayObject *)PyArray_SimpleNew(2, dims_double, NPY_DOUBLE);
 
-    // costs and probability
+    // cost, fare, probability, initial cost, initial fare
     npy_intp dims_paths[2];
     dims_paths[0] = pathset.size();
-    dims_paths[1] = 2;
+    dims_paths[1] = 5;
     PyArrayObject *ret_paths = (PyArrayObject*)PyArray_SimpleNew(2, dims_paths, NPY_DOUBLE);
 
     int ind      = 0;
@@ -154,7 +154,10 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
         const fasttrips::Path& path = psi->first;
 
         *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 0) = path.cost();
-        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 1) = psi->second.probability_;
+        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 1) = path.fare();
+        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 2) = psi->second.probability_;
+        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 3) = path.initialCost();
+        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 4) = path.initialFare();
 
         for (int link_num = 0; link_num < path.size(); ++link_num) {
             *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 0) = path_num;

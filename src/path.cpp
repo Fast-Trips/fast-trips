@@ -13,15 +13,21 @@ namespace fasttrips {
     Path::Path() :
         outbound_(false),
         enumerating_(false),
+        fare_(0),
         cost_(0),
-        capacity_problem_(false)
+        capacity_problem_(false),
+        initial_fare_(0),
+        initial_cost_(0)
     {}
 
     Path::Path(bool outbound, bool enumerating) :
         outbound_(outbound),
         enumerating_(enumerating),
+        fare_(0),
         cost_(0),
-        capacity_problem_(false)
+        capacity_problem_(false),
+        initial_fare_(0),
+        initial_cost_(0)
     {}
 
     Path::~Path()
@@ -33,10 +39,24 @@ namespace fasttrips {
         return links_.size();
     }
 
-    // What's the cost of this path?
     double Path::cost() const
     {
         return cost_;
+    }
+
+    double Path::fare() const
+    {
+        return fare_;
+    }
+
+    double Path::initialCost() const
+    {
+        return initial_cost_;
+    }
+
+    double Path::initialFare() const
+    {
+        return initial_fare_;
     }
 
     // Clear
@@ -120,7 +140,7 @@ namespace fasttrips {
                 trace_file << std::endl;
 
                 // delete this later
-                trace_file << "--------------- path_before ---- (cost " << cost_ << ")" << std::endl;
+                trace_file << "--------------- path_before ---- (cost " << cost_ << ", fare " << fare_ << ")" << std::endl;
                 print(trace_file, path_spec, pf);
                 trace_file << "--------------------------------" << std::endl;
             }
@@ -220,6 +240,7 @@ namespace fasttrips {
             }
         }
         cost_          += new_link.link_cost_;
+        fare_          += new_link.link_fare_;
         new_link.cost_  = cost_;
         links_.push_back( std::make_pair(stop_id, new_link) );
 
@@ -231,7 +252,7 @@ namespace fasttrips {
 
             // this is excessive but oh well
             if (links_.size() > 1) {
-                trace_file << "--------------- path so far ----" << (feasible ? " (feasible)" : " (infeasible)") << " (cost " << cost_ << ")" << std::endl;
+                trace_file << "--------------- path so far ----" << (feasible ? " (feasible)" : " (infeasible)") << " (cost " << cost_ << ", fare " << fare_ << ")" << std::endl;
                 print(trace_file, path_spec, pf);
                 trace_file << "--------------------------------" << std::endl;
             }
@@ -289,9 +310,14 @@ namespace fasttrips {
         // no stops - nothing to do
         if (links_.size()==0) { return; }
 
+        // save aside the fare and cost
+        initial_fare_ = fare_;
+        initial_cost_ = cost_;
+
         bool chrono_order   = (!outbound_ && !enumerating_) || (outbound_ && enumerating_);
         if (path_spec.trace_ && !hush) {
-            trace_file << "calculatePathCost: (chrono? " << (chrono_order ? "yes)" : "no)") << std::endl;
+            trace_file << "calculatePathCost: (chrono? " << (chrono_order ? "yes, " : "no,");
+            trace_file << " cost: " << initial_cost_ << ", fare: " << initial_fare_ << ")" << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;
         }
@@ -305,6 +331,7 @@ namespace fasttrips {
         int inc             = chrono_order ? 1 : -1;
 
         cost_               = 0;
+        fare_               = 0;
         std::string last_fare_period;
 
         // for free transfer calculations -- fare_period -> (first board time, board count)
@@ -412,11 +439,12 @@ namespace fasttrips {
                 first_trip = false;
             }
             cost_                            += stop_state.link_cost_;
+            fare_                            += stop_state.link_fare_;
             stop_state.cost_                  = cost_;
         }
 
         if (path_spec.trace_ && !hush) {
-            trace_file << " ==================================================> cost: " << cost_ << std::endl;
+            trace_file << " ==================================================> cost: " << cost_ << ", fare: " << fare_ << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;
         }

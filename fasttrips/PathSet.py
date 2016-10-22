@@ -100,8 +100,11 @@ class PathSet:
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 
-    PATH_KEY_COST           = "pf_cost"
-    PATH_KEY_PROBABILITY    = "pf_probability"
+    PATH_KEY_COST           = "pf_cost"         #: path cost according to pathfinder
+    PATH_KEY_FARE           = "pf_fare"         #: path fare according to pathfinder
+    PATH_KEY_PROBABILITY    = "pf_probability"  #: path probability according to pathfinder
+    PATH_KEY_INIT_COST      = "pf_initcost"     #: initial cost (in pathfinding, before path was finalized)
+    PATH_KEY_INIT_FARE      = "pf_initfare"     #: initial fare (in pathfinding, before path was finalized)
     PATH_KEY_STATES         = "states"
 
     STATE_IDX_LABEL         = 0  #: :py:class:`datetime.timedelta` instance

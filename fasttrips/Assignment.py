@@ -922,7 +922,10 @@ class Assignment:
 
             pathdict[path_num] = {}
             pathdict[path_num][PathSet.PATH_KEY_COST       ] = path_costs[path_num, 0]
-            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 1]
+            pathdict[path_num][PathSet.PATH_KEY_FARE       ] = path_costs[path_num, 1]
+            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 2]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_COST  ] = path_costs[path_num, 3]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_FARE  ] = path_costs[path_num, 4]
             # List of (stop_id, stop_state)
             pathdict[path_num][PathSet.PATH_KEY_STATES     ] = []
 

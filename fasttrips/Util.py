@@ -53,7 +53,7 @@ class Util:
     ]
     DROP_PATHFINDING_COLUMNS = [
         # pathfinding debugging
-        "pf_iteration","pf_A_time","pf_B_time","pf_linktime","pf_linkcost","pf_linkdist","pf_waittime","pf_linkfare"
+        "pf_iteration","pf_A_time","pf_B_time","pf_linktime","pf_linkcost","pf_linkdist","pf_waittime","pf_linkfare","pf_cost","pf_fare","pf_initcost","pf_initfare"
     ]
 
     @staticmethod
