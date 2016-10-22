@@ -22,8 +22,9 @@ namespace fasttrips {
         return (mode == MODE_TRANSIT);
     }
 
-    double Hyperlink::TIME_WINDOW_      = 0.0;
-    double Hyperlink::STOCH_DISPERSION_ = 0.0;
+    double Hyperlink::TIME_WINDOW_          = 0.0;
+    double Hyperlink::STOCH_DISPERSION_     = 0.0;
+    bool   Hyperlink::TRANSFER_FARE_IGNORE_ = false;
 
     // Default constructor
     Hyperlink::Hyperlink() :
@@ -868,6 +869,11 @@ namespace fasttrips {
         const FarePeriod& fare_period,
         const std::map<int, Hyperlink>& stop_states) const
     {
+        // if we opted not to do this through configuration, just return the fare
+        if (Hyperlink::TRANSFER_FARE_IGNORE_) {
+            return fare_period.price_;
+        }
+
         // Figure out the probability of another previous fare period
         std::map<const FarePeriod*, double> fare_period_probabilities;
 

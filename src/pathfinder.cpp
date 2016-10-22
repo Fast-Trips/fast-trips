@@ -48,6 +48,7 @@ namespace fasttrips {
         int        stoch_pathset_size,
         double     stoch_dispersion,
         int        stoch_max_stop_process_count,
+        bool       transfer_fare_ignore,
         int        max_num_paths,
         double     min_path_probability)
     {
@@ -59,6 +60,7 @@ namespace fasttrips {
 
         Hyperlink::TIME_WINDOW_         = time_window;
         Hyperlink::STOCH_DISPERSION_    = stoch_dispersion;
+        Hyperlink::TRANSFER_FARE_IGNORE_= transfer_fare_ignore;
     }
 
     void PathFinder::readIntermediateFiles()

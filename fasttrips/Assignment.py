@@ -109,6 +109,10 @@ class Assignment:
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
+    #: In path-finding, suppress trying to adjust fares using transfer fare rules.
+    #: This is for performance testing.
+    TRANSFER_FARE_IGNORE            = None
+
     #: Route choice configuration: How many times max times should we process a stop
     #: during labeling?  Use -1 to specify no max.  Int.
     #: Setting this to a positive value may increase runtime but may decrease
@@ -272,6 +276,7 @@ class Assignment:
                       'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
                       'time_window'                     :30,
+                      'transfer_fare_ignore'            :'False',
                       'user_class_function'             :'generic_user_class'
                      })
         # First, read configuration from network directory
@@ -322,6 +327,7 @@ class Assignment:
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
         Assignment.TIME_WINDOW = datetime.timedelta(
                                          minutes = parser.getfloat  ('pathfinding','time_window'))
+        Assignment.TRANSFER_FARE_IGNORE          = parser.getboolean('pathfinding','transfer_fare_ignore')
         PathSet.USER_CLASS_FUNCTION              = parser.get       ('pathfinding','user_class_function')
 
         if PathSet.OVERLAP_VARIABLE not in PathSet.OVERLAP_VARIABLE_OPTIONS:
@@ -383,6 +389,7 @@ class Assignment:
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('pathfinding','time_window',                 '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
+        parser.set('pathfinding','transfer_fare_ignore',        'True' if Assignment.TRANSFER_FARE_IGNORE else 'False')
         parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
@@ -422,6 +429,7 @@ class Assignment:
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
+                                         1 if Assignment.TRANSFER_FARE_IGNORE else 0,
                                          Assignment.MAX_NUM_PATHS,
                                          Assignment.MIN_PATH_PROBABILITY)
 

@@ -65,7 +65,7 @@ Option Name                         | Type   | Default | Description
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
 `output_pathset_per_sim_iter`       | bool   | False   | Output pathsets for each simulation iteration?  If false, just outputs once per path-finding iteration.
 `prepend_route_id_to_trip_id`       | bool   | False   | This is for readability in debugging; if True, then route ids will be prepended to trip ids.
-`simulation`                        | bool   | True    | After path-finding, should we choose paths and assign passengers?  (Why would you ever not do this?)
+`simulation`                        | bool   | True    | Simulate transit vehicles?  After path-finding, should fast-trips update vehicle times and put passengers on vehicles?  If False, fast-trips still calculates costs and probabilities and chooses paths, but the vehicle times will not be updated from those read in from the input network, and passengers will not be loaded onto vehicles.  This is useful for debugging path-finding and verifying that pathfinding calculations are consistent with cost/fare calculations done outside pathfinding.
 `skim_start_time`                   | string | 5:00    | Not implemented yet.
 `skim_end_time`                     | string | 10:00   | Not implemented yet.
 `skip_person_ids`                   | string | 'None'  | A list of person IDs to skip.
