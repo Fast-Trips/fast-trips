@@ -139,7 +139,7 @@ Discount and free transfers specified in [fare_transfer_rules_ft.txt](https://gi
 
 Free transfers are also specified *within* fare periods (possibly time-bounded) in [fare_attributes_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md). These free transfers are applied *after* the discounts from [fare_transfer_rules_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) and they do not need to be back-to-back.  So if a passenger transfers from A to B to A and fare period A has 1 free transfer specified, but a transfer from B to A has a transfer fare of $.50, the passenger will receive the free transfer since these rules are applied last (and override).
 
-There are three places where fares factor into the fast-trips.
+There are four places where fares factor into the fast-trips.
 
 1. During path-finding (C++ extension), fares get assessed as a cost onto links, which translate to generalized cost (minutes) via the traveler's value of time.  [Fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) here are complicated, because we don't know which is the next/previous fare, and we can only guess based on probabilities.  The fare is estimated using [`Hyperlink::getFareWithTransfer()`](src/hyperlink.cpp).  Turn this off using configuration option `transfer_fare_ignore`.
 
@@ -148,7 +148,7 @@ There are three places where fares factor into the fast-trips.
 2. During path-enumeration (C++ extension), when the paths are being constructed by choosing links from the hyperpath graph, at the point where each link is added to the path, the [fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) *could be applied* to adjust fares with more certainty of the the path so far.  This is currently not being done but it would be in [`Path::addLink()`](src/path.cpp) and/or [`Hyperlink::setupProbabilities()`](src/hyperlink.cpp).  It may be valuable since it may affect the probability of the next link being chosen since the fare could be set with more certainty and then the potential link costs could be updated along with their probabilities.
 
    Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are not addressed here yet but could be also.
-   
+
 3. During path-enumeration (C++ extension), after the path is constructed, the trip cost is re-calculated at the end using [`Path::calculateCost()`](src/path.cpp).  At this moment in the process, the path is complete and final, so the fare transfer rules are relatively easy to apply given that links are certain.  The initial fare and cost are saved and passed back to python to show the effect of step 1.
 
    Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are also addressed here.
