@@ -309,3 +309,12 @@ class Stop:
             return True
         return False
 
+    def stop_min_max_lat_lon(self):
+        """
+        Returns (min_stop_lat, max_stop_lat,
+                 min_stop_lon, max_stop_lon)
+        """
+        return (self.stops_df[Stop.STOPS_COLUMN_STOP_LATITUDE].min(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LATITUDE].max(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LONGITUDE].min(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LONGITUDE].max())
