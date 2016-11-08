@@ -18,6 +18,7 @@ import csv, datetime, logging, os
 import numpy
 import pandas
 
+from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
 
 class Util:
@@ -80,7 +81,7 @@ class Util:
     @staticmethod
     def add_new_id(input_df,   id_colname,         newid_colname,
                    mapping_df, mapping_id_colname, mapping_newid_colname,
-                   warn=False, warn_msg=None):
+                   warn=False, warn_msg=None,      drop_failures=True):
         """
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
@@ -117,13 +118,14 @@ class Util:
             # FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
 
 
-            if warn:
+            if drop_failures:
                 # remove them
                 return_df = return_df.loc[pandas.notnull(return_df[mapping_newid_colname_chk])]
                 # make it an int
                 return_df[mapping_newid_colname_chk] = return_df[mapping_newid_colname_chk].astype(int)
-            else:
-                raise
+
+            if not warn:
+                raise UnexpectedError("Util.add_new_id failed to map all ids to numbers")
 
         # remove the redundant id column if necessary (it's redundant)
         if id_colname != mapping_id_colname:

@@ -189,7 +189,7 @@ class Stop:
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE))
 
 
-    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None):
+    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None, drop_failures=True):
         """
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
         adds the numeric stop id as a column named *numeric_newcolname* and returns it.
@@ -198,7 +198,7 @@ class Stop:
                                    mapping_df=self.stop_id_df,
                                    mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                    mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
-                                   warn=warn, warn_msg=warn_msg)
+                                   warn=warn, warn_msg=warn_msg, drop_failures=drop_failures)
 
     def add_stop_lat_lon(self, input_df, id_colname, new_lat_colname, new_lon_colname, new_stop_name_colname=None):
         """
