@@ -1513,8 +1513,6 @@ class Assignment:
         new_bump_wait.reset_index(drop=False, inplace=True)
         new_bump_wait.rename(columns={"A_id_num":Trip.STOPTIMES_COLUMN_STOP_ID_NUM}, inplace=True)
         # add trip id num
-        new_bump_wait = trips.add_numeric_trip_id(new_bump_wait, Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM)
-
         new_bump_wait = trips.add_numeric_trip_id(new_bump_wait, id_colname=Trip.STOPTIMES_COLUMN_TRIP_ID, numeric_newcolname=Trip.STOPTIMES_COLUMN_TRIP_ID_NUM)
 
         FastTripsLogger.debug("new_bump_wait (%d rows, showing head):\n%s" %
