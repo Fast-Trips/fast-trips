@@ -218,7 +218,7 @@ class Stop:
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE))
 
 
-    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None):
+    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None, drop_failures=True):
         """
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
         adds the numeric stop id as a column named *numeric_newcolname* and returns it.
@@ -227,7 +227,7 @@ class Stop:
                                    mapping_df=self.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]],
                                    mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                    mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
-                                   warn=warn, warn_msg=warn_msg)
+                                   warn=warn, warn_msg=warn_msg, drop_failures=drop_failures)
 
     def add_stop_id_for_numeric_id(self, input_df, numeric_id, id_colname):
         """
@@ -377,3 +377,12 @@ class Stop:
             return True
         return False
 
+    def stop_min_max_lat_lon(self):
+        """
+        Returns (min_stop_lat, max_stop_lat,
+                 min_stop_lon, max_stop_lon)
+        """
+        return (self.stops_df[Stop.STOPS_COLUMN_STOP_LATITUDE].min(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LATITUDE].max(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LONGITUDE].min(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LONGITUDE].max())

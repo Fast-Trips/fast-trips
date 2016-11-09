@@ -428,6 +428,7 @@ class Passenger:
                               Assignment.SIM_COL_PAX_B_TIME])
         links_dtypes = {Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object,
+                        Trip.TRIPS_COLUMN_TRIP_ID                :object,
                         "A_id"                                   :object,
                         "B_id"                                   :object,
                         Passenger.PF_COL_ROUTE_ID                :object,
@@ -441,18 +442,19 @@ class Passenger:
 
         # convert time strings to datetimes
         for date_col in date_cols:
-            pathset_links_df[date_col] = pathset_links_df[date_col].map(lambda x: Util.read_time(x))
+            if date_col in pathset_links_df.columns.values:
+                pathset_links_df[date_col] = pathset_links_df[date_col].map(lambda x: Util.read_time(x))
 
         # convert time duration columns to time durations
         link_cols = list(pathset_links_df.columns.values)
         if Passenger.PF_COL_LINK_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_LINK_TIME])
-        else:
+        elif "%s min" % Passenger.PF_COL_LINK_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_LINK_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_LINK_TIME], unit='m')
 
         if Passenger.PF_COL_WAIT_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df[Passenger.PF_COL_WAIT_TIME])
-        else:
+        elif "%s min" % Passenger.PF_COL_WAIT_TIME in link_cols:
             pathset_links_df[Passenger.PF_COL_WAIT_TIME]       = pandas.to_timedelta(pathset_links_df["%s min" % Passenger.PF_COL_WAIT_TIME], unit='m')
 
         # if simulation results are available
@@ -467,17 +469,20 @@ class Passenger:
             pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pandas.to_timedelta(pathset_links_df["%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], unit='m')
 
         # and drop the numeric version
-        pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
-                               "%s min" % Passenger.PF_COL_WAIT_TIME], axis=1, inplace=True)
-        if include_asgn:
+        if "%s min" % Passenger.PF_COL_LINK_TIME in link_cols:
+            pathset_links_df.drop(["%s min" % Passenger.PF_COL_LINK_TIME,
+                                   "%s min" % Passenger.PF_COL_WAIT_TIME], axis=1, inplace=True)
+        if "%s min" % Assignment.SIM_COL_PAX_LINK_TIME in link_cols:
             pathset_links_df.drop(["%s min" % Assignment.SIM_COL_PAX_LINK_TIME,
                                    "%s min" % Assignment.SIM_COL_PAX_WAIT_TIME], axis=1, inplace=True)
 
         # if A_id_num isn't there, add it
         if "A_id_num" not in pathset_links_df.columns.values:
-            pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="A_id", numeric_newcolname="A_id_num")
+            pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="A_id", numeric_newcolname="A_id_num",
+                                                         warn=True, warn_msg="read_passenger_pathsets: invalid stop ID", drop_failures=False)
         if "B_id_num" not in pathset_links_df.columns.values:
-            pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="B_id", numeric_newcolname="B_id_num")
+            pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="B_id", numeric_newcolname="B_id_num",
+                                                         warn=True, warn_msg="read_passenger_pathsets: invalid stop ID", drop_failures=False)
 
         FastTripsLogger.info("Read %s" % links_file)
         FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.head()))
