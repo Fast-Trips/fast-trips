@@ -88,6 +88,20 @@ namespace fasttrips {
         return links_.back();
     }
 
+    int Path::last_added_trip_id() const
+    {
+        if (links_.size() <= 1) { return -1; }
+        std::vector< std::pair<int, StopState> >::const_reverse_iterator riter;
+        for (riter = links_.rbegin(); riter != links_.rend(); ++riter) {
+            const StopState& ss = riter->second;
+            if (ss.deparr_mode_ == fasttrips::MODE_TRANSIT) {
+                return ss.trip_id_;
+            }
+        }
+        return -1;
+    }
+
+
     /// Comparison
     bool Path::operator<(const Path& path2) const
     {

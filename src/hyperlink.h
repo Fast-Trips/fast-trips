@@ -166,7 +166,7 @@ namespace fasttrips {
          */
         int setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
                                  const PathFinder& pf, bool trip_linkset,
-                                 const StopState* prev_link = NULL, const int last_trip_id = -1);
+                                 const Path* path_so_far = NULL);
 
         /**
          * Randomly selects one of the links in this hyperlink based on the cumulative probability

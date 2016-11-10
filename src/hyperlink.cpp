@@ -691,7 +691,7 @@ namespace fasttrips {
     // Return the max cum probability for the linkset
     int Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
                                         const PathFinder& pf, bool trip_linkset,
-                                        const StopState* prev_link, const int last_trip_id)
+                                        const Path* path_so_far)
     {
         LinkSet& linkset = (trip_linkset ? linkset_trip_ : linkset_nontrip_);
 
@@ -717,17 +717,18 @@ namespace fasttrips {
             ss.cum_prob_i_  = -1; // this means invalid
 
             // some checks if we have a previous link -- this will be a two-pass :p
-            if (prev_link != NULL)
+            if (path_so_far != NULL)
             {
+                const StopState& prev_link = path_so_far->back().second;
                 // infinite cost is invalid
                 if (ss.cost_ >= fasttrips::MAX_COST) { continue; }
                 // outbound: we cannot depart before we arrive
-                if ( path_spec.outbound_ && ss.deparr_time_ < prev_link->arrdep_time_) { continue; }
+                if ( path_spec.outbound_ && ss.deparr_time_ < prev_link.arrdep_time_) { continue; }
                 // inbound: we cannot arrive after we depart
-                if (!path_spec.outbound_ && ss.deparr_time_ > prev_link->arrdep_time_) { continue; }
+                if (!path_spec.outbound_ && ss.deparr_time_ > prev_link.arrdep_time_) { continue; }
 
                 // don't repeat the same trip
-                if (isTrip(ss.deparr_mode_) && (ss.trip_id_ == last_trip_id)) { continue; }
+                if (isTrip(ss.deparr_mode_) && (ss.trip_id_ == path_so_far->last_added_trip_id())) { continue; }
 
                 // calculating denominator
                 ss.cum_prob_i_ = 0;
@@ -773,7 +774,7 @@ namespace fasttrips {
         if (valid_links == 0) { return linkset.max_cum_prob_i_; }
 
         // this set is ready
-        if (prev_link == NULL) { return linkset.max_cum_prob_i_; }
+        if (path_so_far == NULL) { return linkset.max_cum_prob_i_; }
 
         // fail -- nothing is valid because costs are too big
         if (sum_exp != sum_exp) {

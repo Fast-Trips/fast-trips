@@ -73,6 +73,7 @@ namespace fasttrips {
               std::pair<int, StopState>& operator[](size_t n);
         const std::pair<int, StopState>& back() const;
               std::pair<int, StopState>& back();
+        int last_added_trip_id() const;
 
         /// Comparison operator; determines ordering in PathSet
         bool operator<(const Path& other) const;

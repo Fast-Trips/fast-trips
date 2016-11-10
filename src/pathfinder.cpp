@@ -1887,7 +1887,7 @@ namespace fasttrips {
 
             // setup probabilities
             Hyperlink& current_hyperlink = ssi->second;
-            maxcumi = current_hyperlink.setupProbabilities(path_spec, trace_file, *this, !isTrip(ss.deparr_mode_), &ss, last_trip_id);
+            maxcumi = current_hyperlink.setupProbabilities(path_spec, trace_file, *this, !isTrip(ss.deparr_mode_), &path);
 
             if (maxcumi == 0) { return false; }
 
