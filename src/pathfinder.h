@@ -159,6 +159,7 @@ namespace fasttrips {
         double      transfer_duration_; ///< Transfer duration, in seconds. -1 if no requirement.
     };
 
+    /// Maps route id + origin zone + dest zone (any of these may be NA, or -1) => FarePeriod
     typedef std::multimap<RouteStopZone, struct FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
 
     /// Fare transfer types

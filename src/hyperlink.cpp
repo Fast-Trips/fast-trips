@@ -949,6 +949,11 @@ namespace fasttrips {
                     *price_adj = *price_adj - ft->amount_;
                 }
             }
+            // for fare attribute-based free transfers, just assess the transfer as free if any are allowed here
+            if ((other_fp == &fare_period) && (fare_period.transfers_ > 0)) {
+                trace_xfer_type = "freeattr";
+                *price_adj = 0;
+            }
 
             // add it to the combined -- new price x probability
             new_price_adj       += (*price_adj)*fp_iter->second;
