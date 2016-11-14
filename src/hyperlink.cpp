@@ -687,11 +687,12 @@ namespace fasttrips {
 
     }
 
-    // Set up probabilities for the links in the hyperlink
+    // Set up probabilities for the links in the hyperlink.
+    // If path_so_far is passed, then uses that to update trip fares and costs
     // Return the max cum probability for the linkset
     int Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
-                                        const PathFinder& pf, bool trip_linkset,
-                                        const Path* path_so_far)
+                                      const PathFinder& pf, bool trip_linkset,
+                                      const Path* path_so_far)
     {
         LinkSet& linkset = (trip_linkset ? linkset_trip_ : linkset_nontrip_);
 
@@ -706,11 +707,15 @@ namespace fasttrips {
         double sum_exp          = 0;
         linkset.max_cum_prob_i_ = 0;
 
+        // for logging
+        std::map<StopStateKey, std::string> ssk_log;
+
         // Setup the probabilities
         for (CostToStopState::iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
         {
             const StopStateKey& ssk   = iter->second;
             StopState&           ss   = linkset.stop_state_map_[ssk];
+            ssk_log[ssk]              = "";
 
             // reset
             ss.probability_ = 0;
@@ -727,8 +732,24 @@ namespace fasttrips {
                 // inbound: we cannot arrive after we depart
                 if (!path_spec.outbound_ && ss.deparr_time_ > prev_link.arrdep_time_) { continue; }
 
-                // don't repeat the same trip
-                if (isTrip(ss.deparr_mode_) && (ss.trip_id_ == path_so_far->last_added_trip_id())) { continue; }
+                // if this is a trip and we had a previous trip, update costs for transfer fares
+                const std::pair<int, StopState>* last_trip = path_so_far->lastAddedTrip();
+                if (isTrip(ss.deparr_mode_) && (last_trip)) {
+                    // don't repeat the same trip
+                    if (ss.trip_id_ == last_trip->second.trip_id_) { continue; }
+
+                    // check for fare transfer updates that may affect cost
+                    const FarePeriod* last_trip_fp = last_trip->second.fare_period_;
+
+                    // for outbound, path enumeration goes forwards  so last_trip is the *previous* trip
+                    // for inbound,  path enumeration goes backwards so last_trip is the *next* trip
+                    double link_fare_pre_update = ss.link_fare_;
+                    updateFare(path_spec, trace_file, pf, last_trip_fp, path_spec.outbound_, *path_so_far, ss, ssk_log[ssk]);
+                    if (abs(link_fare_pre_update - ss.link_fare_) > 0.001) {
+                        // update the link          (60 min/hour)*(hours/vot currency) x (currency)
+                        ss.link_cost_ = ss.link_cost_ + (60.0/path_spec.value_of_time_)*(ss.link_fare_-link_fare_pre_update);
+                    }
+                }
 
                 // calculating denominator
                 ss.cum_prob_i_ = 0;
@@ -802,7 +823,7 @@ namespace fasttrips {
             // ready to log
             if (path_spec.trace_) {
                 Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
-                trace_file << std::endl;
+                trace_file << " " << ssk_log[ssk] << std::endl;
             }
         } // finish second pass
         return linkset.max_cum_prob_i_;
@@ -861,6 +882,91 @@ namespace fasttrips {
             }
 
         }
+    }
+
+    // update ss.link_fare_
+    void Hyperlink::updateFare(
+        const PathSpecification& path_spec,
+        std::ostream& trace_file,
+        const PathFinder& pf,
+        const FarePeriod* last_trip_fp,
+        bool  last_is_prev,         // is last_trip_fp the previous trip, chronologically?
+        const Path& path_so_far,    // the path so far
+        StopState& ss,              // update the link_fare_ for this stop state / link
+        std::string& trace_xfer_type) const
+    {
+        // if no fare period here, nothing to do
+        if (ss.fare_period_ == NULL) { return; }
+        const FarePeriod* this_fp = ss.fare_period_;
+
+        // start with the price of this fare period
+        double price = this_fp->price_;
+        // and the last_trip_fp
+        double price_last = last_trip_fp->price_;
+        // adjust the latter fare period
+        double* price_adj = (last_is_prev ? &price : &price_last);
+        // this is just for trace
+        trace_xfer_type = "-";
+
+        // apply fare fare transfer rules
+        const FareTransfer* fare_transfer = pf.getFareTransfer(last_is_prev ? last_trip_fp->fare_period_ : this_fp->fare_period_,
+                                                               last_is_prev ? this_fp->fare_period_ : last_trip_fp->fare_period_);
+
+        if (fare_transfer) {
+
+            if (fare_transfer->type_ == TRANSFER_FREE) {
+                trace_xfer_type = "free";
+                *price_adj = 0;
+            } else if (fare_transfer->type_ == TRANSFER_COST) {
+                trace_xfer_type = "discount";
+                *price_adj = fare_transfer->amount_;
+            } else if (fare_transfer->type_ == TRANSFER_DISCOUNT) {
+                trace_xfer_type = "cost";
+                *price_adj = *price_adj - fare_transfer->amount_;
+            }
+        }
+
+        // apply fare attribute-based free transfers
+        int fare_boardings = path_so_far.boardsForFarePeriod(this_fp->fare_period_);
+        //  there are free transfers and we've already have a boarding
+        if ((this_fp->transfers_ > 0) &&             // there are free transfers
+            (fare_boardings > 0) &&                  // we've already have a boarding
+            (fare_boardings <= this_fp->transfers_)) // we have transfers left
+        {
+            // count is as a discount of the fare
+            trace_xfer_type = "freeattr";
+            *price_adj = *price_adj - this_fp->price_;
+        }
+
+        // it can't be negative
+        if (*price_adj < 0) { *price_adj = 0; }
+
+        if (path_spec.trace_) {
+            trace_file << "updateFare() price=" << price << "; price_last=" << price_last << std::endl;
+        }
+
+        // ss is the fare we're adjusting so let's do it!
+        if (last_is_prev) {
+            ss.link_fare_ = price;
+            return;
+        }
+
+        // otherwise, the fare of the latter link has already been assessed so do our best by applying an effective discount to the earlier link
+        // knowing that we'll transfer
+        double effective_discount = last_trip_fp->price_ - price_last;
+        if (effective_discount > 0) {
+            // apply it to the fare
+            double new_fare = ss.fare_period_->price_ - effective_discount;
+            // make sure it's non-negative
+            if (new_fare < 0) { new_fare = 0; }
+            // set it
+            ss.link_fare_ = new_fare;
+            return;
+        }
+
+        // no effective discount -- set it to fare
+        ss.link_fare_ = ss.fare_period_->price_;
+        return;
     }
 
     double Hyperlink::getFareWithTransfer(
@@ -923,6 +1029,8 @@ namespace fasttrips {
                                                                  fp_iter != fare_period_probabilities.end();
                                                                ++fp_iter)
         {
+            // this is similar to, but a simplified version of Hyperlink::updateFare()
+
             const FarePeriod* other_fp = fp_iter->first;
             // is there a transfer rule?
             // for outbound, pathfinding goes backwards so other_fp is the *next* fare period

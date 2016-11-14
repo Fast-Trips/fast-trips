@@ -63,6 +63,7 @@ namespace fasttrips {
     void Path::clear()
     {
         links_.clear();
+        boards_per_fareperiod_.clear();
         cost_ = 0;
         capacity_problem_ = false;
     }
@@ -88,17 +89,26 @@ namespace fasttrips {
         return links_.back();
     }
 
-    int Path::last_added_trip_id() const
+    const std::pair<int, StopState>* Path::lastAddedTrip() const
     {
-        if (links_.size() <= 1) { return -1; }
+        if (links_.size() <= 1) { return NULL; }
         std::vector< std::pair<int, StopState> >::const_reverse_iterator riter;
         for (riter = links_.rbegin(); riter != links_.rend(); ++riter) {
             const StopState& ss = riter->second;
             if (ss.deparr_mode_ == fasttrips::MODE_TRANSIT) {
-                return ss.trip_id_;
+                return &(*riter);
             }
         }
-        return -1;
+        return NULL;
+    }
+
+    int Path::boardsForFarePeriod(const std::string& fare_period) const
+    {
+        std::map< std::string, int >::const_iterator iter = boards_per_fareperiod_.find(fare_period);
+        if (iter != boards_per_fareperiod_.end()) {
+            return iter->second;
+        }
+        return 0;
     }
 
 
@@ -257,6 +267,11 @@ namespace fasttrips {
         fare_          += new_link.link_fare_;
         new_link.cost_  = cost_;
         links_.push_back( std::make_pair(stop_id, new_link) );
+
+        // update boards_per_fareperiod_
+        if (link.fare_period_) {
+            boards_per_fareperiod_[link.fare_period_->fare_period_] += 1;
+        }
 
         if (path_spec.trace_)
         {

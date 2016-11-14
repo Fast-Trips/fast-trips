@@ -77,8 +77,8 @@ class Route(object):
     #: `gtfs fare_attributes <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md>`_ file).
     #: See `fare_attributes_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md>`_.
     INPUT_FARE_ATTRIBUTES_FILE              = "fare_attributes_ft.txt"
-    # fasttrips Fare attributes column name: Fare Class
-    FARE_ATTR_COLUMN_FARE_CLASS             = "fare_class"
+    # fasttrips Fare attributes column name: Fare Period
+    FARE_ATTR_COLUMN_FARE_PERIOD            = "fare_period"
     # fasttrips Fare attributes column name: Price
     FARE_ATTR_COLUMN_PRICE                  = "price"
     # fasttrips Fare attributes column name: Currency Type
@@ -90,10 +90,9 @@ class Route(object):
     # fasttrips Fare attributes column name: Transfer duration (Integer length of time in seconds before transfer expires. Omit or leave empty if they do not.)
     FARE_ATTR_COLUMN_TRANSFER_DURATION      = "transfer_duration"
 
-    #: File with fasttrips fare rules information (this extends the
-    #: `gtfs fare_rules <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md>`_ file).
+    #: File with fasttrips fare periods information
     #: See `fare_rules_ft specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md>`_.
-    INPUT_FARE_RULES_FILE                   = "fare_rules_ft.txt"
+    INPUT_FARE_PERIODS_FILE                 = "fare_periods_ft.txt"
     #: fasttrips Fare rules column name: Fare ID
     FARE_RULES_COLUMN_FARE_ID               = "fare_id"
     #: GTFS fare rules column name: Route ID
@@ -105,7 +104,7 @@ class Route(object):
     #: GTFS fare rules column name: Contains ID
     FARE_RULES_COLUMN_CONTAINS_ID           = "contains_id"
     #: fasttrips Fare rules column name: Fare class
-    FARE_RULES_COLUMN_FARE_CLASS            = FARE_ATTR_COLUMN_FARE_CLASS
+    FARE_RULES_COLUMN_FARE_PERIOD           = FARE_ATTR_COLUMN_FARE_PERIOD
     #: fasttrips Fare rules column name: Start time for the fare. A DateTime
     FARE_RULES_COLUMN_START_TIME            = "start_time"
     #: fasttrips Fare rules column name: End time for the fare rule. A DateTime.
@@ -125,9 +124,9 @@ class Route(object):
     #: See `fare_transfer_rules specification <https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md>`_.
     INPUT_FARE_TRANSFER_RULES_FILE              = "fare_transfer_rules_ft.txt"
     #: fasttrips Fare transfer rules column name: From Fare Class
-    FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS  = "from_fare_class"
+    FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD = "from_fare_period"
     #: fasttrips Fare transfer rules column name: To Fare Class
-    FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS    = "to_fare_class"
+    FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD   = "to_fare_period"
     #: fasttrips Fare transfer rules column name: Transfer type?
     FARE_TRANSFER_RULES_COLUMN_TYPE             = "transfer_fare_type"
     #: fasttrips Fare transfer rules column name: Transfer amount (discount or fare)
@@ -262,7 +261,7 @@ class Route(object):
                                                  dtype={Route.FARE_ATTR_COLUMN_PRICE:numpy.float64})
             # verify required columns are present
             fare_attrs_cols = list(self.fare_attrs_df.columns.values)
-            assert(Route.FARE_ATTR_COLUMN_FARE_CLASS        in fare_attrs_cols)
+            assert(Route.FARE_ATTR_COLUMN_FARE_PERIOD       in fare_attrs_cols)
             assert(Route.FARE_ATTR_COLUMN_PRICE             in fare_attrs_cols)
             assert(Route.FARE_ATTR_COLUMN_CURRENCY_TYPE     in fare_attrs_cols)
             assert(Route.FARE_ATTR_COLUMN_PAYMENT_METHOD    in fare_attrs_cols)
@@ -276,7 +275,7 @@ class Route(object):
             FastTripsLogger.info("Read %7d %15s from %25s" %
                                  (len(self.fare_attrs_df), "fare attributes", Route.INPUT_FARE_ATTRIBUTES_FILE))
 
-            #: fares are by fare_class rather than by fare_id
+            #: fares are by fare_period rather than by fare_id
             self.fare_by_class = True
         else:
             self.fare_by_class = False
@@ -293,13 +292,13 @@ class Route(object):
         else:
             self.fare_ids_df = pandas.DataFrame()
 
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE)):
-            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_RULES_FILE),
+        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE)):
+            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE),
                                                dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})
             # verify required columns are present
             fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
             assert(Route.FARE_RULES_COLUMN_FARE_ID      in fare_rules_ft_cols)
-            assert(Route.FARE_RULES_COLUMN_FARE_CLASS   in fare_rules_ft_cols)
+            assert(Route.FARE_RULES_COLUMN_FARE_PERIOD  in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
 
@@ -310,7 +309,7 @@ class Route(object):
                 fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: Util.read_time(x, True))
 
             # Split fare classes so they don't overlap
-            fare_rules_ft_df = self.remove_fare_class_overlap(fare_rules_ft_df)
+            fare_rules_ft_df = self.remove_fare_period_overlap(fare_rules_ft_df)
 
             # join to fare rules dataframe
             self.fare_rules_df = pandas.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
@@ -357,7 +356,7 @@ class Route(object):
 
             # We don't support rows with only one of origin_id or destination_id specified
 
-            # join to fare_attributes on fare_class if we have it, or fare_id if we don't
+            # join to fare_attributes on fare_period if we have it, or fare_id if we don't
 
             #: Fare ID/class (fare period)/attribute mapping.
             #:
@@ -372,7 +371,7 @@ class Route(object):
             #: `destination_id`     (optional) Destination fare zone ID(s) for fare ID. (See `fare_rules`_)
             #: `destination_id_num` (optional) Destination fare zone number for fare ID.
             #: `contains_id`        (optional) Contains fare zone ID(s) for fare ID. (See `fare_rules`_)
-            #: `fare_class`         GTFS-plus fare_class (See `fare_rules_ft`_)
+            #: `fare_period`        GTFS-plus fare_period (See `fare_periods_ft`_)
             #: `start_time`         Fare class start time (See `fare_rules_ft`_)
             #: `end_time`           Fare class end time (See `fare_rules_ft`_)
             #: `currency_type`      Currency of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)
@@ -389,7 +388,7 @@ class Route(object):
             self.fare_rules_df = pandas.merge(left =self.fare_rules_df,
                                               right=self.fare_attrs_df,
                                               how  ='left',
-                                              on   = Route.FARE_RULES_COLUMN_FARE_CLASS if self.fare_by_class else Route.FARE_RULES_COLUMN_FARE_ID)
+                                              on   = Route.FARE_RULES_COLUMN_FARE_PERIOD if self.fare_by_class else Route.FARE_RULES_COLUMN_FARE_ID)
 
 
         FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head(10).to_string(formatters=\
@@ -397,17 +396,17 @@ class Route(object):
                                Route.FARE_RULES_COLUMN_END_TIME  :Util.datetime64_formatter})))
         FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
-                             (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_RULES_FILE))
+                             (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_PERIODS_FILE))
 
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE)):
             self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE),
                                                           dtype={Route.FARE_TRANSFER_RULES_COLUMN_TYPE:object})
             # verify required columns are present
             fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS   in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_TYPE            in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT          in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD   in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_TYPE             in fare_transfer_rules_cols)
+            assert(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT           in fare_transfer_rules_cols)
 
             # verify valid values for transfer type
             invalid_type = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE].isin(Route.TRANSFER_TYPE_OPTIONS)==False ]
@@ -476,12 +475,12 @@ class Route(object):
                                mapping_newid_colname=Route.ROUTES_COLUMN_MODE_NUM,
                                warn=warn)
 
-    def remove_fare_class_overlap(self, fare_rules_ft_df):
+    def remove_fare_period_overlap(self, fare_rules_ft_df):
         """
         Split fare classes so they don't overlap
         """
         fare_rules_ft_df["fare_period_id"] = fare_rules_ft_df.index+1
-        # FastTripsLogger.debug("remove_fare_class_overlap: initial\n%s" % fare_rules_ft_df)
+        # FastTripsLogger.debug("remove_fare_period_overlap: initial\n%s" % fare_rules_ft_df)
         max_fare_period_id = fare_rules_ft_df["fare_period_id"].max()
 
         while True:
@@ -499,7 +498,7 @@ class Route(object):
             # remove dupes
             df = df.loc[ df["fare_period_id_x"] != df["fare_period_id_y"] ]
 
-            FastTripsLogger.debug("remove_fare_class_overlap:\n%s" % df)
+            FastTripsLogger.debug("remove_fare_period_overlap:\n%s" % df)
 
             # this is an overlap -- error
             #  ____y_______                     x starts after y starts
@@ -511,7 +510,7 @@ class Route(object):
             if len(intersecting_fare_periods) > 0:
                 error_msg = "Partially overlapping fare periods are ambiguous. \n%s" % str(intersecting_fare_periods)
                 FastTripsLogger.error(error_msg)
-                raise NetworkInputError(Route.INPUT_FARE_RULES_FILE, error_msg)
+                raise NetworkInputError(Route.INPUT_FARE_PERIODS_FILE, error_msg)
 
             # is x a subset of y?
             #    ___x___            x starts after y starts
@@ -520,7 +519,7 @@ class Route(object):
                                           (df["end_time_x"  ]<=df["end_time_y"]) ]
             # if no subsets, done -- return
             if len(subset_fare_periods) == 0:
-                FastTripsLogger.debug("remove_fare_class_overlap returning\n%s" % fare_rules_ft_df)
+                FastTripsLogger.debug("remove_fare_period_overlap returning\n%s" % fare_rules_ft_df)
                 return fare_rules_ft_df
 
             # do one at a time -- split first into three rows
@@ -528,17 +527,17 @@ class Route(object):
             row_dict = subset_fare_periods.head(1).to_dict(orient="records")[0]
             FastTripsLogger.debug(row_dict)
             y_1 = {'fare_id'          :row_dict['fare_id'],
-                   'fare_class'       :row_dict['fare_class_y'],
+                   'fare_period'      :row_dict['fare_period_y'],
                    'start_time'       :row_dict['start_time_y'],
                    'end_time'         :row_dict['start_time_x'],
                    'fare_period_id'   :row_dict['fare_period_id_y']}
             x   = {'fare_id'          :row_dict['fare_id'],
-                   'fare_class'       :row_dict['fare_class_x'],
+                   'fare_period'      :row_dict['fare_period_x'],
                    'start_time'       :row_dict['start_time_x'],
                    'end_time'         :row_dict['end_time_x'],
                    'fare_period_id'   :row_dict['fare_period_id_x']}
             y_2 = {'fare_id'          :row_dict['fare_id'],
-                   'fare_class'       :row_dict['fare_class_y'],
+                   'fare_period'      :row_dict['fare_period_y'],
                    'start_time'       :row_dict['end_time_x'],
                    'end_time'         :row_dict['end_time_y'],
                    'fare_period_id'   :max_fare_period_id+1} # new
@@ -547,7 +546,7 @@ class Route(object):
             new_df = pandas.DataFrame([y_1,x,y_2])
             FastTripsLogger.debug("\n%s" % str(new_df))
 
-            # put it together with the unaffected fare_classes we already had
+            # put it together with the unaffected fare_periodes we already had
             prev_df = fare_rules_ft_df.loc[ (fare_rules_ft_df["fare_period_id"]!=row_dict["fare_period_id_x"])&
                                             (fare_rules_ft_df["fare_period_id"]!=row_dict["fare_period_id_y"]) ]
             fare_rules_ft_df = prev_df.append(new_df)
@@ -557,7 +556,7 @@ class Route(object):
                                           Route.FARE_RULES_COLUMN_START_TIME], inplace=True)
             # reorder columns
             fare_rules_ft_df = fare_rules_ft_df[[Route.FARE_RULES_COLUMN_FARE_ID,
-                                                 Route.FARE_RULES_COLUMN_FARE_CLASS,
+                                                 Route.FARE_RULES_COLUMN_FARE_PERIOD,
                                                  "fare_period_id",
                                                  Route.FARE_RULES_COLUMN_START_TIME,
                                                  Route.FARE_RULES_COLUMN_END_TIME]]
@@ -606,7 +605,7 @@ class Route(object):
             fare_rules_df.to_csv(os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE),
                                 columns=[Route.FARE_RULES_COLUMN_FARE_ID_NUM,
                                          Route.FARE_RULES_COLUMN_FARE_ID,
-                                         Route.FARE_ATTR_COLUMN_FARE_CLASS,
+                                         Route.FARE_ATTR_COLUMN_FARE_PERIOD,
                                          Route.FARE_RULES_COLUMN_ROUTE_ID_NUM,
                                          Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM,
                                          Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM,
@@ -634,7 +633,7 @@ class Route(object):
 
         * :py:attr:`Assignment.SIM_COL_PAX_FARE`
         * :py:attr:`Assignment.SIM_COL_PAX_FARE_PERIOD`
-        * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS`
+        * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD`
         * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
         * :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT`
         * :py:attr:`Assignment.SIM_COL_PAX_FREE_TRANSFER`
@@ -646,7 +645,7 @@ class Route(object):
         if Assignment.SIM_COL_PAX_FARE in list(trip_links_df.columns.values):
             trip_links_df.drop([Assignment.SIM_COL_PAX_FARE,
                                 Assignment.SIM_COL_PAX_FARE_PERIOD,
-                                Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS,
+                                Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
                                 Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
                                 Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
                                 Assignment.SIM_COL_PAX_FREE_TRANSFER], axis=1, inplace=True)
@@ -654,7 +653,7 @@ class Route(object):
         return_columns = list(trip_links_df.columns.values)
         return_columns.append(Assignment.SIM_COL_PAX_FARE)
         return_columns.append(Assignment.SIM_COL_PAX_FARE_PERIOD)
-        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS)
+        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD)
         return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_TYPE)
         return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT)
         return_columns.append(Assignment.SIM_COL_PAX_FREE_TRANSFER)
@@ -807,7 +806,7 @@ class Route(object):
         """
         Applies fare transfers by attaching previous fare period.
 
-        Adds (or replaces) columns :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS`, :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
+        Adds (or replaces) columns :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD`, :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`
         and :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT` and adjusts the values in
         :py:attr:`Assignment.SIM_COL_PAX_FARE`.
 
@@ -815,8 +814,8 @@ class Route(object):
         from .Passenger import Passenger
         from .Assignment import Assignment
 
-        if Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS in list(trip_links_df.columns.values):
-            trip_links_df.drop([Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS,
+        if Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD in list(trip_links_df.columns.values):
+            trip_links_df.drop([Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
                                 Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
                                 Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT], axis=1, inplace=True)
 
@@ -840,23 +839,23 @@ class Route(object):
                                                Passenger.PF_COL_LINK_NUM],
                                      suffixes=["","_prev"],
                                      how     ="left")
-        # extra columns are linknum prev, linknum_prev, fare_prev, fare_class_prev,
+        # extra columns are linknum prev, linknum_prev, fare_prev, fare_period_prev,
 
         # join with transfers table
         trip_links_df = pandas.merge(left    =trip_links_df,
                                      right   =self.fare_transfer_rules_df,
-                                     left_on =["fare_class_prev","fare_class"],
-                                     right_on=[Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS,
-                                               Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS],
+                                     left_on =["fare_period_prev","fare_period"],
+                                     right_on=[Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
+                                               Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD],
                                      how     ="left")
         # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
 
-        # keep Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS, Route.FARE_TRANSFER_RULES_COLUMN_TYPE, Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT
+        # keep Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD, Route.FARE_TRANSFER_RULES_COLUMN_TYPE, Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT
         # so lose the rest
         trip_links_df.drop(["%s prev" % Passenger.PF_COL_LINK_NUM,
                             "%s_prev" % Passenger.PF_COL_LINK_NUM,
                             "%s_prev" % Assignment.SIM_COL_PAX_FARE_PERIOD,
-                            Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS], axis=1, inplace=True)
+                            Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD], axis=1, inplace=True)
         # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
 
         # apply transfer discount

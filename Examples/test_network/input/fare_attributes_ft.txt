@@ -1,4 +1,4 @@
-fare_class,price,currency_type,payment_method,transfers,transfer_duration
+fare_period,price,currency_type,payment_method,transfers,transfer_duration
 bus_local_fare_default,2,USD,0,0,
 bus_local_fare_am,2.5,USD,0,0,
 bus_local_fare_pm,2.75,USD,0,0,

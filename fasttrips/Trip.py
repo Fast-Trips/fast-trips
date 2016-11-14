@@ -630,7 +630,7 @@ class Trip:
                        Route.ROUTES_COLUMN_ROUTE_LONG_NAME,   # I don't think this is useful
                        Route.ROUTES_COLUMN_ROUTE_TYPE,        # I don't think this is useful
                        Route.ROUTES_COLUMN_MODE,              # use numerical version
-                       Route.FARE_ATTR_COLUMN_FARE_CLASS,     # text
+                       Route.FARE_ATTR_COLUMN_FARE_PERIOD,    # text
                        Route.ROUTES_COLUMN_PROOF_OF_PAYMENT,  # text
                        ]
         # we can only drop fields that are in the dataframe

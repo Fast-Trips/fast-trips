@@ -51,6 +51,9 @@ namespace fasttrips {
         /// and destination to origin order for inbound trips.
         std::vector< std::pair<int, StopState> > links_;
 
+        /// Boards per fare period.  Added by addLink()
+        std::map< std::string, int > boards_per_fareperiod_;
+
     public:
         /// Default constructor
         Path();
@@ -73,7 +76,8 @@ namespace fasttrips {
               std::pair<int, StopState>& operator[](size_t n);
         const std::pair<int, StopState>& back() const;
               std::pair<int, StopState>& back();
-        int last_added_trip_id() const;
+        const std::pair<int, StopState>* lastAddedTrip() const;
+        int boardsForFarePeriod(const std::string& fare_period) const;
 
         /// Comparison operator; determines ordering in PathSet
         bool operator<(const Path& other) const;

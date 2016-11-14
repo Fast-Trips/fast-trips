@@ -187,6 +187,16 @@ namespace fasttrips {
                                             const PathFinder& pf,
                                             double transfer_probability,
                                             std::map<const FarePeriod*, double>& fp_probs) const;
+
+        void updateFare(const PathSpecification& path_spec,
+                        std::ostream& trace_file,
+                        const PathFinder& pf,
+                        const FarePeriod* last_trip_fp,
+                        bool  last_is_prev,                 ///< is last_trip_fp the previous trip, chronologically?
+                        const Path& path_so_far,
+                        StopState& ss,
+                        std::string& trace_xfer_type) const;
+
         /**
          * Estimate the fare during pathfinding given transfer possibilities.
          * This is called on the previous (transfer) link by PathFinder::updateStopStatesForTrips().
