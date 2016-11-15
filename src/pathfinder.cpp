@@ -110,7 +110,7 @@ namespace fasttrips {
         ss_stop << output_dir_ << kPathSeparator << "ft_intermediate_stop_id.txt";
         stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
 
-        std::string string_stop_id_num, string_stop_id, string_zone_num, string_zone_id;
+        std::string line, string_stop_id_num, string_stop_id, string_zone_num, string_zone_id;
         int stop_id_num, zone_num;
 
         stop_id_file >> string_stop_id_num >> string_stop_id >> string_zone_num >> string_zone_id;
@@ -121,7 +121,10 @@ namespace fasttrips {
             std::cout << "[" << string_zone_num      << "] ";
             std::cout << "[" << string_zone_id       << "] ";
         }
-        while (stop_id_file >> stop_id_num >> string_stop_id >> zone_num >> string_zone_id) {
+        while (!stop_id_file.eof()) {
+            getline(stop_id_file, line);
+            std::istringstream iss(line);
+            iss >> stop_id_num >> string_stop_id >> zone_num >> string_zone_id;
             stop_num_to_stop_[stop_id_num].stop_str_ = string_stop_id;
             stop_num_to_stop_[stop_id_num].zone_num_ = zone_num;  // -1 means none
         }

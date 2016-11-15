@@ -709,6 +709,9 @@ namespace fasttrips {
 
         // for logging
         std::map<StopStateKey, std::string> ssk_log;
+        const std::pair<int, StopState>* last_trip = NULL;
+        if (path_so_far) { last_trip = path_so_far->lastAddedTrip(); }
+
 
         // Setup the probabilities
         for (CostToStopState::iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)
@@ -733,7 +736,6 @@ namespace fasttrips {
                 if (!path_spec.outbound_ && ss.deparr_time_ > prev_link.arrdep_time_) { continue; }
 
                 // if this is a trip and we had a previous trip, update costs for transfer fares
-                const std::pair<int, StopState>* last_trip = path_so_far->lastAddedTrip();
                 if (isTrip(ss.deparr_mode_) && (last_trip)) {
                     // don't repeat the same trip
                     if (ss.trip_id_ == last_trip->second.trip_id_) { continue; }
@@ -902,27 +904,30 @@ namespace fasttrips {
         // start with the price of this fare period
         double price = this_fp->price_;
         // and the last_trip_fp
-        double price_last = last_trip_fp->price_;
+        double price_last = (last_trip_fp ? last_trip_fp->price_ : 0);
         // adjust the latter fare period
         double* price_adj = (last_is_prev ? &price : &price_last);
         // this is just for trace
         trace_xfer_type = "-";
 
-        // apply fare fare transfer rules
-        const FareTransfer* fare_transfer = pf.getFareTransfer(last_is_prev ? last_trip_fp->fare_period_ : this_fp->fare_period_,
-                                                               last_is_prev ? this_fp->fare_period_ : last_trip_fp->fare_period_);
+        if (last_trip_fp)
+        {
+            // apply fare fare transfer rules
+            const FareTransfer* fare_transfer = pf.getFareTransfer(last_is_prev ? last_trip_fp->fare_period_ : this_fp->fare_period_,
+                                                                   last_is_prev ? this_fp->fare_period_ : last_trip_fp->fare_period_);
 
-        if (fare_transfer) {
+            if (fare_transfer) {
 
-            if (fare_transfer->type_ == TRANSFER_FREE) {
-                trace_xfer_type = "free";
-                *price_adj = 0;
-            } else if (fare_transfer->type_ == TRANSFER_COST) {
-                trace_xfer_type = "discount";
-                *price_adj = fare_transfer->amount_;
-            } else if (fare_transfer->type_ == TRANSFER_DISCOUNT) {
-                trace_xfer_type = "cost";
-                *price_adj = *price_adj - fare_transfer->amount_;
+                if (fare_transfer->type_ == TRANSFER_FREE) {
+                    trace_xfer_type = "free";
+                    *price_adj = 0;
+                } else if (fare_transfer->type_ == TRANSFER_COST) {
+                    trace_xfer_type = "discount";
+                    *price_adj = fare_transfer->amount_;
+                } else if (fare_transfer->type_ == TRANSFER_DISCOUNT) {
+                    trace_xfer_type = "cost";
+                    *price_adj = *price_adj - fare_transfer->amount_;
+                }
             }
         }
 
@@ -953,7 +958,7 @@ namespace fasttrips {
 
         // otherwise, the fare of the latter link has already been assessed so do our best by applying an effective discount to the earlier link
         // knowing that we'll transfer
-        double effective_discount = last_trip_fp->price_ - price_last;
+        double effective_discount = (last_trip_fp ? last_trip_fp->price_ : 0) - price_last;
         if (effective_discount > 0) {
             // apply it to the fare
             double new_fare = ss.fare_period_->price_ - effective_discount;
