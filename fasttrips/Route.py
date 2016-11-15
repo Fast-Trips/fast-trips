@@ -130,7 +130,7 @@ class Route(object):
     #: fasttrips Fare transfer rules column name: Transfer type?
     FARE_TRANSFER_RULES_COLUMN_TYPE             = "transfer_fare_type"
     #: fasttrips Fare transfer rules column name: Transfer amount (discount or fare)
-    FARE_TRANSFER_RULES_COLUMN_AMOUNT           = "transfer_fare_amount"
+    FARE_TRANSFER_RULES_COLUMN_AMOUNT           = "transfer_fare"
 
     #: Value for :py:attr:`Route.FARE_TRANSFER_RULES_COLUMN_TYPE`: transfer discount
     TRANSFER_TYPE_TRANSFER_DISCOUNT = "transfer_discount"
