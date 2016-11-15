@@ -89,8 +89,10 @@ namespace fasttrips {
         static double TIME_WINDOW_;
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         static double STOCH_DISPERSION_;
-        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE">fasttrips.Assignment.TRANSFER_FARE_IGNORE</a>
-        static bool TRANSFER_FARE_IGNORE_;
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING">fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING</a>
+        static bool TRANSFER_FARE_IGNORE_PATHFINDING_;
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM">fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM</a>
+        static bool TRANSFER_FARE_IGNORE_PATHENUM_;
 
         /// Default constructor
         Hyperlink();

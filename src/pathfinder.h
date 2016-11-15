@@ -459,7 +459,8 @@ namespace fasttrips {
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion,
                                   int        stoch_max_stop_process_count,
-                                  bool       transfer_fare_ignore,
+                                  bool       transfer_fare_ignore_pf,
+                                  bool       transfer_fare_ignore_pe,
                                   int        max_num_paths,
                                   double     min_path_probability);
 

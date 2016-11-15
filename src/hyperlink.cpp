@@ -24,7 +24,8 @@ namespace fasttrips {
 
     double Hyperlink::TIME_WINDOW_          = 0.0;
     double Hyperlink::STOCH_DISPERSION_     = 0.0;
-    bool   Hyperlink::TRANSFER_FARE_IGNORE_ = false;
+    bool   Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ = false;
+    bool   Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_    = false;
 
     // Default constructor
     Hyperlink::Hyperlink() :
@@ -740,16 +741,19 @@ namespace fasttrips {
                     // don't repeat the same trip
                     if (ss.trip_id_ == last_trip->second.trip_id_) { continue; }
 
-                    // check for fare transfer updates that may affect cost
-                    const FarePeriod* last_trip_fp = last_trip->second.fare_period_;
-
-                    // for outbound, path enumeration goes forwards  so last_trip is the *previous* trip
-                    // for inbound,  path enumeration goes backwards so last_trip is the *next* trip
-                    double link_fare_pre_update = ss.link_fare_;
-                    updateFare(path_spec, trace_file, pf, last_trip_fp, path_spec.outbound_, *path_so_far, ss, ssk_log[ssk]);
-                    if (abs(link_fare_pre_update - ss.link_fare_) > 0.001) {
-                        // update the link          (60 min/hour)*(hours/vot currency) x (currency)
-                        ss.link_cost_ = ss.link_cost_ + (60.0/path_spec.value_of_time_)*(ss.link_fare_-link_fare_pre_update);
+                    if (!Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_)
+                    {
+                        // check for fare transfer updates that may affect cost
+                        const FarePeriod* last_trip_fp = last_trip->second.fare_period_;
+    
+                        // for outbound, path enumeration goes forwards  so last_trip is the *previous* trip
+                        // for inbound,  path enumeration goes backwards so last_trip is the *next* trip
+                        double link_fare_pre_update = ss.link_fare_;
+                        updateFare(path_spec, trace_file, pf, last_trip_fp, path_spec.outbound_, *path_so_far, ss, ssk_log[ssk]);
+                        if (abs(link_fare_pre_update - ss.link_fare_) > 0.001) {
+                            // update the link          (60 min/hour)*(hours/vot currency) x (currency)
+                            ss.link_cost_ = ss.link_cost_ + (60.0/path_spec.value_of_time_)*(ss.link_fare_-link_fare_pre_update);
+                        }
                     }
                 }
 
@@ -974,6 +978,7 @@ namespace fasttrips {
         return;
     }
 
+    // used during pathfinding
     double Hyperlink::getFareWithTransfer(
         const PathSpecification& path_spec,
         std::ostream& trace_file,
@@ -982,7 +987,7 @@ namespace fasttrips {
         const std::map<int, Hyperlink>& stop_states) const
     {
         // if we opted not to do this through configuration, just return the fare
-        if (Hyperlink::TRANSFER_FARE_IGNORE_) {
+        if (Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_) {
             return fare_period.price_;
         }
 

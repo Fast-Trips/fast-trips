@@ -86,7 +86,8 @@ Option Name                         | Type   | Default | Description
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.
 `stochastic_pathset_size`           | int    | 1000    | In path-finding, how many paths (not necessarily unique) determine a pathset?
 `time_window`                       | float  | 30      | In path-finding, the max time a passenger would wait at a stop.
-`transfer_fare_ignore`              | bool   | False   | In path-finding, suppress trying to adjust fares using transfer rules.  This is for performance testing.
+`transfer_fare_ignore_pathfinding`  | bool   | False   | In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
+`transfer_fare_ignore_pathenum`     | bool   | False   | In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
 
 #### More on Overlap Path Size Penalties
@@ -141,15 +142,19 @@ Free transfers are also specified *within* fare periods (possibly time-bounded) 
 
 There are four places where fares factor into fast-trips.
 
-1. During path-finding (C++ extension), fares get assessed as a cost onto links, which translate to generalized cost (minutes) via the traveler's value of time.  [Fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) here are complicated, because we don't know which is the next/previous fare, and we can only guess based on probabilities.  The fare is estimated using [`Hyperlink::getFareWithTransfer()`](src/hyperlink.cpp).  Turn this off using configuration option `transfer_fare_ignore`.
+1. During path-finding (C++ extension), fares get assessed as a cost onto links, which translate to generalized cost (minutes) via the traveler's value of time.  [Fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) here are complicated, because we don't know which is the next/previous fare, and we can only guess based on probabilities.  The fare is estimated using [`Hyperlink::getFareWithTransfer()`](src/hyperlink.cpp).
 
    Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are implemented here in a simplistic way; that is, a free transfer is assumed if the fare attributes have granted any free transfers without looking at `transfer_duration` or the number of transfers. Also, this transfer is required to be *back-to-back* also.  A future enhancement could include keeping a transfer count for each fare period so that the back-to-back requirement is not imposed, and also so that a certain number of free fares could be tallied, but at this time, a simpler approach is used because it's not clear if this kind of detail is helpful.
+
+   Turn this off using configuration option `transfer_fare_ignore_pathfinding`.
 
 2. During path-enumeration (C++ extension), when the paths are being constructed by choosing links from the hyperpath graph, at the point where each link is added to the path, the [fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) are applied to adjust fares with more certainty of the the path so far.  This is done in [`Hyperlink::setupProbabilities()`](src/hyperlink.cpp) which calls `Hyperlink::updateFare()` and updates the link cost as well if the fare is affected.  Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are looked at here as well, but without the transfer duration component.
 
 3. During path-enumeration (C++ extension), after the path is constructed, the trip cost is re-calculated at the end using [`Path::calculateCost()`](src/path.cpp).  At this moment in the process, the path is complete and final, so the fare transfer rules are relatively easy to apply given that links are certain.  The initial fare and cost are saved and passed back to python to show the effect of step 1.
 
    Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are also addressed here.
+
+   Turn this off using configuration option `transfer_fare_ignore_pathenum`.
 
 4. During simulation (python), while the path is being adjusted due to vehicle times, the fares are calculated via [`Route.add_fares()`](fasttrips/Route.py).  This is unlikely to change anything unless the fare periods changed due to the slow-down of vehicles -- so consider deprecating this in favor of using the pathfinding results?  For now, it's a good test that the C++ code is working as expected; running with simulation off should result in identical fare and cost results from pathfinding and the (non-vehicle-updating) python simulation.
 
