@@ -27,8 +27,10 @@ if __name__ == "__main__":
     parser.add_argument('-m','--max_stop_process_count', type=int, help="Max times to process a stop in stochastic pathfinding")
     parser.add_argument('-c','--capacity',   action='store_true', help="Enable capacity constraint")
     parser.add_argument('-o','--output_dir', type=str,  help="Directory within output_loc to write fasttrips outtput.  If none specified, will construct one.")
-    parser.add_argument('--overlap_variable',      choices=['None','count','distance','time'], help="Variable to use for overlap penalty calculation")
-    parser.add_argument('--overlap_split_transit', action='store_true', help="Split transit for path overlap penalty calculation")
+    parser.add_argument('--overlap_variable',                 choices=['None','count','distance','time'], help="Variable to use for overlap penalty calculation")
+    parser.add_argument('--overlap_split_transit',            action='store_true', help="Split transit for path overlap penalty calculation")
+    parser.add_argument('--transfer_fare_ignore_pathfinding', action='store_true', help="In path-finding, suppress trying to adjust fares using transfer rules.  For performance.")
+    parser.add_argument('--transfer_fare_ignore_pathenum',    action='store_true', help="In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.")
     parser.add_argument("pathfinding_type",  choices=['deterministic','stochastic','file'], help="Type of pathfinding")
     parser.add_argument("iters",             type=int,  help="Number of iterations to run")
     parser.add_argument("input_network_dir", type=str,  help="Location of the input network")
@@ -72,6 +74,13 @@ if __name__ == "__main__":
 
     if args.overlap_split_transit:
         fasttrips.PathSet.OVERLAP_SPLIT_TRANSIT  = args.overlap_split_transit
+
+    if args.transfer_fare_ignore_pathfinding:
+        fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = True
+
+    if args.transfer_fare_ignore_pathenum:
+        fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM = True
+
 
     if args.dispersion:
         fasttrips.Assignment.STOCH_DISPERSION    = args.dispersion
