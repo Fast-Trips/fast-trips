@@ -4,6 +4,7 @@
  * Path implementation
  **/
 
+#include <cmath> // fmod
 #include "path.h"
 #include "pathfinder.h"
 #include "hyperlink.h"
@@ -398,7 +399,7 @@ namespace fasttrips {
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
                 const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, path_spec.purpose_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
-                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop, dest_arrival_time ));
+                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
                 attributes["preferred_delay_min"] = preference_delay;
 
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
