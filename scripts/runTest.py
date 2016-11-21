@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument('-m','--max_stop_process_count', type=int, help="Max times to process a stop in stochastic pathfinding")
     parser.add_argument('-c','--capacity',   action='store_true', help="Enable capacity constraint")
     parser.add_argument('-o','--output_dir', type=str,  help="Directory within output_loc to write fasttrips outtput.  If none specified, will construct one.")
+    parser.add_argument('--debug_output_columns',             action='store_true', help="Include debug columns in output")
     parser.add_argument('--overlap_variable',                 choices=['None','count','distance','time'], help="Variable to use for overlap penalty calculation")
     parser.add_argument('--overlap_split_transit',            action='store_true', help="Split transit for path overlap penalty calculation")
     parser.add_argument('--transfer_fare_ignore_pathfinding', action='store_true', help="In path-finding, suppress trying to adjust fares using transfer rules.  For performance.")
@@ -68,6 +69,9 @@ if __name__ == "__main__":
 
     if args.max_stop_process_count:
         fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT = args.max_stop_process_count
+
+    if args.debug_output_columns:
+        fasttrips.Assignment.DEBUG_OUTPUT_COLUMNS = args.debug_output_columns
 
     if args.overlap_variable:
         fasttrips.PathSet.OVERLAP_VARIABLE       = args.overlap_variable
