@@ -52,7 +52,7 @@ copy "sfcta2\faretest\output_fares_nopf_nope\ft_output_config.txt"      sfcta2\f
 copy "sfcta2\faretest\output_fares_nopf_nope\ft_output_performance.csv" sfcta2\faretest\ft_output_performance_fares_nopf_nope.csv
 copy "sfcta2\faretest\output_fares_nopf_nope\pathset_links.csv"         sfcta2\faretest\pathset_links_fares_nopf_nope.csv
 copy "sfcta2\faretest\output_fares_nopf_nope\pathset_paths.csv"         sfcta2\faretest\pathset_paths_fares_nopf_nope.csv
-copy "sfcta2\faretest\output_fares_nopf_nope\pathset_map_points.csv"    sfcta2\faretest\pathset_map_points_fares_nope.csv
+copy "sfcta2\faretest\output_fares_nopf_nope\pathset_map_points.csv"    sfcta2\faretest\pathset_map_points_fares_nopf_nope.csv
 
 
 :done
