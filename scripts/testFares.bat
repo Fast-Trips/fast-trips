@@ -61,11 +61,11 @@ copy "sfcta2\faretest\output_fares_nopf_nope\pathset_map_points.csv"    sfcta2\f
 ::---------------------------------------------------------------------------------------------------------------------
 :: develop
 :: git checkout develop
-:: python .\scripts\runTest.py --num_trips %TEST_SIZE% --output_dir output_develop stochastic 1 "%NETWORK_DIR%" "%DEMAND_DIR%" sfcta2\faretest
+:: python .\scripts\runTest.py --num_trips %TEST_SIZE% --output_dir output_develop stochastic 1 "sfcta\network_draft1.9" "%DEMAND_DIR%" sfcta2\faretest
 :: if ERRORLEVEL 1 goto done
 :: 
 :: :: create maps
-:: python .\scripts\create_tableau_path_map.py --description "%NETWORK_DIR%" "sfcta2\faretest\output_develop"
+:: python .\scripts\create_tableau_path_map.py --description "sfcta\network_draft1.9" "sfcta2\faretest\output_develop"
 :: if ERRORLEVEL 1 goto done
 :: 
 :: :: rename files
