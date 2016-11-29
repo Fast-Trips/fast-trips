@@ -60,6 +60,7 @@ Option Name                         | Type   | Default | Description
 `debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
 `debug_output_columns`              | bool   | False   | If True, will write internal & debug columns into output.
+`fare_zone_symmetry`                | bool   | False   | If True, will assume fare zone symmetry.  That is, if fare_id X is configured from origin zone A to destination zone B, and there is no fare configured from zone B to zone A, we'll assume that fare_id X also applies.
 `iterations`                        | int    | 1       | Number of pathfinding iterations to run.
 `number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?

@@ -292,6 +292,45 @@ class Route(object):
         else:
             self.fare_ids_df = pandas.DataFrame()
 
+
+        # optionally reverse those with origin/destinations if configured
+        from .Assignment import Assignment
+        if Assignment.FARE_ZONE_SYMMETRY:
+            FastTripsLogger.debug("applying FARE_ZONE_SYMMETRY to %d fare rules" % len(self.fare_rules_df))
+            # select only those with an origin and destination
+            reverse_fare_rules = self.fare_rules_df.loc[ pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])&
+                                                         pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ].copy()
+            # FastTripsLogger.debug("reverse_fare_rules 1 head()=\n%s" % str(reverse_fare_rules.head()))
+
+            # reverse them
+            reverse_fare_rules.rename(columns={Route.FARE_RULES_COLUMN_ORIGIN_ID          : Route.FARE_RULES_COLUMN_DESTINATION_ID,
+                                               Route.FARE_RULES_COLUMN_DESTINATION_ID     : Route.FARE_RULES_COLUMN_ORIGIN_ID},
+                                      inplace=True)
+            # FastTripsLogger.debug("reverse_fare_rules 2 head()=\n%s" % str(reverse_fare_rules.head()))
+
+            # join them to eliminate dupes
+            reverse_fare_rules = pandas.merge(left     =reverse_fare_rules,
+                                              right    =self.fare_rules_df,
+                                              how      ="left",
+                                              on       =[Route.FARE_RULES_COLUMN_FARE_ID,
+                                                         Route.FARE_RULES_COLUMN_FARE_ID_NUM,
+                                                         Route.FARE_RULES_COLUMN_ROUTE_ID,
+                                                         Route.FARE_RULES_COLUMN_ORIGIN_ID,
+                                                         Route.FARE_RULES_COLUMN_DESTINATION_ID,
+                                                         Route.FARE_RULES_COLUMN_CONTAINS_ID],
+                                              indicator=True)
+            # dupes exist in both -- drop those
+            reverse_fare_rules = reverse_fare_rules.loc[ reverse_fare_rules["_merge"]=="left_only"]
+            reverse_fare_rules.drop(["_merge"], axis=1, inplace=True)
+
+            # add them to fare rules
+            self.fare_rules_df = pandas.concat([self.fare_rules_df, reverse_fare_rules])
+            FastTripsLogger.debug("fare rules with symmetry %d head()=\n%s" % (len(self.fare_rules_df), str(self.fare_rules_df.head())))
+
+        # sort by fare ID num so zone-to-zone and their reverse are together
+        if len(self.fare_rules_df) > 0:
+            self.fare_rules_df.sort_values(by=[Route.FARE_RULES_COLUMN_FARE_ID_NUM], inplace=True)
+
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE)):
             fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE),
                                                dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})

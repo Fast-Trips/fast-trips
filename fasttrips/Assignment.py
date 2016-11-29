@@ -138,6 +138,11 @@ class Assignment:
     #: Debug: include debug columns in output
     DEBUG_OUTPUT_COLUMNS            = False
 
+    #: Fare zone symmetry. If True, will assume fare zone symmetry.  That is, if fare_id X is
+    # configured from origin zone A to destination zone B, and there is no fare configured
+    # from zone B to zone A, we'll assume that fare_id X also applies.
+    FARE_ZONE_SYMMETRY              = False
+
     #: Skip these passengers
     SKIP_PERSON_IDS                 = None
 
@@ -263,6 +268,7 @@ class Assignment:
                       'debug_trace_only'                :'False',
                       'debug_num_trips'                 :-1,
                       'debug_output_columns'            :'False',
+                      'fare_zone_symmetry'              :'False',
                       'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
@@ -309,6 +315,7 @@ class Assignment:
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.DEBUG_OUTPUT_COLUMNS          = parser.getboolean('fasttrips','debug_output_columns')
+        Assignment.FARE_ZONE_SYMMETRY            = parser.getboolean('fasttrips','fare_zone_symmetry')
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
@@ -377,6 +384,7 @@ class Assignment:
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
         parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
         parser.set('fasttrips','debug_output_columns',          'True' if Assignment.DEBUG_OUTPUT_COLUMNS else 'False')
+        parser.set('fasttrips','fare_zone_symmetry',            'True' if Assignment.FARE_ZONE_SYMMETRY else 'False')
         parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
