@@ -52,7 +52,7 @@ class Assignment:
     #: Configuration: Maximum number of iterations to remove capacity violations. When
     #: the transit system is not crowded or when capacity constraint is
     #: relaxed the model will terminate after the first iteration
-    ITERATION_FLAG                  = None
+    MAX_ITERATIONS                  = None
 
     #: Find paths deterministically, using shortest path search based on travel time.
     PATHFINDING_TYPE_DETERMINISTIC  = 'deterministic'
@@ -243,7 +243,7 @@ class Assignment:
             FastTripsLogger.info("PathSet.CONFIGURED_FUNCTIONS = %s" % str(PathSet.CONFIGURED_FUNCTIONS))
 
         parser = ConfigParser.RawConfigParser(
-            defaults={'iterations'                      :1,
+            defaults={'max_iterations'                  :1,
                       'simulation'                      :'True',
                       'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
@@ -285,7 +285,7 @@ class Assignment:
             FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
             parser.read(config_fullpath)
 
-        Assignment.ITERATION_FLAG                = parser.getint    ('fasttrips','iterations')
+        Assignment.MAX_ITERATIONS                = parser.getint    ('fasttrips','max_iterations')
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
@@ -351,7 +351,7 @@ class Assignment:
         parser.add_section('fasttrips')
         parser.set('fasttrips','input_demand_dir',              Assignment.INPUT_DEMAND_DIR)
         parser.set('fasttrips','input_network_dir',             Assignment.INPUT_NETWORK_DIR)
-        parser.set('fasttrips','iterations',                    '%d' % Assignment.ITERATION_FLAG)
+        parser.set('fasttrips','max_iterations',                '%d' % Assignment.MAX_ITERATIONS)
         parser.set('fasttrips','simulation',                    'True' if Assignment.SIMULATION else 'False')
         parser.set('fasttrips','output_dir',                    Assignment.OUTPUT_DIR)
         parser.set('fasttrips','output_passenger_trajectories', 'True' if Assignment.OUTPUT_PASSENGER_TRAJECTORIES else 'False')
@@ -550,7 +550,8 @@ class Assignment:
         # write 0-iter vehicle trips
         Assignment.write_vehicle_trips(output_dir, 0, veh_trips_df)
 
-        for iteration in range(1,Assignment.ITERATION_FLAG+1):
+        for iteration in range(1,Assignment.MAX_ITERATIONS+1):
+
             FastTripsLogger.info("***************************** ITERATION %d **************************************" % iteration)
 
             if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and (iteration == 1):

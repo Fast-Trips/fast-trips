@@ -1,6 +1,6 @@
 # configuration for fasttrips
 [fasttrips]
-iterations                    = 1
+max_iterations                = 1
 simulation                    = True
 output_passenger_trajectories = True
 create_skims                  = False

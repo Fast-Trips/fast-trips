@@ -62,7 +62,7 @@ if __name__ == "__main__":
     ft.read_configuration()
 
     fasttrips.Assignment.PATHFINDING_TYPE        = args.pathfinding_type
-    fasttrips.Assignment.ITERATION_FLAG          = int(args.iters)
+    fasttrips.Assignment.MAX_ITERATIONS          = int(args.iters)
 
     if args.max_stop_process_count:
         fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT = args.max_stop_process_count

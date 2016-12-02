@@ -59,7 +59,7 @@ Option Name                         | Type   | Default | Description
 `debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
 `debug_output_columns`              | bool   | False   | If True, will write internal & debug columns into output.
-`iterations`                        | int    | 1       | Number of pathfinding iterations to run.
+`max_iterations`                    | int    | 1       | Maximum number of pathfinding iterations to run.
 `number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
 `output_pathset_per_sim_iter`       | bool   | False   | Output pathsets for each simulation iteration?  If false, just outputs once per path-finding iteration.
