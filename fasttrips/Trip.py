@@ -182,8 +182,10 @@ class Trip:
     SIM_COL_VEH_STANDEES                        = 'standees'
     #: Result column name: Friction. Where positive, friction = on+off+standees. Int.
     SIM_COL_VEH_FRICTION                        = 'friction'
-    #: Result column name: Number of onboard passengers minus capacity. Int.
+    #: Result column name: Number of onboard passengers minus capacity. Int. Can be negative.
     SIM_COL_VEH_OVERCAP                         = 'overcap'
+    #: Result column name: Percentage of boards that are problematic. (overcap/boards)
+    SIM_COL_VEH_OVERCAP_FRAC                    = 'overcap_frac'
 
     #: Result column name: MSA of column :py:attr:`SIM_COL_VEH_BOARDS`. Float.
     SIM_COL_VEH_MSA_BOARDS                      = 'msa_boards'
