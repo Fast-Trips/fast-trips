@@ -43,6 +43,8 @@ class TAZ:
     WALK_ACCESS_COLUMN_TAZ                  = 'taz'
     #: Walk access links column name: Stop Identifier. String.
     WALK_ACCESS_COLUMN_STOP                 = 'stop_id'
+    #: Walk access links column name: Direction (access or egress)
+    WALK_ACCESS_COLUMN_DIRECTION            = "direction"
     #: Walk access links column name: Walk Distance
     WALK_ACCESS_COLUMN_DIST                 = 'dist'
 
@@ -231,13 +233,21 @@ class TAZ:
                                                      TAZ.WALK_ACCESS_COLUMN_STOP:object})
         # verify required columns are present
         walk_access_cols = list(self.walk_access_df.columns.values)
-        assert(TAZ.WALK_ACCESS_COLUMN_TAZ      in walk_access_cols)
-        assert(TAZ.WALK_ACCESS_COLUMN_STOP     in walk_access_cols)
-        assert(TAZ.WALK_ACCESS_COLUMN_DIST     in walk_access_cols)
+        assert(TAZ.WALK_ACCESS_COLUMN_TAZ       in walk_access_cols)
+        assert(TAZ.WALK_ACCESS_COLUMN_STOP      in walk_access_cols)
+        assert(TAZ.WALK_ACCESS_COLUMN_DIRECTION in walk_access_cols)
+        assert(TAZ.WALK_ACCESS_COLUMN_DIST      in walk_access_cols)
 
         # printing this before setting index
         FastTripsLogger.debug("=========== WALK ACCESS ===========\n" + str(self.walk_access_df.head()))
         FastTripsLogger.debug("As read\n"+str(self.walk_access_df.dtypes))
+
+        # Verify direction is valid
+        invalid_direction = self.walk_access_df.loc[ self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIRECTION].isin(["access","egress"])==False ]
+        if len(invalid_direction) > 0:
+            error_msg = "Invalid direction in walk access links: \n%s" % str(invalid_direction)
+            FastTripsLogger.fatal(error_msg)
+            raise NetworkInputError(TAZ.INPUT_WALK_ACCESS_FILE, error_msg)
 
         # TODO: remove?  Or put walk speed some place?
         self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0;
@@ -246,7 +256,9 @@ class TAZ:
             self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
 
         # make sure WALK_ACCESS_COLUMN_TAZ/WALK_ACCESS_COLUMN_DIST is unique
-        walk_access_dupes = self.walk_access_df.duplicated(subset=[TAZ.WALK_ACCESS_COLUMN_TAZ,TAZ.WALK_ACCESS_COLUMN_STOP], keep=False)
+        walk_access_dupes = self.walk_access_df.duplicated(subset=[TAZ.WALK_ACCESS_COLUMN_TAZ,
+                                                                   TAZ.WALK_ACCESS_COLUMN_STOP,
+                                                                   TAZ.WALK_ACCESS_COLUMN_DIRECTION], keep=False)
         if walk_access_dupes.sum() > 0:
             self.walk_access_df["duplicates"] = walk_access_dupes
             error_msg = "Duplicate taz/stop pairs in walk access links: \n%s" % str(self.walk_access_df.loc[ self.walk_access_df["duplicates"]])
@@ -445,18 +457,16 @@ class TAZ:
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_TAZ,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_TAZ_NUM)
 
-        # These are bi-directional - use as access and copy for egress
-        # This should probably be done in TAZ...
-        walk_egress_df = self.walk_access_df.copy()
-        walk_egress_df     [TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE] = "walk_%s" % Route.MODE_TYPE_EGRESS
-        self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE] = "walk_%s" % Route.MODE_TYPE_ACCESS
-        self.walk_access_df = pandas.concat([self.walk_access_df, walk_egress_df], axis=0)
+        # These have direction now.  Set supply mode string
+        self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE] = "walk_" +  self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIRECTION]
 
         self.walk_access_df = routes.add_numeric_mode_id(self.walk_access_df,
                                                          id_colname=TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE,
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM)
 
         if self.has_drive_access:
+            print self.drive_access_df.loc[ self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP] == "9065"]
+
             self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_STOP,
                                                              numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM)
@@ -586,6 +596,7 @@ class TAZ:
         # drop the redundant columns
         drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,        # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_STOP,        # use numerical version
+                      TAZ.WALK_ACCESS_COLUMN_DIRECTION,   # it's in the supply mode num
                       TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE, # use numerical version
                       TAZ.WALK_ACCESS_COLUMN_TIME,        # use numerical version
                      ]
