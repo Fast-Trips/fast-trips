@@ -1,6 +1,6 @@
 # configuration for fasttrips
 [fasttrips]
-iterations                    = 1
+max_iterations                = 1
 simulation                    = True
 output_passenger_trajectories = True
 create_skims                  = False
@@ -9,10 +9,8 @@ capacity_constraint           = False
 trace_person_ids              = ['bunnies']
 number_of_processes           = 2
 bump_buffer                   = 5
+debug_output_columns          = True
 
 [pathfinding]
-pathfinding_type                  = deterministic
-stochastic_dispersion             = 0.8
-stochastic_max_stop_process_count = 1
 stochastic_pathset_size           = 1000
 time_window                       = 30

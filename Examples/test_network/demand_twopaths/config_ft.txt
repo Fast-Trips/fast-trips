@@ -1,7 +1,8 @@
 [fasttrips]
 number_of_processes           = 5
-trace_person_ids              = ['frogger','paperboy','marge']
+trace_person_ids              = ['frogger','paperboy','marge','maggie']
 bump_one_at_a_time            = True
+simulation                    = True
 
 [pathfinding]
 time_window                   = 50

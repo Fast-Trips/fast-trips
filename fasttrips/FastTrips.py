@@ -12,7 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os
+import os, sys
 from operator import attrgetter
 import pandas
 import transitfeed
@@ -145,6 +145,11 @@ class FastTrips:
         # Initialize performance results
         self.performance = Performance()
 
-        # Do it!
-        Assignment.assign_paths(output_dir, self)
+        # Do it!  Try it!
+        try:
+            Assignment.assign_paths(output_dir, self)
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))
+            raise
 

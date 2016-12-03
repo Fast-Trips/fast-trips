@@ -595,12 +595,13 @@ namespace fasttrips {
             ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
             // append because this will happen across iterations
             std::ios_base::openmode omode = std::ios_base::out;
-            if (path_spec.iteration_ != 1) {
+            if (path_spec.iteration_ > 1 || path_spec.pathfinding_iteration_ > 1) {
                 omode = omode | std::ios_base::app; // append
             }
             trace_file.open(ss.str().c_str(), omode);
             trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
             trace_file << "iteration_       = " << path_spec.iteration_ << std::endl;
+            trace_file << "pathfinding_iter = " << path_spec.pathfinding_iteration_ << std::endl;
             trace_file << "outbound_        = " << path_spec.outbound_  << std::endl;
             trace_file << "hyperpath_       = " << path_spec.hyperpath_ << std::endl;
             trace_file << "preferred_time_  = ";
@@ -812,7 +813,7 @@ namespace fasttrips {
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
             ss << "fasttrips_labels_" << path_spec.path_id_ << ".csv";
-            label_file.open(ss.str().c_str(), (path_spec.iteration_ == 1 ? std::ios_base::out : std::ios_base::out | std::ios_base::app));
+            label_file.open(ss.str().c_str(), ((path_spec.iteration_ == 1) && (path_spec.pathfinding_iteration_ == 1))? std::ios_base::out : std::ios_base::out | std::ios_base::app);
             label_file << "label_iteration,link,node ID,time,mode,trip_id,link_time,link_cost,cost,AB" << std::endl;
         }
 

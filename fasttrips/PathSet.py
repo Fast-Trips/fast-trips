@@ -678,7 +678,7 @@ class PathSet:
         return path2
 
     @staticmethod
-    def calculate_cost(iteration, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df, veh_trips_df, stops, routes):
+    def calculate_cost(simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df, veh_trips_df, stops, routes):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -935,9 +935,10 @@ class PathSet:
         # at cap is a binary, 1 if overcap >= 0 and they're not one of the lucky few that boarded
         cost_trip_df["at_capacity"] = 0.0
         if Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED in list(cost_trip_df.columns.values):
-            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)&(cost_trip_df[Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] != 1), "at_capacity" ] = 1.0
+            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)&
+                              (cost_trip_df[Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] != "boarded"), "at_capacity" ] = 1.0
         else:
-            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)                                                             , "at_capacity" ] = 1.0
+            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)                                    , "at_capacity" ] = 1.0
 
         cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "at_capacity"    , "var_value"] = cost_trip_df["at_capacity"]
         cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"        , "var_value"] = cost_trip_df[overcap_col]
@@ -1220,23 +1221,5 @@ class PathSet:
         # Note: the path finding costs won't match the costs here because missed transfers are already calculated here
         # It would be good to have some sanity checking that theyre aligned otherwise though to make sure we're
         # calculating costs consistently
-        if False and (iteration % 2 == 1) and simulation_iteration == 0:
-            # verify the cost matches what came from the C++ extension
-            pathset_paths_df["cost_diff"    ] = pathset_paths_df[PathSet.PATH_KEY_COST] - pathset_paths_df[Assignment.SIM_COL_PAX_COST]
-            pathset_paths_df["cost_pct_diff"] = pathset_paths_df["cost_diff"]/pathset_paths_df[PathSet.PATH_KEY_COST]
-            cost_differs = pathset_paths_df.loc[abs(pathset_paths_df["cost_pct_diff"])>0.01]
-            FastTripsLogger.debug("calculate_cost: cost_differs for %d rows\n%s" % (len(cost_differs), cost_differs.to_string()))
-            if len(cost_differs) > 0:
-                FastTripsLogger.warn("calculate_cost: cost_differs for %d rows\n%s" % (len(cost_differs), cost_differs.to_string()))
-
-            pathset_paths_df["prob_diff"    ] = pathset_paths_df[PathSet.PATH_KEY_PROBABILITY] - pathset_paths_df[Assignment.SIM_COL_PAX_PROBABILITY]
-            prob_differs = pathset_paths_df.loc[abs(pathset_paths_df["prob_diff"])>0.01]
-            FastTripsLogger.debug("calculate_cost: prob_differs for %d rows\n%s" % (len(prob_differs), prob_differs.to_string()))
-            if len(prob_differs) > 0:
-                FastTripsLogger.warn("calculate_cost: prob_differs for %d rows\n%s" % (len(prob_differs), prob_differs.to_string()))
-
-            pathset_paths_df.drop(["cost_diff","cost_pct_diff","prob_diff"], axis=1, inplace=True)
-
-
         return (pathset_paths_df, pathset_links_df)
 

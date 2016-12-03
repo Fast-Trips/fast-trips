@@ -61,7 +61,7 @@ Option Name                         | Type   | Default | Description
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
 `debug_output_columns`              | bool   | False   | If True, will write internal & debug columns into output.
 `fare_zone_symmetry`                | bool   | False   | If True, will assume fare zone symmetry.  That is, if fare_id X is configured from origin zone A to destination zone B, and there is no fare configured from zone B to zone A, we'll assume that fare_id X also applies.
-`iterations`                        | int    | 1       | Number of pathfinding iterations to run.
+`max_iterations`                    | int    | 1       | Maximum number of pathfinding iterations to run.
 `number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
 `output_pathset_per_sim_iter`       | bool   | False   | Output pathsets for each simulation iteration?  If false, just outputs once per path-finding iteration.
@@ -208,6 +208,7 @@ Type of Assignment:
 Major changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
 
 To be filled in further but including:
+* Added pathfinding iterations to looping (so pathfinding_iteration=1 finds paths for everyone, and subsequently just find paths for people who don't have a valid path. Break when max or we don't find anymore)
 * Added time-period based drive access links (10/2016)
 * Added link distance to extension as part of StopState (10/2016)
 * Implemented overlap pathsize correction (8/2016)

@@ -491,7 +491,7 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, iteration, stops, trip_id_df, trips_df, modes_df,
+    def setup_passenger_pathsets(self, iteration, pathfinding_iteration, stops, trip_id_df, trips_df, modes_df,
                                  transfers, tazs, prepend_route_id_to_trip_id):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
@@ -511,7 +511,7 @@ class Passenger:
         `trip_list_id_num`            int64  trip list numerical ID
         `pathdir`                     int64  the :py:attr:`PathSet.direction`
         `pathmode`                   object  the :py:attr:`PathSet.mode`
-        `pf_iteration`                int64  iteration in which these paths were found
+        `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
         `pathnum`                     int64  the path number for the path within the pathset
         `pf_cost`                   float64  the cost of the entire path
         `pf_fare`                   float64  the fare of the entire path
@@ -529,7 +529,7 @@ class Passenger:
         `person_id`                  object  person ID
         `person_trip_id`             object  person trip ID
         `trip_list_id_num`            int64  trip list numerical ID
-        `iteration`                   int64  iteration in which these paths were found
+        `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
         `pathnum`                     int64  the path number for the path within the pathset
         `linkmode`                   object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
                                              :py:attr:`PathSet.STATE_MODE_TRANSFER` or :py:attr:`PathSet.STATE_MODE_TRIP`.  PathSets will always start with
@@ -613,7 +613,7 @@ class Passenger:
                     trip_list_id,
                     pathset.direction,
                     pathset.mode,
-                    iteration,
+                    0.01*pathfinding_iteration+iteration,
                     pathnum,
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
@@ -667,7 +667,7 @@ class Passenger:
                         pathset.person_id,
                         pathset.person_trip_id,
                         trip_list_id,
-                        iteration,
+                        0.01*pathfinding_iteration + iteration,
                         pathnum,
                         linkmode,
                         mode_num,
@@ -783,34 +783,36 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def write_paths(output_dir, iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns, drop_pathfinding_columns):
+    def write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns, drop_pathfinding_columns):
         """
         Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
         """
         # if simulation_iteration < 0, then this is the pathfinding result
         if simulation_iteration < 0:
-            pathset_df["iteration"] = iteration
+            pathset_df[            "iteration"] = iteration
+            pathset_df["pathfinding_iteration"] = pathfinding_iteration
             Util.write_dataframe(df=pathset_df,
                                  name="pathset_links_df" if links else "pathset_paths_df",
                                  output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
-                                 append=True if iteration > 1 else False,
+                                 append=True if ((iteration > 1) or (pathfinding_iteration > 1)) else False,
                                  keep_duration_columns=True,
                                  drop_debug_columns=drop_debug_columns,
                                  drop_pathfinding_columns=drop_pathfinding_columns)
-            pathset_df.drop(["iteration"], axis=1, inplace=True)
+            pathset_df.drop(["iteration","pathfinding_iteration"], axis=1, inplace=True)
             return
 
         # otherwise, add columns and write it
-        pathset_df[           "iteration"] = iteration
-        pathset_df["simulation_iteration"] = simulation_iteration
+        pathset_df[            "iteration"] = iteration
+        pathset_df["pathfinding_iteration"] = pathfinding_iteration
+        pathset_df[ "simulation_iteration"] = simulation_iteration
 
         # mostly we append
         do_append = True
         # but sometimes we ovewrite
         if output_pathset_per_sim_iter:
-            if (iteration == 1) and (simulation_iter == 0): do_append = False
+            if (iteration == 1) and (pathfinding_iteration == 1) and (simulation_iteration == 0): do_append = False
         else:
-            if iteration == 1: do_append = False
+            if (iteration == 1) and (pathfinding_iteration == 1): do_append = False
 
         Util.write_dataframe(df=pathset_df,
                              name="pathset_links_df" if links else "pathset_paths_df",
@@ -818,17 +820,17 @@ class Passenger:
                              append=do_append,
                              drop_debug_columns=drop_debug_columns,
                              drop_pathfinding_columns=drop_pathfinding_columns)
-        pathset_df.drop(["iteration","simulation_iteration"], axis=1, inplace=True)
+        pathset_df.drop(["iteration","pathfinding_iteration","simulation_iteration"], axis=1, inplace=True)
 
 
     @staticmethod
-    def choose_paths(choose_for_everyone, iteration, simulation_iteration, pathset_paths_df, pathset_links_df):
+    def choose_paths(choose_for_everyone, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, pathset_links_df):
         """
         Returns the same dataframes as input, but with a new/updated column,
         :py:attr:`Assignment.SIM_COL_PAX_CHOSEN`.  This column is set to:
 
         * :py:attr:`Assignment.CHOSEN_NOT_CHOSEN_YET` for not chosen yet
-        * iteration + simulation_iteration/100 when a path is chosen
+        * 'iter%d.%02d sim%d' % (iteration, pathfinding_iteration, simulation_iteration for chosen)
         * :py:attr:`Assignment.CHOSEN_REJECTED` for chosen but then rejected
 
         If *choose_for_everyone* is True, this will attempt to choose for every passenger trip.
@@ -839,29 +841,42 @@ class Passenger:
         from .Assignment import Assignment
         from .PathSet    import PathSet
 
+
         # If choose_for_everyone, we need to do all of them.
         if choose_for_everyone:
-            pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] = Assignment.CHOSEN_NOT_CHOSEN_YET
+            pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] = pandas.Categorical([Assignment.CHOSEN_NOT_CHOSEN_YET]*len(pathset_paths_df), categories=Assignment.CHOSEN_CATEGORIES, ordered=True)
         else:
+            # set chosen to ordered categories if needed
+            if pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN].dtype.name != "category":
+                pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] = pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN].astype('category')
+                pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN].cat.set_categories(Assignment.CHOSEN_CATEGORIES, ordered=True, inplace=True)
+
             # Otherwise, just choose for those that still need it
-            rejected_paths = pathset_paths_df.loc[ (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >= 0                )&
+            rejected_paths = pathset_paths_df.loc[ (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >  Assignment.CHOSEN_NOT_CHOSEN_YET)&
                                                    (pathset_paths_df[Assignment.SIM_COL_PAX_COST  ] >= PathSet.HUGE_COST) ]
             FastTripsLogger.info("          Rejecting %d previously chosen paths for huge costs" % len(rejected_paths))
 
             # why doesn't this translate to pathset_links_df ?
             if len(rejected_paths) > 0:
                 # first invalidate any high cost choices
-                pathset_paths_df.loc[ (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >= 0                )&
+                pathset_paths_df.loc[ (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >  Assignment.CHOSEN_NOT_CHOSEN_YET)&
                                       (pathset_paths_df[Assignment.SIM_COL_PAX_COST  ] >= PathSet.HUGE_COST),
                                       Assignment.SIM_COL_PAX_CHOSEN ] = Assignment.CHOSEN_REJECTED
             #     # do the same to links
             #     rejected_paths.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, Passenger.PF_COL_PATH_NUM])
+
+        # add this as a category
+        CHOSEN_VALUE = "iter%d.%02d sim%d" % (iteration, pathfinding_iteration, simulation_iteration)
+        Assignment.CHOSEN_CATEGORIES.append(CHOSEN_VALUE)
+        pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN].cat.add_categories(CHOSEN_VALUE, inplace=True)
 
         # group to passenger trips
         pathset_paths_df_grouped = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                      Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                      Assignment.SIM_COL_PAX_CHOSEN]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]).aggregate("max").reset_index()
+        pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN] = pandas.Categorical(pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN], categories=Assignment.CHOSEN_CATEGORIES, ordered=True)
+
         # if there's no chosen AND one of the unchosen options is choosable then we can choose
         num_rejected = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_REJECTED       ])  # everything is rejected
         num_unchosen = len(pathset_paths_df_grouped.loc[ pathset_paths_df_grouped[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET ])
@@ -892,13 +907,11 @@ class Passenger:
                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                              "to_choose", "rand"]],
                                         how  ="left")
-        FastTripsLogger.debug("choose_paths() pathset_paths_df=\n%s" % pathset_paths_df.head().to_string())
 
         # select out just those pathsets we're choosing, and eligible
         paths_choose_df = pathset_paths_df.loc[ (pathset_paths_df["to_choose"]==1) &
                                                 (pathset_paths_df[Assignment.SIM_COL_PAX_COST] < PathSet.HUGE_COST) &
                                                 (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] == Assignment.CHOSEN_NOT_CHOSEN_YET) ].copy()
-        FastTripsLogger.debug("choose_paths() paths_choose_df=\n%s" % pathset_paths_df.loc[ (pathset_paths_df["to_choose"]==1) ].head(30).to_string())
 
         if len(paths_choose_df) == 0:
             FastTripsLogger.info("          No choosable paths")
@@ -930,7 +943,7 @@ class Passenger:
 
         # mark it as chosen
         pathset_paths_df = pandas.merge(left=pathset_paths_df, right=chosen_path_df, how="left")
-        pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Assignment.SIM_COL_PAX_CHOSEN] = iteration + (0.01*simulation_iteration)
+        pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Assignment.SIM_COL_PAX_CHOSEN] = CHOSEN_VALUE
         FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
 
         FastTripsLogger.info("          Chose %d out of %d paths from the pathsets => total chosen %d" %
@@ -951,6 +964,9 @@ class Passenger:
                                                                 Assignment.SIM_COL_PAX_CHOSEN]],
                                         how="left")
 
+        pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN] = pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].astype('category')
+        pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].cat.set_categories(Assignment.CHOSEN_CATEGORIES, ordered=True, inplace=True)
+
         return (num_chosen, len(chosen_path_df), pathset_paths_df, pathset_links_df)
 
 
@@ -961,5 +977,11 @@ class Passenger:
         """
         # gather the links for the chosen paths
         from .Assignment import Assignment
-        return pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>=0,].copy()
+
+        # set to ordered categories if needed
+        if pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].dtype.name != "category":
+            pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN] = pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].astype('category')
+            pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].cat.set_categories(Assignment.CHOSEN_CATEGORIES, ordered=True, inplace=True)
+
+        return pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>Assignment.CHOSEN_NOT_CHOSEN_YET,].copy()
 
