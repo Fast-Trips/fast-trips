@@ -168,8 +168,16 @@ class Transfer:
 
         # TODO: this is to be consistent with original implementation. Remove?
         if len(self.transfers_df) > 0:
+
             self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN] = \
                 self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME]/60.0
+
+            # fill in null dist
+            null_dist = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE].isnull() ]
+            if len(null_dist) > 0:
+                FastTripsLogger.warn("Filling in %d transfers with null dist" % len(null_dist))
+                self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE].isnull(),
+                                        Transfer.TRANSFERS_COLUMN_DISTANCE ] = 0.0
 
             # transfer time is based on distance
             self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] = \
