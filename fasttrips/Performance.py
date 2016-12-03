@@ -27,6 +27,8 @@ class Performance:
     """
     #: Performance column: Iteration
     PERFORMANCE_COLUMN_ITERATION              = "iteration"
+    #: Performance column: Pathfinding Iteration
+    PERFORMANCE_COLUMN_PATHFINDING_ITERATION  = "pathfinding_iteration"
     #: Performance column: Person ID
     PERFORMANCE_COLUMN_PERSON_ID              = Passenger.TRIP_LIST_COLUMN_PERSON_ID
     #: Performance column: Trip list ID num
@@ -63,6 +65,7 @@ class Performance:
         """
         self.performance_dict = {
             Performance.PERFORMANCE_COLUMN_ITERATION                :[],
+            Performance.PERFORMANCE_COLUMN_PATHFINDING_ITERATION    :[],
             Performance.PERFORMANCE_COLUMN_PERSON_ID                :[],
             Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM         :[],
             Performance.PERFORMANCE_COLUMN_PROCESS_NUM              :[],
@@ -79,12 +82,13 @@ class Performance:
         }
 
 
-    def add_info(self, iteration, person_id, trip_list_id_num, perf_dict):
+    def add_info(self, iteration, pathfinding_iteration, person_id, trip_list_id_num, perf_dict):
         """
         Add this row to the performance dict of arrays.
         Assumes time values are in milliseconds.
         """
         self.performance_dict[Performance.PERFORMANCE_COLUMN_ITERATION].append(iteration)
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_PATHFINDING_ITERATION].append(pathfinding_iteration)
         self.performance_dict[Performance.PERFORMANCE_COLUMN_PERSON_ID].append(person_id)
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM].append(trip_list_id_num)
 
@@ -103,13 +107,13 @@ class Performance:
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING   ].append(datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS   ]))
         self.performance_dict[Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING].append(datetime.timedelta(milliseconds=perf_dict[Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS]))
 
-    def write(self, output_dir, iteration):
+    def write(self, output_dir, append):
         """
         Writes the results to OUTPUT_PERFORMANCE_FILE to a tab-delimited file.
         """
         performance_df = pandas.DataFrame.from_dict(self.performance_dict)
 
-        Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE), append=(iteration>1))
+        Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE), append=append)
 
         # reset dict to blank
         for key in self.performance_dict.keys():

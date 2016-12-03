@@ -14,6 +14,7 @@ namespace fasttrips {
      */
     typedef struct {
         int     iteration_;             ///< Iteration
+        int     pathfinding_iteration_; ///< Pathfinding iteration
         int     passenger_id_;          ///< The passenger ID
         int     path_id_;               ///< The path ID - uniquely identifies a passenger+path
         bool    hyperpath_;             ///< If true, find path using stochastic algorithm
