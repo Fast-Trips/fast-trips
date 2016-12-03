@@ -168,6 +168,7 @@ Type of Assignment:
 Major changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
 
 To be filled in further but including:
+* Added pathfinding iterations to looping (so pathfinding_iteration=1 finds paths for everyone, and subsequently just find paths for people who don't have a valid path. Break when max or we don't find anymore)
 * Added time-period based drive access links (10/2016)
 * Added link distance to extension as part of StopState (10/2016)
 * Implemented overlap pathsize correction (8/2016)
