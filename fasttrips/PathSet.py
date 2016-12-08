@@ -896,11 +896,12 @@ class PathSet:
 
         # at cap is a binary, 1 if overcap >= 0 and they're not one of the lucky few that boarded
         cost_trip_df["at_capacity"] = 0.0
-        if Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED in list(cost_trip_df.columns.values):
+        if Assignment.SIM_COL_PAX_BOARD_STATE in list(cost_trip_df.columns.values):
             cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)&
-                              (cost_trip_df[Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED] != "boarded"), "at_capacity" ] = 1.0
+                              (cost_trip_df[Assignment.SIM_COL_PAX_BOARD_STATE] != "board_easy")&
+                              (cost_trip_df[Assignment.SIM_COL_PAX_BOARD_STATE] != "boarded"), "at_capacity" ] = 1.0
         else:
-            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)                                    , "at_capacity" ] = 1.0
+            cost_trip_df.loc[ (cost_trip_df[overcap_col] >= 0)                               , "at_capacity" ] = 1.0
 
         cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "at_capacity"    , "var_value"] = cost_trip_df["at_capacity"]
         cost_trip_df.loc[cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "overcap"        , "var_value"] = cost_trip_df[overcap_col]

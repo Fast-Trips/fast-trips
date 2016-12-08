@@ -107,7 +107,7 @@ class Passenger:
     TRIP_LIST_COLUMN_VOT                        = "vot"
 
     #: Column names from pathfinding
-    PF_COL_PF_ITERATION             = 'pf_iteration' #: iteration during which this path was found
+    PF_COL_PF_ITERATION             = 'pf_iteration' #: 0.01*pathfinding_iteration + iteration during which this path was found
     PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
     PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
     PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
@@ -831,6 +831,7 @@ class Passenger:
             rejected_paths = pathset_paths_df.loc[ (pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN] >  Assignment.CHOSEN_NOT_CHOSEN_YET)&
                                                    (pathset_paths_df[Assignment.SIM_COL_PAX_COST  ] >= PathSet.HUGE_COST) ]
             FastTripsLogger.info("          Rejecting %d previously chosen paths for huge costs" % len(rejected_paths))
+            FastTripsLogger.debug("rejected_paths head(20): \n%s" % rejected_paths.head(20))
 
             # why doesn't this translate to pathset_links_df ?
             if len(rejected_paths) > 0:
@@ -914,20 +915,21 @@ class Passenger:
                                           "rand_less"]].groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]).idxmax(axis=0).reset_index()
         chosen_path_df.rename(columns={"rand_less":"chosen_idx"}, inplace=True)
-        FastTripsLogger.debug("choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
+        # FastTripsLogger.debug("choose_path() chosen_path_df=\n%s\n" % chosen_path_df.head(30).to_string())
         num_chosen += len(chosen_path_df)
 
         # mark it as chosen
         pathset_paths_df = pandas.merge(left=pathset_paths_df, right=chosen_path_df, how="left")
         pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Assignment.SIM_COL_PAX_CHOSEN] = CHOSEN_VALUE
-        FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
+
+        if len(Assignment.TRACE_PERSON_IDS) > 0:
+            FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.loc[ pathset_paths_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string())
 
         FastTripsLogger.info("          Chose %d out of %d paths from the pathsets => total chosen %d" %
                              (len(chosen_path_df), len(pathset_paths_df_grouped), num_chosen))
 
         # drop the intermediates
         pathset_paths_df.drop(["to_choose","rand","chosen_idx"], axis=1, inplace=True)
-        FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.head(30).to_string())
 
         # give the chosen index to pathset_links_df
         if Assignment.SIM_COL_PAX_CHOSEN in list(pathset_links_df.columns.values):
