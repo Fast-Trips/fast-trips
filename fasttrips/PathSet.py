@@ -659,7 +659,7 @@ class PathSet:
         return path2
 
     @staticmethod
-    def calculate_cost(simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, trip_list_df, transfers_df, walk_df, drive_df, veh_trips_df, stops):
+    def calculate_cost(FT, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -689,24 +689,25 @@ class PathSet:
 
         if len(Assignment.TRACE_PERSON_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
-            FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(trip_list_df.loc[trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+            FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         # base this on pathfinding distance
         pathset_links_df[Assignment.SIM_COL_PAX_DISTANCE] = pathset_links_df[Passenger.PF_COL_LINK_DIST]
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:
-            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)
+            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, FT.stops)
 
         # First, we need user class, purpose, and demand modes
         pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
-                                             right=trip_list_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                 Passenger.TRIP_LIST_COLUMN_USER_CLASS,
-                                                                 Passenger.TRIP_LIST_COLUMN_PURPOSE,
-                                                                 Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
-                                                                 Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
-                                                                 Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
-                                                                ]],
+                                             right=FT.passengers.trip_list_df[[
+                                                        Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                        Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                                                        Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                                                        Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+                                                        Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+                                                        Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
+                                                        ]],
                                              how  ="left",
                                              on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
         # todo: add Value of time
@@ -768,14 +769,14 @@ class PathSet:
 
             # make copies; we don't want to mess with originals
             if accegr_type == "walk":
-                link_df   = walk_df.copy()
+                link_df   = FT.tazs.walk_df.copy()
                 mode_list = TAZ.WALK_MODE_NUMS
             elif accegr_type == "bike":
                 mode_list = TAZ.BIKE_MODE_NUMS
                 # not supported yet
                 continue
             else:
-                link_df   = drive_df.copy()
+                link_df   = FT.tazs.drive_df.copy()
                 mode_list = TAZ.DRIVE_MODE_NUMS
 
             FastTripsLogger.debug("Access/egress link_df %s\n%s" % (accegr_type, link_df.head().to_string()))
@@ -817,12 +818,13 @@ class PathSet:
 
         # Access/egress needs passenger trip departure, arrival and time_target
         cost_accegr_df = pandas.merge(left =cost_accegr_df,
-                                      right=trip_list_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
-                                                          Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
-                                                          Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
-                                                        ]],
+                                      right=FT.passengers.trip_list_df[[
+                                                Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
+                                                Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
+                                                Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
+                                                ]],
                                       how  ="left",
                                       on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
 
@@ -920,16 +922,11 @@ class PathSet:
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
-        FastTripsLogger.debug("cost_transfer_df head = \n%s\ntransfers_df head=\n%s" % (cost_transfer_df.head().to_string(), transfers_df.head().to_string()))
-        cost_transfer_df = pandas.merge(left     = cost_transfer_df,
-                                        left_on  = ["A_id_num","B_id_num"],
-                                        right    = transfers_df,
-                                        right_on = [Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM, Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
-                                        how      = "left")
-        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min"   , "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
+        cost_transfer_df = FT.transfers.add_transfer_attributes(cost_transfer_df)
+        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
 
         # any numeric column can be used
-        for colname in list(transfers_df.select_dtypes(include=['float64','int64']).columns.values):
+        for colname in list(cost_transfer_df.select_dtypes(include=['float64','int64']).columns.values):
             FastTripsLogger.debug("Using numeric column %s" % colname)
             cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == colname, "var_value"] = cost_transfer_df[colname]
 

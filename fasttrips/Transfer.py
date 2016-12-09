@@ -211,28 +211,21 @@ class Transfer:
             # We're ready to write it
             self.write_transfers_for_extension()
 
-    def add_distance(self, links_df, dist_col):
+    def add_transfer_attributes(self, links_df):
         """
-        Sets distance column value for transfer links.
+        Adds transfer attributes for transfer links.
         """
-        transfer_dists = self.transfers_df[[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                            Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
-                                            Transfer.TRANSFERS_COLUMN_DISTANCE]].copy()
-        transfer_dists.rename(columns={Transfer.TRANSFERS_COLUMN_DISTANCE:"transfer_dist"}, inplace=True)
+        # FastTripsLogger.debug("links_df head(20)=\n%s\ntransfers_df head(20)=\n%s" % (links_df.head(20).to_string(), self.transfers_df.head(20).to_string()))
+        len_links_df = len(links_df)
+        # right now, we don't use these so let's not do the join
+        # if we do the join, we'll need to drop the duplicates since the from rout id and to route id might be specified
+        # links_df = pandas.merge(left     = links_df,
+        #                         left_on  = ["A_id_num","B_id_num"],
+        #                         right    = self.transfers_df,
+        #                         right_on = [Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM, Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
+        #                         how      = "left")
+        assert(len_links_df == len(links_df))
 
-        links_df = pandas.merge(left    =links_df,
-                                left_on =["A_id_num","B_id_num"],
-                                right   =transfer_dists,
-                                right_on=[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
-                                how     ="left")
-
-        links_df.loc[links_df["linkmode"]=="transfer", dist_col] = links_df["transfer_dist"]
-        links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                       Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
-                       "transfer_dist"], axis=1, inplace=True)
-
-        # 0-distance transfers
-        links_df.loc[ (links_df["linkmode"]=="transfer")&(links_df["A_id_num"]==links_df["B_id_num"]), dist_col ] = 0.0
         return links_df
 
     def write_transfers_for_extension(self):
