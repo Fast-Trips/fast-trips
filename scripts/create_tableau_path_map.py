@@ -64,7 +64,7 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
     fasttrips.FastTripsLogger.info("Imputing nostop transit link stops using %s link" % prev_next)
     fasttrips.FastTripsLogger.debug("impute_nostop_transit_link_stops: veh_trips_df head=\n%s" % str(veh_trips_df.head()))
 
-    prevnext_links_df = pathset_links_df[["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum","linkmode",
+    prevnext_links_df = pathset_links_df[["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum","linkmode",
                                           "A_id","A_id_num","A_lat","A_lon",
                                           "B_id","B_id_num","B_lat","B_lon"]].copy()
     if prev_next=="prev":
@@ -78,7 +78,7 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
     pathset_links_df = pandas.merge(left    =pathset_links_df,
                                     right   =prevnext_links_df,
                                     how     ="left",
-                                    on      =["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"],
+                                    on      =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"],
                                     suffixes=["","_%s" % prev_next])
 
     # target links to imput nodes
@@ -141,15 +141,15 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
             fasttrips.FastTripsLogger.debug("near_stops_df len=%d head()=\n%s" % (len(near_stops_df), str(near_stops_df.head())))
 
             # pick the closest one
-            near_stops_df = near_stops_df.loc[ near_stops_df.groupby(["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"])["stop_dist"].idxmin(),
-              ["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum","stop_id","stop_id_num","stop_name","stop_lat","stop_lon","stop_dist"] ]
+            near_stops_df = near_stops_df.loc[ near_stops_df.groupby(["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"])["stop_dist"].idxmin(),
+              ["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum","stop_id","stop_id_num","stop_name","stop_lat","stop_lon","stop_dist"] ]
 
             fasttrips.FastTripsLogger.debug("near_stops_df len=%d head()=\n%s" % (len(near_stops_df), str(near_stops_df.head())))
 
             # set it into pathset_links_df
             pathset_links_df = pandas.merge(left=pathset_links_df,
                                             right=near_stops_df,
-                                            on=["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"],
+                                            on=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"],
                                             how="left",
                                             suffixes=["","_near"])
             fasttrips.FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"])].head()))
@@ -193,7 +193,7 @@ def impute_stop_from_adjacent_stop(ft, pathset_links_df, prev_next):
 
     # fill in unknown Bs from next link
     fasttrips.FastTripsLogger.info("Trying to impute %8d null %s_id values" % (target_count, AB_set))
-    prevnext_links_df = pathset_links_df[["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum",
+    prevnext_links_df = pathset_links_df[["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum",
                                           "%s_id" % AB_use,"%s_id_num" % AB_use, "%s_lat" % AB_use, "%s_lon" % AB_use]].copy()
     if prev_next=="next":
         prevnext_links_df["linknum"] = prevnext_links_df["linknum"]-1
@@ -203,7 +203,7 @@ def impute_stop_from_adjacent_stop(ft, pathset_links_df, prev_next):
     pathset_links_df = pandas.merge(left    =pathset_links_df,
                                     right   =prevnext_links_df,
                                     how     ="left",
-                                    on      =["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"],
+                                    on      =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"],
                                     suffixes=["","_%s" % prev_next])
 
     # inpute the AB_set
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     parser.add_argument('input_network_dir', type=str, nargs=1, help="Directory with input network")
     parser.add_argument('input_path_dir',    type=str, nargs=1, help="Directory with pathset_[links,paths].csv files")
     parser.add_argument('--description', dest='use_description', action='store_true', 
-        help="Specify this to use path description as ID.  Otherwise will use standard pathset fields (person_id, person_trip_id, iteration, simulation_iteration, pathnum)")
+        help="Specify this to use path description as ID.  Otherwise will use standard pathset fields (person_id, person_trip_id, iteration, pathfinding_iteration, simulation_iteration, pathnum)")
 
     args = parser.parse_args()
     LOG_DIR = "create_tableau_path_map"
@@ -265,6 +265,9 @@ if __name__ == "__main__":
     if "iteration" not in list(pathset_paths_df.columns.values):
         pathset_paths_df["iteration"] = 1
         pathset_links_df["iteration"] = 1
+    if "pathfinding_iteration" not in list(pathset_paths_df.columns.values):
+        pathset_paths_df["pathfinding_iteration"] = 1
+        pathset_links_df["pathfinding_iteration"] = 1
     # add simulation_iteration if not there.  todo: handle its absence better instead?
     if "simulation_iteration" not in list(pathset_paths_df.columns.values):
         pathset_paths_df["simulation_iteration"] = 1
@@ -310,7 +313,7 @@ if __name__ == "__main__":
     fasttrips.FastTripsLogger.debug("Wrote %s" % debug_file)
 
     # select out just the fields we want for the map
-    map_link_fields = ["person_id","person_trip_id","iteration","simulation_iteration","pathnum",
+    map_link_fields = ["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum",
                        "linknum","linkmode","mode","route_id","trip_id",
                        "A_id","A_seq","A_lat","A_lon",
                        "B_id","B_seq","B_lat","B_lon"]
@@ -319,16 +322,16 @@ if __name__ == "__main__":
     # drop the B fields
     map_points_df = pathset_links_df[map_link_fields[:-4]].copy()
 
-    pathset_paths_df = pathset_paths_df[["person_id","person_trip_id","iteration","simulation_iteration","pathnum",
+    pathset_paths_df = pathset_paths_df[["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum",
                                          "description"]]
     pathset_paths_df[["pathnum"]] = pathset_paths_df[["pathnum"]].astype(int)
 
     # Each link will be it's own map line.  A split link is a single map line but with a bunch of points.
     # Access, egresss and transit map lines will just be two points: A and B
-    # So the line index is "person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"
+    # So the line index is "person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"
 
     # add point id starting with 1 for A; the B point IS is just that plus one
-    map_points_df["point_id"] = map_points_df.groupby(["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"]).cumcount() + 1
+    map_points_df["point_id"] = map_points_df.groupby(["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"]).cumcount() + 1
     # rename A_id, A_seq, A_lat, A_lon
     map_points_df.rename(columns={"A_id" :"stop_or_taz_id",
                                   "A_seq":"stop_sequence",
@@ -339,7 +342,7 @@ if __name__ == "__main__":
 
     # group for the last one
     pathset_links_df["point_id"]=1  # we need this set to *something* agg
-    last_point_df = pathset_links_df.groupby(["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum"]).agg(
+    last_point_df = pathset_links_df.groupby(["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"]).agg(
         {"point_id":"count",
          "B_id":"last",
          "B_seq":"last",
@@ -358,7 +361,7 @@ if __name__ == "__main__":
 
     # combine map points with the last map point
     map_points_df = map_points_df.append(last_point_df, ignore_index=True)
-    map_points_df.sort_values(by=["person_id","person_trip_id","iteration","simulation_iteration","pathnum","linknum","point_id"], inplace=True)
+    map_points_df.sort_values(by=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum","point_id"], inplace=True)
     map_points_df.reset_index(drop=True, inplace=True)
 
     map_points_df[["pathnum","linknum"]] = map_points_df[["pathnum","linknum"]].astype(int)
@@ -374,15 +377,21 @@ if __name__ == "__main__":
 
         # join map points to them
         map_points_df = pandas.merge(left    =pathset_paths_df,
-                                     left_on =["person_id","person_trip_id","iteration","simulation_iteration","pathnum"],
+                                     left_on =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
                                      right   =map_points_df,
-                                     right_on=["person_id","person_trip_id","iteration","simulation_iteration","pathnum"],
+                                     right_on=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
                                      how     ="inner")
         fasttrips.FastTripsLogger.info("Have %d map points" % len(map_points_df))
 
         # drop the non-descript columns
-        map_points_df.drop(["person_id","person_trip_id","iteration","simulation_iteration","pathnum"], axis=1, inplace=True)
-
+        map_points_df.drop(["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"], axis=1, inplace=True)
+    else:
+        # just add descriptions
+        map_points_df = pandas.merge(left    =map_points_df,
+                                     left_on =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
+                                     right   =pathset_paths_df[["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","description"]],
+                                     right_on=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
+                                     how     ="left")
     # write it
     output_file = os.path.join(args.input_path_dir[0], "pathset_map_points.csv")
     map_points_df.to_csv(output_file, sep=",", index=False)

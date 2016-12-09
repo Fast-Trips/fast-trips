@@ -15,6 +15,7 @@ __license__   = """
 import collections,datetime,os,sys
 import numpy,pandas
 
+from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
 from .Route  import Route
 from .Util   import Util
@@ -221,6 +222,15 @@ class Trip:
             self.capacity_configured = True
         else:
             self.capacity_configured = False
+
+            # error if capacity constraints are on
+            from .Assignment import Assignment
+            if Assignment.CAPACITY_CONSTRAINT:
+                error_str = "capacity_constraint is configured to be True but either %s or %s is missing from vehicle information" % \
+                    (Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY)
+                FastTripsLogger.fatal(error_str)
+
+                raise NetworkInputError(Trip.INPUT_VEHICLES_FILE, error_str)
 
         # convert mph to fps for maximum speed
         if Trip.VEHICLES_COLUMN_MAXIMUM_SPEED in vehicle_ft_cols:

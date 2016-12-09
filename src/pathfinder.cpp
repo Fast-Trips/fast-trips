@@ -1968,8 +1968,9 @@ namespace fasttrips {
         if (path_spec.hyperpath_)
         {
             double logsum = 0;
-            // random seed
-            srand(path_spec.path_id_);
+            // random seed -- possible todo: make this a function of more meaningful attributes, like o/d/time/outbound/userclass/purpose ?
+            // srand(path_spec.path_id_);
+            srand(42);
             // find a *set of Paths*
             for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
