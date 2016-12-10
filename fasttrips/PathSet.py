@@ -922,7 +922,7 @@ class PathSet:
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
-        cost_transfer_df = FT.transfers.add_transfer_attributes(cost_transfer_df)
+        cost_transfer_df = FT.transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
         cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
 
         # any numeric column can be used
