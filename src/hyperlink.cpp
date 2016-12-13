@@ -794,7 +794,7 @@ namespace fasttrips {
             }
         }
         if (path_spec.trace_) {
-            trace_file << "valid_links=" << valid_links << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << std::endl;
+            trace_file << "valid_links=" << valid_links << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << "; sum_exp=" << sum_exp << std::endl;
         }
 
         // fail -- nothing is valid
@@ -804,7 +804,7 @@ namespace fasttrips {
         if (path_so_far == NULL) { return linkset.max_cum_prob_i_; }
 
         // fail -- nothing is valid because costs are too big
-        if (sum_exp != sum_exp) {
+        if ((valid_links != 1) && (log(sum_exp) != log(sum_exp))) {
             printf("infinity\n");
             return linkset.max_cum_prob_i_;
         }
@@ -817,7 +817,11 @@ namespace fasttrips {
 
             if (ss.cum_prob_i_ == -1) {
                 // marked as invalid
-            } else {
+            } else if (valid_links == 1) {
+                ss.cum_prob_i_          = 1.0;
+                linkset.max_cum_prob_i_ = ss.cum_prob_i_;
+            }
+            else {
                 ss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) / sum_exp;
                 int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
 
