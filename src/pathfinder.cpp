@@ -2262,18 +2262,18 @@ namespace fasttrips {
     void PathFinder::printMode(std::ostream& ostr, const int& mode, const int& trip_id) const
     {
         if (mode == MODE_ACCESS) {
-            ostr << std::setw(10) << std::setfill(' ') << "Access";
+            ostr << std::setw(13) << std::setfill(' ') << "Access";
         } else if (mode == MODE_EGRESS) {
-            ostr << std::setw(10) << std::setfill(' ') << "Egress";
+            ostr << std::setw(13) << std::setfill(' ') << "Egress";
         } else if (mode == MODE_TRANSFER) {
-            ostr << std::setw(10) << std::setfill(' ') << "Transfer";
+            ostr << std::setw(13) << std::setfill(' ') << "Transfer";
         } else if (mode == MODE_TRANSIT) {
             // show the supply mode
             int supply_mode_num = trip_info_.find(trip_id)->second.supply_mode_num_;
-            ostr << std::setw(10) << std::setfill(' ') << mode_num_to_str_.find(supply_mode_num)->second;
+            ostr << std::setw(13) << std::setfill(' ') << mode_num_to_str_.find(supply_mode_num)->second;
         } else {
             // trip
-            ostr << std::setw(10) << std::setfill(' ') << "???";
+            ostr << std::setw(13) << std::setfill(' ') << "???";
         }
     }
 
