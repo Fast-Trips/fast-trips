@@ -784,7 +784,7 @@ class Assignment:
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, pathfinding_iteration, trip_pathset,
                                                         Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                                                        trace=trace_person)
+                                                        trace=False) #trace_person)
                     trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
 
@@ -1658,8 +1658,8 @@ class Assignment:
             pathset_paths_df, pathset_links_df)
 
         # Write the pathsets
-        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
-        Passenger.write_paths(output_dir, iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
+        Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False, Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
+        Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
 
         # write the final chosen paths for this iteration
         chosen_links_df = Passenger.get_chosen_links(pathset_links_df)
