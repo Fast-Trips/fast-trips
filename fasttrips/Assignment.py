@@ -813,7 +813,7 @@ class Assignment:
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, pathfinding_iteration, trip_pathset,
                                                         Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                                                        trace=False) #trace_person)
+                                                        trace=trace_person)
                     trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
 
