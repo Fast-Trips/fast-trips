@@ -247,6 +247,10 @@ class Transfer:
         FastTripsLogger.debug("add_transfer_attributes: transfer_links_df(%d) head(20)=\n%s\ntransfers_df head(20)=\n%s" % \
                               (len_transfer_links_df, transfer_links_df.head(20).to_string(), self.transfers_df.head(20).to_string()))
 
+        # nothing to do
+        if len_transfer_links_df == 0:
+            return transfer_links_df
+
         # these will be filled for route matches
         transfer_links_done = pandas.DataFrame()
 

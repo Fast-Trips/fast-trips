@@ -208,6 +208,8 @@ class Stop:
 
         # write the stop ids and zone ids to numbering file
         stop_id_df = self.stop_id_df  # local copy with filled NA
+        if Stop.STOPS_COLUMN_ZONE_ID_NUM not in stop_id_df.columns.values:
+            stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = -1
         stop_id_df.fillna(value={Stop.STOPS_COLUMN_ZONE_ID_NUM:-1,
                                  Stop.STOPS_COLUMN_ZONE_ID:"None"}, inplace=True)
         stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM].astype(int)

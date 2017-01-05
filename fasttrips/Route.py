@@ -361,12 +361,14 @@ class Route(object):
                                                                Route.FARE_RULES_COLUMN_ROUTE_ID,
                                                                Route.FARE_RULES_COLUMN_ROUTE_ID_NUM)
             # add origin zone numbering if applicable
-            if Route.FARE_RULES_COLUMN_ORIGIN_ID in list(self.fare_rules_df.columns.values):
+            if (Route.FARE_RULES_COLUMN_ORIGIN_ID in list(self.fare_rules_df.columns.values)) and \
+               (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID]).sum() > 0):
                 self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
                                                                     Route.FARE_RULES_COLUMN_ORIGIN_ID,
                                                                     Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM)
             # add destination zone numbering if applicable
-            if Route.FARE_RULES_COLUMN_DESTINATION_ID in list(self.fare_rules_df.columns.values):
+            if (Route.FARE_RULES_COLUMN_DESTINATION_ID in list(self.fare_rules_df.columns.values)) and \
+                (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]).sum() > 0):
                 self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
                                                                     Route.FARE_RULES_COLUMN_DESTINATION_ID,
                                                                     Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM)
@@ -466,7 +468,7 @@ class Route(object):
             FastTripsLogger.info("Read %7d %15s from %25s" %
                                  (len(self.fare_transfer_rules_df), "fare xfer rules", Route.INPUT_FARE_TRANSFER_RULES_FILE))
         else:
-            self.fare_transfer_rules_df = None
+            self.fare_transfer_rules_df = pandas.DataFrame()
 
         self.write_routes_for_extension()
 
@@ -857,6 +859,13 @@ class Route(object):
             trip_links_df.drop([Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
                                 Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
                                 Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT], axis=1, inplace=True)
+
+        # no transfer rules => nothing to do
+        if len(self.fare_transfer_rules_df) == 0:
+            trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD] = None
+            trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]             = None
+            trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]           = None
+            return trip_links_df
 
         # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
 
