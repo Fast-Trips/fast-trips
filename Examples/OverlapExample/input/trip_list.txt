@@ -1,0 +1,2 @@
+person_id,person_trip_id,o_taz,d_taz,mode,purpose,departure_time,arrival_time,time_target,vot,pnr_ids
+frogger,0,ZO,ZD,transit,fun,14:59:00,15:30:00,departure,25.50,
