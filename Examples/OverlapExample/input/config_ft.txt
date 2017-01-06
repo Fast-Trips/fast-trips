@@ -14,5 +14,5 @@ debug_output_columns          = True
 [pathfinding]
 stochastic_pathset_size           = 1000
 time_window                       = 30
-overlap_variable                  = None
+overlap_variable                  = time
 overlap_split_transit             = True
