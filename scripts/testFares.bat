@@ -3,7 +3,7 @@
 ::
 
 :: first, setup for run
-set NETWORK_DIR=sfcta\network_draft1.9_fare
+set NETWORK_DIR=sfcta\network_draft1.10_fare
 set DEMAND_DIR=sfcta\CHAMP_fasttrips_demand_v0.3
 set TEST_SIZE=1000
 
@@ -61,7 +61,7 @@ copy "sfcta2\faretest\output_fares_nopf_nope\pathset_map_points.csv"    sfcta2\f
 ::---------------------------------------------------------------------------------------------------------------------
 :: develop
 :: git checkout develop
-:: python .\scripts\runTest.py --num_trips %TEST_SIZE% --output_dir output_develop stochastic 1 "sfcta\network_draft1.9" "%DEMAND_DIR%" sfcta2\faretest
+:: python .\scripts\runTest.py --num_trips %TEST_SIZE% --output_dir output_develop stochastic 1 "sfcta\network_draft1.10" "%DEMAND_DIR%" sfcta2\faretest
 :: if ERRORLEVEL 1 goto done
 :: 
 :: :: create maps
