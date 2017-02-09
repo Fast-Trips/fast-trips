@@ -1,0 +1,3 @@
+fare_id,route_id
+default_fare_id,Bus
+default_fare_id,LR

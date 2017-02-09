@@ -99,6 +99,9 @@ class Passenger:
     #: Generic transit - Numeric mode number
     MODE_GENERIC_TRANSIT_NUM                    = 1000
 
+    #: Minumum Value of Time: 1 dollar shouldn't be worth 180 minutes
+    MIN_VALUE_OF_TIME                           = 60.0/180.0
+
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
     #: Trip list column: Purpose. String.
@@ -111,7 +114,8 @@ class Passenger:
     PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
     PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
     PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
-    PF_COL_LINK_COST                = 'pf_linkcost'  #: cost path-finder thinks passenger spent on link
+    PF_COL_LINK_FARE                = 'pf_linkfare'  #: fare path-finder thinks passenger spent on link
+    PF_COL_LINK_COST                = 'pf_linkcost'  #: cost (generalized) path-finder thinks passenger spent on link
     PF_COL_LINK_DIST                = 'pf_linkdist'  #: dist path-finder thinks passenger spent on link
     PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
 
@@ -161,6 +165,7 @@ class Passenger:
         assert(Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME     in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME       in trip_list_cols)
         assert(Passenger.TRIP_LIST_COLUMN_TIME_TARGET        in trip_list_cols)
+        assert(Passenger.TRIP_LIST_COLUMN_VOT                in trip_list_cols)
 
         FastTripsLogger.debug("=========== TRIP LIST ===========\n" + str(self.trip_list_df.head()))
         FastTripsLogger.debug("\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
@@ -243,6 +248,14 @@ class Passenger:
                 60*x.time().hour + x.time().minute + x.time().second/60.0 )
 
         # TODO: validate fields?
+
+        # value of time must be greater than a threshhold or any fare becomes prohibitively expensive
+        low_vot = self.trip_list_df.loc[ self.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT] < Passenger.MIN_VALUE_OF_TIME ]
+        if len(low_vot) > 0:
+            FastTripsLogger.warn("These trips have value of time lower than the minimum threshhhold (%f): raising to minimum.\n%s" %
+                (Passenger.MIN_VALUE_OF_TIME, str(low_vot) ))
+        self.trip_list_df.loc[ self.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT] < Passenger.MIN_VALUE_OF_TIME,
+            Passenger.TRIP_LIST_COLUMN_VOT] = Passenger.MIN_VALUE_OF_TIME
 
         if len(self.persons_df) > 0:
             # Join trips to persons
@@ -478,7 +491,7 @@ class Passenger:
         return (pathset_paths_df, pathset_links_df)
 
 
-    def setup_passenger_pathsets(self, iteration, pathfinding_iteration, stops, trip_id_df, trips_df, modes_df, 
+    def setup_passenger_pathsets(self, iteration, pathfinding_iteration, stops, trip_id_df, trips_df, modes_df,
                                  transfers, tazs, prepend_route_id_to_trip_id):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
@@ -490,55 +503,59 @@ class Passenger:
 
         pathset_paths_df has path set information, where each row represents a passenger's path:
 
-        ================  ===============  =====================================================================================================
-        column name        column type     description
-        ================  ===============  =====================================================================================================
-        `person_id`                object  person ID
-        `person_trip_id`           object  person trip ID
-        `trip_list_id_num`          int64  trip list numerical ID
-        `pathdir`                   int64  the :py:attr:`PathSet.direction`
-        `pathmode`                 object  the :py:attr:`PathSet.mode`
-        `pf_iteration`            float64  iteration + 0.01*pathfinding_iteration in which these paths were found
-        `pathnum`                   int64  the path number for the path within the pathset
-        `pf_cost`                 float64  the cost of the entire path
-        `pf_probability`          float64  the probability of the path
-        `description`              object  string representation of the path
-        ================  ===============  =====================================================================================================
+        ==================  ===============  =====================================================================================================
+        column name          column type     description
+        ==================  ===============  =====================================================================================================
+        `person_id`                  object  person ID
+        `person_trip_id`             object  person trip ID
+        `trip_list_id_num`            int64  trip list numerical ID
+        `pathdir`                     int64  the :py:attr:`PathSet.direction`
+        `pathmode`                   object  the :py:attr:`PathSet.mode`
+        `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
+        `pathnum`                     int64  the path number for the path within the pathset
+        `pf_cost`                   float64  the cost of the entire path
+        `pf_fare`                   float64  the fare of the entire path
+        `pf_probability`            float64  the probability of the path
+        `pf_initcost`               float64  the initial cost of the entire path
+        `pf_initfare`               float64  the initial fare of the entire path
+        `description`                object  string representation of the path
+        ==================  ===============  =====================================================================================================
 
         pathset_links_df has path link information, where each row represents a link in a passenger's path:
 
-        ==============  ===============  =====================================================================================================
-        column name      column type     description
-        ==============  ===============  =====================================================================================================
-        `person_id`              object  person ID
-        `person_trip_id`         object  person trip ID
-        `trip_list_id_num`        int64  trip list numerical ID
-        `pf_iteration`          float64  iteration + 0.01*pathfinding_iteration in which these paths were found
-        `pathnum`                 int64  the path number for the path within the pathset
-        `linkmode`               object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
-                                         :py:attr:`PathSet.STATE_MODE_TRANSFER` or :py:attr:`PathSet.STATE_MODE_TRIP`.  PathSets will always start with
-                                         access, followed by trips with transfers in between, and ending in an egress following the last trip.
-        `mode_num`                int64  the mode number for the link
-        `mode`                   object  the supply mode for the link
-        `route_id`               object  the route ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `trip_id`                object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `trip_id_num`           float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `A_id`                   object  the stop ID at the start of the link, or TAZ ID for access links
-        `A_id_num`                int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
-        `B_id`                   object  the stop ID at the end of the link, or a TAZ ID for access links
-        `B_id_num`                int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
-        `A_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `B_seq`,                  int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `pf_A_time`      datetime64[ns]  the time the passenger arrives at `A_id`
-        `pf_B_time`      datetime64[ns]  the time the passenger arrives at `B_id`
-        `pf_linktime`   timedelta64[ns]  the time spent on the link
-        `pf_linkcost`           float64  the cost of the link
-        `pf_linkdist`           float64  the distance for the link
-        `A_lat`                 float64  the latitude of A (if it's a stop)
-        `A_lon`                 float64  the longitude of A (if it's a stop)
-        `B_lat`                 float64  the latitude of B (if it's a stop)
-        `B_lon`                 float64  the longitude of B (if it's a stop)
-        ==============  ===============  =====================================================================================================
+        ==================  ===============  =====================================================================================================
+        column name          column type     description
+        ==================  ===============  =====================================================================================================
+        `person_id`                  object  person ID
+        `person_trip_id`             object  person trip ID
+        `trip_list_id_num`            int64  trip list numerical ID
+        `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
+        `pathnum`                     int64  the path number for the path within the pathset
+        `linkmode`                   object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
+                                             :py:attr:`PathSet.STATE_MODE_TRANSFER` or :py:attr:`PathSet.STATE_MODE_TRIP`.  PathSets will always start with
+                                             access, followed by trips with transfers in between, and ending in an egress following the last trip.
+        `mode_num`                    int64  the mode number for the link
+        `mode`                       object  the supply mode for the link
+        `route_id`                   object  the route ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
+        `trip_id`                    object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
+        `trip_id_num`               float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
+        `A_id`                       object  the stop ID at the start of the link, or TAZ ID for access links
+        `A_id_num`                    int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
+        `B_id`                       object  the stop ID at the end of the link, or a TAZ ID for access links
+        `B_id_num`                    int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
+        `A_seq`                       int64  the sequence number for the stop at the start of the link, or -1 for access links
+        `B_seq`                       int64  the sequence number for the stop at the start of the link, or -1 for access links
+        `pf_A_time`          datetime64[ns]  the time the passenger arrives at `A_id`
+        `pf_B_time`          datetime64[ns]  the time the passenger arrives at `B_id`
+        `pf_linktime`       timedelta64[ns]  the time spent on the link
+        `pf_linkfare`               float64  the fare of the link
+        `pf_linkcost`               float64  the generalized cost of the link
+        `pf_linkdist`               float64  the distance for the link
+        `A_lat`                     float64  the latitude of A (if it's a stop)
+        `A_lon`                     float64  the longitude of A (if it's a stop)
+        `B_lat`                     float64  the latitude of B (if it's a stop)
+        `B_lon`                     float64  the longitude of B (if it's a stop)
+        ==================  ===============  =====================================================================================================
 
         """
         from .PathSet import PathSet
@@ -599,7 +616,10 @@ class Passenger:
                     0.01*pathfinding_iteration+iteration,
                     pathnum,
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY]
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY],
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_COST],
+                    pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_FARE]
                 ])
 
                 link_num   = 0
@@ -659,6 +679,7 @@ class Passenger:
                         a_time,
                         b_time,
                         state[PathSet.STATE_IDX_LINKTIME],
+                        state[PathSet.STATE_IDX_LINKFARE],
                         state[PathSet.STATE_IDX_LINKCOST],
                         state[PathSet.STATE_IDX_LINKDIST],
                         waittime,
@@ -679,7 +700,10 @@ class Passenger:
             Passenger.PF_COL_PF_ITERATION,
             Passenger.PF_COL_PATH_NUM,
             PathSet.PATH_KEY_COST,
-            PathSet.PATH_KEY_PROBABILITY ])
+            PathSet.PATH_KEY_FARE,
+            PathSet.PATH_KEY_PROBABILITY,
+            PathSet.PATH_KEY_INIT_COST,
+            PathSet.PATH_KEY_INIT_FARE])
 
         pathset_links_df = pandas.DataFrame(linklist, columns=[\
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -695,6 +719,7 @@ class Passenger:
             Passenger.PF_COL_PAX_A_TIME,
             Passenger.PF_COL_PAX_B_TIME,
             Passenger.PF_COL_LINK_TIME,
+            Passenger.PF_COL_LINK_FARE,
             Passenger.PF_COL_LINK_COST,
             Passenger.PF_COL_LINK_DIST,
             Passenger.PF_COL_WAIT_TIME,
@@ -703,10 +728,9 @@ class Passenger:
         FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (len(pathset_paths_df), len(pathset_links_df)))
 
         # get A_id and B_id and trip_id
-        pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='A_id_num',                            newid_colname='A_id',
-                                           mapping_df=stops.stop_id_df,  mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
-        pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname='B_id_num',                            newid_colname='B_id',
-                                           mapping_df=stops.stop_id_df,  mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM, mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID)
+        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df,'A_id_num','A_id')
+        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df,'B_id_num','B_id')
+
         # get A_lat, A_lon, B_lat, B_lon
         pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="A_id", new_lat_colname="A_lat", new_lon_colname="A_lon")
         pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="B_id", new_lat_colname="B_lat", new_lon_colname="B_lon")

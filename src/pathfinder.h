@@ -96,12 +96,6 @@ namespace fasttrips {
         double  egress_cost_;   ///< general cost units
     } TazStopCost;
 
-    /// Supply data: transfer time and cost between stops
-    typedef struct {
-        double  time_;          ///< in minutes
-        double  cost_;          ///< general cost units
-    } TransferCost;
-
     /// Supply data: Transit trip data, indexed by trip ID
     typedef struct {
         int        supply_mode_num_;
@@ -134,6 +128,55 @@ namespace fasttrips {
                     ((ts1.trip_id_ == ts2.trip_id_) && (ts1.seq_ < ts2.seq_)));
         }
     };
+
+    /// For fare lookups FarePeriod index
+    typedef struct {
+        int         route_id_;          ///< Route id number, if applicable
+        int         origin_zone_;       ///< Origin stop zone number, if applicable
+        int         destination_zone_;  ///< Destination stop zone number, if applicable
+    } RouteStopZone;
+
+    struct RouteStopZoneCompare {
+        bool operator()(const RouteStopZone& rsz1, const RouteStopZone& rsz2) const {
+            if (rsz1.route_id_         < rsz2.route_id_        ) { return true;  }
+            if (rsz1.route_id_         > rsz2.route_id_        ) { return false; }
+            if (rsz1.origin_zone_      < rsz2.origin_zone_     ) { return true;  }
+            if (rsz1.origin_zone_      > rsz2.origin_zone_     ) { return false; }
+            if (rsz1.destination_zone_ < rsz2.destination_zone_) { return true;  }
+            if (rsz1.destination_zone_ > rsz2.destination_zone_) { return false; }
+            return false;
+        }
+    };
+
+    /// For fare lookups: FarePeriod definition
+    struct FarePeriod {
+        std::string fare_id_;           ///< Fare ID
+        std::string fare_period_;       ///< Name of the fare period
+        double      start_time_;        ///< Start time of the fare period
+        double      end_time_;          ///< End time of the fare period
+        double      price_;             ///< Currency unspecified but matches value_of_time_
+        int         transfers_;         ///< Number of free transfers allowed on this fare.
+        double      transfer_duration_; ///< Transfer duration, in seconds. -1 if no requirement.
+    };
+
+    /// Maps route id + origin zone + dest zone (any of these may be NA, or -1) => FarePeriod
+    typedef std::multimap<RouteStopZone, struct FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
+
+    /// Fare transfer types
+    enum FareTransferType {
+      TRANSFER_FREE     = 1,            ///< free transfer
+      TRANSFER_DISCOUNT = 2,            ///< discount transfer
+      TRANSFER_COST     = 3             ///< set price transfer
+    };
+
+    /// For fare transfer rules
+    typedef struct {
+      FareTransferType  type_;            ///< what type of transfer is this
+      double            amount_;          ///< fare transfer type
+    } FareTransfer;
+
+    /// Fare Transfer Rules
+    typedef std::map< std::pair<std::string,std::string>, FareTransfer> FareTransferMap;
 
     /** Performance information to return. */
     typedef struct {
@@ -196,10 +239,16 @@ namespace fasttrips {
         std::map<int, std::vector<TripStopTime> > trip_stop_times_;
         /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time, overcap]
         std::map<int, std::vector<TripStopTime> > stop_trip_times_;
+        // Fare information: route id -> fare id
+        std::map<int, int> route_fares_;
+        // Fare information: route/origin zone/dest zone -> fare period
+        FarePeriodMmap fare_periods_;
+        // Fare transfer rules: (from_fare_period,to_fare_period) -> FareTransfer
+        FareTransferMap fare_transfer_rules_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
-        std::map<int, std::string> stop_num_to_str_;
+        std::map<int, Stop>        stop_num_to_stop_;
         std::map<int, std::string> route_num_to_str_;
         std::map<int, std::string> mode_num_to_str_; // supply modes
         int transfer_supply_mode_;
@@ -222,6 +271,7 @@ namespace fasttrips {
         void readTripIds();
         void readStopIds();
         void readRouteIds();
+        void readFarePeriods();
         void readModeIds();
         void readAccessLinks();
         void readTransferLinks();
@@ -337,7 +387,7 @@ namespace fasttrips {
          */
         bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
-                                  const StopStates& stop_states,
+                                  StopStates& stop_states,
                                   Path& path) const;
 
         /**
@@ -353,7 +403,7 @@ namespace fasttrips {
 
         bool getPathSet(const PathSpecification&      path_spec,
                         std::ofstream&                trace_file,
-                        const StopStates&             stop_states,
+                        StopStates&                   stop_states,
                         PathSet&                      pathset) const;
 
         /**
@@ -377,6 +427,8 @@ namespace fasttrips {
         const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
         /// Accessor for trip info
         const TripInfo* getTripInfo(int trip_id_num) const;
+        /// Accessor for route id
+        int getRouteIdForTripId(int trip_id_num) const;
         /// Accessor for TripStopTime for given trip id, stop sequence
         const TripStopTime& getTripStopTime(int trip_id, int stop_seq) const;
         /**
@@ -407,6 +459,8 @@ namespace fasttrips {
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion,
                                   int        stoch_max_stop_process_count,
+                                  bool       transfer_fare_ignore_pf,
+                                  bool       transfer_fare_ignore_pe,
                                   int        max_num_paths,
                                   double     min_path_probability);
 
@@ -461,6 +515,10 @@ namespace fasttrips {
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
 
+        const FarePeriod* getFarePeriod(int route_id, int board_stop_id, int alight_stop_id, double trip_depart_time) const;
+
+        const FareTransfer* getFareTransfer(const std::string from_fare_period, const std::string to_fare_period) const;
+
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 
         void printTime(std::ostream& ostr, const double& timemin) const;
@@ -468,7 +526,7 @@ namespace fasttrips {
         void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
 
         /// Accessor for stop strings.  Assumes valid stop id.
-        const std::string& stopStringForId(int stop_id) const { return stop_num_to_str_.find(stop_id)->second; }
+        const std::string& stopStringForId(int stop_id) const { return stop_num_to_stop_.find(stop_id)->second.stop_str_; }
         /// Accessor for trip strings.  Assumes valid trip id.
         const std::string& tripStringForId(int trip_id) const { return trip_num_to_str_.find(trip_id)->second; }
         /// Accessor for mode strings.  Assumes valid mode number.

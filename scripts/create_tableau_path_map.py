@@ -293,10 +293,13 @@ if __name__ == "__main__":
     fasttrips.FastTripsLogger.info("Splitting pathset_links_df (%d) into links with trip_id (%d) and links without (%d)" %
                                    (len(pathset_links_df), len(pathset_links_trip), len(pathset_links_notrip)))
 
-    pathset_links_trip   = fasttrips.PathSet.split_transit_links(pathset_links_trip, veh_trips_df, ft.stops)
-    fasttrips.FastTripsLogger.info("Split links with trip_id into parts => %d links" % len(pathset_links_trip))
-    pathset_links_df     = pathset_links_trip.append(pathset_links_notrip, ignore_index=True)
-    fasttrips.FastTripsLogger.info("Back together to make %d pathset_links_df" % len(pathset_links_df))
+    if len(pathset_links_trip) == 0:
+        pathset_links_df = pathset_links_notrip
+    else:
+        pathset_links_trip   = fasttrips.PathSet.split_transit_links(pathset_links_trip, veh_trips_df, ft.stops)
+        fasttrips.FastTripsLogger.info("Split links with trip_id into parts => %d links" % len(pathset_links_trip))
+        pathset_links_df     = pathset_links_trip.append(pathset_links_notrip, ignore_index=True)
+        fasttrips.FastTripsLogger.info("Back together to make %d pathset_links_df" % len(pathset_links_df))
 
     pathset_links_df.sort_values(by=["person_id","person_trip_id","pathnum","linknum"], inplace=True)
     pathset_links_df.reset_index(drop=True, inplace=True)

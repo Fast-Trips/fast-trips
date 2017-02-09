@@ -63,11 +63,11 @@ class FastTrips:
         #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
         self.passengers      = None
 
-        #: :py:class:`dict` with :py:attr:`fasttrips.Route.route_id` key and :py:class:`fasttrips.Route` value
-        self.routes          = None
-
         #: :py:class:`dict` with :py:attr:`fasttrips.Stop.stop_id` key and :py:class:`fasttrips.Stop` value
         self.stops           = None
+
+        #: :py:class:`dict` with :py:attr:`fasttrips.Route.route_id` key and :py:class:`fasttrips.Route` value
+        self.routes          = None
 
         #: :py:class:`dict` with :py:attr:`fasttrips.TAZ.taz_id` key and :py:class:`fasttrips.TAZ` value
         self.tazs            = None
@@ -116,13 +116,13 @@ class FastTrips:
         # Required: Trips, Routes, Stops, Stop Times, Agency, Calendar
         # Optional: Transfers, Shapes, Calendar Dates...
 
-        # Read routes, agencies
-        self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                            self.gtfs_schedule, Util.SIMULATION_DAY)
-
         # Read Stops (gtfs-required)
         self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
                           self.gtfs_schedule)
+
+        # Read routes, agencies, fares
+        self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
+                            self.gtfs_schedule, Util.SIMULATION_DAY, self.stops)
 
         # Read Transfers
         self.transfers = Transfer(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,

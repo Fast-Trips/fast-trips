@@ -13,6 +13,7 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
     * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
+* [Fares](#fares)
 * [Test Sample Input](#test-sample-input)
   * [Test Network](#test-network)
   * [Test Demand](#test-demand)
@@ -59,12 +60,13 @@ Option Name                         | Type   | Default | Description
 `debug_num_trips`                   | int    | -1      | If positive, will truncate the trip list to this length.
 `debug_trace_only`                  | bool   | False   | If True, will only find paths and simulate the person ids specified in `trace_person_ids`.
 `debug_output_columns`              | bool   | False   | If True, will write internal & debug columns into output.
+`fare_zone_symmetry`                | bool   | False   | If True, will assume fare zone symmetry.  That is, if fare_id X is configured from origin zone A to destination zone B, and there is no fare configured from zone B to zone A, we'll assume that fare_id X also applies.
 `max_iterations`                    | int    | 1       | Maximum number of pathfinding iterations to run.
 `number_of_processes`               | int    | 0       | Number of processes to use for path finding.
 `output_passenger_trajectories`     | bool   | True    | Write chosen passenger paths?  TODO: deprecate.  Why would you ever not do this?
 `output_pathset_per_sim_iter`       | bool   | False   | Output pathsets for each simulation iteration?  If false, just outputs once per path-finding iteration.
 `prepend_route_id_to_trip_id`       | bool   | False   | This is for readability in debugging; if True, then route ids will be prepended to trip ids.
-`simulation`                        | bool   | True    | After path-finding, should we choose paths and assign passengers?  (Why would you ever not do this?)
+`simulation`                        | bool   | True    | Simulate transit vehicles?  After path-finding, should fast-trips update vehicle times and put passengers on vehicles?  If False, fast-trips still calculates costs and probabilities and chooses paths, but the vehicle times will not be updated from those read in from the input network, and passengers will not be loaded onto vehicles.  This is useful for debugging path-finding and verifying that pathfinding calculations are consistent with cost/fare calculations done outside pathfinding.
 `skim_start_time`                   | string | 5:00    | Not implemented yet.
 `skim_end_time`                     | string | 10:00   | Not implemented yet.
 `skip_person_ids`                   | string | 'None'  | A list of person IDs to skip.
@@ -85,6 +87,8 @@ Option Name                         | Type   | Default | Description
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.
 `stochastic_pathset_size`           | int    | 1000    | In path-finding, how many paths (not necessarily unique) determine a pathset?
 `time_window`                       | float  | 30      | In path-finding, the max time a passenger would wait at a stop.
+`transfer_fare_ignore_pathfinding`  | bool   | False   | In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
+`transfer_fare_ignore_pathenum`     | bool   | False   | In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
 
 #### More on Overlap Path Size Penalties
@@ -113,11 +117,47 @@ From Hoogendoor-Lanser et al.:
 This is an *optional* python file in the Transit Demand input directory containing functions that are evaluated.
 This could be used to programmatically define user classes based on person, household and/or trip attributes.
 To use a function in this file, specify it in the *pathfinding* configuration as the `user_class_function`.
-(See [Example](Examples/test_network/demand_twopaths/config.py) )
+(See [Example](Examples/test_network/demand_twopaths/config_ft.py) )
 
 ###  `pathweight_ft.txt`
 
 TBD
+
+## Fares
+
+GTFS-plus fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.
+
+However, since the columns `route_id`, `origin_id`, `destination_id` and `contains_id` are all optional in [fare_rules.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md) and therefore may be specified in different combinations, fast-trips implements fares with the following rules:
+
+* `contains_id` is not implemented in fast-trips, and its inclusion will result in an error
+* Specifying `origin_id` and not `destination_id` or vice versa will result in an error.  Each fare rule must specify both or neither.
+* These combinations of `route_id`, `origin_id`, and `destination_id` will be used to match a `fare_id` to a transit trip, in this order. The first match will win.
+  * Matching `route_id`, `origin_id` and `destination_id`
+  * Matching `route_id` only (no `origin_id` or `destination_id` specified)
+  * Matching `origin_id` and `destination_id` only (no `route_id` specified)
+  * No match (e.g. `fare_id` specified with no other columns)
+
+Discount and free transfers specified in [fare_transfer_rules_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) are applied to transfers from one fare period to another fare period, and these links need to be *back-to-back*.  So if a passenger transfers from A to B to C and the discount is specified for fare period A to fare period C, they will not receive the discount.
+
+Free transfers are also specified *within* fare periods (possibly time-bounded) in [fare_attributes_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md). These free transfers are applied *after* the discounts from [fare_transfer_rules_ft.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) and they do not need to be back-to-back.  So if a passenger transfers from A to B to A and fare period A has 1 free transfer specified, but a transfer from B to A has a transfer fare of $.50, the passenger will receive the free transfer since these rules are applied last (and override).
+
+There are four places where fares factor into fast-trips.
+
+1. During path-finding (C++ extension), fares get assessed as a cost onto links, which translate to generalized cost (minutes) via the traveler's value of time.  [Fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) here are complicated, because we don't know which is the next/previous fare, and we can only guess based on probabilities.  The fare is estimated using [`Hyperlink::getFareWithTransfer()`](src/hyperlink.cpp).
+
+   Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are implemented here in a simplistic way; that is, a free transfer is assumed if the fare attributes have granted any free transfers without looking at `transfer_duration` or the number of transfers. Also, this transfer is required to be *back-to-back* also.  A future enhancement could include keeping a transfer count for each fare period so that the back-to-back requirement is not imposed, and also so that a certain number of free fares could be tallied, but at this time, a simpler approach is used because it's not clear if this kind of detail is helpful.
+
+   Turn this off using configuration option `transfer_fare_ignore_pathfinding`.
+
+2. During path-enumeration (C++ extension), when the paths are being constructed by choosing links from the hyperpath graph, at the point where each link is added to the path, the [fare transfer rules](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md) are applied to adjust fares with more certainty of the the path so far.  This is done in [`Hyperlink::setupProbabilities()`](src/hyperlink.cpp) which calls `Hyperlink::updateFare()` and updates the link cost as well if the fare is affected.  Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are looked at here as well, but without the transfer duration component.
+
+3. During path-enumeration (C++ extension), after the path is constructed, the trip cost is re-calculated at the end using [`Path::calculateCost()`](src/path.cpp).  At this moment in the process, the path is complete and final, so the fare transfer rules are relatively easy to apply given that links are certain.  The initial fare and cost are saved and passed back to python to show the effect of step 1.
+
+   Free transfers as configured in [fare attributes](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md) are also addressed here.
+
+   Turn this off using configuration option `transfer_fare_ignore_pathenum`.
+
+4. During simulation (python), while the path is being adjusted due to vehicle times, the fares are calculated via [`Route.add_fares()`](fasttrips/Route.py).  This is unlikely to change anything unless the fare periods changed due to the slow-down of vehicles -- so consider deprecating this in favor of using the pathfinding results?  For now, it's a good test that the C++ code is working as expected; running with simulation off should result in identical fare and cost results from pathfinding and the (non-vehicle-updating) python simulation.
 
 ## Test Sample Input
 

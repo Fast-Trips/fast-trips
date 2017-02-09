@@ -1,0 +1,2 @@
+fare_id,price,currency_type,payment_method,transfers
+default_fare_id,0.05,USD,0,0

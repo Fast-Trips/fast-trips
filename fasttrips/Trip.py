@@ -576,11 +576,13 @@ class Trip:
                                           suffixes=["","_prev"])
         Util.calculate_distance_miles(self.stop_times_df, "stop_lat","stop_lon","stop_lat_prev","stop_lon_prev","calc shape_dist_traveled")
 
+        # make it cumulative
+        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"])&
+                                (self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]==1), "calc shape_dist_traveled" ] = 0.0
+        self.stop_times_df["calc shape_dist_traveled"] = self.stop_times_df.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID])["calc shape_dist_traveled"].apply(lambda x: x.cumsum())
+
         # incorporate it
-        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"])&
-                                (self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]==1), Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = 0.0
-        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"])&
-                                (self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1),  Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = self.stop_times_df["calc shape_dist_traveled"]
+        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"]), Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = self.stop_times_df["calc shape_dist_traveled"]
 
         FastTripsLogger.debug("add_shape_dist_traveled() stop_times_df\n%s" % str(self.stop_times_df.head()))
 
@@ -640,7 +642,7 @@ class Trip:
                        Route.ROUTES_COLUMN_ROUTE_LONG_NAME,   # I don't think this is useful
                        Route.ROUTES_COLUMN_ROUTE_TYPE,        # I don't think this is useful
                        Route.ROUTES_COLUMN_MODE,              # use numerical version
-                       Route.ROUTES_COLUMN_FARE_CLASS,        # text
+                       Route.FARE_ATTR_COLUMN_FARE_PERIOD,    # text
                        Route.ROUTES_COLUMN_PROOF_OF_PAYMENT,  # text
                        ]
         # we can only drop fields that are in the dataframe

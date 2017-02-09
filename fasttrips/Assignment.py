@@ -109,6 +109,13 @@ class Assignment:
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
+    #: In path-finding, suppress trying to adjust fares using transfer fare rules.
+    #: This is for performance testing.
+    TRANSFER_FARE_IGNORE_PATHFINDING = None
+    #: In path-enumeration, suppress trying to adjust fares using transfer fare rules.
+    #: This is for performance testing.
+    TRANSFER_FARE_IGNORE_PATHENUM    = None
+
     #: Route choice configuration: How many times max times should we process a stop
     #: during labeling?  Use -1 to specify no max.  Int.
     #: Setting this to a positive value may increase runtime but may decrease
@@ -130,6 +137,11 @@ class Assignment:
 
     #: Debug: include debug columns in output
     DEBUG_OUTPUT_COLUMNS            = False
+
+    #: Fare zone symmetry. If True, will assume fare zone symmetry.  That is, if fare_id X is
+    # configured from origin zone A to destination zone B, and there is no fare configured
+    # from zone B to zone A, we'll assume that fare_id X also applies.
+    FARE_ZONE_SYMMETRY              = False
 
     #: Skip these passengers
     SKIP_PERSON_IDS                 = None
@@ -194,6 +206,9 @@ class Assignment:
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BOARD_STATE         = 'board_state'      #: NaN if not relevent, 1 if lucky enough to board at an at- or over-capacity stop, 0 if bumped.  Set by :py:meth:`Assignment.flag_bump_overcap_passengers`
     SIM_COL_PAX_DISTANCE            = "distance"         #: Link distance
+    SIM_COL_PAX_FARE                = "fare"             #: Link fare in currency
+    SIM_COL_PAX_FARE_PERIOD         = "fare_period"      #: Fare period id
+    SIM_COL_PAX_FREE_TRANSFER       = "free_transfer"    #: Free transfer?  NaN, 0.0 or 1.0, only free based on `fare_attributes_ft.txt`
     SIM_COL_PAX_COST                = 'sim_cost'         #: Link cost. (Cannot be `cost` because it collides with TAZ.DRIVE_ACCESS_COLUMN_COST)
     SIM_COL_PAX_LNPS                = 'ln_PS'            #: log(PathSize)
     SIM_COL_PAX_PROBABILITY         = 'probability'      #: Probability of this path
@@ -262,6 +277,7 @@ class Assignment:
                       'debug_trace_only'                :'False',
                       'debug_num_trips'                 :-1,
                       'debug_output_columns'            :'False',
+                      'fare_zone_symmetry'              :'False',
                       'prepend_route_id_to_trip_id'     :'False',
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
@@ -278,6 +294,8 @@ class Assignment:
                       'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
                       'time_window'                     :30,
+                      'transfer_fare_ignore_pathfinding':'False',
+                      'transfer_fare_ignore_pathenum'   :'False',
                       'user_class_function'             :'generic_user_class'
                      })
         # First, read configuration from network directory
@@ -306,6 +324,7 @@ class Assignment:
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.DEBUG_OUTPUT_COLUMNS          = parser.getboolean('fasttrips','debug_output_columns')
+        Assignment.FARE_ZONE_SYMMETRY            = parser.getboolean('fasttrips','fare_zone_symmetry')
         Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID   = parser.getboolean('fasttrips','prepend_route_id_to_trip_id')
         Assignment.NUMBER_OF_PROCESSES           = parser.getint    ('fasttrips','number_of_processes')
         Assignment.BUMP_BUFFER = datetime.timedelta(
@@ -328,6 +347,9 @@ class Assignment:
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
         Assignment.TIME_WINDOW = datetime.timedelta(
                                          minutes = parser.getfloat  ('pathfinding','time_window'))
+
+        Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
+        Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION              = parser.get       ('pathfinding','user_class_function')
 
         if PathSet.OVERLAP_VARIABLE not in PathSet.OVERLAP_VARIABLE_OPTIONS:
@@ -371,6 +393,7 @@ class Assignment:
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
         parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
         parser.set('fasttrips','debug_output_columns',          'True' if Assignment.DEBUG_OUTPUT_COLUMNS else 'False')
+        parser.set('fasttrips','fare_zone_symmetry',            'True' if Assignment.FARE_ZONE_SYMMETRY else 'False')
         parser.set('fasttrips','prepend_route_id_to_trip_id',   'True' if Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID else 'False')
         parser.set('fasttrips','number_of_processes',           '%d' % Assignment.NUMBER_OF_PROCESSES)
         parser.set('fasttrips','bump_buffer',                   '%f' % (Assignment.BUMP_BUFFER.total_seconds()/60.0))
@@ -389,6 +412,10 @@ class Assignment:
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('pathfinding','time_window',                 '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
+
+        parser.set('pathfinding','transfer_fare_ignore_pathfinding', 'True' if Assignment.TRANSFER_FARE_IGNORE_PATHFINDING else 'False')
+        parser.set('pathfinding','transfer_fare_ignore_pathenum',    'True' if Assignment.TRANSFER_FARE_IGNORE_PATHENUM else 'False')
+
         parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
@@ -428,6 +455,8 @@ class Assignment:
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
+                                         1 if Assignment.TRANSFER_FARE_IGNORE_PATHFINDING else 0,
+                                         1 if Assignment.TRANSFER_FARE_IGNORE_PATHENUM else 0,
                                          Assignment.MAX_NUM_PATHS,
                                          Assignment.MIN_PATH_PROBABILITY)
 
@@ -784,7 +813,7 @@ class Assignment:
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, pathfinding_iteration, trip_pathset,
                                                         Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                                                        trace=False) #trace_person)
+                                                        trace=trace_person)
                     trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
 
@@ -934,7 +963,7 @@ class Assignment:
             _fasttrips.find_pathset(iteration, pathfinding_iteration, int(pathset.person_id_num), pathset.trip_list_id_num, hyperpath,
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
-                                 1 if pathset.outbound else 0, float(pathset.pref_time_min),
+                                 1 if pathset.outbound else 0, float(pathset.pref_time_min), pathset.vot,
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
         # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (pathset.person_id, pathset.trip_list_id_num))
@@ -945,7 +974,10 @@ class Assignment:
 
             pathdict[path_num] = {}
             pathdict[path_num][PathSet.PATH_KEY_COST       ] = path_costs[path_num, 0]
-            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 1]
+            pathdict[path_num][PathSet.PATH_KEY_FARE       ] = path_costs[path_num, 1]
+            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 2]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_COST  ] = path_costs[path_num, 3]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_FARE  ] = path_costs[path_num, 4]
             # List of (stop_id, stop_state)
             pathdict[path_num][PathSet.PATH_KEY_STATES     ] = []
 
@@ -976,10 +1008,11 @@ class Assignment:
                         ret_ints[row_num,5],                                                             # sequence
                         ret_ints[row_num,6],                                                             # sequence succ/pred
                         datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
-                        ret_doubles[row_num,3],                                                          # link cost
-                        ret_doubles[row_num,4],                                                          # link distance
-                        ret_doubles[row_num,5],                                                          # cost
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,6])   # arrival/departure time
+                        ret_doubles[row_num,3],                                                          # link fare
+                        ret_doubles[row_num,4],                                                          # link cost
+                        ret_doubles[row_num,5],                                                          # link distance
+                        ret_doubles[row_num,6],                                                          # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
                     ] ) )
                 else:
                     pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
@@ -991,10 +1024,11 @@ class Assignment:
                         ret_ints[row_num,5],                                                             # sequence
                         ret_ints[row_num,6],                                                             # sequence succ/pred
                         datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
-                        datetime.timedelta(minutes=ret_doubles[row_num,3]),                              # link cost
-                        ret_doubles[row_num,4],                                                          # link dist
-                        datetime.timedelta(minutes=ret_doubles[row_num,5]),                              # cost
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,6])   # arrival/departure time
+                        ret_doubles[row_num,3],                                                          # link fare
+                        datetime.timedelta(minutes=ret_doubles[row_num,4]),                              # link cost
+                        ret_doubles[row_num,5],                                                          # link dist
+                        datetime.timedelta(minutes=ret_doubles[row_num,6]),                              # cost
+                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
                     ] ) )
                 row_num += 1
 

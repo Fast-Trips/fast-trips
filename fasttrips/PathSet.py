@@ -100,8 +100,11 @@ class PathSet:
     DIR_OUTBOUND    = 1  #: Trips outbound from home have preferred arrival times
     DIR_INBOUND     = 2  #: Trips inbound to home have preferred departure times
 
-    PATH_KEY_COST           = "pf_cost"
-    PATH_KEY_PROBABILITY    = "pf_probability"
+    PATH_KEY_COST           = "pf_cost"         #: path cost according to pathfinder
+    PATH_KEY_FARE           = "pf_fare"         #: path fare according to pathfinder
+    PATH_KEY_PROBABILITY    = "pf_probability"  #: path probability according to pathfinder
+    PATH_KEY_INIT_COST      = "pf_initcost"     #: initial cost (in pathfinding, before path was finalized)
+    PATH_KEY_INIT_FARE      = "pf_initfare"     #: initial fare (in pathfinding, before path was finalized)
     PATH_KEY_STATES         = "states"
 
     STATE_IDX_LABEL         = 0  #: :py:class:`datetime.timedelta` instance
@@ -112,10 +115,11 @@ class PathSet:
     STATE_IDX_SEQ           = 5  #: sequence (for trip)
     STATE_IDX_SEQ_SUCCPRED  = 6  #: sequence for successor/predecessor
     STATE_IDX_LINKTIME      = 7  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_LINKCOST      = 8  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_LINKDIST      = 9  #: :py:class:`datetime.timedelta` instance
-    STATE_IDX_COST          = 10 #: cost float, for hyperpath/stochastic assignment
-    STATE_IDX_ARRDEP        = 11 #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
+    STATE_IDX_LINKFARE      = 8  #: fare cost, float
+    STATE_IDX_LINKCOST      = 9  #: link generalized cost, float for hyperpath/stochastic,
+    STATE_IDX_LINKDIST      = 10 #: link distance, float
+    STATE_IDX_COST          = 11 #: cost float, for hyperpath/stochastic assignment
+    STATE_IDX_ARRDEP        = 12 #: :py:class:`datetime.datetime` instance. Arrival if outbound/backwards, departure if inbound/forwards.
 
     # these are also the demand_mode_type values
     STATE_MODE_ACCESS   = "access"
@@ -352,6 +356,20 @@ class PathSet:
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
                                sep=" ", index=False)
+
+        # add placeholder weights (-1) for fares - one for each user_class, purpose, transit demand mode
+        # these will be updated based on the person's value of time in calculate_cost()
+        fare_weights = PathSet.WEIGHTS_DF.loc[ PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]==PathSet.STATE_MODE_TRIP]
+        fare_weights = fare_weights[[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+                                     PathSet.WEIGHTS_COLUMN_PURPOSE,
+                                     PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
+                                     PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+                                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
+                                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM]].copy().drop_duplicates()
+        fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ] = "fare"  # SIM_COL_PAX_FARE
+        fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] = -1.0
+        PathSet.WEIGHTS_DF = PathSet.WEIGHTS_DF.append(fare_weights)
+        FastTripsLogger.debug("PathSet.WEIGHTS_DF with fare weights: \n%s" % PathSet.WEIGHTS_DF)
         return trip_list_df
 
     def __str__(self):
@@ -554,6 +572,8 @@ class PathSet:
         So if a transit trip goes from stop A to D but passes stop B and C in between, the
         row A->D will now be replaced by rows A->B, B->C, and C->D.
 
+        Adds "split_first" bool - True on the first veh link only
+
         Note that this does *not* renumber the linknum field.
         """
         from .Assignment import Assignment
@@ -584,14 +604,18 @@ class PathSet:
                              on      =merge_cols,
                              how     ="left",
                              suffixes=["","_veh"])
+        path2["split_first"] = False
+
         # delete anything irrelevant -- so keep non-transit links, and transit links WITH valid sequences
         path2 = path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]!=Route.MODE_TYPE_TRANSIT) | 
                            ( (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT) & 
                              (path2["A_seq_veh"]>=path2["A_seq"]) & 
                              (path2["B_seq_veh"]<=path2["B_seq"]) ) ]
         # These are the new columns -- incorporate them
+        path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT)&(path2["A_seq_veh"]==path2["A_seq"]), "split_first"] = True
 
         # A_arrival_time       datetime64[ns] => A time for intermediate links
+
         path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT)&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_A_TIME     ] = path2["A_arrival_time"]
         # no waittime, boardtime, missed_xfer except on first link
         path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT)&(path2["A_id"]!=path2["A_id_veh"]), Assignment.SIM_COL_PAX_WAIT_TIME  ] = None
@@ -668,8 +692,8 @@ class PathSet:
 
         It's also messier to have this in two places.  Maybe we should delete it from the C++; the overlap calcs are only in here right now.
 
-        Returns pathset_paths_df with additional columns, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
-        And pathset_links_df with additional column, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_DISTANCE
+        Returns pathset_paths_df with additional columns, Assignment.SIM_COL_PAX_FARE, Assignment.SIM_COL_PAX_COST, Assignment.SIM_COL_PAX_PROBABILITY, Assignment.SIM_COL_PAX_LOGSUM
+        And pathset_links_df with additional columns, Assignment.SIM_COL_PAX_FARE, Assignment.SIM_COL_PAX_FARE_PERIOD, Assignment.SIM_COL_PAX_COST and Assignment.SIM_COL_PAX_DISTANCE
 
         """
         from .Assignment import Assignment
@@ -679,7 +703,7 @@ class PathSet:
             pathset_paths_df.drop([Assignment.SIM_COL_PAX_COST,
                                    Assignment.SIM_COL_PAX_LNPS,
                                    Assignment.SIM_COL_PAX_PROBABILITY,
-                                   Assignment.SIM_COL_PAX_LOGSUM     ], axis=1, inplace=True)
+                                   Assignment.SIM_COL_PAX_LOGSUM], axis=1, inplace=True)
             pathset_links_df.drop([Assignment.SIM_COL_PAX_COST,
                                    Assignment.SIM_COL_PAX_DISTANCE], axis=1, inplace=True)
 
@@ -691,27 +715,40 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
             FastTripsLogger.debug("calculate_cost: trip_list_df\n%s" % str(FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
+        # Add fares -- need stop zones first if they're not there.
+        # We only need to do this once per pathset.
+        # todo -- could remove non-transit links for this?
+        FastTripsLogger.debug("calculate_cost columns:\n%s" % str(list(pathset_links_df.columns.values)))
+        if "A_zone_id" not in list(pathset_links_df.columns.values):
+            pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+            pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+        # This needs to be done fresh each time since simulation might change the board times and therefore the fare periods
+        pathset_links_df = FT.routes.add_fares(pathset_links_df)
+
+
         # base this on pathfinding distance
         pathset_links_df[Assignment.SIM_COL_PAX_DISTANCE] = pathset_links_df[Passenger.PF_COL_LINK_DIST]
+
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:
             pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, FT.stops)
+        else:
+            pathset_links_to_use["split_first"] = True  # all transit links are first
 
-        # First, we need user class, purpose, and demand modes
+        # First, we need user class, purpose, demand modes, and value of time
         pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
                                              right=FT.passengers.trip_list_df[[
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                                                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                                                        Passenger.TRIP_LIST_COLUMN_VOT,
                                                         Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
                                                         Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
                                                         Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
                                                         ]],
                                              how  ="left",
                                              on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
-        # todo: add Value of time
-        # Passenger.TRIP_LIST_COLUMN_VOT
 
         # linkmode = demand_mode_type.  Set demand_mode for the links
         pathset_links_cost_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = None
@@ -738,7 +775,6 @@ class PathSet:
         # Inner join with the weights - now each weight has a row
         cost_df = pandas.merge(left    =pathset_links_cost_df,
                                right   =PathSet.WEIGHTS_DF,
-                               # TODO: add purpose
                                left_on =[Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                                          Passenger.TRIP_LIST_COLUMN_PURPOSE,
                                          Passenger.PF_COL_LINK_MODE,
@@ -750,6 +786,10 @@ class PathSet:
                                          PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
                                how     ="inner")
+
+        # update the fare weight placeholder based on value of time (currency per hour)
+        # since generalized cost is roughly in minutes, (60 min/1 hour)x(hour/vot currency) is the weight (minutes/currency)
+        cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] = 60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT]
 
         if len(Assignment.TRACE_PERSON_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].sort_values([Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,Passenger.PF_COL_PATH_NUM,Passenger.PF_COL_LINK_NUM]).head(20)))
@@ -835,9 +875,10 @@ class PathSet:
 
         # it's only drive links we need to check
         cost_accegr_df["to_drop"]    = False
-        cost_accegr_df.loc[ cost_accegr_df[TAZ.MODE_COLUMN_MODE_NUM].isin(TAZ.DRIVE_MODE_NUMS)&
-                           ((cost_accegr_df["check_time"] <  cost_accegr_df["%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN, "drive")])|
-                            (cost_accegr_df["check_time"] >= cost_accegr_df["%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN,   "drive")])), "to_drop"] = True
+        if "%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN, "drive") in cost_accegr_df.columns.values:
+            cost_accegr_df.loc[ cost_accegr_df[TAZ.MODE_COLUMN_MODE_NUM].isin(TAZ.DRIVE_MODE_NUMS)&
+                               ((cost_accegr_df["check_time"] <  cost_accegr_df["%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN, "drive")])|
+                                (cost_accegr_df["check_time"] >= cost_accegr_df["%s %s" % (TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN,   "drive")])), "to_drop"] = True
 
         # if len(Assignment.TRACE_PERSON_IDS) > 0:
         #     FastTripsLogger.debug("cost_accegr_df=\n%s\ndtypes=\n%s" % (cost_accegr_df.loc[cost_accegr_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_accegr_df.dtypes)))
@@ -873,6 +914,12 @@ class PathSet:
             FastTripsLogger.fatal(error_accegr_msg)
 
         ##################### Next, handle Transit Trip link costs
+
+
+        # set the fare var_values for split_first only
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "fare")&(cost_trip_df["split_first"]==True), "var_value"]  = cost_trip_df[Assignment.SIM_COL_PAX_FARE]
+        cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "fare")&(cost_trip_df["split_first"]==False), "var_value"] = 0
+
         if len(Assignment.TRACE_PERSON_IDS) > 0:
             FastTripsLogger.debug("cost_trip_df=\n%s\ndtypes=\n%s" % (cost_trip_df.loc[cost_trip_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string(), str(cost_trip_df.dtypes)))
 
@@ -956,6 +1003,7 @@ class PathSet:
                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                        Passenger.TRIP_LIST_COLUMN_VOT,
                         Passenger.PF_COL_PATH_NUM,
                         Passenger.PF_COL_LINK_NUM,
                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
@@ -966,7 +1014,8 @@ class PathSet:
                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE,
                         "var_value",
                         Assignment.SIM_COL_MISSED_XFER,
-                        Assignment.SIM_COL_PAX_BUMP_ITER]
+                        Assignment.SIM_COL_PAX_BUMP_ITER,
+                        Assignment.SIM_COL_PAX_FARE]
         cost_accegr_df   = cost_accegr_df[cost_columns]
         cost_trip_df     = cost_trip_df[cost_columns]
         cost_transfer_df = cost_transfer_df[cost_columns]
@@ -1162,7 +1211,7 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_paths_df\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         ###################### logsum and probabilities
-        pathset_paths_df["logsum_component"] = numpy.exp((-1.0*STOCH_DISPERSION)*(pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS]))
+        pathset_paths_df["logsum_component"] = numpy.exp((STOCH_DISPERSION)*(-1.0*pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS]))
 
         # sum across all paths
         pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "logsum_component"]].groupby(

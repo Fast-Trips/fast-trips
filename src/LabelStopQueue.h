@@ -14,6 +14,11 @@ namespace fasttrips {
         bool    is_trip_;               ///< Two labels: a trip-label and a non-trip-label
     } LabelStop;
 
+    /// Supply data: Stops
+    typedef struct {
+        std::string stop_str_;          ///< stop id string
+        int         zone_num_;          ///< stop zone number for fare lookup
+    } Stop;
 
     /// Comparator to enable the fasttrips::LabelStopQueue to return the lowest labeled stop.
     struct LabelStopCompare {
@@ -103,7 +108,7 @@ namespace fasttrips {
         }
 
         /** Pop the top *valid* LabelStop */
-        LabelStop pop_top(const std::map<int, std::string>& stop_num_to_str, bool trace, std::ofstream& trace_file) {
+        LabelStop pop_top(const std::map<int, Stop>& stop_num_to_stop, bool trace, std::ofstream& trace_file) {
             // this will crash if labelstop_priority_queue_ is empty.  I'm terrible.
 
             while (true) {
@@ -128,7 +133,7 @@ namespace fasttrips {
                 // if it's not valid then continue
                 if (!ls_iter->second.valid_) {
                     if (trace) {
-                        trace_file << "Skipping stop A (" << stop_num_to_str.find(ls.stop_id_)->second << "," << ls.is_trip_ << ")";
+                        trace_file << "Skipping stop A (" << stop_num_to_stop.find(ls.stop_id_)->second.stop_str_ << "," << ls.is_trip_ << ")";
                         trace_file << "; valid " << ls_iter->second.valid_;
                         trace_file << "; count " << ls_iter->second.count_;
                         trace_file << "; map label " << ls_iter->second.label_;
@@ -144,7 +149,7 @@ namespace fasttrips {
                 // but only the matching label is valid
                 if (ls_iter->second.label_ != ls.label_) {
                     if (trace) {
-                        trace_file << "Skipping stop B (" << stop_num_to_str.find(ls.stop_id_)->second << "," << ls.is_trip_ << ")";
+                        trace_file << "Skipping stop B (" << stop_num_to_stop.find(ls.stop_id_)->second.stop_str_ << "," << ls.is_trip_ << ")";
                         trace_file << "; valid " << ls_iter->second.valid_;
                         trace_file << "; count " << ls_iter->second.count_;
                         trace_file << "; map label " << ls_iter->second.label_;
@@ -157,7 +162,7 @@ namespace fasttrips {
                 }
 
                 if (trace) {
-                    trace_file << "LabelStopQueue returning (" << stop_num_to_str.find(ls.stop_id_)->second << "," << ls.is_trip_ << ")";
+                    trace_file << "LabelStopQueue returning (" << stop_num_to_stop.find(ls.stop_id_)->second.stop_str_ << "," << ls.is_trip_ << ")";
                     trace_file << "; valid " << ls_iter->second.valid_;
                     trace_file << "; count " << ls_iter->second.count_;
                     trace_file << "; map label " << ls_iter->second.label_;
