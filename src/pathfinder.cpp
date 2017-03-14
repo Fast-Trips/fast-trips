@@ -639,12 +639,31 @@ namespace fasttrips {
         gettimeofday(&labeling_start_time, NULL);
 #endif
 
-        // todo: handle failure
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
+        if (!success && path_spec.trace_) {
+            trace_file << "initializeStopStates() failed.  Skipping labeling." << std::endl;
+        }
 
         // These are the stops that are reachable from the final TAZ
         std::map<int, int> reachable_final_stops;
-        success = setReachableFinalStops(path_spec, trace_file, reachable_final_stops);
+        if (success) {
+            success = setReachableFinalStops(path_spec, trace_file, reachable_final_stops);
+            if (!success && path_spec.trace_) {
+                trace_file << "setReachableFinalStops() failed.  Skipping labeling." << std::endl;
+            }
+        }
+
+        // don't go further if we failed an earlier step
+        if (!success) {
+            stop_states.clear();
+
+            if (path_spec.trace_) {
+                trace_file.close();
+                label_file.close();
+                stopids_file.close();
+            }
+            return;
+        }
 
         performance_info.label_iterations_ = labelStops(path_spec, trace_file, reachable_final_stops,
                                                         stop_states, label_stop_queue, performance_info.max_process_count_);
