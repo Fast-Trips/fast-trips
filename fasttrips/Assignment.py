@@ -290,6 +290,7 @@ class Assignment:
                       'overlap_split_transit'           :'False',
                       'overlap_variable'                :'count',
                       'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
+                      'pathweights_fixed_width'         :'False',
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':-1,
                       'stochastic_pathset_size'         :1000,
@@ -339,6 +340,7 @@ class Assignment:
         PathSet.OVERLAP_SPLIT_TRANSIT            = parser.getboolean('pathfinding','overlap_split_transit')
         PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
         Assignment.PATHFINDING_TYPE              = parser.get       ('pathfinding','pathfinding_type')
+        PathSet.WEIGHTS_FIXED_WIDTH              = parser.getboolean('pathfinding','pathweights_fixed_width')
         assert(Assignment.PATHFINDING_TYPE in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
                                                Assignment.PATHFINDING_TYPE_READ_FILE])
@@ -366,7 +368,10 @@ class Assignment:
             FastTripsLogger.fatal("No path weights file %s" % weights_file)
             sys.exit(2)
 
-        PathSet.WEIGHTS_DF = pandas.read_fwf(weights_file)
+        if PathSet.WEIGHTS_FIXED_WIDTH:
+            PathSet.WEIGHTS_DF = pandas.read_fwf(weights_file)
+        else:
+            PathSet.WEIGHTS_DF = pandas.read_csv(weights_file)
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
 
@@ -408,6 +413,7 @@ class Assignment:
         parser.set('pathfinding','overlap_split_transit',       'True' if PathSet.OVERLAP_SPLIT_TRANSIT else 'False')
         parser.set('pathfinding','overlap_variable',            '%s' % PathSet.OVERLAP_VARIABLE)
         parser.set('pathfinding','pathfinding_type',            Assignment.PATHFINDING_TYPE)
+        parser.set('pathfinding','pathweights_fixed_width',     'True' if PathSet.WEIGHTS_FIXED_WIDTH else 'False')
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)

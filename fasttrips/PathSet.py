@@ -49,6 +49,8 @@ class PathSet:
     WEIGHTS_FILE                    = 'pathweight_ft.txt'
     #: Path weights
     WEIGHTS_DF                      = None
+    #: Read weights file as fixed-width format.  If false, standard CSV format is read.
+    WEIGHTS_FIXED_WIDTH             = False
 
     #: Configuration: Minimum transfer penalty. Safeguard against having no transfer penalty
     #: which can result in terrible paths with excessive transfers.

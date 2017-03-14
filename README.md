@@ -83,6 +83,7 @@ Option Name                         | Type   | Default | Description
 `overlap_split_transit`             | bool   | False   | For overlap calcs, split transit leg into component legs (A to E becauses A-B-C-D-E)
 `overlap_variable`                  | string | 'count' | The variable upon which to base the overlap path size variable.  Can be one of `None`, `count`, `distance`, `time`.
 `pathfinding_type`                  | string | 'stochastic' | Pathfinding method.  Can be `stochastic`, `deterministic`, or `file`.
+`pathweights_fixed_width`           | bool   | False   | If true, read the pathweights file as a fixed width, left-justified table (as opposed to a CSV, which is the default).
 `stochastic_dispersion`             | float  | 1.0     | Stochastic dispersion parameter. TODO: document this further.
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.
 `stochastic_pathset_size`           | int    | 1000    | In path-finding, how many paths (not necessarily unique) determine a pathset?
