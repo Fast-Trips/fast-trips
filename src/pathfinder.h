@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include "pathspec.h"
+#include "access_egress.h"
 #include "LabelStopQueue.h"
 #include "hyperlink.h"
 #include "path.h"
@@ -22,11 +23,6 @@
 #include <tr1/unordered_set>
 #else
 #include <unordered_set>
-#endif
-
-#if _WIN32
-// suppress warning C4503: decorated name length exceeded, name was truncated
-#pragma warning(disable:4503)
 #endif
 
 namespace fasttrips {
@@ -60,29 +56,7 @@ namespace fasttrips {
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
     typedef std::map< UserClassPurposeMode, SupplyModeToNamedWeights, struct fasttrips::UCPMCompare > WeightLookup;
 
-    /// Duration struct.  Goes from [start_time_,end_time_), so end_time is not included
-    typedef struct {
-        double start_time_;     /// minutes past midnight, included
-        double end_time_;       /// minutes past midnight, not included
-    } TimePeriod;
 
-    struct TimePeriodCompare {
-        // less than
-        bool operator()(const TimePeriod& tp1, const TimePeriod& tp2) const {
-            if (tp1.start_time_ < tp2.start_time_) { return true;  }
-            if (tp1.start_time_ > tp2.start_time_) { return false; }
-            if (tp1.end_time_   < tp2.end_time_  ) { return true;  }
-            if (tp1.end_time_   > tp2.end_time_  ) { return false; }
-            return false;
-        }
-    };
-
-    typedef std::map<std::string, double> Attributes;
-    typedef std::map<TimePeriod, Attributes, struct fasttrips::TimePeriodCompare > TimePeriodToAttr;
-    typedef std::map<int, TimePeriodToAttr> StopTpToAttr;
-    typedef std::map<int, StopTpToAttr> SupStopTpToAttr;
-    /// Access/Egress information: taz id -> supply_mode -> stop id -> (start time, end time) -> attribute map
-    typedef std::map<int, SupStopTpToAttr> TAZSupStopTpToAttr;
 
     // Transfer information: stop id -> stop id -> attribute map
     typedef std::map<int, Attributes> StopToAttr;
