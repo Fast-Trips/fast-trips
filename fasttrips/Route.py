@@ -172,6 +172,7 @@ class Route(object):
 
         # Read the fast-trips supplemental routes data file
         routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE),
+                                       skipinitialspace=True,
                                        dtype={Route.ROUTES_COLUMN_ROUTE_ID:object,
                                               Route.ROUTES_COLUMN_MODE    :object})
         # verify required columns are present
@@ -258,6 +259,7 @@ class Route(object):
         # subsitute fasttrips fare attributes
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE)):
             self.fare_attrs_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE),
+                                                 skipinitialspace=True,
                                                  dtype={Route.FARE_ATTR_COLUMN_PRICE:numpy.float64})
             # verify required columns are present
             fare_attrs_cols = list(self.fare_attrs_df.columns.values)
@@ -333,6 +335,7 @@ class Route(object):
 
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE)):
             fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE),
+                                               skipinitialspace=True,
                                                dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})
             # verify required columns are present
             fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
@@ -441,6 +444,7 @@ class Route(object):
 
         if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE)):
             self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE),
+                                                          skipinitialspace=True,
                                                           dtype={Route.FARE_TRANSFER_RULES_COLUMN_TYPE:object})
             # verify required columns are present
             fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)

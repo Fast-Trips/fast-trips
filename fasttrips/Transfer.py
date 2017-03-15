@@ -134,7 +134,8 @@ class Transfer:
             self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
 
         # Read the fast-trips supplemental transfers data file
-        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Transfer.INPUT_TRANSFERS_FILE), 
+        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Transfer.INPUT_TRANSFERS_FILE),
+                                          skipinitialspace=True,
                                           dtype={Transfer.TRANSFERS_COLUMN_FROM_STOP:object, Transfer.TRANSFERS_COLUMN_TO_STOP:object})
         # verify required columns are present
         transfer_ft_cols = list(transfers_ft_df.columns.values)

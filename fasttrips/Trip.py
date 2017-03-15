@@ -209,7 +209,7 @@ class Trip:
         self.output_dir = output_dir
 
         # Read vehicles first
-        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE))
+        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE), skipinitialspace=True)
         # verify the required columns are present
         vehicle_ft_cols = list(self.vehicles_df.columns.values)
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
@@ -291,6 +291,7 @@ class Trip:
 
         # Read the fast-trips supplemental trips data file.  Make sure trip ID is read as a string.
         trips_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_TRIPS_FILE),
+                                      skipinitialspace=True,
                                       dtype={Trip.TRIPS_COLUMN_TRIP_ID:object})
         # verify required columns are present
         trips_ft_cols = list(trips_ft_df.columns.values)
@@ -373,6 +374,7 @@ class Trip:
 
         # Read the fast-trips supplemental stop times data file
         stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE),
+                                           skipinitialspace=True,
                                       dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
                                              Trip.STOPTIMES_COLUMN_STOP_ID:object})
         # verify required columns are present

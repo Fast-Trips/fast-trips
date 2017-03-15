@@ -371,7 +371,7 @@ class Assignment:
         if PathSet.WEIGHTS_FIXED_WIDTH:
             PathSet.WEIGHTS_DF = pandas.read_fwf(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object})
         else:
-            PathSet.WEIGHTS_DF = pandas.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object})
+            PathSet.WEIGHTS_DF = pandas.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
 

@@ -91,6 +91,7 @@ class Stop:
 
         # Read the fast-trips supplemental stops data file. Make sure stop ID is read as a string.
         stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE),
+                                      skipinitialspace=True,
                                       dtype={Stop.STOPS_COLUMN_STOP_ID:object})
         # verify required columns are present
         stops_ft_cols = list(stops_ft_df.columns.values)

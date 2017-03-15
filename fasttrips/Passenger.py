@@ -150,6 +150,7 @@ class Passenger:
         FastTripsLogger.info("Capacity constraint? %x" % capacity_constraint )
 
         self.trip_list_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE),
+                                             skipinitialspace=True,
                                              dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
                                                     Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID    :object,
                                                     Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :object,
@@ -195,6 +196,7 @@ class Passenger:
         if non_zero_person_ids > 0 and os.path.exists(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE)):
 
             self.persons_df     = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE),
+                                                  skipinitialspace=True,
                                                   dtype={Passenger.PERSONS_COLUMN_PERSON_ID:object})
             self.persons_id_df  = Util.add_numeric_column(self.persons_df[[Passenger.PERSONS_COLUMN_PERSON_ID]],
                                                           id_colname=Passenger.PERSONS_COLUMN_PERSON_ID,
@@ -208,7 +210,7 @@ class Passenger:
             FastTripsLogger.info("Read %7d %15s from %25s" %
                                  (len(self.persons_df), "persons", Passenger.INPUT_PERSONS_FILE))
 
-            self.households_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_HOUSEHOLDS_FILE))
+            self.households_df  = pandas.read_csv(os.path.join(input_dir, Passenger.INPUT_HOUSEHOLDS_FILE), skipinitialspace=True)
             household_cols      = list(self.households_df.columns.values)
 
             FastTripsLogger.debug("=========== HOUSEHOLDS ===========\n" + str(self.households_df.head()))
@@ -414,6 +416,7 @@ class Passenger:
         # read existing paths
         paths_file = os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV if include_asgn else Passenger.PF_PATHS_CSV)
         pathset_paths_df = pandas.read_csv(paths_file,
+                                           skipinitialspace=True,
                                            dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
                                                   Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object})
         FastTripsLogger.info("Read %s" % paths_file)
@@ -439,7 +442,7 @@ class Passenger:
             links_dtypes[date_col] = object
 
         links_file = os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV if include_asgn else Passenger.PF_LINKS_CSV)
-        pathset_links_df = pandas.read_csv(links_file, dtype=links_dtypes)
+        pathset_links_df = pandas.read_csv(links_file, skipinitialspace=True,dtype=links_dtypes)
 
         # convert time strings to datetimes
         for date_col in date_cols:

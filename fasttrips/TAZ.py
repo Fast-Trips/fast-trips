@@ -229,6 +229,7 @@ class TAZ:
 
         #: Walk access links table. Make sure TAZ ID and stop ID are read as strings.
         self.walk_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_WALK_ACCESS_FILE),
+                                              skipinitialspace=True,
                                               dtype={TAZ.WALK_ACCESS_COLUMN_TAZ :object,
                                                      TAZ.WALK_ACCESS_COLUMN_STOP:object})
         # verify required columns are present
@@ -272,6 +273,7 @@ class TAZ:
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DAP_FILE)):
             #: DAP table. Make sure TAZ ID and lot ID are read as strings.
             self.dap_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DAP_FILE),
+                                          skipinitialspace=True,
                                           dtype={TAZ.DAP_COLUMN_LOT_ID:object})
             # verify required columns are present
             dap_cols = list(self.dap_df.columns.values)
@@ -297,6 +299,7 @@ class TAZ:
         #: Drive access links table. Make sure TAZ ID and lot ID are read as strings.
         if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE)):
             self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE),
+                                                   skipinitialspace=True,
                                                    dtype={TAZ.DRIVE_ACCESS_COLUMN_TAZ   :object,
                                                           TAZ.DRIVE_ACCESS_COLUMN_LOT_ID:object})
 
