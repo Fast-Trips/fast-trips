@@ -442,7 +442,7 @@ class Passenger:
             links_dtypes[date_col] = object
 
         links_file = os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV if include_asgn else Passenger.PF_LINKS_CSV)
-        pathset_links_df = pandas.read_csv(links_file, skipinitialspace=True,dtype=links_dtypes)
+        pathset_links_df = pandas.read_csv(links_file, skipinitialspace=True, dtype=links_dtypes)
 
         # convert time strings to datetimes
         for date_col in date_cols:

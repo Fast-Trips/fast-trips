@@ -202,7 +202,7 @@ namespace fasttrips {
 
         // ================ Network supply ================
         /// Access/Egress information: taz id -> supply_mode -> stop id -> (start time, end time) -> attribute map
-        TAZSupStopTpToAttr taz_access_links_;
+        AccessEgressLinks access_egress_links_;
 
         /// Transfer information: stop id -> stop id -> attributes
         StopStopToAttr transfer_links_o_d_;
