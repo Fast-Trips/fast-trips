@@ -1,4 +1,5 @@
 #include "access_egress.h"
+#include "path.h"
 
 #include <fstream>
 #include <limits.h>
@@ -113,12 +114,14 @@ namespace fasttrips {
     /// Accessor
     const Attributes* AccessEgressLinks::getAccessAttributes(int taz_id, int supply_mode_num, int stop_id, double tp_time) const
     {
+
         AccessEgressLinkAttr::const_iterator iter_lo = map_.lower_bound(AccessEgressLinkKey(taz_id, supply_mode_num, stop_id, -100*24, -100*24));
 
         AccessEgressLinkAttr::const_iterator iter_hi = map_.lower_bound(AccessEgressLinkKey(taz_id, supply_mode_num, stop_id,  100*24,  100*24));
 
+        double tp_time_024 = fix_time_range(tp_time);
         for (AccessEgressLinkAttr::const_iterator iter = iter_lo; iter != iter_hi; ++iter) {
-            if ((iter->first.start_time_ <= tp_time) && (tp_time < iter->first.end_time_)) {
+            if ((iter->first.start_time_ <= tp_time_024) && (tp_time_024 < iter->first.end_time_)) {
                 return &(iter->second);
             }
         }

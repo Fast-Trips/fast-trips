@@ -526,7 +526,7 @@ namespace fasttrips {
     void Hyperlink::printStopStateHeader(std::ostream& ostr, const PathSpecification& path_spec)
     {
         ostr << std::setw( 8) << std::setfill(' ') << std::right << "stop" << ": ";
-        ostr << std::setw(10) << (path_spec.outbound_ ? "dep_time" : "arr_time");
+        ostr << std::setw(11) << (path_spec.outbound_ ? "dep_time" : "arr_time");
         ostr << std::setw(15) << (path_spec.outbound_ ? "dep_mode" : "arr_mode");
         ostr << std::setw(22) << "trip_id";
         ostr << std::setw(12) << (path_spec.outbound_ ? "successor" : "predecessor");

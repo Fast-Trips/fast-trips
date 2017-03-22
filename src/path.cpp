@@ -10,6 +10,14 @@
 #include "hyperlink.h"
 
 namespace fasttrips {
+    /// utility function to make sure time is in [0, 24*60) = [0, 1440)
+    double fix_time_range(double time) {
+        double ret_time = time;
+        while (ret_time <     0.0) { ret_time += 1440.0; }
+        while (ret_time >= 1440.0) { ret_time -= 1440.0; }
+        return ret_time;
+    }
+
     // Default constructor
     Path::Path() :
         outbound_(false),

@@ -1090,8 +1090,9 @@ namespace fasttrips {
             earliest_dep_latest_arr = current_stop_state.earliestDepartureLatestArrival(path_spec.outbound_, true);
         } else {
             earliest_dep_latest_arr = current_stop_state.lowestCostStopState(true).deparr_time_;
-
         }
+        double earliest_dep_latest_arr_024 = fix_time_range(earliest_dep_latest_arr);
+
 
         // are there any egress/access links?
         if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
@@ -1128,8 +1129,8 @@ namespace fasttrips {
                 const AccessEgressLinkKey& aelk = iter_aelk->first;
 
                 // require earliest_dep_latest_arr in [start_time_, end_time)
-                if (aelk.start_time_ >  earliest_dep_latest_arr) continue;
-                if (aelk.end_time_   <= earliest_dep_latest_arr) continue;
+                if (aelk.start_time_ >  earliest_dep_latest_arr_024) continue;
+                if (aelk.end_time_   <= earliest_dep_latest_arr_024) continue;
 
                 Attributes link_attr            = iter_aelk->second;
                 link_attr["preferred_delay_min"]= 0.0;
@@ -2170,12 +2171,25 @@ namespace fasttrips {
     void PathFinder::printTime(std::ostream& ostr, const double& timemin) const
     {
         double minpart, secpart;
-        int    hour = static_cast<int>(timemin/60.0);
+        double time_min_024 = timemin;
+        char   cross_day    = ' ';
 
-        secpart = modf(timemin, &minpart); // split into minutes and seconds
+        // this version is in [0,1440)
+        if (time_min_024 < 0) {
+            time_min_024 += 1440.0;
+            cross_day    = '-';
+        }
+        if (time_min_024 >= 1440.0) {
+            time_min_024 -= 1440.0;
+            cross_day     = '+';
+        }
+        int    hour = static_cast<int>(time_min_024/60.0);
+
+        secpart = modf(time_min_024, &minpart); // split into minutes and seconds
         minpart = minpart - hour*60.0;
         secpart = secpart*60.0;
         ostr << std::right;
+        ostr << std::setw( 1) << cross_day;
         ostr << std::setw( 2) << std::setfill('0') << hour                       << ":"; // hour
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)  << ":"; // minutes
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(secpart);

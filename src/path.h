@@ -14,6 +14,8 @@
 
 namespace fasttrips {
 
+    /// utility function to make sure time is in [0, 24*60) = [0, 1440)
+    double fix_time_range(double time);
 
     /** In stochastic path finding, this is the information we'll collect about the path. */
     typedef struct {

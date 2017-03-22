@@ -94,6 +94,11 @@ namespace fasttrips {
     class Path;
     struct FarePeriod;
 
+    /** Stop states are basically links in a hyperpath.
+      * Note that the time fields (deparr_time_ and arrdep_time_) are based around the preferred arrival or departure time
+      * and can be negative or over 24*60 if the travel crosses the midnight boundary.
+      * For example, if the preferred arrival time is 12:10a then links before it might have negative values.
+      **/
     struct StopState {
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
