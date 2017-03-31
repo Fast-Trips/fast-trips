@@ -18,6 +18,8 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
   * [Test Network](#test-network)
   * [Test Demand](#test-demand)
 * [Test Runs](#test-runs)
+* [Frequently Asked Questions](#frequently-asked-questions)
+* [References](#references)
 * [Changelog](#changelog)
 
 ## Setup
@@ -197,6 +199,12 @@ There are a total of six test runs in `\scripts\runAllTests.bat`. Type of assign
 Type of Assignment:
  *  "Deterministic" indicates use of a deterministic trip-based shortest path search algorithm
  *  "Stochastic" indicates use of a stochastic hyperpath-finding algorithm
+
+## Frequently Asked Questions
+
+* How do I restart a run after pathfinding?
+
+Use the option `pathfinding_type=file`, via `runTest.py` or in the configuration.  Then, drop the `pathsfound_paths.csv` and `pathsfound_links.csv` files in the output directory for your run, and they'll be read in instead of generated.
 
 ## References
 
