@@ -97,6 +97,7 @@ class FastTrips:
         Read the fast-trips assignment and path-finding configuration
         """
         Assignment.read_configuration()
+        Assignment.write_configuration(Assignment.OUTPUT_DIR)
 
     def read_input_files(self):
         """

@@ -585,8 +585,6 @@ class Assignment:
         """
         Finds the paths for the passengers.
         """
-        Assignment.write_configuration(output_dir)
-
         # write the initial load profile, iteration 0
         veh_trips_df     = FT.trips.get_full_trips()
         pathset_paths_df = None
