@@ -15,7 +15,7 @@ __license__   = """
 import datetime, os
 import numpy,pandas
 
-from .Error  import NetworkInputError,NotImplementedError
+from .Error  import NetworkInputError,NotImplementedError,UnexpectedError
 from .Logger import FastTripsLogger
 from .Util   import Util
 
@@ -528,6 +528,7 @@ class Route(object):
         # FastTripsLogger.debug("remove_fare_period_overlap: initial\n%s" % fare_rules_ft_df)
         max_fare_period_id = fare_rules_ft_df["fare_period_id"].max()
 
+        loop_iters = 0
         while True:
             # join with itself to see if any are contained
             df = pandas.merge(left =fare_rules_ft_df,
@@ -535,9 +536,9 @@ class Route(object):
                               on   =Route.FARE_RULES_COLUMN_FARE_ID,
                               how  ="outer")
 
-            # if there's one fare class per fare id, nothing to do
+            # if there's one fare period per fare id, nothing to do
             if len(df)==len(fare_rules_ft_df):
-                FastTripsLogger.debug("One fare class per fare id, no need to split")
+                FastTripsLogger.debug("One fare period per fare id, no need to split")
                 return fare_rules_ft_df
 
             # remove dupes
@@ -568,7 +569,7 @@ class Route(object):
                 return fare_rules_ft_df
 
             # do one at a time -- split first into three rows
-            FastTripsLogger.debug("splitting\n%s" % str(subset_fare_periods.head(1)))
+            FastTripsLogger.debug("splitting\n%s" % str(subset_fare_periods))
             row_dict = subset_fare_periods.head(1).to_dict(orient="records")[0]
             FastTripsLogger.debug(row_dict)
             y_1 = {'fare_id'          :row_dict['fare_id'],
@@ -606,6 +607,13 @@ class Route(object):
                                                  Route.FARE_RULES_COLUMN_START_TIME,
                                                  Route.FARE_RULES_COLUMN_END_TIME]]
             FastTripsLogger.debug("\n%s" % str(fare_rules_ft_df))
+
+            loop_iters += 1
+            # don't loop forever -- there's a problem
+            if loop_iters > 5:
+                error_str = "Route.remove_fare_period_overlap looping too much!  Something is wrong."
+                FastTripsLogger.critical(error_str)
+                raise UnexpectedError(error_str)
 
         # this shouldn't happen
         FastTripsLogger.warn("This shouldn't happen")
@@ -695,94 +703,143 @@ class Route(object):
                                 Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
                                 Assignment.SIM_COL_PAX_FREE_TRANSFER], axis=1, inplace=True)
 
-        return_columns = list(trip_links_df.columns.values)
-        return_columns.append(Assignment.SIM_COL_PAX_FARE)
-        return_columns.append(Assignment.SIM_COL_PAX_FARE_PERIOD)
-        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD)
-        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_TYPE)
-        return_columns.append(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT)
-        return_columns.append(Assignment.SIM_COL_PAX_FREE_TRANSFER)
+        orig_columns = list(trip_links_df.columns.values)
+        return_columns = orig_columns + \
+           [Assignment.SIM_COL_PAX_FARE,
+            Assignment.SIM_COL_PAX_FARE_PERIOD,
+            Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
+            Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
+            Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
+            Assignment.SIM_COL_PAX_FREE_TRANSFER]
 
         # give them a unique index and store it for later
         trip_links_df.reset_index(drop=True, inplace=True)
         trip_links_df["trip_links_df index"] = trip_links_df.index
 
         num_trip_links = len(trip_links_df)
-        FastTripsLogger.debug("add_fares initial trips, fare_rules(%d):\n%s\n%s" % (num_trip_links, str(trip_links_df.head()), str(self.fare_rules_df)))
+        FastTripsLogger.debug("add_fares initial trips (%d):\n%s" % (num_trip_links, str(trip_links_df.head(20))))
+        FastTripsLogger.debug("add_fares initial fare_rules (%d):\n%s" % (len(self.fare_rules_df), str(self.fare_rules_df.head(20))))
 
-        trip_links_match_all = trip_links_df.copy()
-        trip_links_match_all["match_level"] = 100  # no match
+        # initialize
+        trip_links_unmatched = trip_links_df
+        trip_links_matched   = pandas.DataFrame()
+        del trip_links_df
 
+        from .Passenger import Passenger
         # level 0: match on all three
         fare_rules0 = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
                                              pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
                                              pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
+
         if len(fare_rules0) > 0:
-            trip_links_match0 = pandas.merge(left     =trip_links_df,
+            trip_links_match0 = pandas.merge(left     =trip_links_unmatched,
                                              right    =fare_rules0,
-                                             how      ="left",
+                                             how      ="inner",
                                              left_on  =[Route.FARE_RULES_COLUMN_ROUTE_ID,"A_zone_id","B_zone_id"],
                                              right_on =[Route.FARE_RULES_COLUMN_ROUTE_ID,Route.FARE_RULES_COLUMN_ORIGIN_ID,Route.FARE_RULES_COLUMN_DESTINATION_ID],
-                                             suffixes =["","_fare_rules"],
-                                             indicator=True)
-            # keep only full matches
-            trip_links_match0 = trip_links_match0.loc[ trip_links_match0["_merge"] == "both"]
-            trip_links_match0.drop(["_merge"], axis=1, inplace=True)
+                                             suffixes =["","_fare_rules"])
+
             # delete rows where the board time is not within the fare period
             trip_links_match0 = trip_links_match0.loc[ pandas.isnull(trip_links_match0[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match0[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match0[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match0[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match0[Route.FARE_RULES_COLUMN_END_TIME])) ]
-            trip_links_match0["match_level"] = 0
-            FastTripsLogger.debug("add_fares level 0 (%d):\n%s" % (len(trip_links_match0), str(trip_links_match0.head())))
+            FastTripsLogger.debug("add_fares level 0 (%d):\n%s" % (len(trip_links_match0), str(trip_links_match0.head(20))))
 
-            trip_links_match_all = pandas.concat([trip_links_match_all, trip_links_match0], axis=0, copy=False)
+            if len(trip_links_match0) > 0:
+
+                # update matched and unmatched == they should be disjoint with union = whole
+                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                                                    right=trip_links_match0[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                             Passenger.PF_COL_PATH_NUM,
+                                                                             Passenger.PF_COL_LINK_NUM]],
+                                                    how  ="left",
+                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                           Passenger.PF_COL_PATH_NUM,
+                                                           Passenger.PF_COL_LINK_NUM],
+                                                    indicator=True)
+                trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
+                trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
+
+                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match0], axis=0, copy=False)
+                FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
+                del trip_links_match0
 
         # level 1: match on route only
         fare_rules1 = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
                                              pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
                                              pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
         if len(fare_rules1) > 0:
-            trip_links_match1 = pandas.merge(left     =trip_links_df,
+            trip_links_match1 = pandas.merge(left     =trip_links_unmatched,
                                              right    =fare_rules1,
-                                             how      ="left",
+                                             how      ="inner",
                                              on       =Route.FARE_RULES_COLUMN_ROUTE_ID,
-                                             suffixes =["","_fare_rules"],
-                                             indicator=True)
-            # keep only full matches
-            trip_links_match1 = trip_links_match1.loc[ trip_links_match1["_merge"] == "both"]
-            trip_links_match1.drop(["_merge"], axis=1, inplace=True)
+                                             suffixes =["","_fare_rules"])
+
             # delete rows where the board time is not within the fare period
             trip_links_match1 = trip_links_match1.loc[ pandas.isnull(trip_links_match1[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match1[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match1[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match1[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match1[Route.FARE_RULES_COLUMN_END_TIME])) ]
-            trip_links_match1["match_level"] = 1
             FastTripsLogger.debug("add_fares level 1 (%d):\n%s" % (len(trip_links_match1), str(trip_links_match1.head())))
 
-            trip_links_match_all = pandas.concat([trip_links_match_all, trip_links_match1], axis=0, copy=False)
+            if len(trip_links_match1) > 0:
+                # update matched and unmatched == they should be disjoint with union = whole
+                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                                                    right=trip_links_match1[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                             Passenger.PF_COL_PATH_NUM,
+                                                                             Passenger.PF_COL_LINK_NUM]],
+                                                    how  ="left",
+                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                           Passenger.PF_COL_PATH_NUM,
+                                                           Passenger.PF_COL_LINK_NUM],
+                                                    indicator=True)
+                trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
+                trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
+
+                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match1], axis=0, copy=False)
+                FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
+                del trip_links_match1
 
         # level 2: match on origin and destination zones only
         fare_rules2 = self.fare_rules_df.loc[pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
                                              pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
                                              pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
         if len(fare_rules2) > 0:
-            trip_links_match2 = pandas.merge(left     =trip_links_df,
+            trip_links_match2 = pandas.merge(left     =trip_links_unmatched,
                                              right    =fare_rules2,
-                                             how      ="left",
+                                             how      ="inner",
                                              left_on  =["A_zone_id","B_zone_id"],
                                              right_on =[Route.FARE_RULES_COLUMN_ORIGIN_ID,Route.FARE_RULES_COLUMN_DESTINATION_ID],
-                                             suffixes =["","_fare_rules"],
-                                             indicator=True)
-            # keep only full matches
-            trip_links_match2 = trip_links_match2.loc[ trip_links_match2["_merge"] == "both"]
-            trip_links_match2.drop(["_merge"], axis=1, inplace=True)
+                                             suffixes =["","_fare_rules"])
+
             # delete rows where the board time is not within the fare period
             trip_links_match2 = trip_links_match2.loc[ pandas.isnull(trip_links_match2[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match2[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match2[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match2[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match2[Route.FARE_RULES_COLUMN_END_TIME])) ]
-            trip_links_match2["match_level"] = 2
             FastTripsLogger.debug("add_fares level 2 (%d):\n%s" % (len(trip_links_match2), str(trip_links_match2.head())))
 
-            trip_links_match_all = pandas.concat([trip_links_match_all, trip_links_match2], axis=0, copy=False)
+            if len(trip_links_match2) > 0:
+                # update matched and unmatched == they should be disjoint with union = whole
+                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                                                    right=trip_links_match2[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                             Passenger.PF_COL_PATH_NUM,
+                                                                             Passenger.PF_COL_LINK_NUM]],
+                                                    how  ="left",
+                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                           Passenger.PF_COL_PATH_NUM,
+                                                           Passenger.PF_COL_LINK_NUM],
+                                                    indicator=True)
+                trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
+                trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
+
+                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match2], axis=0, copy=False)
+                FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
+                del trip_links_match2
 
         # level 3: no route, origin or destination specified
         fare_rules3 = self.fare_rules_df.loc[pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
@@ -792,60 +849,74 @@ class Route(object):
             # need a column to merge on
             merge_column = "fare level 3 merge col"
             fare_rules3[merge_column] = 1
-            trip_links_df[merge_column] = 1
+            trip_links_unmatched[merge_column] = 1
 
             FastTripsLogger.debug("fare_rules3 (%d):\n%s" % (len(fare_rules3), str(fare_rules3.head())))
 
-            trip_links_match3 = pandas.merge(left     =trip_links_df,
+            trip_links_match3 = pandas.merge(left     =trip_links_unmatched,
                                              right    =fare_rules3,
-                                             how      ="left",
+                                             how      ="inner",
                                              on       =merge_column,
-                                             suffixes =["","_fare_rules"],
-                                             indicator=True)
-            # keep only full matches
-            trip_links_match3 = trip_links_match3.loc[ trip_links_match3["_merge"] == "both"]
-            trip_links_match3.drop(["_merge", merge_column], axis=1, inplace=True)
-            trip_links_df.drop([merge_column], axis=1, inplace=True)
+                                             suffixes =["","_fare_rules"])
+
+            trip_links_match3.drop([merge_column], axis=1, inplace=True)
+            trip_links_unmatched.drop([merge_column], axis=1, inplace=True)
 
             # delete rows where the board time is not within the fare period
             trip_links_match3 = trip_links_match3.loc[ pandas.isnull(trip_links_match3[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match3[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match3[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match3[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match3[Route.FARE_RULES_COLUMN_END_TIME])) ]
-            trip_links_match3["match_level"] = 3
             FastTripsLogger.debug("add_fares level 3 (%d):\n%s" % (len(trip_links_match3), str(trip_links_match3.head())))
 
-            trip_links_match_all = pandas.concat([trip_links_match_all, trip_links_match3], axis=0, copy=False)
+            if len(trip_links_match3) > 0:
+                # update matched and unmatched == they should be disjoint with union = whole
+                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                                                    right=trip_links_match3[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                             Passenger.PF_COL_PATH_NUM,
+                                                                             Passenger.PF_COL_LINK_NUM]],
+                                                    how  ="left",
+                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                           Passenger.PF_COL_PATH_NUM,
+                                                           Passenger.PF_COL_LINK_NUM],
+                                                    indicator=True)
+                trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
+                trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
 
-        FastTripsLogger.debug("trip_links_match_all (%d):\n%s\n%s" % (len(trip_links_match_all), str(trip_links_match_all.head()),
-                              str(trip_links_match_all["match_level"].value_counts())))
+                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match3], axis=0, copy=False)
+                FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
+                del trip_links_match3
 
-        # groupby trip_links_df index and use match_level idx min
-        trip_links_match_all.reset_index(drop=True, inplace=True)
-        trip_links_match_all = trip_links_match_all.loc[ trip_links_match_all.groupby("trip_links_df index")["match_level"].idxmin()]
-        trip_links_match_all.sort_values(by="trip_links_df index", inplace=True)
-        trip_links_match_all.reset_index(drop=True, inplace=True)
+        # put them together
+        trip_links_df = pandas.concat([trip_links_matched, trip_links_unmatched], axis=0, copy=False)
+        trip_links_df.sort_values(by=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                      Passenger.PF_COL_PATH_NUM,
+                                      Passenger.PF_COL_LINK_NUM],
+                                      inplace=True)
+        del trip_links_matched
+        del trip_links_unmatched
 
-        FastTripsLogger.debug("trip_links_match_all (%d):\n%s\n%s" % (len(trip_links_match_all), str(trip_links_match_all.head()),
-                              str(trip_links_match_all["match_level"].value_counts())))
+        FastTripsLogger.debug("trip_links_df (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head())))
 
         # rename price to fare
-        trip_links_match_all.rename(columns={Route.FARE_ATTR_COLUMN_PRICE:Assignment.SIM_COL_PAX_FARE}, inplace=True)
+        trip_links_df.rename(columns={Route.FARE_ATTR_COLUMN_PRICE:Assignment.SIM_COL_PAX_FARE}, inplace=True)
 
         # join fails mean 0
-        trip_links_match_all.fillna(value={Assignment.SIM_COL_PAX_FARE:0.0}, inplace=True)
+        trip_links_df.fillna(value={Assignment.SIM_COL_PAX_FARE:0.0}, inplace=True)
 
         # make sure we didn't lose or add any
-        assert len(trip_links_match_all) == num_trip_links
+        assert len(trip_links_df) == num_trip_links
 
         # apply fare transfers
-        trip_links_match_all = self.apply_fare_transfer_rules(trip_links_match_all)
+        trip_links_df = self.apply_fare_transfer_rules(trip_links_df)
 
-        trip_links_match_all = self.apply_free_transfers(trip_links_match_all)
+        trip_links_df = self.apply_free_transfers(trip_links_df)
 
         # drop other columns
-        trip_links_match_all = trip_links_match_all[return_columns]
+        trip_links_df = trip_links_df[return_columns]
 
-        return trip_links_match_all
+        return trip_links_df
 
     def apply_fare_transfer_rules(self, trip_links_df):
         """
