@@ -618,10 +618,10 @@ class Assignment:
                                                                                                           FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
                                                                                                           FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
                     # write pathfinding results to special PF results file
-                    Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_paths_df, False, 
-                                          Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
-                    Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_links_df, True, 
-                                          Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                    Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_paths_df, False,
+                                          Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
+                    Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_links_df, True,
+                                          Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
 
                     # write performance info right away in case we crash, quit, etc
                     FT.performance.write(output_dir, append=((iteration>1) or (pathfinding_iteration>1)))
