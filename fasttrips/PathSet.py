@@ -1070,122 +1070,9 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_links_df\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
 
         ###################### overlap calcs
-        overlap_df = None
+        full_overlap_df = None
         if PathSet.OVERLAP_VARIABLE != PathSet.OVERLAP_NONE:
-
-            # CHUNKING because we run into memory problems
-            # TODO: figure out more sophisticated chunk size
-            CHUNK_SIZE = 1000 # person trips
-            chunk_list = pathset_links_to_use[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]].drop_duplicates().reset_index(drop=True)
-            num_chunks = len(chunk_list)/CHUNK_SIZE + 1
-            chunk_list["chunk_num"] = numpy.floor_divide(chunk_list.index, CHUNK_SIZE)
-            FastTripsLogger.debug("calculate_cost: chunk_list size=%d head=\n%s\ntail=\n%s" % (len(chunk_list), chunk_list.head().to_string(), chunk_list.tail().to_string()))
-            pathset_links_to_use = pandas.merge(left  =pathset_links_to_use,
-                                                right =chunk_list,
-                                                how   ='left')
-            FastTripsLogger.debug("calculate_cost: mem_use=%s pathset_links_to_use has length %d, head=\n%s" % (Util.get_process_mem_use_str(), 
-                                  len(pathset_links_to_use), pathset_links_to_use.head().to_string()))
-            full_overlap_df = pandas.DataFrame()
-
-            for chunk_num in range(num_chunks):
-
-                # get the person trips in the chunk
-                overlap_df = pathset_links_to_use.loc[ pathset_links_to_use["chunk_num"] == chunk_num]
-
-                overlap_df = overlap_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                         Passenger.PF_COL_PATH_NUM,
-                                         Passenger.PF_COL_LINK_NUM,
-                                         "A_id_num","B_id_num",
-                                         Route.ROUTES_COLUMN_MODE,
-                                         "new_linktime",
-                                         Assignment.SIM_COL_PAX_DISTANCE]].copy()
-                # sum count, time, dist(TODO) to path and add path sum version to overlap_df -- this is L
-                FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_df has length %d, head=\n%s" % (Util.get_process_mem_use_str(), len(overlap_df), overlap_df.head().to_string()))
-
-                # path aggregate
-                overlap_df["count"] = 1
-                overlap_path_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                      Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                      Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index(drop=False)
-                overlap_path_df.rename(columns={"count":"path_count", "new_linktime":"path_time", Assignment.SIM_COL_PAX_DISTANCE:"path_distance"}, inplace=True)
-                overlap_df.drop(["count"], axis=1, inplace=True)
-
-                FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_path_df has length %d, head=\n%s" % (Util.get_process_mem_use_str(), len(overlap_path_df), overlap_path_df.head().to_string()))
-
-                # get the path variables
-                overlap_df = pandas.merge(overlap_df, overlap_path_df,
-                                          how="left",
-                                          on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                              Passenger.PF_COL_PATH_NUM])
-                del overlap_path_df
-
-                # outer join on trip_list_id_num means when they match, we'll get a cartesian product of the links
-                overlap_df = pandas.merge(overlap_df, overlap_df.copy(), on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID], how="outer")
-                FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_df has length %d, head=\n%s" % (Util.get_process_mem_use_str(), len(overlap_df), overlap_df.head().to_string()))
-
-                # count matches -- matching A,B,mode
-                overlap_df["match"] = 0
-                overlap_df.loc[ (overlap_df["A_id_num_x"]==overlap_df["A_id_num_y"])&
-                                (overlap_df["B_id_num_x"]==overlap_df["B_id_num_y"])&
-                                (overlap_df["mode_x"    ]==overlap_df["mode_y"    ])  , "match"] = 1
-
-                if PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_COUNT:
-                    overlap_df["link_prop_x"] = 1.0/overlap_df["path_count_x"]                         # l_a/L_i
-                    overlap_df["pathlen_x_y"] = overlap_df["path_count_x"]/overlap_df["path_count_y"]  # L_i/L_j
-                elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_TIME:
-                    overlap_df["link_prop_x"] = overlap_df["new_linktime_x"]/overlap_df["path_time_x"] # l_a/L_i
-                    overlap_df["pathlen_x_y"] = overlap_df["path_time_x"]/overlap_df["path_time_y"]    # L_i/L_j
-                elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_DISTANCE:
-                    overlap_df["link_prop_x"] = overlap_df["distance_x"]/overlap_df["path_distance_x"] # l_a/L_i
-                    overlap_df["pathlen_x_y"] = overlap_df["path_distance_x"]/overlap_df["path_distance_y"]    # L_i/L_j
-
-                overlap_df["pathlen_x_y_scale"] = overlap_df[["pathlen_x_y"]].pow(PathSet.OVERLAP_SCALE_PARAMETER)  # (L_i/L_j)^gamma
-                # zero it out if it's not a match
-                overlap_df.loc[overlap_df["match"]==0, "pathlen_x_y_scale"] = 0
-                # now pathlen_x_y_scale = (L_i/L_j)^gamma x delta_aj
-
-                if len(Assignment.TRACE_PERSON_IDS) > 0:
-                    FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
-
-                # debug
-                # overlap_df_temp = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "pathnum_x","linknum_x","link_prop_x","pathnum_y"]).aggregate({"match":"sum", "pathlen_x_y_scale":"sum"})
-                # FastTripsLogger.debug("calculate_cost: overlap_df_temp\n%s" % str(overlap_df_temp.head(50)))
-
-                # group by pathnum_x, linknum_x -- so this sums over paths P_j in equation (or pathnum_y here)
-                overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "pathnum_x","linknum_x","link_prop_x"]).aggregate({"pathlen_x_y_scale":"sum"}).reset_index()
-                # now pathlen_x_y_scale = SUM_j (L_i/L_j)^gamma x delta_aj
-                overlap_df["PS"] = overlap_df["link_prop_x"]/overlap_df["pathlen_x_y_scale"]  # l_a/L_i * 1/(SUM_j (L_i/L_j)^gamma x delta_aj)
-                if len(Assignment.TRACE_PERSON_IDS) > 0:
-                    FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
-
-                # sum across link in path
-                overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "pathnum_x"]).aggregate({"PS":"sum"}).reset_index(drop=False)
-
-                # Check all pathsizes are in [0,1]
-                min_PS = overlap_df["PS"].min()
-                max_PS = overlap_df["PS"].max()
-                FastTripsLogger.debug("PathSize min=%f max=%f" % (min_PS, max_PS))
-                if min_PS < 0:
-                    FastTripsLogger.fatal("Min pathsize = %f < 0:\n%s" % (min_PS, overlap_df.loc[overlap_df["PS"]==min_PS].to_string()))
-                if max_PS > 1.0001:
-                    FastTripsLogger.fatal("Max pathsize = %f > 1:\n%s" % (max_PS, overlap_df.loc[overlap_df["PS"]==max_PS].to_string()))
-
-                overlap_df[Assignment.SIM_COL_PAX_LNPS] = numpy.log(overlap_df["PS"])
-                if len(Assignment.TRACE_PERSON_IDS) > 0:
-                    FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
-
-                # rename pathnum_x to pathnum and drop PS.  Now overlap_df has columns trip_list_id_num, pathnum, ln_PS
-                overlap_df.rename(columns={"pathnum_x":Passenger.PF_COL_PATH_NUM}, inplace=True)
-                overlap_df.drop(["PS"], axis=1, inplace=True) # we have ln_PS
-
-                if len(full_overlap_df) == 0:
-                    full_overlap_df = overlap_df
-                else:
-                    full_overlap_df = full_overlap_df.append(overlap_df)
-                FastTripsLogger.debug("calculate_cost: mem_use=%s full_overlap_df has length %d" % (Util.get_process_mem_use_str(), len(full_overlap_df)))
+            full_overlap_df = PathSet.calculate_overlap(pathset_links_to_use)
 
         ###################### sum linkcost to paths
         cost_link_df.drop([Passenger.PF_COL_LINK_NUM], axis=1, inplace=True)
@@ -1232,3 +1119,130 @@ class PathSet:
         # calculating costs consistently
         return (pathset_paths_df, pathset_links_df)
 
+    @staticmethod
+    def calculate_overlap(pathset_links_to_use):
+        """
+        Given a set of pathset links, returns a the results of overlap calculations.
+
+        This return dataframe will have colums person_id, person_trip_id, pathnum, and ln_PS
+        """
+        from .Assignment import Assignment
+
+        FastTripsLogger.debug("calculate_overlap() pathset_links_to_use (%d) head=\n%s" % (len(pathset_links_to_use), str(pathset_links_to_use.head(30))))
+        # CHUNKING because we run into memory problems
+        # TODO: figure out more sophisticated chunk size
+        CHUNK_SIZE = 1000 # person trips
+        chunk_list = pathset_links_to_use[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]].drop_duplicates().reset_index(drop=True)
+        num_chunks = len(chunk_list)/CHUNK_SIZE + 1
+        chunk_list["chunk_num"] = numpy.floor_divide(chunk_list.index, CHUNK_SIZE)
+        FastTripsLogger.debug("calculate_cost: chunk_list size=%d head=\n%s\ntail=\n%s" % (len(chunk_list), chunk_list.head().to_string(), chunk_list.tail().to_string()))
+        pathset_links_to_use = pandas.merge(left  =pathset_links_to_use,
+                                            right =chunk_list,
+                                            how   ='left')
+        FastTripsLogger.debug("calculate_cost: mem_use=%s pathset_links_to_use has length %d, head=\n%s" % (Util.get_process_mem_use_str(), 
+                              len(pathset_links_to_use), pathset_links_to_use.head().to_string()))
+        full_overlap_df = pandas.DataFrame()
+
+        for chunk_num in range(num_chunks):
+
+            # get the person trips in the chunk
+            overlap_df = pathset_links_to_use.loc[ pathset_links_to_use["chunk_num"] == chunk_num]
+
+            overlap_df = overlap_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                     Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                     Passenger.PF_COL_PATH_NUM,
+                                     Passenger.PF_COL_LINK_NUM,
+                                     "A_id_num","B_id_num",
+                                     Route.ROUTES_COLUMN_MODE,
+                                     "new_linktime",
+                                     Assignment.SIM_COL_PAX_DISTANCE]].copy()
+            # sum count, time, dist(TODO) to path and add path sum version to overlap_df -- this is L
+            FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_df has length %d, head=\n%s" % (Util.get_process_mem_use_str(), len(overlap_df), overlap_df.head().to_string()))
+
+            # path aggregate
+            overlap_df["count"] = 1
+            overlap_path_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                  Passenger.PF_COL_PATH_NUM]).aggregate({'count':'sum','new_linktime':'sum',Assignment.SIM_COL_PAX_DISTANCE:'sum'}).reset_index(drop=False)
+            overlap_path_df.rename(columns={"count":"path_count", "new_linktime":"path_time", Assignment.SIM_COL_PAX_DISTANCE:"path_distance"}, inplace=True)
+            overlap_df.drop(["count"], axis=1, inplace=True)
+
+            FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_path_df has length %d, head=\n%s" % (Util.get_process_mem_use_str(), len(overlap_path_df), overlap_path_df.head().to_string()))
+
+            # get the path variables
+            overlap_df = pandas.merge(overlap_df, overlap_path_df,
+                                      how="left",
+                                      on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                          Passenger.PF_COL_PATH_NUM])
+            del overlap_path_df
+
+            # outer join on trip_list_id_num means when they match, we'll get a cartesian product of the links
+            overlap_df = pandas.merge(overlap_df, overlap_df.copy(), on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID], how="outer")
+            FastTripsLogger.debug("calculate_cost: mem_use=%s overlap_df has length %d, head=\n%s" % (Util.get_process_mem_use_str(), len(overlap_df), overlap_df.head().to_string()))
+
+            # count matches -- matching A,B,mode
+            overlap_df["match"] = 0
+            overlap_df.loc[ (overlap_df["A_id_num_x"]==overlap_df["A_id_num_y"])&
+                            (overlap_df["B_id_num_x"]==overlap_df["B_id_num_y"])&
+                            (overlap_df["mode_x"    ]==overlap_df["mode_y"    ])  , "match"] = 1
+
+            if PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_COUNT:
+                overlap_df["link_prop_x"] = 1.0/overlap_df["path_count_x"]                         # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_count_x"]/overlap_df["path_count_y"]  # L_i/L_j
+            elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_TIME:
+                overlap_df["link_prop_x"] = overlap_df["new_linktime_x"]/overlap_df["path_time_x"] # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_time_x"]/overlap_df["path_time_y"]    # L_i/L_j
+            elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_DISTANCE:
+                overlap_df["link_prop_x"] = overlap_df["distance_x"]/overlap_df["path_distance_x"] # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_distance_x"]/overlap_df["path_distance_y"]    # L_i/L_j
+
+            overlap_df["pathlen_x_y_scale"] = overlap_df[["pathlen_x_y"]].pow(PathSet.OVERLAP_SCALE_PARAMETER)  # (L_i/L_j)^gamma
+            # zero it out if it's not a match
+            overlap_df.loc[overlap_df["match"]==0, "pathlen_x_y_scale"] = 0
+            # now pathlen_x_y_scale = (L_i/L_j)^gamma x delta_aj
+
+            if len(Assignment.TRACE_PERSON_IDS) > 0:
+                FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+
+            # debug
+            # overlap_df_temp = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "pathnum_x","linknum_x","link_prop_x","pathnum_y"]).aggregate({"match":"sum", "pathlen_x_y_scale":"sum"})
+            # FastTripsLogger.debug("calculate_cost: overlap_df_temp\n%s" % str(overlap_df_temp.head(50)))
+
+            # group by pathnum_x, linknum_x -- so this sums over paths P_j in equation (or pathnum_y here)
+            overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "pathnum_x","linknum_x","link_prop_x"]).aggregate({"pathlen_x_y_scale":"sum"}).reset_index()
+            # now pathlen_x_y_scale = SUM_j (L_i/L_j)^gamma x delta_aj
+            overlap_df["PS"] = overlap_df["link_prop_x"]/overlap_df["pathlen_x_y_scale"]  # l_a/L_i * 1/(SUM_j (L_i/L_j)^gamma x delta_aj)
+            if len(Assignment.TRACE_PERSON_IDS) > 0:
+                FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+
+            # sum across link in path
+            overlap_df = overlap_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID, "pathnum_x"]).aggregate({"PS":"sum"}).reset_index(drop=False)
+
+            # Check all pathsizes are in [0,1]
+            min_PS = overlap_df["PS"].min()
+            max_PS = overlap_df["PS"].max()
+            FastTripsLogger.debug("PathSize min=%f max=%f" % (min_PS, max_PS))
+            if min_PS < 0:
+                FastTripsLogger.fatal("Min pathsize = %f < 0:\n%s" % (min_PS, overlap_df.loc[overlap_df["PS"]==min_PS].to_string()))
+            if max_PS > 1.0001:
+                FastTripsLogger.fatal("Max pathsize = %f > 1:\n%s" % (max_PS, overlap_df.loc[overlap_df["PS"]==max_PS].to_string()))
+
+            overlap_df[Assignment.SIM_COL_PAX_LNPS] = numpy.log(overlap_df["PS"])
+            if len(Assignment.TRACE_PERSON_IDS) > 0:
+                FastTripsLogger.debug("calculate_cost: overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]))
+
+            # rename pathnum_x to pathnum and drop PS.  Now overlap_df has columns trip_list_id_num, pathnum, ln_PS
+            overlap_df.rename(columns={"pathnum_x":Passenger.PF_COL_PATH_NUM}, inplace=True)
+            overlap_df.drop(["PS"], axis=1, inplace=True) # we have ln_PS
+
+            if len(full_overlap_df) == 0:
+                full_overlap_df = overlap_df
+            else:
+                full_overlap_df = full_overlap_df.append(overlap_df)
+            FastTripsLogger.debug("calculate_cost: mem_use=%s full_overlap_df has length %d" % (Util.get_process_mem_use_str(), len(full_overlap_df)))
+
+        FastTripsLogger.debug("full_overlap_df head=\n%s" % full_overlap_df.head(30))
+
+        return full_overlap_df
