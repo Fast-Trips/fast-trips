@@ -81,6 +81,7 @@ Option Name                         | Type   | Default | Description
 `max_num_paths`                     | int    | -1      | If positive, drops paths after this IF probability is less than ``
 `min_path_probability`              | float  | 0.005   | Paths with probability less than this get dropped IF `max_num_paths` specified AND hit.
 `min_transfer_penalty`              | float  | 1       | Minimum transfer penalty. Safeguard against having no transfer penalty which can result in terrible paths with excessive transfers.
+`overlap_chunk_size`                | int    | 500     | How many person's trips to process at a time in overlap calculations in python simulation (more means faster but more memory required.)
 `overlap_scale_parameter`           | float  | 1       | Scale parameter for overlap path size variable.
 `overlap_split_transit`             | bool   | False   | For overlap calcs, split transit leg into component legs (A to E becauses A-B-C-D-E)
 `overlap_variable`                  | string | 'count' | The variable upon which to base the overlap path size variable.  Can be one of `None`, `count`, `distance`, `time`.

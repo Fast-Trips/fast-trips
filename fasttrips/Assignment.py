@@ -286,6 +286,7 @@ class Assignment:
                       'max_num_paths'                   :-1,
                       'min_path_probability'            :0.005,
                       'min_transfer_penalty'            :1.0,
+                      'overlap_chunk_size'              :500,
                       'overlap_scale_parameter'         :1.0,
                       'overlap_split_transit'           :'False',
                       'overlap_variable'                :'count',
@@ -336,6 +337,7 @@ class Assignment:
         Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
         Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
         PathSet.MIN_TRANSFER_PENALTY             = parser.getfloat  ('pathfinding','min_transfer_penalty')
+        PathSet.OVERLAP_CHUNK_SIZE               = parser.getint    ('pathfinding','overlap_chunk_size')
         PathSet.OVERLAP_SCALE_PARAMETER          = parser.getfloat  ('pathfinding','overlap_scale_parameter')
         PathSet.OVERLAP_SPLIT_TRANSIT            = parser.getboolean('pathfinding','overlap_split_transit')
         PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
@@ -410,6 +412,7 @@ class Assignment:
         parser.set('pathfinding','max_num_paths',               '%d' % Assignment.MAX_NUM_PATHS)
         parser.set('pathfinding','min_path_probability',        '%f' % Assignment.MIN_PATH_PROBABILITY)
         parser.set('pathfinding','min_transfer_penalty',        '%f' % PathSet.MIN_TRANSFER_PENALTY)
+        parser.set('pathfinding','overlap_chunk_size',          '%d' % PathSet.OVERLAP_CHUNK_SIZE)
         parser.set('pathfinding','overlap_scale_parameter',     '%f' % PathSet.OVERLAP_SCALE_PARAMETER)
         parser.set('pathfinding','overlap_split_transit',       'True' if PathSet.OVERLAP_SPLIT_TRANSIT else 'False')
         parser.set('pathfinding','overlap_variable',            '%s' % PathSet.OVERLAP_VARIABLE)
@@ -609,8 +612,11 @@ class Assignment:
 
                 if (Assignment.PATHFINDING_TYPE == Assignment.PATHFINDING_TYPE_READ_FILE) and (iteration == 1) and (pathfinding_iteration == 1):
                     FastTripsLogger.info("Reading paths from file")
-                    (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, FT.stops, include_asgn=False)
+                    (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.read_passenger_pathsets(output_dir, FT.stops, FT.routes.modes_df, include_asgn=False)
                     num_new_paths_found = Assignment.number_of_pathsets(new_pathset_paths_df)
+
+                    # todo: what about subsequent iterations
+                    Assignment.PATHFINDING_TYPE = Assignment.PATHFINDING_TYPE_STOCHASTIC
 
                 else:
                     num_new_paths_found = Assignment.generate_pathsets(FT, pathset_paths_df, veh_trips_df, output_dir, iteration, pathfinding_iteration)
@@ -785,6 +791,7 @@ class Assignment:
             # process tasks or send tasks to workers for processing
             num_paths_found_prev  = 0
             num_paths_found_now   = 0
+            num_paths_sought      = 0
             path_cols             = list(FT.passengers.pathfind_trip_list_df.columns.values)
             for path_tuple in FT.passengers.pathfind_trip_list_df.itertuples(index=False):
                 path_dict         = dict(zip(path_cols, path_tuple))
@@ -817,18 +824,20 @@ class Assignment:
                     # do the work
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, pathfinding_iteration, trip_pathset,
-                                                        Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                                                        trace=trace_person)
+                                                           Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
+                                                           trace=trace_person)
+                    num_paths_sought += 1
+
                     trip_pathset.pathdict = pathdict
                     FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
 
                     if trip_pathset.path_found():
                         num_paths_found_now += 1
 
-                    if num_paths_found_now % info_freq == 0:
+                    if num_paths_sought % info_freq == 0:
                         time_elapsed = datetime.datetime.now() - start_time
-                        FastTripsLogger.info(" %6d / %6d passenger paths found.  Time elapsed: %2dh:%2dm:%2ds" % (
-                                             num_paths_found_now, est_paths_to_find,
+                        FastTripsLogger.info(" %6d paths sought, %6d paths found of %d paths total.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                             num_paths_sought, num_paths_found_now, est_paths_to_find,
                                              int( time_elapsed.total_seconds() / 3600),
                                              int( (time_elapsed.total_seconds() % 3600) / 60),
                                              time_elapsed.total_seconds() % 60))
@@ -862,13 +871,14 @@ class Assignment:
 
                             FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
 
+                            num_paths_sought += 1
                             if pathset.path_found():
                                 num_paths_found_now += 1
 
-                            if num_paths_found_now % info_freq == 0:
+                            if num_paths_sought % info_freq == 0:
                                 time_elapsed = datetime.datetime.now() - start_time
-                                FastTripsLogger.info(" %6d / %6d passenger paths found.  Time elapsed: %2dh:%2dm:%2ds" % (
-                                                     num_paths_found_now, est_paths_to_find,
+                                FastTripsLogger.info("  %6d paths sought, %6d paths found of %d paths total.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                                     num_paths_sought, num_paths_found_now, est_paths_to_find,
                                                      int( time_elapsed.total_seconds() / 3600),
                                                      int( (time_elapsed.total_seconds() % 3600) / 60),
                                                      time_elapsed.total_seconds() % 60))

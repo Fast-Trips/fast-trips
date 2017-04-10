@@ -247,7 +247,7 @@ if __name__ == "__main__":
     ft.read_input_files()
 
     # and the pathset files
-    (pathset_paths_df, pathset_links_df) = fasttrips.Passenger.read_passenger_pathsets(args.input_path_dir[0], ft.stops)
+    (pathset_paths_df, pathset_links_df) = ft.passengers.read_passenger_pathsets(args.input_path_dir[0], ft.stops, ft.routes.modes_df)
     fasttrips.Assignment.TRACE_PERSON_IDS = pathset_paths_df["person_id"].head(5).tolist()
     fasttrips.FastTripsLogger.debug("Read passenger pathsets. head=\n%s" % str(pathset_links_df.head(100)))
 

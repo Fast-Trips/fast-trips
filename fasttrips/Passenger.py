@@ -399,8 +399,7 @@ class Passenger:
     def get_person_id(self, trip_list_id):
         return self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, Passenger.TRIP_LIST_COLUMN_PERSON_ID].iloc[0]
 
-    @staticmethod
-    def read_passenger_pathsets(pathset_dir, stops, include_asgn=True):
+    def read_passenger_pathsets(self, pathset_dir, stops, modes_df, include_asgn=True):
         """
         Reads the dataframes described in :py:meth:`Passenger.setup_passenger_pathsets` and returns them.
 
@@ -487,6 +486,24 @@ class Passenger:
         if "B_id_num" not in pathset_links_df.columns.values:
             pathset_links_df = stops.add_numeric_stop_id(pathset_links_df, id_colname="B_id", numeric_newcolname="B_id_num",
                                                          warn=True, warn_msg="read_passenger_pathsets: invalid stop ID", drop_failures=False)
+
+        # if trip_list_id_num is in trip list and not in these, add it
+        if Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM in self.trip_list_df.columns.values:
+            if Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM not in pathset_paths_df.columns.values:
+                pathset_paths_df = pandas.merge(left  =pathset_paths_df,
+                                                right =self.trip_list_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]],
+                                                how   ="left")
+            if Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM not in pathset_links_df.columns.values:
+                pathset_links_df = pandas.merge(left  =pathset_links_df,
+                                                right =self.trip_list_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                          Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]],
+                                                how   ="left")
+        # add mode_num if it's not there
+        if Route.ROUTES_COLUMN_MODE_NUM not in pathset_links_df.columns.values:
+            pathset_links_df = pandas.merge(left=pathset_links_df, right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]], how="left")
 
         FastTripsLogger.info("Read %s" % links_file)
         FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.head()))
