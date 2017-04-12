@@ -18,6 +18,7 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
   * [Test Network](#test-network)
   * [Test Demand](#test-demand)
 * [Test Runs](#test-runs)
+* [Summarizing Results](#summarizing-results)
 * [Frequently Asked Questions](#frequently-asked-questions)
 * [References](#references)
 * [Changelog](#changelog)
@@ -200,6 +201,14 @@ There are a total of six test runs in `\scripts\runAllTests.bat`. Type of assign
 Type of Assignment:
  *  "Deterministic" indicates use of a deterministic trip-based shortest path search algorithm
  *  "Stochastic" indicates use of a stochastic hyperpath-finding algorithm
+
+## Summarizing Results
+
+Fast-Trips will output results in the [dyno-path](https://github.com/osplanning-data-standards/dyno-path) format, which can be used to generate summary dashboards in Tableau or other reports.  
+
+### Creating Tableau Dashboard
+
+
 
 ## Frequently Asked Questions
 
