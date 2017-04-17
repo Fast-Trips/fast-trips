@@ -797,6 +797,7 @@ class Assignment:
                 path_dict         = dict(zip(path_cols, path_tuple))
                 trip_list_id      = path_dict[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
                 person_id         = path_dict[Passenger.TRIP_LIST_COLUMN_PERSON_ID]
+                person_trip_id    = path_dict[Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]
                 trace_person      = person_id in Assignment.TRACE_PERSON_IDS
 
                 if Assignment.DEBUG_TRACE_ONLY and not trace_person: continue
@@ -829,7 +830,7 @@ class Assignment:
                     num_paths_sought += 1
 
                     trip_pathset.pathdict = pathdict
-                    FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
+                    FT.performance.add_info(iteration, pathfinding_iteration, person_id, person_trip_id, perf_dict)
 
                     if trip_pathset.path_found():
                         num_paths_found_now += 1
@@ -867,9 +868,9 @@ class Assignment:
                             pathset         = FT.passengers.get_pathset(trip_list_id)
                             pathset.pathdict= result[3]
                             perf_dict       = result[4]
-                            person_id       = FT.passengers.get_person_id(trip_list_id)
+                            (person_id,person_trip_id) = FT.passengers.get_person_id(trip_list_id)
 
-                            FT.performance.add_info(iteration, pathfinding_iteration, person_id, trip_list_id, perf_dict)
+                            FT.performance.add_info(iteration, pathfinding_iteration, person_id, person_trip_id, perf_dict)
 
                             num_paths_sought += 1
                             if pathset.path_found():
@@ -955,6 +956,7 @@ class Assignment:
         Where pathdict maps {pathnum:{PATH_KEY_COST:cost, PATH_KEY_PROBABILITY:probability, PATH_KEY_STATES:[state list]}}
 
         Where performance_dict includes:
+                 pathfinding return status,
                  number of label iterations,
                  max number of times a stop was processed,
                  seconds spent in labeling,
@@ -971,7 +973,7 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        (ret_ints, ret_doubles, path_costs, process_num,
+        (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
          bytes_workingset, bytes_privateusage) = \
@@ -1049,6 +1051,7 @@ class Assignment:
 
         perf_dict = { \
             Performance.PERFORMANCE_COLUMN_PROCESS_NUM           : process_num,
+            Performance.PERFORMANCE_COLUMN_PATHFINDING_STATUS    : pf_returnstatus,
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS      : label_iterations,
             Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS     : num_labeled_stops,
             Performance.PERFORMANCE_COLUMN_MAX_STOP_PROCESS_COUNT: max_label_process_count,

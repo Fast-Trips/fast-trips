@@ -127,7 +127,7 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
 
     fasttrips::PathSet pathset;
     fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0, 0, 0};
-    pathfinder.findPathSet(path_spec, pathset, perf_info);
+    int pf_returnstatus = pathfinder.findPathSet(path_spec, pathset, perf_info);
 
     // count links
     int num_links = 0;
@@ -186,7 +186,7 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
         path_num += 1;
     }
 
-    PyObject *returnobj = Py_BuildValue("(OOOiiiillll)",ret_int,ret_double,ret_paths, pathfinder.processNumber(),
+    PyObject *returnobj = Py_BuildValue("(OOOiiiiillll)",ret_int,ret_double,ret_paths, pathfinder.processNumber(), pf_returnstatus,
                                         perf_info.label_iterations_, perf_info.num_labeled_stops_, perf_info.max_process_count_,
                                         perf_info.milliseconds_labeling_, perf_info.milliseconds_enumerating_,
                                         perf_info.workingset_bytes_, perf_info.privateusage_bytes_);

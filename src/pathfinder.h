@@ -375,10 +375,10 @@ namespace fasttrips {
                         PathSet& paths,
                         int max_prob_i) const;
 
-        bool getPathSet(const PathSpecification&      path_spec,
-                        std::ofstream&                trace_file,
-                        StopStates&                   stop_states,
-                        PathSet&                      pathset) const;
+        int getPathSet(const PathSpecification&      path_spec,
+                       std::ofstream&                trace_file,
+                       StopStates&                   stop_states,
+                       PathSet&                      pathset) const;
 
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
@@ -388,6 +388,14 @@ namespace fasttrips {
 
     public:
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
+
+        /** Return statuses for PathFinder::findPathSet() **/
+        const static int RET_SUCCESS               = 0;    ///< Success. Paths found
+        const static int RET_FAIL_INIT_STOP_STATES = 1;    ///< PathFinder::initializeStopStates() failed
+        const static int RET_FAIL_SET_REACHABLE    = 2;    ///< PathFinder::setReachableFinalStops() failed
+        const static int RET_FAIL_END_NOT_FOUND    = 3;    ///< end taz not reached
+        const static int RET_FAIL_NO_PATHS_GEN     = 4;    ///< no paths successfully walked
+        const static int RET_FAIL_NO_PATH_PROB     = 5;    ///< no paths with probability found (?)
 
         /// PathFinder constructor.
         PathFinder();
@@ -481,8 +489,9 @@ namespace fasttrips {
          * @param path_spec     The specifications of that path to find
          * @param path          This is really a return fasttrips::Path
          * @param path_info     Also for returng information (e.g. about the Path cost)
+         * @returns             Return code signifying return status
          */
-        void findPathSet(
+        int findPathSet(
             PathSpecification path_spec,
             PathSet           &pathset,
             PerformanceInfo   &performance_info) const;

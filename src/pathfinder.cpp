@@ -532,7 +532,7 @@ namespace fasttrips {
         // std::cout << "PathFinder destructor" << std::endl;
     }
 
-    void PathFinder::findPathSet(
+    int PathFinder::findPathSet(
         PathSpecification path_spec,
         PathSet           &pathset,
         PerformanceInfo   &performance_info) const
@@ -596,17 +596,24 @@ namespace fasttrips {
         gettimeofday(&labeling_start_time, NULL);
 #endif
 
+        int pf_returnstatus = -1;
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
-        if (!success && path_spec.trace_) {
-            trace_file << "initializeStopStates() failed.  Skipping labeling." << std::endl;
+        if (!success) {
+            pf_returnstatus = PathFinder::RET_FAIL_INIT_STOP_STATES;
+            if (path_spec.trace_) {
+                trace_file << "initializeStopStates() failed.  Skipping labeling." << std::endl;
+            }
         }
 
         // These are the stops that are reachable from the final TAZ
         std::map<int, int> reachable_final_stops;
         if (success) {
             success = setReachableFinalStops(path_spec, trace_file, reachable_final_stops);
-            if (!success && path_spec.trace_) {
-                trace_file << "setReachableFinalStops() failed.  Skipping labeling." << std::endl;
+            if (!success) {
+                pf_returnstatus = PathFinder::RET_FAIL_SET_REACHABLE;
+                if (path_spec.trace_) {
+                    trace_file << "setReachableFinalStops() failed.  Skipping labeling." << std::endl;
+                }
             }
         }
 
@@ -619,7 +626,7 @@ namespace fasttrips {
                 label_file.close();
                 stopids_file.close();
             }
-            return;
+            return pf_returnstatus;
         }
 
         performance_info.label_iterations_ = labelStops(path_spec, trace_file, reachable_final_stops,
@@ -632,7 +639,7 @@ namespace fasttrips {
         gettimeofday(&labeling_end_time, NULL);
 #endif
 
-        getPathSet(path_spec, trace_file, stop_states, pathset);
+        pf_returnstatus = getPathSet(path_spec, trace_file, stop_states, pathset);
 
 #ifdef _WIN32
         QueryPerformanceCounter(&pathfind_end_time);
@@ -685,6 +692,7 @@ namespace fasttrips {
             label_file.close();
             stopids_file.close();
         }
+        return pf_returnstatus;
     }
 
     double PathFinder::tallyLinkCost(
@@ -1861,8 +1869,8 @@ namespace fasttrips {
         printf("PathFinder::choosePath() This should never happen!\n");
     }
 
-    // Return success
-    bool PathFinder::getPathSet(
+    // Returns PathFinder::RET_SUCCESS, etc.
+    int PathFinder::getPathSet(
         const PathSpecification&    path_spec,
         std::ofstream&              trace_file,
         StopStates&                 stop_states,
@@ -1872,10 +1880,10 @@ namespace fasttrips {
 
         // no taz states -> no path found
         StopStates::const_iterator ssi_iter = stop_states.find(end_taz_id);
-        if (ssi_iter == stop_states.end()) { return false; }
+        if (ssi_iter == stop_states.end()) { return RET_FAIL_END_NOT_FOUND; }
 
         const Hyperlink& taz_state = ssi_iter->second;
-        if (taz_state.size() == 0) { return false; }
+        if (taz_state.size() == 0) { return RET_FAIL_END_NOT_FOUND; }
 
         // experimental-- look at the low cost path?
         if (false && path_spec.trace_)
@@ -1929,7 +1937,7 @@ namespace fasttrips {
                 }
             }
 
-            if (logsum == 0) { return false; } // fail
+            if (logsum == 0) { return PathFinder::RET_FAIL_NO_PATHS_GEN; } // fail
 
             // for integerized probability*1000000
             int cum_prob    = 0;
@@ -1981,7 +1989,7 @@ namespace fasttrips {
                 }
             }
 
-            if (cum_prob == 0) { return false; } // fail
+            if (cum_prob == 0) { return RET_FAIL_NO_PATH_PROB; } // fail
 
             // if we have more than the max num paths AND some are low probability, truncate
             if (trunc_iter != pathset.end()) {
@@ -2009,7 +2017,7 @@ namespace fasttrips {
             // choose path
             // path = choosePath(path_spec, trace_file, pathsset, cum_prob);
             // path_info = paths[path];
-            return true;
+            return RET_SUCCESS;
         }
         else
         {
@@ -2039,7 +2047,7 @@ namespace fasttrips {
                 trace_file << "Final path" << std::endl;
                 path.print(trace_file, path_spec, *this);
             }
-            return true;
+            return RET_SUCCESS;
         }
     }
 

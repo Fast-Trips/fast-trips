@@ -397,7 +397,10 @@ class Passenger:
         return self.id_to_pathset[trip_list_id]
 
     def get_person_id(self, trip_list_id):
-        return self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, Passenger.TRIP_LIST_COLUMN_PERSON_ID].iloc[0]
+        to_ret = self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, 
+                                        [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]]
+        return(to_ret.iloc[0,0], to_ret.iloc[0,1])
 
     def read_passenger_pathsets(self, pathset_dir, stops, modes_df, include_asgn=True):
         """

@@ -31,10 +31,12 @@ class Performance:
     PERFORMANCE_COLUMN_PATHFINDING_ITERATION  = "pathfinding_iteration"
     #: Performance column: Person ID
     PERFORMANCE_COLUMN_PERSON_ID              = Passenger.TRIP_LIST_COLUMN_PERSON_ID
-    #: Performance column: Trip list ID num
-    PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM       = Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM
+    #: Performance column: Person Trip ID
+    PERFORMANCE_COLUMN_PERSON_TRIP_ID         = Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID
     #: Performance column: Process number
     PERFORMANCE_COLUMN_PROCESS_NUM            = "process number"
+    #: Performance column: Pathfinding status
+    PERFORMANCE_COLUMN_PATHFINDING_STATUS     = "pathfinding_status"
     #: Performance column: Number of label iterations
     PERFORMANCE_COLUMN_LABEL_ITERATIONS       = "label iterations"
     #: Performance column: Number of labeled stops
@@ -67,8 +69,9 @@ class Performance:
             Performance.PERFORMANCE_COLUMN_ITERATION                :[],
             Performance.PERFORMANCE_COLUMN_PATHFINDING_ITERATION    :[],
             Performance.PERFORMANCE_COLUMN_PERSON_ID                :[],
-            Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM         :[],
+            Performance.PERFORMANCE_COLUMN_PERSON_TRIP_ID           :[],
             Performance.PERFORMANCE_COLUMN_PROCESS_NUM              :[],
+            Performance.PERFORMANCE_COLUMN_PATHFINDING_STATUS       :[],
             Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS        :[],
             Performance.PERFORMANCE_COLUMN_TRACED                   :[],
             Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS         :[],
@@ -82,7 +85,7 @@ class Performance:
         }
 
 
-    def add_info(self, iteration, pathfinding_iteration, person_id, trip_list_id_num, perf_dict):
+    def add_info(self, iteration, pathfinding_iteration, person_id, person_trip_id,  perf_dict):
         """
         Add this row to the performance dict of arrays.
         Assumes time values are in milliseconds.
@@ -90,9 +93,10 @@ class Performance:
         self.performance_dict[Performance.PERFORMANCE_COLUMN_ITERATION].append(iteration)
         self.performance_dict[Performance.PERFORMANCE_COLUMN_PATHFINDING_ITERATION].append(pathfinding_iteration)
         self.performance_dict[Performance.PERFORMANCE_COLUMN_PERSON_ID].append(person_id)
-        self.performance_dict[Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM].append(trip_list_id_num)
+        self.performance_dict[Performance.PERFORMANCE_COLUMN_PERSON_TRIP_ID].append(person_trip_id)
 
         for key in [Performance.PERFORMANCE_COLUMN_PROCESS_NUM,
+                    Performance.PERFORMANCE_COLUMN_PATHFINDING_STATUS,
                     Performance.PERFORMANCE_COLUMN_LABEL_ITERATIONS,
                     Performance.PERFORMANCE_COLUMN_NUM_LABELED_STOPS,
                     Performance.PERFORMANCE_COLUMN_TRACED,
