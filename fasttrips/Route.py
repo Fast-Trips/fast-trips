@@ -766,6 +766,14 @@ class Route(object):
                 FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
                 del trip_links_match0
 
+                # TODO - Addding stop gap solution - if there are duplicates, drop them
+                # but there's probably a better way to handle this, like flagging in input
+                # See https://app.asana.com/0/15582794263969/319659099709517
+
+                # trip_links_matched["dupe"] = trip_links_matched.duplicated(subset="trip_links_df index")
+                # FastTripsLogger.debug("dupes: \n%s" % trip_links_matched.loc[trip_links_matched["dupe"]==True].sort_values(by="trip_links_df index"))
+                trip_links_matched.drop_duplicates(subset="trip_links_df index", keep="first", inplace=True)
+
         # level 1: match on route only
         fare_rules1 = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
                                              pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
