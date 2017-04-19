@@ -1345,9 +1345,14 @@ class Assignment:
         pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
-        #: if the linktime > 23 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
+        #: if the linktime > 22 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
         pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > numpy.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_B_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - numpy.timedelta64(24, 'h')
         pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > numpy.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
+
+        #: if the linktime < -22 hours then the trip time is probably off by a day, so it's right before midnight -- back it up
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] < numpy.timedelta64(-22, 'h'), Assignment.SIM_COL_PAX_A_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] - numpy.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] < numpy.timedelta64(-22, 'h'), Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
+
 
         # new wait time
         pathset_links_df.loc[pandas.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_BOARD_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
