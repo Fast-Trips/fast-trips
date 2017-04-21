@@ -98,7 +98,7 @@ if __name__ == "__main__":
         fasttrips.Assignment.CAPACITY_CONSTRAINT = False
 
     if args.trace_only:
-        if len(fasttrips.Assignment.TRACE_PERSON_IDS) == 0:
+        if len(fasttrips.Assignment.TRACE_IDS) == 0:
             print "Trace only requested but no trace IDs are specified in configuration."
             sys.exit(2)
         fasttrips.Assignment.DEBUG_TRACE_ONLY    = True
