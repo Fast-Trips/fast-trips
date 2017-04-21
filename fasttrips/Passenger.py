@@ -108,6 +108,8 @@ class Passenger:
     TRIP_LIST_COLUMN_PURPOSE                    = "purpose"
     #: Trip list column: Value of time. Float.
     TRIP_LIST_COLUMN_VOT                        = "vot"
+    #: Trip list column: Trace. Boolean.
+    TRIP_LIST_COLUMN_TRACE                      = "trace"
 
     #: Column names from pathfinding
     PF_COL_PF_ITERATION             = 'pf_iteration' #: 0.01*pathfinding_iteration + iteration during which this path was found
@@ -380,7 +382,25 @@ class Passenger:
         FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
         FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string())
 
-        #: Maps trip list ID num to :py:class:`PathSet` instance
+        # add column trace
+        from .Assignment import Assignment
+        if len(Assignment.TRACE_IDS) > 0:
+            trace_df = pandas.DataFrame.from_records(data=Assignment.TRACE_IDS,
+                                                     columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+            trace_df[Passenger.TRIP_LIST_COLUMN_TRACE] = True
+
+            # combine
+            self.trip_list_df = pandas.merge(left  =self.trip_list_df,
+                                             right =trace_df,
+                                             how   ="left",
+                                             on    =[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+            # make nulls into False
+            self.trip_list_df.loc[pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]), Passenger.TRIP_LIST_COLUMN_TRACE] = False
+        else:
+            self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
+
+        #: Maps trip_list_id to :py:class:`PathSet` instance.  Use trip_list_id instead of (person_id, person_trip_id) for simplicity and to iterate sequentially
+        #: in setup_passenger_pathsets()
         self.id_to_pathset = collections.OrderedDict()
 
     def add_pathset(self, trip_list_id, pathset):
@@ -393,7 +413,6 @@ class Passenger:
         """
         Retrieves a stored path set for the given trip_list_id
         """
-        # print self.id_to_path
         return self.id_to_pathset[trip_list_id]
 
     def get_person_id(self, trip_list_id):
@@ -533,6 +552,7 @@ class Passenger:
         `person_id`                  object  person ID
         `person_trip_id`             object  person trip ID
         `trip_list_id_num`            int64  trip list numerical ID
+        `trace`                        bool  Are we tracing this person trip?
         `pathdir`                     int64  the :py:attr:`PathSet.direction`
         `pathmode`                   object  the :py:attr:`PathSet.mode`
         `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
@@ -553,6 +573,7 @@ class Passenger:
         `person_id`                  object  person ID
         `person_trip_id`             object  person trip ID
         `trip_list_id_num`            int64  trip list numerical ID
+        `trace`                        bool  Are we tracing this person trip?
         `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
         `pathnum`                     int64  the path number for the path within the pathset
         `linkmode`                   object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
@@ -582,6 +603,7 @@ class Passenger:
         ==================  ===============  =====================================================================================================
 
         """
+        from .Assignment import Assignment
         from .PathSet import PathSet
         pathlist = []
         linklist = []
@@ -635,6 +657,7 @@ class Passenger:
                     pathset.person_id,
                     pathset.person_trip_id,
                     trip_list_id,
+                    (pathset.person_id,pathset.person_trip_id) in Assignment.TRACE_IDS,
                     pathset.direction,
                     pathset.mode,
                     0.01*pathfinding_iteration+iteration,
@@ -684,13 +707,14 @@ class Passenger:
 
                     # two trips in a row -- this shouldn't happen
                     if linkmode == PathSet.STATE_MODE_TRIP and prev_linkmode == PathSet.STATE_MODE_TRIP:
-                        FastTripsLogger.warn("Two trip links in a row... this shouldn't happen.  trip_list_id is %s\npathnum is %d\nstatelist (%d): %s\n" % (str(trip_list_id), pathnum, len(state_list), str(state_list)))
+                        FastTripsLogger.warn("Two trip links in a row... this shouldn't happen. person_id is %s trip is %s\npathnum is %d\nstatelist (%d): %s\n" % (person_id, person_trip_id, pathnum, len(state_list), str(state_list)))
                         sys.exit()
 
                     linklist.append([\
                         pathset.person_id,
                         pathset.person_trip_id,
                         trip_list_id,
+                        (pathset.person_id,pathset.person_trip_id) in Assignment.TRACE_IDS,
                         0.01*pathfinding_iteration + iteration,
                         pathnum,
                         linkmode,
@@ -719,6 +743,7 @@ class Passenger:
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.TRIP_LIST_COLUMN_TRACE,
             'pathdir',  # for debugging
             'pathmode', # for output
             Passenger.PF_COL_PF_ITERATION,
@@ -733,6 +758,7 @@ class Passenger:
             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.TRIP_LIST_COLUMN_TRACE,
             Passenger.PF_COL_PF_ITERATION,
             Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_MODE,
@@ -970,8 +996,8 @@ class Passenger:
         pathset_paths_df = pandas.merge(left=pathset_paths_df, right=chosen_path_df, how="left")
         pathset_paths_df.loc[pathset_paths_df["chosen_idx"]==pathset_paths_df.index, Assignment.SIM_COL_PAX_CHOSEN] = CHOSEN_VALUE
 
-        if len(Assignment.TRACE_PERSON_IDS) > 0:
-            FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.loc[ pathset_paths_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string())
+        if len(Assignment.TRACE_IDS) > 0:
+            FastTripsLogger.debug("choose_path() pathset_paths_df=\n%s\n" % pathset_paths_df.loc[ pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string())
 
         FastTripsLogger.info("          Chose %d out of %d paths from the pathsets => total chosen %d" %
                              (len(chosen_path_df), len(pathset_paths_df_grouped), num_chosen))

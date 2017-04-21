@@ -862,7 +862,7 @@ namespace fasttrips {
             if (random_num <= ss.cum_prob_i_) { return ss; }
         }
         // shouldn't get here
-        printf("PathFinder::chooseState() This should never happen! path_id_=%d\n", path_spec.path_id_);
+        printf("PathFinder::chooseState() This should never happen! person_id:[%s] person_trip_id:[%s]\n", path_spec.person_id_.c_str(), path_spec.person_trip_id_.c_str());
         if (path_spec.trace_) { trace_file << "Fatal: PathFinder::chooseState() This should never happen!" << std::endl; }
         return linkset.stop_state_map_.begin()->second;
     }

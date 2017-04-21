@@ -73,7 +73,7 @@ Option Name                         | Type   | Default | Description
 `skim_start_time`                   | string | 5:00    | Not implemented yet.
 `skim_end_time`                     | string | 10:00   | Not implemented yet.
 `skip_person_ids`                   | string | 'None'  | A list of person IDs to skip.
-`trace_person_ids`                  | string | 'None'  | A list of person IDs for whom to output verbose trace information.
+`trace_ids`                         | string | 'None'  | A list of tuples, (person ID, person trip ID), for whom to output verbose trace information.
 
 #### Configuration Options: pathfinding
 

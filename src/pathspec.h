@@ -15,8 +15,6 @@ namespace fasttrips {
     typedef struct {
         int     iteration_;             ///< Iteration
         int     pathfinding_iteration_; ///< Pathfinding iteration
-        int     passenger_id_;          ///< The passenger ID
-        int     path_id_;               ///< The path ID - uniquely identifies a passenger+path
         bool    hyperpath_;             ///< If true, find path using stochastic algorithm
         int     origin_taz_id_;         ///< Origin of path
         int     destination_taz_id_;    ///< Destination of path
@@ -24,6 +22,8 @@ namespace fasttrips {
         double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
         double  value_of_time_;         ///< Value of time, in currency_type/hour
         bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
+        std::string person_id_;         ///< Person ID
+        std::string person_trip_id_;    ///< Person Trip ID
         std::string user_class_;        ///< User class string
         std::string purpose_;           ///< Purpose string
         std::string access_mode_;       ///< Access demand mode

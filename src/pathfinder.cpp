@@ -549,14 +549,14 @@ namespace fasttrips {
         if (path_spec.trace_) {
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
-            ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
+            ss << "fasttrips_trace_" << path_spec.person_id_ << "-" << path_spec.person_trip_id_ << ".log";
             // append because this will happen across iterations
             std::ios_base::openmode omode = std::ios_base::out;
             if (path_spec.iteration_ > 1 || path_spec.pathfinding_iteration_ > 1) {
                 omode = omode | std::ios_base::app; // append
             }
             trace_file.open(ss.str().c_str(), omode);
-            trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
+            trace_file << "Tracing assignment of person " << path_spec.person_id_ << " with person_trip_id" << path_spec.person_trip_id_ << std::endl;
             trace_file << "iteration_       = " << path_spec.iteration_ << std::endl;
             trace_file << "pathfinding_iter = " << path_spec.pathfinding_iteration_ << std::endl;
             trace_file << "outbound_        = " << path_spec.outbound_  << std::endl;
@@ -575,7 +575,7 @@ namespace fasttrips {
 
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
-            ss2 << "fasttrips_labels_ids_" << path_spec.path_id_ << ".csv";
+            ss2 << "fasttrips_labels_ids_" << path_spec.person_id_ << "-" << path_spec.person_trip_id_ << ".csv";
             stopids_file.open(ss2.str().c_str(), omode);
             stopids_file << "stop_id,stop_id_label_iter,is_trip,label_stop_cost" << std::endl;
         }
@@ -796,7 +796,7 @@ namespace fasttrips {
 
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
-            ss << "fasttrips_labels_" << path_spec.path_id_ << ".csv";
+            ss << "fasttrips_labels_" << path_spec.person_id_ << "-" << path_spec.person_trip_id_ << ".csv";
             label_file.open(ss.str().c_str(), ((path_spec.iteration_ == 1) && (path_spec.pathfinding_iteration_ == 1))? std::ios_base::out : std::ios_base::out | std::ios_base::app);
             label_file << "label_iteration,link,node ID,time,mode,trip_id,link_time,link_cost,cost,AB" << std::endl;
         }
@@ -858,7 +858,7 @@ namespace fasttrips {
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class/purpose (1) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return false;
         }
 
@@ -1120,7 +1120,7 @@ namespace fasttrips {
             // this shouldn't happen because of the shortcut
             std::cerr << "Couldn't find any weights configured for user class/purpose (2) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return;
         }
 
@@ -1601,7 +1601,7 @@ namespace fasttrips {
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class/purpose (3) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return false;
         }
 
@@ -1665,7 +1665,7 @@ namespace fasttrips {
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class/purpose (4) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return false;
         }
 
@@ -2006,9 +2006,9 @@ namespace fasttrips {
             {
                 const Path* low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
                 if (low_cost_path == NULL) {
-                    std::cerr << "No low cost path found for path_id " << path_spec.path_id_ << std::endl;
+                    std::cerr << "No low cost path found for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
                 } else if (real_low_cost_path->cost() < low_cost_path->cost()) {
-                    std::cerr << "Real low cost path not found for path_id " << path_spec.path_id_ << std::endl;
+                    std::cerr << "Real low cost path not found for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
                 } else {
                     std::cerr << "Real low cost path found" << std::endl;
                 }

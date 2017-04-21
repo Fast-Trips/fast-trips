@@ -703,14 +703,13 @@ class Route(object):
                                 Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
                                 Assignment.SIM_COL_PAX_FREE_TRANSFER], axis=1, inplace=True)
 
-        orig_columns = list(trip_links_df.columns.values)
-        return_columns = orig_columns + \
-           [Assignment.SIM_COL_PAX_FARE,
-            Assignment.SIM_COL_PAX_FARE_PERIOD,
-            Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
-            Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
-            Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
-            Assignment.SIM_COL_PAX_FREE_TRANSFER]
+        orig_columns     = list(trip_links_df.columns.values)
+        fare_columns     = [Assignment.SIM_COL_PAX_FARE,
+                            Assignment.SIM_COL_PAX_FARE_PERIOD]
+        transfer_columns = [Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
+                            Route.FARE_TRANSFER_RULES_COLUMN_TYPE,
+                            Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
+                            Assignment.SIM_COL_PAX_FREE_TRANSFER]
 
         # give them a unique index and store it for later
         trip_links_df.reset_index(drop=True, inplace=True)
@@ -899,19 +898,24 @@ class Route(object):
         # put them together
         trip_links_df = pandas.concat([trip_links_matched, trip_links_unmatched], axis=0, copy=False)
         trip_links_df.sort_values(by=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                      Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                      Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                       Passenger.PF_COL_PATH_NUM,
                                       Passenger.PF_COL_LINK_NUM],
                                       inplace=True)
         del trip_links_matched
         del trip_links_unmatched
 
-        FastTripsLogger.debug("trip_links_df (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head())))
-
         # rename price to fare
         trip_links_df.rename(columns={Route.FARE_ATTR_COLUMN_PRICE:Assignment.SIM_COL_PAX_FARE}, inplace=True)
 
         # join fails mean 0
         trip_links_df.fillna(value={Assignment.SIM_COL_PAX_FARE:0.0}, inplace=True)
+
+        # reorder columns
+        trip_links_df = trip_links_df[orig_columns + fare_columns + [Route.FARE_ATTR_COLUMN_TRANSFERS, Route.FARE_ATTR_COLUMN_TRANSFER_DURATION]]
+
+        FastTripsLogger.debug("trip_links_df (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head())))
 
         # make sure we didn't lose or add any
         assert len(trip_links_df) == num_trip_links
@@ -922,7 +926,7 @@ class Route(object):
         trip_links_df = self.apply_free_transfers(trip_links_df)
 
         # drop other columns
-        trip_links_df = trip_links_df[return_columns]
+        trip_links_df = trip_links_df[orig_columns + fare_columns + transfer_columns]
 
         return trip_links_df
 

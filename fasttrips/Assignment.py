@@ -146,8 +146,8 @@ class Assignment:
     #: Skip these passengers
     SKIP_PERSON_IDS                 = None
 
-    #: Trace these passengers
-    TRACE_PERSON_IDS                = []
+    #: Trace these persons/person trips (a list of tuples)
+    TRACE_IDS                       = []
 
     #: Prepend the route id to the trip id?  This is for readability in debugging, since
     #: route IDs are typically more readable and trip ids are inscrutable
@@ -273,7 +273,7 @@ class Assignment:
                       'skim_end_time'                   :'10:00',
                       'capacity_constraint'             :'False',
                       'skip_person_ids'                 :'None',
-                      'trace_person_ids'                :'None',
+                      'trace_ids'                       :[],
                       'debug_trace_only'                :'False',
                       'debug_num_trips'                 :-1,
                       'debug_output_columns'            :'False',
@@ -322,7 +322,7 @@ class Assignment:
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.SKIP_PERSON_IDS          = eval(parser.get       ('fasttrips','skip_person_ids'))
-        Assignment.TRACE_PERSON_IDS         = eval(parser.get       ('fasttrips','trace_person_ids'))
+        Assignment.TRACE_IDS                = eval(parser.get       ('fasttrips','trace_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.DEBUG_OUTPUT_COLUMNS          = parser.getboolean('fasttrips','debug_output_columns')
@@ -397,7 +397,7 @@ class Assignment:
         parser.set('fasttrips','skim_end_time',                 Assignment.SKIM_END_TIME.strftime('%H:%M'))
         parser.set('fasttrips','capacity_constraint',           'True' if Assignment.CAPACITY_CONSTRAINT else 'False')
         parser.set('fasttrips','skip_person_ids',               '%s' % str(Assignment.SKIP_PERSON_IDS))
-        parser.set('fasttrips','trace_person_ids',              '%s' % str(Assignment.TRACE_PERSON_IDS))
+        parser.set('fasttrips','trace_ids',                     '%s' % str(Assignment.TRACE_IDS))
         parser.set('fasttrips','debug_trace_only',              'True' if Assignment.DEBUG_TRACE_ONLY else 'False')
         parser.set('fasttrips','debug_num_trips',               '%d' % Assignment.DEBUG_NUM_TRIPS)
         parser.set('fasttrips','debug_output_columns',          'True' if Assignment.DEBUG_OUTPUT_COLUMNS else 'False')
@@ -540,15 +540,17 @@ class Assignment:
         FastTripsLogger.debug("merge_pathsets(): new_pathset_links_df len=%d head=\n%s" % (len(new_pathset_links_df), new_pathset_links_df.head().to_string()))
         FastTripsLogger.debug("merge_pathsets() dtypes=\n%s" % str(pathset_links_df.dtypes))
 
+
+        FastTripsLogger.debug("merge_pathsets():     pathfind_trip_list_df len=%d head=\n%s" % (len(    pathfind_trip_list_df),     pathfind_trip_list_df.head().to_string()))
         # TODO: This might be inefficient...
 
         # filter out the new pathset person trips from pathset_paths_df
-        pathfind_trip_list_df["new"] = 1
-        pathset_paths_df = pandas.merge(left =pathset_paths_df,
-                                        right=pathfind_trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"new"]],
-                                        how  ="left")
-        pathset_paths_df = pathset_paths_df.loc[pandas.isnull(pathset_paths_df["new"])]
-        pathset_paths_df.drop(["new"], axis=1, inplace=True)
+        pathset_paths_df = pandas.merge(left     =pathset_paths_df,
+                                        right    =pathfind_trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]],
+                                        how      ="left",
+                                        indicator=True)
+        pathset_paths_df = pathset_paths_df.loc[pathset_paths_df["_merge"]=="left_only"]
+        pathset_paths_df.drop(["_merge"], axis=1, inplace=True)
         FastTripsLogger.debug("Filtered to %d pathset_paths_df rows" % len(pathset_paths_df))
         # TODO: error prone, make this cleaner with where it's initialized elsewhere
         new_pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN ] = pandas.Categorical([Assignment.CHOSEN_NOT_CHOSEN_YET]*len(new_pathset_paths_df),
@@ -559,11 +561,12 @@ class Assignment:
         FastTripsLogger.debug("Concatenated so pathset_paths_df has %d rows" % len(pathset_paths_df))
 
         # filter out the new pathset person trips from pathset_links_df
-        pathset_links_df = pandas.merge(left =pathset_links_df,
-                                        right=pathfind_trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"new"]],
-                                        how  ="left")
-        pathset_links_df = pathset_links_df.loc[pandas.isnull(pathset_links_df["new"])]
-        pathset_links_df.drop(["new"], axis=1, inplace=True)
+        pathset_links_df = pandas.merge(left     =pathset_links_df,
+                                        right    =pathfind_trip_list_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]],
+                                        how      ="left",
+                                        indicator=True)
+        pathset_links_df = pathset_links_df.loc[pathset_links_df["_merge"]=="left_only"]
+        pathset_links_df.drop(["_merge"], axis=1, inplace=True)
         FastTripsLogger.debug("Filtered to %d pathset_links_df rows" % len(pathset_links_df))
         # append
         pathset_links_df = pandas.concat([pathset_links_df, new_pathset_links_df], axis=0)
@@ -573,7 +576,6 @@ class Assignment:
         FastTripsLogger.debug("merge_pathsets():     pathset_links_df len=%d head=\n%s\ntail=\n%s" % (len(pathset_links_df), pathset_links_df.head().to_string(),pathset_links_df.tail().to_string()))
 
         # done with this
-        pathfind_trip_list_df.drop(["new"], axis=1, inplace=True)
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
@@ -731,7 +733,7 @@ class Assignment:
         # We only need to do this once
         if iteration == 1 and pathfinding_iteration == 1:
             if Assignment.DEBUG_TRACE_ONLY:
-                FT.passengers.trip_list_df = FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)]
+                FT.passengers.trip_list_df = FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]
             else:
                 if Assignment.DEBUG_NUM_TRIPS > 0 and len(FT.passengers.trip_list_df) > Assignment.DEBUG_NUM_TRIPS:
                     FastTripsLogger.info("Truncating trip list to %d trips" % Assignment.DEBUG_NUM_TRIPS)
@@ -756,7 +758,7 @@ class Assignment:
         if est_paths_to_find == 0:
             return 0
 
-        info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-2))
+        info_freq           = pow(10, int(math.log(est_paths_to_find+1,10)-1))
         if info_freq < 1: info_freq = 1
         # info_freq = 1 # DEBUG CRASH
 
@@ -798,9 +800,9 @@ class Assignment:
                 trip_list_id      = path_dict[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
                 person_id         = path_dict[Passenger.TRIP_LIST_COLUMN_PERSON_ID]
                 person_trip_id    = path_dict[Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]
-                trace_person      = person_id in Assignment.TRACE_PERSON_IDS
+                do_trace          = path_dict[Passenger.TRIP_LIST_COLUMN_TRACE]
 
-                if Assignment.DEBUG_TRACE_ONLY and not trace_person: continue
+                if Assignment.DEBUG_TRACE_ONLY and not do_trace: continue
 
                 # first iteration -- create path objects
                 if iteration==1:
@@ -819,14 +821,14 @@ class Assignment:
                 if num_processes > 1:
                     todo_queue.put( trip_pathset )
                 else:
-                    if trace_person:
-                        FastTripsLogger.debug("Tracing assignment of person_id %s" % str(person_id))
+                    if do_trace:
+                        FastTripsLogger.debug("Tracing assignment of person_id %s and trip %s" % (person_id, person_trip_id))
 
                     # do the work
                     (pathdict, perf_dict) = \
                         Assignment.find_trip_based_pathset(iteration, pathfinding_iteration, trip_pathset,
                                                            Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                                                           trace=trace_person)
+                                                           trace=do_trace)
                     num_paths_sought += 1
 
                     trip_pathset.pathdict = pathdict
@@ -868,9 +870,8 @@ class Assignment:
                             pathset         = FT.passengers.get_pathset(trip_list_id)
                             pathset.pathdict= result[3]
                             perf_dict       = result[4]
-                            (person_id,person_trip_id) = FT.passengers.get_person_id(trip_list_id)
 
-                            FT.performance.add_info(iteration, pathfinding_iteration, person_id, person_trip_id, perf_dict)
+                            FT.performance.add_info(iteration, pathfinding_iteration, pathset.person_id, pathset.person_trip_id, perf_dict)
 
                             num_paths_sought += 1
                             if pathset.path_found():
@@ -977,13 +978,13 @@ class Assignment:
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
          bytes_workingset, bytes_privateusage) = \
-            _fasttrips.find_pathset(iteration, pathfinding_iteration, int(pathset.person_id_num), pathset.trip_list_id_num, hyperpath,
+            _fasttrips.find_pathset(iteration, pathfinding_iteration, hyperpath, pathset.person_id, pathset.person_trip_id,
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
                                  1 if pathset.outbound else 0, float(pathset.pref_time_min), pathset.vot,
                                  1 if trace else 0)
         # FastTripsLogger.debug("C++ extension complete")
-        # FastTripsLogger.debug("Finished finding path for person %s trip list id num %d" % (pathset.person_id, pathset.trip_list_id_num))
+        FastTripsLogger.debug("Finished finding path for person %s trip %s" % (pathset.person_id, pathset.person_trip_id))
         pathdict = {}
         row_num  = 0
 
@@ -1078,9 +1079,9 @@ class Assignment:
 
         Returns the same dataframe but with four additional columns (replacing them if they're already there).
         """
-        if False and len(Assignment.TRACE_PERSON_IDS) > 0:
+        if False and len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("find_passenger_vehicle_times(): input pathset_links_df len=%d\n%s" % \
-                                  (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
+                                  (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
 
         if Assignment.SIM_COL_PAX_BOARD_TIME in list(pathset_links_df.columns.values):
             pathset_links_df.drop([Assignment.SIM_COL_PAX_BOARD_TIME,
@@ -1135,9 +1136,9 @@ class Assignment:
                                '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
 
-        if False and len(Assignment.TRACE_PERSON_IDS) > 0:
+        if False and len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df len=%d\n%s" % \
-                                  (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
+                                  (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
         return pathset_links_df
 
     @staticmethod
@@ -1362,7 +1363,8 @@ class Assignment:
         pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME]<numpy.timedelta64(0,'m'), Assignment.SIM_COL_MISSED_XFER] = 1
 
         # count how many are valid (sum of invalid = 0 for the trip list id + path)
-        pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+        pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, # sort by this
+                                                             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                              Passenger.PF_COL_PATH_NUM]).aggregate({Assignment.SIM_COL_MISSED_XFER:"sum" })
 
@@ -1748,12 +1750,11 @@ class Assignment:
 
         while True:
             FastTripsLogger.info("Simulation Iteration %d" % simulation_iteration)
-            for trace_pax in Assignment.TRACE_PERSON_IDS:
-                FastTripsLogger.debug("Initial pathset_links_df for %s\n%s" % \
-                   (str(trace_pax), pathset_links_df.loc[pathset_links_df.person_id==trace_pax].to_string()))
-
-                FastTripsLogger.debug("Initial pathset_paths_df for %s\n%s" % \
-                   (str(trace_pax), pathset_paths_df.loc[pathset_paths_df.person_id==trace_pax].to_string()))
+            # for trace_tuple in Assignment.TRACE_PERSON_IDS:
+            #     FastTripsLogger.debug("Initial pathset_links_df for %s\n%s" % \
+            #        (str(trace_pax), pathset_links_df.loc[pathset_links_df.person_id==trace_pax].to_string()))
+            #     FastTripsLogger.debug("Initial pathset_paths_df for %s\n%s" % \
+            #        (str(trace_pax), pathset_paths_df.loc[pathset_paths_df.person_id==trace_pax].to_string()))
 
             ######################################################################################################
             FastTripsLogger.info("  Step 1. Find out board/alight times for all pathset links from vehicle times")
@@ -1835,6 +1836,7 @@ class Assignment:
                              drop_pathfinding_columns=not Assignment.DEBUG_OUTPUT_COLUMNS)
         chosen_paths_df.drop(["iteration", "pathfinding_iteration"], axis=1, inplace=True)
 
+
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
 
 
@@ -1879,13 +1881,13 @@ def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worke
         # do the work
         pathset = todo
 
-        FastTripsLogger.info("Processing person %20s path %d" % (pathset.person_id, pathset.trip_list_id_num))
+        FastTripsLogger.info("Processing person %20s trip %20s" % (pathset.person_id, pathset.person_trip_id))
         # communicate it to the parent
-        done_queue.put( (worker_num, "STARTING", pathset.person_id, pathset.trip_list_id_num ))
+        done_queue.put( (worker_num, "STARTING", pathset.person_id, pathset.person_trip_id ))
 
         trace_person = False
-        if pathset.person_id in Assignment.TRACE_PERSON_IDS:
-            FastTripsLogger.debug("Tracing assignment of person %s" % pathset.person_id)
+        if (pathset.person_id, pathset.person_trip_id) in Assignment.TRACE_IDS:
+            FastTripsLogger.debug("Tracing assignment of person %s trip %s" % (pathset.person_id, pathset.person_trip_id))
             trace_person = True
 
         try:
