@@ -1,5 +1,5 @@
 [fasttrips]
-trace_person_ids              = ['tracey']
+trace_ids                     = [('tracey','trip_191')]
 number_of_processes           = 1
 debug_output_columns          = True
 
