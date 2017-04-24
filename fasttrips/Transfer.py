@@ -251,13 +251,20 @@ class Transfer:
         # nothing to do
         if len_transfer_links_df == 0:
             return transfer_links_df
+        if len(self.transfers_df) == 0:
+            return transfer_links_df
 
         # these will be filled for route matches
         transfer_links_done = pandas.DataFrame()
 
         # match on both from route and to route
-        transfers_with_routes_df = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].notnull() ]
-        transfers_wo_routes_df   = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].isnull()  ]
+        if Transfer.TRANSFERS_COLUMN_FROM_ROUTE not in self.transfers_df.columns.values:
+            transfers_with_routes_df = pandas.DataFrame()
+            transfers_wo_routes_df   = self.transfers_df
+        else:
+            transfers_with_routes_df = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].notnull() ]
+            transfers_wo_routes_df   = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].isnull()  ]
+
         FastTripsLogger.debug("add_transfer_attributes: have %d transfers with routes and %d transfers without routes" % \
                               (len(transfers_with_routes_df), len(transfers_wo_routes_df)))
 
@@ -341,13 +348,14 @@ class Transfer:
             # FastTripsLogger.debug("transfer_links_df split into %d not done:\n%s" % (len(transfer_links_df), transfer_links_df.head(20).to_string()))
 
         # match on both from stops ONLY
-        transfer_links_df = pandas.merge(left     =transfer_links_df,
-                                         left_on  =["A_id_num","B_id_num"],
-                                         right    =transfers_wo_routes_df,
-                                         right_on =[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                    Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
-                                         how      ="left")
-        transfer_links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM], axis=1, inplace=True)
+        if len(transfers_wo_routes_df) > 0:
+            transfer_links_df = pandas.merge(left     =transfer_links_df,
+                                             left_on  =["A_id_num","B_id_num"],
+                                             right    =transfers_wo_routes_df,
+                                             right_on =[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                        Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
+                                             how      ="left")
+            transfer_links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM], axis=1, inplace=True)
 
         # put the two parts back together
         if len(transfer_links_done) > 0:

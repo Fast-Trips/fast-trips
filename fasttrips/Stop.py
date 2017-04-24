@@ -284,7 +284,12 @@ class Stop:
         """
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
         adds the stop zone id as a column named *zone_colname* and returns it.
+
+        If no zone_ids specified, this is a no-op.
         """
+        if Stop.STOPS_COLUMN_ZONE_ID not in self.stops_df.columns.values:
+            return input_df
+
         input_df = pandas.merge(left    =input_df,
                                 right   = self.stops_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_ZONE_ID]],
                                 how     ="left",

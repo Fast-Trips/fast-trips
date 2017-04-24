@@ -703,6 +703,16 @@ class Route(object):
                                 Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT,
                                 Assignment.SIM_COL_PAX_FREE_TRANSFER], axis=1, inplace=True)
 
+        # no fares configured
+        if len(self.fare_rules_df) == 0:
+            trip_links_df[Assignment.SIM_COL_PAX_FARE                      ] = 0
+            trip_links_df[Assignment.SIM_COL_PAX_FARE_PERIOD               ] = None
+            trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD] = None
+            trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE            ] = None
+            trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT          ] = None
+            trip_links_df[Assignment.SIM_COL_PAX_FREE_TRANSFER             ] = None
+            return trip_links_df
+
         orig_columns     = list(trip_links_df.columns.values)
         fare_columns     = [Assignment.SIM_COL_PAX_FARE,
                             Assignment.SIM_COL_PAX_FARE_PERIOD]
