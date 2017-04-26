@@ -354,7 +354,7 @@ namespace fasttrips {
 
         bool chrono_order   = (!outbound_ && !enumerating_) || (outbound_ && enumerating_);
         if (path_spec.trace_ && !hush) {
-            trace_file << "calculatePathCost: (chrono? " << (chrono_order ? "yes, " : "no,");
+            trace_file << "Path::calculateCost() (chrono? " << (chrono_order ? "yes, " : "no,");
             trace_file << " cost: " << initial_cost_ << ", fare: " << initial_fare_ << ")" << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;

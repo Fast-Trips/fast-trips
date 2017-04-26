@@ -2,6 +2,16 @@
 #include <exception>
 #include <stdexcept>
 
+// Uncomment for debug detail for LabelStopQueue
+// #define DEBUG_LSQ
+
+// Debug macros. If debug is not on, the if (trace) isn't even executed.
+#ifdef DEBUG_LSQ
+#  define D_LSQ(x) do { if (trace) { x } } while (0)
+#else
+#  define D_LSQ(x) do {} while (0)
+#endif
+
 namespace fasttrips {
 
     /**
@@ -132,14 +142,14 @@ namespace fasttrips {
 
                 // if it's not valid then continue
                 if (!ls_iter->second.valid_) {
-                    if (trace) {
+                    D_LSQ(
                         trace_file << "Skipping stop A (" << stop_num_to_stop.find(ls.stop_id_)->second.stop_str_ << "," << ls.is_trip_ << ")";
                         trace_file << "; valid " << ls_iter->second.valid_;
                         trace_file << "; count " << ls_iter->second.count_;
                         trace_file << "; map label " << ls_iter->second.label_;
                         trace_file << "; priq label " << ls.label_;
                         trace_file << "; priq size " << labelstop_priority_queue_.size() << std::endl;
-                    }
+                    );
                     ls_iter->second.count_ -= 1;
                     labelstop_priority_queue_.pop();
                     continue;
@@ -148,20 +158,20 @@ namespace fasttrips {
                 // this stop id is in the queue as valid
                 // but only the matching label is valid
                 if (ls_iter->second.label_ != ls.label_) {
-                    if (trace) {
+                    D_LSQ(
                         trace_file << "Skipping stop B (" << stop_num_to_stop.find(ls.stop_id_)->second.stop_str_ << "," << ls.is_trip_ << ")";
                         trace_file << "; valid " << ls_iter->second.valid_;
                         trace_file << "; count " << ls_iter->second.count_;
                         trace_file << "; map label " << ls_iter->second.label_;
                         trace_file << "; priq label " << ls.label_;
                         trace_file << "; priq size " << labelstop_priority_queue_.size() << std::endl;
-                    }
+                    );
                     ls_iter->second.count_ -= 1;
                     labelstop_priority_queue_.pop();
                     continue;
                 }
 
-                if (trace) {
+                D_LSQ(
                     trace_file << "LabelStopQueue returning (" << stop_num_to_stop.find(ls.stop_id_)->second.stop_str_ << "," << ls.is_trip_ << ")";
                     trace_file << "; valid " << ls_iter->second.valid_;
                     trace_file << "; count " << ls_iter->second.count_;
@@ -169,7 +179,7 @@ namespace fasttrips {
                     trace_file << "; priq label " << ls.label_;
                     trace_file << "; priq size " << labelstop_priority_queue_.size();
                     trace_file << "; valid count " << valid_count_ << std::endl;
-                }
+                );
                 // else the map label is equal to the priority queue one, it's the valid one -- return it
                 LabelStop to_ret = ls;
                 labelstop_priority_queue_.pop();

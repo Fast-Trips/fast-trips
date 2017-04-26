@@ -27,6 +27,16 @@ const char kPathSeparator =
 
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( std::ostringstream() << std::dec << x ).str()
 
+// Uncomment for debug detail for link cost.
+// #define DEBUG_LINKCOST
+
+// Debug macros. If debug is not on, the if (trace) isn't even executed.
+#ifdef DEBUG_LINKCOST
+#  define D_LINKCOST(x) do { if (path_spec.trace_) { x } } while (0)
+#else
+#  define D_LINKCOST(x) do {} while (0)
+#endif
+
 static std::ofstream label_file;
 static std::ofstream stopids_file;
 
@@ -705,10 +715,10 @@ namespace fasttrips {
     {
         // iterate through the weights
         double cost = 0;
-        if (true && path_spec.trace_ && !hush) {
+        D_LINKCOST(
             trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << modeStringForNum(supply_mode_num);
             trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
-        }
+        );
 
         NamedWeights::const_iterator iter_weights;
         for (iter_weights  = weights.begin();
@@ -726,11 +736,11 @@ namespace fasttrips {
             }
 
             cost += iter_weights->second * iter_attr->second;
-            if (true && path_spec.trace_ && !hush) {
+            D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
                 trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
                 trace_file << " x " << iter_attr->second << std::endl;
-            }
+            );
         }
         // fare
         static const std::string fare_str("fare");
@@ -739,16 +749,16 @@ namespace fasttrips {
             //       (60 min/hour)*(hours/vot currency) x (currency)
             cost += (60.0/path_spec.value_of_time_) * fare_attr->second;
 
-            if (true && path_spec.trace_ && !hush) {
+            D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
                 trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (60.0/path_spec.value_of_time_);
                 trace_file << " x " << fare_attr->second << std::endl;
-            }
+            );
         }
-        if (true && path_spec.trace_ && !hush) {
+        D_LINKCOST(
             trace_file << std::setw(26) << std::setfill(' ') << "final cost" << ":  = ";
             trace_file << std::setw(13) << std::setprecision(4) << std::fixed << cost << std::endl;
-        }
+        );
         return cost;
     }
 
@@ -1354,7 +1364,7 @@ namespace fasttrips {
                     // this is where it gets painful... if we have a fareperiod, try to check transfer fare rules and guess the right fare
                     if (fp) { fare     = current_stop_state.getFareWithTransfer(path_spec, trace_file, *this, *fp, stop_states); }
 
-                    if (path_spec.trace_) {
+                    if (false && path_spec.trace_) {
                         if (path_spec.outbound_) {
                             trace_file << "trip " << tripStringForId(possible_board_alight.trip_id_)
                                        << ", stop " << stopStringForId(possible_board_alight.stop_id_)

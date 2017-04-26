@@ -15,6 +15,23 @@
 #include <sstream>
 #include <stack>
 
+// Uncomment for debug detail for probabilities
+// #define DEBUG_PROBS
+// Uncomment for debug detail for fare calculations
+// #define DEBUG_FARE
+
+#ifdef DEBUG_PROBS
+#  define D_PROBS(x) do { if (path_spec.trace_) { x } } while (0)
+#else
+#  define D_PROBS(x) do {} while (0)
+#endif
+
+#ifdef DEBUG_FARE
+#  define D_FARE(x) do { if (path_spec.trace_) { x } } while (0)
+#else
+#  define D_FARE(x) do {} while (0)
+#endif
+
 namespace fasttrips {
 
     bool isTrip(const int& mode)
@@ -538,10 +555,10 @@ namespace fasttrips {
         ostr << std::setw(12) << "linkdist";
         ostr << std::setw(13) << "cost";
         ostr << std::setw( 9) << "iter";
-        ostr << std::setw(10) << (path_spec.outbound_ ? "arr_time" : "dep_time");
+        ostr << std::setw(11) << (path_spec.outbound_ ? "arr_time" : "dep_time");
         ostr << std::setw( 8) << "prob";
         ostr << std::setw( 8) << "cumprob";
-        ostr << std::setw(22) << "fareperiod";
+        ostr << std::setw(27) << "fareperiod";
     }
 
     void Hyperlink::printStopState(std::ostream& ostr, int stop_id, const StopState& ss, const PathSpecification& path_spec, const PathFinder& pf)
@@ -590,7 +607,7 @@ namespace fasttrips {
         ostr << "  ";
         ostr << std::setw(6) << ss.cum_prob_i_;
         ostr << "  ";
-        ostr << std::setw(20) << (ss.fare_period_ ? ss.fare_period_->fare_period_ : "");
+        ostr << std::setw(25) << (ss.fare_period_ ? ss.fare_period_->fare_period_ : "");
     }
 
     void Hyperlink::printLinkSet(std::ostream& ostr, int stop_id, bool is_trip, const LinkSet& linkset, const PathSpecification& path_spec, const PathFinder& pf)
@@ -691,6 +708,7 @@ namespace fasttrips {
     // Set up probabilities for the links in the hyperlink.
     // If path_so_far is passed, then uses that to update trip fares and costs
     // Return the max cum probability for the linkset
+    // Turn on verbose debug trace with DEBUG_PROBS
     int Hyperlink::setupProbabilities(const PathSpecification& path_spec, std::ostream& trace_file,
                                       const PathFinder& pf, bool trip_linkset,
                                       const Path* path_so_far)
@@ -698,11 +716,11 @@ namespace fasttrips {
         LinkSet& linkset = (trip_linkset ? linkset_trip_ : linkset_nontrip_);
 
         // Build a vector of probabilities in order of the costmap iteration
-        if (path_spec.trace_) {
+        D_PROBS(
             trace_file << "setupProbabilities() cost_map_.size = " << linkset.cost_map_.size() << std::endl;
             Hyperlink::printStopStateHeader(trace_file, path_spec);
             trace_file << std::endl;
-        }
+        );
 
         int    valid_links      = 0;
         double sum_exp          = 0;
@@ -787,15 +805,15 @@ namespace fasttrips {
                 }
 
                 // these are ready to log
-                if (path_spec.trace_) {
+                D_PROBS(
                     Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
                     trace_file << std::endl;
-                }
+                );
             }
         }
-        if (path_spec.trace_) {
+        D_PROBS(
             trace_file << "valid_links=" << valid_links << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << "; sum_exp=" << sum_exp << std::endl;
-        }
+        );
 
         // fail -- nothing is valid
         if (valid_links == 0) { return linkset.max_cum_prob_i_; }
@@ -954,9 +972,9 @@ namespace fasttrips {
         // it can't be negative
         if (*price_adj < 0) { *price_adj = 0; }
 
-        if (path_spec.trace_) {
+        D_FARE(
             trace_file << "updateFare() price=" << price << "; price_last=" << price_last << std::endl;
-        }
+        );
 
         // ss is the fare we're adjusting so let's do it!
         if (last_is_prev) {
@@ -1022,7 +1040,7 @@ namespace fasttrips {
             return fare_period.price_;
         }
 
-        if (path_spec.trace_) {
+        D_FARE(
             trace_file << "getFareWithTransfer() -- original fareperiod " << fare_period.fare_period_ << "; original fare price " << fare_period.price_ << std::endl;
             if (path_spec.outbound_) {
                 trace_file << "              next_fare_period nextfar    fare    prob  transfer => new_nextfar => prob x new_nextfar" << std::endl;
@@ -1030,7 +1048,7 @@ namespace fasttrips {
                 trace_file << "              prev_fare_period prevfar    fare    prob  transfer =>    new_fare => prob x    new_fare" << std::endl;
             }
             // print(trace_file, path_spec, pf);
-        }
+        );
 
         double remaining_prob      = 1.0;
         // this represents the price for the latter fare period
@@ -1085,7 +1103,7 @@ namespace fasttrips {
             // probability not accounted for by transfer
             remaining_prob -= fp_iter->second;
 
-            if (path_spec.trace_) {
+            D_FARE(
                 trace_file << std::setw(30) << std::setfill(' ') << other_fp->fare_period_ << "  ";
                 trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << other_fp->price_ << "  ";
                 trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << fare_period.price_ << "  ";
@@ -1094,14 +1112,14 @@ namespace fasttrips {
                 trace_file << std::setw(13) << std::setprecision(2) << std::fixed << *price_adj << "  ";
                 trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << new_price_adj << "  ";
                 trace_file << std::endl;
-            }
+            );
         }
         // if there's any remaining probability
         if (remaining_prob > 0.001) {
             double price_adj = (path_spec.outbound_ ? 0 : fare_period.price_);
             new_price_adj += price_adj*remaining_prob;
 
-            if (path_spec.trace_) {
+            D_FARE(
                 trace_file << std::setw(30) << std::setfill(' ') << "none" << "  ";
                 trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << 0.0 << "  ";
                 trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << std::setfill(' ') << fare_period.price_ << "  ";
@@ -1110,13 +1128,13 @@ namespace fasttrips {
                 trace_file << std::setw(13) << std::setprecision(2) << std::fixed << price_adj << "  ";
                 trace_file << std::setw( 6) << std::setprecision(2) << std::fixed << new_price_adj << "  ";
                 trace_file << std::endl;
-            }
+            );
         }
 
         // new_price_adj is now the new value of either the fare price or the next_fare price (if outbound)
         // if inbound, just use this best guess as the fare
         if (path_spec.outbound_ == false) {
-            if (path_spec.trace_) { trace_file << "Returning adjusted fare " << new_price_adj << std::endl; }
+            D_FARE(trace_file << "Returning adjusted fare " << new_price_adj << std::endl; );
             return new_price_adj;
         }
         // if outbound, new_price_adj is for the next fare period, which we can't change
@@ -1127,7 +1145,7 @@ namespace fasttrips {
             new_price_adj = fare_period.price_ - effective_discount;
             // make sure it's non-negative
             if (new_price_adj < 0) { new_price_adj = 0; }
-            if (path_spec.trace_) { trace_file << "Applied effective discount " <<  effective_discount << " to fare, returning " << new_price_adj << std::endl; }
+            D_FARE(trace_file << "Applied effective discount " <<  effective_discount << " to fare, returning " << new_price_adj << std::endl; );
             return new_price_adj;
         }
         return fare_period.price_;
