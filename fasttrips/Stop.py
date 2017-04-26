@@ -90,18 +90,19 @@ class Stop:
         self.stops_df = pandas.DataFrame(data=stop_dicts)
 
         # Read the fast-trips supplemental stops data file. Make sure stop ID is read as a string.
-        stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE),
-                                      skipinitialspace=True,
-                                      dtype={Stop.STOPS_COLUMN_STOP_ID:object})
-        # verify required columns are present
-        stops_ft_cols = list(stops_ft_df.columns.values)
-        assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
+        if os.path.exists(os.path.join(input_dir, Stop.INPUT_STOPS_FILE)):
+            stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE),
+                                          skipinitialspace=True,
+                                          dtype={Stop.STOPS_COLUMN_STOP_ID:object})
+            # verify required columns are present
+            stops_ft_cols = list(stops_ft_df.columns.values)
+            assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
 
-        # if more than one column, join to the stops dataframe
-        if len(stops_ft_cols) > 1:
-            self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
-                                         how='left',
-                                         on=Stop.STOPS_COLUMN_STOP_ID)
+            # if more than one column, join to the stops dataframe
+            if len(stops_ft_cols) > 1:
+                self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
+                                             how='left',
+                                             on=Stop.STOPS_COLUMN_STOP_ID)
 
 
         # Stop IDs are strings. Create a unique numeric stop ID.
