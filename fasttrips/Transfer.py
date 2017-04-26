@@ -158,6 +158,11 @@ class Transfer:
                                             Transfer.TRANSFERS_COLUMN_STOP_TO_STOP:False},
                                      inplace=True)
 
+            if Transfer.TRANSFERS_COLUMN_FROM_ROUTE not in self.transfers_df.columns.values:
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE] = None
+            if Transfer.TRANSFERS_COLUMN_TO_ROUTE not in self.transfers_df.columns.values:
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_TO_ROUTE] = None
+
             # support BOTH TRANSFERS_COLUMN_FROM_ROUTE and TRANSFERS_COLUMN_TO_ROUTE but not one
             one_route_specified_df = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].notnull()^
                                                             self.transfers_df[Transfer.TRANSFERS_COLUMN_TO_ROUTE].notnull() ]
@@ -380,15 +385,17 @@ class Transfer:
         transfers_df = transfers_df.loc[transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 3]
 
         # drop some of the attributes
-        transfers_df.drop([Transfer.TRANSFERS_COLUMN_TIME,                # use numerical version
-                           Transfer.TRANSFERS_COLUMN_FROM_STOP,           # use numerical version
-                           Transfer.TRANSFERS_COLUMN_TO_STOP,             # use numerical version
-                           Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,   # minute version is sufficient
-                           Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE, # don't know what to do with this
-                           Transfer.TRANSFERS_COLUMN_STOP_TO_STOP,        # not needed
-                           Transfer.TRANSFERS_COLUMN_FROM_ROUTE,          # TODO?
-                           Transfer.TRANSFERS_COLUMN_TO_ROUTE             # TODO?
-                          ], axis=1, inplace=True)
+        drop_attrs = [Transfer.TRANSFERS_COLUMN_TIME,                # use numerical version
+                      Transfer.TRANSFERS_COLUMN_FROM_STOP,           # use numerical version
+                      Transfer.TRANSFERS_COLUMN_TO_STOP,             # use numerical version
+                      Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,   # minute version is sufficient
+                      Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE, # don't know what to do with this
+                      Transfer.TRANSFERS_COLUMN_STOP_TO_STOP,        # not needed
+                      Transfer.TRANSFERS_COLUMN_FROM_ROUTE,          # TODO?
+                      Transfer.TRANSFERS_COLUMN_TO_ROUTE             # TODO?
+                     ]
+        keep_attrs = set(list(transfers_df.columns.values)) - set(drop_attrs)
+        transfers_df = transfers_df[list(keep_attrs)]
 
         # transfers time_min is really walk_time_min
         transfers_df["walk_time_min"] = transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN]
