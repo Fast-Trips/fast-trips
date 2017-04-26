@@ -373,21 +373,22 @@ class Trip:
         self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
 
         # Read the fast-trips supplemental stop times data file
-        stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE),
-                                           skipinitialspace=True,
-                                      dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
-                                             Trip.STOPTIMES_COLUMN_STOP_ID:object})
-        # verify required columns are present
-        stop_times_ft_cols = list(stop_times_ft_df.columns.values)
-        assert(Trip.STOPTIMES_COLUMN_TRIP_ID    in stop_times_ft_cols)
-        assert(Trip.STOPTIMES_COLUMN_STOP_ID    in stop_times_ft_cols)
+        if os.path.exists(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE)):
+            stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE),
+                                               skipinitialspace=True,
+                                          dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
+                                                 Trip.STOPTIMES_COLUMN_STOP_ID:object})
+            # verify required columns are present
+            stop_times_ft_cols = list(stop_times_ft_df.columns.values)
+            assert(Trip.STOPTIMES_COLUMN_TRIP_ID    in stop_times_ft_cols)
+            assert(Trip.STOPTIMES_COLUMN_STOP_ID    in stop_times_ft_cols)
 
-        # Join to the trips dataframe
-        if len(stop_times_ft_cols) > 2:
-            self.stop_times_df = pandas.merge(left=stop_times_df, right=stop_times_ft_df,
-                                              how='left',
-                                              on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                  Trip.STOPTIMES_COLUMN_STOP_ID])
+            # Join to the trips dataframe
+            if len(stop_times_ft_cols) > 2:
+                self.stop_times_df = pandas.merge(left=stop_times_df, right=stop_times_ft_df,
+                                                  how='left',
+                                                  on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                      Trip.STOPTIMES_COLUMN_STOP_ID])
 
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(self.stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))
