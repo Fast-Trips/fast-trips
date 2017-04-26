@@ -16,7 +16,7 @@ import collections,datetime,os,sys
 import numpy
 import pandas
 
-from .Error  import DemandInputErorr
+from .Error  import DemandInputError
 from .Logger import FastTripsLogger
 from .Route  import Route
 from .Stop   import Stop
