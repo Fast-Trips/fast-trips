@@ -21,7 +21,7 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
 
 ## Setup
 Follow the steps below to setup up fast-trips:
-*  We suggest that you work from a Python 2.7 [virtual environment][virtenv-url] in order to make sure you don't interfere with other python installations you can do this using the base virtenv package, conda, or using the Anaconda Navigator GUI.  Using conda: `conda create -n fasttrips python-2.7 anaconda`  `source activate fasttrips` . 
+*  We suggest that you work from a Python 2.7 [virtual environment][virtenv-url] in order to make sure you don't interfere with other python installations you can do this using the base virtenv package, conda, or using the Anaconda Navigator GUI.  Using conda: `conda create -n fasttrips python=2.7 anaconda`  `source activate fasttrips` . 
 *  Your VirtEnv should include [numpy][numpy-url],  [pandas][pandas-url], and [transitfeed][python-transitfeed-url] for reading GTFS Many *data analytics* Python distributions like [Anaconda][anaconda-url] bundle [numpy][numpy-url] and [pandas][pandas-url], but they can also be installed using the command `pip install <packagename>` within the virtual environment.  As a last resort, Windows users can also find binary package installers [here][python-packages-windows-url].  
 *  Install [Git][git-url] and clone the fast-trips repository (https://github.com/MetropolitanTransportationCommission/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.  
 *  Switch to the `develop` branch of the repository.  
