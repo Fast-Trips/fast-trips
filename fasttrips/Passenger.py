@@ -183,7 +183,7 @@ class Passenger:
             error_msg = "Missing person_id or person_trip_id fields:\n%s\n" % str(missing_person_ids)
             error_msg += "Use 0 for person_id for trips without corresponding person."
             FastTripsLogger.fatal(error_msg)
-            raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+            raise DemandInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
         # Drop (warn) on missing origins or destinations
         missing_ods = self.trip_list_df[ pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID])|
@@ -233,7 +233,7 @@ class Passenger:
                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                  self.trip_list_df.loc[self.trip_list_df["ID_dupes"]==True].to_string())
             FastTripsLogger.fatal(error_msg)
-            raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+            raise DemandInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
         # Create unique numeric index
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = self.trip_list_df.index + 1
@@ -275,7 +275,7 @@ class Passenger:
                 error_msg = "Even though a person list is given, failed to find person information for %d trips" % len(no_person_ids)
                 FastTripsLogger.fatal(error_msg)
                 FastTripsLogger.fatal("\n%s\n" % no_person_ids.to_string())
-                raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+                raise DemandInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
             # And then to households
             self.trip_list_df = pandas.merge(left=self.trip_list_df, right=self.households_df,
@@ -348,7 +348,7 @@ class Passenger:
         if len(invalid_time_target) > 0:
             error_msg = "Invalid value in column %s:\n%s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(invalid_time_target))
             FastTripsLogger.fatal(error_msg)
-            raise DemandInputErorr(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
+            raise DemandInputError(Passenger.INPUT_TRIP_LIST_FILE, error_msg)
 
         # set outbound
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_OUTBOUND] = (self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_ARRIVAL)
