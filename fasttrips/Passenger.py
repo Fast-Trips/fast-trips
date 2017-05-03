@@ -918,8 +918,9 @@ class Passenger:
 
         # add this as a category
         CHOSEN_VALUE = "iter%d.%02d sim%d" % (iteration, pathfinding_iteration, simulation_iteration)
-        Assignment.CHOSEN_CATEGORIES.append(CHOSEN_VALUE)
-        pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN].cat.add_categories(CHOSEN_VALUE, inplace=True)
+        if CHOSEN_VALUE not in Assignment.CHOSEN_CATEGORIES:
+            Assignment.CHOSEN_CATEGORIES.append(CHOSEN_VALUE)
+            pathset_paths_df[Assignment.SIM_COL_PAX_CHOSEN].cat.add_categories(CHOSEN_VALUE, inplace=True)
 
         # group to passenger trips
         pathset_paths_df_grouped = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
