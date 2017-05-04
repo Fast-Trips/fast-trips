@@ -39,8 +39,8 @@ class FastTrips:
     #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    def __init__(self, input_network_dir, input_demand_dir, output_dir,
-                 logname_append="", appendLog=False):
+    def __init__(self, input_network_dir, input_demand_dir, input_weights, run_config, 
+        output_dir,input_functions=None, logname_append="", appendLog=False):
         """
         Constructor.
 
@@ -51,6 +51,10 @@ class FastTrips:
         :type input_network_dir:  string
         :param input_demand_dir:  Location of demand csv files to read
         :type input_demand_dir:   string
+        :param input_weights:  Location of pathweight file
+        :type input_weights:   string
+        :param run_config:        Location of run configuraiton file.
+        :type run_config:         string
         :param output_dir:        Location to write output and log files.
         :type output_dir:         string
         :param logname_append:    Modifier for info and debug log filenames.  So workers can write their own logs.
@@ -76,13 +80,22 @@ class FastTrips:
         self.trips           = None
 
         #: string representing directory with input network data
-        Assignment.INPUT_NETWORK_DIR = input_network_dir
+        Assignment.INPUT_NETWORK_DIR  = input_network_dir
 
         #: string representing directory with input demand data
-        Assignment.INPUT_DEMAND_DIR  = input_demand_dir
+        Assignment.INPUT_DEMAND_DIR   = input_demand_dir
+        
+         #: string representing directory with input demand data
+        Assignment.INPUT_WEIGHTS      = input_weights
+        
+         #: string representing directory with input demand data
+        Assignment.CONFIGURATION_FILE = run_config
+        
+        #: string representing directory with input demand data
+        Assignment.CONFIGURATION_FUNCTIONS_FILE  = input_functions
 
         #: string representing directory in which to write our output
-        Assignment.OUTPUT_DIR        = output_dir
+        Assignment.OUTPUT_DIR         = output_dir
 
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
         self.gtfs_schedule      = None
@@ -96,7 +109,11 @@ class FastTrips:
         """
         Read the fast-trips assignment and path-finding configuration
         """
-        Assignment.read_configuration()
+        if Assignment.CONFIGURATION_FUNCTIONS_FILE: 
+            Assignment.read_functions(weights_file = Assignment.CONFIGURATION_FUNCTIONS_FILE)
+        Assignment.read_configuration(config_fullpath = Assignment.CONFIGURATION_FILE)
+        Assignment.read_weights(weights_file          = Assignment.INPUT_WEIGHTS)
+        
         Assignment.write_configuration(Assignment.OUTPUT_DIR)
 
     def read_input_files(self):

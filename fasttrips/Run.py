@@ -5,6 +5,9 @@ from .Error import ConfigurationError
 
 def run_setup(input_net_dir = '',
               input_demand_dir = '',
+              input_weights = '',
+              run_config = '',
+              input_functions = None,
               iters = 0,
               output_dir = '',
               output_folder = '',
@@ -20,6 +23,9 @@ def run_setup(input_net_dir = '',
     Named Keyword arguments:
         input_net_dir -- the input directory with GTFS-PLUS networks (required)
         input_demand_dir -- the input directory with the dyno-demand files (required)
+        input_weights -- the file with the pathweight parameters (required)
+        run_config -- the file with further run configs (required)
+        
         iters -- number of global iterations, integer (required)
     
         output_dir -- where to put the output folder. Will be created if it doesn't already exist.
@@ -27,6 +33,7 @@ def run_setup(input_net_dir = '',
     
         pathfinding_type -- one of ['stochastic','deterministic','file'] (default: stochastic)
         trace_only -- will only run demand for the trace.  Will not overwrite other output (default: False)
+        
     
     Unnamed keyword arguments:
         num_trips -- if specified, will process this number of trips and ignore the rest
@@ -55,6 +62,16 @@ def run_setup(input_net_dir = '',
         FastTripsLogger.fatal(msg)
         raise ConfigurationError("external input", msg)
         
+    if not input_weights:
+        msg = "Must specify where pathweight parameters are"
+        FastTripsLogger.fatal(msg)
+        raise ConfigurationError("external input", msg)
+        
+    if not run_config:
+        msg = "Must specify file with run configurations"
+        FastTripsLogger.fatal(msg)
+        raise ConfigurationError("external input", msg)
+        
     if pathfinding_type not in ['deterministic','stochastic','file']:
         msg = "pathfinding.type [%s] not defined. Expected values: %s" % (pathfinding_type,['deterministic','stochastic','file'])
         FastTripsLogger.fatal(msg)
@@ -80,7 +97,7 @@ def run_setup(input_net_dir = '',
         os.mkdir(full_output_dir)
     
     # Create fast-trips instance
-    ft = fasttrips.FastTrips(input_net_dir, input_demand_dir, full_output_dir)
+    ft = fasttrips.FastTrips(input_net_dir, input_demand_dir, input_weights, run_config, full_output_dir,input_functions=input_functions)
 
     # Read the configuration file and overwrite with any options called with the function call
     ft.read_configuration()
