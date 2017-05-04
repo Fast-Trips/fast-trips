@@ -557,9 +557,9 @@ class PathSet:
         """
         from .Assignment import Assignment
 
-        if len(Assignment.TRACE_PERSON_IDS) > 0:
-            FastTripsLogger.debug("split_transit_links: pathset_links_df (%d)\n%s" % (len(pathset_links_df),
-                                  pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
+        if len(Assignment.TRACE_IDS) > 0:
+            FastTripsLogger.debug("split_transit_links: pathset_links_df (%d) trace\n%s" % (len(pathset_links_df),
+                                  pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
             FastTripsLogger.debug("split_transit_links: pathset_links_df columns\n%s" % str(pathset_links_df.dtypes))
 
         veh_links_df = Trip.linkify_vehicle_trips(veh_trips_df, stops)
@@ -655,9 +655,9 @@ class PathSet:
         # renumber linknum?  Let's not bother
 
         # trace
-        if len(Assignment.TRACE_PERSON_IDS) > 0:
-            FastTripsLogger.debug("split_transit_links: path2 (%d)\n%s" % (len(path2),
-                                  path2.loc[path2[Passenger.TRIP_LIST_COLUMN_PERSON_ID].isin(Assignment.TRACE_PERSON_IDS)].to_string()))
+        if len(Assignment.TRACE_IDS) > 0:
+            FastTripsLogger.debug("split_transit_links: path2 (%d) trace\n%s" % (len(path2),
+                                  path2.loc[path2[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
         FastTripsLogger.debug("split_transit_links: path2 columns\n%s" % str(path2.dtypes))
         return path2
 
@@ -749,7 +749,7 @@ class PathSet:
             pathset_links_cost_df[Assignment.SIM_COL_PAX_BUMP_ITER] = -1
 
         if len(Assignment.TRACE_IDS) > 0:
-            FastTripsLogger.debug("calculate_cost: pathset_links_cost_df\n%s" % str(pathset_links_cost_df.loc[pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
+            FastTripsLogger.debug("calculate_cost: pathset_links_cost_df trace\n%s" % str(pathset_links_cost_df.loc[pathset_links_cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 
         # Inner join with the weights - now each weight has a row
         cost_df = pandas.merge(left    =pathset_links_cost_df,
