@@ -166,7 +166,9 @@ class FastTrips:
         # Do it!  Try it!
         try:
             r = Assignment.assign_paths(output_dir, self)
+            FastTripsLogger.info("Successfully completed!")
             return r
+
         except:
             print("Unexpected error:", sys.exc_info()[0])
             FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))
