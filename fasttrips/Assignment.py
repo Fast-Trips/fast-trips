@@ -34,9 +34,9 @@ class Assignment:
 
     """
     #: Configuration file for fasttrips
-    CONFIGURATION_FILE              = 'config_ft.txt'
+    CONFIGURATION_FILE              = None
     #: Configuration functions
-    CONFIGURATION_FUNCTIONS_FILE    = 'config_ft.py'
+    CONFIGURATION_FUNCTIONS_FILE    = None
 
     #: Output copy of the configuration file in case anything got overridden
     #: (Hmm naming conventions are a bit awkward here)
@@ -46,7 +46,9 @@ class Assignment:
     INPUT_NETWORK_DIR               = None
     #: Configuration: Input demand directory
     INPUT_DEMAND_DIR                = None
-    #: Configuration: Output directory
+    #: Configuration: Pathweight parameters
+    INPUT_WEIGHTS                = None
+    #: Configuration: Run Configuration
     OUTPUT_DIR                      = None
 
     #: Configuration: Maximum number of iterations to remove capacity violations. When
@@ -239,29 +241,29 @@ class Assignment:
         This does nothing.  Assignment methods are static methods for now.
         """
         pass
-
     @staticmethod
-    def read_configuration(override_input_network_dir=None, override_input_demand_dir=None, config_file=CONFIGURATION_FILE):
+    def read_functions(func_file=CONFIGURATION_FUNCTIONS_FILE):
         """
-        Read the configuration parameters from :py:attr:`Assignment.INPUT_NETWORK_DIR` and then :py:attr:`Assignment.INPUT_DEMAND_DIR`
+        Read the functions from :py:attr:`Assignment.CONFIGURATION_FUNCTIONS_FILE
+        """
+        # Functions are defined in here -- read this and eval it
+        if os.path.exists(func_file):
+            my_globals = {}
+            FastTripsLogger.info("Reading %s" % func_file)
+            execfile(func_file, my_globals, PathSet.CONFIGURED_FUNCTIONS)
+            FastTripsLogger.info("PathSet.CONFIGURED_FUNCTIONS = %s" % str(PathSet.CONFIGURED_FUNCTIONS))
+            
+    @staticmethod
+    def read_configuration(config_fullpath=CONFIGURATION_FILE):
+        """
+        Read the configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
         """
         pandas.set_option('display.width',      1000)
         # pandas.set_option('display.height',   1000)
         pandas.set_option('display.max_rows',   1000)
         pandas.set_option('display.max_columns', 100)
 
-        if override_input_network_dir:
-            Assignment.INPUT_NETWORK_DIR = override_input_network_dir
-        if override_input_demand_dir:
-            Assignment.INPUT_DEMAND_DIR = override_input_demand_dir
 
-        # Functions are defined in here -- read this and eval it
-        func_file = os.path.join(Assignment.INPUT_DEMAND_DIR, Assignment.CONFIGURATION_FUNCTIONS_FILE)
-        if os.path.exists(func_file):
-            my_globals = {}
-            FastTripsLogger.info("Reading %s" % func_file)
-            execfile(func_file, my_globals, PathSet.CONFIGURED_FUNCTIONS)
-            FastTripsLogger.info("PathSet.CONFIGURED_FUNCTIONS = %s" % str(PathSet.CONFIGURED_FUNCTIONS))
 
         parser = ConfigParser.RawConfigParser(
             defaults={'max_iterations'                  :1,
@@ -300,17 +302,10 @@ class Assignment:
                       'transfer_fare_ignore_pathenum'   :'False',
                       'user_class_function'             :'generic_user_class'
                      })
-        # First, read configuration from network directory
-        config_fullpath = os.path.join(Assignment.INPUT_NETWORK_DIR, config_file)
+        # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
         parser.read(config_fullpath)
-
-        # Then, read configuration from demand directory (if specified and different from network directory)
-        config_fullpath = os.path.join(Assignment.INPUT_DEMAND_DIR, config_file)
-        if Assignment.INPUT_DEMAND_DIR and (Assignment.INPUT_DEMAND_DIR != Assignment.INPUT_NETWORK_DIR) and os.path.exists(config_fullpath):
-            FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
-            parser.read(config_fullpath)
-
+		
         Assignment.MAX_ITERATIONS                = parser.getint    ('fasttrips','max_iterations')
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
@@ -321,8 +316,8 @@ class Assignment:
         Assignment.SKIM_END_TIME   = datetime.datetime.strptime(
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
-        Assignment.SKIP_PERSON_IDS          = eval(parser.get       ('fasttrips','skip_person_ids'))
-        Assignment.TRACE_IDS                = eval(parser.get       ('fasttrips','trace_ids'))
+        Assignment.SKIP_PERSON_IDS               = eval(parser.get       ('fasttrips','skip_person_ids'))
+        Assignment.TRACE_IDS                     = eval(parser.get       ('fasttrips','trace_ids'))
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.DEBUG_OUTPUT_COLUMNS          = parser.getboolean('fasttrips','debug_output_columns')
@@ -333,7 +328,7 @@ class Assignment:
                                          minutes = parser.getfloat  ('fasttrips','bump_buffer'))
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
-        # pathfinding
+        # pathfinding        
         Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
         Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
         PathSet.MIN_TRANSFER_PENALTY             = parser.getfloat  ('pathfinding','min_transfer_penalty')
@@ -343,9 +338,6 @@ class Assignment:
         PathSet.OVERLAP_VARIABLE                 = parser.get       ('pathfinding','overlap_variable')
         Assignment.PATHFINDING_TYPE              = parser.get       ('pathfinding','pathfinding_type')
         PathSet.WEIGHTS_FIXED_WIDTH              = parser.getboolean('pathfinding','pathweights_fixed_width')
-        assert(Assignment.PATHFINDING_TYPE in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
-                                               Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
-                                               Assignment.PATHFINDING_TYPE_READ_FILE])
         Assignment.STOCH_DISPERSION              = parser.getfloat  ('pathfinding','stochastic_dispersion')
         Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('pathfinding','stochastic_max_stop_process_count')
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
@@ -354,8 +346,15 @@ class Assignment:
 
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
-        PathSet.USER_CLASS_FUNCTION              = parser.get       ('pathfinding','user_class_function')
+        PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
 
+        if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
+                                               Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
+                                               Assignment.PATHFINDING_TYPE_READ_FILE]:
+            msg = "pathfinding type [%s] not available. Expected values: %s" % (Assignment.PATHFINDING_TYPE, str([Assignment.PATHFINDING_TYPE_STOCHASTIC, Assignment.PATHFINDING_TYPE_DETERMINISTIC,  Assignment.PATHFINDING_TYPE_READ_FILE]))
+            FastTripsLogger.fatal(msg)
+            raise ConfigurationError(func_file, msg)
+        
         if PathSet.OVERLAP_VARIABLE not in PathSet.OVERLAP_VARIABLE_OPTIONS:
             msg = "pathfinding.overlap_variable [%s] not defined. Expected values: %s" % (PathSet.OVERLAP_VARIABLE, str(PathSet.OVERLAP_VARIABLE_OPTIONS))
             FastTripsLogger.fatal(msg)
@@ -365,7 +364,11 @@ class Assignment:
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(func_file, msg)
 
-        weights_file = os.path.join(Assignment.INPUT_DEMAND_DIR, PathSet.WEIGHTS_FILE)
+    @staticmethod
+    def read_weights(weights_file = INPUT_WEIGHTS):
+        """
+        Read the weights from :py:attr:`Assignment.INPUT_WEIGHTS
+        """
         if not os.path.exists(weights_file):
             FastTripsLogger.fatal("No path weights file %s" % weights_file)
             sys.exit(2)
@@ -377,7 +380,9 @@ class Assignment:
             PathSet.WEIGHTS_DF = pandas.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
+        
 
+            
     @staticmethod
     def write_configuration(output_dir):
         """
@@ -686,9 +691,15 @@ class Assignment:
             # end condition for iterations loop
             if False and capacity_gap < 0.001:
                 break
-
+            
             # end for loop
-
+        
+        return {"capacity_gap": capacity_gap,
+                "paths_found": num_paths_found,
+                "passengers_arrived": num_passengers_arrived,
+                "passengers_missed": num_bumped_passengers,
+                "passengers_demand": len(FT.passengers.trip_list_df) }
+        
     @staticmethod
     def filter_trip_list_to_not_arrived(trip_list_df, pathset_paths_df):
         """
@@ -974,6 +985,7 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
+        print "TRACE",trace
         (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
