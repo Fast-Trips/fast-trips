@@ -164,4 +164,5 @@ def run_fasttrips(**kwargs):
     # Readthe networks and demand
     ft.read_input_files()
     # Run Fast-Trips 
-    ft.run_assignment(fasttrips.Assignment.OUTPUT_DIR)
+    r = ft.run_assignment(fasttrips.Assignment.OUTPUT_DIR)
+    return r

@@ -691,9 +691,15 @@ class Assignment:
             # end condition for iterations loop
             if False and capacity_gap < 0.001:
                 break
-
+            
             # end for loop
-
+        
+        return {"capacity_gap": capacity_gap,
+                "paths_found": num_paths_found,
+                "passengers_arrived": num_passengers_arrived,
+                "passengers_missed": num_bumped_passengers,
+                "passengers_demand": len(FT.passengers.trip_list_df) }
+        
     @staticmethod
     def filter_trip_list_to_not_arrived(trip_list_df, pathset_paths_df):
         """
