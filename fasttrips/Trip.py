@@ -818,7 +818,10 @@ class Trip:
                             trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_DECELERATION]
 
         # update the travel time
-        trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = (trips_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/numpy.timedelta64(1, 's')) + trips_df["accel_secs"] + trips_df["decel_secs"]
+        trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = trips_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/numpy.timedelta64(1, 's')
+        trips_df.loc[ pandas.notnull(trips_df["accel_secs"]), Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] + trips_df["accel_secs"]
+        trips_df.loc[ pandas.notnull(trips_df["decel_secs"]), Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] + trips_df["decel_secs"]
+
         trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME    ] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC].map(lambda x: datetime.timedelta(seconds=x))
 
         # put travel time + dwell together because that's the full time for a link (stop arrival time to next stop arrival time)
