@@ -5,7 +5,7 @@ from fasttrips import Run
 EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"Examples","test_scenario")
 
 Run.run_fasttrips(
-    input_net_dir    = os.path.join(EXAMPLES_DIR,"network"),
+    input_network_dir    = os.path.join(EXAMPLES_DIR,"network"),
     input_demand_dir = os.path.join(EXAMPLES_DIR,"demand_reg"),
     run_config       = os.path.join(EXAMPLES_DIR,"demand_reg","config_ft.txt"),
     input_weights    = os.path.join(EXAMPLES_DIR,"demand_reg","pathweight_ft.txt"),
