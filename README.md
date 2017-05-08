@@ -126,7 +126,79 @@ To use a function in this file, specify it in the *pathfinding* configuration as
 
 ###  `pathweight_ft.txt`
 
-TBD
+The pathweight file is a *required* file that tells Fast-Trips how much to value each attribute of a path.  
+
+The file can be a csv or fixed-format.  If you use a fixed-format, make sure
+`pathweights_fixed_width = True` in the run configuration file (e.g., `config_ft.txt`).
+
+`pathweight_ft.txt` **must** have the following columns:
+
+Column Name        | Type  | Description
+-----------        | ----  | -----------
+`user_class`       | Str   | Config functions can use trip list, person, and household attributes to return a user class string to the trip.  <br><br>The string that is returned determines the set of path weights that are used. <br><br>( ??? is default if no user class function ? )  
+`purpose`          | St    | This should match the trip purpose as specified in `trip_list.txt`  
+`demand_mode_type` | Str   | One of <br>- `transfer`, <br>- `access`, <br>- `egress`, or <br>-`transit`  
+`demand_mode`      | Str   | One of: <br>- `transfer`, <br>- a string specified as **access/egress mode** in `trip_list.txt` demand file (i.e. `walk`, `PNR`)  , or <br>- a string specified as a **transit mode** in `trip_list.txt` demand file (i.e. `local_bus`, `commuter_rail`)  
+`supply_mode`      | Str   | For `demand_mode_type=transit`, corresponds to the transit mode as defined in the [`GTFS-Plus`](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/variables.md#mode) input network.  <br><br>For `demand_mode_type=transfer` and `demand_mode=transfer`, is one of `walk`, `wait`, or `transfer_penalty`.  <br><br>For `demand_mode_type = access`, is one of `walk_access`, `bike_access`, `pnr_access`, or `knr_access`. <br><br>For `demand_mode_type = egress`, is one of `walk_egress`, `bike_egress`, `pnr_egress`, or `knr_egress`. 
+`weight_name`      | Str   | An attribute of the path link. See below for more details.
+`weight_value`     | Float |  The multiplier for the attribute named `weight_name`
+
+_Notes_: 
+
+  1.   If demand mode X has supply mode Y, that means a trip specified as transit mode X in the `trip_list.txt` may use a transit link specified as Y in the network. Moreover, if the trip list were to specify that someone takes `commuter_rail` (like if the ABM chooses the primary mode for them as commuter rail), then they can still take a local bus or any lesser mode on their trip in addition to commuter rail. Often in this case, the weights are assumed to be higher for non-commuter rail modes and lower for commuter rail to induce them to ride. For example:
+  
+`demand_mode`	| `supply_mode`	| `weight_name`	        | `weight_value`
+--------------  | ------------- | --------------------- | -----------
+`commuter_rail` | `local_bus`	| `in_vehicle_time_min`	| 1.5
+`commuter_rail`	| `heavy_rail`  | `in_vehicle_time_min` | 1.0
+
+### `Weight_Name` Values  
+
+The following is an example of a minimally specified `pathweight_ft.txt` : 
+
+`demand_mode_type`| `demand_mode`	| `supply_mode`	| `weight_name`	       | `weight_value`
+----------------  | --------------  | ------------- | -------------------- | -----------
+`access`          | `walk`          | `walk_access` | `time_min`           | 2
+`egress`          | `walk`          | `walk_egress` | `time_min`           | 2
+`transit`         | `transit`       | `local_bus`   | `wait_time_min`      | 2
+`transit`         | `transit`       | `local_bus`   | `in_vehicle_time_min`| 1
+`transfer`        | `transfer`      | `transfer`    | `transfer_penalty`   | 5
+`transfer`        | `transfer`      | `transfer`    | `time_min`           | 2
+
+For most of the weights prefix mode is not needed. E.g. there is no need to label `weight_name` `time_min` for `supply_mode` `walk_access` as `walk_time_min`, because the fact that the `supply_mode` is `walk_access` means it is only assessed on walk links. The drive option (PNR/KNR access/egress), however, should have `walk_` and `drive_` prefixes, because the access can have both components: driving to the station from the origin and walking from the lot to the station. So for example, for `supply_mode` `pnr_access` there will be two weights associated with travel time: `walk_time_min` and `drive_time_min`. 
+
+The following is a partial list of possible weight names base don the demand mode / supply mode combinations.
+
+
+`demand_mode_type = access` / `demand_mode = walk` / `supply_mode = walk_access` 
+  
+  * `time_min`  
+  * `elevation_gain` 
+  * `preferred_delay_min`
+  
+`demand_mode_type = egress` / `demand_mode = walk` / `supply_mode = walk_egress` 
+  
+  * `time_min` 
+  * `elevation_gain` 
+  * `preferred_delay_min`
+  
+`demand_mode_type = access` / `demand_mode = PNR` / `supply_mode = pnr_access` 
+
+  * `walk_time_min`  
+  * `drive_time_min` 
+  
+`demand_mode_type = transfer` / `demand_mode = transfer` / `supply_mode = transfer`  
+
+  * `transfer_penalty`
+  * `time_min`
+  * `wait_time_min`
+
+`demand_mode_type = transit` / `demand_mode = transit` / `supply_mode = <pick a transit mode>` 
+
+  * `in_vehicle_time_min`
+  * `wait_time_min`
+  
+Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.  
 
 ## Fares
 
