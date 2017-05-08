@@ -1,0 +1,16 @@
+{
+  "tests/test_assignment_type.py::test_deterministic": true, 
+  "tests/test_assignment_type.py::test_stochastic": true, 
+  "tests/test_dispersion.py::test_dispersion": true, 
+  "tests/test_fares.py::test_fares_nopf": true, 
+  "tests/test_fares.py::test_fares_nopf_nopf": true, 
+  "tests/test_feedback.py::test_fares_nopf_nopf": true, 
+  "tests/test_maxStopProcessCount.py::test_max_stop_process_count": true, 
+  "tests/test_overlap.py::test_overlap_count": true, 
+  "tests/test_overlap.py::test_overlap_count_with_split": true, 
+  "tests/test_overlap.py::test_overlap_distance": true, 
+  "tests/test_overlap.py::test_overlap_distance_with_split": true, 
+  "tests/test_overlap.py::test_overlap_none": true, 
+  "tests/test_overlap.py::test_overlap_time": true, 
+  "tests/test_overlap.py::test_overlap_time_with_split": true
+}

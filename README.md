@@ -236,47 +236,81 @@ There are four places where fares factor into fast-trips.
 
 4. During simulation (python), while the path is being adjusted due to vehicle times, the fares are calculated via [`Route.add_fares()`](fasttrips/Route.py).  This is unlikely to change anything unless the fare periods changed due to the slow-down of vehicles -- so consider deprecating this in favor of using the pathfinding results?  For now, it's a good test that the C++ code is working as expected; running with simulation off should result in identical fare and cost results from pathfinding and the (non-vehicle-updating) python simulation.
 
-## Test Sample Input
+## Running the Example
 
-Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical test network and also example transit demand data.
-To quickly test the setup, run fast-trips on sample input using the following steps:
-*  Add `<fast-trips-dir>` to the `PYTHONPATH` environment variable in *Advanced system settings*.
-*  Run `\scripts\runAllTests.bat` from within `<fast-trips-dir>` in a command prompt. This will run several "preset" parameter combinations. The user can alternatively run each parameter combination individually using the commands listed in the batch file. Details about the test runs are provided in subsequent sections.
+Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
+
+To run the example: 
+*  Make sure your `<fast-trips-dir>` is in your `PYTHONPATH` environment variable in *Advanced system settings* [Win] or terminal [OSX].
+*  Run `python run_example.py` from within `<fast-trips-dir>\scripts` in a command prompt [ Win ] or terminal [ OSX ]. 
+
 Output files from running fast-trips with the sample input data provided can be found in the `output` directory.
 
-### Test Network
-A hypothetical 5-zone test network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
+### Example Network
+A hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
-![alt text](/Examples/test_network/input/test_network.png "Transit Test Network") 
+![alt text](/Examples/example_network/input/test_network.png "Transit Example Network") 
 
 Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
-### Test Demand
+### Example Demand
 Two versions of sample demand have been prepared:
 *  `demand_reg` contains regular demand that consists only of a transit trip list. There are no multiple user classes and all trips use a single set of path weights (`pathweight_ft.txt`). Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](/Examples/test_network/demand_reg/Readme.md).
 *  `demand_twopaths` represents demand for two user classes that use different sets of path weights. Household and person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
 
 Similar to network data standards, there also exists a [Demand Data Standards Repository][demand-standard-url]. 
 
-## Test Runs
-There are a total of six test runs in `\scripts\runAllTests.bat`. Type of assignment, capacity constraint, and number of iterations are varied in addition to the demand.
 
-| Sno   | Demand  | Assignment Type | Iterations | Capacity Constraint |
-|------:|:-------:|:---------------:|-----------:|:-------------------:|
-| 1 | Multi-class | Deterministic   | 2 | On  |
-| 2 | Multi-class | Stochastic      | 1 | Off |
-| 3 | Multi-class | Stochastic      | 2 | On  |
-| 4 | Regular     | Deterministic   | 2 | On  |
-| 5 | Regular     | Stochastic      | 1 | Off |
-| 6 | Regular     | Stochastic      | 2 | On  |
+## Tests
+There are multiple test runs in `\tests`.  They can be run by installing the [PyTest](https://docs.pytest.org/en/latest/) library and executing the command `pytest` from the command line within your `<fast-trips-dir>`.  
 
-Type of Assignment:
+__Fares:__ `test_maxStopProcessCount.py`
+
+Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
+
+ * **Overlap Variable:** `count`, `distance`, `time`   
+ * **Overlap Split:** Boolean
+
+__Fares:__ `test_fares.py`
+
+Tests shortcuts in fare calculations
+
+ * **Ignore Pathfinding**     
+ * **Ignore Pathfinding and Path Enumeration** 
+ 
+__Overlap Functions:__ `test_overlap.py`
+
+Tests both overlap type and whether or not each transit segment is broken and compared to each of its parts.
+
+ * **Overlap Variable:** `count`, `distance`, `time`   
+ * **Overlap Split:** Boolean
+
+__Feedback:__ `test_feedback.py`
+
+ *  Runs full demand for three iterations with and without capacity constraint
+
+__Dispersion Levels:__ `test_dispersion.py`
+
+ *  Runs dispersion levels 0.1 to 1.0 at 0.1 increments
+
+__User Classes:__ `test_user_classes.py`
+
+ *  Uses multiple user classes as defined in `config_ft.py`
+ 
+__Multiple Processes:__ `test_multiple_processes.py`
+
+ *  Runs model with two processes.
+
+__Assignment Type:__ `test_assignment_type.py`
+
  *  "Deterministic" indicates use of a deterministic trip-based shortest path search algorithm
  *  "Stochastic" indicates use of a stochastic hyperpath-finding algorithm
+ 
 
 ## Summarizing Results
 
 Fast-Trips will output results in the [dyno-path](https://github.com/osplanning-data-standards/dyno-path) format, which can be used to generate summary dashboards in Tableau or other reports.  
+
 
 ### Creating Tableau Dashboard
 
