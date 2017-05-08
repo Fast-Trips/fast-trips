@@ -391,6 +391,12 @@ class Assignment:
         parser.add_section('fasttrips')
         parser.set('fasttrips','input_demand_dir',              Assignment.INPUT_DEMAND_DIR)
         parser.set('fasttrips','input_network_dir',             Assignment.INPUT_NETWORK_DIR)
+        parser.set('fasttrips','input_weights',                 Assignment.INPUT_WEIGHTS)
+        if Assignment.CONFIGURATION_FUNCTIONS_FILE:
+            parser.set('fasttrips','input_functions',           Assignment.CONFIGURATION_FUNCTIONS_FILE)
+        parser.set('fasttrips','run_config',                    Assignment.CONFIGURATION_FILE)
+
+
         parser.set('fasttrips','max_iterations',                '%d' % Assignment.MAX_ITERATIONS)
         parser.set('fasttrips','simulation',                    'True' if Assignment.SIMULATION else 'False')
         parser.set('fasttrips','output_dir',                    Assignment.OUTPUT_DIR)
