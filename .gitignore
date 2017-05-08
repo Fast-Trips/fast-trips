@@ -3,6 +3,7 @@
 *.swp
 *.so
 *.bak
+.cache/*
 
 Examples/*/output
 Examples/*/*/output*
