@@ -1,5 +1,4 @@
 [fasttrips]
-number_of_processes           = 5
 trace_ids                     = [('frogger','1'),('paperboy','1'),('marge','1'),('maggie','1')]
 bump_one_at_a_time            = True
 simulation                    = True

@@ -109,7 +109,7 @@ def run_setup(input_network_dir,
         fasttrips.Assignment.MAX_ITERATIONS          = int(iters)
 
     if kwargs.has_key("number_of_processes"):
-        fasttrips.Assignment.NUMBER_OF_PROCESSES = kwarge["number_of_processes"]
+        fasttrips.Assignment.NUMBER_OF_PROCESSES = kwargs["number_of_processes"]
 
     if trace_only:
         if len(fasttrips.Assignment.TRACE_IDS) == 0:

@@ -15,7 +15,7 @@ def test_dispersion():
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
     OUTPUT_DIR     = os.path.join(EXAMPLES_DIR,"output")
 
-    for d in [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]: 
+    for d in [1.0, 0.7, 0.5, 0.4, 0.1]: 
         
         full_output_dir = os.path.join(OUTPUT_DIR,"test_dispers_%4.2f" % d)
         if not os.path.exists(full_output_dir): os.mkdir(full_output_dir)
@@ -29,7 +29,8 @@ def test_dispersion():
             output_folder    = "test_dispers_%4.2f" % d,
             pathfinding_type = "stochastic",
             iters            = 1,
-            dispersion       = d )
+            dispersion       = d,
+            test_size        = 100 )
         
         print "FINISHED RUN"
         assert r["passengers_arrived"] > 0

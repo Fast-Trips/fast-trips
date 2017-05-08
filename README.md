@@ -291,7 +291,7 @@ __Feedback:__ `test_feedback.py`
 
 __Dispersion Levels:__ `test_dispersion.py`
 
- *  Runs dispersion levels 0.1 to 1.0 at 0.1 increments
+ *  Runs dispersion levels 0.1 to 1.0 at varying increments
 
 __User Classes:__ `test_user_classes.py`
 
