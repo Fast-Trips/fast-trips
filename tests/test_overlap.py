@@ -15,7 +15,7 @@ def test_overlap_none():
     OVERLAP_TYPE   = "None"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -39,7 +39,7 @@ def test_overlap_count():
     OVERLAP_TYPE   = "count"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -64,7 +64,7 @@ def test_overlap_distance():
     OVERLAP_TYPE   = "distance"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -89,7 +89,7 @@ def test_overlap_time():
     OVERLAP_TYPE   = "time"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -113,7 +113,7 @@ def test_overlap_count_with_split():
     OVERLAP_TYPE   = "count"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -139,7 +139,7 @@ def test_overlap_distance_with_split():
     OVERLAP_TYPE   = "distance"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -165,7 +165,7 @@ def test_overlap_time_with_split():
     OVERLAP_TYPE   = "time"
     
     r = Run.run_fasttrips(
-        input_net_dir    = INPUT_NETWORKS,
+        input_network_dir= INPUT_NETWORKS,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),

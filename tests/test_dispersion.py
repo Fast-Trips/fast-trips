@@ -21,7 +21,7 @@ def test_dispersion():
         if not os.path.exists(full_output_dir): os.mkdir(full_output_dir)
         print "STARTING RUN"
         r = Run.run_fasttrips(
-            input_net_dir    = INPUT_NETWORKS,
+            input_network_dir= INPUT_NETWORKS,
             input_demand_dir = INPUT_DEMAND,
             run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
             input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
