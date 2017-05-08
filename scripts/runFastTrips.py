@@ -2,10 +2,9 @@ import fasttrips
 import argparse, os, pandas, re, sys
 
 USAGE = r"""
-  python runTest.py [--trace_only|-t] [--num_trips|-n #trips] [-c|--capacity] [-o|--output_dir dir] pathfinding_type iters input_network_dir input_demand_dir output_loc
-  Where pathfinding_type is one of 'deterministic','stochastic' or 'file'
-  e.g.
-  python scripts\runTest.py --capacity deterministic 2 "C:\Users\lzorn\Box Sync\SHRP C-10\7-Test Case Development\test_net_export_20151005" Examples\test_net_20151005
+
+  Run Fast-Trips from the command line with required inputs as command line parameters.
+
 """
 
 if __name__ == "__main__":

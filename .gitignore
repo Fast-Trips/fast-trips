@@ -5,8 +5,7 @@
 *.bak
 
 Examples/*/output
-Examples/*/output_bak
-Examples/simplest
+Examples/*/*/output*
 create_tableau_path_map/*
 
 # Distribution / packaging
@@ -15,3 +14,4 @@ build/
 # test
 sfcta/
 psrc/
+run*/
