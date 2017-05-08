@@ -20,6 +20,7 @@ from .Passenger import Passenger
 from .PathSet import PathSet
 from .Performance import Performance
 from .Route import Route
+from .Run import run_fasttrips
 from .Stop import Stop
 from .TAZ import TAZ
 from .Transfer import Transfer

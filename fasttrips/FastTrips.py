@@ -40,7 +40,7 @@ class FastTrips:
     DEBUG_LOG = "ft_debug%s.log"
 
     def __init__(self, input_network_dir, input_demand_dir, input_weights, run_config, 
-        output_dir,input_functions=None, logname_append="", appendLog=False):
+        output_dir, input_functions=None, logname_append="", appendLog=False):
         """
         Constructor.
 
@@ -51,8 +51,8 @@ class FastTrips:
         :type input_network_dir:  string
         :param input_demand_dir:  Location of demand csv files to read
         :type input_demand_dir:   string
-        :param input_weights:  Location of pathweight file
-        :type input_weights:   string
+        :param input_weights:     Location of pathweight file
+        :type input_weights:      string
         :param run_config:        Location of run configuraiton file.
         :type run_config:         string
         :param output_dir:        Location to write output and log files.
@@ -84,13 +84,13 @@ class FastTrips:
 
         #: string representing directory with input demand data
         Assignment.INPUT_DEMAND_DIR   = input_demand_dir
-        
+
          #: string representing directory with input demand data
         Assignment.INPUT_WEIGHTS      = input_weights
-        
+
          #: string representing directory with input demand data
         Assignment.CONFIGURATION_FILE = run_config
-        
+
         #: string representing directory with input demand data
         Assignment.CONFIGURATION_FUNCTIONS_FILE  = input_functions
 
@@ -109,8 +109,8 @@ class FastTrips:
         """
         Read the fast-trips assignment and path-finding configuration
         """
-        if Assignment.CONFIGURATION_FUNCTIONS_FILE: 
-            Assignment.read_functions(weights_file = Assignment.CONFIGURATION_FUNCTIONS_FILE)
+        if Assignment.CONFIGURATION_FUNCTIONS_FILE:
+            Assignment.read_functions(func_file       = Assignment.CONFIGURATION_FUNCTIONS_FILE)
         Assignment.read_configuration(config_fullpath = Assignment.CONFIGURATION_FILE)
         Assignment.read_weights(weights_file          = Assignment.INPUT_WEIGHTS)
         

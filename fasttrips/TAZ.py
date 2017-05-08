@@ -472,7 +472,9 @@ class TAZ:
 
             self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_STOP,
-                                                             numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM)
+                                                             numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
+                                                             warn=True,
+                                                             warn_msg="Drive access stops missing ids")
             self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_TAZ,
                                                              numeric_newcolname=TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM)

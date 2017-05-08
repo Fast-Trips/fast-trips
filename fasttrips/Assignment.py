@@ -47,7 +47,7 @@ class Assignment:
     #: Configuration: Input demand directory
     INPUT_DEMAND_DIR                = None
     #: Configuration: Pathweight parameters
-    INPUT_WEIGHTS                = None
+    INPUT_WEIGHTS                   = None
     #: Configuration: Run Configuration
     OUTPUT_DIR                      = None
 
@@ -241,20 +241,21 @@ class Assignment:
         This does nothing.  Assignment methods are static methods for now.
         """
         pass
+
     @staticmethod
-    def read_functions(func_file=CONFIGURATION_FUNCTIONS_FILE):
+    def read_functions(func_file):
         """
         Read the functions from :py:attr:`Assignment.CONFIGURATION_FUNCTIONS_FILE
         """
         # Functions are defined in here -- read this and eval it
-        if os.path.exists(func_file):
+        if func_file and os.path.exists(func_file):
             my_globals = {}
             FastTripsLogger.info("Reading %s" % func_file)
             execfile(func_file, my_globals, PathSet.CONFIGURED_FUNCTIONS)
             FastTripsLogger.info("PathSet.CONFIGURED_FUNCTIONS = %s" % str(PathSet.CONFIGURED_FUNCTIONS))
-            
+
     @staticmethod
-    def read_configuration(config_fullpath=CONFIGURATION_FILE):
+    def read_configuration(config_fullpath):
         """
         Read the configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
         """
@@ -262,8 +263,6 @@ class Assignment:
         # pandas.set_option('display.height',   1000)
         pandas.set_option('display.max_rows',   1000)
         pandas.set_option('display.max_columns', 100)
-
-
 
         parser = ConfigParser.RawConfigParser(
             defaults={'max_iterations'                  :1,
@@ -328,7 +327,7 @@ class Assignment:
                                          minutes = parser.getfloat  ('fasttrips','bump_buffer'))
         Assignment.BUMP_ONE_AT_A_TIME            = parser.getboolean('fasttrips','bump_one_at_a_time')
 
-        # pathfinding        
+        # pathfinding
         Assignment.MAX_NUM_PATHS                 = parser.getint    ('pathfinding','max_num_paths')
         Assignment.MIN_PATH_PROBABILITY          = parser.getfloat  ('pathfinding','min_path_probability')
         PathSet.MIN_TRANSFER_PENALTY             = parser.getfloat  ('pathfinding','min_transfer_penalty')
@@ -353,16 +352,16 @@ class Assignment:
                                                Assignment.PATHFINDING_TYPE_READ_FILE]:
             msg = "pathfinding type [%s] not available. Expected values: %s" % (Assignment.PATHFINDING_TYPE, str([Assignment.PATHFINDING_TYPE_STOCHASTIC, Assignment.PATHFINDING_TYPE_DETERMINISTIC,  Assignment.PATHFINDING_TYPE_READ_FILE]))
             FastTripsLogger.fatal(msg)
-            raise ConfigurationError(func_file, msg)
-        
+            raise ConfigurationError(config_fullpath, msg)
+
         if PathSet.OVERLAP_VARIABLE not in PathSet.OVERLAP_VARIABLE_OPTIONS:
             msg = "pathfinding.overlap_variable [%s] not defined. Expected values: %s" % (PathSet.OVERLAP_VARIABLE, str(PathSet.OVERLAP_VARIABLE_OPTIONS))
             FastTripsLogger.fatal(msg)
-            raise ConfigurationError(func_file, msg)
+            raise ConfigurationError(config_fullpath, msg)
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
-            msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, func_file)
+            msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, Assignment.CONFIGURATION_FUNCTIONS_FILE)
             FastTripsLogger.fatal(msg)
-            raise ConfigurationError(func_file, msg)
+            raise ConfigurationError(config_fullpath, msg)
 
     @staticmethod
     def read_weights(weights_file = INPUT_WEIGHTS):
@@ -791,6 +790,7 @@ class Assignment:
                     process_dict[process_idx] = {
                         "process":multiprocessing.Process(target=find_trip_based_paths_process_worker,
                             args=(iteration, pathfinding_iteration, process_idx, Assignment.INPUT_NETWORK_DIR, Assignment.INPUT_DEMAND_DIR,
+                                  Assignment.CONFIGURATION_FILE, Assignment.CONFIGURATION_FUNCTIONS_FILE,
                                   Assignment.OUTPUT_DIR, todo_queue, done_queue,
                                   Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
                                   Assignment.bump_wait_df, veh_trips_df)),
@@ -985,7 +985,6 @@ class Assignment:
         """
         # FastTripsLogger.debug("C++ extension start")
         # send it to the C++ extension
-        print "TRACE",trace
         (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
@@ -1852,7 +1851,7 @@ class Assignment:
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
 
 
-def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worker_num, input_network_dir, input_demand_dir,
+def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worker_num, input_network_dir, input_demand_dir, run_config, func_file,
                                          output_dir, todo_pathset_queue, done_queue, hyperpath, bump_wait_df, stop_times_df):
     """
     Process worker function.  Processes all the paths in queue.
@@ -1868,10 +1867,11 @@ def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worke
                  append           = False if ((iteration==1) and (pathfinding_iteration==1)) else True)
     FastTripsLogger.info("Iteration %d Pathfinding Iteration %d Worker %2d starting" % (iteration, pathfinding_iteration, worker_num))
 
-    # the child process doesn't have these set to read them
-    Assignment.read_configuration(override_input_network_dir=output_dir,
-                                  override_input_demand_dir=input_demand_dir,
-                                  config_file=Assignment.CONFIGURATION_OUTPUT_FILE)
+    # the child process doesn't have these set so read them
+    Assignment.CONFIGURATION_FILE           = run_config
+    Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
+    Assignment.read_functions(func_file)
+    Assignment.read_configuration(run_config)
 
     # this passes those read parameters and the stop times to the C++ extension
     Assignment.initialize_fasttrips_extension(worker_num, output_dir, stop_times_df)
