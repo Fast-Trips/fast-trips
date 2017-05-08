@@ -1,12 +1,16 @@
 from setuptools import setup, Extension
+import pypandoc
 import sys
 import numpy
 
+long_description = pypandoc.convert('README.md', 'rst')
+
 setup(name          = 'fasttrips',
-      version       = '1.0a1',
+      version       = '1.0a2',
       author        = 'MTC, SFCTA & PSRC',
       author_email  = 'lzorn@mtc.ca.gov',
       description   = 'Dynamic Transit Assignment Model. Given a transit network and a list of transit demand, finds a pathset and chooses a path for each traveler.',
+      long_description = long_description,
       packages      = ['fasttrips'],
       url           = 'http://fast-trips.mtc.ca.gov/',
       license       = 'Apache',
@@ -31,6 +35,7 @@ setup(name          = 'fasttrips',
                                  sources=['src/fasttrips.cpp',
                                           'src/hyperlink.cpp',
                                           'src/access_egress.cpp',
+
                                           'src/path.cpp',
                                           'src/pathfinder.cpp',
                                           ],
