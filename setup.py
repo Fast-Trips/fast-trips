@@ -1,12 +1,13 @@
 from setuptools import setup, Extension
 import pypandoc
-import sys
+import os,sys
 import numpy
 
 long_description = pypandoc.convert('README.md', 'rst')
+cwd = os.getcwd()
 
 setup(name          = 'fasttrips',
-      version       = '1.0a2',
+      version       = '1.0a5',
       author        = 'MTC, SFCTA & PSRC',
       author_email  = 'lzorn@mtc.ca.gov',
       description   = 'Dynamic Transit Assignment Model. Given a transit network and a list of transit demand, finds a pathset and chooses a path for each traveler.',
@@ -30,7 +31,8 @@ setup(name          = 'fasttrips',
                        'Programming Language :: Python :: 2.7'],
       keywords      = 'transit model dynamic passenger assignment simulation',
       install_requires = ['pandas','transitfeed'],
-      package_data  = { 'Examples':['Examples'] },
+      package_dir   = { 'fasttrips':'' },
+      package_data  = { 'fasttrips':['Examples/test_scenario/demand_reg/*', 'Examples/test_scenario/demand_twopaths/*','Examples/test_scenario/network/*','tests/*.py'] },
       ext_modules   = [Extension('_fasttrips',
                                  sources=['src/fasttrips.cpp',
                                           'src/hyperlink.cpp',
