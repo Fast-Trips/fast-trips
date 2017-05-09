@@ -179,8 +179,8 @@ def run_fasttrips(**kwargs):
     read from the control file, but overwritten with parameters passed into this function.
     """
     args_dict = kwargs
-    for key in args_dict.keys():
-        print "%40s => %s" % (key, args_dict[key])
+    # for key in args_dict.keys():
+    #     print "%40s => %s" % (key, args_dict[key])
 
     ft = run_setup(**kwargs)
     # Read the networks and demand

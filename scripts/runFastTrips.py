@@ -45,6 +45,6 @@ if __name__ == "__main__":
     func_file = os.path.join(args.input_demand_dir, "config_ft.py")
     if os.path.exists(func_file):
         args_dict["input_functions"] = func_file
-    print args_dict
+    # print args_dict
 
     r = fasttrips.Run.run_fasttrips(**args_dict)

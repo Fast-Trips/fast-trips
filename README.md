@@ -275,7 +275,8 @@ All the other parameters described in the [configuration options](#configuration
 
 Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
 
-```python
+~~~~
+python
 
 # \scripts\run_example.py
 
@@ -296,7 +297,7 @@ Run.run_fasttrips(
     overlap_split_transit = True,
     iters            = 1,
     dispersion       = 0.50)
-```
+~~~~
 
 To run the example: 
 
@@ -309,7 +310,55 @@ Output files from running fast-trips with the sample input data provided can be 
 
 The same example can be run from the command line by using the command from within the `<fast-trips-dir>` directory:
 
+~~~~
+C:\Users\lzorn\Documents\fast-trips>rem See usage and forgive my use of windows
 
+C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py -h
+usage:
+
+  Run Fast-Trips from the command line with required inputs as command line parameters.
+
+positional arguments:
+  {deterministic,stochastic,file}
+                        Type of pathfinding
+  iters                 Number of iterations to run
+  run_config            The run configuration file
+  input_network_dir     Location of the input network
+  input_demand_dir      Location of the input demand
+  input_weights         Location of the pathweights file
+  output_dir            Location to write fasttrips output
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t, --trace_only      Run only the trace persons?
+  -n NUM_TRIPS, --num_trips NUM_TRIPS
+                        Number of person trips to run, if you don't want to
+                        run the whole demand.
+  -d DISPERSION, --dispersion DISPERSION
+                        Stochastic dispersion parameter
+  -m MAX_STOP_PROCESS_COUNT, --max_stop_process_count MAX_STOP_PROCESS_COUNT
+                        Max times to process a stop in stochastic pathfinding
+  -c, --capacity        Enable capacity constraint
+  -o OUTPUT_FOLDER, --output_folder OUTPUT_FOLDER
+                        Directory within output_loc to write fasttrips
+                        outtput. If none specified, will construct one.
+  --debug_output_columns
+                        Include debug columns in output
+  --overlap_variable {None,count,distance,time}
+                        Variable to use for overlap penalty calculation
+  --overlap_split_transit
+                        Split transit for path overlap penalty calculation
+  --transfer_fare_ignore_pathfinding
+                        In path-finding, suppress trying to adjust fares using
+                        transfer rules. For performance.
+  --transfer_fare_ignore_pathenum
+                        In path-enumeration, suppress trying to adjust fares
+                        using transfer rules. For performance.
+
+C:\Users\lzorn\Documents\fast-trips>rem Run it with Example test scenario and the demand_reg trip list
+
+C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py stochastic 1 Examples\test_scenario\demand_reg\config_ft.txt Examples\test_scenario\network Examples\test_scenario\demand_reg Examples\test_scenario\demand_reg\pathweight_ft.txt Examples\test_scenario\output_demand_reg
+~~~~
 
 #### Example Network
 The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
