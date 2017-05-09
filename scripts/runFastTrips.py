@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(usage=USAGE)
     parser.register('type','bool',str2bool)
     parser.add_argument('-t','--trace_only', action='store_true', help="Run only the trace persons?")
-    parser.add_argument('-n','--num_trips',  type=int,  help="Number of person trips to run, if you don't want to run the whole demand.")
+    parser.add_argument('-n','--num_trips',  type=int,  help="Number of person trips to run, to run a subset of the whole demand.")
     parser.add_argument('-d','--dispersion', type=float,help="Stochastic dispersion parameter")
     parser.add_argument('-m','--max_stop_process_count', type=int, help="Max times to process a stop in stochastic pathfinding")
     parser.add_argument('-c','--capacity',      action='store_true', help="Enable capacity constraint")

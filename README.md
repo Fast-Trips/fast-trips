@@ -331,8 +331,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -t, --trace_only      Run only the trace persons?
   -n NUM_TRIPS, --num_trips NUM_TRIPS
-                        Number of person trips to run, if you don't want to
-                        run the whole demand.
+                        Number of person trips to run, to run a subset of the
+                        whole demand.
   -d DISPERSION, --dispersion DISPERSION
                         Stochastic dispersion parameter
   -m MAX_STOP_PROCESS_COUNT, --max_stop_process_count MAX_STOP_PROCESS_COUNT
