@@ -942,13 +942,13 @@ class Assignment:
             # terminating my processes
             for proc in process_dict:
                 proc.terminate()
-            sys.exit(2)
+            raise
         except:
             # some other error
             exc_type, exc_value, exc_tb = sys.exc_info()
             error_lines = traceback.format_exception(exc_type, exc_value, exc_tb)
             for e in error_lines: FastTripsLogger.error(e)
-            sys.exit(2)
+            raise
 
         time_elapsed = datetime.datetime.now() - start_time
         FastTripsLogger.info("Finished finding %6d passenger paths.  Time elapsed: %2dh:%2dm:%2ds" % (
