@@ -275,8 +275,7 @@ All the other parameters described in the [configuration options](#configuration
 
 Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
 
-~~~~
-python
+```python
 
 # \scripts\run_example.py
 
@@ -297,7 +296,7 @@ Run.run_fasttrips(
     overlap_split_transit = True,
     iters                 = 1,
     dispersion            = 0.50)
-~~~~
+```
 
 To run the example: 
 
@@ -310,7 +309,7 @@ Output files from running fast-trips with the sample input data provided can be 
 
 The same example can be run from the command line by using the command from within the `<fast-trips-dir>` directory:
 
-~~~~
+```bat
 C:\Users\lzorn\Documents\fast-trips>rem See usage and forgive my use of windows
 
 C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py -h
@@ -358,7 +357,7 @@ optional arguments:
 C:\Users\lzorn\Documents\fast-trips>rem Run it with Example test scenario and the demand_reg trip list
 
 C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py stochastic 1 Examples\test_scenario\demand_reg\config_ft.txt Examples\test_scenario\network Examples\test_scenario\demand_reg Examples\test_scenario\demand_reg\pathweight_ft.txt Examples\test_scenario\output_demand_reg
-~~~~
+```
 
 #### Example Network
 The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
