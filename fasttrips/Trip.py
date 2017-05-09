@@ -553,7 +553,10 @@ class Trip:
 
         # aggregate to trip to find which trips are missing this field
         stop_times_trips = self.stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID, "null_shape_dist_traveled"]].groupby([Trip.STOPTIMES_COLUMN_TRIP_ID]).sum()
-        stop_times_trips["null_shape_dist_traveled"] = stop_times_trips["null_shape_dist_traveled"] > 0
+        stop_times_trips["null_shape_dist_traveled_bool"] = False
+        stop_times_trips.loc[ stop_times_trips["null_shape_dist_traveled"] > 0, "null_shape_dist_traveled_bool"] = True
+
+        stop_times_trips.drop(["null_shape_dist_traveled"], axis=1, inplace=True)
         stop_times_trips.reset_index(drop=False, inplace=True)
         # FastTripsLogger.debug("add_shape_dist_traveled() stop_times_trips\n%s" % str(stop_times_trips))
 
@@ -580,17 +583,17 @@ class Trip:
         Util.calculate_distance_miles(self.stop_times_df, "stop_lat","stop_lon","stop_lat_prev","stop_lon_prev","calc shape_dist_traveled")
 
         # make it cumulative
-        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"])&
+        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled_bool"])&
                                 (self.stop_times_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]==1), "calc shape_dist_traveled" ] = 0.0
         self.stop_times_df["calc shape_dist_traveled"] = self.stop_times_df.groupby([Trip.STOPTIMES_COLUMN_TRIP_ID])["calc shape_dist_traveled"].apply(lambda x: x.cumsum())
 
         # incorporate it
-        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled"]), Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = self.stop_times_df["calc shape_dist_traveled"]
+        self.stop_times_df.loc[ (self.stop_times_df["null_shape_dist_traveled_bool"]), Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = self.stop_times_df["calc shape_dist_traveled"]
 
         FastTripsLogger.debug("add_shape_dist_traveled() stop_times_df\n%s" % str(self.stop_times_df.head()))
 
         # drop the temp fields
-        self.stop_times_df.drop(["null_shape_dist_traveled",
+        self.stop_times_df.drop(["null_shape_dist_traveled_bool",
                                  "stop_lat", "stop_lon",
                                  "stop_seq_prev", "stop_sequence_prev",
                                  "stop_lat_prev", "stop_lon_prev", "calc shape_dist_traveled"], axis=1, inplace=True)
