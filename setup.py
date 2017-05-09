@@ -7,7 +7,7 @@ long_description = pypandoc.convert('README.md', 'rst')
 cwd = os.getcwd()
 
 setup(name          = 'fasttrips',
-      version       = '1.0a6',
+      version       = '1.0a7',
       author        = 'MTC, SFCTA & PSRC',
       author_email  = 'lzorn@mtc.ca.gov',
       description   = 'Dynamic Transit Assignment Model. Given a transit network and a list of transit demand, finds a pathset and chooses a path for each traveler.',
@@ -37,7 +37,7 @@ setup(name          = 'fasttrips',
                                      'Examples/test_scenario/network/*',
                                      'tests/*.py',
                                      'scripts/*.py'] },
-      entry_points  = { 'console_scripts': ['runFastTrips=fasttrips.Run:main']},
+      entry_points  = { 'console_scripts': ['run_fasttrips=fasttrips.Run:main']},
       ext_modules   = [Extension('_fasttrips',
                                  sources=['src/fasttrips.cpp',
                                           'src/hyperlink.cpp',
