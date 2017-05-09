@@ -286,17 +286,17 @@ from fasttrips import Run
 EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"Examples","test_scenario")
 
 Run.run_fasttrips(
-    input_network_dir    = os.path.join(EXAMPLES_DIR,"network"),
-    input_demand_dir = os.path.join(EXAMPLES_DIR,"demand_reg"),
-    run_config       = os.path.join(EXAMPLES_DIR,"demand_reg","config_ft.txt"),
-    input_weights    = os.path.join(EXAMPLES_DIR,"demand_reg","pathweight_ft.txt"),
-    output_dir       = os.path.join(EXAMPLES_DIR,"output"),
-    output_folder    = "example",
-    pathfinding_type = "stochastic",
-    overlap_variable = "count",
+    input_network_dir     = os.path.join(EXAMPLES_DIR,"network"),
+    input_demand_dir      = os.path.join(EXAMPLES_DIR,"demand_reg"),
+    run_config            = os.path.join(EXAMPLES_DIR,"demand_reg","config_ft.txt"),
+    input_weights         = os.path.join(EXAMPLES_DIR,"demand_reg","pathweight_ft.txt"),
+    output_dir            = os.path.join(EXAMPLES_DIR,"output"),
+    output_folder         = "example",
+    pathfinding_type      = "stochastic",
+    overlap_variable      = "count",
     overlap_split_transit = True,
-    iters            = 1,
-    dispersion       = 0.50)
+    iters                 = 1,
+    dispersion            = 0.50)
 ~~~~
 
 To run the example: 
@@ -363,7 +363,7 @@ C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py stochastic 1 
 #### Example Network
 The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
-![alt text](/Examples/example_network/input/test_network.png "Transit Example Network") 
+![alt text](/Examples/test_scenario/network/test_network.png "Transit Example Network")
 
 Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
