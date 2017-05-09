@@ -146,7 +146,9 @@ class Passenger:
         """
 
         # if no demand dir, nothing to do
-        if input_dir == None: return
+        if input_dir == None:
+            self.trip_list_df = pandas.DataFrame()
+            return
 
         FastTripsLogger.info("-------- Reading demand --------")
         FastTripsLogger.info("Capacity constraint? %x" % capacity_constraint )
