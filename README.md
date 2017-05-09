@@ -16,9 +16,8 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
 * [Fares](#fares)
 * [Test Sample Input](#test-sample-input)
   * [Test Network](#test-network)  
-  * [Test Demand](#test-demand)  
+  * [Test Demand](#test-demand) 
 * [Running Fast-Trips](#running-fast-trips)  
-  * [Example Runs](#Running-the-Example-from-a-Script)  
 * [Tests](#tests)  
 * [Summarizing Results](#summarizing-results)
 * [Frequently Asked Questions](#frequently-asked-questions)
@@ -121,10 +120,26 @@ From Hoogendoor-Lanser et al.:
 
 ### `config_ft.py`
 
-This is an *optional* python file in the Transit Demand input directory containing functions that are evaluated.
+This is an *optional* python file containing functions that are evaluated to ascertain items such as user classes. 
 This could be used to programmatically define user classes based on person, household and/or trip attributes.
-To use a function in this file, specify it in the *pathfinding* configuration as the `user_class_function`.
-(See [Example](Examples/test_network/demand_twopaths/config_ft.py) )
+
+The function name for user class is specified in the *pathfinding* input parameter `user_class_function`
+
+__Example:__
+
+```python
+def user_class(row_series):
+    """
+    Defines the user class for this trip list.
+
+    This function takes a single argument, the pandas.Series with person, household and
+    trip_list attributes, and returns a user class string.
+    """
+    if row_series["hh_id"] == "simpson":
+        return "not_real"
+    return "real"
+```
+
 
 ###  `pathweight_ft.txt`
 
