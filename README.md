@@ -312,7 +312,7 @@ The same example can be run from the command line by using the command from with
 ```bat
 C:\Users\lzorn\Documents\fast-trips>rem See usage and forgive my use of windows
 
-C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py -h
+C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py -h
 usage:
 
   Run Fast-Trips from the command line with required inputs as command line parameters.
@@ -356,7 +356,7 @@ optional arguments:
 
 C:\Users\lzorn\Documents\fast-trips>rem Run it with Example test scenario and the demand_reg trip list
 
-C:\Users\lzorn\Documents\fast-trips>python scripts\runFastTrips.py stochastic 1 Examples\test_scenario\demand_reg\config_ft.txt Examples\test_scenario\network Examples\test_scenario\demand_reg Examples\test_scenario\demand_reg\pathweight_ft.txt Examples\test_scenario\output_demand_reg
+C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 Examples\test_scenario\demand_reg\config_ft.txt Examples\test_scenario\network Examples\test_scenario\demand_reg Examples\test_scenario\demand_reg\pathweight_ft.txt Examples\test_scenario\output_demand_reg
 ```
 
 #### Example Network
