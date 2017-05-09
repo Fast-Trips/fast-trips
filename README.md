@@ -15,9 +15,11 @@ fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
   * [`pathweight_ft.txt`](#pathweight_fttxt)
 * [Fares](#fares)
 * [Test Sample Input](#test-sample-input)
-  * [Test Network](#test-network)
-  * [Test Demand](#test-demand)
-* [Test Runs](#test-runs)
+  * [Test Network](#test-network)  
+  * [Test Demand](#test-demand)  
+* [Running Fast-Trips](#running-fast-trips)  
+  * [Example Runs](#Running-the-Example-from-a-Script)  
+* [Tests](#tests)  
 * [Summarizing Results](#summarizing-results)
 * [Frequently Asked Questions](#frequently-asked-questions)
 * [References](#references)
@@ -236,24 +238,72 @@ There are four places where fares factor into fast-trips.
 
 4. During simulation (python), while the path is being adjusted due to vehicle times, the fares are calculated via [`Route.add_fares()`](fasttrips/Route.py).  This is unlikely to change anything unless the fare periods changed due to the slow-down of vehicles -- so consider deprecating this in favor of using the pathfinding results?  For now, it's a good test that the C++ code is working as expected; running with simulation off should result in identical fare and cost results from pathfinding and the (non-vehicle-updating) python simulation.
 
-## Running the Example
+## Running Fast-Trips
+
+Fast-Trips can be run from the command line or by calling it from within a Python script or an iPython notebook using the `Run.run_fasttrips()` function.
+
+There are six required parameters that need to either be passed from the command line or the function call:  
+
+  * `input_network_dir` = directory for input networks can be found  
+  * `input_demand_dir`  = directory where input demand can be found  
+  * `input_weights`     = file where path weights can be found  
+  * `run_config` = file where run configurations can be found  
+  * `iters`      = Number of global iterations  
+  * `output_dir` = directory where output folder is created  
+  * `pathfinding_type` = either `deterministic` or `stochastic`
+
+All the other parameters described in the [configuration options](#configuration-options-fasttrips) can also be passed as keywords.  
+
+**NOTE: Any parameters passed in at run-time from the command line or via the script will overwrite any parameters read in from the `run_config` file.
+
+### Running the Example from a Script
 
 Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
 
+```python
+
+# \scripts\run_example.py
+
+import os
+from fasttrips import Run
+
+EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"Examples","test_scenario")
+
+Run.run_fasttrips(
+    input_network_dir    = os.path.join(EXAMPLES_DIR,"network"),
+    input_demand_dir = os.path.join(EXAMPLES_DIR,"demand_reg"),
+    run_config       = os.path.join(EXAMPLES_DIR,"demand_reg","config_ft.txt"),
+    input_weights    = os.path.join(EXAMPLES_DIR,"demand_reg","pathweight_ft.txt"),
+    output_dir       = os.path.join(EXAMPLES_DIR,"output"),
+    output_folder    = "example",
+    pathfinding_type = "stochastic",
+    overlap_variable = "count",
+    overlap_split_transit = True,
+    iters            = 1,
+    dispersion       = 0.50)
+```
+
 To run the example: 
+
 *  Make sure your `<fast-trips-dir>` is in your `PYTHONPATH` environment variable in *Advanced system settings* [Win] or terminal [OSX].
 *  Run `python run_example.py` from within `<fast-trips-dir>\scripts` in a command prompt [ Win ] or terminal [ OSX ]. 
 
 Output files from running fast-trips with the sample input data provided can be found in the `output` directory.
 
-### Example Network
-A hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
+### Running the Example from Command Line  
+
+The same example can be run from the command line by using the command from within the `<fast-trips-dir>` directory:
+
+
+
+#### Example Network
+The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
 ![alt text](/Examples/example_network/input/test_network.png "Transit Example Network") 
 
 Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
-### Example Demand
+#### Example Demand
 Two versions of sample demand have been prepared:
 *  `demand_reg` contains regular demand that consists only of a transit trip list. There are no multiple user classes and all trips use a single set of path weights (`pathweight_ft.txt`). Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](/Examples/test_network/demand_reg/Readme.md).
 *  `demand_twopaths` represents demand for two user classes that use different sets of path weights. Household and person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
