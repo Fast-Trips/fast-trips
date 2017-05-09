@@ -346,16 +346,13 @@ __Dispersion Levels:__ `test_dispersion.py`
 __User Classes:__ `test_user_classes.py`
 
  *  Uses multiple user classes as defined in `config_ft.py`
- 
-__Multiple Processes:__ `test_multiple_processes.py`
-
- *  Runs model with two processes.
 
 __Assignment Type:__ `test_assignment_type.py`
 
  *  "Deterministic" indicates use of a deterministic trip-based shortest path search algorithm
  *  "Stochastic" indicates use of a stochastic hyperpath-finding algorithm
- 
+
+__Note:__ Multiprocessing is not tested because it is [incompatible with PyTest](https://github.com/pytest-dev/pytest/issues/958)  
 
 ## Summarizing Results
 
