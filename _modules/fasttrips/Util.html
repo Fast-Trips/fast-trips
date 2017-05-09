@@ -76,12 +76,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.PathSet.html">fasttrips.PathSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Run.html">fasttrips.Run</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../_generated/fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
@@ -145,6 +146,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 
+<span class="kn">from</span> <span class="nn">.Error</span>  <span class="kn">import</span> <span class="n">UnexpectedError</span>
 <span class="kn">from</span> <span class="nn">.Logger</span> <span class="kn">import</span> <span class="n">FastTripsLogger</span>
 
 <div class="viewcode-block" id="Util"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util">[docs]</a><span class="k">class</span> <span class="nc">Util</span><span class="p">:</span>
@@ -163,10 +165,25 @@
         <span class="s">&#39;time enumerating&#39;</span>  <span class="p">:</span> <span class="s">&#39;milliseconds&#39;</span><span class="p">,</span>  <span class="c"># performance</span>
         <span class="s">&#39;time labeling&#39;</span>     <span class="p">:</span> <span class="s">&#39;milliseconds&#39;</span><span class="p">,</span>  <span class="c"># performance</span>
         <span class="s">&#39;pf_linktime&#39;</span>       <span class="p">:</span> <span class="s">&#39;min&#39;</span><span class="p">,</span>
+        <span class="s">&#39;pf_linkcost&#39;</span>       <span class="p">:</span> <span class="s">&#39;min&#39;</span><span class="p">,</span>
         <span class="s">&#39;pf_waittime&#39;</span>       <span class="p">:</span> <span class="s">&#39;min&#39;</span><span class="p">,</span>
         <span class="s">&#39;new_linktime&#39;</span>      <span class="p">:</span> <span class="s">&#39;min&#39;</span><span class="p">,</span>
         <span class="s">&#39;new_waittime&#39;</span>      <span class="p">:</span> <span class="s">&#39;min&#39;</span>
     <span class="p">}</span>
+
+    <span class="c">#: Debug columns to drop</span>
+    <span class="n">DROP_DEBUG_COLUMNS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c"># drop these?</span>
+        <span class="s">&quot;A_lat&quot;</span><span class="p">,</span><span class="s">&quot;A_lon&quot;</span><span class="p">,</span><span class="s">&quot;B_lat&quot;</span><span class="p">,</span><span class="s">&quot;B_lon&quot;</span><span class="p">,</span><span class="c"># &quot;distance&quot;,</span>
+        <span class="c"># numeric versions of other columns</span>
+        <span class="s">&quot;trip_list_id_num&quot;</span><span class="p">,</span><span class="s">&quot;trip_id_num&quot;</span><span class="p">,</span><span class="s">&quot;A_id_num&quot;</span><span class="p">,</span><span class="s">&quot;B_id_num&quot;</span><span class="p">,</span><span class="s">&quot;mode_num&quot;</span><span class="p">,</span>
+        <span class="c"># simulation debugging</span>
+        <span class="s">&quot;bump_iter&quot;</span><span class="p">,</span><span class="s">&quot;bumpstop_boarded&quot;</span><span class="p">,</span><span class="s">&quot;alight_delay_min&quot;</span>
+    <span class="p">]</span>
+    <span class="n">DROP_PATHFINDING_COLUMNS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c"># pathfinding debugging</span>
+        <span class="s">&quot;pf_iteration&quot;</span><span class="p">,</span><span class="s">&quot;pf_A_time&quot;</span><span class="p">,</span><span class="s">&quot;pf_B_time&quot;</span><span class="p">,</span><span class="s">&quot;pf_linktime&quot;</span><span class="p">,</span><span class="s">&quot;pf_linkcost&quot;</span><span class="p">,</span><span class="s">&quot;pf_linkdist&quot;</span><span class="p">,</span><span class="s">&quot;pf_waittime&quot;</span><span class="p">,</span><span class="s">&quot;pf_linkfare&quot;</span><span class="p">,</span><span class="s">&quot;pf_cost&quot;</span><span class="p">,</span><span class="s">&quot;pf_fare&quot;</span><span class="p">,</span><span class="s">&quot;pf_initcost&quot;</span><span class="p">,</span><span class="s">&quot;pf_initfare&quot;</span>
+    <span class="p">]</span>
 
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="Util.add_numeric_column"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.add_numeric_column">[docs]</a>    <span class="k">def</span> <span class="nf">add_numeric_column</span><span class="p">(</span><span class="n">input_df</span><span class="p">,</span> <span class="n">id_colname</span><span class="p">,</span> <span class="n">numeric_newcolname</span><span class="p">):</span>
@@ -192,7 +209,7 @@
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="Util.add_new_id"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.add_new_id">[docs]</a>    <span class="k">def</span> <span class="nf">add_new_id</span><span class="p">(</span><span class="n">input_df</span><span class="p">,</span>   <span class="n">id_colname</span><span class="p">,</span>         <span class="n">newid_colname</span><span class="p">,</span>
                    <span class="n">mapping_df</span><span class="p">,</span> <span class="n">mapping_id_colname</span><span class="p">,</span> <span class="n">mapping_newid_colname</span><span class="p">,</span>
-                   <span class="n">warn</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">warn_msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                   <span class="n">warn</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">warn_msg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>      <span class="n">drop_failures</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,</span>
 <span class="sd">        adds the numeric id as a column named *newid_colname* and returns it.</span>
@@ -229,13 +246,14 @@
             <span class="c"># FastTripsLogger.log(msg_level,&quot;pandas.isnull(input_df[%s]).sum() = %d&quot; % (id_colname, pandas.isnull(input_df[id_colname]).sum()))</span>
 
 
-            <span class="k">if</span> <span class="n">warn</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">drop_failures</span><span class="p">:</span>
                 <span class="c"># remove them</span>
                 <span class="n">return_df</span> <span class="o">=</span> <span class="n">return_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">])]</span>
                 <span class="c"># make it an int</span>
                 <span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">]</span> <span class="o">=</span> <span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">warn</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnexpectedError</span><span class="p">(</span><span class="s">&quot;Util.add_new_id failed to map all ids to numbers&quot;</span><span class="p">)</span>
 
         <span class="c"># remove the redundant id column if necessary (it&#39;s redundant)</span>
         <span class="k">if</span> <span class="n">id_colname</span> <span class="o">!=</span> <span class="n">mapping_id_colname</span><span class="p">:</span>
@@ -303,10 +321,10 @@
 <div class="viewcode-block" id="Util.read_time"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.read_time">[docs]</a>    <span class="k">def</span> <span class="nf">read_time</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">end_of_day</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">x</span><span class="o">==</span><span class="s">&#39;&#39;</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">==</span><span class="s">&#39;default&#39;</span><span class="p">:</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="s">&#39;23:59:59&#39;</span> <span class="k">if</span> <span class="n">end_of_day</span> <span class="k">else</span> <span class="s">&#39;00:00:00&#39;</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="s">&#39;24:00:00&#39;</span> <span class="k">if</span> <span class="n">end_of_day</span> <span class="k">else</span> <span class="s">&#39;00:00:00&#39;</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="s">&#39;23:59:59&#39;</span> <span class="k">if</span> <span class="n">end_of_day</span> <span class="k">else</span> <span class="s">&#39;00:00:00&#39;</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="s">&#39;24:00:00&#39;</span> <span class="k">if</span> <span class="n">end_of_day</span> <span class="k">else</span> <span class="s">&#39;00:00:00&#39;</span>
         <span class="n">time_split</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">)</span>
         <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time_split</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">day</span> <span class="o">=</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span>
@@ -317,15 +335,47 @@
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">day</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s">&#39;%H:%M:%S&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
 </div>
     <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="Util.write_dataframe"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.write_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">write_dataframe</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">keep_duration_columns</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Util.write_dataframe"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.write_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">write_dataframe</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">keep_duration_columns</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">drop_debug_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">drop_pathfinding_columns</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience method to write a dataframe but make some of the fields more usable.</span>
 
-<span class="sd">        If a column named colname is a timedelta64 fields, instead of writing &quot;0 days 00:12:00.000000000&quot;,</span>
-<span class="sd">         writes colname_min with the minutes.</span>
+<span class="sd">        :param df:          The dataframe to write</span>
+<span class="sd">        :type  df:          :py:class:`pandas.DataFrame`</span>
+<span class="sd">        :param name:        Name of the dataframe. Just used for logging.</span>
+<span class="sd">        :type  name:        str</span>
+<span class="sd">        :param output_file: The name of the file to which the dataframe will be written</span>
+<span class="sd">        :type  output_file: str</span>
+<span class="sd">        :param append:      Pass true to append to the existing output file, false otherwise</span>
+<span class="sd">        :type  append:      bool</span>
+<span class="sd">        :param keep_duration_columns: Pass True to keep the original duration columns (e.g. &quot;0 days 00:12:00.000000000&quot;)</span>
+<span class="sd">        :type  keep_duration_columns: bool</span>
+<span class="sd">        :param drop_debug_columns:    Pass True to drop debug columns specified in :py:attr:`Util.DROP_DEBUG_COLUMNS`</span>
+<span class="sd">        :type  drop_debug_columns:    bool</span>
+<span class="sd">        :param drop_pathfinding_columns: Pass True to drop pathfinding columns specified in :py:attr:`Util.DROP_PATHFINDING_COLUMNS`</span>
+<span class="sd">        :type  drop_pathfinding_columns: bool</span>
+
+<span class="sd">        For columns that are :py:class:`numpy.timedelta64` fields, instead of writing &quot;0 days 00:12:00.000000000&quot;,</span>
+<span class="sd">        times will be converted to the units specified in :py:attr:`Util.TIMEDELTA_COLUMNS_TO_UNITS`.  The original</span>
+<span class="sd">        duration columns will be kept if *keep_duration_columns* is True.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;No rows of </span><span class="si">%s</span><span class="s"> dataframe to write to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">output_file</span><span class="p">))</span>
+            <span class="k">return</span>
+
         <span class="n">df_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-        <span class="n">df_toprint</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">drop_debug_columns</span><span class="p">:</span>
+            <span class="c"># drop the columns from the list</span>
+            <span class="k">for</span> <span class="n">debug_col</span> <span class="ow">in</span> <span class="n">Util</span><span class="o">.</span><span class="n">DROP_DEBUG_COLUMNS</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">debug_col</span> <span class="ow">in</span> <span class="n">df_cols</span><span class="p">:</span> <span class="n">df_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">debug_col</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">drop_pathfinding_columns</span><span class="p">:</span>
+            <span class="c"># drop the columns from the list</span>
+            <span class="k">for</span> <span class="n">debug_col</span> <span class="ow">in</span> <span class="n">Util</span><span class="o">.</span><span class="n">DROP_PATHFINDING_COLUMNS</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">debug_col</span> <span class="ow">in</span> <span class="n">df_cols</span><span class="p">:</span> <span class="n">df_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">debug_col</span><span class="p">)</span>
+
+        <span class="n">df_toprint</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df_cols</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="c"># if we&#39;re appending, figure out the header row</span>
         <span class="n">header_row</span> <span class="o">=</span> <span class="bp">None</span>
@@ -388,7 +438,7 @@
 <div class="viewcode-block" id="Util.calculate_distance_miles"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.calculate_distance_miles">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_distance_miles</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">origin_lat</span><span class="p">,</span> <span class="n">origin_lon</span><span class="p">,</span> <span class="n">destination_lat</span><span class="p">,</span> <span class="n">destination_lon</span><span class="p">,</span> <span class="n">distance_colname</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance</span>
-<span class="sd">        in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called dist.</span>
+<span class="sd">        in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">radius</span> <span class="o">=</span> <span class="mf">3959.0</span> <span class="c"># mi</span>
 

@@ -32,6 +32,8 @@ fasttrips.Util
 
    .. autosummary::
    
+      ~Util.DROP_DEBUG_COLUMNS
+      ~Util.DROP_PATHFINDING_COLUMNS
       ~Util.SIMULATION_DAY
       ~Util.SIMULATION_DAY_START
       ~Util.TIMEDELTA_COLUMNS_TO_UNITS

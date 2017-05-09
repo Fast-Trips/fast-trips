@@ -14,8 +14,8 @@ fasttrips.Transfer
    .. autosummary::
    
       ~Transfer.__init__
-      ~Transfer.add_distance
       ~Transfer.add_numeric_stop_id
+      ~Transfer.add_transfer_attributes
       ~Transfer.write_transfers_for_extension
    
    
@@ -37,9 +37,11 @@ fasttrips.Transfer
       ~Transfer.TRANSFERS_COLUMN_INDIRECTNESS
       ~Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME
       ~Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN
+      ~Transfer.TRANSFERS_COLUMN_PENALTY
       ~Transfer.TRANSFERS_COLUMN_POPULATION_DENSITY
       ~Transfer.TRANSFERS_COLUMN_RETAIL_DENSITY
       ~Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE
+      ~Transfer.TRANSFERS_COLUMN_STOP_TO_STOP
       ~Transfer.TRANSFERS_COLUMN_TIME
       ~Transfer.TRANSFERS_COLUMN_TIME_MIN
       ~Transfer.TRANSFERS_COLUMN_TO_ROUTE

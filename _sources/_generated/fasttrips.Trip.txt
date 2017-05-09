@@ -16,6 +16,7 @@ fasttrips.Trip
       ~Trip.__init__
       ~Trip.add_numeric_trip_id
       ~Trip.add_original_travel_time_and_dwell
+      ~Trip.add_shape_dist_traveled
       ~Trip.add_trip_attrs_from_stoptimes
       ~Trip.calculate_headways
       ~Trip.get_full_trips
@@ -57,6 +58,7 @@ fasttrips.Trip
       ~Trip.SIM_COL_VEH_MSA_STANDEES
       ~Trip.SIM_COL_VEH_ONBOARD
       ~Trip.SIM_COL_VEH_OVERCAP
+      ~Trip.SIM_COL_VEH_OVERCAP_FRAC
       ~Trip.SIM_COL_VEH_STANDEES
       ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME
       ~Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN

@@ -15,9 +15,9 @@ fasttrips.PathSet
    
       ~PathSet.__init__
       ~PathSet.calculate_cost
+      ~PathSet.calculate_overlap
       ~PathSet.goes_somewhere
       ~PathSet.num_paths
-      ~PathSet.outbound
       ~PathSet.path_found
       ~PathSet.reset
       ~PathSet.set_user_class
@@ -41,6 +41,7 @@ fasttrips.PathSet
       ~PathSet.HUGE_COST
       ~PathSet.MIN_TRANSFER_PENALTY
       ~PathSet.OUTPUT_WEIGHTS_FILE
+      ~PathSet.OVERLAP_CHUNK_SIZE
       ~PathSet.OVERLAP_COUNT
       ~PathSet.OVERLAP_DISTANCE
       ~PathSet.OVERLAP_NONE
@@ -51,6 +52,9 @@ fasttrips.PathSet
       ~PathSet.OVERLAP_VARIABLE_OPTIONS
       ~PathSet.PATHS_OUTPUT_FILE
       ~PathSet.PATH_KEY_COST
+      ~PathSet.PATH_KEY_FARE
+      ~PathSet.PATH_KEY_INIT_COST
+      ~PathSet.PATH_KEY_INIT_FARE
       ~PathSet.PATH_KEY_PROBABILITY
       ~PathSet.PATH_KEY_STATES
       ~PathSet.PATH_TIMES_OUTPUT_FILE
@@ -59,6 +63,9 @@ fasttrips.PathSet
       ~PathSet.STATE_IDX_DEPARR
       ~PathSet.STATE_IDX_DEPARRMODE
       ~PathSet.STATE_IDX_LABEL
+      ~PathSet.STATE_IDX_LINKCOST
+      ~PathSet.STATE_IDX_LINKDIST
+      ~PathSet.STATE_IDX_LINKFARE
       ~PathSet.STATE_IDX_LINKTIME
       ~PathSet.STATE_IDX_SEQ
       ~PathSet.STATE_IDX_SEQ_SUCCPRED
@@ -79,5 +86,6 @@ fasttrips.PathSet
       ~PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE
       ~PathSet.WEIGHTS_DF
       ~PathSet.WEIGHTS_FILE
+      ~PathSet.WEIGHTS_FIXED_WIDTH
    
    

@@ -76,12 +76,13 @@
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Passenger.html">fasttrips.Passenger</a></li>
-<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.PathSet.html">fasttrips.PathSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Performance.html">fasttrips.Performance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Run.html">fasttrips.Run</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Stop.html">fasttrips.Stop</a></li>
-<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Transfer.html">fasttrips.Transfer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Trip.html">fasttrips.Trip</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_generated/fasttrips.Util.html">fasttrips.Util</a></li>
 </ul>
@@ -220,12 +221,10 @@
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.add_distance">add_distance() (fasttrips.TAZ method)</a>
   </dt>
 
-      <dd><dl>
-        
-  <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.add_distance">(fasttrips.Transfer method)</a>
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.add_fares">add_fares() (fasttrips.Route method)</a>
   </dt>
 
-      </dl></dd>
       
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.add_info">add_info() (fasttrips.Performance method)</a>
   </dt>
@@ -246,8 +245,6 @@
   <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.add_numeric_route_id">add_numeric_route_id() (fasttrips.Route method)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.add_numeric_stop_id">add_numeric_stop_id() (fasttrips.Stop method)</a>
   </dt>
@@ -259,9 +256,15 @@
 
       </dl></dd>
       
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.add_numeric_stop_zone_id">add_numeric_stop_zone_id() (fasttrips.Stop method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.add_numeric_trip_id">add_numeric_trip_id() (fasttrips.Trip method)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.add_original_travel_time_and_dwell">add_original_travel_time_and_dwell() (fasttrips.Trip method)</a>
   </dt>
@@ -271,7 +274,23 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.add_shape_dist_traveled">add_shape_dist_traveled() (fasttrips.Trip method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.add_stop_id_for_numeric_id">add_stop_id_for_numeric_id() (fasttrips.Stop method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.add_stop_lat_lon">add_stop_lat_lon() (fasttrips.Stop method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.add_stop_zone_id">add_stop_zone_id() (fasttrips.Stop method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.add_transfer_attributes">add_transfer_attributes() (fasttrips.Transfer method)</a>
   </dt>
 
       
@@ -283,12 +302,20 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.apply_fare_transfer_rules">apply_fare_transfer_rules() (fasttrips.Route method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.apply_free_transfers">apply_free_transfers() (fasttrips.Route method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.ConfigurationError.args">args (fasttrips.Error.ConfigurationError attribute)</a>
   </dt>
 
       <dd><dl>
         
-  <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.DemandInputErorr.args">(fasttrips.Error.DemandInputErorr attribute)</a>
+  <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.DemandInputError.args">(fasttrips.Error.DemandInputError attribute)</a>
   </dt>
 
         
@@ -324,6 +351,10 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.BIKE_MODE_NUMS">BIKE_MODE_NUMS (fasttrips.TAZ attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BOARD_STATE_CATEGORICAL">BOARD_STATE_CATEGORICAL (fasttrips.Assignment attribute)</a>
   </dt>
 
       
@@ -367,6 +398,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.calculate_overlap">calculate_overlap() (fasttrips.PathSet static method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CAPACITY_CONSTRAINT">CAPACITY_CONSTRAINT (fasttrips.Assignment attribute)</a>
   </dt>
 
@@ -379,11 +414,15 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_NOT_CHOSEN_YET">CHOSEN_NOT_CHOSEN_YET (fasttrips.Assignment attribute)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_CATEGORIES">CHOSEN_CATEGORIES (fasttrips.Assignment attribute)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_NOT_CHOSEN_YET">CHOSEN_NOT_CHOSEN_YET (fasttrips.Assignment attribute)</a>
+  </dt>
+
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_REJECTED">CHOSEN_REJECTED (fasttrips.Assignment attribute)</a>
   </dt>
@@ -475,6 +514,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.DEBUG_OUTPUT_COLUMNS">DEBUG_OUTPUT_COLUMNS (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.DEBUG_TRACE_ONLY">DEBUG_TRACE_ONLY (fasttrips.Assignment attribute)</a>
   </dt>
 
@@ -483,7 +526,7 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.DemandInputErorr">DemandInputErorr</a>
+  <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.DemandInputError">DemandInputError</a>
   </dt>
 
       
@@ -510,12 +553,12 @@
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.DRIVE_ACCESS_COLUMN_DISTANCE">DRIVE_ACCESS_COLUMN_DISTANCE (fasttrips.TAZ attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE">DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE (fasttrips.TAZ attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME">DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME (fasttrips.TAZ attribute)</a>
   </dt>
@@ -604,6 +647,14 @@
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.DRIVE_MODE_NUMS">DRIVE_MODE_NUMS (fasttrips.TAZ attribute)</a>
   </dt>
 
+      
+  <dt><a href="_generated/fasttrips.Util.html#fasttrips.Util.DROP_DEBUG_COLUMNS">DROP_DEBUG_COLUMNS (fasttrips.Util attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Util.html#fasttrips.Util.DROP_PATHFINDING_COLUMNS">DROP_PATHFINDING_COLUMNS (fasttrips.Util attribute)</a>
+  </dt>
+
   </dl></td>
 </tr></table>
 
@@ -631,7 +682,7 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_ATTR_COLUMN_FARE_CLASS">FARE_ATTR_COLUMN_FARE_CLASS (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_ATTR_COLUMN_FARE_PERIOD">FARE_ATTR_COLUMN_FARE_PERIOD (fasttrips.Route attribute)</a>
   </dt>
 
       
@@ -643,6 +694,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_ATTR_COLUMN_TRANSFER_DURATION">FARE_ATTR_COLUMN_TRANSFER_DURATION (fasttrips.Route attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_ATTR_COLUMN_TRANSFERS">FARE_ATTR_COLUMN_TRANSFERS (fasttrips.Route attribute)</a>
   </dt>
 
@@ -651,15 +706,19 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_CONTAINS_ID">FARE_RULES_COLUMN_CONTAINS_ID (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_DESTINATION_ID">FARE_RULES_COLUMN_DESTINATION_ID (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM">FARE_RULES_COLUMN_DESTINATION_ID_NUM (fasttrips.Route attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_END_TIME">FARE_RULES_COLUMN_END_TIME (fasttrips.Route attribute)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_END_TIME_MIN">FARE_RULES_COLUMN_END_TIME_MIN (fasttrips.Route attribute)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_FARE_CLASS">FARE_RULES_COLUMN_FARE_CLASS (fasttrips.Route attribute)</a>
   </dt>
 
       
@@ -667,27 +726,55 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_FARE_ID_NUM">FARE_RULES_COLUMN_FARE_ID_NUM (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_FARE_PERIOD">FARE_RULES_COLUMN_FARE_PERIOD (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_ORIGIN_ID">FARE_RULES_COLUMN_ORIGIN_ID (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM">FARE_RULES_COLUMN_ORIGIN_ID_NUM (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_ROUTE_ID">FARE_RULES_COLUMN_ROUTE_ID (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_ROUTE_ID_NUM">FARE_RULES_COLUMN_ROUTE_ID_NUM (fasttrips.Route attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_START_TIME">FARE_RULES_COLUMN_START_TIME (fasttrips.Route attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_RULES_COLUMN_START_TIME_MIN">FARE_RULES_COLUMN_START_TIME_MIN (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.fare_rules_df">fare_rules_df (fasttrips.Route attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS">FARE_TRANSFER_RULES_COLUMN_FROM_FARE_CLASS (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT">FARE_TRANSFER_RULES_COLUMN_AMOUNT (fasttrips.Route attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_IS_FLAT_FEE">FARE_TRANSFER_RULES_COLUMN_IS_FLAT_FEE (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD">FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD (fasttrips.Route attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS">FARE_TRANSFER_RULES_COLUMN_TO_FARE_CLASS (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD">FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD (fasttrips.Route attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE">FARE_TRANSFER_RULES_COLUMN_TRANSFER_RULE (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.FARE_TRANSFER_RULES_COLUMN_TYPE">FARE_TRANSFER_RULES_COLUMN_TYPE (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.FARE_ZONE_SYMMETRY">FARE_ZONE_SYMMETRY (fasttrips.Assignment attribute)</a>
   </dt>
 
       
@@ -707,6 +794,102 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Run.html#module-fasttrips.Run">fasttrips.Run (module)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20AccessEgressLinkAttrE">fasttrips::AccessEgressLinkAttr (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips23AccessEgressLinkCompareE">fasttrips::AccessEgressLinkCompare (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips23AccessEgressLinkCompareclERK19AccessEgressLinkKeyRK19AccessEgressLinkKey">fasttrips::AccessEgressLinkCompare::operator() (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKeyE">fasttrips::AccessEgressLinkKey (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey19AccessEgressLinkKeyEiiidd">fasttrips::AccessEgressLinkKey::AccessEgressLinkKey (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey19AccessEgressLinkKeyEv">[1]</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey9end_time_E">fasttrips::AccessEgressLinkKey::end_time_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey11start_time_E">fasttrips::AccessEgressLinkKey::start_time_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey8stop_id_E">fasttrips::AccessEgressLinkKey::stop_id_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey16supply_mode_num_E">fasttrips::AccessEgressLinkKey::supply_mode_num_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey7taz_id_E">fasttrips::AccessEgressLinkKey::taz_id_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinksE">fasttrips::AccessEgressLinks (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks17AccessEgressLinksEv">fasttrips::AccessEgressLinks::AccessEgressLinks (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks19getAccessAttributesEiiid">fasttrips::AccessEgressLinks::getAccessAttributes (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks14hasLinksForTazEi">fasttrips::AccessEgressLinks::hasLinksForTaz (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks11lower_boundEii">fasttrips::AccessEgressLinks::lower_bound (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks11lower_boundEiii">[1]</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks4map_E">fasttrips::AccessEgressLinks::map_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks9readLinksERNSt8ifstreamEb">fasttrips::AccessEgressLinks::readLinks (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks12stop_id_max_E">fasttrips::AccessEgressLinks::stop_id_max_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks12stop_id_min_E">fasttrips::AccessEgressLinks::stop_id_min_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks20supply_mode_num_max_E">fasttrips::AccessEgressLinks::supply_mode_num_max_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks20supply_mode_num_min_E">fasttrips::AccessEgressLinks::supply_mode_num_min_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks11upper_boundEii">fasttrips::AccessEgressLinks::upper_bound (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks11upper_boundEiii">[1]</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinksD0Ev">fasttrips::AccessEgressLinks::~AccessEgressLinks (C++ function)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10AttributesE">fasttrips::Attributes (C++ type)</a>
   </dt>
 
@@ -716,6 +899,66 @@
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14DemandModeTypeE">fasttrips::DemandModeType (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriodE">fasttrips::FarePeriod (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod9end_time_E">fasttrips::FarePeriod::end_time_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod8fare_id_E">fasttrips::FarePeriod::fare_id_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod12fare_period_E">fasttrips::FarePeriod::fare_period_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod6price_E">fasttrips::FarePeriod::price_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod11start_time_E">fasttrips::FarePeriod::start_time_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod18transfer_duration_E">fasttrips::FarePeriod::transfer_duration_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod10transfers_E">fasttrips::FarePeriod::transfers_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14FarePeriodMmapE">fasttrips::FarePeriodMmap (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12FareTransferE">fasttrips::FareTransfer (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12FareTransfer7amount_E">fasttrips::FareTransfer::amount_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12FareTransfer5type_E">fasttrips::FareTransfer::type_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15FareTransferMapE">fasttrips::FareTransferMap (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips16FareTransferTypeE">fasttrips::FareTransferType (C++ type)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14fix_time_rangeEd">fasttrips::fix_time_range (C++ function)</a>
   </dt>
 
       
@@ -739,7 +982,7 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink11chooseStateERK17PathSpecificationRNSt7ostreamERKNSt6vectorI20ProbabilityStopStateEEPK9StopState">fasttrips::Hyperlink::chooseState (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink11chooseStateERK17PathSpecificationRNSt7ostreamEPK9StopState">fasttrips::Hyperlink::chooseState (C++ function)</a>
   </dt>
 
       
@@ -747,7 +990,15 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink30collectFarePeriodProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderdRNSt3mapIPK10FarePerioddEE">fasttrips::Hyperlink::collectFarePeriodProbabilities (C++ function)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink30earliestDepartureLatestArrivalEbb">fasttrips::Hyperlink::earliestDepartureLatestArrival (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink19getFareWithTransferERK17PathSpecificationRNSt7ostreamERK10PathFinderRK10FarePeriodRKNSt3mapIi9HyperlinkEE">fasttrips::Hyperlink::getFareWithTransfer (C++ function)</a>
   </dt>
 
       
@@ -819,7 +1070,7 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink18setupProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderRNSt6vectorI20ProbabilityStopStateEEPK9StopStateKi">fasttrips::Hyperlink::setupProbabilities (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink18setupProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderbPK4Path">fasttrips::Hyperlink::setupProbabilities (C++ function)</a>
   </dt>
 
       
@@ -836,6 +1087,18 @@
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink12TIME_WINDOW_E">fasttrips::Hyperlink::TIME_WINDOW_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink30TRANSFER_FARE_IGNORE_PATHENUM_E">fasttrips::Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink33TRANSFER_FARE_IGNORE_PATHFINDING_E">fasttrips::Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink10updateFareERK17PathSpecificationRNSt7ostreamERK10PathFinderPK10FarePeriodbRK4PathR9StopStateRNSt6stringE">fasttrips::Hyperlink::updateFare (C++ function)</a>
   </dt>
 
       
@@ -911,7 +1174,7 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue7pop_topERKNSt3mapIiNSt6stringEEEbRNSt8ofstreamE">fasttrips::LabelStopQueue::pop_top (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue7pop_topERKNSt3mapIi4StopEEbRNSt8ofstreamE">fasttrips::LabelStopQueue::pop_top (C++ function)</a>
   </dt>
 
       
@@ -967,6 +1230,10 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet15max_cum_prob_i_E">fasttrips::LinkSet::max_cum_prob_i_ (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet14process_count_E">fasttrips::LinkSet::process_count_ (C++ member)</a>
   </dt>
 
@@ -1011,6 +1278,10 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttripslsERNSt7ostreamERK19AccessEgressLinkKey">fasttrips::operator&lt;&lt; (C++ function)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4PathE">fasttrips::Path (C++ class)</a>
   </dt>
 
@@ -1019,7 +1290,15 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4backEv">fasttrips::Path::back (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4backEv">fasttrips::Path::back (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4backEv">[1]</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path22boards_per_fareperiod_E">fasttrips::Path::boards_per_fareperiod_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path19boardsForFarePeriodERKNSt6stringE">fasttrips::Path::boardsForFarePeriod (C++ function)</a>
   </dt>
 
       
@@ -1044,6 +1323,38 @@
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path12enumerating_E">fasttrips::Path::enumerating_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4fareEv">fasttrips::Path::fare (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path5fare_E">fasttrips::Path::fare_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path19getFareWithTransferERK10PathFinderRKNSt6stringEPK10FarePeriod">fasttrips::Path::getFareWithTransfer (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path13initial_cost_E">fasttrips::Path::initial_cost_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path13initial_fare_E">fasttrips::Path::initial_fare_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path11initialCostEv">fasttrips::Path::initialCost (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path11initialFareEv">fasttrips::Path::initialFare (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path13lastAddedTripEv">fasttrips::Path::lastAddedTrip (C++ function)</a>
   </dt>
 
       
@@ -1087,6 +1398,10 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20access_egress_links_E">fasttrips::PathFinder::access_egress_links_ (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12addStopStateERK17PathSpecificationRNSt8ofstreamEKiRK9StopStatePK9HyperlinkR10StopStatesR14LabelStopQueue">fasttrips::PathFinder::addStopState (C++ function)</a>
   </dt>
 
@@ -1098,8 +1413,18 @@
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10bump_wait_E">fasttrips::PathFinder::bump_wait_ (C++ member)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10choosePathERK17PathSpecificationRNSt8ofstreamER7PathSeti">fasttrips::PathFinder::choosePath (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder13fare_periods_E">fasttrips::PathFinder::fare_periods_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20fare_transfer_rules_E">fasttrips::PathFinder::fare_transfer_rules_ (C++ member)</a>
   </dt>
 
       
@@ -1111,7 +1436,15 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder19getAccessAttributesEiii">fasttrips::PathFinder::getAccessAttributes (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder19getAccessAttributesEiiid">fasttrips::PathFinder::getAccessAttributes (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder13getFarePeriodEiiid">fasttrips::PathFinder::getFarePeriod (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder15getFareTransferEKNSt6stringEKNSt6stringE">fasttrips::PathFinder::getFareTransfer (C++ function)</a>
   </dt>
 
       
@@ -1119,7 +1452,11 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10getPathSetERK17PathSpecificationRNSt8ofstreamERK10StopStatesR7PathSet">fasttrips::PathFinder::getPathSet (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10getPathSetERK17PathSpecificationRNSt8ofstreamER10StopStatesR7PathSet">fasttrips::PathFinder::getPathSet (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder19getRouteIdForTripIdEi">fasttrips::PathFinder::getRouteIdForTripId (C++ function)</a>
   </dt>
 
       
@@ -1143,11 +1480,11 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamERK10StopStatesR4Path">fasttrips::PathFinder::hyperpathGeneratePath (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamER10StopStatesR4Path">fasttrips::PathFinder::hyperpathGeneratePath (C++ function)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20initializeParametersEddidiid">fasttrips::PathFinder::initializeParameters (C++ function)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20initializeParametersEddidibbid">fasttrips::PathFinder::initializeParameters (C++ function)</a>
   </dt>
 
       
@@ -1186,8 +1523,6 @@
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11output_dir_E">fasttrips::PathFinder::output_dir_ (C++ member)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10PathFinderEv">fasttrips::PathFinder::PathFinder (C++ function)</a>
   </dt>
@@ -1214,6 +1549,10 @@
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder15readAccessLinksEv">fasttrips::PathFinder::readAccessLinks (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder15readFarePeriodsEv">fasttrips::PathFinder::readFarePeriods (C++ function)</a>
   </dt>
 
       
@@ -1249,6 +1588,34 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder22RET_FAIL_END_NOT_FOUNDE">fasttrips::PathFinder::RET_FAIL_END_NOT_FOUND (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder25RET_FAIL_INIT_STOP_STATESE">fasttrips::PathFinder::RET_FAIL_INIT_STOP_STATES (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21RET_FAIL_NO_PATH_PROBE">fasttrips::PathFinder::RET_FAIL_NO_PATH_PROB (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21RET_FAIL_NO_PATHS_GENE">fasttrips::PathFinder::RET_FAIL_NO_PATHS_GEN (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder22RET_FAIL_SET_REACHABLEE">fasttrips::PathFinder::RET_FAIL_SET_REACHABLE (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11RET_SUCCESSE">fasttrips::PathFinder::RET_SUCCESS (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12route_fares_E">fasttrips::PathFinder::route_fares_ (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder17route_num_to_str_E">fasttrips::PathFinder::route_num_to_str_ (C++ member)</a>
   </dt>
 
@@ -1269,7 +1636,7 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder16stop_num_to_str_E">fasttrips::PathFinder::stop_num_to_str_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder17stop_num_to_stop_E">fasttrips::PathFinder::stop_num_to_stop_ (C++ member)</a>
   </dt>
 
       
@@ -1282,10 +1649,6 @@
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder13tallyLinkCostEKiRK17PathSpecificationRNSt7ostreamERK12NamedWeightsRK10Attributesb">fasttrips::PathFinder::tallyLinkCost (C++ function)</a>
-  </dt>
-
-      
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder17taz_access_links_E">fasttrips::PathFinder::taz_access_links_ (C++ member)</a>
   </dt>
 
       
@@ -1397,11 +1760,15 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification13passenger_id_E">fasttrips::PathSpecification::passenger_id_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification22pathfinding_iteration_E">fasttrips::PathSpecification::pathfinding_iteration_ (C++ member)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification8path_id_E">fasttrips::PathSpecification::path_id_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification10person_id_E">fasttrips::PathSpecification::person_id_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification15person_trip_id_E">fasttrips::PathSpecification::person_trip_id_ (C++ member)</a>
   </dt>
 
       
@@ -1422,6 +1789,10 @@
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification11user_class_E">fasttrips::PathSpecification::user_class_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification14value_of_time_E">fasttrips::PathSpecification::value_of_time_ (C++ member)</a>
   </dt>
 
       
@@ -1457,19 +1828,39 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20ProbabilityStopStateE">fasttrips::ProbabilityStopState (C++ class)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZoneE">fasttrips::RouteStopZone (C++ class)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20ProbabilityStopState7prob_i_E">fasttrips::ProbabilityStopState::prob_i_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZone17destination_zone_E">fasttrips::RouteStopZone::destination_zone_ (C++ member)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20ProbabilityStopState12probability_E">fasttrips::ProbabilityStopState::probability_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZone12origin_zone_E">fasttrips::RouteStopZone::origin_zone_ (C++ member)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20ProbabilityStopState4ssk_E">fasttrips::ProbabilityStopState::ssk_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZone9route_id_E">fasttrips::RouteStopZone::route_id_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20RouteStopZoneCompareE">fasttrips::RouteStopZoneCompare (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20RouteStopZoneCompareclERK13RouteStopZoneRK13RouteStopZone">fasttrips::RouteStopZoneCompare::operator() (C++ function)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4StopE">fasttrips::Stop (C++ class)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Stop9stop_str_E">fasttrips::Stop::stop_str_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Stop9zone_num_E">fasttrips::Stop::zone_num_ (C++ member)</a>
   </dt>
 
       
@@ -1485,11 +1876,19 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState11cum_prob_i_E">fasttrips::StopState::cum_prob_i_ (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12deparr_mode_E">fasttrips::StopState::deparr_mode_ (C++ member)</a>
   </dt>
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12deparr_time_E">fasttrips::StopState::deparr_time_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12fare_period_E">fasttrips::StopState::fare_period_ (C++ member)</a>
   </dt>
 
       
@@ -1501,11 +1900,23 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_dist_E">fasttrips::StopState::link_dist_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_fare_E">fasttrips::StopState::link_fare_ (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_time_E">fasttrips::StopState::link_time_ (C++ member)</a>
   </dt>
 
       
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState14low_cost_path_E">fasttrips::StopState::low_cost_path_ (C++ member)</a>
+  </dt>
+
+      
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12probability_E">fasttrips::StopState::probability_ (C++ member)</a>
   </dt>
 
       
@@ -1521,7 +1932,7 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddid">fasttrips::StopState::StopState (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState9StopStateEv">[1]</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddddidPK10FarePeriod">fasttrips::StopState::StopState (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState9StopStateEv">[1]</a>
   </dt>
 
       
@@ -1585,10 +1996,6 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips16SupplyStopToAttrE">fasttrips::SupplyStopToAttr (C++ type)</a>
-  </dt>
-
-      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11TazStopCostE">fasttrips::TazStopCost (C++ class)</a>
   </dt>
 
@@ -1605,19 +2012,15 @@
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19TAZSupplyStopToAttrE">fasttrips::TAZSupplyStopToAttr (C++ type)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13TRANSFER_COSTE">fasttrips::TRANSFER_COST (C++ class)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TransferCostE">fasttrips::TransferCost (C++ class)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17TRANSFER_DISCOUNTE">fasttrips::TRANSFER_DISCOUNT (C++ class)</a>
   </dt>
 
       
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TransferCost5cost_E">fasttrips::TransferCost::cost_ (C++ member)</a>
-  </dt>
-
-      
-  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TransferCost5time_E">fasttrips::TransferCost::time_ (C++ member)</a>
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13TRANSFER_FREEE">fasttrips::TRANSFER_FREE (C++ class)</a>
   </dt>
 
       
@@ -1681,6 +2084,10 @@
   </dt>
 
       
+  <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime16shape_dist_trav_E">fasttrips::TripStopTime::shape_dist_trav_ (C++ member)</a>
+  </dt>
+
+      
   <dt><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime8stop_id_E">fasttrips::TripStopTime::stop_id_ (C++ member)</a>
   </dt>
 
@@ -1734,10 +2141,6 @@
 
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.find_trip_based_pathset">find_trip_based_pathset() (fasttrips.Assignment static method)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.flag_bump_overcap_passengers">flag_bump_overcap_passengers() (fasttrips.Assignment static method)</a>
   </dt>
 
       
@@ -1859,7 +2262,7 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.INPUT_FARE_RULES_FILE">INPUT_FARE_RULES_FILE (fasttrips.Route attribute)</a>
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.INPUT_FARE_PERIODS_FILE">INPUT_FARE_PERIODS_FILE (fasttrips.Route attribute)</a>
   </dt>
 
       
@@ -1913,11 +2316,11 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.is_transfer">is_transfer() (fasttrips.Stop method)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.INPUT_WEIGHTS">INPUT_WEIGHTS (fasttrips.Assignment attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.ITERATION_FLAG">ITERATION_FLAG (fasttrips.Assignment attribute)</a>
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.is_transfer">is_transfer() (fasttrips.Stop method)</a>
   </dt>
 
   </dl></td>
@@ -1931,11 +2334,21 @@
   </dt>
 
   </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.load_passengers_on_vehicles_with_cap">load_passengers_on_vehicles_with_cap() (fasttrips.Assignment static method)</a>
+  </dt>
+
+  </dl></td>
 </tr></table>
 
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.MAX_ITERATIONS">MAX_ITERATIONS (fasttrips.Assignment attribute)</a>
+  </dt>
+
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.MAX_NUM_PATHS">MAX_NUM_PATHS (fasttrips.Assignment attribute)</a>
   </dt>
@@ -1958,7 +2371,7 @@
 
       <dd><dl>
         
-  <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.DemandInputErorr.message">(fasttrips.Error.DemandInputErorr attribute)</a>
+  <dt><a href="_generated/fasttrips.Error.html#fasttrips.Error.DemandInputError.message">(fasttrips.Error.DemandInputError attribute)</a>
   </dt>
 
         
@@ -1984,6 +2397,10 @@
 
       
   <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.MIN_TRANSFER_PENALTY">MIN_TRANSFER_PENALTY (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.MIN_VALUE_OF_TIME">MIN_VALUE_OF_TIME (fasttrips.Passenger attribute)</a>
   </dt>
 
       
@@ -2014,12 +2431,12 @@
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.MODE_COLUMN_MODE_NUM">MODE_COLUMN_MODE_NUM (fasttrips.TAZ attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.MODE_EGRESS_BIKE_OWN">MODE_EGRESS_BIKE_OWN (fasttrips.TAZ attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.MODE_EGRESS_BIKE_SHARE">MODE_EGRESS_BIKE_SHARE (fasttrips.TAZ attribute)</a>
   </dt>
@@ -2115,15 +2532,19 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.outbound">outbound() (fasttrips.PathSet method)</a>
-  </dt>
-
-      
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.OUTPUT_ACCESS_EGRESS_FILE">OUTPUT_ACCESS_EGRESS_FILE (fasttrips.TAZ attribute)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.OUTPUT_DIR">OUTPUT_DIR (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.OUTPUT_FARE_ID_FILE">OUTPUT_FARE_ID_FILE (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.OUTPUT_FARE_TRANSFER_FILE">OUTPUT_FARE_TRANSFER_FILE (fasttrips.Route attribute)</a>
   </dt>
 
       
@@ -2166,6 +2587,10 @@
 
       
   <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.OUTPUT_WEIGHTS_FILE">OUTPUT_WEIGHTS_FILE (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.OVERLAP_CHUNK_SIZE">OVERLAP_CHUNK_SIZE (fasttrips.PathSet attribute)</a>
   </dt>
 
       
@@ -2220,6 +2645,18 @@
 
       
   <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.PATH_KEY_COST">PATH_KEY_COST (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.PATH_KEY_FARE">PATH_KEY_FARE (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.PATH_KEY_INIT_COST">PATH_KEY_INIT_COST (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.PATH_KEY_INIT_FARE">PATH_KEY_INIT_FARE (fasttrips.PathSet attribute)</a>
   </dt>
 
       
@@ -2295,13 +2732,27 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_PATHFINDING_ITERATION">PERFORMANCE_COLUMN_PATHFINDING_ITERATION (fasttrips.Performance attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_PATHFINDING_STATUS">PERFORMANCE_COLUMN_PATHFINDING_STATUS (fasttrips.Performance attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_PERSON_ID">PERFORMANCE_COLUMN_PERSON_ID (fasttrips.Performance attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_PERSON_TRIP_ID">PERFORMANCE_COLUMN_PERSON_TRIP_ID (fasttrips.Performance attribute)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES">PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES (fasttrips.Performance attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_PROCESS_NUM">PERFORMANCE_COLUMN_PROCESS_NUM (fasttrips.Performance attribute)</a>
   </dt>
@@ -2310,8 +2761,6 @@
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING">PERFORMANCE_COLUMN_TIME_ENUMERATING (fasttrips.Performance attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS">PERFORMANCE_COLUMN_TIME_ENUMERATING_MS (fasttrips.Performance attribute)</a>
   </dt>
@@ -2326,10 +2775,6 @@
 
       
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_TRACED">PERFORMANCE_COLUMN_TRACED (fasttrips.Performance attribute)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM">PERFORMANCE_COLUMN_TRIP_LIST_ID_NUM (fasttrips.Performance attribute)</a>
   </dt>
 
       
@@ -2350,6 +2795,18 @@
 
       
   <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.PF_COL_DESCRIPTION">PF_COL_DESCRIPTION (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.PF_COL_LINK_COST">PF_COL_LINK_COST (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.PF_COL_LINK_DIST">PF_COL_LINK_DIST (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.PF_COL_LINK_FARE">PF_COL_LINK_FARE (fasttrips.Passenger attribute)</a>
   </dt>
 
       
@@ -2433,15 +2890,27 @@
 
       </dl></dd>
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.read_functions">read_functions() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.read_input_files">read_input_files() (fasttrips.FastTrips method)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.read_passenger_pathsets">read_passenger_pathsets() (fasttrips.Passenger static method)</a>
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.read_passenger_pathsets">read_passenger_pathsets() (fasttrips.Passenger method)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Util.html#fasttrips.Util.read_time">read_time() (fasttrips.Util static method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.read_weights">read_weights() (fasttrips.Assignment static method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.remove_fare_period_overlap">remove_fare_period_overlap() (fasttrips.Route method)</a>
   </dt>
 
       
@@ -2466,10 +2935,6 @@
 
       
   <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.ROUTES_COLUMN_AGENCY_ID">ROUTES_COLUMN_AGENCY_ID (fasttrips.Route attribute)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.ROUTES_COLUMN_FARE_CLASS">ROUTES_COLUMN_FARE_CLASS (fasttrips.Route attribute)</a>
   </dt>
 
   </dl></td>
@@ -2512,6 +2977,14 @@
 
       
   <dt><a href="_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.run_assignment">run_assignment() (fasttrips.FastTrips method)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Run.html#fasttrips.Run.run_fasttrips">run_fasttrips() (in module fasttrips.Run)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Run.html#fasttrips.Run.run_setup">run_setup() (in module fasttrips.Run)</a>
   </dt>
 
   </dl></td>
@@ -2569,15 +3042,15 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_BOARD_STATE">SIM_COL_PAX_BOARD_STATE (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_BOARD_TIME">SIM_COL_PAX_BOARD_TIME (fasttrips.Assignment attribute)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_BUMP_ITER">SIM_COL_PAX_BUMP_ITER (fasttrips.Assignment attribute)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED">SIM_COL_PAX_BUMPSTOP_BOARDED (fasttrips.Assignment attribute)</a>
   </dt>
 
       
@@ -2590,6 +3063,18 @@
 
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_DISTANCE">SIM_COL_PAX_DISTANCE (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_FARE">SIM_COL_PAX_FARE (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_FARE_PERIOD">SIM_COL_PAX_FARE_PERIOD (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_FREE_TRANSFER">SIM_COL_PAX_FREE_TRANSFER (fasttrips.Assignment attribute)</a>
   </dt>
 
       
@@ -2606,6 +3091,10 @@
 
       
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_MISSED_XFER">SIM_COL_PAX_MISSED_XFER (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_OVERCAP">SIM_COL_PAX_OVERCAP (fasttrips.Assignment attribute)</a>
   </dt>
 
       
@@ -2665,6 +3154,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.SIM_COL_VEH_OVERCAP_FRAC">SIM_COL_VEH_OVERCAP_FRAC (fasttrips.Trip attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.SIM_COL_VEH_STANDEES">SIM_COL_VEH_STANDEES (fasttrips.Trip attribute)</a>
   </dt>
 
@@ -2712,14 +3205,26 @@
   <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.STATE_IDX_DEPARR">STATE_IDX_DEPARR (fasttrips.PathSet attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.STATE_IDX_DEPARRMODE">STATE_IDX_DEPARRMODE (fasttrips.PathSet attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.STATE_IDX_LABEL">STATE_IDX_LABEL (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.STATE_IDX_LINKCOST">STATE_IDX_LINKCOST (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.STATE_IDX_LINKDIST">STATE_IDX_LINKDIST (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.STATE_IDX_LINKFARE">STATE_IDX_LINKFARE (fasttrips.PathSet attribute)</a>
   </dt>
 
       
@@ -2772,6 +3277,10 @@
 
       
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop">Stop (class in fasttrips)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.stop_min_max_lat_lon">stop_min_max_lat_lon() (fasttrips.Stop method)</a>
   </dt>
 
       
@@ -2828,6 +3337,14 @@
 
       
   <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.STOPS_COLUMN_STOP_NAME">STOPS_COLUMN_STOP_NAME (fasttrips.Stop attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.STOPS_COLUMN_ZONE_ID">STOPS_COLUMN_ZONE_ID (fasttrips.Stop attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Stop.html#fasttrips.Stop.STOPS_COLUMN_ZONE_ID_NUM">STOPS_COLUMN_ZONE_ID_NUM (fasttrips.Stop attribute)</a>
   </dt>
 
       
@@ -2921,6 +3438,14 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TIME_TARGET_ARRIVAL">TIME_TARGET_ARRIVAL (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TIME_TARGET_DEPARTURE">TIME_TARGET_DEPARTURE (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">TIME_WINDOW (fasttrips.Assignment attribute)</a>
   </dt>
 
@@ -2933,11 +3458,35 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRACE_PERSON_IDS">TRACE_PERSON_IDS (fasttrips.Assignment attribute)</a>
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRACE_IDS">TRACE_IDS (fasttrips.Assignment attribute)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer">Transfer (class in fasttrips)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM">TRANSFER_FARE_IGNORE_PATHENUM (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING">TRANSFER_FARE_IGNORE_PATHFINDING (fasttrips.Assignment attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.TRANSFER_TYPE_OPTIONS">TRANSFER_TYPE_OPTIONS (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.TRANSFER_TYPE_TRANSFER_COST">TRANSFER_TYPE_TRANSFER_COST (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.TRANSFER_TYPE_TRANSFER_DISCOUNT">TRANSFER_TYPE_TRANSFER_DISCOUNT (fasttrips.Route attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.TRANSFER_TYPE_TRANSFER_FREE">TRANSFER_TYPE_TRANSFER_FREE (fasttrips.Route attribute)</a>
   </dt>
 
       
@@ -2977,6 +3526,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.TRANSFERS_COLUMN_PENALTY">TRANSFERS_COLUMN_PENALTY (fasttrips.Transfer attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.TRANSFERS_COLUMN_POPULATION_DENSITY">TRANSFERS_COLUMN_POPULATION_DENSITY (fasttrips.Transfer attribute)</a>
   </dt>
 
@@ -2986,6 +3539,10 @@
 
       
   <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE">TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE (fasttrips.Transfer attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.TRANSFERS_COLUMN_STOP_TO_STOP">TRANSFERS_COLUMN_STOP_TO_STOP (fasttrips.Transfer attribute)</a>
   </dt>
 
       
@@ -3012,16 +3569,14 @@
   <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE">TRANSFERS_COLUMN_TRANSFER_TYPE (fasttrips.Transfer attribute)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Trip.html#fasttrips.Trip">Trip (class in fasttrips)</a>
   </dt>
 
       
   <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_ACCESS_MODE">TRIP_LIST_COLUMN_ACCESS_MODE (fasttrips.Passenger attribute)</a>
-  </dt>
-
-      
-  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_ACCESS_MODE_NUM">TRIP_LIST_COLUMN_ACCESS_MODE_NUM (fasttrips.Passenger attribute)</a>
   </dt>
 
       
@@ -3036,8 +3591,6 @@
   <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME">TRIP_LIST_COLUMN_DEPARTURE_TIME (fasttrips.Passenger attribute)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN">TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN (fasttrips.Passenger attribute)</a>
   </dt>
@@ -3055,10 +3608,6 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_EGRESS_MODE_NUM">TRIP_LIST_COLUMN_EGRESS_MODE_NUM (fasttrips.Passenger attribute)</a>
-  </dt>
-
-      
   <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_MODE">TRIP_LIST_COLUMN_MODE (fasttrips.Passenger attribute)</a>
   </dt>
 
@@ -3068,6 +3617,10 @@
 
       
   <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM">TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM (fasttrips.Passenger attribute)</a>
+  </dt>
+
+      
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_OUTBOUND">TRIP_LIST_COLUMN_OUTBOUND (fasttrips.Passenger attribute)</a>
   </dt>
 
       
@@ -3087,11 +3640,11 @@
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE">TRIP_LIST_COLUMN_TRANSIT_MODE (fasttrips.Passenger attribute)</a>
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_TRACE">TRIP_LIST_COLUMN_TRACE (fasttrips.Passenger attribute)</a>
   </dt>
 
       
-  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE_NUM">TRIP_LIST_COLUMN_TRANSIT_MODE_NUM (fasttrips.Passenger attribute)</a>
+  <dt><a href="_generated/fasttrips.Passenger.html#fasttrips.Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE">TRIP_LIST_COLUMN_TRANSIT_MODE (fasttrips.Passenger attribute)</a>
   </dt>
 
       
@@ -3273,6 +3826,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.WALK_ACCESS_COLUMN_DIRECTION">WALK_ACCESS_COLUMN_DIRECTION (fasttrips.TAZ attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.TAZ.html#fasttrips.TAZ.WALK_ACCESS_COLUMN_DIST">WALK_ACCESS_COLUMN_DIST (fasttrips.TAZ attribute)</a>
   </dt>
 
@@ -3387,6 +3944,10 @@
   </dt>
 
       
+  <dt><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHTS_FIXED_WIDTH">WEIGHTS_FIXED_WIDTH (fasttrips.PathSet attribute)</a>
+  </dt>
+
+      
   <dt><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.write">write() (fasttrips.Performance method)</a>
   </dt>
 
@@ -3416,6 +3977,10 @@
   </dt>
 
       </dl></dd>
+      
+  <dt><a href="_generated/fasttrips.Route.html#fasttrips.Route.write_routes_for_extension">write_routes_for_extension() (fasttrips.Route method)</a>
+  </dt>
+
       
   <dt><a href="_generated/fasttrips.Transfer.html#fasttrips.Transfer.write_transfers_for_extension">write_transfers_for_extension() (fasttrips.Transfer method)</a>
   </dt>

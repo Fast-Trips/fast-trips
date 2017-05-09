@@ -1,0 +1,29 @@
+fasttrips.Run
+=============
+
+.. automodule:: fasttrips.Run
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      run_fasttrips
+      run_setup
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      ConfigurationError
+   
+   

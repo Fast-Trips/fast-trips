@@ -16,12 +16,16 @@ fasttrips.Stop
       ~Stop.__init__
       ~Stop.add_daps_tazs_to_stops
       ~Stop.add_numeric_stop_id
+      ~Stop.add_numeric_stop_zone_id
+      ~Stop.add_stop_id_for_numeric_id
       ~Stop.add_stop_lat_lon
+      ~Stop.add_stop_zone_id
       ~Stop.add_trips
       ~Stop.get_transfers
       ~Stop.get_trips_arriving_within_time
       ~Stop.get_trips_departing_within_time
       ~Stop.is_transfer
+      ~Stop.stop_min_max_lat_lon
    
    
 
@@ -46,5 +50,7 @@ fasttrips.Stop
       ~Stop.STOPS_COLUMN_STOP_LATITUDE
       ~Stop.STOPS_COLUMN_STOP_LONGITUDE
       ~Stop.STOPS_COLUMN_STOP_NAME
+      ~Stop.STOPS_COLUMN_ZONE_ID
+      ~Stop.STOPS_COLUMN_ZONE_ID_NUM
    
    

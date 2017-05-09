@@ -19,14 +19,16 @@ fasttrips.Assignment
       ~Assignment.filter_trip_list_to_not_arrived
       ~Assignment.find_passenger_vehicle_times
       ~Assignment.find_trip_based_pathset
-      ~Assignment.flag_bump_overcap_passengers
       ~Assignment.flag_missed_transfers
       ~Assignment.generate_pathsets
       ~Assignment.initialize_fasttrips_extension
+      ~Assignment.load_passengers_on_vehicles_with_cap
       ~Assignment.merge_pathsets
       ~Assignment.number_of_pathsets
       ~Assignment.put_passengers_on_vehicles
       ~Assignment.read_configuration
+      ~Assignment.read_functions
+      ~Assignment.read_weights
       ~Assignment.set_fasttrips_bump_wait
       ~Assignment.simulate
       ~Assignment.write_configuration
@@ -40,9 +42,11 @@ fasttrips.Assignment
 
    .. autosummary::
    
+      ~Assignment.BOARD_STATE_CATEGORICAL
       ~Assignment.BUMP_BUFFER
       ~Assignment.BUMP_ONE_AT_A_TIME
       ~Assignment.CAPACITY_CONSTRAINT
+      ~Assignment.CHOSEN_CATEGORIES
       ~Assignment.CHOSEN_NOT_CHOSEN_YET
       ~Assignment.CHOSEN_REJECTED
       ~Assignment.CONFIGURATION_FILE
@@ -50,10 +54,13 @@ fasttrips.Assignment
       ~Assignment.CONFIGURATION_OUTPUT_FILE
       ~Assignment.CREATE_SKIMS
       ~Assignment.DEBUG_NUM_TRIPS
+      ~Assignment.DEBUG_OUTPUT_COLUMNS
       ~Assignment.DEBUG_TRACE_ONLY
+      ~Assignment.FARE_ZONE_SYMMETRY
       ~Assignment.INPUT_DEMAND_DIR
       ~Assignment.INPUT_NETWORK_DIR
-      ~Assignment.ITERATION_FLAG
+      ~Assignment.INPUT_WEIGHTS
+      ~Assignment.MAX_ITERATIONS
       ~Assignment.MAX_NUM_PATHS
       ~Assignment.MAX_SIMULATION_ITERS
       ~Assignment.MIN_PATH_PROBABILITY
@@ -73,17 +80,21 @@ fasttrips.Assignment
       ~Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN
       ~Assignment.SIM_COL_PAX_ALIGHT_TIME
       ~Assignment.SIM_COL_PAX_A_TIME
+      ~Assignment.SIM_COL_PAX_BOARD_STATE
       ~Assignment.SIM_COL_PAX_BOARD_TIME
-      ~Assignment.SIM_COL_PAX_BUMPSTOP_BOARDED
       ~Assignment.SIM_COL_PAX_BUMP_ITER
       ~Assignment.SIM_COL_PAX_B_TIME
       ~Assignment.SIM_COL_PAX_CHOSEN
       ~Assignment.SIM_COL_PAX_COST
       ~Assignment.SIM_COL_PAX_DISTANCE
+      ~Assignment.SIM_COL_PAX_FARE
+      ~Assignment.SIM_COL_PAX_FARE_PERIOD
+      ~Assignment.SIM_COL_PAX_FREE_TRANSFER
       ~Assignment.SIM_COL_PAX_LINK_TIME
       ~Assignment.SIM_COL_PAX_LNPS
       ~Assignment.SIM_COL_PAX_LOGSUM
       ~Assignment.SIM_COL_PAX_MISSED_XFER
+      ~Assignment.SIM_COL_PAX_OVERCAP
       ~Assignment.SIM_COL_PAX_OVERCAP_FRAC
       ~Assignment.SIM_COL_PAX_PROBABILITY
       ~Assignment.SIM_COL_PAX_WAIT_TIME
@@ -94,7 +105,9 @@ fasttrips.Assignment
       ~Assignment.STOCH_MAX_STOP_PROCESS_COUNT
       ~Assignment.STOCH_PATHSET_SIZE
       ~Assignment.TIME_WINDOW
-      ~Assignment.TRACE_PERSON_IDS
+      ~Assignment.TRACE_IDS
+      ~Assignment.TRANSFER_FARE_IGNORE_PATHENUM
+      ~Assignment.TRANSFER_FARE_IGNORE_PATHFINDING
       ~Assignment.bump_wait
       ~Assignment.bump_wait_df
    
