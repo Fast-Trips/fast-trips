@@ -113,8 +113,6 @@ class FastTrips:
             Assignment.read_functions(func_file       = Assignment.CONFIGURATION_FUNCTIONS_FILE)
         Assignment.read_configuration(config_fullpath = Assignment.CONFIGURATION_FILE)
         Assignment.read_weights(weights_file          = Assignment.INPUT_WEIGHTS)
-        
-        Assignment.write_configuration(Assignment.OUTPUT_DIR)
 
     def read_input_files(self):
         """
@@ -165,6 +163,9 @@ class FastTrips:
 
         # Do it!  Try it!
         try:
+            # do this last before assigning paths so vlaues reflect pathfinding
+            Assignment.write_configuration(Assignment.OUTPUT_DIR)
+
             r = Assignment.assign_paths(output_dir, self)
             FastTripsLogger.info("Successfully completed!")
             return r
