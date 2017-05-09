@@ -1,0 +1,39 @@
+[fasttrips]
+input_demand_dir = Examples\OverlapExample\input
+input_network_dir = Examples\OverlapExample\input
+max_iterations = 1
+simulation = True
+output_dir = Examples\OverlapExample\output\stochastic_iter1_nocap
+output_passenger_trajectories = True
+output_pathset_per_sim_iter = False
+create_skims = False
+skim_start_time = 05:00
+skim_end_time = 10:00
+capacity_constraint = False
+skip_person_ids = None
+trace_person_ids = ['frogger']
+debug_trace_only = False
+debug_num_trips = -1
+debug_output_columns = True
+fare_zone_symmetry = False
+prepend_route_id_to_trip_id = True
+number_of_processes = 1
+bump_buffer = 5.000000
+bump_one_at_a_time = False
+
+[pathfinding]
+max_num_paths = -1
+min_path_probability = 0.005000
+min_transfer_penalty = 1.000000
+overlap_scale_parameter = 1.000000
+overlap_split_transit = True
+overlap_variable = time
+pathfinding_type = stochastic
+stochastic_dispersion = 1.000000
+stochastic_max_stop_process_count = -1
+stochastic_pathset_size = 1000
+time_window = 30.000000
+transfer_fare_ignore_pathfinding = False
+transfer_fare_ignore_pathenum = False
+user_class_function = generic_user_class
+

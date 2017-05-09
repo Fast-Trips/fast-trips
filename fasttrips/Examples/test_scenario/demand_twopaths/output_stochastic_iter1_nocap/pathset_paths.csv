@@ -1,0 +1,301 @@
+person_id,person_trip_id,trace,pathdir,pathmode,pathnum,pf_probability,description,chosen,missed_xfer,sim_cost,ln_PS,logsum_component,logsum,probability,iteration,pathfinding_iteration,simulation_iteration
+frogger,1,True,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+marge,1,True,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+marge,1,True,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+marge,1,True,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+marge,1,True,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+marge,1,True,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,1,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,1,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,1,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,1,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,1,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,1,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,2,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,2,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,2,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,2,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,2,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,2,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,3,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,3,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,3,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,3,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,3,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,3,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,4,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,4,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,4,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,4,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,4,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,4,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,5,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,5,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,5,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,5,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,5,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,5,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,6,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,6,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,6,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,6,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,6,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,6,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,7,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,7,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,7,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,7,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,7,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,7,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,8,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,8,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,8,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,8,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,8,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,8,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,9,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,9,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,9,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,9,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,9,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,9,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,10,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,10,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,10,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,10,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,10,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,10,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,11,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,11,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,11,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,11,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,11,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,11,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,12,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,12,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,12,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,12,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,12,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,12,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,13,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,13,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,13,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,13,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,13,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,13,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,14,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,14,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,14,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,14,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,14,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,14,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,15,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,15,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,15,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,15,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,15,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,15,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,16,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,16,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,16,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,16,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,16,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,16,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,17,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,17,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,17,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,17,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,17,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,17,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,18,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,18,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,18,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,18,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,18,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,18,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,19,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,19,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,19,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,19,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,19,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,19,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,20,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,20,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,20,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,20,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,20,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,20,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,21,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,21,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,21,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,21,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,21,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,21,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,22,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,22,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,22,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,22,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,22,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,22,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,23,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,23,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,23,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,23,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,23,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,23,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,24,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,24,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,24,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,24,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,24,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,24,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,25,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,25,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,25,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,25,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,25,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,25,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,26,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,26,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,26,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,26,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,26,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,26,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,27,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,27,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,27,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,27,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,27,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,27,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,28,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,28,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,28,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,28,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,28,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,28,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,29,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,29,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,29,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,29,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,29,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,iter1.01 sim0,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,29,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,30,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,30,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,30,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,30,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,30,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,30,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,31,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,31,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,31,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,31,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,31,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,31,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,32,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,32,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,32,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,32,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,32,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,32,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,33,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,33,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,33,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,33,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,33,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,33,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,34,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,34,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,34,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,34,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,34,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,34,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,35,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,35,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,35,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,35,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,35,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,35,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,36,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,36,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,36,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,36,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,36,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,36,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,37,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,37,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,37,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,37,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,37,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,37,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,38,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,38,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,38,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,38,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,38,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,38,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,39,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,39,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,39,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,39,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,39,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,39,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,40,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,40,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,40,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,40,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,40,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,40,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,41,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,41,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,41,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,41,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,41,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,41,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,42,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,42,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,42,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,42,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,42,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,42,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,43,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,43,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,43,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,43,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,43,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,43,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,44,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,44,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,44,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,44,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,iter1.01 sim0,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,44,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,44,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,45,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,45,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,45,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,45,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,45,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,45,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,46,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,46,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,46,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,46,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,46,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,46,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,47,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,47,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,47,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,47,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,47,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,47,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+ben,48,False,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+bart,48,False,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,unchosen,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+bart,48,False,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,iter1.01 sim0,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+bart,48,False,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+bart,48,False,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+bart,48,False,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2
+paperboy,1,True,1,walk-commuter_rail-walk,0,1.0000000000,Z1 walk_access B0 local_bus t20 B2 transfer R2 heavy_rail t151 R3 walk_egress Z5,iter1.01 sim0,0,124.3837425289,0.0000000000,0.0000000000,0.0000000000,1.0000000000,1,1,2
+maggie,1,True,2,PNR-commuter_rail-walk,0,0.6364086466,Z2 PNR_access R1 heavy_rail t136 R2 walk_egress Z3,iter1.01 sim0,0,347.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0000000000,1,1,2
+maggie,1,True,2,PNR-commuter_rail-walk,1,0.2341216573,Z2 PNR_access R1 heavy_rail t137 R2 walk_egress Z3,unchosen,0,283.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.4275489635,1,1,2
+maggie,1,True,2,PNR-commuter_rail-walk,2,0.0861285444,Z2 PNR_access R1 heavy_rail t138 R2 walk_egress Z3,unchosen,0,284.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.1572864738,1,1,2
+maggie,1,True,2,PNR-commuter_rail-walk,3,0.0316849208,Z2 PNR_access R1 heavy_rail t139 R2 walk_egress Z3,unchosen,0,285.5965368094,-1.6094379124,0.0000000000,0.0000000000,0.0578624601,1,1,2
+maggie,1,True,2,PNR-commuter_rail-walk,4,0.0116562310,Z2 PNR_access R1 heavy_rail t140 R2 walk_egress Z3,unchosen,0,283.7760239760,-1.6094379124,0.0000000000,0.0000000000,0.3573021026,1,1,2

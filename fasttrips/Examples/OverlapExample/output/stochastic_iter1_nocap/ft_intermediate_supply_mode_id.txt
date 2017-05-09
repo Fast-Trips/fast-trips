@@ -1,0 +1,14 @@
+mode_num mode
+1 transfer
+301 local_bus
+302 light_rail
+101 walk_access
+102 bike_own_access
+103 bike_share_access
+104 PNR_access
+105 KNR_access
+201 walk_egress
+202 bike_own_egress
+203 bike_share_egress
+204 PNR_egress
+205 KNR_egress

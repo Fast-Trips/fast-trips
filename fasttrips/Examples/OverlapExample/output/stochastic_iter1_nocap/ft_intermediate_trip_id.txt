@@ -1,0 +1,3 @@
+trip_id_num trip_id
+1 LR_lr_trip1
+2 Bus_bus_trip1

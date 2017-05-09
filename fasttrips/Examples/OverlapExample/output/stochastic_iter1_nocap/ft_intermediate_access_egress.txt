@@ -1,0 +1,11 @@
+taz_num supply_mode_num stop_id_num start_time_min end_time_min level_5 attr_value
+6 101 3 0.0 1440.0 dist 0.02
+6 101 3 0.0 1440.0 time_min 0.4
+6 101 5 0.0 1440.0 dist 0.02
+6 101 5 0.0 1440.0 time_min 0.4
+7 201 2 0.0 1440.0 dist 0.35
+7 201 2 0.0 1440.0 time_min 7.0
+7 201 1 0.0 1440.0 dist 0.2125
+7 201 1 0.0 1440.0 time_min 4.25
+7 201 4 0.0 1440.0 dist 0.3725
+7 201 4 0.0 1440.0 time_min 7.45

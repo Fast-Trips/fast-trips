@@ -1,0 +1,3 @@
+fare_id_num fare_id fare_period route_id_num origin_id_num destination_id_num start_time end_time price transfers transfer_duration
+1 default_fare_id default_fare_id_allday 1 -1 -1 0.0 1440.0 1.0 0 -1.0
+1 default_fare_id default_fare_id_allday 2 -1 -1 0.0 1440.0 1.0 0 -1.0
