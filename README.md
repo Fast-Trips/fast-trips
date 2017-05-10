@@ -311,7 +311,7 @@ The same example can be run from the command line by using the command from with
 
 ```bat
 C:\Users\lzorn\Documents\fast-trips>rem See usage and forgive my use of windows
-
+C:\Users\lzorn\Documents\fast-trips>rem If using installed version, use 'run_fasttrips' instead of 'python fasttrips\Run.py'
 C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py -h
 usage:
 
@@ -355,6 +355,7 @@ optional arguments:
                         using transfer rules. For performance.
 
 C:\Users\lzorn\Documents\fast-trips>rem Run it with Example test scenario and the demand_reg trip list
+C:\Users\lzorn\Documents\fast-trips>rem If using installed version, use 'run_fasttrips' instead of 'python fasttrips\Run.py'
 
 C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 Examples\test_scenario\demand_reg\config_ft.txt Examples\test_scenario\network Examples\test_scenario\demand_reg Examples\test_scenario\demand_reg\pathweight_ft.txt Examples\test_scenario\output_demand_reg
 ```
@@ -362,7 +363,7 @@ C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 Example
 #### Example Network
 The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
-![alt text](/Examples/test_scenario/network/test_network.png "Transit Example Network")
+![alt text](/fasttrips/Examples/test_scenario/network/test_network.png "Transit Example Network")
 
 Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
