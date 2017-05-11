@@ -1,10 +1,6 @@
 from setuptools import setup, Extension
-import pypandoc
 import os,sys
 import numpy
-
-long_description = pypandoc.convert('README.md', 'rst')
-cwd = os.getcwd()
 
 setup(name          = 'fasttrips',
       version       = '1.0a12',
