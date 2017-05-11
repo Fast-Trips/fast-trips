@@ -282,7 +282,7 @@ Sample input files have been provided in `<fast-trips-dir>\Examples\test_network
 import os
 from fasttrips import Run
 
-EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"Examples","test_scenario")
+EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"fasttrips","Examples","test_scenario")
 
 Run.run_fasttrips(
     input_network_dir     = os.path.join(EXAMPLES_DIR,"network"),
@@ -357,7 +357,7 @@ optional arguments:
 C:\Users\lzorn\Documents\fast-trips>rem Run it with Example test scenario and the demand_reg trip list
 C:\Users\lzorn\Documents\fast-trips>rem If using installed version, use 'run_fasttrips' instead of 'python fasttrips\Run.py'
 
-C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 Examples\test_scenario\demand_reg\config_ft.txt Examples\test_scenario\network Examples\test_scenario\demand_reg Examples\test_scenario\demand_reg\pathweight_ft.txt Examples\test_scenario\output_demand_reg
+C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 fasttrips\Examples\test_scenario\demand_reg\config_ft.txt fasttrips\Examples\test_scenario\network fasttrips\Examples\test_scenario\demand_reg fasttrips\Examples\test_scenario\demand_reg\pathweight_ft.txt fasttrips\Examples\test_scenario\output_demand_reg
 ```
 
 #### Example Network
