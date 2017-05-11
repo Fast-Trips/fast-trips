@@ -495,11 +495,12 @@ class Assignment:
                                                Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
                                  bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype('float64'))
     @staticmethod
-    def write_vehicle_trips(output_dir, iteration, pathfinding_iteration, veh_trips_df):
+    def write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df):
         """
         """
         columns = ["iteration",                             # we'll add
                    "pathfinding_iteration",
+                   "simulation_iteration",
                    Trip.TRIPS_COLUMN_DIRECTION_ID,
                    Trip.TRIPS_COLUMN_SERVICE_ID,
                    Trip.TRIPS_COLUMN_ROUTE_ID,
@@ -535,8 +536,10 @@ class Assignment:
 
         veh_trips_df[            "iteration"] = iteration
         veh_trips_df["pathfinding_iteration"] = pathfinding_iteration
-        Util.write_dataframe(veh_trips_df[columns], "veh_trips_df", os.path.join(output_dir, "veh_trips.csv"), append=(iteration>0))
-        veh_trips_df.drop(["iteration","pathfinding_iteration"], axis=1, inplace=True)
+        veh_trips_df[ "simulation_iteration"] =  simulation_iteration
+        Util.write_dataframe(veh_trips_df[columns], "veh_trips_df", os.path.join(output_dir, "veh_trips.csv"),
+                             append=(iteration>0 or pathfinding_iteration>0))
+        veh_trips_df.drop(["iteration","pathfinding_iteration","simulation_iteration"], axis=1, inplace=True)
 
     @staticmethod
     def merge_pathsets(pathfind_trip_list_df, pathset_paths_df, pathset_links_df, new_pathset_paths_df, new_pathset_links_df):
@@ -606,7 +609,7 @@ class Assignment:
         pathset_links_df = None
 
         # write 0-iter vehicle trips
-        Assignment.write_vehicle_trips(output_dir, 0, 0, veh_trips_df)
+        Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
         for iteration in range(1,Assignment.MAX_ITERATIONS+1):
 
@@ -669,7 +672,8 @@ class Assignment:
                 # Set new schedule
                 FT.trips.stop_times_df = veh_trips_df
 
-                Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, veh_trips_df)
+                # todo: pass back correct simulation iteration?
+                Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, "final", veh_trips_df)
 
                 if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                     PathSet.write_path_times(Passenger.get_chosen_links(pathset_links_df), output_dir)
@@ -1813,11 +1817,13 @@ class Assignment:
 
             ######################################################################################################
             if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
-                FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
+                FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
                 Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False, 
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
                 Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                # and vehicle trips
+                Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df)
 
             simulation_iteration += 1
 
