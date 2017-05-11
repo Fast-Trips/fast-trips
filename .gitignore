@@ -5,8 +5,8 @@
 *.bak
 .cache/*
 
-Examples/*/output
-Examples/*/*/output*
+fasttrips/Examples/*/output
+fasttrips/Examples/*/*/output*
 create_tableau_path_map/*
 
 # Distribution / packaging

@@ -9,7 +9,7 @@ from fasttrips import Run
 
 def test_dispersion():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")

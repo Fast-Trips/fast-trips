@@ -7,7 +7,7 @@ from fasttrips import Run
 
 def test_overlap_none():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
@@ -31,7 +31,7 @@ def test_overlap_none():
 
 def test_overlap_count():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
@@ -56,7 +56,7 @@ def test_overlap_count():
     
 def test_overlap_distance():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
@@ -81,7 +81,7 @@ def test_overlap_distance():
     
 def test_overlap_time():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
@@ -105,7 +105,7 @@ def test_overlap_time():
 
 def test_overlap_count_with_split():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
@@ -131,7 +131,7 @@ def test_overlap_count_with_split():
     
 def test_overlap_distance_with_split():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
@@ -157,7 +157,7 @@ def test_overlap_distance_with_split():
     
 def test_overlap_time_with_split():
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"Examples","test_scenario")
+    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples","test_scenario")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR,"network")
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,"demand_reg")
