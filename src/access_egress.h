@@ -80,6 +80,8 @@ namespace fasttrips {
         /// Destructor
         ~AccessEgressLinks() {}
 
+        void clear() { map_.clear(); }
+
         void readLinks(std::ifstream& accegr_file, bool debug_out);
 
         /// Are there access or egress links for the given taz?

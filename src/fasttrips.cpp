@@ -194,11 +194,20 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
     return returnobj;
 }
 
+static PyObject *
+_fasttrips_reset(PyObject *self, PyObject *args)
+{
+    // keep them
+    pathfinder.reset();
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef fasttripsMethods[] = {
     {"initialize_parameters",   _fasttrips_initialize_parameters, METH_VARARGS, "Initialize path finding parameters" },
     {"initialize_supply",       _fasttrips_initialize_supply,     METH_VARARGS, "Initialize network supply" },
     {"set_bump_wait",           _fasttrips_set_bump_wait,         METH_VARARGS, "Update bump wait"          },
     {"find_pathset",            _fasttrips_find_pathset,          METH_VARARGS, "Find trip-based path set"  },
+    {"reset",                   _fasttrips_reset,                 METH_VARARGS, "Reset pathfinder - done"   },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

@@ -486,9 +486,11 @@ namespace fasttrips {
         process_num_ = process_num;
         if (trip_stop_times_.size() == 0)
         {
+            // nothing has run yet -- read intermediate files
             readIntermediateFiles();
         } else
         {
+            // previous iterations have run so the network is still valid, but we need to update the stop times
             // reset these
             trip_stop_times_.clear();
             stop_trip_times_.clear();
@@ -533,6 +535,29 @@ namespace fasttrips {
                        bw_index[3*i], bw_index[3*i+1], bw_index[3*i+2], bw_data[i] );
             }
         }
+    }
+
+    void PathFinder::reset()
+    {
+        weight_lookup_.clear();
+        access_egress_links_.clear();
+
+        transfer_links_o_d_.clear();
+        transfer_links_d_o_.clear();
+        
+        trip_info_.clear();
+        trip_stop_times_.clear();
+        stop_trip_times_.clear();
+        route_fares_.clear();
+        fare_periods_.clear();
+        fare_transfer_rules_.clear();
+
+        trip_num_to_str_.clear();
+        stop_num_to_stop_.clear();
+        route_num_to_str_.clear();
+        mode_num_to_str_.clear();
+        
+        bump_wait_.clear();
     }
 
     /// This doesn't really do anything because the instance variables are all STL structures

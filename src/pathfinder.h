@@ -477,6 +477,9 @@ namespace fasttrips {
                          double*    bw_data,
                          int        num_bw);
 
+        /// Reset - clear state
+        void reset();
+
         /// Destructor
         ~PathFinder();
 
