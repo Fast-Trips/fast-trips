@@ -63,6 +63,7 @@ def run_setup(input_network_dir,
         transfer_fare_ignore_pathfinding = Boolean. In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
         transfer_fare_ignore_pathenum = Boolean. In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
         number_of_processes = Integer. Number of processes to run at once (default: 1)
+        output_pathset_per_sim_iter = Boolean. Output pathsets per simulation iteration?  (default: false)
 
         debug_output_columnns -- boolean to activate extra columns for debugging (default: False)
     """
@@ -167,6 +168,9 @@ def run_setup(input_network_dir,
 
     if "capacity" in kwargs.keys():
         fasttrips.Assignment.CAPACITY_CONSTRAINT = kwargs["capacity"]
+
+    if "output_pathset_per_sim_iter" in kwargs.keys():
+        fasttrips.Assignment.OUTPUT_PATHSET_PER_SIM_ITER = kwargs["output_pathset_per_sim_iter"] 
 
     if "user_class_function" in kwargs.keys():
         fasttrips.PathSet.USER_CLASS_FUNCTION    = kwargs["user_class_function"]
