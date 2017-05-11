@@ -168,6 +168,9 @@ def run_setup(input_network_dir,
     if "capacity" in kwargs.keys():
         fasttrips.Assignment.CAPACITY_CONSTRAINT = kwargs["capacity"]
 
+    if "user_class_function" in kwargs.keys():
+        fasttrips.PathSet.USER_CLASS_FUNCTION    = kwargs["user_class_function"]
+
     return ft
 
 
