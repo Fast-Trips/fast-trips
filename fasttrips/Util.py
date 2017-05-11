@@ -170,6 +170,18 @@ class Util:
         return pandas.to_datetime(x).strftime('%H:%M:%S') if pandas.notnull(x) else ""
 
     @staticmethod
+    def pretty(df):
+        """
+        Make a pretty version of the dataframe and return it.
+        """
+        df_cp = df.copy()
+        df_cols = list(df.columns.values)
+        for col_idx in range(len(df_cols)):
+            if str(df.dtypes[col_idx]) == "datetime64[ns]": # print as HH:MM:SS
+                df_cp[df_cols[col_idx]] = df[df_cols[col_idx]].apply(Util.datetime64_formatter)
+        return df_cp
+
+    @staticmethod
     def datetime64_min_formatter(x):
         """
         Formatter to convert :py:class:`numpy.datetime64` to minutes after midnight
