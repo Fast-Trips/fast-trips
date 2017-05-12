@@ -380,10 +380,6 @@ class Passenger:
         # Make sure we have all the weights required for these user_class/mode combinations
         self.trip_list_df = PathSet.verify_weight_config(self.modes_df, output_dir, routes, capacity_constraint, self.trip_list_df)
 
-        FastTripsLogger.info("Have %d person trips" % len(self.trip_list_df))
-        FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
-        FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string())
-
         # add column trace
         from .Assignment import Assignment
         if len(Assignment.TRACE_IDS) > 0:
@@ -400,6 +396,11 @@ class Passenger:
             self.trip_list_df.loc[pandas.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]), Passenger.TRIP_LIST_COLUMN_TRACE] = False
         else:
             self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
+
+
+        FastTripsLogger.info("Have %d person trips" % len(self.trip_list_df))
+        FastTripsLogger.debug("Final trip_list_df\n"+str(self.trip_list_df.index.dtype)+"\n"+str(self.trip_list_df.dtypes))
+        FastTripsLogger.debug("\n"+self.trip_list_df.head().to_string())
 
         #: Maps trip_list_id to :py:class:`PathSet` instance.  Use trip_list_id instead of (person_id, person_trip_id) for simplicity and to iterate sequentially
         #: in setup_passenger_pathsets()
