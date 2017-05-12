@@ -433,6 +433,11 @@ class Route(object):
                                               right=self.fare_attrs_df,
                                               how  ='left',
                                               on   = Route.FARE_RULES_COLUMN_FARE_PERIOD if self.fare_by_class else Route.FARE_RULES_COLUMN_FARE_ID)
+        elif len(self.fare_rules_df) > 0:
+            # we have fare rules but no fare periods -- make the fare periods the same
+            self.fare_rules_df[Route.FARE_RULES_COLUMN_FARE_PERIOD] = self.fare_rules_df[Route.FARE_RULES_COLUMN_FARE_ID]
+            self.fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = Util.read_time("00:00:00")
+            self.fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = Util.read_time("24:00:00")
 
 
         FastTripsLogger.debug("=========== FARE RULES ===========\n" + str(self.fare_rules_df.head(10).to_string(formatters=\
