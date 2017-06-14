@@ -26,12 +26,13 @@ fast-trips Classes
    FastTrips
    FastTripsLogger
    Passenger
-   Performance
    PathSet
+   Performance
    Route
+   Run
    Stop
-   Transfer
    TAZ
+   Transfer
    Trip
    Util
 
