@@ -60,6 +60,7 @@ def run_setup(input_network_dir,
         overlap_variable -- One of ['None','count','distance','time']. Variable to use for overlap penalty calculation (default: 'count')
         overlap_split_transit -- Boolean.Split transit for path overlap penalty calculation (default: False)
 
+        time_window = Integer. The time window in minutes where a passenger searches for a eminating transit route at each node.
         transfer_fare_ignore_pathfinding = Boolean. In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
         transfer_fare_ignore_pathenum = Boolean. In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
         number_of_processes = Integer. Number of processes to run at once (default: 1)
@@ -159,6 +160,9 @@ def run_setup(input_network_dir,
         
     if "transfer_fare_ignore_pathenum" in kwargs.keys():
         fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM = kwargs["transfer_fare_ignore_pathenum"]
+
+    if "time_window" in kwargs.keys():
+        fasttrips.Assignment.TIME_WINDOW         = kwargs["time_window"]
 
     if "dispersion" in kwargs.keys():
         fasttrips.Assignment.STOCH_DISPERSION    = kwargs["dispersion"]
