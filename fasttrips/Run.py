@@ -17,7 +17,7 @@ __license__   = """
     limitations under the License.
 """
 import fasttrips
-import argparse, os, pandas, re, sys
+import argparse, os, pandas, re, sys, datetime
 
 def run_setup(input_network_dir,
               input_demand_dir,
@@ -162,7 +162,7 @@ def run_setup(input_network_dir,
         fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM = kwargs["transfer_fare_ignore_pathenum"]
 
     if "time_window" in kwargs.keys():
-        fasttrips.Assignment.TIME_WINDOW         = kwargs["time_window"]
+        fasttrips.Assignment.TIME_WINDOW         = datetime.timedelta(minutes=float(kwargs["time_window"]))
 
     if "dispersion" in kwargs.keys():
         fasttrips.Assignment.STOCH_DISPERSION    = kwargs["dispersion"]
