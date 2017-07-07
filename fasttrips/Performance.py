@@ -55,8 +55,10 @@ class Performance:
     PERFORMANCE_COLUMN_TRACED                 = "traced"
     #: Performance column: Working set in memory, in bytes
     PERFORMANCE_COLUMN_WORKING_SET_BYTES      = "working set bytes"
-    #: Performance column: Private usage in memroy, in bytes
+    #: Performance column: Private usage in memory, in bytes
     PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES    = "private usage bytes"
+    #: Performance column: Timestamp of memory query, in a datetime.datetime
+    PERFORMANCE_COLUMN_MEM_TIMESTAMP          = "mem_timestamp"
 
     #: File with to write performance results
     OUTPUT_PERFORMANCE_FILE                   = 'ft_output_performance.csv'
@@ -81,7 +83,8 @@ class Performance:
             Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING         :[],
             Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS      :[],
             Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES        :[],
-            Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES      :[]
+            Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES      :[],
+            Performance.PERFORMANCE_COLUMN_MEM_TIMESTAMP            :[]
         }
 
 
@@ -104,7 +107,8 @@ class Performance:
                     Performance.PERFORMANCE_COLUMN_TIME_LABELING_MS,
                     Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS,
                     Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES,
-                    Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES]:
+                    Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES,
+                    Performance.PERFORMANCE_COLUMN_MEM_TIMESTAMP]:
             self.performance_dict[key].append(perf_dict[key])
 
         # convert milliseconds time to timedeltas

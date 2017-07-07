@@ -9,6 +9,7 @@
 #endif
 
 #include <assert.h>
+#include <ctime>
 #include <sstream>
 #include <ios>
 #include <iostream>
@@ -700,6 +701,7 @@ namespace fasttrips {
         {
             performance_info.workingset_bytes_   = pmc.WorkingSetSize;
             performance_info.privateusage_bytes_ = pmc.PrivateUsage;
+            performance_info.mem_timestamp_      = (long)time((time_t*)0);
         }
 #else
         gettimeofday(&pathfind_end_time, NULL);

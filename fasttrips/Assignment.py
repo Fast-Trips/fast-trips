@@ -1001,7 +1001,7 @@ class Assignment:
         (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
-         bytes_workingset, bytes_privateusage) = \
+         bytes_workingset, bytes_privateusage, mem_timestamp) = \
             _fasttrips.find_pathset(iteration, pathfinding_iteration, hyperpath, pathset.person_id, pathset.person_trip_id,
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
@@ -1084,7 +1084,8 @@ class Assignment:
             Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING_MS   : ms_enumerating,
             Performance.PERFORMANCE_COLUMN_TRACED                : trace,
             Performance.PERFORMANCE_COLUMN_WORKING_SET_BYTES     : bytes_workingset,
-            Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES   : bytes_privateusage
+            Performance.PERFORMANCE_COLUMN_PRIVATE_USAGE_BYTES   : bytes_privateusage,
+            Performance.PERFORMANCE_COLUMN_MEM_TIMESTAMP         : datetime.datetime.fromtimestamp(mem_timestamp)
         }
         return (pathdict, perf_dict)
 
