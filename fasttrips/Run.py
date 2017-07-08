@@ -192,6 +192,7 @@ def run_fasttrips(**kwargs):
     # for key in args_dict.keys():
     #     print "%40s => %s" % (key, args_dict[key])
 
+    # instantiate and read configuration
     ft = run_setup(**kwargs)
     # Read the networks and demand
     ft.read_input_files()

@@ -36,6 +36,7 @@ class Util:
     TIMEDELTA_COLUMNS_TO_UNITS      = {
         'time enumerating'  : 'milliseconds',  # performance
         'time labeling'     : 'milliseconds',  # performance
+        'step_duration'     : 'seconds',       # performance
         'pf_linktime'       : 'min',
         'pf_linkcost'       : 'min',
         'pf_waittime'       : 'min',
@@ -284,6 +285,8 @@ class Util:
                     units = numpy.timedelta64(1,'ms')
                 elif units_str == "min":
                     units = numpy.timedelta64(1,'m')
+                elif units_str == "seconds":
+                    units = numpy.timedelta64(1,'s')
                 else:
                     raise
 
@@ -347,22 +350,33 @@ class Util:
         dataframe.drop(["dist_lat","dist_lon","dist_hava","dist_havc"], axis=1, inplace=True)
 
     @staticmethod
-    def get_process_mem_use_str():
+    def get_process_mem_use_bytes():
         """
-        Returns a string representing the process memory use.
+        Returns the process memory usage in bytes
         """
         try:
             import psutil
 
         except ImportError:
-            return "Uknown; please install python package psutil"
+            FastTripsLogger.warn("Unknown; please install python package psutil")
+            return -1
 
         p = psutil.Process()
         bytes = p.memory_info().rss
-        if bytes < 1024:
+        return bytes
+
+    @staticmethod
+    def get_process_mem_use_str():
+        """
+        Returns a string representing the process memory use.
+        Use SI prefixes (not binary prefixes).  1KB = 1000 bytes
+        """
+        bytes = Util.get_process_mem_use_bytes()
+
+        if bytes < 1000:
             return "%d bytes" % bytes
-        if bytes < 1024*1024:
-            return "%.1f KB" % (bytes/1024.0)
-        if bytes < 1024*1024*1024:
-            return "%.1f MB" % (bytes/(1024.0*1024.0))
-        return "%.1f GB" % (bytes/(1024.0*1024.0*1024.0))
+        if bytes < 1000*1000:
+            return "%.1f KB" % (bytes/1000.0)
+        if bytes < 1000*1000*1000:
+            return "%.1f MB" % (bytes/(1000.0*1000.0))
+        return "%.1f GB" % (bytes/(1000.0*1000.0*1000.0))
