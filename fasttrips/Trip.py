@@ -809,7 +809,9 @@ class Trip:
         trips_df["accel_secs"] = 0.0
         if (Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS in trip_cols) and \
            (Trip.VEHICLES_COLUMN_ACCELERATION in trip_cols):
-            trips_df.loc[trips_df["does_stop"] & (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1) & \
+            trips_df.loc[trips_df["does_stop"] & \
+                         (trips_df[Trip.VEHICLES_COLUMN_ACCELERATION] > 0) &
+                         (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1) & \
                          (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]<trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]), "accel_secs"] = \
                             trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_ACCELERATION]
         # Add deceleration to next stop.
@@ -817,7 +819,9 @@ class Trip:
         trips_df["decel_secs"] = 0.0
         if (Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS in trip_cols) and \
            (Trip.VEHICLES_COLUMN_DECELERATION in trip_cols):
-            trips_df.loc[(trips_df["next_does_stop"]) & (trips_df["next_is_last_stop"]==False), "decel_secs"] = \
+            trips_df.loc[(trips_df["next_does_stop"]) & \
+                         (trips_df[Trip.VEHICLES_COLUMN_DECELERATION] > 0) &
+                         (trips_df["next_is_last_stop"]==False), "decel_secs"] = \
                             trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_DECELERATION]
 
         # update the travel time

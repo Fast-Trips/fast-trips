@@ -105,10 +105,15 @@ class FastTrips:
                      os.path.join(Assignment.OUTPUT_DIR, FastTrips.DEBUG_LOG % logname_append),
                      logToConsole=True, append=appendLog)
 
+        # Initialize performance results
+        self.performance = Performance()
+
     def read_configuration(self):
         """
         Read the fast-trips assignment and path-finding configuration
         """
+        self.performance.record_step_start(-1,-1,-1,"read_configuration")
+
         if Assignment.CONFIGURATION_FUNCTIONS_FILE:
             Assignment.read_functions(func_file       = Assignment.CONFIGURATION_FUNCTIONS_FILE)
         Assignment.read_configuration(config_fullpath = Assignment.CONFIGURATION_FILE)
@@ -118,6 +123,8 @@ class FastTrips:
         """
         Reads in the input network and demand files and initializes the relevant data structures.
         """
+        self.performance.record_step_start(0,0,0,"read_input_files")
+
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
         loader             = transitfeed.Loader(Assignment.INPUT_NETWORK_DIR, memory_db=True)
@@ -158,20 +165,23 @@ class FastTrips:
 
     def run_assignment(self, output_dir):
 
-        # Initialize performance results
-        self.performance = Performance()
+        self.performance.record_step_start(-1,-1,-1,"run_assignment")
 
         # Do it!  Try it!
+        r = None
         try:
             # do this last before assigning paths so vlaues reflect pathfinding
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
 
             r = Assignment.assign_paths(output_dir, self)
-            FastTripsLogger.info("Successfully completed!")
-            return r
 
         except:
             print("Unexpected error:", sys.exc_info()[0])
             FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))
             raise
 
+        self.performance.record_step_end(-1,-1,-1)
+        self.performance.write(output_dir)
+
+        FastTripsLogger.info("Successfully completed!")
+        return r

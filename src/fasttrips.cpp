@@ -187,10 +187,10 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
         path_num += 1;
     }
 
-    PyObject *returnobj = Py_BuildValue("(OOOiiiiillll)",ret_int,ret_double,ret_paths, pathfinder.processNumber(), pf_returnstatus,
+    PyObject *returnobj = Py_BuildValue("(OOOiiiiilllll)",ret_int,ret_double,ret_paths, pathfinder.processNumber(), pf_returnstatus,
                                         perf_info.label_iterations_, perf_info.num_labeled_stops_, perf_info.max_process_count_,
                                         perf_info.milliseconds_labeling_, perf_info.milliseconds_enumerating_,
-                                        perf_info.workingset_bytes_, perf_info.privateusage_bytes_);
+                                        perf_info.workingset_bytes_, perf_info.privateusage_bytes_, perf_info.mem_timestamp_);
     return returnobj;
 }
 

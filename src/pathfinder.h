@@ -161,6 +161,7 @@ namespace fasttrips {
         long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
         long    workingset_bytes_;              ///< Working set size, in bytes
         long    privateusage_bytes_;            ///< Private memory usage, in bytes
+        long    mem_timestamp_;                 ///< Time of memory query, in seconds since epoch
     } PerformanceInfo;
 
     /**
