@@ -129,6 +129,9 @@ def run_setup(input_network_dir,
     if kwargs.has_key("number_of_processes"):
         fasttrips.Assignment.NUMBER_OF_PROCESSES = kwargs["number_of_processes"]
 
+    if "trace_ids" in kwargs.keys():
+        fasttrips.Assignment.TRACE_IDS = kwargs["trace_ids"]
+
     if trace_only:
         if len(fasttrips.Assignment.TRACE_IDS) == 0:
             print "Trace only requested but no trace IDs are specified in configuration."
@@ -154,10 +157,10 @@ def run_setup(input_network_dir,
 
     if "overlap_split_transit" in kwargs.keys():
         fasttrips.PathSet.OVERLAP_SPLIT_TRANSIT  = kwargs["overlap_split_transit"]
-        
+
     if "transfer_fare_ignore_pathfinding" in kwargs.keys():
         fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = kwargs["transfer_fare_ignore_pathfinding"]
-        
+
     if "transfer_fare_ignore_pathenum" in kwargs.keys():
         fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHENUM = kwargs["transfer_fare_ignore_pathenum"]
 
@@ -174,7 +177,7 @@ def run_setup(input_network_dir,
         fasttrips.Assignment.CAPACITY_CONSTRAINT = kwargs["capacity"]
 
     if "output_pathset_per_sim_iter" in kwargs.keys():
-        fasttrips.Assignment.OUTPUT_PATHSET_PER_SIM_ITER = kwargs["output_pathset_per_sim_iter"] 
+        fasttrips.Assignment.OUTPUT_PATHSET_PER_SIM_ITER = kwargs["output_pathset_per_sim_iter"]
 
     if "user_class_function" in kwargs.keys():
         fasttrips.PathSet.USER_CLASS_FUNCTION    = kwargs["user_class_function"]
