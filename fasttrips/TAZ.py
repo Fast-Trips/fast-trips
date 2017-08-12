@@ -96,13 +96,13 @@ class TAZ:
     DRIVE_ACCESS_COLUMN_COST                 = 'cost'
     #: Drive access links column name: Driving time in minutes between TAZ and lot (TimeDelta)
     DRIVE_ACCESS_COLUMN_TRAVEL_TIME          = 'travel_time'
-    #: Drive access links column name: Start time (open time for lot?), minutes after midnight
+    #: Drive access links column name: Start time (e.g. time period these attributes apply), minutes after midnight
     DRIVE_ACCESS_COLUMN_START_TIME_MIN       = 'start_time_min'
-    #: Drive access links column name: Start time (open time for lot?). A DateTime instance
+    #: Drive access links column name: Start time (e.g. time period these attributes apply). A DateTime instance
     DRIVE_ACCESS_COLUMN_START_TIME           = 'start_time'
-    #: Drive access links column name: End time (open time for lot?), minutes after midnight
+    #: Drive access links column name: End time (e.g. time period these attributes apply), minutes after midnight
     DRIVE_ACCESS_COLUMN_END_TIME_MIN         = 'end_time_min'
-    #: Drive access links column name: End time (open time for lot?). A DateTime instance
+    #: Drive access links column name: End time (e.g. time period these attributes apply). A DateTime instance
     DRIVE_ACCESS_COLUMN_END_TIME             = 'end_time'
 
     #: fasttrips Drive access links column name: Elevation Gain, feet gained along link.
@@ -327,13 +327,27 @@ class TAZ:
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME]
 
-            # lot open/close time: datetime version
+            # drive access period start/end time: datetime version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: Util.read_time(x))
 
-            # lot open/close time: float version
+            # if there are any that go past midnight, duplicate
+            sim_day_end = Util.SIMULATION_DAY_START + datetime.timedelta(days=1)
+            dupes = self.drive_access_df.loc[self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, :].copy()
+            if len(dupes) > 0:
+                # e.g. 18:00 - 27:00
+                # dupe: 00:00 - 3:00
+                dupes.loc[ dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = Util.SIMULATION_DAY_START
+                dupes.loc[ dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_END_TIME  ] = dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - datetime.timedelta(days=1)
+                # orig: 18:00 - 24:00
+                self.drive_access_df.loc[ self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_END_TIME ] = sim_day_end
+                FastTripsLogger.debug("Added %d morning hour drive access links.  Head:\n%s" % (len(dupes), dupes.head().to_string()))
+                # combine
+                self.drive_access_df = self.drive_access_df.append(dupes)
+
+            # drive access period start/end time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
                 (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
