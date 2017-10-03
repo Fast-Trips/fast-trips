@@ -2,7 +2,7 @@ import os
 
 from fasttrips import Run
 
-EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"Examples","test_scenario")
+EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"fasttrips","Examples","test_scenario")
 
 Run.run_fasttrips(
     input_network_dir    = os.path.join(EXAMPLES_DIR,"network"),
