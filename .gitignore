@@ -5,8 +5,7 @@
 *.bak
 .cache/*
 
-fasttrips/Examples/*/output
-fasttrips/Examples/*/*/output*
+**/Examples/**/output*
 create_tableau_path_map/*
 
 # Distribution / packaging
@@ -18,4 +17,6 @@ fasttrips.egg-info/
 sfcta/
 psrc/
 run*/
-output/
+
+#PyCharm IDE
+.idea/
