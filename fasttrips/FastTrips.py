@@ -145,7 +145,7 @@ class FastTrips:
 
         # Read routes, agencies, fares
         self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                            self.gtfs_schedule, Util.SIMULATION_DAY, self.stops)
+                            self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE, self.stops)
 
         # Read Transfers
         self.transfers = Transfer(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
