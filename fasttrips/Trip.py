@@ -13,6 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
+from datetime import date
 import numpy,pandas
 
 from .Error  import NetworkInputError
@@ -211,11 +212,9 @@ class Trip:
         # Read vehicles first
         self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE), skipinitialspace=True)
         # verify the required columns are present
-        vehicle_ft_cols = list(self.vehicles_df.columns.values)
-        assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME    in vehicle_ft_cols)
+        assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME in self.vehicles_df)
 
-        if (Trip.VEHICLES_COLUMN_SEATED_CAPACITY   in vehicle_ft_cols and
-            Trip.VEHICLES_COLUMN_STANDING_CAPACITY in vehicle_ft_cols):
+        if ({Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY}.issubset(self.vehicles_df)):
             self.vehicles_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY] = \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY] + \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_STANDING_CAPACITY]
@@ -233,7 +232,7 @@ class Trip:
                 raise NetworkInputError(Trip.INPUT_VEHICLES_FILE, error_str)
 
         # convert mph to fps for maximum speed
-        if Trip.VEHICLES_COLUMN_MAXIMUM_SPEED in vehicle_ft_cols:
+        if Trip.VEHICLES_COLUMN_MAXIMUM_SPEED in self.vehicles_df:
             self.vehicles_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS] = \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED]*5280.0/(60.0*60.0)
 
@@ -245,13 +244,11 @@ class Trip:
         # Combine all gtfs Trip objects to a single pandas DataFrame
         trip_dicts      = []
         stop_time_dicts = []
-        for gtfs_trip in gtfs_schedule.GetTripList():
-            trip_dict = {}
-            for fieldname in gtfs_trip._FIELD_NAMES:
-                if fieldname in gtfs_trip.__dict__:
-                    trip_dict[fieldname] = gtfs_trip.__dict__[fieldname]
-            trip_dicts.append(trip_dict)
-
+        #Only iterate through the active records for the day of the analysis
+        for gtfs_trip in (gtfs_trip for gtfs_trip in gtfs_schedule.GetTripList()
+                          if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today)):
+            trip_dicts.append({field_name: gtfs_trip.__dict__[field_name] for field_name in gtfs_trip._FIELD_NAMES})
+            
             # stop times
             #   _REQUIRED_FIELD_NAMES = ['trip_id', 'arrival_time', 'departure_time',
             #                            'stop_id', 'stop_sequence']
@@ -288,15 +285,18 @@ class Trip:
                 stop_time_dicts.append(stop_time_dict)
 
         self.trips_df = pandas.DataFrame(data=trip_dicts)
+        if len(self.trips_df) == 0:
+            error_str = "No GTFS trips found for simulation day. Simulation day=%s" % (today.strftime("%B %d, %Y"))
+            FastTripsLogger.fatal(error_str)
+
+            raise NetworkInputError(Trip.INPUT_TRIPS_FILE, error_str)
 
         # Read the fast-trips supplemental trips data file.  Make sure trip ID is read as a string.
         trips_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_TRIPS_FILE),
                                       skipinitialspace=True,
                                       dtype={Trip.TRIPS_COLUMN_TRIP_ID:object})
         # verify required columns are present
-        trips_ft_cols = list(trips_ft_df.columns.values)
-        assert(Trip.TRIPS_COLUMN_TRIP_ID        in trips_ft_cols)
-        assert(Trip.TRIPS_COLUMN_VEHICLE_NAME   in trips_ft_cols)
+        assert({Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_VEHICLE_NAME}.issubset(trips_ft_df))
 
         # Join to the trips dataframe
         self.trips_df = pandas.merge(left=self.trips_df, right=trips_ft_df,
@@ -325,38 +325,16 @@ class Trip:
                                sep=" ", index=False)
         FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, Trip.OUTPUT_TRIP_ID_NUM_FILE))
 
-        self.trips_df = pandas.merge(left=self.trips_df, right=self.trip_id_df, how='left')
+        self.trips_df = pandas.merge(left=self.trips_df, right=self.trip_id_df, on=Trip.TRIPS_COLUMN_TRIP_ID, how='left')
 
         # Merge vehicles
-        self.trips_df = pandas.merge(left=self.trips_df, right=self.vehicles_df, how='left')
+        self.trips_df = pandas.merge(left=self.trips_df, right=self.vehicles_df, how='left',
+                                     left_on=Trip.TRIPS_COLUMN_VEHICLE_NAME, right_on=Trip.VEHICLES_COLUMN_VEHICLE_NAME)
 
         FastTripsLogger.debug("=========== TRIPS ===========\n" + str(self.trips_df.head()))
         FastTripsLogger.debug("\n"+str(self.trips_df.index.dtype)+"\n"+str(self.trips_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.trips_df), "trips", "trips.txt", self.INPUT_TRIPS_FILE))
-
-        service_dicts = []
-        for gtfs_service in gtfs_schedule.GetServicePeriodList():
-            service_dict = {}
-            service_tuple = gtfs_service.GetCalendarFieldValuesTuple()
-            for fieldnum in range(len(gtfs_service._FIELD_NAMES)):
-                # all required
-                fieldname = gtfs_service._FIELD_NAMES[fieldnum]
-                service_dict[fieldname] = service_tuple[fieldnum]
-            service_dicts.append(service_dict)
-        self.service_df = pandas.DataFrame(data=service_dicts)
-
-        # Rename SERVICE_COLUMN_START_DATE to SERVICE_COLUMN_START_DATE_STR
-        self.service_df[Trip.SERVICE_COLUMN_START_DATE_STR] = self.service_df[Trip.SERVICE_COLUMN_START_DATE]
-        self.service_df[Trip.SERVICE_COLUMN_END_DATE_STR  ] = self.service_df[Trip.SERVICE_COLUMN_END_DATE  ]
-
-        # Convert to datetime
-        self.service_df[Trip.SERVICE_COLUMN_START_DATE] = \
-            self.service_df[Trip.SERVICE_COLUMN_START_DATE_STR].map(lambda x: \
-            datetime.datetime.combine(datetime.datetime.strptime(x, '%Y%M%d').date(), datetime.time(minute=0)))
-        self.service_df[Trip.SERVICE_COLUMN_END_DATE] = \
-            self.service_df[Trip.SERVICE_COLUMN_END_DATE_STR].map(lambda x: \
-            datetime.datetime.combine(datetime.datetime.strptime(x, '%Y%M%d').date(), datetime.time(hour=23, minute=59, second=59, microsecond=999999)))
 
         # Join with routes
         self.trips_df = pandas.merge(left=self.trips_df, right=routes.routes_df,
@@ -364,11 +342,6 @@ class Trip:
                                      on=Trip.TRIPS_COLUMN_ROUTE_ID)
         FastTripsLogger.debug("Final (%d)\n%s" % (len(self.trips_df), str(self.trips_df.head())))
         FastTripsLogger.debug("\n"+str(self.trips_df.dtypes))
-
-        FastTripsLogger.debug("=========== SERVICE PERIODS ===========\n" + str(self.service_df.head()))
-        FastTripsLogger.debug("\n"+str(self.service_df.index.dtype)+"\n"+str(self.service_df.dtypes))
-        FastTripsLogger.info("Read %7d %15s from %25s" %
-                             (len(self.service_df), "service periods", "calendar.txt"))
 
         self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
 
@@ -379,13 +352,12 @@ class Trip:
                                           dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
                                                  Trip.STOPTIMES_COLUMN_STOP_ID:object})
             # verify required columns are present
-            stop_times_ft_cols = list(stop_times_ft_df.columns.values)
-            assert(Trip.STOPTIMES_COLUMN_TRIP_ID    in stop_times_ft_cols)
-            assert(Trip.STOPTIMES_COLUMN_STOP_ID    in stop_times_ft_cols)
+            stop_times_ft_cols = list(stop_times_ft_df)
+            assert({Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_ID}.issubset(stop_times_ft_df))
 
             # Join to the trips dataframe
-            if len(stop_times_ft_cols) > 2:
-                self.stop_times_df = pandas.merge(left=stop_times_df, right=stop_times_ft_df,
+            if len(stop_times_ft_df.columns) > 2:
+                self.stop_times_df = pandas.merge(left=self.stop_times_df, right=stop_times_ft_df,
                                                   how='left',
                                                   on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
                                                       Trip.STOPTIMES_COLUMN_STOP_ID])

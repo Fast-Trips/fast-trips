@@ -56,6 +56,7 @@ class Assignment:
     #: relaxed the model will terminate after the first iteration
     MAX_ITERATIONS                  = None
 
+    NETWORK_BUILD_DATE              = None
     #: Find paths deterministically, using shortest path search based on travel time.
     PATHFINDING_TYPE_DETERMINISTIC  = 'deterministic'
     #: Find paths stochastically using trip-based hyperpath
@@ -266,6 +267,7 @@ class Assignment:
 
         parser = ConfigParser.RawConfigParser(
             defaults={'max_iterations'                  :1,
+                      'network_build_date'              : datetime.date.today().strftime("%m/%d/%Y"),
                       'simulation'                      :'True',
                       'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
@@ -306,6 +308,8 @@ class Assignment:
         parser.read(config_fullpath)
 		
         Assignment.MAX_ITERATIONS                = parser.getint    ('fasttrips','max_iterations')
+        Assignment.NETWORK_BUILD_DATE            = datetime.datetime.strptime(
+                                                    parser.get('fasttrips', 'network_build_date'), '%m/%d/%Y').date()
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
