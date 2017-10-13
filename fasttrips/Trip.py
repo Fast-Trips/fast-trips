@@ -247,7 +247,7 @@ class Trip:
         #Only iterate through the active records for the day of the analysis
         for gtfs_trip in (gtfs_trip for gtfs_trip in gtfs_schedule.GetTripList()
                           if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today)):
-            trip_dicts.append({field_name: gtfs_trip.__dict__[field_name] for field_name in gtfs_trip._FIELD_NAMES})
+            trip_dicts.append({field_name: gtfs_trip.__dict__[field_name] for field_name in gtfs_trip._REQUIRED_FIELD_NAMES})
             
             # stop times
             #   _REQUIRED_FIELD_NAMES = ['trip_id', 'arrival_time', 'departure_time',
