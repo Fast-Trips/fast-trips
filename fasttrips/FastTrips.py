@@ -141,7 +141,7 @@ class FastTrips:
 
         # Read Stops (gtfs-required)
         self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule)
+                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE)
 
         # Read routes, agencies, fares
         self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
