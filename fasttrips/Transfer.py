@@ -74,7 +74,7 @@ class Transfer:
     #:
     #: .. todo:: Make this configurable?
     #:
-    WALK_SPEED_MILES_PER_HOUR  = 3.0
+    WALK_SPEED_MILES_PER_HOUR  = 2.7
 
     #: Transfers column name: Link walk time.  This is a TimeDelta.
     #:

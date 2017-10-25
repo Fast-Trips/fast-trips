@@ -251,7 +251,7 @@ class TAZ:
             raise NetworkInputError(TAZ.INPUT_WALK_ACCESS_FILE, error_msg)
 
         # TODO: remove?  Or put walk speed some place?
-        self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/3.0;
+        self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN] = self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST]*60.0/2.7;
         # convert time column from float to timedelta
         self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME] = \
             self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_TIME_MIN].map(lambda x: datetime.timedelta(minutes=x))
