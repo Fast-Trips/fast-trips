@@ -1,4 +1,5 @@
 [fasttrips]
+network_build_date            = 06/30/2015
 trace_ids                     = [('tracey','trip_191')]
 number_of_processes           = 1
 debug_output_columns          = True

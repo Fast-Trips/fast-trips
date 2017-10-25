@@ -141,11 +141,11 @@ class FastTrips:
 
         # Read Stops (gtfs-required)
         self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule)
+                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE)
 
         # Read routes, agencies, fares
         self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                            self.gtfs_schedule, Util.SIMULATION_DAY, self.stops)
+                            self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE, self.stops)
 
         # Read Transfers
         self.transfers = Transfer(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
@@ -153,7 +153,7 @@ class FastTrips:
 
         # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule, Util.SIMULATION_DAY,
+                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE,
                           self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance

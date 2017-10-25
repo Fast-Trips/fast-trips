@@ -163,12 +163,19 @@ class Route(object):
         # Combine all gtfs Route objects to a single pandas DataFrame
         route_dicts = []
         for gtfs_route in gtfs_schedule.GetRouteList():
-            route_dict = {}
-            for fieldname in gtfs_route._FIELD_NAMES:
-                if fieldname in gtfs_route.__dict__:
-                    route_dict[fieldname] = gtfs_route.__dict__[fieldname]
-            route_dicts.append(route_dict)
+            for gtfs_trip in gtfs_route.trips:
+                if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today):
+                    route_dict = {}
+                    for fieldname in gtfs_route._FIELD_NAMES:
+                        if fieldname in gtfs_route.__dict__:
+                            route_dict[fieldname] = gtfs_route.__dict__[fieldname]
+                    route_dicts.append(route_dict)
+                    break
+
         self.routes_df = pandas.DataFrame(data=route_dicts)
+
+        FastTripsLogger.info("Read %7d %15s from %25d %25s" %
+                             (len(self.routes_df), 'date valid route', len(gtfs_schedule.routes), 'total routes'))
 
         # Read the fast-trips supplemental routes data file
         routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE),

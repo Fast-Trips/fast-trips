@@ -1,6 +1,7 @@
 # configuration for fasttrips
 [fasttrips]
 max_iterations                = 1
+network_build_date            = 06/30/2015
 simulation                    = True
 output_passenger_trajectories = True
 create_skims                  = False
