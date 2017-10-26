@@ -168,7 +168,7 @@ class Util:
         """
         Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM:SS`
         """
-        return pandas.to_datetime(x).strftime('%H:%M:%S') if pandas.notnull(x) else ""
+        return pandas.to_datetime(x).strftime('%Y-%m-%d %H:%M:%S') if pandas.notnull(x) else ""
 
     @staticmethod
     def pretty(df):
