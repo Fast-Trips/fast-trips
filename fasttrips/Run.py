@@ -54,7 +54,7 @@ def run_setup(input_network_dir,
         num_trips -- if specified, will process this number of trips and ignore the rest
 
         dispersion -- theta parameter; essentially the nesting parameter. Good value is between 0.5-1. (default: 1.0)
-        max_stop_process_count = maximum number of times you will re-processe a node (default: None)
+        max_stop_process_count = maximum number of times you will re-processe a node (default: 20)
         capacity -- Boolean to activate capacity constraints (default: False)
 
         overlap_variable -- One of ['None','count','distance','time']. Variable to use for overlap penalty calculation (default: 'count')
