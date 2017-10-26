@@ -6,7 +6,7 @@ from shutil import copyfile
 from test_convergence import run_capacity_test
 
 
-GENERATE_FILES_FROM_TWO_PATH_EXAMPLE = True
+GENERATE_FILES_FROM_TWO_PATH_EXAMPLE = False
 
 BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'test_scenario')
 TEST_FOLDER         = 'calculate_cost'
@@ -106,10 +106,10 @@ def run_calculate_cost_test():
                                         how="left")
 
     # Calculate Cost Parameters
-    simulation_iteration = 1
-    stochastic_dispersion = 1
+    stochastic_dispersion = 0.5
 
-    (paths_df, links_df) = PathSet.calculate_cost(ft, simulation_iteration, stochastic_dispersion, pathset_paths_df, pathset_links_df, veh_trips_df)
+    (paths_df, links_df) = PathSet.calculate_cost(ft, stochastic_dispersion, pathset_paths_df, pathset_links_df,
+                                                  veh_trips_df, reset_bump_iter=False)
     paths_df.to_csv(os.path.join(DF_DIR, 'pathset_paths_cost.csv'))
     links_df.to_csv(os.path.join(DF_DIR, 'pathset_links_cost.csv'))
 

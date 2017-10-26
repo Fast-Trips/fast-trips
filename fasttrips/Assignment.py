@@ -1739,8 +1739,8 @@ class Assignment:
         ######################################################################################################
         FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
         (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-            FT, simulation_iteration, Assignment.STOCH_DISPERSION,
-            pathset_paths_df, pathset_links_df, veh_trips_df)
+            FT, Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df,
+            veh_trips_df, reset_bump_iter=simulation_iteration==0)
 
         ######################################################################################################
         FastTripsLogger.info("  Step 3. Choose a path for each passenger from their pathset")
@@ -1806,8 +1806,8 @@ class Assignment:
             ######################################################################################################
             FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
             (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-                FT, simulation_iteration, Assignment.STOCH_DISPERSION,
-                pathset_paths_df, pathset_links_df, veh_trips_df)
+                FT, Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df,
+                veh_trips_df, reset_bump_iter=simulation_iteration == 0)
 
             ######################################################################################################
             FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")

@@ -662,7 +662,7 @@ class PathSet:
         return path2
 
     @staticmethod
-    def calculate_cost(FT, simulation_iteration, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df):
+    def calculate_cost(FT, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df, reset_bump_iter=False):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -744,8 +744,8 @@ class PathSet:
                                     Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
                                     Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE], axis=1, inplace=True)
 
-        # if this isn't set yet (only simulation_iteration==0) set it
-        if simulation_iteration == 0:
+        # if bump_iter doesn't exist or if it needs to be reset
+        if reset_bump_iter or Assignment.SIM_COL_PAX_BUMP_ITER not in pathset_links_cost_df:
             pathset_links_cost_df[Assignment.SIM_COL_PAX_BUMP_ITER] = -1
 
         if len(Assignment.TRACE_IDS) > 0:
