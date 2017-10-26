@@ -51,7 +51,8 @@ def run_calculate_cost_test():
         'person_id', 'person_trip_id', 'trip_list_id_num','trace','pathdir', 'pathmode', 'pf_iteration', 'pathnum',
         'iteration', 'pathfinding_iteration', 'simulation_iteration'
     ]
-    pathset_paths_df = pd.read_csv(pathset_paths_loc, usecols=pathset_paths_cols)
+    pathset_paths_df = pd.read_csv(pathset_paths_loc, usecols=pathset_paths_cols,
+                                   dtype={'person_id':str, 'person_trip_id':str})
     pathset_paths_df = pathset_paths_df.loc[pathset_paths_df.iteration == pathset_paths_df.iteration.max()]
     pathset_paths_df = pathset_paths_df.loc[pathset_paths_df.pathfinding_iteration == pathset_paths_df.pathfinding_iteration.max()]
     pathset_paths_df = pathset_paths_df.loc[pathset_paths_df.simulation_iteration == pathset_paths_df.simulation_iteration.max()]
