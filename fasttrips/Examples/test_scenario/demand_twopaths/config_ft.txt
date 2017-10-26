@@ -1,4 +1,5 @@
 [fasttrips]
+number_of_processes          = 1
 network_build_date            = 06/30/2015
 trace_ids                     = [('frogger','1'),('paperboy','1'),('marge','1'),('maggie','1')]
 bump_one_at_a_time            = True
