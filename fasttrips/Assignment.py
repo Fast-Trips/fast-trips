@@ -296,7 +296,7 @@ class Assignment:
                       'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
                       'pathweights_fixed_width'         :'False',
                       'stochastic_dispersion'           :1.0,
-                      'stochastic_max_stop_process_count':-1,
+                      'stochastic_max_stop_process_count':20,
                       'stochastic_pathset_size'         :1000,
                       'time_window'                     :30,
                       'transfer_fare_ignore_pathfinding':'False',

@@ -420,12 +420,13 @@ __Note:__ Multiprocessing is not tested because it is [incompatible with PyTest]
 
 ## Summarizing Results
 
-Fast-Trips will output results in the [dyno-path](https://github.com/osplanning-data-standards/dyno-path) format, which can be used to generate summary dashboards in Tableau or other reports.  
+Fast-Trips will output results in the [dyno-path](https://github.com/osplanning-data-standards/dyno-path) format. If there exists a survey with transit path details that can be converted to the [dyno-path](https://github.com/osplanning-data-standards/dyno-path) format as well, Fast-Trips results can be summarized and validated against the survey observations. One such effort has been made to validate Fast-Trips output against two surveys in San Francisco Bay Area - Transit On-Board Survey (OBS) and California Household Travel Survey (CHTS).
 
+### Creating Validation Metrics Tableau Dashboard
+The scripts and detailed instructions to process the surveys and generate summary dashboards in Tableau can be found in the [fast-trips-validation][fast-trips-validation-url] repository.
 
-### Creating Tableau Dashboard
-
-
+### Creating Path Visualizer Tableau Dashboard
+Todo.
 
 ## Frequently Asked Questions
 
@@ -472,3 +473,4 @@ To be filled in further but including:
 [network-standard-url]: <https://github.com/osplanning-data-standards/GTFS-PLUS>
 [demand-standard-url]: <https://github.com/osplanning-data-standards/dyno-demand>
 [stop-order-details-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22>
+[fast-trips-validation-url]: <https://github.com/psrc/fast-trips-validation>
