@@ -33,6 +33,7 @@ def run_calculate_cost_test():
         GLOBAL_ITERATIONS,
         OUTPUT_DIR,
         pathfinding_type='stochastic',
+        capacity=True,
         input_functions=INPUT_FUNCTIONS,
         output_folder=TEST_FOLDER,
         trace_only=False,
