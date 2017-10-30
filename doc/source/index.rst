@@ -3,53 +3,62 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to fasttrips's documentation!
-=====================================
+Welcome to the Fast-Trips developers documentation!
+=======================================================
 
-.. automodule:: fasttrips
-   :no-members:
-   :no-undoc-members:
-   :no-inherited-members:
-   :no-show-inheritance:
+This page organizes documentation that is useful for both software and model developers.  It is designed to be browsed through from top-to-bottom starting with the objectives, then going through theory and software design, and finishing with how to contribute.
 
-fast-trips Classes
-------------------
+.. note::  This documentation is based on the develop branch, and is current thru `commit #  5e504cb3319b58faac3aca1310cb4ad08dc44ed8 <https://github.com/BayAreaMetro/fast-trips/tree/5e504cb3319b58faac3aca1310cb4ad08dc44ed8>`_
 
-.. currentmodule:: fasttrips
+Software Objectives
+------------------------
+Objectives are driven by users and their use cases.  Generally speaking, Fast-Trips is a simulation of transit user experience, taking into account the interactions of every transit vehicle trip and every transit passenger.  It is capable of capturing phenomena such as bus bunching, transit overcrowding, and passenger heterogeneity.
 
-.. autosummary::
-   :nosignatures:
-   :toctree: _generated
+Users
+------
+The team strives to keep several categories of users in mind. When possible, the functionality between these users is separated to be the simplest possible abstraction level for that user.  For example, an analyst who is just running fast-trips should touch the minimum number of files and parameters to run it and analyze the results.  User categories have been generally defined as:
 
-   Assignment
-   Error
-   FastTrips
-   FastTripsLogger
-   Passenger
-   PathSet
-   Performance
-   Route
-   Run
-   Stop
-   TAZ
-   Transfer
-   Trip
-   Util
+* **Developers**: Well-versed in the details of how Fast-Trips works, developers aim to make the user experience good for other users
+* **Modelers**: Modelers understand the algorithms and data structures that Fast-Trips uses and may edit them around the edges to achieve their goals.
+* **Analysts**: Analysts primarily interact with Fast-Trips in order to run a scenario and analyze the results.  They should be able to easily change parameters, inputs, and run configurations and verify that Fast-Trips provided valid results.
 
-fast-trips C++ Extension Classes
---------------------------------
+Use Cases
+----------
+Fast-trips can be used for analyzing short-term effects as well as long range planning when linked up with a `travel demand modeling  <https://zephyrtransport.github.io/zephyr-directory/project-groups/abm-platforms/>`_ tool such as `ActivitySim <https://github.com/UDST/activitysim>`_:
+
+* An analyst who wants to study the effect of a on service reliability of a schedule change.
+* An analyst who wants to evaluate a service plan for a special event.
+* A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
+
+Assumptions and Prerequisites
+------------------------------------
+
+This guide assumes that you are familiar with the following:
+
+* `Python <https://www.python.org/>`_ and the `pandas <http://pandas.pydata.org/>`_ library
+* `C++ <https://en.wikipedia.org/wiki/C%2B%2B>`_ (if working in the c++ module)
+* `Git version control <https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control>`_
+* `Jupyter notebooks <http://jupyter.org/>`_
+* `Pathfinding algorithms <https://en.wikipedia.org/wiki/Pathfinding>`_
+* `GTFS Transit Networks <http://gtfs.org/>`_
+
+
+
+Contents
+----------
+
 .. toctree::
-   fasttrips_c_extension
+   :maxdepth: 2
 
-Todo List
-=========
+   gettingstarted
+   howitworks
+   api
+   contributing
 
-.. todolist::
 
 Indices and tables
-==================
+===================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
