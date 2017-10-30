@@ -2,7 +2,7 @@
 
 fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:
  * Project Website: http://fast-trips.mtc.ca.gov/
- * Full Technical Documentation (API): http://bayareametro.github.io/fast-trips/
+ * Documentation for developers (contributing, API, etc.): http://bayareametro.github.io/fast-trips/
 
 **Use Cases**  
 Fast-trips can be used for analyzing short-term effects as a stand-along tool as well as long range planning when linked up with a travel demand modeling tool:
