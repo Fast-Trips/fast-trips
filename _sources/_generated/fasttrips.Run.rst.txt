@@ -1,5 +1,5 @@
-fasttrips.Run
-=============
+fasttrips\.Run
+==============
 
 .. automodule:: fasttrips.Run
 
@@ -9,6 +9,7 @@ fasttrips.Run
 
    .. autosummary::
    
+      main
       run_fasttrips
       run_setup
    
@@ -19,11 +20,5 @@ fasttrips.Run
    
 
    
-   
-   .. rubric:: Exceptions
-
-   .. autosummary::
-   
-      ConfigurationError
    
    

@@ -1,0 +1,41 @@
+fasttrips\.Assignment
+=====================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Assignment
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Assignment.__init__
+      ~Assignment.assign_paths
+      ~Assignment.choose_paths_without_simulation
+      ~Assignment.filter_trip_list_to_not_arrived
+      ~Assignment.find_passenger_vehicle_times
+      ~Assignment.find_trip_based_pathset
+      ~Assignment.flag_missed_transfers
+      ~Assignment.generate_pathsets
+      ~Assignment.initialize_fasttrips_extension
+      ~Assignment.load_passengers_on_vehicles_with_cap
+      ~Assignment.merge_pathsets
+      ~Assignment.number_of_pathsets
+      ~Assignment.put_passengers_on_vehicles
+      ~Assignment.read_configuration
+      ~Assignment.read_functions
+      ~Assignment.read_weights
+      ~Assignment.set_fasttrips_bump_wait
+      ~Assignment.simulate
+      ~Assignment.write_configuration
+      ~Assignment.write_vehicle_trips
+   
+   
+
+   
+   
+   

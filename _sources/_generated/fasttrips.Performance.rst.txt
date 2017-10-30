@@ -1,0 +1,27 @@
+fasttrips\.Performance
+======================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Performance
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Performance.__init__
+      ~Performance.add_info
+      ~Performance.record_step_end
+      ~Performance.record_step_start
+      ~Performance.write
+      ~Performance.write_pathfinding
+   
+   
+
+   
+   
+   

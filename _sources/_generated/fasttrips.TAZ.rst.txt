@@ -1,0 +1,25 @@
+fasttrips\.TAZ
+==============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: TAZ
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TAZ.__init__
+      ~TAZ.add_distance
+      ~TAZ.warn_on_stops_without_walk_access
+      ~TAZ.write_access_egress_for_extension
+   
+   
+
+   
+   
+   

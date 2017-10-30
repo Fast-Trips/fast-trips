@@ -1,0 +1,30 @@
+fasttrips\.Passenger
+====================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Passenger
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Passenger.__init__
+      ~Passenger.add_pathset
+      ~Passenger.choose_paths
+      ~Passenger.get_chosen_links
+      ~Passenger.get_pathset
+      ~Passenger.get_person_id
+      ~Passenger.read_passenger_pathsets
+      ~Passenger.setup_passenger_pathsets
+      ~Passenger.write_paths
+   
+   
+
+   
+   
+   

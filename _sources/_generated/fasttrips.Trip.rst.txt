@@ -1,0 +1,36 @@
+fasttrips\.Trip
+===============
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Trip
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Trip.__init__
+      ~Trip.add_numeric_trip_id
+      ~Trip.add_original_travel_time_and_dwell
+      ~Trip.add_shape_dist_traveled
+      ~Trip.add_trip_attrs_from_stoptimes
+      ~Trip.calculate_headways
+      ~Trip.get_full_trips
+      ~Trip.get_scheduled_departure
+      ~Trip.get_stop_times
+      ~Trip.has_capacity_configured
+      ~Trip.linkify_vehicle_trips
+      ~Trip.number_of_stops
+      ~Trip.reset_onboard
+      ~Trip.update_trip_times
+      ~Trip.write_trips_for_extension
+   
+   
+
+   
+   
+   

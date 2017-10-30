@@ -1,5 +1,5 @@
-fasttrips.Util
-==============
+fasttrips\.Util
+===============
 
 .. currentmodule:: fasttrips
 
@@ -18,7 +18,9 @@ fasttrips.Util
       ~Util.calculate_distance_miles
       ~Util.datetime64_formatter
       ~Util.datetime64_min_formatter
+      ~Util.get_process_mem_use_bytes
       ~Util.get_process_mem_use_str
+      ~Util.pretty
       ~Util.read_time
       ~Util.remove_null_columns
       ~Util.timedelta_formatter
@@ -27,15 +29,5 @@ fasttrips.Util
    
 
    
-   
-   .. rubric:: Attributes
-
-   .. autosummary::
-   
-      ~Util.DROP_DEBUG_COLUMNS
-      ~Util.DROP_PATHFINDING_COLUMNS
-      ~Util.SIMULATION_DAY
-      ~Util.SIMULATION_DAY_START
-      ~Util.TIMEDELTA_COLUMNS_TO_UNITS
    
    

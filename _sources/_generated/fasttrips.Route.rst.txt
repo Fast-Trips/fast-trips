@@ -1,0 +1,30 @@
+fasttrips\.Route
+================
+
+.. currentmodule:: fasttrips
+
+.. autoclass:: Route
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Route.__init__
+      ~Route.add_access_egress_modes
+      ~Route.add_fares
+      ~Route.add_numeric_mode_id
+      ~Route.add_numeric_route_id
+      ~Route.apply_fare_transfer_rules
+      ~Route.apply_free_transfers
+      ~Route.remove_fare_period_overlap
+      ~Route.write_routes_for_extension
+   
+   
+
+   
+   
+   

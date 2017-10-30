@@ -1,0 +1,6 @@
+fasttrips\.Error
+================
+
+.. currentmodule:: fasttrips
+
+.. autoexception:: Error

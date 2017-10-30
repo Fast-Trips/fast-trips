@@ -1,0 +1,329 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fasttrips.Run &mdash; fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../index.html"/>
+        <link rel="up" title="Fast-Trips Classes and Functions" href="../api.html"/>
+        <link rel="next" title="fasttrips.Stop" href="fasttrips.Stop.html"/>
+        <link rel="prev" title="fasttrips.Route" href="fasttrips.Route.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> fasttrips
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">Fast-Trips Classes and Functions</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#fast-trips-classes">fast-trips Classes</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Error.html">fasttrips.Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.FastTrips.html">fasttrips.FastTrips</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.FastTripsLogger.html">fasttrips.FastTripsLogger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Passenger.html">fasttrips.Passenger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.PathSet.html">fasttrips.PathSet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Performance.html">fasttrips.Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Route.html">fasttrips.Route</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">fasttrips.Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Stop.html">fasttrips.Stop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.TAZ.html">fasttrips.TAZ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Transfer.html">fasttrips.Transfer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Trip.html">fasttrips.Trip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fasttrips.Util.html">fasttrips.Util</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#fast-trips-c-extension-classes">fast-trips C++ Extension Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html#documentation">Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">fasttrips</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../api.html">Fast-Trips Classes and Functions</a> &raquo;</li>
+        
+      <li>fasttrips.Run</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/_generated/fasttrips.Run.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-fasttrips.Run">
+<span id="fasttrips-run"></span><h1>fasttrips.Run<a class="headerlink" href="#module-fasttrips.Run" title="Permalink to this headline">¶</a></h1>
+<p>Functions to simplify running Fast-Trips.</p>
+<p class="rubric">Functions</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#fasttrips.Run.main" title="fasttrips.Run.main"><code class="xref py py-obj docutils literal"><span class="pre">main</span></code></a>()</td>
+<td>Does arg parsing for command line interface.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#fasttrips.Run.run_fasttrips" title="fasttrips.Run.run_fasttrips"><code class="xref py py-obj docutils literal"><span class="pre">run_fasttrips</span></code></a>(**kwargs)</td>
+<td>Wrapper function to set up and run fast-trips.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#fasttrips.Run.run_setup" title="fasttrips.Run.run_setup"><code class="xref py py-obj docutils literal"><span class="pre">run_setup</span></code></a>(input_network_dir,&nbsp;…[,&nbsp;…])</td>
+<td>Reads run configuration files from network and demand input directories.</td>
+</tr>
+</tbody>
+</table>
+<dl class="function">
+<dt id="fasttrips.Run.main">
+<code class="descclassname">fasttrips.Run.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Run.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Run.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Does arg parsing for command line interface.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="fasttrips.Run.run_fasttrips">
+<code class="descclassname">fasttrips.Run.</code><code class="descname">run_fasttrips</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Run.html#run_fasttrips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Run.run_fasttrips" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper function to set up and run fast-trips.
+The fast trips parameters as a combination of parameters
+read from the control file, but overwritten with parameters passed into this function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="fasttrips.Run.run_setup">
+<code class="descclassname">fasttrips.Run.</code><code class="descname">run_setup</code><span class="sig-paren">(</span><em>input_network_dir</em>, <em>input_demand_dir</em>, <em>input_weights</em>, <em>run_config</em>, <em>iters</em>, <em>output_dir</em>, <em>pathfinding_type='stochastic'</em>, <em>input_functions=None</em>, <em>output_folder=None</em>, <em>trace_only=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Run.html#run_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Run.run_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads run configuration files from network and demand input directories.
+If additional parameters are input here, they will override the run configuration files.</p>
+<dl class="docutils">
+<dt>Named Keyword arguments:</dt>
+<dd><p class="first">input_network_dir – the input directory with GTFS-PLUS networks (required)
+input_demand_dir – the input directory with the dyno-demand files (required)
+input_weights – the file with the pathweight parameters (required)
+run_config – the file with further run configs (required)
+iters – number of global iterations, integer (required)
+output_dir – where to put the output folder (required). Will be created if it doesn’t already exist.</p>
+<p class="last">pathfinding_type – one of [‘stochastic’,’deterministic’,’file’] (default: stochastic)
+input_functions – the file with user functions
+output_folder – where to put the outputs.  Will be created if it doesn’t already exist.
+trace_only – will only run demand for the trace.  Will not overwrite other output (default: False)</p>
+</dd>
+<dt>Unnamed keyword arguments:</dt>
+<dd><p class="first">num_trips – if specified, will process this number of trips and ignore the rest</p>
+<p>dispersion – theta parameter; essentially the nesting parameter. Good value is between 0.5-1. (default: 1.0)
+max_stop_process_count = maximum number of times you will re-processe a node (default: 20)
+capacity – Boolean to activate capacity constraints (default: False)</p>
+<p>overlap_variable – One of [‘None’,’count’,’distance’,’time’]. Variable to use for overlap penalty calculation (default: ‘count’)
+overlap_split_transit – Boolean.Split transit for path overlap penalty calculation (default: False)</p>
+<p>time_window = Integer. The time window in minutes where a passenger searches for a eminating transit route at each node.
+transfer_fare_ignore_pathfinding = Boolean. In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
+transfer_fare_ignore_pathenum = Boolean. In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
+number_of_processes = Integer. Number of processes to run at once (default: 1)
+output_pathset_per_sim_iter = Boolean. Output pathsets per simulation iteration?  (default: false)</p>
+<p class="last">debug_output_columnns – boolean to activate extra columns for debugging (default: False)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="fasttrips.Stop.html" class="btn btn-neutral float-right" title="fasttrips.Stop" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fasttrips.Route.html" class="btn btn-neutral" title="fasttrips.Route" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2017, Lisa Zorn.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

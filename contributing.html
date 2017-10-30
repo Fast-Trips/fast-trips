@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Contributing &mdash; fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="index.html"/>
+        <link rel="prev" title="fasttrips C++ Extension" href="fasttrips_c_extension.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> fasttrips
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#style">Style</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#development-workflow">Development Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#roadmap">Roadmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#todo-list">Todo List</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#releases">Releases</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fasttrips</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Contributing</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/contributing.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="style">
+<h2>Style<a class="headerlink" href="#style" title="Permalink to this headline">¶</a></h2>
+<p>We attempt as much as possible to adhere to <a class="reference external" href="https://www.python.org/dev/peps/pep-0008/">PEP8</a>. Adherence to PEP8 standards can be checked using the <a class="reference external" href="https://pypi.python.org/pypi/pycodestyle">pycodestyle</a> package from your fast-trips directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pycodestyle</span> <span class="n">fasttrips</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="development-workflow">
+<h2>Development Workflow<a class="headerlink" href="#development-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Aside from the core developer team, we use a <a class="reference external" href="https://gist.github.com/Chaser324/ce0505fbed06b947d962">fork-and-pull workflow</a>.</p>
+<p>We use the <a class="reference external" href="http://nvie.com/posts/a-successful-git-branching-model/">Git Flow</a> branching model whereby there is always a master and develop branch.  New features should always be developed in a branch from the develop branch.</p>
+<p>In general, development should respond to <a class="reference external" href="https://github.com/BayAreaMetro/fast-trips/issues">identified issues</a> that proceed along a general roadmap for Fast-Trips.  If no issue exists then please consider making one before proceeding so that your approach can be discussed with the team.   When possible, issues should be written as <a class="reference external" href="https://en.wikipedia.org/wiki/User_story">user stories</a>.</p>
+<p>When possible, the team strives to adhere to <a class="reference external" href="https://en.wikipedia.org/wiki/Agile_software_development#Agile_software_development_principles">agile software development principles</a>.</p>
+</div>
+<div class="section" id="roadmap">
+<h2>Roadmap<a class="headerlink" href="#roadmap" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<p>We are still working on more comprehensive testing, but we use the <a class="reference external" href="https://docs.pytest.org/en/latest/">pyTest</a> library and put test in the <code class="code docutils literal"><span class="pre">/tests</span></code> folder.</p>
+</div>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>Functions, classes and methods should be documented using <a class="reference external" href="https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html">restructured text docstrings</a> to be compiled in SPHINX using autodoc functionality, doxygen for c++, and breathe to link them.</p>
+<p>The resulting HTML is then manually pushed to the gh-pages branch.</p>
+<p><strong>Install documentation packages</strong></p>
+<p>Do rebuild the documentation, you must have sphinx, numpydoc, and the read-the-docs sphinx theme installed:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">sphinx</span> <span class="n">numpydoc</span> <span class="n">sphinx_rtd_theme</span> <span class="n">breathe</span>
+</pre></div>
+</div>
+<p>To update the c++ documentation (if needed), you will also need to install doxygen and the breathe python library:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">breathe</span>
+</pre></div>
+</div>
+<p>Follow directions on <a class="reference external" href="https://www.stack.nl/~dimitri/doxygen/manual/install.html">doxygen page</a> to install, or if you have brew installed on a mac, use the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">brew</span> <span class="n">install</span> <span class="n">doxygen</span>
+</pre></div>
+</div>
+<p>Make sure the file :code: <cite>docdoxygen.conf</cite> adds the breathe package location to your path using :code: <cite>sys.path.append</cite>.</p>
+<p><strong>Building documentation</strong></p>
+<p>If you have updated the c++ module, you should first update its documentation by running the following command from the :code: <cite>doc</cite> directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">doxygen</span> <span class="n">doxygen</span><span class="o">.</span><span class="n">conf</span>
+</pre></div>
+</div>
+<p>This will output xml-formatted documentation to :code: <cite>docsourcedoxygenxml</cite>.</p>
+<p>Then run sphinx running the following command from the :code: <cite>doc</cite> directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sphinx</span><span class="o">-</span><span class="n">build</span> <span class="o">-</span><span class="n">b</span> <span class="n">html</span> <span class="n">source</span> <span class="n">build</span>
+</pre></div>
+</div>
+<p><strong>Push documentation to gh-pages branch</strong></p>
+<p>The resulting files in the <code class="code docutils literal"><span class="pre">doc/html</span></code> directory should be published to the gh-pages branch in the .git repository, making sure it is clean ahead of time.  This can be done via a GUI or by using the following commands from the root fast-trips directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tar</span> <span class="n">czf</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">html</span><span class="o">.</span><span class="n">tgz</span> <span class="n">doc</span><span class="o">/</span><span class="n">build</span><span class="o">/**</span> <span class="c1">## zips and copies files to temp directory</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">gh</span><span class="o">-</span><span class="n">pages</span>              <span class="c1">## checks out github pages directory</span>
+<span class="n">git</span> <span class="n">rm</span> <span class="o">-</span><span class="n">rf</span> <span class="o">.</span>                       <span class="c1">## clean out gh-pages branch...but not the .git folder!</span>
+<span class="n">tar</span> <span class="n">xzf</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">html</span><span class="o">.</span><span class="n">tgz</span>              <span class="c1">## unzip the html that you had stashed in the temp directory</span>
+<span class="n">git</span> <span class="n">add</span> <span class="o">.</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">a</span> <span class="o">-</span><span class="n">m</span> <span class="s2">&quot;documentation for version x.x&quot;</span>
+<span class="n">git</span> <span class="n">push</span> <span class="n">origin</span> <span class="n">gh</span><span class="o">-</span><span class="n">pages</span>
+</pre></div>
+</div>
+<p>NOTE: make sure you have made any commits to the code you wanted to keep before checking out the gh-pages branch!</p>
+</div>
+<div class="section" id="todo-list">
+<h2>Todo List<a class="headerlink" href="#todo-list" title="Permalink to this headline">¶</a></h2>
+<p>Please see the <a class="reference external" href="https://github.com/BayAreaMetro/fast-trips/issues">Issues list on Github</a> as well as the in-code todo list below.</p>
+<div class="admonition-todo admonition">
+<p class="first admonition-title">Todo</p>
+<p class="last">This is really about the access and egress links; perhaps it should be renamed?</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="_generated/fasttrips.TAZ.html#index-0"><em>original entry</em></a> is located in /Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips/fasttrips/TAZ.py:docstring of fasttrips.TAZ, line 6.)</p>
+<div class="admonition-todo admonition">
+<p class="first admonition-title">Todo</p>
+<p class="last">This neglects the start_time/end_time issue.  Don’t use without fixing.</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="_generated/fasttrips.TAZ.html#index-1"><em>original entry</em></a> is located in /Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips/fasttrips/TAZ.py:docstring of fasttrips.TAZ.add_distance, line 3.)</p>
+<div class="admonition-todo admonition">
+<p class="first admonition-title">Todo</p>
+<p class="last">clean this up?  Rename intermediate files (they’re not really output)</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="_generated/fasttrips.TAZ.html#index-2"><em>original entry</em></a> is located in /Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips/fasttrips/TAZ.py:docstring of fasttrips.TAZ.write_access_egress_for_extension, line 6.)</p>
+<div class="admonition-todo admonition">
+<p class="first admonition-title">Todo</p>
+<p class="last">Remove these?  Maybe weights should be distance based?  Walk speed is configured how?</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="_generated/fasttrips.Transfer.html#index-0"><em>original entry</em></a> is located in /Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips/fasttrips/Transfer.py:docstring of fasttrips.Transfer.TRANSFERS_COLUMN_TIME, line 3.)</p>
+<div class="admonition-todo admonition">
+<p class="first admonition-title">Todo</p>
+<p class="last">Make this configurable?</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="_generated/fasttrips.Transfer.html#index-1"><em>original entry</em></a> is located in /Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips/fasttrips/Transfer.py:docstring of fasttrips.Transfer.WALK_SPEED_MILES_PER_HOUR, line 3.)</p>
+<div class="admonition-todo admonition">
+<p class="first admonition-title">Todo</p>
+<p class="last">this will be in miles, but should be configurable</p>
+</div>
+<p class="todo-source">(The <a class="reference internal" href="_generated/fasttrips.Trip.html#index-0"><em>original entry</em></a> is located in /Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips/fasttrips/Trip.py:docstring of fasttrips.Trip.add_shape_dist_traveled, line 4.)</p>
+</div>
+<div class="section" id="releases">
+<h2>Releases<a class="headerlink" href="#releases" title="Permalink to this headline">¶</a></h2>
+<p>Releases are manually uploaded to the <a class="reference external" href="https://pypi.python.org/pypi/fasttrips">Python Package Index (PyPI)</a>.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="fasttrips_c_extension.html" class="btn btn-neutral" title="fasttrips C++ Extension" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2017, Lisa Zorn.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
