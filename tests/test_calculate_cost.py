@@ -26,6 +26,18 @@ STOCHASTIC_DISPERSION = 0.5
 
 
 def init_fasttrips(capacity_constrained=True, split_transit=False):
+    """
+    Initialize the FastTrips object. The FastTrips object is necessary to
+    run the static calculate_cost method.
+
+    TODO: Remove the FastTrips object dependency in the calculate_cost function
+    :param capacity_constrained: Whether the calculate_cost method should be capacity constrained
+    :type capacity_constrained: bool.
+    :param split_transit: Whether split_transit_links should be called as part of the calculate_cost method
+    :type split_transit:
+    :return: FastTrips Object
+
+    """
 
     GLOBAL_ITERATIONS = 4
 
@@ -50,6 +62,14 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
 
 
 def run_calculate_cost(ft):
+    """
+    Runs PathSet.calculate_cost with as a static method with configured pathset_links,
+    pathset_paths, and veh_trips.
+
+    :param ft: An initialized and loaded FastTrips object.
+    :type ft: py:class:FastTrips
+    :return:
+    """
 
     ######## LOAD IN PATHSET PATHS #################
     pathset_paths_loc = os.path.join(DF_DIR, 'input_pathset_paths.csv')
@@ -94,7 +114,19 @@ def run_calculate_cost(ft):
     links_df.to_csv(PATHSET_LINKS_OUT, index=False)
 
 
-def verify_links_results(ctl_path, test_path, dtypes, join_cols, compare_cols):
+def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
+    """
+    Method to verify that a test dataframe is equal (or nearly equal for floats)
+    to a known control dataframe with specified join columns and comparison columns.
+
+    :param ctl_path: Path to known datafame csv
+    :param test_path: Path to unknown dataframe csv
+    :param dtypes: (key=colname, value=datatype) Specify datatype dictionary to ensure proper comparison
+    :param join_cols: List of columns to join dataframes for comparison
+    :param compare_cols: List of columns to compare values.
+    :return: AssertionError if dataframes do not match on compare_cols.
+    """
+
     df_test = pd.read_csv(ctl_path, usecols=list(dtypes.keys()), dtype=dtypes)
     df_control = pd.read_csv(test_path, usecols=list(dtypes.keys()), dtype=dtypes)
 
@@ -119,6 +151,8 @@ def verify_links_results(ctl_path, test_path, dtypes, join_cols, compare_cols):
 
 
 def test_calculate_cost():
+    """Organizing script for Nostests to run to test calculate_cost"""
+
     ft = init_fasttrips(split_transit=False)
     run_calculate_cost(ft)
     join_dtypes = {
@@ -135,7 +169,7 @@ def test_calculate_cost():
         'probability': np.float64
     }
 
-    verify_links_results(PATHSET_PATHS_CTL, PATHSET_PATHS_OUT, Util.merge_two_dicts(join_dtypes, compare_dtypes),
+    verify_dataframe(PATHSET_PATHS_CTL, PATHSET_PATHS_OUT, Util.merge_two_dicts(join_dtypes, compare_dtypes),
                          list(join_dtypes.keys()), list(compare_dtypes.keys()))
 
     join_dtypes = {
@@ -149,7 +183,7 @@ def test_calculate_cost():
             'sim_cost': np.float64,
     }
 
-    verify_links_results(PATHSET_LINKS_CTL, PATHSET_LINKS_OUT, Util.merge_two_dicts(join_dtypes, compare_dtypes),
+    verify_dataframe(PATHSET_LINKS_CTL, PATHSET_LINKS_OUT, Util.merge_two_dicts(join_dtypes, compare_dtypes),
                          list(join_dtypes.keys()), list(compare_dtypes.keys()))
 
 
