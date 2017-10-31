@@ -2,7 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 
-from fasttrips import Passenger, PathSet, Run
+from fasttrips import PathSet, Run, Util
 
 BASE_DIR            = os.path.join(os.getcwd(), '..', 'fasttrips', 'Examples', 'test_scenario')
 TEST_FOLDER         = 'calculate_cost'
@@ -118,12 +118,6 @@ def verify_links_results(ctl_path, test_path, dtypes, join_cols, compare_cols):
             assert False
 
 
-def merge_two_dicts(x, y):
-    z = x.copy()   # start with x's keys and values
-    z.update(y)    # modifies z with y's keys and values & returns None
-    return z
-
-
 def test_calculate_cost():
     ft = init_fasttrips(split_transit=False)
     run_calculate_cost(ft)
@@ -141,7 +135,7 @@ def test_calculate_cost():
         'probability': np.float64
     }
 
-    verify_links_results(PATHSET_PATHS_CTL, PATHSET_PATHS_OUT, merge_two_dicts(join_dtypes, compare_dtypes),
+    verify_links_results(PATHSET_PATHS_CTL, PATHSET_PATHS_OUT, Util.merge_two_dicts(join_dtypes, compare_dtypes),
                          list(join_dtypes.keys()), list(compare_dtypes.keys()))
 
     join_dtypes = {
@@ -155,7 +149,7 @@ def test_calculate_cost():
             'sim_cost': np.float64,
     }
 
-    verify_links_results(PATHSET_LINKS_CTL, PATHSET_LINKS_OUT, merge_two_dicts(join_dtypes, compare_dtypes),
+    verify_links_results(PATHSET_LINKS_CTL, PATHSET_LINKS_OUT, Util.merge_two_dicts(join_dtypes, compare_dtypes),
                          list(join_dtypes.keys()), list(compare_dtypes.keys()))
 
 

@@ -380,3 +380,18 @@ class Util:
         if bytes < 1000*1000*1000:
             return "%.1f MB" % (bytes/(1000.0*1000.0))
         return "%.1f GB" % (bytes/(1000.0*1000.0*1000.0))
+
+    @staticmethod
+    def merge_two_dicts(x, y):
+        """A helper method for Python 2.7 to 'zip' two dictionary objects
+
+        :param x: This dictionary will be copied and y appended to the copy.
+        :type x: dict.
+        :param y: This dictionary will be appended with a copy of x.
+        :type y: dict.
+        :returns: dict
+
+        """
+        z = x.copy()
+        z.update(y)
+        return z
