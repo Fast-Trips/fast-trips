@@ -1,9 +1,11 @@
 import numpy as np
 import os
 import pandas as pd
-
+import sys
 from fasttrips import Util
-from scripts import init_fasttrips, run_calculate_cost
+
+sys.path.insert(0, os.path.join(os.getcwd(), 'scripts'))
+from calculate_cost import init_fasttrips, run_calculate_cost
 
 # DIRECTORY LOCATIONS
 BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'test_scenario')

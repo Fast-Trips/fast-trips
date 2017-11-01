@@ -8,7 +8,7 @@ setup(name          = 'fasttrips',
       author_email  = 'lzorn@mtc.ca.gov',
       description   = 'Dynamic Transit Assignment Model. Given a transit network and a list of transit demand, finds a pathset and chooses a path for each traveler.',
       long_description = 'See https://github.com/MetropolitanTransportationCommission/fast-trips',
-      packages      = ['fasttrips','scripts'],
+      packages      = ['fasttrips'],
       url           = 'http://fast-trips.mtc.ca.gov/',
       license       = 'Apache',
       classifiers   = [# How mature is this project?
@@ -46,5 +46,5 @@ setup(name          = 'fasttrips',
                                  include_dirs=[numpy.get_include()],
                                  libraries=['psapi'] if sys.platform=='win32' else []
                                  )
-                      ],
+                      ]
       )
