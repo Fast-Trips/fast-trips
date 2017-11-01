@@ -126,15 +126,7 @@ class FastTrips:
         self.performance.record_step_start(0,0,0,"read_input_files")
 
         # Read the gtfs files first
-        FastTripsLogger.info("Reading GTFS schedule")
-        loader             = transitfeed.Loader(Assignment.INPUT_NETWORK_DIR, memory_db=True)
-        self.gtfs_schedule = loader.Load()
-
-        if False:
-            # Validate the GTFS
-            FastTripsLogger.info("Validating GTFS schedule")
-            self.gtfs_schedule.Validate()
-            FastTripsLogger.info("Done validating GTFS schedule")
+        self.gtfs_schedule = Util.load_transit_network(Assignment.INPUT_NETWORK_DIR)
 
         # Required: Trips, Routes, Stops, Stop Times, Agency, Calendar
         # Optional: Transfers, Shapes, Calendar Dates...
