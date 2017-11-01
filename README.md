@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
+
 # fast-trips
 
 fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:
