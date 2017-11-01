@@ -17,6 +17,7 @@ import csv, datetime, logging, os
 
 import numpy
 import pandas
+import transitfeed
 
 from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
@@ -395,3 +396,16 @@ class Util:
         z = x.copy()
         z.update(y)
         return z
+
+    @staticmethod
+    def load_transit_network(network_dir, validate=False):
+        FastTripsLogger.info("Reading GTFS schedule")
+        loader = transitfeed.Loader(network_dir, memory_db=True)
+        schedule = loader.Load()
+
+        if validate:
+            FastTripsLogger.info("Validating GTFS schedule")
+            schedule.Validate()
+            FastTripsLogger.info("Done validating GTFS schedule")
+
+        return schedule
