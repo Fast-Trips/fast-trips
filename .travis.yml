@@ -22,6 +22,8 @@ install:
   # Replace dep1 dep2 ... with your dependencies
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
+  - pip install numpy
+  - pip install pandas
   - pip install transitfeed
   - python setup.py install
 script: pytest
