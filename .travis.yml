@@ -4,6 +4,7 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install pytest
-  - python setup.py build_ext --inplace
+  - pip install psutil
+  - python setup.py install
 # command to run tests
 script: pytest
