@@ -25,5 +25,5 @@ install:
   - pip install numpy
   - pip install pandas
   - pip install transitfeed
-  - python setup.py install
+  - pip install .
 script: pytest
