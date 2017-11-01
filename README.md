@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/danielsclint/fast-trips.svg?branch=develop)](https://travis-ci.org/danielsclint/fast-trips)
+[![Build Status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
 
 # fast-trips
 
