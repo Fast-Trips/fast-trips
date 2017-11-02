@@ -5,7 +5,7 @@ import sys
 from fasttrips import Util
 
 sys.path.insert(0, os.path.join(os.getcwd(), 'scripts'))
-from calculate_cost import init_fasttrips, run_calculate_cost
+from calculate_cost import calculate_cost
 
 # DIRECTORY LOCATIONS
 BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'test_scenario')
@@ -55,8 +55,7 @@ def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
 def test_calculate_cost():
     """Organizing script for Nostests to run to test calculate_cost"""
 
-    ft = init_fasttrips(split_transit=False)
-    paths_csv, links_csv = run_calculate_cost(ft)
+    paths_csv, links_csv = calculate_cost(use_ft=False)
 
     join_dtypes = {
         'trip_list_id_num': int,
