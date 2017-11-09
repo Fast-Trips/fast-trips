@@ -166,6 +166,7 @@ def calculate_cost(use_ft=True, capacity_constrained=True, split_transit=False):
         PathSet.OVERLAP_SCALE_PARAMETER = 1.0
         PathSet.OVERLAP_SPLIT_TRANSIT = split_transit
         PathSet.OVERLAP_VARIABLE = 'count'
+        PathSet.WEIGHTS_FIXED_WIDTH = False
 
         passengers = Passenger(INPUT_DEMAND, OUTPUT_DIR, NETWORK_DATE, stops, routes, capacity_constrained)
 
