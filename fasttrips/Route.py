@@ -160,19 +160,6 @@ class Route(object):
         """
         self.output_dir         = output_dir
 
-        # Combine all gtfs Route objects to a single pandas DataFrame
-        #route_dicts = []
-        #for gtfs_route in gtfs_schedule.GetRouteList():
-        #    for gtfs_trip in gtfs_route.trips:
-        #        if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today):
-        #            route_dict = {}
-        #            for fieldname in gtfs_route._FIELD_NAMES:
-        #                if fieldname in gtfs_route.__dict__:
-        #                    route_dict[fieldname] = gtfs_route.__dict__[fieldname]
-        #            route_dicts.append(route_dict)
-        #            break
-        #
-        #self.routes_df = pandas.DataFrame(data=route_dicts)
         self.routes_df = gtfs.routes
 
         FastTripsLogger.info("Read %7d %15s from %25d %25s" %
@@ -226,15 +213,6 @@ class Route(object):
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.routes_df), "routes", "routes.txt", Route.INPUT_ROUTES_FILE))
 
-
-        #agency_dicts = []
-        #for gtfs_agency in gtfs_schedule.GetAgencyList():
-        #    agency_dict = {}
-        #    for fieldname in gtfs_agency._FIELD_NAMES:
-        #        if fieldname in gtfs_agency.__dict__:
-        #            agency_dict[fieldname] = gtfs_agency.__dict__[fieldname]
-        #    agency_dicts.append(agency_dict)
-        #self.agencies_df = pandas.DataFrame(data=agency_dicts)
         self.agencies_df = gtfs.agency
 
         FastTripsLogger.debug("=========== AGENCIES ===========\n" + str(self.agencies_df.head()))
@@ -242,23 +220,6 @@ class Route(object):
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.agencies_df), "agencies", "agency.txt"))
 
-        #fare_attr_dicts = []
-        #fare_rule_dicts = []
-        #for gtfs_fare_attr in gtfs_schedule.GetFareAttributeList():
-        #    fare_attr_dict = {}
-        #    for fieldname in gtfs_fare_attr._FIELD_NAMES:
-        #        if fieldname in gtfs_fare_attr.__dict__:
-        #            fare_attr_dict[fieldname] = gtfs_fare_attr.__dict__[fieldname]
-        #    fare_attr_dicts.append(fare_attr_dict)
-        #
-        #    for gtfs_fare_rule in gtfs_fare_attr.GetFareRuleList():
-        #        fare_rule_dict = {}
-        #        for fieldname in gtfs_fare_rule._FIELD_NAMES:
-        #            if fieldname in gtfs_fare_rule.__dict__:
-        #                fare_rule_dict[fieldname] = gtfs_fare_rule.__dict__[fieldname]
-        #        fare_rule_dicts.append(fare_rule_dict)
-        #
-        #self.fare_attrs_df = pandas.DataFrame(data=fare_attr_dicts)
         self.fare_attrs_df = gtfs.fare_attributes
 
         FastTripsLogger.debug("=========== FARE ATTRIBUTES ===========\n" + str(self.fare_attrs_df.head()))
@@ -293,7 +254,6 @@ class Route(object):
             self.fare_by_class = False
 
         # Fare rules (map routes to fare_id)
-        #self.fare_rules_df = pandas.DataFrame(data=fare_rule_dicts)
         self.fare_rules_df = gtfs.fare_rules
         if len(self.fare_rules_df) > 0:
             self.fare_ids_df = Util.add_numeric_column(self.fare_rules_df[[Route.FARE_RULES_COLUMN_FARE_ID]],
