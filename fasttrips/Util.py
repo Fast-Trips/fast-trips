@@ -28,7 +28,7 @@ class Util:
     Collect useful stuff here that doesn't belong in any particular existing class.
     """
     #: Use this as the date
-    SIMULATION_DAY                  = datetime.date(2016,1,1)
+    SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)
     #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
     SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
 
@@ -218,6 +218,12 @@ class Util:
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
+
+    @staticmethod
+    def parse_minutes_to_time(minutes):
+        elapsed_time = datetime.timedelta(minutes=minutes)
+        return Util.SIMULATION_DAY + elapsed_time
+
 
     @staticmethod
     def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True, drop_pathfinding_columns=True):

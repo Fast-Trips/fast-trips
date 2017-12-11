@@ -1,3 +1,3 @@
 ###### Requirements without Version Specifiers ######
-transitfeed
+partridge
 pandas
