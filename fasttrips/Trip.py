@@ -242,49 +242,6 @@ class Trip:
                              (len(self.vehicles_df), "vehicles", self.INPUT_VEHICLES_FILE))
 
         # Combine all gtfs Trip objects to a single pandas DataFrame
-        #trip_dicts      = []
-        #stop_time_dicts = []
-        #Only iterate through the active records for the day of the analysis
-        #for gtfs_trip in (gtfs_trip for gtfs_trip in gtfs_schedule.GetTripList()
-        #                  if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today)):
-        #    trip_dicts.append({field_name: gtfs_trip.__dict__[field_name] for field_name in gtfs_trip._REQUIRED_FIELD_NAMES})
-        #
-        #    # stop times
-        #    #   _REQUIRED_FIELD_NAMES = ['trip_id', 'arrival_time', 'departure_time',
-        #    #                            'stop_id', 'stop_sequence']
-        #    #   _OPTIONAL_FIELD_NAMES = ['stop_headsign', 'pickup_type',
-        #    #                            'drop_off_type', 'shape_dist_traveled', 'timepoint']
-        #    for gtfs_stop_time in gtfs_trip.GetStopTimes():
-        #        stop_time_dict = {}
-        #        stop_time_dict[Trip.STOPTIMES_COLUMN_TRIP_ID]         = gtfs_trip.__dict__[Trip.STOPTIMES_COLUMN_TRIP_ID]
-        #        stop_time_dict[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]    = gtfs_stop_time.arrival_time
-        #        stop_time_dict[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]  = gtfs_stop_time.departure_time
-        #        stop_time_dict[Trip.STOPTIMES_COLUMN_STOP_ID]         = gtfs_stop_time.stop_id
-        #        stop_time_dict[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]   = gtfs_stop_time.stop_sequence
-        #        # optional fields
-        #        try:
-        #            stop_time_dict[Trip.STOPTIMES_COLUMN_HEADSIGN]            = gtfs_stop_time.stop_headsign
-        #        except:
-        #            pass
-        #        try:
-        #            stop_time_dict[Trip.STOPTIMES_COLUMN_PICKUP_TYPE]         = gtfs_stop_time.pickup_type
-        #        except:
-        #            pass
-        #        try:
-        #            stop_time_dict[Trip.STOPTIMES_COLUMN_DROP_OFF_TYPE]        = gtfs_stop_time.drop_off_type
-        #        except:
-        #            pass
-        #        try:
-        #            stop_time_dict[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = gtfs_stop_time.shape_dist_traveled
-        #        except:
-        #            pass
-        #        try:
-        #            stop_time_dict[Trip.STOPTIMES_COLUMN_TIMEPOINT]           = gtfs_stop_time.timepoint
-        #        except:
-        #            pass
-        #        stop_time_dicts.append(stop_time_dict)
-
-        #self.trips_df = pandas.DataFrame(data=trip_dicts)
         self.trips_df = gtfs_feed.trips
         if len(self.trips_df) == 0:
             error_str = "No GTFS trips found for simulation day. Simulation day=%s" % (today.strftime("%B %d, %Y"))
@@ -374,18 +331,13 @@ class Trip:
             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME: Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
         }, inplace=True)
 
+        # float version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] / 60
 
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] / 60
-        # float version
-        #self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
-        #    self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: \
-        #        60*x.time().hour + x.time().minute + x.time().second/60.0 )
-        #self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
-        #    self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
-        #        60*x.time().hour + x.time().minute + x.time().second/60.0 )
+
 
         # datetime version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
