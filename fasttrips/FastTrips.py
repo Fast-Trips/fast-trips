@@ -13,9 +13,8 @@ __license__   = """
     limitations under the License.
 """
 import os, sys
-from operator import attrgetter
-import pandas
-import transitfeed
+
+import partridge
 
 from .Assignment  import Assignment
 from .Logger      import FastTripsLogger, setupLogging
@@ -98,7 +97,7 @@ class FastTrips:
         Assignment.OUTPUT_DIR         = output_dir
 
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
-        self.gtfs_schedule      = None
+        #self.gtfs_schedule      = None
 
         # setup logging
         setupLogging(os.path.join(Assignment.OUTPUT_DIR, FastTrips.INFO_LOG % logname_append),
@@ -127,33 +126,40 @@ class FastTrips:
 
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        loader             = transitfeed.Loader(Assignment.INPUT_NETWORK_DIR, memory_db=True)
-        self.gtfs_schedule = loader.Load()
+        service_ids_by_date = partridge.read_service_ids_by_date(os.path.join(Assignment.INPUT_NETWORK_DIR, 'sample_gtfs.zip'))
+        service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
+        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_DIR, 'sample_gtfs.zip'), view={
+            'trips.txt': {
+              'service_id': service_ids
+            },
+        })
+        #loader             = transitfeed.Loader(Assignment.INPUT_NETWORK_DIR, memory_db=True)
+        #self.gtfs_schedule = loader.Load()
 
-        if False:
-            # Validate the GTFS
-            FastTripsLogger.info("Validating GTFS schedule")
-            self.gtfs_schedule.Validate()
-            FastTripsLogger.info("Done validating GTFS schedule")
+        #if False:
+        #    # Validate the GTFS
+        #    FastTripsLogger.info("Validating GTFS schedule")
+        #    self.gtfs_schedule.Validate()
+        #    FastTripsLogger.info("Done validating GTFS schedule")
 
         # Required: Trips, Routes, Stops, Stop Times, Agency, Calendar
         # Optional: Transfers, Shapes, Calendar Dates...
 
         # Read Stops (gtfs-required)
         self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE)
+                          gtfs_feed, Assignment.NETWORK_BUILD_DATE)
 
         # Read routes, agencies, fares
         self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                            self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE, self.stops)
+                            gtfs_feed, Assignment.NETWORK_BUILD_DATE, self.stops)
 
         # Read Transfers
         self.transfers = Transfer(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                                  self.gtfs_schedule)
+                                  gtfs_feed)
 
         # Read trips, vehicles, calendar and stoptimes
         self.trips = Trip(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE,
+                          gtfs_feed, Assignment.NETWORK_BUILD_DATE,
                           self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance
