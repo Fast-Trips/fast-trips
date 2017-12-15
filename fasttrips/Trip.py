@@ -424,7 +424,9 @@ class Trip:
         """
         Returns :py:class:`pandas.DataFrame` with stop times for the given trip id.
         """
-        return self.stop_times_df.loc[trip_id]
+        return self.stop_times_df.loc[
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_TRIP_ID] == trip_id
+        ]
 
     def number_of_stops(self, trip_id):
         """
