@@ -327,7 +327,7 @@ class Util:
         Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
         in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.
         """
-        radius = 3959.0 # mi
+        radius = 3963.190592 # mi
 
         # assume these aren't in here
         dataframe["dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
