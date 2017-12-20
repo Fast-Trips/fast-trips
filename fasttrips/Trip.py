@@ -323,7 +323,7 @@ class Trip:
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(self.stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))
 
-        self.add_shape_dist_traveled(stops)
+        self.add_shape_dist_traveled_old(stops)
 
         self.stop_times_df.rename(columns={
             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME: Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
