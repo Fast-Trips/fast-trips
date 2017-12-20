@@ -18,17 +18,7 @@ NETWORK_HOME_DIR = os.path.join(HOME_DIR, 'networks', 'psrc_1_1')
 TEST_HOME_DIR = os.path.join(HOME_DIR, 'test_trip_distance')
 OUTPUT_DIR = os.path.join(TEST_HOME_DIR, 'output')
 
-
 def test_calculate_distance_miles():
-    orig_lat, orig_lon = 32.707431, -117.157058
-    dest_lat, dest_lon = 32.740792, -117.211333
-
-    distance = Util.calculate_distance_miles(orig_lat, orig_lon, dest_lat, dest_lon)
-    print 'test_calculate_distance_miles2: {:.5f} mi'.format(distance)
-
-    assert abs(distance - 3.9116) < 0.0001
-
-def test_calculate_distance_miles_old():
     orig_lat, orig_lon = 32.707431, -117.157058
     dest_lat, dest_lon = 32.740792, -117.211333
     cols = ['orig_lat','orig_lon','dest_lat','dest_lon','dist']
@@ -36,7 +26,7 @@ def test_calculate_distance_miles_old():
     df = pd.DataFrame([[orig_lat,orig_lon,dest_lat,dest_lon,np.nan]],
                       columns=cols)
 
-    Util.calculate_distance_miles_old(df, cols[0], cols[1], cols[2], cols[3], cols[4])
+    Util.calculate_distance_miles(df, cols[0], cols[1], cols[2], cols[3], cols[4])
     distance = df[cols[4]][0]
 
     print 'test_calculate_distance_miles: {:.5f} mi'.format(distance)
@@ -71,7 +61,7 @@ def test_add_shape_dist_traveled(zip_file, day_of_service, expected_dict):
         },
     })
 
-    stop_times_df = Trip.add_shape_dist_traveled(feed.stops, feed.stop_times)
+    stop_times_df = Trip.add_shape_dist_traveled_new(feed.stops, feed.stop_times)
     stop_times_df.sort_values([Trip.TRIPS_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
 
     for trip_id, expected_array in expected_dict.iteritems():
