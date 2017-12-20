@@ -4,6 +4,7 @@
 *.so
 *.bak
 .cache/*
+*.zip
 
 **/.ipynb_checkpoints/*
 
