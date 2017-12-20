@@ -12,8 +12,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,os,sys
-from datetime import date
+import collections,datetime,os
 import numpy,pandas
 
 from .Error  import NetworkInputError
@@ -470,7 +469,68 @@ class Trip:
         # make sure we didn't change the length
         assert(trips_len == len(self.trips_df))
 
-    def add_shape_dist_traveled(self, stops):
+    @staticmethod
+    def add_shape_dist_traveled(stops_df, stop_times_df):
+        from .Stop import Stop
+
+        def compute_dist(group):
+            group = group.sort_values(Trip.STOPTIMES_COLUMN_STOP_SEQUENCE)
+            point_coords = group[[Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]].values
+            prev_point_coords = point_coords[0]
+            d = 0
+            distances = [0]
+            for p in point_coords[1:]:
+                distance = Util.calculate_distance_miles(prev_point_coords[0],
+                                                          prev_point_coords[1],
+                                                          p[0],
+                                                          p[1])
+                d += distance
+                distances.append(d)
+                prev_point_coords = p
+            group[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = distances
+            return group
+
+        stop_times_df = pandas.merge(stop_times_df, stops_df[[Stop.STOPS_COLUMN_STOP_ID,
+                                                             Stop.STOPS_COLUMN_STOP_LATITUDE,
+                                                             Stop.STOPS_COLUMN_STOP_LONGITUDE,
+                                                             ]],
+                                    on=Stop.STOPS_COLUMN_STOP_ID)
+
+        if Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED not in stop_times_df:
+            stop_times_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = numpy.nan
+
+        null_shape_trip_ids = stop_times_df[stop_times_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED].isnull()][Trip.TRIPS_COLUMN_TRIP_ID].unique()
+
+        FastTripsLogger.debug("add_shape_dist_traveled: missing %d out of %d shape_dist_traveled values in the stop times dataframe" %
+                              (len(null_shape_trip_ids),
+                               len(stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID].unique())))
+
+        if len(null_shape_trip_ids) == 0:
+            return stop_times_df.drop([Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE], axis=1)
+
+        FastTripsLogger.warn("Adding shape_dist_traveled in miles")
+
+        dist_needed_df = stop_times_df.loc[stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID].isin(null_shape_trip_ids),
+                                           [
+                                               Trip.TRIPS_COLUMN_TRIP_ID,
+                                               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                               Stop.STOPS_COLUMN_STOP_LATITUDE,
+                                               Stop.STOPS_COLUMN_STOP_LONGITUDE]]
+
+        dist_needed_df = dist_needed_df.groupby([Trip.TRIPS_COLUMN_TRIP_ID], group_keys=False).apply(compute_dist)
+
+        stop_times_df.loc[dist_needed_df.index, Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = \
+            dist_needed_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED]
+
+        stop_times_df = stop_times_df.drop([Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE], axis=1)
+
+        FastTripsLogger.debug("add_shape_dist_traveled() stop_times_df\n%s" % str(stop_times_df.head()))
+
+        return stop_times_df
+
+
+
+    def add_shape_dist_traveled_old(self, stops):
         """
         For any trips in :py:attr:`Trip.stop_times_df` with rows that are missing column `shape_dist_traveled`,
         this method will fill in the column from the stop longitude & latitude.  *stops* is a :py:class:`Stop` instance.
