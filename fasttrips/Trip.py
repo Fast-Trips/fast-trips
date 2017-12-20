@@ -470,25 +470,14 @@ class Trip:
         assert(trips_len == len(self.trips_df))
 
     @staticmethod
-    def add_shape_dist_traveled(stops_df, stop_times_df):
-        from .Stop import Stop
+    def add_shape_dist_traveled_new(stops_df, stop_times_df):
+        """
+                For any trips in :py:attr:`Trip.stop_times_df` with rows that are missing column `shape_dist_traveled`,
+                this method will fill in the column from the stop longitude & latitude.  *stops* is a :py:class:`Stop` instance.
 
-        def compute_dist(group):
-            group = group.sort_values(Trip.STOPTIMES_COLUMN_STOP_SEQUENCE)
-            point_coords = group[[Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]].values
-            prev_point_coords = point_coords[0]
-            d = 0
-            distances = [0]
-            for p in point_coords[1:]:
-                distance = Util.calculate_distance_miles(prev_point_coords[0],
-                                                          prev_point_coords[1],
-                                                          p[0],
-                                                          p[1])
-                d += distance
-                distances.append(d)
-                prev_point_coords = p
-            group[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = distances
-            return group
+                .. todo:: this will be in miles, but should be configurable
+        """
+        from .Stop import Stop
 
         stop_times_df = pandas.merge(stop_times_df, stops_df[[Stop.STOPS_COLUMN_STOP_ID,
                                                              Stop.STOPS_COLUMN_STOP_LATITUDE,
@@ -515,9 +504,24 @@ class Trip:
                                                Trip.TRIPS_COLUMN_TRIP_ID,
                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
                                                Stop.STOPS_COLUMN_STOP_LATITUDE,
-                                               Stop.STOPS_COLUMN_STOP_LONGITUDE]]
+                                               Stop.STOPS_COLUMN_STOP_LONGITUDE,
+                                               Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
+                                           ]]
 
-        dist_needed_df = dist_needed_df.groupby([Trip.TRIPS_COLUMN_TRIP_ID], group_keys=False).apply(compute_dist)
+        dist_needed_df.sort_values([Trip.TRIPS_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
+        dist_needed_df[['from_lat','from_lon']] = dist_needed_df.groupby([Trip.TRIPS_COLUMN_TRIP_ID])[
+            [Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]
+        ].shift(1)
+
+        dist_needed_df['temp_dist'] = 0
+
+        dist_needed_df.loc[dist_needed_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] > 1, 'temp_dist'] = \
+            Util.calculate_distance_miles(
+                dist_needed_df.loc[dist_needed_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE] > 1,],
+                'from_lat', 'from_lon', Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE,'temp_dist'
+            )['temp_dist']
+
+        dist_needed_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = dist_needed_df.groupby([Trip.TRIPS_COLUMN_TRIP_ID])['temp_dist'].cumsum()
 
         stop_times_df.loc[dist_needed_df.index, Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = \
             dist_needed_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED]
@@ -527,8 +531,6 @@ class Trip:
         FastTripsLogger.debug("add_shape_dist_traveled() stop_times_df\n%s" % str(stop_times_df.head()))
 
         return stop_times_df
-
-
 
     def add_shape_dist_traveled_old(self, stops):
         """

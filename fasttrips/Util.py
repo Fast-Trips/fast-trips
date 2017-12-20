@@ -328,18 +328,7 @@ class Util:
             FastTripsLogger.info("Wrote %s dataframe to %s" % (name, output_file))
 
     @staticmethod
-    def calculate_distance_miles(origin_lat, origin_lon, dest_lat, dest_lon):
-        radius = 3963.190592 #mi
-        dist_lat = numpy.radians(dest_lat-origin_lat)
-        dist_lon = numpy.radians(dest_lon - origin_lon)
-        dist_hava = numpy.sin(dist_lat/2)**2 + \
-                    numpy.cos(numpy.radians(origin_lat)) * numpy.cos(numpy.radians(dest_lat)) * \
-                     numpy.sin(dist_lon/2.0)**2
-        dist_havc = 2.0*numpy.arctan2(numpy.sqrt(dist_hava), numpy.sqrt(1.0-dist_hava))
-        return radius * dist_havc
-
-    @staticmethod
-    def calculate_distance_miles_old(dataframe, origin_lat, origin_lon, destination_lat, destination_lon, distance_colname):
+    def calculate_distance_miles(dataframe, origin_lat, origin_lon, destination_lat, destination_lon, distance_colname):
         """
         Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
         in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.
@@ -349,8 +338,9 @@ class Util:
         # assume these aren't in here
         dataframe["dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
         dataframe["dist_lon" ] = numpy.radians(dataframe[destination_lon]-dataframe[origin_lon])
-        dataframe["dist_hava"] = (numpy.sin(dataframe["dist_lat"]/2) * numpy.sin(dataframe["dist_lat"]/2)) + \
-                                 (numpy.cos(numpy.radians(dataframe[origin_lat])) * numpy.cos(numpy.radians(dataframe[destination_lat])) * numpy.sin(dataframe["dist_lon"]/2.0) * numpy.sin(dataframe["dist_lon"]/2.0))
+        dataframe["dist_hava"] = numpy.sin(dataframe["dist_lat"]/2) ** 2 + \
+                                 numpy.cos(numpy.radians(dataframe[origin_lat])) * numpy.cos(numpy.radians(dataframe[destination_lat])) * \
+                                  numpy.sin(dataframe["dist_lon"]/2.0) ** 2
         dataframe["dist_havc"] = 2.0*numpy.arctan2(numpy.sqrt(dataframe["dist_hava"]), numpy.sqrt(1.0-dataframe["dist_hava"]))
         dataframe[distance_colname] = radius * dataframe["dist_havc"]
 
@@ -364,7 +354,9 @@ class Util:
         if max_dist > 1000:
             FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[dataframe[distance_colname]>1000].to_string())
 
-        dataframe.drop(["dist_lat","dist_lon","dist_hava","dist_havc"], axis=1, inplace=True)
+        dataframe.drop(["dist_lat", "dist_lon", "dist_hava", "dist_havc"], axis=1, inplace=True)
+
+        return dataframe
 
     @staticmethod
     def get_process_mem_use_bytes():
