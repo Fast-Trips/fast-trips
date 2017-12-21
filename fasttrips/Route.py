@@ -606,7 +606,7 @@ class Route(object):
         Write to an intermediate formatted file for the C++ extension.
         Since there are strings involved, it's easier than passing it to the extension.
         """
-
+        from .Assignment import Assignment
         # write intermediate file -- route id num, route id
         self.route_id_df[[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID]].to_csv(
             os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE), sep=" ", index=False)
