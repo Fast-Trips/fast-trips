@@ -28,9 +28,9 @@ class Util:
     Collect useful stuff here that doesn't belong in any particular existing class.
     """
     #: Use this as the date
-    SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)
+    #SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)
     #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
-    SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
+    #SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
 
     #: Maps timedelta columns to units for :py:meth:`Util.write_dataframe`
     TIMEDELTA_COLUMNS_TO_UNITS      = {
@@ -204,6 +204,7 @@ class Util:
 
     @staticmethod
     def read_time(x, end_of_day=False):
+        from .Assignment import Assignment
         try:
             if x=='' or x.lower()=='default':
                 x = '24:00:00' if end_of_day else '00:00:00'
@@ -212,7 +213,7 @@ class Util:
                 x = '24:00:00' if end_of_day else '00:00:00'
         time_split = x.split(':')
         hour = int(time_split[0])
-        day = Util.SIMULATION_DAY
+        day = Assignment.NETWORK_BUILD_DATE
         if hour >= 24: 
             time_split[0] = '%02d' %(hour-24)
             day += datetime.timedelta(days=1)
@@ -221,8 +222,9 @@ class Util:
 
     @staticmethod
     def parse_minutes_to_time(minutes):
+        from .Assignment import Assignment
         elapsed_time = datetime.timedelta(minutes=minutes)
-        return Util.SIMULATION_DAY + elapsed_time
+        return datetime.datetime.combine(Assignment.NETWORK_BUILD_DATE, datetime.time()) + elapsed_time
 
 
     @staticmethod
@@ -336,13 +338,13 @@ class Util:
         radius = 3963.190592 # mi
 
         # assume these aren't in here
-        dataframe["dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
-        dataframe["dist_lon" ] = numpy.radians(dataframe[destination_lon]-dataframe[origin_lon])
-        dataframe["dist_hava"] = numpy.sin(dataframe["dist_lat"]/2) ** 2 + \
+        dataframe.loc[:,"dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
+        dataframe.loc[:,"dist_lon" ] = numpy.radians(dataframe[destination_lon]-dataframe[origin_lon])
+        dataframe.loc[:,"dist_hava"] = numpy.sin(dataframe["dist_lat"]/2) ** 2 + \
                                  numpy.cos(numpy.radians(dataframe[origin_lat])) * numpy.cos(numpy.radians(dataframe[destination_lat])) * \
                                   numpy.sin(dataframe["dist_lon"]/2.0) ** 2
-        dataframe["dist_havc"] = 2.0*numpy.arctan2(numpy.sqrt(dataframe["dist_hava"]), numpy.sqrt(1.0-dataframe["dist_hava"]))
-        dataframe[distance_colname] = radius * dataframe["dist_havc"]
+        dataframe.loc[:,"dist_havc"] = 2.0*numpy.arctan2(numpy.sqrt(dataframe["dist_hava"]), numpy.sqrt(1.0-dataframe["dist_hava"]))
+        dataframe.loc[:,distance_colname] = radius * dataframe["dist_havc"]
 
         # FastTripsLogger.debug("calculate_distance_miles\n%s", dataframe.to_string())
 
@@ -354,9 +356,7 @@ class Util:
         if max_dist > 1000:
             FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[dataframe[distance_colname]>1000].to_string())
 
-        dataframe.drop(["dist_lat", "dist_lon", "dist_hava", "dist_havc"], axis=1, inplace=True)
-
-        return dataframe
+        return dataframe.drop(["dist_lat", "dist_lon", "dist_hava", "dist_havc"], axis=1)
 
     @staticmethod
     def get_process_mem_use_bytes():

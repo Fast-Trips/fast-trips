@@ -69,7 +69,7 @@ def test_add_shape_dist_traveled(zip_file, scenario_results, scenario_date):
         },
     })
 
-    stop_times_df = Trip.add_shape_dist_traveled_new(feed.stops, feed.stop_times)
+    stop_times_df = Trip.add_shape_dist_traveled(feed.stop_times, feed.stops)
     stop_times_df.sort_values([Trip.TRIPS_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
 
     for trip_id, expected_array in scenario_results.iteritems():

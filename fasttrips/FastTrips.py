@@ -38,7 +38,7 @@ class FastTrips:
     #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    def __init__(self, input_network_dir, input_demand_dir, input_weights, run_config, 
+    def __init__(self, input_network_archive, input_demand_dir, input_weights, run_config,
         output_dir, input_functions=None, logname_append="", appendLog=False):
         """
         Constructor.
@@ -79,7 +79,7 @@ class FastTrips:
         self.trips           = None
 
         #: string representing directory with input network data
-        Assignment.INPUT_NETWORK_DIR  = input_network_dir
+        Assignment.INPUT_NETWORK_ARCHIVE  = input_network_archive
 
         #: string representing directory with input demand data
         Assignment.INPUT_DEMAND_DIR   = input_demand_dir
@@ -126,36 +126,37 @@ class FastTrips:
 
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        service_ids_by_date = partridge.read_service_ids_by_date(os.path.join(Assignment.INPUT_NETWORK_DIR, 'sample_gtfs.zip'))
+
+        service_ids_by_date = partridge.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_DIR, 'sample_gtfs.zip'), view={
+        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), view={
             'trips.txt': {
               'service_id': service_ids
             },
         })
         # Read Stops (gtfs-required)
-        self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
+        self.stops = Stop(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
                           gtfs_feed, Assignment.NETWORK_BUILD_DATE)
 
         # Read routes, agencies, fares
-        self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
+        self.routes = Route(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
                             gtfs_feed, Assignment.NETWORK_BUILD_DATE, self.stops)
 
         # Read Transfers
-        self.transfers = Transfer(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
+        self.transfers = Transfer(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
                                   gtfs_feed)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
+        self.trips = Trip(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
                           gtfs_feed, Assignment.NETWORK_BUILD_DATE,
                           self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR, Util.SIMULATION_DAY,
+        self.tazs = TAZ(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR, Assignment.NETWORK_BUILD_DATE,
                         self.stops, self.transfers, self.routes)
 
         # Read the demand int passenger_id -> passenger instance
-        self.passengers = Passenger(Assignment.INPUT_DEMAND_DIR, Assignment.OUTPUT_DIR, Util.SIMULATION_DAY, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
+        self.passengers = Passenger(Assignment.INPUT_DEMAND_DIR, Assignment.OUTPUT_DIR, Assignment.NETWORK_BUILD_DATE, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
 
     def run_assignment(self, output_dir):
 

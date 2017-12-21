@@ -13,6 +13,8 @@ __license__   = """
     limitations under the License.
 """
 import datetime,os,sys
+import zipfile
+
 import pandas
 
 from .Error  import NetworkInputError
@@ -91,10 +93,10 @@ class Transfer:
     #: initialize_fasttrips_extension() because of the strings involved
     OUTPUT_TRANSFERS_FILE       = "ft_intermediate_transfers.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_feed):
+    def __init__(self, input_archive, output_dir, gtfs_feed):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips transfers data from the input files in *input_dir*.
+        fast-trips transfers data from the input files in *input_archive*.
         """
         self.output_dir       = output_dir
 
@@ -113,9 +115,10 @@ class Transfer:
         self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
 
         # Read the fast-trips supplemental transfers data file
-        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Transfer.INPUT_TRANSFERS_FILE),
-                                          skipinitialspace=True,
-                                          dtype={Transfer.TRANSFERS_COLUMN_FROM_STOP:object, Transfer.TRANSFERS_COLUMN_TO_STOP:object})
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            transfers_ft_df = pandas.read_csv(zipf.open(Transfer.INPUT_TRANSFERS_FILE),
+                                              skipinitialspace=True,
+                                              dtype={Transfer.TRANSFERS_COLUMN_FROM_STOP:object, Transfer.TRANSFERS_COLUMN_TO_STOP:object})
         # verify required columns are present
         transfer_ft_cols = list(transfers_ft_df.columns.values)
         assert(Transfer.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)

@@ -13,6 +13,8 @@ __license__   = """
     limitations under the License.
 """
 import datetime, os
+import zipfile
+
 import numpy,pandas
 
 from .Error  import NetworkInputError,NotImplementedError,UnexpectedError
@@ -153,10 +155,10 @@ class Route(object):
     #: File with mode, mode number correspondence
     OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs, today, stops):
+    def __init__(self, input_archive, output_dir, gtfs, today, stops):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips routes data from the input file in *input_dir*.
+        fast-trips routes data from the input file in *input_archive*.
         """
         self.output_dir         = output_dir
 
@@ -166,10 +168,11 @@ class Route(object):
                              (len(self.routes_df), 'date valid route', len(gtfs.routes), 'total routes'))
 
         # Read the fast-trips supplemental routes data file
-        routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE),
-                                       skipinitialspace=True,
-                                       dtype={Route.ROUTES_COLUMN_ROUTE_ID:object,
-                                              Route.ROUTES_COLUMN_MODE    :object})
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            routes_ft_df = pandas.read_csv(zipf.open(Route.INPUT_ROUTES_FILE),
+                                           skipinitialspace=True,
+                                           dtype={Route.ROUTES_COLUMN_ROUTE_ID:object,
+                                                  Route.ROUTES_COLUMN_MODE    :object})
         # verify required columns are present
         routes_ft_cols = list(routes_ft_df.columns.values)
         assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
@@ -228,30 +231,31 @@ class Route(object):
                              (len(self.fare_attrs_df), "fare attributes", "fare_attributes.txt"))
 
         # subsitute fasttrips fare attributes
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE)):
-            self.fare_attrs_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE),
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            if Route.INPUT_FARE_ATTRIBUTES_FILE in zipf.namelist():
+                self.fare_attrs_df = pandas.read_csv(zipf.open(Route.INPUT_FARE_ATTRIBUTES_FILE),
                                                  skipinitialspace=True,
                                                  dtype={Route.FARE_ATTR_COLUMN_PRICE:numpy.float64})
-            # verify required columns are present
-            fare_attrs_cols = list(self.fare_attrs_df.columns.values)
-            assert(Route.FARE_ATTR_COLUMN_FARE_PERIOD       in fare_attrs_cols)
-            assert(Route.FARE_ATTR_COLUMN_PRICE             in fare_attrs_cols)
-            assert(Route.FARE_ATTR_COLUMN_CURRENCY_TYPE     in fare_attrs_cols)
-            assert(Route.FARE_ATTR_COLUMN_PAYMENT_METHOD    in fare_attrs_cols)
-            assert(Route.FARE_ATTR_COLUMN_TRANSFERS         in fare_attrs_cols)
+                # verify required columns are present
+                fare_attrs_cols = list(self.fare_attrs_df.columns.values)
+                assert(Route.FARE_ATTR_COLUMN_FARE_PERIOD       in fare_attrs_cols)
+                assert(Route.FARE_ATTR_COLUMN_PRICE             in fare_attrs_cols)
+                assert(Route.FARE_ATTR_COLUMN_CURRENCY_TYPE     in fare_attrs_cols)
+                assert(Route.FARE_ATTR_COLUMN_PAYMENT_METHOD    in fare_attrs_cols)
+                assert(Route.FARE_ATTR_COLUMN_TRANSFERS         in fare_attrs_cols)
 
-            if Route.FARE_ATTR_COLUMN_TRANSFER_DURATION not in fare_attrs_cols:
-                self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION] = numpy.nan
+                if Route.FARE_ATTR_COLUMN_TRANSFER_DURATION not in fare_attrs_cols:
+                    self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION] = numpy.nan
 
-            FastTripsLogger.debug("===> REPLACED BY FARE ATTRIBUTES FT\n" + str(self.fare_attrs_df.head()))
-            FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
-            FastTripsLogger.info("Read %7d %15s from %25s" %
-                                 (len(self.fare_attrs_df), "fare attributes", Route.INPUT_FARE_ATTRIBUTES_FILE))
+                FastTripsLogger.debug("===> REPLACED BY FARE ATTRIBUTES FT\n" + str(self.fare_attrs_df.head()))
+                FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
+                FastTripsLogger.info("Read %7d %15s from %25s" %
+                                     (len(self.fare_attrs_df), "fare attributes", Route.INPUT_FARE_ATTRIBUTES_FILE))
 
-            #: fares are by fare_period rather than by fare_id
-            self.fare_by_class = True
-        else:
-            self.fare_by_class = False
+                #: fares are by fare_period rather than by fare_id
+                self.fare_by_class = True
+            else:
+                self.fare_by_class = False
 
         # Fare rules (map routes to fare_id)
         self.fare_rules_df = gtfs.fare_rules
@@ -305,78 +309,79 @@ class Route(object):
         if len(self.fare_rules_df) > 0:
             self.fare_rules_df.sort_values(by=[Route.FARE_RULES_COLUMN_FARE_ID_NUM], inplace=True)
 
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE)):
-            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE),
-                                               skipinitialspace=True,
-                                               dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})
-            # verify required columns are present
-            fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
-            assert(Route.FARE_RULES_COLUMN_FARE_ID      in fare_rules_ft_cols)
-            assert(Route.FARE_RULES_COLUMN_FARE_PERIOD  in fare_rules_ft_cols)
-            assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
-            assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            if Route.INPUT_FARE_PERIODS_FILE in zipf.namelist():
+                fare_rules_ft_df = pandas.read_csv(zipf.open(Route.INPUT_FARE_PERIODS_FILE),
+                                                   skipinitialspace=True,
+                                                   dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})
+                # verify required columns are present
+                fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
+                assert(Route.FARE_RULES_COLUMN_FARE_ID      in fare_rules_ft_cols)
+                assert(Route.FARE_RULES_COLUMN_FARE_PERIOD  in fare_rules_ft_cols)
+                assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
+                assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
 
-            # convert these to datetimes
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: Util.read_time(x, True))
+                # convert these to datetimes
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
+                    fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
+                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
+                    fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: Util.read_time(x, True))
 
-            # Split fare classes so they don't overlap
-            fare_rules_ft_df = self.remove_fare_period_overlap(fare_rules_ft_df)
+                # Split fare classes so they don't overlap
+                fare_rules_ft_df = self.remove_fare_period_overlap(fare_rules_ft_df)
 
-            # join to fare rules dataframe
-            self.fare_rules_df = pandas.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
-                                              how='left',
-                                              on=Route.FARE_RULES_COLUMN_FARE_ID)
+                # join to fare rules dataframe
+                self.fare_rules_df = pandas.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
+                                                  how='left',
+                                                  on=Route.FARE_RULES_COLUMN_FARE_ID)
 
-            # add route id numbering if applicable
-            if Route.FARE_RULES_COLUMN_ROUTE_ID in list(self.fare_rules_df.columns.values):
-                self.fare_rules_df = self.add_numeric_route_id(self.fare_rules_df,
-                                                               Route.FARE_RULES_COLUMN_ROUTE_ID,
-                                                               Route.FARE_RULES_COLUMN_ROUTE_ID_NUM)
-            # add origin zone numbering if applicable
-            if (Route.FARE_RULES_COLUMN_ORIGIN_ID in list(self.fare_rules_df.columns.values)) and \
-               (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID]).sum() > 0):
-                self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
-                                                                    Route.FARE_RULES_COLUMN_ORIGIN_ID,
-                                                                    Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM)
-            # add destination zone numbering if applicable
-            if (Route.FARE_RULES_COLUMN_DESTINATION_ID in list(self.fare_rules_df.columns.values)) and \
-                (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]).sum() > 0):
-                self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
-                                                                    Route.FARE_RULES_COLUMN_DESTINATION_ID,
-                                                                    Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM)
-                # They should both be present
-                # This is unlikely
-                if Route.FARE_RULES_COLUMN_ORIGIN_ID not in list(self.fare_rules_df.columns.values):
-                    error_str = "Fast-trips only supports both origin_id and destination_id or neither in fare rules"
-                    FastTripsLogger.fatal(error_str)
-                    raise NotImplementedError(error_str)
+                # add route id numbering if applicable
+                if Route.FARE_RULES_COLUMN_ROUTE_ID in list(self.fare_rules_df.columns.values):
+                    self.fare_rules_df = self.add_numeric_route_id(self.fare_rules_df,
+                                                                   Route.FARE_RULES_COLUMN_ROUTE_ID,
+                                                                   Route.FARE_RULES_COLUMN_ROUTE_ID_NUM)
+                # add origin zone numbering if applicable
+                if (Route.FARE_RULES_COLUMN_ORIGIN_ID in list(self.fare_rules_df.columns.values)) and \
+                   (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID]).sum() > 0):
+                    self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
+                                                                        Route.FARE_RULES_COLUMN_ORIGIN_ID,
+                                                                        Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM)
+                # add destination zone numbering if applicable
+                if (Route.FARE_RULES_COLUMN_DESTINATION_ID in list(self.fare_rules_df.columns.values)) and \
+                    (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]).sum() > 0):
+                    self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
+                                                                        Route.FARE_RULES_COLUMN_DESTINATION_ID,
+                                                                        Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM)
+                    # They should both be present
+                    # This is unlikely
+                    if Route.FARE_RULES_COLUMN_ORIGIN_ID not in list(self.fare_rules_df.columns.values):
+                        error_str = "Fast-trips only supports both origin_id and destination_id or neither in fare rules"
+                        FastTripsLogger.fatal(error_str)
+                        raise NotImplementedError(error_str)
 
-                # check for each row, either both are present or neither -- use xor, or ^
-                xor_id = self.fare_rules_df.loc[ pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])^
-                                                 pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ]
-                if len(xor_id) > 0:
-                    error_str = "Fast-trips supports fare rules with both origin id and destination id specified, or neither ONLY.\n%s" % str(xor_id)
-                    FastTripsLogger.fatal(error_str)
-                    raise NotImplementedError(error_str)
+                    # check for each row, either both are present or neither -- use xor, or ^
+                    xor_id = self.fare_rules_df.loc[ pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])^
+                                                     pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ]
+                    if len(xor_id) > 0:
+                        error_str = "Fast-trips supports fare rules with both origin id and destination id specified, or neither ONLY.\n%s" % str(xor_id)
+                        FastTripsLogger.fatal(error_str)
+                        raise NotImplementedError(error_str)
 
-            # We don't support contains_id
-            if Route.FARE_RULES_COLUMN_CONTAINS_ID in list(self.fare_rules_df.columns.values):
-                non_null_contains_id = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_CONTAINS_ID])]
-                if len(non_null_contains_id) > 0:
-                    error_str = "Fast-trips does not support contains_id in fare rules:\n%s" % str(non_null_contains_id)
-                    FastTripsLogger.fatal(error_str)
-                    raise NotImplementedError(error_str)
+                # We don't support contains_id
+                if Route.FARE_RULES_COLUMN_CONTAINS_ID in list(self.fare_rules_df.columns.values):
+                    non_null_contains_id = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_CONTAINS_ID])]
+                    if len(non_null_contains_id) > 0:
+                        error_str = "Fast-trips does not support contains_id in fare rules:\n%s" % str(non_null_contains_id)
+                        FastTripsLogger.fatal(error_str)
+                        raise NotImplementedError(error_str)
 
-            # We don't support rows with only one of origin_id or destination_id specified
+                # We don't support rows with only one of origin_id or destination_id specified
 
-        elif len(self.fare_rules_df) > 0:
-            # we have fare rules but no fare periods -- make the fare periods the same
-            self.fare_rules_df[Route.FARE_RULES_COLUMN_FARE_PERIOD] = self.fare_rules_df[Route.FARE_RULES_COLUMN_FARE_ID]
-            self.fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = Util.read_time("00:00:00")
-            self.fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = Util.read_time("24:00:00")
+            elif len(self.fare_rules_df) > 0:
+                # we have fare rules but no fare periods -- make the fare periods the same
+                self.fare_rules_df[Route.FARE_RULES_COLUMN_FARE_PERIOD] = self.fare_rules_df[Route.FARE_RULES_COLUMN_FARE_ID]
+                self.fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = Util.read_time("00:00:00")
+                self.fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = Util.read_time("24:00:00")
 
         # join to fare_attributes on fare_period if we have it, or fare_id if we don't
         if len(self.fare_rules_df) > 0:
@@ -420,38 +425,38 @@ class Route(object):
         FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_PERIODS_FILE))
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            if Route.INPUT_FARE_TRANSFER_RULES_FILE in zipf.namelist():
+                self.fare_transfer_rules_df = pandas.read_csv(zipf.open(Route.INPUT_FARE_TRANSFER_RULES_FILE),
+                                                              skipinitialspace=True,
+                                                              dtype={Route.FARE_TRANSFER_RULES_COLUMN_TYPE:object})
+                # verify required columns are present
+                fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)
+                assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD in fare_transfer_rules_cols)
+                assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD   in fare_transfer_rules_cols)
+                assert(Route.FARE_TRANSFER_RULES_COLUMN_TYPE             in fare_transfer_rules_cols)
+                assert(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT           in fare_transfer_rules_cols)
 
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE)):
-            self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE),
-                                                          skipinitialspace=True,
-                                                          dtype={Route.FARE_TRANSFER_RULES_COLUMN_TYPE:object})
-            # verify required columns are present
-            fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD   in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_TYPE             in fare_transfer_rules_cols)
-            assert(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT           in fare_transfer_rules_cols)
+                # verify valid values for transfer type
+                invalid_type = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE].isin(Route.TRANSFER_TYPE_OPTIONS)==False ]
+                if len(invalid_type) > 0:
+                    error_msg = "Invalid value for %s:\n%s" % (Route.FARE_TRANSFER_RULES_COLUMN_TYPE, str(invalid_type))
+                    FastTripsLogger.fatal(error_msg)
+                    raise NetworkInputError(Route.INPUT_FARE_TRANSFER_RULES_FILE, error_msg)
 
-            # verify valid values for transfer type
-            invalid_type = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE].isin(Route.TRANSFER_TYPE_OPTIONS)==False ]
-            if len(invalid_type) > 0:
-                error_msg = "Invalid value for %s:\n%s" % (Route.FARE_TRANSFER_RULES_COLUMN_TYPE, str(invalid_type))
-                FastTripsLogger.fatal(error_msg)
-                raise NetworkInputError(Route.INPUT_FARE_TRANSFER_RULES_FILE, error_msg)
+                # verify the amount is positive
+                negative_amount = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT] < 0]
+                if len(negative_amount) > 0:
+                    error_msg = "Negative transfer amounts are invalid:\n%s" % str(negative_amount)
+                    FastTripsLogger.fatal(error_msg)
+                    raise NetworkInputError(Route.INPUT_FARE_TRANSFER_RULES_FILE, error_msg)
 
-            # verify the amount is positive
-            negative_amount = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT] < 0]
-            if len(negative_amount) > 0:
-                error_msg = "Negative transfer amounts are invalid:\n%s" % str(negative_amount)
-                FastTripsLogger.fatal(error_msg)
-                raise NetworkInputError(Route.INPUT_FARE_TRANSFER_RULES_FILE, error_msg)
-
-            FastTripsLogger.debug("=========== FARE TRANSFER RULES ===========\n" + str(self.fare_transfer_rules_df.head()))
-            FastTripsLogger.debug("\n"+str(self.fare_transfer_rules_df.dtypes))
-            FastTripsLogger.info("Read %7d %15s from %25s" %
-                                 (len(self.fare_transfer_rules_df), "fare xfer rules", Route.INPUT_FARE_TRANSFER_RULES_FILE))
-        else:
-            self.fare_transfer_rules_df = pandas.DataFrame()
+                FastTripsLogger.debug("=========== FARE TRANSFER RULES ===========\n" + str(self.fare_transfer_rules_df.head()))
+                FastTripsLogger.debug("\n"+str(self.fare_transfer_rules_df.dtypes))
+                FastTripsLogger.info("Read %7d %15s from %25s" %
+                                     (len(self.fare_transfer_rules_df), "fare xfer rules", Route.INPUT_FARE_TRANSFER_RULES_FILE))
+            else:
+                self.fare_transfer_rules_df = pandas.DataFrame()
 
         self.write_routes_for_extension()
 
@@ -615,8 +620,8 @@ class Route(object):
             fare_rules_df = self.fare_rules_df.copy()
 
             # replace with float versions
-            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
-            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
 
             # fillna with -1
             for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM]:
