@@ -13,6 +13,8 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os
+import zipfile
+
 import numpy,pandas
 
 from .Error  import NetworkInputError
@@ -201,15 +203,19 @@ class Trip:
     #: Result column name: Number of MSA onboard passengers minus capacity. Float.
     SIM_COL_VEH_MSA_OVERCAP                     = 'msa_overcap'
 
-    def __init__(self, input_dir, output_dir, gtfs_feed, today, stops, routes, prepend_route_id_to_trip_id):
+    def __init__(self, input_archive, output_dir, gtfs_feed, today, stops, routes, prepend_route_id_to_trip_id):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
-        fast-trips stops data from the input files in *input_dir*.
+        fast-trips stops data from the input files in *input_archive*.
         """
         self.output_dir = output_dir
 
         # Read vehicles first
-        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE), skipinitialspace=True)
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            self.vehicles_df = pandas.read_csv(zipf.open(Trip.INPUT_VEHICLES_FILE), skipinitialspace=True)
+            trips_ft_df = pandas.read_csv(zipf.open(Trip.INPUT_TRIPS_FILE),
+                                          skipinitialspace=True,
+                                          dtype={Trip.TRIPS_COLUMN_TRIP_ID:object})
         # verify the required columns are present
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME in self.vehicles_df)
 
@@ -248,10 +254,7 @@ class Trip:
 
             raise NetworkInputError(Trip.INPUT_TRIPS_FILE, error_str)
 
-        # Read the fast-trips supplemental trips data file.  Make sure trip ID is read as a string.
-        trips_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_TRIPS_FILE),
-                                      skipinitialspace=True,
-                                      dtype={Trip.TRIPS_COLUMN_TRIP_ID:object})
+
         # verify required columns are present
         assert({Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_VEHICLE_NAME}.issubset(trips_ft_df))
 
@@ -304,26 +307,27 @@ class Trip:
         self.stop_times_df = gtfs_feed.stop_times
 
         # Read the fast-trips supplemental stop times data file
-        if os.path.exists(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE)):
-            stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE),
-                                               skipinitialspace=True,
-                                          dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
-                                                 Trip.STOPTIMES_COLUMN_STOP_ID:object})
-            # verify required columns are present
-            stop_times_ft_cols = list(stop_times_ft_df)
-            assert({Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_ID}.issubset(stop_times_ft_df))
+        with zipfile.ZipFile(input_archive, 'r') as zipf:
+            if Trip.INPUT_STOPTIMES_FILE in zipf.namelist():
+                stop_times_ft_df = pandas.read_csv(zipf.open(Trip.INPUT_STOPTIMES_FILE),
+                                                   skipinitialspace=True,
+                                              dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
+                                                     Trip.STOPTIMES_COLUMN_STOP_ID:object})
+                # verify required columns are present
+                stop_times_ft_cols = list(stop_times_ft_df)
+                assert({Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_ID}.issubset(stop_times_ft_df))
 
-            # Join to the trips dataframe
-            if len(stop_times_ft_df.columns) > 2:
-                self.stop_times_df = pandas.merge(left=self.stop_times_df, right=stop_times_ft_df,
-                                                  how='left',
-                                                  on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                      Trip.STOPTIMES_COLUMN_STOP_ID])
+                # Join to the trips dataframe
+                if len(stop_times_ft_df.columns) > 2:
+                    self.stop_times_df = pandas.merge(left=self.stop_times_df, right=stop_times_ft_df,
+                                                      how='left',
+                                                      on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                          Trip.STOPTIMES_COLUMN_STOP_ID])
 
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(self.stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))
 
-        self.add_shape_dist_traveled_old(stops)
+        self.stop_times_df = Trip.add_shape_dist_traveled(self.stop_times_df, stops.stops_df)
 
         self.stop_times_df.rename(columns={
             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME: Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
@@ -470,10 +474,12 @@ class Trip:
         assert(trips_len == len(self.trips_df))
 
     @staticmethod
-    def add_shape_dist_traveled_new(stops_df, stop_times_df):
+    def add_shape_dist_traveled(stop_times_df, stops_df):
         """
                 For any trips in :py:attr:`Trip.stop_times_df` with rows that are missing column `shape_dist_traveled`,
                 this method will fill in the column from the stop longitude & latitude.  *stops* is a :py:class:`Stop` instance.
+
+                returns an updated version of stop_times_df
 
                 .. todo:: this will be in miles, but should be configurable
         """

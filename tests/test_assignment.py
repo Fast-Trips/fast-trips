@@ -1,75 +1,75 @@
-import datetime
 import os
 
 import numpy as np
 import partridge as ptg
-import pytest
 
 import _fasttrips
 from fasttrips import Trip
+from fasttrips import Util
+
+HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples",)
+TEST_HOME_DIR = os.path.join(HOME_DIR, 'test_assignment')
+OUTPUT_DIR = os.path.join(TEST_HOME_DIR, 'output')
 
 
-class TestFastTripsAssignment(object):
-    HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples",)
-    NETWORK_HOME_DIR = os.path.join(HOME_DIR, 'networks')
-    TEST_HOME_DIR = os.path.join(HOME_DIR, 'test_assignment')
-    OUTPUT_DIR = os.path.join(TEST_HOME_DIR, 'output')
+def test_assignment(zip_file, scenario_date):
+    service_ids_by_date = ptg.read_service_ids_by_date(zip_file)
+    service_ids = service_ids_by_date[scenario_date]
 
-    process_number = 1
+    feed = ptg.feed(zip_file, view={
+        'trips.txt': {
+            'service_id': service_ids,
+        },
+    })
 
-    def stop_times(self):
-        path = os.path.join(self.NETWORK_HOME_DIR, 'simple_gtfs.zip')
-        service_ids_by_date = ptg.read_service_ids_by_date(path)
-        service_ids = service_ids_by_date[datetime.date(2015, 11, 22)]
+    stop_times_df = Trip.add_shape_dist_traveled(feed.stop_times, feed.stops)
+    stop_times_df[Trip.SIM_COL_VEH_OVERCAP] = -1
+    stop_times_df[Trip.STOPTIMES_COLUMN_TRIP_ID] = stop_times_df[Trip.STOPTIMES_COLUMN_TRIP_ID].astype('category')
+    stop_times_df[Trip.STOPTIMES_COLUMN_STOP_ID] = stop_times_df[Trip.STOPTIMES_COLUMN_STOP_ID].astype('category')
 
-        feed = ptg.feed(path, view={
-            'trips.txt' : {
-              'service_id': service_ids,
-            },
-        })
+    stop_times_df.rename(columns={
+        Trip.STOPTIMES_COLUMN_ARRIVAL_TIME: Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+        Trip.STOPTIMES_COLUMN_DEPARTURE_TIME: Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+    }, inplace=True)
 
-        stop_times_df = feed.stop_times
+    # float version
+    stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
+        stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] / 60
 
-        stop_times_df.rename(columns={
-            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME: Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-            Trip.STOPTIMES_COLUMN_DEPARTURE_TIME: Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
-        }, inplace=True)
+    stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
+        stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] / 60
 
-        # float version
-        stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
-            stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] / 60
+    #stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID_NUM] = stop_times_df[Trip.STOPTIMES_COLUMN_TRIP_ID].cat.codes + 1
+    #stop_times_df[Trip.STOPTIMES_COLUMN_STOP_ID_NUM] =  stop_times_df[Trip.STOPTIMES_COLUMN_STOP_ID].cat.codes.values + 1
+    trip_id_df = Util.add_numeric_column(feed.trips[[Trip.TRIPS_COLUMN_TRIP_ID]],
+                                         id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
+                                         numeric_newcolname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
 
-        stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
-            stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] / 60
+    stop_times_df = Util.add_new_id(stop_times_df, Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                    mapping_df=trip_id_df,
+                    mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID,
+                    mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM)
 
-        return stop_times_df
+    int32_inputs = stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32')
 
-    def test_assignment(self):
-        stop_times = self.stop_times();
-        stop_times[Trip.SIM_COL_VEH_OVERCAP] = 0
-        stop_times[Trip.STOPTIMES_COLUMN_TRIP_ID] = stop_times[Trip.STOPTIMES_COLUMN_TRIP_ID].astype('category')
-        stop_times[Trip.STOPTIMES_COLUMN_STOP_ID] = stop_times[Trip.STOPTIMES_COLUMN_STOP_ID].astype('category')
+    int64_inputs = stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                    Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+                                                    Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
+                                  Trip.SIM_COL_VEH_OVERCAP]].as_matrix().astype('float64')
+    _fasttrips.reset()
+    print stop_times_df.describe()
+    _fasttrips.initialize_supply(OUTPUT_DIR,0,
+                                 stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
+                                 stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+                                                Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+                                                Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
+                                                Trip.SIM_COL_VEH_OVERCAP]].as_matrix().astype('float64'))
 
-
-        paths = np.array([
-            stop_times[Trip.STOPTIMES_COLUMN_TRIP_ID].cat.codes,
-            stop_times[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE].astype('int32'),
-            stop_times[Trip.STOPTIMES_COLUMN_STOP_ID].cat.codes.values,
-        ]).transpose()
-
-        time_distance = stop_times[
-            [
-                Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
-                Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
-                Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
-                Trip.SIM_COL_VEH_OVERCAP
-            ]
-        ].values.astype('int64')
-
-        _fasttrips.initialize_supply(TestFastTripsAssignment.OUTPUT_DIR,
-                                     1,
-                                     paths,
-                                     time_distance)
+    print 'initialized'
 
 
 #_fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds() / 60.0,
