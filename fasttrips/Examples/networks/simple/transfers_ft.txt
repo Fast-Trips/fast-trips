@@ -1,0 +1,7 @@
+from_stop_id,to_stop_id,dist,from_route_id,to_route_id,elevation_gain,schedule_precedence
+B2,R2,0.10,A,C,20,to
+R2,B2,0.10,C,A,0,from
+P1,R1,0,,,0,to
+R1,P1,0,,,0,from
+P2,B3,0,,,30,to
+B3,P2,0,,,0,from
