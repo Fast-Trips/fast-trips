@@ -126,12 +126,6 @@ class FastTrips:
 
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), view={
-            'trips.txt': {
-              'service_id': service_ids
-            },
-        })
-
         service_ids_by_date = partridge.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
         gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), view={
