@@ -331,11 +331,13 @@ class Trip:
             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME: Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
         }, inplace=True)
 
+        # float version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] / 60
 
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] / 60
+
 
         # datetime version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
