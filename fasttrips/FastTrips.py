@@ -133,6 +133,8 @@ class FastTrips:
               'service_id': service_ids
             },
         })
+        #loader             = transitfeed.Loader(Assignment.INPUT_NETWORK_DIR, memory_db=True)
+        #self.gtfs_schedule = loader.Load()
 
         # Read Stops (gtfs-required)
         self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,

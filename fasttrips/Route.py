@@ -255,6 +255,7 @@ class Route(object):
 
         # Fare rules (map routes to fare_id)
         self.fare_rules_df = gtfs.fare_rules
+
         if len(self.fare_rules_df) > 0:
             self.fare_ids_df = Util.add_numeric_column(self.fare_rules_df[[Route.FARE_RULES_COLUMN_FARE_ID]],
                                                        id_colname=Route.FARE_RULES_COLUMN_FARE_ID,
