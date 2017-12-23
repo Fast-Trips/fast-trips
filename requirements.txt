@@ -1,4 +1,6 @@
 ###### Requirements without Version Specifiers ######
+numpy
 partridge
 pandas
+pytest
 functools32
