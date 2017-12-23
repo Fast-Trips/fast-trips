@@ -23,5 +23,6 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy pandas psutil pytest
   - source activate test-environment
   - pip install partridge
+  - pip install functools32
   - pip install .
 script: pytest

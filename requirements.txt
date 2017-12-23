@@ -1,3 +1,4 @@
 ###### Requirements without Version Specifiers ######
 partridge
 pandas
+functools32
