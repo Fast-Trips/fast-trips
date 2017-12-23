@@ -7,7 +7,7 @@ def test_psrc():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "networks")
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "psrc")
+    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "psrc_1_1")
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'psrc_1_1')

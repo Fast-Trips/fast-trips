@@ -4,7 +4,6 @@ import pytest
 
 import numpy as np
 import pandas as pd
-import transitfeed
 
 from fasttrips import Route
 from fasttrips import Stop
@@ -14,27 +13,21 @@ from fasttrips import Trip
 HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", )
 NETWORK_HOME_DIR = os.path.join(HOME_DIR, 'networks')
 
+
 @pytest.fixture(scope='module', params=['simple'])
 def scenario(request):
     return request.param
 
-@pytest.fixture(scope="module")
-def gtfs_schedule(network_dir):
-    loader = transitfeed.Loader(network_dir, memory_db=True)
-    yield loader.Load()
 
 @pytest.fixture(scope="module")
 def network_dir(scenario):
     yield os.path.join(NETWORK_HOME_DIR, scenario)
 
-#@pytest.fixture(scope="module", params=["simple"])
-#def gtfs_build_date:
-#build_date = datetime.date(2016, 11, 23)
 
 @pytest.mark.skip(reason='Need to upgrade to Partridge')
-def test_stops_load(network_dir, gtfs_schedule):
+def test_stops_load(network_dir, gtfs_feed):
     stops = Stop(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                      gtfs_schedule, datetime.date(2015, 11, 23))
+                      gtfs_feed, datetime.date(2015, 11, 23))
 
     #Test existence, length, and required columns
     assert not stops.stop_id_df.empty
@@ -75,13 +68,13 @@ def test_stops_load(network_dir, gtfs_schedule):
     assert not stops.trip_times_df
 
 @pytest.mark.skip(reason='Need to upgrade to Partridge')
-def test_routes_load(network_dir, gtfs_schedule):
+def test_routes_load(network_dir, gtfs_feed):
     simulation_day = datetime.date(2015, 11, 23)
     stops = Stop(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                      gtfs_schedule, simulation_day)
+                      gtfs_feed, simulation_day)
 
     routes = Route(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                      gtfs_schedule, simulation_day, stops)
+                      gtfs_feed, simulation_day, stops)
 
     #routes.routes_df
     assert not routes.routes_df.empty
@@ -159,9 +152,9 @@ def test_routes_load(network_dir, gtfs_schedule):
 
 
 @pytest.mark.skip(reason='Need to upgrade to Partridge')
-def test_transfers_load(network_dir, gtfs_schedule):
+def test_transfers_load(network_dir, gtfs_feed):
     transfers = Transfer(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                         gtfs_schedule)
+                         gtfs_feed)
 
     assert not transfers.transfers_df.empty
     transfers_df_dtypes = {
@@ -187,16 +180,16 @@ def test_transfers_load(network_dir, gtfs_schedule):
     assert len(transfers.transfers_df[transfers.transfers_df['min_transfer_time'] > 0]) == 1
 
 @pytest.mark.skip(reason='Need to upgrade to Partridge')
-def test_trips_load(network_dir, gtfs_schedule):
+def test_trips_load(network_dir, gtfs_feed):
     simulation_day = datetime.date(2015, 11, 23)
     stops = Stop(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                 gtfs_schedule, simulation_day)
+                 gtfs_feed, simulation_day)
 
     routes = Route(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                   gtfs_schedule, simulation_day, stops)
+                   gtfs_feed, simulation_day, stops)
 
     trips = Trip(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                 gtfs_schedule, simulation_day, stops, routes, True)
+                 gtfs_feed, simulation_day, stops, routes, True)
 
     assert not trips.trips_df.empty
     assert len(trips.trips_df) == 153

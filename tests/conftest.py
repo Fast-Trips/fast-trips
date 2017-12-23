@@ -3,6 +3,8 @@ import os
 import pytest
 import zipfile
 
+import partridge
+
 HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", )
 NETWORK_HOME_DIR = os.path.join(HOME_DIR, 'networks')
 
@@ -29,3 +31,15 @@ def scenario_date(scenario):
         'psrc_1_1': datetime.date(2016, 11, 22)
     }
     yield dates[scenario]
+
+
+@pytest.fixture(scope="module")
+def gtfs_feed(zipfile, scenario_date):
+    service_ids_by_date = partridge.read_service_ids_by_date(zipfile)
+    service_ids = service_ids_by_date[scenario_date]
+    feed = partridge.feed(os.path.join(zipfile), view={
+        'trips.txt': {
+            'service_id': service_ids
+        },
+    })
+    yield feed

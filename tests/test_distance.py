@@ -7,10 +7,7 @@ import pandas as pd
 import partridge as ptg
 from pyproj import Geod
 import pytest
-import transitfeed
 
-from fasttrips import Route
-from fasttrips import Stop
 from fasttrips import Trip
 from fasttrips import Util
 
