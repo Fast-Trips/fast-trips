@@ -68,15 +68,23 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
     return ft
 
 
-def run_calculate_cost(ft):
+def run_calculate_cost(trip_list_df, routes, stops, tazs, transfers):
     """
     Runs PathSet.calculate_cost with as a static method with configured pathset_links,
     pathset_paths, and veh_trips.
 
-    :param ft: An initialized and loaded FastTrips object.
-    :type ft: py:class:FastTrips
-    :return: (str, str) system paths to pathset_links and pathset_paths csv outputs.
+    :param trip_list_df: Formatted list of person trips and attributes to use in cost calculation.
+    :type trip_list_df: pandas.DataFrame
+    :param routes: Used to set fare costs
+    :type routes: fasttrips.Route
+    :param stops: Used to split transit links if specified
+    :type stops: fasttrips.Stop
+    :param tazs: Skim information
+    :type tazs: fasttrips.TAZ
+    :param transfers: Transfer locations and attributes
+    :type transfers: fasttrips.Transfer
 
+    :return: (str, str) system paths to pathset_links and pathset_paths csv outputs.
     """
 
     ######## LOAD IN PATHSET PATHS #################
@@ -115,8 +123,15 @@ def run_calculate_cost(ft):
     veh_trips_df = pd.read_csv(veh_trips_loc, usecols=veh_trips_col,
                                infer_datetime_format=True, parse_dates=['arrival_time','departure_time'])
 
-    (paths_df, links_df) = PathSet.calculate_cost(ft, STOCHASTIC_DISPERSION, pathset_paths_df, pathset_links_df,
-                                                  veh_trips_df, reset_bump_iter=False)
+    if "A_zone_id" not in list(pathset_links_df.columns.values):
+        pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+        pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+    # This needs to be done fresh each time since simulation might change the board times and therefore the fare periods
+    pathset_links_df = routes.add_fares(pathset_links_df)
+
+    (paths_df, links_df) = PathSet.calculate_cost(STOCHASTIC_DISPERSION, pathset_paths_df, pathset_links_df,
+                                                  veh_trips_df, trip_list_df, tazs, transfers,
+                                                  stops=stops, reset_bump_iter=False, split_transit=False)
 
     paths_df.to_csv(PATHSET_PATHS_OUT, index=False)
     links_df.to_csv(PATHSET_LINKS_OUT, index=False)
@@ -124,6 +139,52 @@ def run_calculate_cost(ft):
     return (PATHSET_PATHS_OUT, PATHSET_LINKS_OUT)
 
 
+def calculate_cost(use_ft=True, capacity_constrained=True, split_transit=False):
+    """
+    Setup the calculate cost method and run run_calculate_cost
+
+    :param use_ft: Initialize with FasTrips object
+    :type use_ft: bool
+    :param capacity_constrained: Whether the calculate_cost method should be capacity constrained
+    :type capacity_constrained: bool.
+    :param split_transit: Whether split_transit_links should be called as part of the calculate_cost method
+    :type split_transit:
+    :return: FastTrips Object
+
+    """
+    if use_ft:
+        ft = init_fasttrips(capacity_constrained, split_transit)
+        passengers = ft.passengers
+        routes = ft.routes
+        stops = ft.stops
+        tazs = ft.tazs
+        transfers = ft.transfers
+    else:
+        gtfs_schedule = Util.load_transit_network(INPUT_NETWORK)
+        stops = Stop(INPUT_NETWORK, OUTPUT_DIR, gtfs_schedule, NETWORK_DATE)
+        routes = Route(INPUT_NETWORK, OUTPUT_DIR, gtfs_schedule, NETWORK_DATE, stops)
+
+        #TRANSFER ARE ONLY FULLY LOADED AFTER TAZ ARE BROUGHT ONLINE
+        transfers = Transfer(INPUT_NETWORK, OUTPUT_DIR, gtfs_schedule)
+        tazs = TAZ(INPUT_NETWORK, OUTPUT_DIR, NETWORK_DATE, stops, transfers, routes)
+        Assignment.read_functions(INPUT_FUNCTIONS)
+        Assignment.read_weights(INPUT_WEIGHTS)
+        PathSet.USER_CLASS_FUNCTION = 'user_class'
+        PathSet.OVERLAP_CHUNK_SIZE = 500
+        PathSet.OVERLAP_SCALE_PARAMETER = 1.0
+        PathSet.OVERLAP_SPLIT_TRANSIT = split_transit
+        PathSet.OVERLAP_VARIABLE = 'count'
+
+        passengers = Passenger(INPUT_DEMAND, OUTPUT_DIR, NETWORK_DATE, stops, routes, capacity_constrained)
+
+    return run_calculate_cost(passengers.trip_list_df, routes, stops, tazs, transfers)
+
+
 if __name__ == '__main__':
-    ft = init_fasttrips(split_transit=False)
-    run_calculate_cost(ft)
+    use_ft = False
+    capacity_constrained = True
+    split_transit = False
+
+    calculate_cost(use_ft=use_ft,
+                   capacity_constrained=capacity_constrained,
+                   split_transit=split_transit)
