@@ -1,2 +1,0 @@
-fare_id,fare_period,start_time,end_time
-default_fare_id,default_fare_id_allday,00:00:00,24:00:00

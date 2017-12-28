@@ -1,0 +1,11 @@
+[fasttrips]
+number_of_processes          = 1
+network_build_date            = 06/30/2015
+trace_ids                     = [('frogger','1'),('paperboy','1'),('marge','1'),('maggie','1')]
+bump_one_at_a_time            = True
+simulation                    = True
+debug_output_columns          = True
+
+[pathfinding]
+time_window                   = 50
+user_class_function           = user_class

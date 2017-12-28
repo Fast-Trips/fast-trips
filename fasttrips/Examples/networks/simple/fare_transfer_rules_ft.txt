@@ -1,0 +1,4 @@
+from_fare_period,to_fare_period,transfer_fare_type,transfer_fare
+bus_local_fare_pm,rail_fare_class,transfer_cost,0.55
+bus_local_fare_default,rail_fare_class,transfer_discount,0.50
+rail_fare_class,bus_local_fare_pm,transfer_free,1.00

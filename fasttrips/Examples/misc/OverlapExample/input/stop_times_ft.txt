@@ -1,0 +1,6 @@
+trip_id,stop_id
+bus_trip1,S1
+bus_trip1,S2
+bus_trip1,S3
+lr_trip1,L1
+lr_trip1,L2

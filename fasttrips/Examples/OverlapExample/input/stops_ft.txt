@@ -1,6 +1,0 @@
-stop_id
-S1
-S2
-S3
-L1
-L2

@@ -1,3 +1,0 @@
-vehicle_name,seated_capacity,standing_capacity
-bus,5,5
-light_rail,8,8

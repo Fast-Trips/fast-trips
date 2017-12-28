@@ -13,9 +13,6 @@ __license__   = """
     limitations under the License.
 """
 import os, sys
-from operator import attrgetter
-import pandas
-import transitfeed
 
 from .Assignment  import Assignment
 from .Logger      import FastTripsLogger, setupLogging
@@ -39,7 +36,7 @@ class FastTrips:
     #: Debug log filename.  Detailed output goes here, including trace information.
     DEBUG_LOG = "ft_debug%s.log"
 
-    def __init__(self, input_network_dir, input_demand_dir, input_weights, run_config, 
+    def __init__(self, input_network_archive, input_demand_dir, input_weights, run_config,
         output_dir, input_functions=None, logname_append="", appendLog=False):
         """
         Constructor.
@@ -80,7 +77,7 @@ class FastTrips:
         self.trips           = None
 
         #: string representing directory with input network data
-        Assignment.INPUT_NETWORK_DIR  = input_network_dir
+        Assignment.INPUT_NETWORK_ARCHIVE  = input_network_archive
 
         #: string representing directory with input demand data
         Assignment.INPUT_DEMAND_DIR   = input_demand_dir
@@ -96,9 +93,6 @@ class FastTrips:
 
         #: string representing directory in which to write our output
         Assignment.OUTPUT_DIR         = output_dir
-
-        #: transitfeed schedule instance.  See https://github.com/google/transitfeed
-        self.gtfs_schedule      = None
 
         # setup logging
         setupLogging(os.path.join(Assignment.OUTPUT_DIR, FastTrips.INFO_LOG % logname_append),
@@ -126,42 +120,31 @@ class FastTrips:
         self.performance.record_step_start(0,0,0,"read_input_files")
 
         # Read the gtfs files first
-        FastTripsLogger.info("Reading GTFS schedule")
-        loader             = transitfeed.Loader(Assignment.INPUT_NETWORK_DIR, memory_db=True)
-        self.gtfs_schedule = loader.Load()
-
-        if False:
-            # Validate the GTFS
-            FastTripsLogger.info("Validating GTFS schedule")
-            self.gtfs_schedule.Validate()
-            FastTripsLogger.info("Done validating GTFS schedule")
-
-        # Required: Trips, Routes, Stops, Stop Times, Agency, Calendar
-        # Optional: Transfers, Shapes, Calendar Dates...
+        gtfs_feed = Util.load_transit_network(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.NETWORK_BUILD_DATE)
 
         # Read Stops (gtfs-required)
-        self.stops = Stop(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE)
+        self.stops = Stop(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
+                          gtfs_feed, Assignment.NETWORK_BUILD_DATE)
 
         # Read routes, agencies, fares
-        self.routes = Route(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                            self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE, self.stops)
+        self.routes = Route(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
+                            gtfs_feed, Assignment.NETWORK_BUILD_DATE, self.stops)
 
         # Read Transfers
-        self.transfers = Transfer(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                                  self.gtfs_schedule)
+        self.transfers = Transfer(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
+                                  gtfs_feed)
 
         # Read trips, vehicles, calendar and stoptimes
-        self.trips = Trip(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR,
-                          self.gtfs_schedule, Assignment.NETWORK_BUILD_DATE,
+        self.trips = Trip(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
+                          gtfs_feed, Assignment.NETWORK_BUILD_DATE,
                           self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(Assignment.INPUT_NETWORK_DIR, Assignment.OUTPUT_DIR, Util.SIMULATION_DAY,
+        self.tazs = TAZ(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR, Assignment.NETWORK_BUILD_DATE,
                         self.stops, self.transfers, self.routes)
 
         # Read the demand int passenger_id -> passenger instance
-        self.passengers = Passenger(Assignment.INPUT_DEMAND_DIR, Assignment.OUTPUT_DIR, Util.SIMULATION_DAY, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
+        self.passengers = Passenger(Assignment.INPUT_DEMAND_DIR, Assignment.OUTPUT_DIR, Assignment.NETWORK_BUILD_DATE, self.stops, self.routes, Assignment.CAPACITY_CONSTRAINT)
 
     def run_assignment(self, output_dir):
 

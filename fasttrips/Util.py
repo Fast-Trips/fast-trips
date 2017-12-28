@@ -17,6 +17,7 @@ import csv, datetime, logging, os
 
 import numpy
 import pandas
+import partridge
 
 from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
@@ -28,9 +29,9 @@ class Util:
     Collect useful stuff here that doesn't belong in any particular existing class.
     """
     #: Use this as the date
-    SIMULATION_DAY                  = datetime.date(2016,1,1)
+    #SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)
     #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
-    SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
+    #SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
 
     #: Maps timedelta columns to units for :py:meth:`Util.write_dataframe`
     TIMEDELTA_COLUMNS_TO_UNITS      = {
@@ -204,6 +205,7 @@ class Util:
 
     @staticmethod
     def read_time(x, end_of_day=False):
+        from .Assignment import Assignment
         try:
             if x=='' or x.lower()=='default':
                 x = '24:00:00' if end_of_day else '00:00:00'
@@ -212,12 +214,19 @@ class Util:
                 x = '24:00:00' if end_of_day else '00:00:00'
         time_split = x.split(':')
         hour = int(time_split[0])
-        day = Util.SIMULATION_DAY
+        day = Assignment.NETWORK_BUILD_DATE
         if hour >= 24: 
             time_split[0] = '%02d' %(hour-24)
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
+
+    @staticmethod
+    def parse_minutes_to_time(minutes):
+        from .Assignment import Assignment
+        elapsed_time = datetime.timedelta(minutes=minutes)
+        return datetime.datetime.combine(Assignment.NETWORK_BUILD_DATE, datetime.time()) + elapsed_time
+
 
     @staticmethod
     def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True, drop_pathfinding_columns=True):
@@ -327,7 +336,7 @@ class Util:
         Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
         in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.
         """
-        radius = 3959.0 # mi
+        radius = 3963.190592 # mi
 
         # assume these aren't in here
         dataframe["dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
@@ -348,6 +357,7 @@ class Util:
             FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[dataframe[distance_colname]>1000].to_string())
 
         dataframe.drop(["dist_lat","dist_lon","dist_hava","dist_havc"], axis=1, inplace=True)
+
 
     @staticmethod
     def get_process_mem_use_bytes():
@@ -395,3 +405,16 @@ class Util:
         z = x.copy()
         z.update(y)
         return z
+
+    @staticmethod
+    def load_transit_network(network_archive, network_date):
+        FastTripsLogger.info("Reading GTFS schedule")
+        service_ids_by_date = partridge.read_service_ids_by_date(network_archive)
+        service_ids = service_ids_by_date[network_date]
+        gtfs_feed = partridge.feed(os.path.join(network_archive), view={
+            'trips.txt': {
+                'service_id': service_ids
+            },
+        })
+
+        return gtfs_feed

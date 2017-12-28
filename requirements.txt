@@ -1,3 +1,4 @@
 ###### Requirements without Version Specifiers ######
-transitfeed
-pandas
+partridge
+pytest
+functools32

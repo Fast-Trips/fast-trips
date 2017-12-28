@@ -1,0 +1,6 @@
+stop_id,stop_name,stop_lat,stop_lon,zone_id
+S1,BusStop1,37.76467,-122.49601,
+S2,BusStop2,37.76586,-122.46974,
+S3,BusStop3,37.76603,-122.46425,
+L1,LightRailStop1,37.76084,-122.49923,
+L2,LightRailStop2,37.76216,-122.46683,

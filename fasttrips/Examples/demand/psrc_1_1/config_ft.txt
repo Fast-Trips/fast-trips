@@ -1,0 +1,10 @@
+[fasttrips]
+number_of_processes           = 4
+network_build_date            = 05/24/2016
+trace_ids                     = []
+skip_person_ids               = [] 
+
+[pathfinding]
+user_class_function           = user_class
+pathweights_fixed_width       = True
+max_num_paths                 = 100

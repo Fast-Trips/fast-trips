@@ -1,17 +1,26 @@
 import os
 
+import zipfile
+
 from fasttrips import Run
 
 
-def run_capacity_test():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", "test_scenario")
+def run_convergence():
+    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
-    INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "network")
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand_twopaths")
+    INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "networks")
+    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "demand_twopaths")
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
-    return (OUTPUT_DIR, Run.run_fasttrips(
-        input_network_dir=INPUT_NETWORKS,
+    scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
+    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
+    with zipfile.ZipFile(scenario_file, 'w') as zipf:
+        for root, dirs, files in os.walk(scenario_dir):
+            for file in files:
+                zipf.write(os.path.join(root, file), file)
+
+    Run.run_fasttrips(
+        input_network_dir=scenario_file,
         input_demand_dir=INPUT_DEMAND,
         run_config=os.path.join(INPUT_DEMAND, "config_ft.txt"),
         input_functions=os.path.join(INPUT_DEMAND, 'config_ft.py'),
@@ -21,7 +30,11 @@ def run_capacity_test():
         pathfinding_type="stochastic",
         capacity=True,
         iters=4,
-        dispersion=0.50))
+        dispersion=0.50
+    )
+
+
+    os.unlink(scenario_file)
 
 if __name__ == '__main__':
-    run_capacity_test()
+    run_convergence()

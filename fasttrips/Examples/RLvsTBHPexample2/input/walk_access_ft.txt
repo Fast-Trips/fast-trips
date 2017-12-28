@@ -1,3 +1,0 @@
-taz,stop_id,dist
-ZO,S1,0.0
-ZD,S4,0.0

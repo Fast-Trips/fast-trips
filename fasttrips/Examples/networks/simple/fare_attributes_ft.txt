@@ -1,0 +1,10 @@
+fare_period,price,currency_type,payment_method,transfers,transfer_duration
+bus_local_fare_default,2,USD,0,0,
+bus_local_fare_am,2.5,USD,0,0,
+bus_local_fare_pm,2.75,USD,0,0,
+bus_local_b1_b3_id_allday,2.25,USD,0,2,
+bus_express_fare_class,3,USD,0,0,
+rail_fare_class,4,USD,1,1,620
+b3_to_b1_fare_am,2.44,USD,0,0,
+b3_to_b1_fare_pm,2.66,USD,0,0,
+default_fare_id_allday,0.10,USD,0,0,

@@ -43,7 +43,7 @@ class Assignment:
     CONFIGURATION_OUTPUT_FILE       = 'ft_output_config.txt'
 
     #: Configuration: Input network directory
-    INPUT_NETWORK_DIR               = None
+    INPUT_NETWORK_ARCHIVE               = None
     #: Configuration: Input demand directory
     INPUT_DEMAND_DIR                = None
     #: Configuration: Pathweight parameters
@@ -56,7 +56,8 @@ class Assignment:
     #: relaxed the model will terminate after the first iteration
     MAX_ITERATIONS                  = None
 
-    NETWORK_BUILD_DATE              = None
+    NETWORK_BUILD_DATE              = datetime.datetime.today()
+    NETWORK_BUILD_DATE_START_TIME   = datetime.datetime.combine(NETWORK_BUILD_DATE, datetime.time())
     #: Find paths deterministically, using shortest path search based on travel time.
     PATHFINDING_TYPE_DETERMINISTIC  = 'deterministic'
     #: Find paths stochastically using trip-based hyperpath
@@ -310,6 +311,7 @@ class Assignment:
         Assignment.MAX_ITERATIONS                = parser.getint    ('fasttrips','max_iterations')
         Assignment.NETWORK_BUILD_DATE            = datetime.datetime.strptime(
                                                     parser.get('fasttrips', 'network_build_date'), '%m/%d/%Y').date()
+        Assignment.NETWORK_BUILD_DATE_START_TIME = datetime.datetime.combine(Assignment.NETWORK_BUILD_DATE, datetime.time())
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
@@ -394,7 +396,7 @@ class Assignment:
         parser = ConfigParser.SafeConfigParser()
         parser.add_section('fasttrips')
         parser.set('fasttrips','input_demand_dir',              Assignment.INPUT_DEMAND_DIR)
-        parser.set('fasttrips','input_network_dir',             Assignment.INPUT_NETWORK_DIR)
+        parser.set('fasttrips','input_network_dir',             Assignment.INPUT_NETWORK_ARCHIVE)
         parser.set('fasttrips','input_weights',                 Assignment.INPUT_WEIGHTS)
         if Assignment.CONFIGURATION_FUNCTIONS_FILE:
             parser.set('fasttrips','input_functions',           Assignment.CONFIGURATION_FUNCTIONS_FILE)
@@ -813,7 +815,7 @@ class Assignment:
                     FastTripsLogger.info("Starting worker process %2d" % process_idx)
                     process_dict[process_idx] = {
                         "process":multiprocessing.Process(target=find_trip_based_paths_process_worker,
-                            args=(iteration, pathfinding_iteration, process_idx, Assignment.INPUT_NETWORK_DIR, Assignment.INPUT_DEMAND_DIR,
+                            args=(iteration, pathfinding_iteration, process_idx, Assignment.INPUT_NETWORK_ARCHIVE, Assignment.INPUT_DEMAND_DIR,
                                   Assignment.CONFIGURATION_FILE, Assignment.CONFIGURATION_FUNCTIONS_FILE,
                                   Assignment.OUTPUT_DIR, todo_queue, done_queue,
                                   Assignment.PATHFINDING_TYPE==Assignment.PATHFINDING_TYPE_STOCHASTIC,
@@ -1054,7 +1056,7 @@ class Assignment:
                 if hyperpath:
                     pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
                         ret_doubles[row_num,0],                                                          # label,
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                        Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
                         mode,                                                                            # departure/arrival mode
                         ret_ints[row_num,3],                                                             # trip id
                         ret_ints[row_num,4],                                                             # successor/predecessor
@@ -1065,12 +1067,12 @@ class Assignment:
                         ret_doubles[row_num,4],                                                          # link cost
                         ret_doubles[row_num,5],                                                          # link distance
                         ret_doubles[row_num,6],                                                          # cost
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
+                        Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
                     ] ) )
                 else:
                     pathdict[path_num][PathSet.PATH_KEY_STATES].append( (ret_ints[row_num, 1], [
                         datetime.timedelta(minutes=ret_doubles[row_num,0]),                              # label,
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                        Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
                         mode,                                                                            # departure/arrival mode
                         ret_ints[row_num,3],                                                             # trip id
                         ret_ints[row_num,4],                                                             # successor/predecessor
@@ -1081,7 +1083,7 @@ class Assignment:
                         datetime.timedelta(minutes=ret_doubles[row_num,4]),                              # link cost
                         ret_doubles[row_num,5],                                                          # link dist
                         datetime.timedelta(minutes=ret_doubles[row_num,6]),                              # cost
-                        Util.SIMULATION_DAY_START + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
+                        Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
                     ] ) )
                 row_num += 1
 
@@ -1737,13 +1739,23 @@ class Assignment:
         pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER     ] = 0
 
         ######################################################################################################
-        FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
-        (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-            FT, Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df,
-            veh_trips_df, reset_bump_iter=simulation_iteration==0)
+        FastTripsLogger.info("  Step 2. Update Fare Prices on all pathset paths")
+        if "A_zone_id" not in pathset_links_df:
+            pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+        if "B_zone_id" not in pathset_links_df:
+            pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+
+        pathset_links_df = FT.routes.add_fares(pathset_links_df)
 
         ######################################################################################################
-        FastTripsLogger.info("  Step 3. Choose a path for each passenger from their pathset")
+        FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
+        (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
+            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df,
+            veh_trips_df, FT.passengers.trip_list_df, FT.tazs, FT.transfers, stops=FT.stops,
+            reset_bump_iter=simulation_iteration == 0, split_transit=PathSet.OVERLAP_SPLIT_TRANSIT)
+
+        ######################################################################################################
+        FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")
 
         # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
         # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
@@ -1804,13 +1816,23 @@ class Assignment:
             (pathset_paths_df, pathset_links_df) = Assignment.flag_missed_transfers(pathset_paths_df, pathset_links_df)
 
             ######################################################################################################
-            FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
-            (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-                FT, Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df,
-                veh_trips_df, reset_bump_iter=simulation_iteration == 0)
+            FastTripsLogger.info("  Step 3. Update Fare Prices on all pathset paths")
+            if "A_zone_id" not in pathset_links_df:
+                pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+            if "B_zone_id" not in pathset_links_df:
+                pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+
+            pathset_links_df = FT.routes.add_fares(pathset_links_df)
 
             ######################################################################################################
-            FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")
+            FastTripsLogger.info("  Step 4. Calculate costs and probabilities for all pathset paths")
+            (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
+                Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df,
+                veh_trips_df, FT.passengers.trip_list_df, FT.tazs, FT.transfers, stops=FT.stops,
+                reset_bump_iter=simulation_iteration == 0, split_transit=PathSet.OVERLAP_SPLIT_TRANSIT)
+
+            ######################################################################################################
+            FastTripsLogger.info("  Step 5. Choose a path for each passenger from their pathset")
 
             # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
             # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
@@ -1820,20 +1842,20 @@ class Assignment:
                 pathset_paths_df, pathset_links_df)
 
             ######################################################################################################
-            FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load and assess capacity constraints")
+            FastTripsLogger.info("  Step 6. Put passenger paths on transit vehicles to get vehicle boards/alights/load and assess capacity constraints")
 
             (pathset_paths_df, pathset_links_df, veh_trips_df) = Assignment.load_passengers_on_vehicles_with_cap(
                 FT, iteration, pathfinding_iteration, simulation_iteration,
                 FT.trips, pathset_paths_df, pathset_links_df, veh_trips_df)
 
             ######################################################################################################
-            FastTripsLogger.info("  Step 6. Update dwell and travel times for transit vehicles")
+            FastTripsLogger.info("  Step 7. Update dwell and travel times for transit vehicles")
             # update the trip times -- accel/decel rates + stops affect travel times, and boards/alights affect dwell times
             veh_trips_df   = Trip.update_trip_times(veh_trips_df, Assignment.MSA_RESULTS)
 
             ######################################################################################################
             if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
-                FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
+                FastTripsLogger.info("  Step 8. Write pathsets (paths and links)")
                 Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False, 
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
                 Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,

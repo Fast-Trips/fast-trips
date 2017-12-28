@@ -1,2 +1,0 @@
-fare_period,price,currency_type,payment_method,transfers,transfer_duration
-default_fare_id_allday,1.00,USD,0,0,

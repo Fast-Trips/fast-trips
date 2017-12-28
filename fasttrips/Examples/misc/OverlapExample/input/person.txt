@@ -1,0 +1,2 @@
+person_id,hh_id,age,gender,worker_status,work_athome,multiple_jobs,transit_pass,disability
+frogger,zorn,21,female,part-time,True,True,False,walker

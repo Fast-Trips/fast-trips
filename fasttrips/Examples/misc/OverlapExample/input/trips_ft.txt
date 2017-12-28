@@ -1,0 +1,3 @@
+trip_id,vehicle_name
+bus_trip1,bus
+lr_trip1,light_rail
