@@ -205,8 +205,8 @@ class Trip:
 
     def __init__(self, input_archive, output_dir, gtfs_feed, today, stops, routes, prepend_route_id_to_trip_id):
         """
-        Constructor. Read the gtfs data from the transitfeed schedule, and the additional
-        fast-trips stops data from the input files in *input_archive*.
+        Constructor.  Reads the transit feed from the gtfs schedule, and the additional
+        fast-trips routes data from the input file in *input_archive*.
         """
         self.output_dir = output_dir
 

@@ -14,8 +14,6 @@ __license__   = """
 """
 import os, sys
 
-import partridge
-
 from .Assignment  import Assignment
 from .Logger      import FastTripsLogger, setupLogging
 from .Passenger   import Passenger
@@ -96,9 +94,6 @@ class FastTrips:
         #: string representing directory in which to write our output
         Assignment.OUTPUT_DIR         = output_dir
 
-        #: transitfeed schedule instance.  See https://github.com/google/transitfeed
-        #self.gtfs_schedule      = None
-
         # setup logging
         setupLogging(os.path.join(Assignment.OUTPUT_DIR, FastTrips.INFO_LOG % logname_append),
                      os.path.join(Assignment.OUTPUT_DIR, FastTrips.DEBUG_LOG % logname_append),
@@ -125,14 +120,8 @@ class FastTrips:
         self.performance.record_step_start(0,0,0,"read_input_files")
 
         # Read the gtfs files first
-        FastTripsLogger.info("Reading GTFS schedule")
-        service_ids_by_date = partridge.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
-        service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), view={
-            'trips.txt': {
-              'service_id': service_ids
-            },
-        })
+        gtfs_feed = Util.load_transit_network(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.NETWORK_BUILD_DATE)
+
         # Read Stops (gtfs-required)
         self.stops = Stop(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR,
                           gtfs_feed, Assignment.NETWORK_BUILD_DATE)

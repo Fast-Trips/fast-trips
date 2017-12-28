@@ -17,7 +17,7 @@ import csv, datetime, logging, os
 
 import numpy
 import pandas
-import transitfeed
+import partridge
 
 from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
@@ -407,14 +407,14 @@ class Util:
         return z
 
     @staticmethod
-    def load_transit_network(network_dir, validate=False):
+    def load_transit_network(network_archive, network_date):
         FastTripsLogger.info("Reading GTFS schedule")
-        loader = transitfeed.Loader(network_dir, memory_db=True)
-        schedule = loader.Load()
+        service_ids_by_date = partridge.read_service_ids_by_date(network_archive)
+        service_ids = service_ids_by_date[network_date]
+        gtfs_feed = partridge.feed(os.path.join(network_archive), view={
+            'trips.txt': {
+                'service_id': service_ids
+            },
+        })
 
-        if validate:
-            FastTripsLogger.info("Validating GTFS schedule")
-            schedule.Validate()
-            FastTripsLogger.info("Done validating GTFS schedule")
-
-        return schedule
+        return gtfs_feed

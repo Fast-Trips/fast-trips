@@ -157,7 +157,7 @@ class Route(object):
 
     def __init__(self, input_archive, output_dir, gtfs, today, stops):
         """
-        Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
+        Constructor.  Reads the transit feed from the gtfs schedule, and the additional
         fast-trips routes data from the input file in *input_archive*.
         """
         self.output_dir         = output_dir
