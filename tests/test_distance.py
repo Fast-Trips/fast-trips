@@ -1,15 +1,13 @@
-import datetime
 import os
-import zipfile
 
 import numpy as np
 import pandas as pd
 import partridge as ptg
-from pyproj import Geod
 import pytest
 
 from fasttrips import Trip
 from fasttrips import Util
+
 
 HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", )
 TEST_HOME_DIR = os.path.join(HOME_DIR, 'test_trip_distance')

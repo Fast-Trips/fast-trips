@@ -4,5 +4,4 @@ numpy
 pandas<=0.20.3
 partridge
 psutil
-pyproj
 pytest
