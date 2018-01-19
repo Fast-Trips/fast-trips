@@ -3,7 +3,12 @@ import zipfile
 
 from fasttrips import Run
 
+
 def test_psrc():
+    """
+    Test to ensure that more complex network, PSRC, is working. Also a
+    useful benchmark for Partridge loader compared to transitfeed.
+    """
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "networks")
