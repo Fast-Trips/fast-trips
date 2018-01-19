@@ -55,6 +55,10 @@ def test_calculate_distance_miles():
     print 'test_calculate_distance_miles: {:.5f} mi'.format(distance)
     assert abs(distance - 3.9116) < 0.0001
 
+# Originally written as a test for testing stop to stop vs route along path
+# Changes were made to make Partridge work (higher priority) and this test
+# was no longer supported. Need to rewrite Trip.add_shape_dist_traveled to
+# to support static call.
 @pytest.mark.skip(reason="Underlying method is no longer static.")
 def test_add_shape_dist_traveled(zip_file, scenario_results, scenario_date):
     service_ids_by_date = ptg.read_service_ids_by_date(zip_file)
@@ -73,20 +77,3 @@ def test_add_shape_dist_traveled(zip_file, scenario_results, scenario_date):
         print stop_times_df[stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID] == trip_id][Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED].values.tolist()
         np.testing.assert_allclose(stop_times_df[stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID] == trip_id][Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED].values,
                                   expected_array, rtol=0, atol=0.00001)
-
-
-def compute_dist(group):
-    m_to_mi = 0.00062137
-    geod = Geod(ellps='WGS84')
-    group = group.sort_values('shape_pt_sequence')
-    point_coords = group[['shape_pt_lon', 'shape_pt_lat']].values
-    p_prev = point_coords[0]
-    d = 0
-    distances = [0]
-    for p in point_coords[1:]:
-        angle1, angle2, distance = geod.inv(p_prev[0], p_prev[1], p[0], p[1])
-        d += distance * m_to_mi
-        distances.append(d)
-        p_prev = p
-    group['shape_dist_traveled'] = distances
-    return group
