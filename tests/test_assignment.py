@@ -11,8 +11,16 @@ HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples",)
 TEST_HOME_DIR = os.path.join(HOME_DIR, 'test_assignment')
 OUTPUT_DIR = os.path.join(TEST_HOME_DIR, 'output')
 
-@pytest.mark.skip(reason='Need to upgrade to access a non-static method')
+#This test is turned off until the supporting method is made static
+#The underlying C++ code also does not start appropriately
+@pytest.mark.skip(reason='Current implementation of Fast-Trips does not support static call to'
+                         'Trip.add_shape_dist_travelled')
 def test_assignment(zip_file, scenario_date):
+    """
+    Test of the fast_trips C++ assignment code. Send in OD pairs and time of day to test
+    outputs.
+    (Not fully implemented yet.)
+    """
     service_ids_by_date = ptg.read_service_ids_by_date(zip_file)
     service_ids = service_ids_by_date[scenario_date]
 
