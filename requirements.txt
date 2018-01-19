@@ -1,4 +1,8 @@
 ###### Requirements without Version Specifiers ######
+functools32;python_version<="2.7"
+numpy
+pandas<=0.20.3
 partridge
+psutil
+pyproj
 pytest
-functools32
