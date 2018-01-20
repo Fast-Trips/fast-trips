@@ -34,10 +34,10 @@ def scenario_date(scenario):
 
 
 @pytest.fixture(scope="module")
-def gtfs_feed(zipfile, scenario_date):
-    service_ids_by_date = partridge.read_service_ids_by_date(zipfile)
+def gtfs_feed(zip_file, scenario_date):
+    service_ids_by_date = partridge.read_service_ids_by_date(zip_file)
     service_ids = service_ids_by_date[scenario_date]
-    feed = partridge.feed(os.path.join(zipfile), view={
+    feed = partridge.feed(os.path.join(zip_file), view={
         'trips.txt': {
             'service_id': service_ids
         },
