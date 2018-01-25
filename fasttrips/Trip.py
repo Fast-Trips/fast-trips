@@ -13,7 +13,6 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os
-import zipfile
 
 import numpy,pandas
 
@@ -211,16 +210,27 @@ class Trip:
         self.output_dir = output_dir
 
         # Read vehicles first
-        with zipfile.ZipFile(input_archive, 'r') as zipf:
-            self.vehicles_df = pandas.read_csv(zipf.open(Trip.INPUT_VEHICLES_FILE), skipinitialspace=True)
-            # Read the fast-trips supplemental trips data file.  Make sure trip ID is read as a string.
-            trips_ft_df = pandas.read_csv(zipf.open(Trip.INPUT_TRIPS_FILE),
-                                          skipinitialspace=True,
-                                          dtype={Trip.TRIPS_COLUMN_TRIP_ID:object})
+        self.vehicles_df = gtfs_feed.get(Trip.INPUT_VEHICLES_FILE)
+
+        if Trip.VEHICLES_COLUMN_MAXIMUM_SPEED in self.vehicles_df:
+            self.vehicles_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED] = \
+                self.vehicles_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED].astype(numpy.float64)
+        if Trip.VEHICLES_COLUMN_ACCELERATION in self.vehicles_df:
+            self.vehicles_df[Trip.VEHICLES_COLUMN_ACCELERATION] = \
+                self.vehicles_df[Trip.VEHICLES_COLUMN_ACCELERATION].astype(numpy.float64)
+        if Trip.VEHICLES_COLUMN_DECELERATION in self.vehicles_df:
+            self.vehicles_df[Trip.VEHICLES_COLUMN_DECELERATION] = \
+                self.vehicles_df[Trip.VEHICLES_COLUMN_DECELERATION].astype(numpy.float64)
+
+        trips_ft_df = gtfs_feed.get(Trip.INPUT_TRIPS_FILE)
+
         # verify the required columns are present
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME in self.vehicles_df)
 
         if ({Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY}.issubset(self.vehicles_df)):
+            self.vehicles_df[[Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY]] = \
+                self.vehicles_df[[Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY]].astype(
+                    numpy.int64)
             self.vehicles_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY] = \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY] + \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_STANDING_CAPACITY]
@@ -307,22 +317,18 @@ class Trip:
         self.stop_times_df = gtfs_feed.stop_times
 
         # Read the fast-trips supplemental stop times data file
-        with zipfile.ZipFile(input_archive, 'r') as zipf:
-            if Trip.INPUT_STOPTIMES_FILE in zipf.namelist():
-                stop_times_ft_df = pandas.read_csv(zipf.open(Trip.INPUT_STOPTIMES_FILE),
-                                                   skipinitialspace=True,
-                                              dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
-                                                     Trip.STOPTIMES_COLUMN_STOP_ID:object})
-                # verify required columns are present
-                stop_times_ft_cols = list(stop_times_ft_df)
-                assert({Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_ID}.issubset(stop_times_ft_df))
+        stop_times_ft_df = gtfs_feed.get(Trip.INPUT_STOPTIMES_FILE)
+        if not stop_times_ft_df.empty:
+            # verify required columns are present
+            stop_times_ft_cols = list(stop_times_ft_df)
+            assert({Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_ID}.issubset(stop_times_ft_df))
 
-                # Join to the trips dataframe
-                if len(stop_times_ft_df.columns) > 2:
-                    self.stop_times_df = pandas.merge(left=self.stop_times_df, right=stop_times_ft_df,
-                                                      how='left',
-                                                      on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                                          Trip.STOPTIMES_COLUMN_STOP_ID])
+            # Join to the trips dataframe
+            if len(stop_times_ft_df.columns) > 2:
+                self.stop_times_df = pandas.merge(left=self.stop_times_df, right=stop_times_ft_df,
+                                                  how='left',
+                                                  on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                      Trip.STOPTIMES_COLUMN_STOP_ID])
 
         FastTripsLogger.debug("=========== STOP TIMES ===========\n" + str(self.stop_times_df.head()))
         FastTripsLogger.debug("\n"+str(self.stop_times_df.index.dtype)+"\n"+str(self.stop_times_df.dtypes))

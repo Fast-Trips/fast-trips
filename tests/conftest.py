@@ -33,7 +33,7 @@ def scenario_date(scenario):
     yield dates[scenario]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def gtfs_feed(zip_file, scenario_date):
     service_ids_by_date = partridge.read_service_ids_by_date(zip_file)
     service_ids = service_ids_by_date[scenario_date]

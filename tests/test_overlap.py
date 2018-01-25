@@ -1,5 +1,4 @@
 import os
-import zipfile
 
 from fasttrips import Run
 
@@ -11,16 +10,11 @@ def test_overlap_none():
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
 
     OVERLAP_TYPE   = "None"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -33,7 +27,7 @@ def test_overlap_none():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)
+
 
 def test_overlap_count():
 
@@ -44,16 +38,11 @@ def test_overlap_count():
     OUTPUT_DIR     = os.path.join(EXAMPLES_DIR,"output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
 
     OVERLAP_TYPE   = "count"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -66,8 +55,7 @@ def test_overlap_count():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)
-    
+
     
 def test_overlap_distance():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
@@ -77,15 +65,11 @@ def test_overlap_distance():
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
+
     OVERLAP_TYPE   = "distance"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -98,8 +82,7 @@ def test_overlap_distance():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)
-    
+
     
 def test_overlap_time():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
@@ -109,15 +92,11 @@ def test_overlap_time():
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
+
     OVERLAP_TYPE   = "time"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -130,7 +109,7 @@ def test_overlap_time():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)
+
 
 def test_overlap_count_with_split():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
@@ -140,15 +119,11 @@ def test_overlap_count_with_split():
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
+
     OVERLAP_TYPE   = "count"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -162,8 +137,7 @@ def test_overlap_count_with_split():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)
-    
+
     
 def test_overlap_distance_with_split():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
@@ -173,15 +147,11 @@ def test_overlap_distance_with_split():
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
+
     OVERLAP_TYPE   = "distance"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -195,7 +165,6 @@ def test_overlap_distance_with_split():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)
     
     
 def test_overlap_time_with_split():
@@ -206,15 +175,11 @@ def test_overlap_time_with_split():
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORKS, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
+
     OVERLAP_TYPE   = "time"
     
     r = Run.run_fasttrips(
-        input_network_dir= scenario_file,
+        input_network_dir= scenario_dir,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
@@ -228,4 +193,3 @@ def test_overlap_time_with_split():
         test_size        = 100 )
     
     assert r["passengers_arrived"] > 0
-    os.unlink(scenario_file)

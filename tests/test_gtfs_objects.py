@@ -20,7 +20,7 @@ def scenario(request):
 
 @pytest.fixture(scope="module")
 def network_dir(scenario):
-    yield os.path.join(NETWORK_HOME_DIR, '{}.zip'.format(scenario))
+    yield os.path.join(NETWORK_HOME_DIR, scenario)
 
 
 def test_stops_load(network_dir, gtfs_feed, scenario_date):
@@ -136,8 +136,8 @@ def test_routes_load(network_dir, gtfs_feed, scenario_date):
         'fare_period': object,
         'price': np.float64,
         'currency_type': object,
-        'payment_method': np.int64,
-        'transfers': np.int64,
+        'payment_method': np.float64,
+        'transfers': np.float64,
         'transfer_duration': np.float64,
     }
     assert (set(fare_attrs_df_dtype.keys()).issubset(routes.fare_attrs_df))

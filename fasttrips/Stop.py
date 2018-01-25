@@ -13,7 +13,6 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
-import zipfile
 
 import pandas
 
@@ -87,20 +86,17 @@ class Stop:
                              (len(self.stops_df), 'date valid stop', len(gtfs.stops), 'total stops'))
 
         # Read the fast-trips supplemental stops data file. Make sure stop ID is read as a string.
-        with zipfile.ZipFile(input_archive, 'r') as zipf:
-            if Stop.INPUT_STOPS_FILE in zipf.namelist():
-                stops_ft_df = pandas.read_csv(zipf.open(Stop.INPUT_STOPS_FILE),
-                                              skipinitialspace=True,
-                                              dtype={Stop.STOPS_COLUMN_STOP_ID:object})
-                # verify required columns are present
-                stops_ft_cols = list(stops_ft_df.columns.values)
-                assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
+        stops_ft_df = gtfs.get(Stop.INPUT_STOPS_FILE)
+        assert(len(stops_ft_df) > 0)
 
-                # if more than one column, join to the stops dataframe
-                if len(stops_ft_cols) > 1:
-                    self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
-                                                 how='left',
-                                                 on=Stop.STOPS_COLUMN_STOP_ID)
+        # verify required columns are present
+        stops_ft_cols = list(stops_ft_df.columns.values)
+        assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
+
+        # if more than one column, join to the stops dataframe
+        if len(stops_ft_cols) > 1:
+            self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
+                                         how='left', on=Stop.STOPS_COLUMN_STOP_ID)
 
         # Stop IDs are strings. Create a unique numeric stop ID.
         self.stop_id_df = Util.add_numeric_column(self.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],

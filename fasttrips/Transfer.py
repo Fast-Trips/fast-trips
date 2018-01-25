@@ -13,8 +13,8 @@ __license__   = """
     limitations under the License.
 """
 import datetime,os,sys
-import zipfile
 
+import numpy
 import pandas
 
 from .Error  import NetworkInputError
@@ -115,15 +115,22 @@ class Transfer:
         self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
 
         # Read the fast-trips supplemental transfers data file
-        with zipfile.ZipFile(input_archive, 'r') as zipf:
-            transfers_ft_df = pandas.read_csv(zipf.open(Transfer.INPUT_TRANSFERS_FILE),
-                                              skipinitialspace=True,
-                                              dtype={Transfer.TRANSFERS_COLUMN_FROM_STOP:object, Transfer.TRANSFERS_COLUMN_TO_STOP:object})
+        transfers_ft_df = gtfs_feed.get(Transfer.INPUT_TRANSFERS_FILE)
+
         # verify required columns are present
         transfer_ft_cols = list(transfers_ft_df.columns.values)
         assert(Transfer.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)
         assert(Transfer.TRANSFERS_COLUMN_TO_STOP             in transfer_ft_cols)
         assert(Transfer.TRANSFERS_COLUMN_DISTANCE            in transfer_ft_cols)
+
+        transfers_ft_df[Transfer.TRANSFERS_COLUMN_DISTANCE] = \
+            transfers_ft_df[Transfer.TRANSFERS_COLUMN_DISTANCE].astype(numpy.float64)
+
+        if Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN in transfers_ft_df:
+            transfers_ft_df[Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN] = \
+                transfers_ft_df[Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN].astype(numpy.int64)
+
+
 
         # join to the transfers dataframe -- need to use the transfers_ft as the primary because
         # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),

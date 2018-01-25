@@ -151,7 +151,7 @@ class FastTrips:
                           self.stops, self.routes, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
         # read the TAZs into a TAZ instance
-        self.tazs = TAZ(Assignment.INPUT_NETWORK_ARCHIVE, Assignment.OUTPUT_DIR, Assignment.NETWORK_BUILD_DATE,
+        self.tazs = TAZ(Assignment.OUTPUT_DIR, gtfs_feed, Assignment.NETWORK_BUILD_DATE,
                         self.stops, self.transfers, self.routes)
 
         # Read the demand int passenger_id -> passenger instance
