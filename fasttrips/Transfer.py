@@ -103,10 +103,6 @@ class Transfer:
         # Combine all gtfs Transfer objects to a single pandas DataFrame
         self.transfers_df = gtfs_feed.transfers
 
-        # make it numerical
-        self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = \
-            self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME].astype(float)
-
         # make it zero if transfer_type != 2, since that's the only time it applies
         self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
                               Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
@@ -122,15 +118,6 @@ class Transfer:
         assert(Transfer.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)
         assert(Transfer.TRANSFERS_COLUMN_TO_STOP             in transfer_ft_cols)
         assert(Transfer.TRANSFERS_COLUMN_DISTANCE            in transfer_ft_cols)
-
-        transfers_ft_df[Transfer.TRANSFERS_COLUMN_DISTANCE] = \
-            transfers_ft_df[Transfer.TRANSFERS_COLUMN_DISTANCE].astype(numpy.float64)
-
-        if Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN in transfers_ft_df:
-            transfers_ft_df[Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN] = \
-                transfers_ft_df[Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN].astype(numpy.int64)
-
-
 
         # join to the transfers dataframe -- need to use the transfers_ft as the primary because
         # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),

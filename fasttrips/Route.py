@@ -174,10 +174,6 @@ class Route(object):
         assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
         assert(Route.ROUTES_COLUMN_MODE         in routes_ft_cols)
 
-        if Route.ROUTES_COLUMN_PROOF_OF_PAYMENT in routes_ft_df:
-            routes_ft_df[Route.ROUTES_COLUMN_PROOF_OF_PAYMENT] = \
-                routes_ft_df[Route.ROUTES_COLUMN_PROOF_OF_PAYMENT].apply(lambda x: x in ['true', 'True', 'TRUE', 1])
-
         # verify no routes_ids are duplicated
         if routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum()>0:
             error_msg = "Found %d duplicate %s in %s" % (routes_ft_df.duplicated(subset=[Route.ROUTES_COLUMN_ROUTE_ID]).sum(),
@@ -241,17 +237,8 @@ class Route(object):
             assert(Route.FARE_ATTR_COLUMN_PAYMENT_METHOD    in fare_attrs_cols)
             assert(Route.FARE_ATTR_COLUMN_TRANSFERS         in fare_attrs_cols)
 
-            self.fare_attrs_df[Route.FARE_ATTR_COLUMN_PRICE] = \
-                self.fare_attrs_df[Route.FARE_ATTR_COLUMN_PRICE].astype(numpy.float64)
-
-            self.fare_attrs_df[[Route.FARE_ATTR_COLUMN_PAYMENT_METHOD, Route.FARE_ATTR_COLUMN_TRANSFERS]] = \
-                self.fare_attrs_df[[Route.FARE_ATTR_COLUMN_PAYMENT_METHOD, Route.FARE_ATTR_COLUMN_TRANSFERS]].astype(numpy.float64)
-
             if Route.FARE_ATTR_COLUMN_TRANSFER_DURATION not in fare_attrs_cols:
                 self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION] = numpy.nan
-            else:
-                self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION] = \
-                    self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION].astype(numpy.float64)
 
             FastTripsLogger.debug("===> REPLACED BY FARE ATTRIBUTES FT\n" + str(self.fare_attrs_df.head()))
             FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
@@ -323,12 +310,6 @@ class Route(object):
             assert(Route.FARE_RULES_COLUMN_FARE_PERIOD  in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
-
-            # convert these to datetimes
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: Util.read_time(x, True))
 
             # Split fare classes so they don't overlap
             fare_rules_ft_df = self.remove_fare_period_overlap(fare_rules_ft_df)
@@ -436,9 +417,6 @@ class Route(object):
             assert(Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD   in fare_transfer_rules_cols)
             assert(Route.FARE_TRANSFER_RULES_COLUMN_TYPE             in fare_transfer_rules_cols)
             assert(Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT           in fare_transfer_rules_cols)
-
-            self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT] = \
-                self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT].astype(numpy.float64)
 
             # verify valid values for transfer type
             invalid_type = self.fare_transfer_rules_df.loc[ self.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE].isin(Route.TRANSFER_TYPE_OPTIONS)==False ]

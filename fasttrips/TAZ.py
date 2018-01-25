@@ -239,9 +239,6 @@ class TAZ:
         assert(TAZ.WALK_ACCESS_COLUMN_DIRECTION in walk_access_cols)
         assert(TAZ.WALK_ACCESS_COLUMN_DIST      in walk_access_cols)
 
-        self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST] = \
-            self.walk_access_df[TAZ.WALK_ACCESS_COLUMN_DIST].astype(numpy.float64)
-
         # printing this before setting index
         FastTripsLogger.debug("=========== WALK ACCESS ===========\n" + str(self.walk_access_df.head()))
         FastTripsLogger.debug("As read\n"+str(self.walk_access_df.dtypes))
@@ -275,8 +272,7 @@ class TAZ:
 
         self.dap_df = gtfs.get(TAZ.INPUT_DAP_FILE)
         if not self.dap_df.empty:
-            #: DAP table. Make sure TAZ ID and lot ID are read as strings.
-            self.dap_df[TAZ.DAP_COLUMN_LOT_ID] = self.dap_df[TAZ.DAP_COLUMN_LOT_ID].astype(object)
+
 
             # verify required columns are present
             dap_cols = list(self.dap_df.columns.values)
@@ -284,17 +280,9 @@ class TAZ:
             assert(TAZ.DAP_COLUMN_LOT_LATITUDE      in dap_cols)
             assert(TAZ.DAP_COLUMN_LOT_LONGITUDE     in dap_cols)
 
-            self.dap_df[[TAZ.DAP_COLUMN_LOT_LATITUDE, TAZ.DAP_COLUMN_LOT_LONGITUDE]] = \
-                self.dap_df[[TAZ.DAP_COLUMN_LOT_LATITUDE, TAZ.DAP_COLUMN_LOT_LONGITUDE]].astype(numpy.float64)
-
-            self.dap_df[[TAZ.DAP_COLUMN_LOT_LATITUDE, TAZ.DAP_COLUMN_LOT_LONGITUDE]] = \
-                self.dap_df[[TAZ.DAP_COLUMN_LOT_LATITUDE, TAZ.DAP_COLUMN_LOT_LONGITUDE]].astype(numpy.float64)
-
             # default capacity = 0
             if TAZ.DAP_COLUMN_CAPACITY not in dap_cols:
                 self.dap_df[TAZ.DAP_COLUMN_CAPACITY] = 0
-            else:
-                self.dap_df[TAZ.DAP_COLUMN_CAPACITY] = self.dap_df[TAZ.DAP_COLUMN_CAPACITY].astype(numpy.int64)
 
             # default drop-off = True
             if TAZ.DAP_COLUMN_DROP_OFF not in dap_cols:
@@ -321,18 +309,6 @@ class TAZ:
             assert(TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME      in drive_access_cols)
             assert(TAZ.DRIVE_ACCESS_COLUMN_START_TIME       in drive_access_cols)
             assert(TAZ.DRIVE_ACCESS_COLUMN_END_TIME         in drive_access_cols)
-
-            self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ, TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]] = \
-                self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ, TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]].astype(object)
-
-            self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_COST, TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME,TAZ.DRIVE_ACCESS_COLUMN_DISTANCE]] = \
-                self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_COST, TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME, TAZ.DRIVE_ACCESS_COLUMN_DISTANCE]].astype(numpy.float64)
-
-            # drive access period start/end time: datetime version
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: Util.read_time(x))
 
             # printing this before setting index
             FastTripsLogger.debug("=========== DRIVE ACCESS ===========\n" + str(self.drive_access_df.head()))

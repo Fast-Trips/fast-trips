@@ -14,6 +14,8 @@ __license__   = """
 """
 import os, sys
 
+from functools import partial
+import pandas
 import partridge
 
 from .Assignment  import Assignment
@@ -25,7 +27,7 @@ from .Stop        import Stop
 from .TAZ         import TAZ
 from .Transfer    import Transfer
 from .Trip        import Trip
-from .Util        import Util
+from .Util        import vparse_boolean, vparse_read_time
 
 class FastTrips:
     """
@@ -126,9 +128,81 @@ class FastTrips:
 
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
+        config = partridge.config.default_config()
+        config.add_nodes_from([
+            ('drive_access_ft.txt', {
+                'converters': {
+                    'cost': partridge.parsers.vparse_numeric,
+                    'travel_time': partridge.parsers.vparse_numeric,
+                    'dist': partridge.parsers.vparse_numeric,
+                    'start_time': vparse_read_time,
+                    'end_time': vparse_read_time
+                }
+            }),
+            ('drive_access_points_ft.txt', {
+                'converters': {
+                    'lot_lan': partridge.parsers.vparse_numeric,
+                    'lot_lon': partridge.parsers.vparse_numeric,
+                    'capacity': partridge.parsers.vparse_numeric
+                }
+            }),
+            ('fare_attributes_ft.txt', {
+                'converters': {
+                    'payment_method': partridge.parsers.vparse_numeric,
+                    'price': partridge.parsers.vparse_numeric,
+                    'tranfers': partridge.parsers.vparse_numeric,
+                    'transfer_duration': partridge.parsers.vparse_numeric
+                }
+            }),
+            ('fare_periods_ft.txt', {
+               'converters': {
+                   'start_time': vparse_read_time,
+                    'end_time': vparse_read_time,
+               }
+            }),
+            ('fare_transfer_rules_ft.txt', {
+                'converters': {
+                    'transfer_fare': partridge.parsers.vparse_numeric
+                },
+                'required_columns': (
+                    'test_name'
+                )
+            }),
+            ('routes_ft.txt', {
+                'converters': {
+                    'proof_of_payment': vparse_boolean
+                }
+            }),
+            ('stops_ft.txt', {}),
+            ('transfers_ft.txt', {
+                'converters': {
+                    'dist': partridge.parsers.vparse_numeric,
+                    'elevation_gain': partridge.parsers.vparse_numeric,
+                }
+            }),
+            ('trips_ft.txt', {
+                'converters': {
+                    'seated_capacity': partridge.parsers.vparse_numeric,
+                    'standing_capacity': partridge.parsers.vparse_numeric,
+                }
+            }),
+            ('vehicles_ft.txt', {
+                'converters': {
+                    'acceleration': partridge.parsers.vparse_numeric,
+                    'deceleration': partridge.parsers.vparse_numeric,
+                    'max_speed': partridge.parsers.vparse_numeric,
+                }
+            }),
+            ('walk_access_ft.txt', {
+                'converters': {
+                    'dist': partridge.parsers.vparse_numeric
+                }
+            })
+        ])
+
         service_ids_by_date = partridge.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), view={
+        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), config=config, view={
             'trips.txt': {
               'service_id': service_ids
             },

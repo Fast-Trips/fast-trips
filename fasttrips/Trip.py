@@ -211,26 +211,12 @@ class Trip:
 
         # Read vehicles first
         self.vehicles_df = gtfs_feed.get(Trip.INPUT_VEHICLES_FILE)
-
-        if Trip.VEHICLES_COLUMN_MAXIMUM_SPEED in self.vehicles_df:
-            self.vehicles_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED] = \
-                self.vehicles_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED].astype(numpy.float64)
-        if Trip.VEHICLES_COLUMN_ACCELERATION in self.vehicles_df:
-            self.vehicles_df[Trip.VEHICLES_COLUMN_ACCELERATION] = \
-                self.vehicles_df[Trip.VEHICLES_COLUMN_ACCELERATION].astype(numpy.float64)
-        if Trip.VEHICLES_COLUMN_DECELERATION in self.vehicles_df:
-            self.vehicles_df[Trip.VEHICLES_COLUMN_DECELERATION] = \
-                self.vehicles_df[Trip.VEHICLES_COLUMN_DECELERATION].astype(numpy.float64)
-
         trips_ft_df = gtfs_feed.get(Trip.INPUT_TRIPS_FILE)
 
         # verify the required columns are present
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME in self.vehicles_df)
 
         if ({Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY}.issubset(self.vehicles_df)):
-            self.vehicles_df[[Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY]] = \
-                self.vehicles_df[[Trip.VEHICLES_COLUMN_SEATED_CAPACITY, Trip.VEHICLES_COLUMN_STANDING_CAPACITY]].astype(
-                    numpy.int64)
             self.vehicles_df[Trip.VEHICLES_COLUMN_TOTAL_CAPACITY] = \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_SEATED_CAPACITY] + \
                 self.vehicles_df[Trip.VEHICLES_COLUMN_STANDING_CAPACITY]

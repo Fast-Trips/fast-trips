@@ -404,3 +404,12 @@ class Util:
         z = x.copy()
         z.update(y)
         return z
+
+def parse_boolean(val):
+    return val in ['true', 'True', 'TRUE', 1]
+
+#copying from the partridge library. Vectorize is a convenience
+#function, and it doesn't really vectorize (just emulates vector
+#with a for loop under the hood)
+vparse_boolean = numpy.vectorize(parse_boolean)
+vparse_read_time = numpy.vectorize(Util.read_time)
