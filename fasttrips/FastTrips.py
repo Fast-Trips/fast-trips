@@ -130,72 +130,68 @@ class FastTrips:
         FastTripsLogger.info("Reading GTFS schedule")
         config = partridge.config.default_config()
         config.add_nodes_from([
-            ('drive_access_ft.txt', {
+            (TAZ.INPUT_DRIVE_ACCESS_FILE, {
                 'converters': {
-                    'cost': partridge.parsers.vparse_numeric,
-                    'travel_time': partridge.parsers.vparse_numeric,
-                    'dist': partridge.parsers.vparse_numeric,
-                    'start_time': vparse_read_time,
-                    'end_time': vparse_read_time
+                    TAZ.DRIVE_ACCESS_COLUMN_COST: partridge.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: partridge.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_START_TIME: vparse_read_time,
+                    TAZ.DRIVE_ACCESS_COLUMN_END_TIME: vparse_read_time
                 }
             }),
-            ('drive_access_points_ft.txt', {
+            (TAZ.INPUT_DAP_FILE, {
                 'converters': {
-                    'lot_lan': partridge.parsers.vparse_numeric,
-                    'lot_lon': partridge.parsers.vparse_numeric,
-                    'capacity': partridge.parsers.vparse_numeric
+                    TAZ.DAP_COLUMN_LOT_LATITUDE: partridge.parsers.vparse_numeric,
+                    TAZ.DAP_COLUMN_LOT_LONGITUDE: partridge.parsers.vparse_numeric,
+                    TAZ.DAP_COLUMN_CAPACITY: partridge.parsers.vparse_numeric
                 }
             }),
-            ('fare_attributes_ft.txt', {
+            (Route.INPUT_FARE_ATTRIBUTES_FILE, {
                 'converters': {
-                    'payment_method': partridge.parsers.vparse_numeric,
-                    'price': partridge.parsers.vparse_numeric,
-                    'tranfers': partridge.parsers.vparse_numeric,
-                    'transfer_duration': partridge.parsers.vparse_numeric
+                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: partridge.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_PRICE: partridge.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFERS: partridge.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: partridge.parsers.vparse_numeric
                 }
             }),
-            ('fare_periods_ft.txt', {
+            (Route.INPUT_FARE_PERIODS_FILE, {
                'converters': {
-                   'start_time': vparse_read_time,
-                    'end_time': vparse_read_time,
+                    Route.FARE_RULES_COLUMN_START_TIME: vparse_read_time,
+                    Route.FARE_RULES_COLUMN_END_TIME: vparse_read_time,
                }
             }),
-            ('fare_transfer_rules_ft.txt', {
+            (Route.INPUT_FARE_TRANSFER_RULES_FILE, {
                 'converters': {
-                    'transfer_fare': partridge.parsers.vparse_numeric
-                },
-                'required_columns': (
-                    'test_name'
-                )
-            }),
-            ('routes_ft.txt', {
-                'converters': {
-                    'proof_of_payment': vparse_boolean
+                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: partridge.parsers.vparse_numeric
                 }
             }),
-            ('stops_ft.txt', {}),
-            ('transfers_ft.txt', {
+            (Route.INPUT_ROUTES_FILE, {
                 'converters': {
-                    'dist': partridge.parsers.vparse_numeric,
-                    'elevation_gain': partridge.parsers.vparse_numeric,
+                    Route.ROUTES_COLUMN_PROOF_OF_PAYMENT: vparse_boolean
                 }
             }),
-            ('trips_ft.txt', {
+            (Stop.INPUT_STOPS_FILE, {}),
+            (Transfer.INPUT_TRANSFERS_FILE, {
                 'converters': {
-                    'seated_capacity': partridge.parsers.vparse_numeric,
-                    'standing_capacity': partridge.parsers.vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: partridge.parsers.vparse_numeric,
                 }
             }),
-            ('vehicles_ft.txt', {
+            (Trip.INPUT_TRIPS_FILE, {
+                'converters': {}
+            }),
+            (Trip.INPUT_VEHICLES_FILE, {
                 'converters': {
-                    'acceleration': partridge.parsers.vparse_numeric,
-                    'deceleration': partridge.parsers.vparse_numeric,
-                    'max_speed': partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_ACCELERATION: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_DECELERATION: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: partridge.parsers.vparse_numeric,
                 }
             }),
-            ('walk_access_ft.txt', {
+            (TAZ.INPUT_WALK_ACCESS_FILE, {
                 'converters': {
-                    'dist': partridge.parsers.vparse_numeric
+                    TAZ.WALK_ACCESS_COLUMN_DIST: partridge.parsers.vparse_numeric
                 }
             })
         ])
