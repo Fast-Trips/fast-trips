@@ -27,7 +27,7 @@ from .Stop        import Stop
 from .TAZ         import TAZ
 from .Transfer    import Transfer
 from .Trip        import Trip
-from .Util        import vparse_boolean, vparse_read_time
+from .Util        import Util
 
 class FastTrips:
     """
@@ -128,77 +128,11 @@ class FastTrips:
 
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
-        config = partridge.config.default_config()
-        config.add_nodes_from([
-            (TAZ.INPUT_DRIVE_ACCESS_FILE, {
-                'converters': {
-                    TAZ.DRIVE_ACCESS_COLUMN_COST: partridge.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: partridge.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_START_TIME: vparse_read_time,
-                    TAZ.DRIVE_ACCESS_COLUMN_END_TIME: vparse_read_time
-                }
-            }),
-            (TAZ.INPUT_DAP_FILE, {
-                'converters': {
-                    TAZ.DAP_COLUMN_LOT_LATITUDE: partridge.parsers.vparse_numeric,
-                    TAZ.DAP_COLUMN_LOT_LONGITUDE: partridge.parsers.vparse_numeric,
-                    TAZ.DAP_COLUMN_CAPACITY: partridge.parsers.vparse_numeric
-                }
-            }),
-            (Route.INPUT_FARE_ATTRIBUTES_FILE, {
-                'converters': {
-                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: partridge.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_PRICE: partridge.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_TRANSFERS: partridge.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: partridge.parsers.vparse_numeric
-                }
-            }),
-            (Route.INPUT_FARE_PERIODS_FILE, {
-               'converters': {
-                    Route.FARE_RULES_COLUMN_START_TIME: vparse_read_time,
-                    Route.FARE_RULES_COLUMN_END_TIME: vparse_read_time,
-               }
-            }),
-            (Route.INPUT_FARE_TRANSFER_RULES_FILE, {
-                'converters': {
-                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: partridge.parsers.vparse_numeric
-                }
-            }),
-            (Route.INPUT_ROUTES_FILE, {
-                'converters': {
-                    Route.ROUTES_COLUMN_PROOF_OF_PAYMENT: vparse_boolean
-                }
-            }),
-            (Stop.INPUT_STOPS_FILE, {}),
-            (Transfer.INPUT_TRANSFERS_FILE, {
-                'converters': {
-                    Transfer.TRANSFERS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
-                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: partridge.parsers.vparse_numeric,
-                }
-            }),
-            (Trip.INPUT_TRIPS_FILE, {
-                'converters': {}
-            }),
-            (Trip.INPUT_VEHICLES_FILE, {
-                'converters': {
-                    Trip.VEHICLES_COLUMN_ACCELERATION: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_DECELERATION: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: partridge.parsers.vparse_numeric,
-                }
-            }),
-            (TAZ.INPUT_WALK_ACCESS_FILE, {
-                'converters': {
-                    TAZ.WALK_ACCESS_COLUMN_DIST: partridge.parsers.vparse_numeric
-                }
-            })
-        ])
 
         service_ids_by_date = partridge.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE), config=config, view={
+        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
+                                   config=Util.get_fast_trips_config(), view={
             'trips.txt': {
               'service_id': service_ids
             },

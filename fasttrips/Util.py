@@ -17,9 +17,11 @@ import csv, datetime, logging, os
 
 import numpy
 import pandas
+import partridge
 
 from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
+
 
 class Util:
     """
@@ -221,6 +223,10 @@ class Util:
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
 
     @staticmethod
+    def read_end_time(x):
+        return Util.read_time(x, True)
+
+    @staticmethod
     def parse_minutes_to_time(minutes):
         from .Assignment import Assignment
         elapsed_time = datetime.timedelta(minutes=minutes)
@@ -405,11 +411,92 @@ class Util:
         z.update(y)
         return z
 
-def parse_boolean(val):
-    return val in ['true', 'True', 'TRUE', 1]
+    @staticmethod
+    def parse_boolean(val):
+        return val in ['true', 'True', 'TRUE', 1]
 
-#copying from the partridge library. Vectorize is a convenience
-#function, and it doesn't really vectorize (just emulates vector
-#with a for loop under the hood)
-vparse_boolean = numpy.vectorize(parse_boolean)
-vparse_read_time = numpy.vectorize(Util.read_time)
+
+    @staticmethod
+    def get_fast_trips_config():
+        """
+        Adds additional nodes to the Partridge graph to
+        support Fast Trip extension files.
+
+        :return: Partridge configuration customized for
+                 Fast-Trips (_ft) loads and type casting.
+        """
+        from .Route import Route
+        from .Stop import Stop
+        from .TAZ import TAZ
+        from .Transfer import Transfer
+        from .Trip import Trip
+
+        config = partridge.config.default_config()
+        config.add_nodes_from([
+            (TAZ.INPUT_DRIVE_ACCESS_FILE, {
+                'converters': {
+                    TAZ.DRIVE_ACCESS_COLUMN_COST: partridge.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: partridge.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_START_TIME: numpy.vectorize(Util.read_time),
+                    TAZ.DRIVE_ACCESS_COLUMN_END_TIME: numpy.vectorize(Util.read_end_time)
+                }
+            }),
+            (TAZ.INPUT_DAP_FILE, {
+                'converters': {
+                    TAZ.DAP_COLUMN_LOT_LATITUDE: partridge.parsers.vparse_numeric,
+                    TAZ.DAP_COLUMN_LOT_LONGITUDE: partridge.parsers.vparse_numeric,
+                    TAZ.DAP_COLUMN_CAPACITY: partridge.parsers.vparse_numeric
+                }
+            }),
+            (Route.INPUT_FARE_ATTRIBUTES_FILE, {
+                'converters': {
+                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: partridge.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_PRICE: partridge.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFERS: partridge.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: partridge.parsers.vparse_numeric
+                }
+            }),
+            (Route.INPUT_FARE_PERIODS_FILE, {
+                'converters': {
+                    Route.FARE_RULES_COLUMN_START_TIME: numpy.vectorize(Util.read_time),
+                    Route.FARE_RULES_COLUMN_END_TIME: numpy.vectorize(Util.read_end_time),
+                }
+            }),
+            (Route.INPUT_FARE_TRANSFER_RULES_FILE, {
+                'converters': {
+                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: partridge.parsers.vparse_numeric
+                }
+            }),
+            (Route.INPUT_ROUTES_FILE, {
+                'converters': {
+                    Route.ROUTES_COLUMN_PROOF_OF_PAYMENT: numpy.vectorize(Util.parse_boolean)
+                }
+            }),
+            (Stop.INPUT_STOPS_FILE, {}),
+            (Transfer.INPUT_TRANSFERS_FILE, {
+                'converters': {
+                    Transfer.TRANSFERS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: partridge.parsers.vparse_numeric,
+                }
+            }),
+            (Trip.INPUT_TRIPS_FILE, {
+                'converters': {}
+            }),
+            (Trip.INPUT_VEHICLES_FILE, {
+                'converters': {
+                    Trip.VEHICLES_COLUMN_ACCELERATION: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_DECELERATION: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: partridge.parsers.vparse_numeric,
+                }
+            }),
+            (TAZ.INPUT_WALK_ACCESS_FILE, {
+                'converters': {
+                    TAZ.WALK_ACCESS_COLUMN_DIST: partridge.parsers.vparse_numeric
+                }
+            })
+        ])
+
+        return config
