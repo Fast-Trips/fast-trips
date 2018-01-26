@@ -16,8 +16,13 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+import argparse
+import datetime
+import os
+import sys
+
 import fasttrips
-import argparse, os, pandas, re, sys, datetime
+
 
 def run_setup(input_network_dir,
               input_demand_dir,

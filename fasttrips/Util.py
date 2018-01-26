@@ -12,12 +12,14 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+import csv
+import datetime
+import logging
+import os
 
-import csv, datetime, logging, os
-
-import numpy
-import pandas
-import partridge
+import numpy as np
+import pandas as pd
+import partridge as ptg
 
 from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
@@ -96,7 +98,7 @@ class Util:
         """
         input_cols = list(input_df.columns.values)
         # add the new id column
-        return_df = pandas.merge(left=input_df, right=mapping_df,
+        return_df = pd.merge(left=input_df, right=mapping_df,
                                  how='left',
                                  left_on=id_colname,
                                  right_on=mapping_id_colname,
@@ -109,21 +111,21 @@ class Util:
         mapping_newid_colname_chk = mapping_id_colname + "_mapping" if mapping_newid_colname in input_cols else mapping_newid_colname
 
         # Make sure all ids were mapped to numbers.  If not warn or error
-        if pandas.isnull(return_df[mapping_newid_colname_chk]).sum() != pandas.isnull(input_df[id_colname]).sum():
+        if pd.isnull(return_df[mapping_newid_colname_chk]).sum() != pd.isnull(input_df[id_colname]).sum():
 
             msg_level = logging.CRITICAL
             if warn: msg_level = logging.WARN
 
             if warn_msg: FastTripsLogger.log(msg_level, warn_msg)
             FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
-            # FastTripsLogger.log(msg_level,"pandas.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.log(msg_level,"\n%s\n" % str(return_df.loc[pandas.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates()))
-            # FastTripsLogger.log(msg_level,"pandas.isnull(input_df[%s]).sum() = %d" % (id_colname, pandas.isnull(input_df[id_colname]).sum()))
+            # FastTripsLogger.log(msg_level,"pd.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pd.isnull(return_df[mapping_newid_colname_chk]).sum()))
+            FastTripsLogger.log(msg_level,"\n%s\n" % str(return_df.loc[pd.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates()))
+            # FastTripsLogger.log(msg_level,"pd.isnull(input_df[%s]).sum() = %d" % (id_colname, pd.isnull(input_df[id_colname]).sum()))
 
 
             if drop_failures:
                 # remove them
-                return_df = return_df.loc[pandas.notnull(return_df[mapping_newid_colname_chk])]
+                return_df = return_df.loc[pd.notnull(return_df[mapping_newid_colname_chk])]
                 # make it an int
                 return_df[mapping_newid_colname_chk] = return_df[mapping_newid_colname_chk].astype(int)
 
@@ -158,7 +160,7 @@ class Util:
         for colname in list(input_df.columns.values):
             if input_df.dtypes[colname] != 'object': continue
 
-            null_count = pandas.isnull(input_df[colname]).sum()
+            null_count = pd.isnull(input_df[colname]).sum()
             if null_count == len(input_df):
                 FastTripsLogger.debug("Dropping null column [%s]" % colname)
                 input_df.drop(colname, axis=1, inplace=inplace)
@@ -170,7 +172,7 @@ class Util:
         """
         Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM:SS`
         """
-        return pandas.to_datetime(x).strftime('%Y-%m-%d %H:%M:%S.%f') if pandas.notnull(x) else ""
+        return pd.to_datetime(x).strftime('%Y-%m-%d %H:%M:%S.%f') if pd.notnull(x) else ""
 
     @staticmethod
     def pretty(df):
@@ -190,16 +192,16 @@ class Util:
         Formatter to convert :py:class:`numpy.datetime64` to minutes after midnight
         (with two decimal places)
         """
-        return '%.2f' % (pandas.to_datetime(x).hour*60.0 + \
-                         pandas.to_datetime(x).minute + \
-                         pandas.to_datetime(x).second/60.0)
+        return '%.2f' % (pd.to_datetime(x).hour*60.0 + \
+                         pd.to_datetime(x).minute + \
+                         pd.to_datetime(x).second/60.0)
 
     @staticmethod
     def timedelta_formatter(x):
         """
         Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
         """
-        seconds = x/numpy.timedelta64(1,'s')
+        seconds = x/np.timedelta64(1,'s')
         minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
@@ -211,7 +213,7 @@ class Util:
             if x=='' or x.lower()=='default':
                 x = '24:00:00' if end_of_day else '00:00:00'
         except:
-            if pandas.isnull(x):
+            if pd.isnull(x):
                 x = '24:00:00' if end_of_day else '00:00:00'
         time_split = x.split(':')
         hour = int(time_split[0])
@@ -296,11 +298,11 @@ class Util:
                 units_str   = Util.TIMEDELTA_COLUMNS_TO_UNITS[old_colname]
                 new_colname = "%s %s" % (old_colname, units_str)
                 if units_str == "milliseconds":
-                    units = numpy.timedelta64(1,'ms')
+                    units = np.timedelta64(1,'ms')
                 elif units_str == "min":
-                    units = numpy.timedelta64(1,'m')
+                    units = np.timedelta64(1,'m')
                 elif units_str == "seconds":
-                    units = numpy.timedelta64(1,'s')
+                    units = np.timedelta64(1,'s')
                 else:
                     raise
 
@@ -344,11 +346,11 @@ class Util:
         radius = 3963.190592 # mi
 
         # assume these aren't in here
-        dataframe["dist_lat" ] = numpy.radians(dataframe[destination_lat]-dataframe[origin_lat])
-        dataframe["dist_lon" ] = numpy.radians(dataframe[destination_lon]-dataframe[origin_lon])
-        dataframe["dist_hava"] = (numpy.sin(dataframe["dist_lat"]/2) * numpy.sin(dataframe["dist_lat"]/2)) + \
-                                 (numpy.cos(numpy.radians(dataframe[origin_lat])) * numpy.cos(numpy.radians(dataframe[destination_lat])) * numpy.sin(dataframe["dist_lon"]/2.0) * numpy.sin(dataframe["dist_lon"]/2.0))
-        dataframe["dist_havc"] = 2.0*numpy.arctan2(numpy.sqrt(dataframe["dist_hava"]), numpy.sqrt(1.0-dataframe["dist_hava"]))
+        dataframe["dist_lat" ] = np.radians(dataframe[destination_lat]-dataframe[origin_lat])
+        dataframe["dist_lon" ] = np.radians(dataframe[destination_lon]-dataframe[origin_lon])
+        dataframe["dist_hava"] = (np.sin(dataframe["dist_lat"]/2) * np.sin(dataframe["dist_lat"]/2)) + \
+                                 (np.cos(np.radians(dataframe[origin_lat])) * np.cos(np.radians(dataframe[destination_lat])) * np.sin(dataframe["dist_lon"]/2.0) * np.sin(dataframe["dist_lon"]/2.0))
+        dataframe["dist_havc"] = 2.0*np.arctan2(np.sqrt(dataframe["dist_hava"]), np.sqrt(1.0-dataframe["dist_hava"]))
         dataframe[distance_colname] = radius * dataframe["dist_havc"]
 
         # FastTripsLogger.debug("calculate_distance_miles\n%s", dataframe.to_string())
@@ -431,53 +433,53 @@ class Util:
         from .Transfer import Transfer
         from .Trip import Trip
 
-        config = partridge.config.default_config()
+        config = ptg.config.default_config()
         config.add_nodes_from([
             (TAZ.INPUT_DRIVE_ACCESS_FILE, {
                 'converters': {
-                    TAZ.DRIVE_ACCESS_COLUMN_COST: partridge.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: partridge.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_START_TIME: numpy.vectorize(Util.read_time),
-                    TAZ.DRIVE_ACCESS_COLUMN_END_TIME: numpy.vectorize(Util.read_end_time)
+                    TAZ.DRIVE_ACCESS_COLUMN_COST: ptg.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: ptg.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: ptg.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_START_TIME: np.vectorize(Util.read_time),
+                    TAZ.DRIVE_ACCESS_COLUMN_END_TIME: np.vectorize(Util.read_end_time)
                 }
             }),
             (TAZ.INPUT_DAP_FILE, {
                 'converters': {
-                    TAZ.DAP_COLUMN_LOT_LATITUDE: partridge.parsers.vparse_numeric,
-                    TAZ.DAP_COLUMN_LOT_LONGITUDE: partridge.parsers.vparse_numeric,
-                    TAZ.DAP_COLUMN_CAPACITY: partridge.parsers.vparse_numeric
+                    TAZ.DAP_COLUMN_LOT_LATITUDE: ptg.parsers.vparse_numeric,
+                    TAZ.DAP_COLUMN_LOT_LONGITUDE: ptg.parsers.vparse_numeric,
+                    TAZ.DAP_COLUMN_CAPACITY: ptg.parsers.vparse_numeric
                 }
             }),
             (Route.INPUT_FARE_ATTRIBUTES_FILE, {
                 'converters': {
-                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: partridge.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_PRICE: partridge.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_TRANSFERS: partridge.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: partridge.parsers.vparse_numeric
+                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: ptg.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_PRICE: ptg.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFERS: ptg.parsers.vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: ptg.parsers.vparse_numeric
                 }
             }),
             (Route.INPUT_FARE_PERIODS_FILE, {
                 'converters': {
-                    Route.FARE_RULES_COLUMN_START_TIME: numpy.vectorize(Util.read_time),
-                    Route.FARE_RULES_COLUMN_END_TIME: numpy.vectorize(Util.read_end_time),
+                    Route.FARE_RULES_COLUMN_START_TIME: np.vectorize(Util.read_time),
+                    Route.FARE_RULES_COLUMN_END_TIME: np.vectorize(Util.read_end_time),
                 }
             }),
             (Route.INPUT_FARE_TRANSFER_RULES_FILE, {
                 'converters': {
-                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: partridge.parsers.vparse_numeric
+                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: ptg.parsers.vparse_numeric
                 }
             }),
             (Route.INPUT_ROUTES_FILE, {
                 'converters': {
-                    Route.ROUTES_COLUMN_PROOF_OF_PAYMENT: numpy.vectorize(Util.parse_boolean)
+                    Route.ROUTES_COLUMN_PROOF_OF_PAYMENT: np.vectorize(Util.parse_boolean)
                 }
             }),
             (Stop.INPUT_STOPS_FILE, {}),
             (Transfer.INPUT_TRANSFERS_FILE, {
                 'converters': {
-                    Transfer.TRANSFERS_COLUMN_DISTANCE: partridge.parsers.vparse_numeric,
-                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: partridge.parsers.vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_DISTANCE: ptg.parsers.vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: ptg.parsers.vparse_numeric,
                 }
             }),
             (Trip.INPUT_TRIPS_FILE, {
@@ -485,16 +487,16 @@ class Util:
             }),
             (Trip.INPUT_VEHICLES_FILE, {
                 'converters': {
-                    Trip.VEHICLES_COLUMN_ACCELERATION: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_DECELERATION: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: partridge.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: partridge.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_ACCELERATION: ptg.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_DECELERATION: ptg.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: ptg.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: ptg.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: ptg.parsers.vparse_numeric,
                 }
             }),
             (TAZ.INPUT_WALK_ACCESS_FILE, {
                 'converters': {
-                    TAZ.WALK_ACCESS_COLUMN_DIST: partridge.parsers.vparse_numeric
+                    TAZ.WALK_ACCESS_COLUMN_DIST: ptg.parsers.vparse_numeric
                 }
             })
         ])

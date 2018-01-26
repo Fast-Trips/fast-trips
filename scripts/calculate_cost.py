@@ -5,6 +5,7 @@ import pandas as pd
 
 from fasttrips import PathSet, Run
 
+
 BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
 TEST_FOLDER         = 'calculate_cost'
 

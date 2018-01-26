@@ -12,11 +12,10 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os, sys
+import os
+import sys
 
-from functools import partial
-import pandas
-import partridge
+import partridge as ptg
 
 from .Assignment  import Assignment
 from .Logger      import FastTripsLogger, setupLogging
@@ -28,6 +27,7 @@ from .TAZ         import TAZ
 from .Transfer    import Transfer
 from .Trip        import Trip
 from .Util        import Util
+
 
 class FastTrips:
     """
@@ -129,9 +129,9 @@ class FastTrips:
         # Read the gtfs files first
         FastTripsLogger.info("Reading GTFS schedule")
 
-        service_ids_by_date = partridge.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
+        service_ids_by_date =ptg.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = partridge.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
+        gtfs_feed = ptg.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
                                    config=Util.get_fast_trips_config(), view={
             'trips.txt': {
               'service_id': service_ids

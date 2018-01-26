@@ -3,7 +3,7 @@ import os
 import pytest
 import zipfile
 
-import partridge
+import partridge as ptg
 
 from fasttrips.Util import Util
 
@@ -39,9 +39,9 @@ def scenario_date(scenario):
 def gtfs_feed(zip_file, scenario_date):
     from fasttrips.Assignment import Assignment
     Assignment.NETWORK_BUILD_DATE = scenario_date
-    service_ids_by_date = partridge.read_service_ids_by_date(zip_file)
+    service_ids_by_date = ptg.read_service_ids_by_date(zip_file)
     service_ids = service_ids_by_date[scenario_date]
-    feed = partridge.feed(os.path.join(zip_file),
+    feed = ptg.feed(os.path.join(zip_file),
                           config=Util.get_fast_trips_config(), view={
         'trips.txt': {
             'service_id': service_ids
