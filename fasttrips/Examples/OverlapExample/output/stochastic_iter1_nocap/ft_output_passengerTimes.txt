@@ -1,2 +1,0 @@
-person_id	person_trip_id	originTaz	destinationTaz	startTime	endTime	arrivalTimes	boardingTimes	alightingTimes
-frogger	0	ZO	ZD	15:01:36	15:16:27	15:02:00	15:02:00	15:09:00

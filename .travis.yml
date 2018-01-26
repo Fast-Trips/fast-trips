@@ -20,8 +20,8 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy pandas psutil pytest
+  - conda create -q -y -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pandas=0.20.3 psutil pytest
   - source activate test-environment
-  - pip install transitfeed
+  - pip install -r requirements.txt
   - pip install .
-script: nosetests
+script: pytest

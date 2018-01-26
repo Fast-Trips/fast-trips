@@ -1,0 +1,4 @@
+route_id,mode,proof_of_payment
+blue,local_bus,FALSE
+green,local_bus,FALSE
+purple,local_bus,FALSE

@@ -15,12 +15,12 @@ __license__   = """
 import collections,datetime,os,sys
 import numpy,pandas
 
-from .Error    import NetworkInputError
-from .Logger   import FastTripsLogger
-from .Route    import Route
-from .Stop     import Stop
-from .Transfer import Transfer
-from .Util     import Util
+from .Error      import NetworkInputError
+from .Logger     import FastTripsLogger
+from .Route      import Route
+from .Stop       import Stop
+from .Transfer   import Transfer
+from .Util       import Util
 
 class TAZ:
     """
@@ -211,10 +211,12 @@ class TAZ:
     #: initialize_fasttrips_extension() because of the strings involved, I think.
     OUTPUT_ACCESS_EGRESS_FILE               = "ft_intermediate_access_egress.txt"
 
-    def __init__(self, input_dir, output_dir, today, stops, transfers, routes):
+    def __init__(self, output_dir, gtfs, today, stops, transfers, routes):
         """
-        Constructor.  Reads the TAZ data from the input files in *input_dir*.
+        Constructor.  Reads the TAZ data from the input files in *input_archive*.
         """
+        from .Assignment import Assignment
+
         self.access_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
                                                       TAZ.MODE_COLUMN_MODE_NUM:TAZ.ACCESS_MODE_NUMS })
         self.access_modes_df[TAZ.MODE_COLUMN_MODE] = self.access_modes_df[TAZ.MODE_COLUMN_MODE]\
@@ -228,10 +230,8 @@ class TAZ:
         routes.add_access_egress_modes(self.access_modes_df, self.egress_modes_df)
 
         #: Walk access links table. Make sure TAZ ID and stop ID are read as strings.
-        self.walk_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_WALK_ACCESS_FILE),
-                                              skipinitialspace=True,
-                                              dtype={TAZ.WALK_ACCESS_COLUMN_TAZ :object,
-                                                     TAZ.WALK_ACCESS_COLUMN_STOP:object})
+        self.walk_access_df = gtfs.get(TAZ.INPUT_WALK_ACCESS_FILE)
+
         # verify required columns are present
         walk_access_cols = list(self.walk_access_df.columns.values)
         assert(TAZ.WALK_ACCESS_COLUMN_TAZ       in walk_access_cols)
@@ -270,11 +270,10 @@ class TAZ:
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.walk_access_df), "walk access", TAZ.INPUT_WALK_ACCESS_FILE))
 
-        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DAP_FILE)):
-            #: DAP table. Make sure TAZ ID and lot ID are read as strings.
-            self.dap_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DAP_FILE),
-                                          skipinitialspace=True,
-                                          dtype={TAZ.DAP_COLUMN_LOT_ID:object})
+        self.dap_df = gtfs.get(TAZ.INPUT_DAP_FILE)
+        if not self.dap_df.empty:
+
+
             # verify required columns are present
             dap_cols = list(self.dap_df.columns.values)
             assert(TAZ.DAP_COLUMN_LOT_ID            in dap_cols)
@@ -284,6 +283,7 @@ class TAZ:
             # default capacity = 0
             if TAZ.DAP_COLUMN_CAPACITY not in dap_cols:
                 self.dap_df[TAZ.DAP_COLUMN_CAPACITY] = 0
+
             # default drop-off = True
             if TAZ.DAP_COLUMN_DROP_OFF not in dap_cols:
                 self.dap_df[TAZ.DAP_COLUMN_DROP_OFF] = True
@@ -297,12 +297,8 @@ class TAZ:
                              (len(self.dap_df), "DAPs", TAZ.INPUT_DAP_FILE))
 
         #: Drive access links table. Make sure TAZ ID and lot ID are read as strings.
-        if os.path.exists(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE)):
-            self.drive_access_df = pandas.read_csv(os.path.join(input_dir, TAZ.INPUT_DRIVE_ACCESS_FILE),
-                                                   skipinitialspace=True,
-                                                   dtype={TAZ.DRIVE_ACCESS_COLUMN_TAZ   :object,
-                                                          TAZ.DRIVE_ACCESS_COLUMN_LOT_ID:object})
-
+        self.drive_access_df = gtfs.get(TAZ.INPUT_DRIVE_ACCESS_FILE)
+        if not self.drive_access_df.empty:
             # verify required columns are present
             drive_access_cols = list(self.drive_access_df.columns.values)
             assert(TAZ.DRIVE_ACCESS_COLUMN_TAZ              in drive_access_cols)
@@ -327,19 +323,13 @@ class TAZ:
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME_MIN] = \
                 self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME]
 
-            # drive access period start/end time: datetime version
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
-            self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] = \
-                self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME].map(lambda x: Util.read_time(x))
-
             # if there are any that go past midnight, duplicate
-            sim_day_end = Util.SIMULATION_DAY_START + datetime.timedelta(days=1)
+            sim_day_end = Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(days=1)
             dupes = self.drive_access_df.loc[self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, :].copy()
             if len(dupes) > 0:
                 # e.g. 18:00 - 27:00
                 # dupe: 00:00 - 3:00
-                dupes.loc[ dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = Util.SIMULATION_DAY_START
+                dupes.loc[ dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_START_TIME] = Assignment.NETWORK_BUILD_DATE_START_TIME
                 dupes.loc[ dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_END_TIME  ] = dupes[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - datetime.timedelta(days=1)
                 # orig: 18:00 - 24:00
                 self.drive_access_df.loc[ self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] > sim_day_end, TAZ.DRIVE_ACCESS_COLUMN_END_TIME ] = sim_day_end
@@ -349,9 +339,9 @@ class TAZ:
 
             # drive access period start/end time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
-                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
-                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
 
 
             # convert time column from number to timedelta

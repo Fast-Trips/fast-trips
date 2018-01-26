@@ -852,7 +852,7 @@ class PathSet:
         # drop links that are irrelevant based on departure time for access links, or arrival time for egress links
         cost_accegr_df["check_time"] = cost_accegr_df[Assignment.SIM_COL_PAX_A_TIME]  # departure time for access
         cost_accegr_df.loc[ cost_accegr_df[TAZ.MODE_COLUMN_MODE_NUM].isin(TAZ.EGRESS_MODE_NUMS), "check_time" ] = cost_accegr_df[Assignment.SIM_COL_PAX_B_TIME] # arrival time for egress
-        cost_accegr_df["check_time"] = (cost_accegr_df["check_time"] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+        cost_accegr_df["check_time"] = (cost_accegr_df["check_time"] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
 
         # it's only drive links we need to check
         cost_accegr_df["to_drop"]    = False

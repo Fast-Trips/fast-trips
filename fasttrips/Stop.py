@@ -13,6 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import collections,datetime,os,sys
+
 import pandas
 
 from .Error import NetworkInputError
@@ -71,46 +72,31 @@ class Stop:
     #: File with stop ID, stop ID number correspondence
     OUTPUT_STOP_ID_NUM_FILE                   = 'ft_intermediate_stop_id.txt'
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today):
+    def __init__(self, input_archive, output_dir, gtfs, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips stops data from the input files in *input_dir*.
+        fast-trips stops data from the input files in *input_archive*.
         """
         # keep this for later
         self.output_dir       = output_dir
 
-        # Combine all gtfs Stop objects to a single pandas DataFrame
-        stop_dicts = []
-        for gtfs_stop in gtfs_schedule.GetStopList():
-            for gtfs_trip in gtfs_stop.GetTrips():
-                if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today):
-                    stop_dict = {}
-                    for fieldname in gtfs_stop._FIELD_NAMES:
-                        if fieldname in gtfs_stop.__dict__:
-                            stop_dict[fieldname] = gtfs_stop.__dict__[fieldname]
-                    stop_dicts.append(stop_dict)
-                    break
-
-        self.stops_df = pandas.DataFrame(data=stop_dicts)
+        self.stops_df = gtfs.stops
 
         FastTripsLogger.info("Read %7d %15s from %25d %25s" %
-                             (len(self.stops_df), 'date valid stop', len(gtfs_schedule.stops), 'total stops'))
+                             (len(self.stops_df), 'date valid stop', len(gtfs.stops), 'total stops'))
 
         # Read the fast-trips supplemental stops data file. Make sure stop ID is read as a string.
-        if os.path.exists(os.path.join(input_dir, Stop.INPUT_STOPS_FILE)):
-            stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE),
-                                          skipinitialspace=True,
-                                          dtype={Stop.STOPS_COLUMN_STOP_ID:object})
-            # verify required columns are present
-            stops_ft_cols = list(stops_ft_df.columns.values)
-            assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
+        stops_ft_df = gtfs.get(Stop.INPUT_STOPS_FILE)
+        assert(len(stops_ft_df) > 0)
 
-            # if more than one column, join to the stops dataframe
-            if len(stops_ft_cols) > 1:
-                self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
-                                             how='left',
-                                             on=Stop.STOPS_COLUMN_STOP_ID)
+        # verify required columns are present
+        stops_ft_cols = list(stops_ft_df.columns.values)
+        assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
 
+        # if more than one column, join to the stops dataframe
+        if len(stops_ft_cols) > 1:
+            self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
+                                         how='left', on=Stop.STOPS_COLUMN_STOP_ID)
 
         # Stop IDs are strings. Create a unique numeric stop ID.
         self.stop_id_df = Util.add_numeric_column(self.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],

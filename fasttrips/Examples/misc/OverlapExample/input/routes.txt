@@ -1,0 +1,3 @@
+route_id,route_short_name,route_long_name,route_type
+Bus,Bus,Local Bus,3
+LR,LightRail,Light Rail,0

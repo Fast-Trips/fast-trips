@@ -1,0 +1,5 @@
+route_id,route_short_name,route_long_name,route_type
+A,Bus_A_Loc,Local Bus - A,3
+B,Bus_B_Exp,Express Bus- B,3
+C,Rail_C,Rail - C Line,2
+D,Shuttle,Local Shuttle,3

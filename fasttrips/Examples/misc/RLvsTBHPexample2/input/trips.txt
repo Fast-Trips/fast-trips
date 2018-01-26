@@ -1,0 +1,4 @@
+trip_id,route_id,service_id,direction_id
+blue_t,blue,TNT,1
+green_t,green,TNT,1
+purple_t,purple,TNT,1

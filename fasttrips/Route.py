@@ -13,6 +13,7 @@ __license__   = """
     limitations under the License.
 """
 import datetime, os
+
 import numpy,pandas
 
 from .Error  import NetworkInputError,NotImplementedError,UnexpectedError
@@ -153,35 +154,21 @@ class Route(object):
     #: File with mode, mode number correspondence
     OUTPUT_MODE_NUM_FILE                        = "ft_intermediate_supply_mode_id.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops):
+    def __init__(self, input_archive, output_dir, gtfs, today, stops):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips routes data from the input file in *input_dir*.
+        fast-trips routes data from the input file in *input_archive*.
         """
         self.output_dir         = output_dir
 
-        # Combine all gtfs Route objects to a single pandas DataFrame
-        route_dicts = []
-        for gtfs_route in gtfs_schedule.GetRouteList():
-            for gtfs_trip in gtfs_route.trips:
-                if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today):
-                    route_dict = {}
-                    for fieldname in gtfs_route._FIELD_NAMES:
-                        if fieldname in gtfs_route.__dict__:
-                            route_dict[fieldname] = gtfs_route.__dict__[fieldname]
-                    route_dicts.append(route_dict)
-                    break
-
-        self.routes_df = pandas.DataFrame(data=route_dicts)
+        self.routes_df = gtfs.routes
 
         FastTripsLogger.info("Read %7d %15s from %25d %25s" %
-                             (len(self.routes_df), 'date valid route', len(gtfs_schedule.routes), 'total routes'))
+                             (len(self.routes_df), 'date valid route', len(gtfs.routes), 'total routes'))
 
         # Read the fast-trips supplemental routes data file
-        routes_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_ROUTES_FILE),
-                                       skipinitialspace=True,
-                                       dtype={Route.ROUTES_COLUMN_ROUTE_ID:object,
-                                              Route.ROUTES_COLUMN_MODE    :object})
+        routes_ft_df = gtfs.get(Route.INPUT_ROUTES_FILE)
+
         # verify required columns are present
         routes_ft_cols = list(routes_ft_df.columns.values)
         assert(Route.ROUTES_COLUMN_ROUTE_ID     in routes_ft_cols)
@@ -225,38 +212,14 @@ class Route(object):
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.routes_df), "routes", "routes.txt", Route.INPUT_ROUTES_FILE))
 
-
-        agency_dicts = []
-        for gtfs_agency in gtfs_schedule.GetAgencyList():
-            agency_dict = {}
-            for fieldname in gtfs_agency._FIELD_NAMES:
-                if fieldname in gtfs_agency.__dict__:
-                    agency_dict[fieldname] = gtfs_agency.__dict__[fieldname]
-            agency_dicts.append(agency_dict)
-        self.agencies_df = pandas.DataFrame(data=agency_dicts)
+        self.agencies_df = gtfs.agency
 
         FastTripsLogger.debug("=========== AGENCIES ===========\n" + str(self.agencies_df.head()))
         FastTripsLogger.debug("\n"+str(self.agencies_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s" %
                              (len(self.agencies_df), "agencies", "agency.txt"))
 
-        fare_attr_dicts = []
-        fare_rule_dicts = []
-        for gtfs_fare_attr in gtfs_schedule.GetFareAttributeList():
-            fare_attr_dict = {}
-            for fieldname in gtfs_fare_attr._FIELD_NAMES:
-                if fieldname in gtfs_fare_attr.__dict__:
-                    fare_attr_dict[fieldname] = gtfs_fare_attr.__dict__[fieldname]
-            fare_attr_dicts.append(fare_attr_dict)
-
-            for gtfs_fare_rule in gtfs_fare_attr.GetFareRuleList():
-                fare_rule_dict = {}
-                for fieldname in gtfs_fare_rule._FIELD_NAMES:
-                    if fieldname in gtfs_fare_rule.__dict__:
-                        fare_rule_dict[fieldname] = gtfs_fare_rule.__dict__[fieldname]
-                fare_rule_dicts.append(fare_rule_dict)
-
-        self.fare_attrs_df = pandas.DataFrame(data=fare_attr_dicts)
+        self.fare_attrs_df = gtfs.fare_attributes
 
         FastTripsLogger.debug("=========== FARE ATTRIBUTES ===========\n" + str(self.fare_attrs_df.head()))
         FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
@@ -264,10 +227,8 @@ class Route(object):
                              (len(self.fare_attrs_df), "fare attributes", "fare_attributes.txt"))
 
         # subsitute fasttrips fare attributes
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE)):
-            self.fare_attrs_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_ATTRIBUTES_FILE),
-                                                 skipinitialspace=True,
-                                                 dtype={Route.FARE_ATTR_COLUMN_PRICE:numpy.float64})
+        self.fare_attrs_df = gtfs.get(Route.INPUT_FARE_ATTRIBUTES_FILE)
+        if not self.fare_attrs_df.empty:
             # verify required columns are present
             fare_attrs_cols = list(self.fare_attrs_df.columns.values)
             assert(Route.FARE_ATTR_COLUMN_FARE_PERIOD       in fare_attrs_cols)
@@ -290,7 +251,8 @@ class Route(object):
             self.fare_by_class = False
 
         # Fare rules (map routes to fare_id)
-        self.fare_rules_df = pandas.DataFrame(data=fare_rule_dicts)
+        self.fare_rules_df = gtfs.fare_rules
+
         if len(self.fare_rules_df) > 0:
             self.fare_ids_df = Util.add_numeric_column(self.fare_rules_df[[Route.FARE_RULES_COLUMN_FARE_ID]],
                                                        id_colname=Route.FARE_RULES_COLUMN_FARE_ID,
@@ -340,22 +302,14 @@ class Route(object):
         if len(self.fare_rules_df) > 0:
             self.fare_rules_df.sort_values(by=[Route.FARE_RULES_COLUMN_FARE_ID_NUM], inplace=True)
 
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE)):
-            fare_rules_ft_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_PERIODS_FILE),
-                                               skipinitialspace=True,
-                                               dtype={Route.FARE_RULES_COLUMN_START_TIME:str, Route.FARE_RULES_COLUMN_END_TIME:str})
+        fare_rules_ft_df = gtfs.get(Route.INPUT_FARE_PERIODS_FILE)
+        if not fare_rules_ft_df.empty:
             # verify required columns are present
             fare_rules_ft_cols = list(fare_rules_ft_df.columns.values)
             assert(Route.FARE_RULES_COLUMN_FARE_ID      in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_FARE_PERIOD  in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_START_TIME   in fare_rules_ft_cols)
             assert(Route.FARE_RULES_COLUMN_END_TIME     in fare_rules_ft_cols)
-
-            # convert these to datetimes
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_START_TIME].map(lambda x: Util.read_time(x))
-            fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME] = \
-                fare_rules_ft_df[Route.FARE_RULES_COLUMN_END_TIME].map(lambda x: Util.read_time(x, True))
 
             # Split fare classes so they don't overlap
             fare_rules_ft_df = self.remove_fare_period_overlap(fare_rules_ft_df)
@@ -455,11 +409,8 @@ class Route(object):
         FastTripsLogger.debug("\n"+str(self.fare_rules_df.dtypes))
         FastTripsLogger.info("Read %7d %15s from %25s, %25s" %
                              (len(self.fare_rules_df), "fare rules", "fare_rules.txt", self.INPUT_FARE_PERIODS_FILE))
-
-        if os.path.exists(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE)):
-            self.fare_transfer_rules_df = pandas.read_csv(os.path.join(input_dir, Route.INPUT_FARE_TRANSFER_RULES_FILE),
-                                                          skipinitialspace=True,
-                                                          dtype={Route.FARE_TRANSFER_RULES_COLUMN_TYPE:object})
+        self.fare_transfer_rules_df = gtfs.get(Route.INPUT_FARE_TRANSFER_RULES_FILE)
+        if not self.fare_transfer_rules_df.empty:
             # verify required columns are present
             fare_transfer_rules_cols = list(self.fare_transfer_rules_df.columns.values)
             assert(Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD in fare_transfer_rules_cols)
@@ -637,7 +588,7 @@ class Route(object):
         Write to an intermediate formatted file for the C++ extension.
         Since there are strings involved, it's easier than passing it to the extension.
         """
-
+        from .Assignment import Assignment
         # write intermediate file -- route id num, route id
         self.route_id_df[[Route.ROUTES_COLUMN_ROUTE_ID_NUM, Route.ROUTES_COLUMN_ROUTE_ID]].to_csv(
             os.path.join(self.output_dir, Route.OUTPUT_ROUTE_ID_NUM_FILE), sep=" ", index=False)
@@ -650,8 +601,8 @@ class Route(object):
             fare_rules_df = self.fare_rules_df.copy()
 
             # replace with float versions
-            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
-            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Util.SIMULATION_DAY_START)/numpy.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
 
             # fillna with -1
             for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM]:

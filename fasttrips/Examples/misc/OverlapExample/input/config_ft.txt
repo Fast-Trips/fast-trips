@@ -1,0 +1,19 @@
+# configuration for fasttrips
+[fasttrips]
+max_iterations                = 1
+network_build_date            = 06/30/2015
+simulation                    = True
+output_passenger_trajectories = True
+create_skims                  = False
+prepend_route_id_to_trip_id   = True
+capacity_constraint           = False
+trace_person_ids              = ['frogger']
+number_of_processes           = 1
+bump_buffer                   = 5
+debug_output_columns          = True
+
+[pathfinding]
+stochastic_pathset_size           = 1000
+time_window                       = 30
+overlap_variable                  = time
+overlap_split_transit             = True

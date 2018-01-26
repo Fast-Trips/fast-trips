@@ -1,0 +1,5 @@
+route_id,mode,proof_of_payment
+A,local_bus,FALSE
+B,rapid_bus,FALSE
+C,heavy_rail,TRUE
+D,local_bus,FALSE
