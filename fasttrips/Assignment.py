@@ -1808,12 +1808,6 @@ class Assignment:
 
             ######################################################################################################
             FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
-            pathset_paths_df.to_csv('C:/apps/fast-trips/fasttrips/Examples/misc/calculate_cost/paths_i{}_pf{}_s{}.csv'.format(iteration, pathfinding_iteration, simulation_iteration),
-                                    index=False)
-            pathset_links_df.to_csv('C:/apps/fast-trips/fasttrips/Examples/misc/calculate_cost/links_i{}_pf{}_s{}.csv'.format(iteration, pathfinding_iteration, simulation_iteration),
-                                    index=False)
-            veh_trips_df.to_csv('C:/apps/fast-trips/fasttrips/Examples/misc/calculate_cost/vehicles_i{}_pf{}_s{}.csv'.format(iteration, pathfinding_iteration, simulation_iteration),
-                                    index=False)
             (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
                 Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
                 FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
