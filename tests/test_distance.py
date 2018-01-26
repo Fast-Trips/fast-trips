@@ -15,7 +15,7 @@ OUTPUT_DIR = os.path.join(TEST_HOME_DIR, 'output')
 
 
 @pytest.fixture(scope="module")
-def scenario_results(scenario):
+def network_results(network):
     results = {
         'simple':
             {
@@ -36,7 +36,7 @@ def scenario_results(scenario):
                          11.01201, 11.60369, 13.62171, 17.34048, 17.62048, 19.08759],
             }
     }
-    yield results[scenario]
+    yield results[network]
 
 
 def test_calculate_distance_miles():

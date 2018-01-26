@@ -10,14 +10,12 @@ def test_psrc():
     """
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
-    INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "networks")
+    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'psrc_1_1')
     INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "psrc_1_1")
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
-    scenario_dir = os.path.join(INPUT_NETWORKS, 'psrc_1_1')
-
     Run.run_fasttrips(
-        input_network_dir=scenario_dir,
+        input_network_dir=INPUT_NETWORK,
         input_demand_dir=INPUT_DEMAND,
         run_config=os.path.join(INPUT_DEMAND, "config_ft.txt"),
         input_functions=os.path.join(INPUT_DEMAND, 'config_ft.py'),
