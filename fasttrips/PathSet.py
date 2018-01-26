@@ -712,7 +712,7 @@ class PathSet:
 
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:
-            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, FT.stops)
+            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)
         else:
             pathset_links_to_use["split_first"] = True  # all transit links are first
 
