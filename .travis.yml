@@ -25,4 +25,4 @@ install:
   - pip install -r requirements.txt
   - pip install .
 script:
-  - travis_wait pytest
+  - pytest
