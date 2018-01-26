@@ -3,14 +3,18 @@ import os
 from fasttrips import Run
 
 
-def run_convergence():
+def test_psrc():
+    """
+    Test to ensure that more complex network, PSRC, is working. Also a
+    useful benchmark for Partridge loader compared to transitfeed.
+    """
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "networks")
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "demand_twopaths")
+    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "psrc_1_1")
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
-    scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
+    scenario_dir = os.path.join(INPUT_NETWORKS, 'psrc_1_1')
 
     Run.run_fasttrips(
         input_network_dir=scenario_dir,
@@ -19,13 +23,14 @@ def run_convergence():
         input_functions=os.path.join(INPUT_DEMAND, 'config_ft.py'),
         input_weights=os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
         output_dir=OUTPUT_DIR,
-        output_folder="test_convergence",
+        output_folder="test_psrc",
         pathfinding_type="stochastic",
         capacity=True,
-        iters=4,
-        dispersion=0.50
+        iters=1,
+        OVERLAP = "None",
+        dispersion=1.0
     )
 
 
 if __name__ == '__main__':
-    run_convergence()
+    test_psrc()

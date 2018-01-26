@@ -13,6 +13,8 @@ __license__   = """
     limitations under the License.
 """
 import datetime,os,sys
+
+import numpy
 import pandas
 
 from .Error  import NetworkInputError
@@ -91,52 +93,26 @@ class Transfer:
     #: initialize_fasttrips_extension() because of the strings involved
     OUTPUT_TRANSFERS_FILE       = "ft_intermediate_transfers.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule):
+    def __init__(self, input_archive, output_dir, gtfs_feed):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips transfers data from the input files in *input_dir*.
+        fast-trips transfers data from the input files in *input_archive*.
         """
         self.output_dir       = output_dir
 
         # Combine all gtfs Transfer objects to a single pandas DataFrame
-        transfer_dicts = []
-        for gtfs_transfer in gtfs_schedule.GetTransferList():
-            transfer_dict = {}
-            for fieldname in gtfs_transfer._FIELD_NAMES:
-                if fieldname in gtfs_transfer.__dict__:
-                    transfer_dict[fieldname] = gtfs_transfer.__dict__[fieldname]
-            transfer_dicts.append(transfer_dict)
-        if len(transfer_dicts) > 0:
-            self.transfers_df = pandas.DataFrame(data=transfer_dicts)
+        self.transfers_df = gtfs_feed.transfers
 
-            # these are strings - empty string should mean 0 min transfer time
-            self.transfers_df.replace(to_replace={Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME:{"":"0"}},
-                                      inplace=True)
-            # make it numerical
-            self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = \
-                self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME].astype(float)
+        # make it zero if transfer_type != 2, since that's the only time it applies
+        self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
+                              Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
 
-            # make it zero if transfer_type != 2, since that's the only time it applies
-            self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
-                                  Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
-
-            # these are from transfers.txt so they don't involve lots
-            self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
-
-        else:
-            self.transfers_df = pandas.DataFrame(columns=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
-                                                          Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                          Transfer.TRANSFERS_COLUMN_TO_STOP,
-                                                          Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
-                                                          Transfer.TRANSFERS_COLUMN_TIME,
-                                                          Transfer.TRANSFERS_COLUMN_TIME_MIN])
-            # set this up as a boolean column
-            self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
+        # these are from transfers.txt so they don't involve lots
+        self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
 
         # Read the fast-trips supplemental transfers data file
-        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Transfer.INPUT_TRANSFERS_FILE),
-                                          skipinitialspace=True,
-                                          dtype={Transfer.TRANSFERS_COLUMN_FROM_STOP:object, Transfer.TRANSFERS_COLUMN_TO_STOP:object})
+        transfers_ft_df = gtfs_feed.get(Transfer.INPUT_TRANSFERS_FILE)
+
         # verify required columns are present
         transfer_ft_cols = list(transfers_ft_df.columns.values)
         assert(Transfer.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)

@@ -1,14 +1,17 @@
-import numpy as np
 import os
-import pandas as pd
+import pytest
 import sys
+
+import numpy as np
+import pandas as pd
+
 from fasttrips import Util
 
 sys.path.insert(0, os.path.join(os.getcwd(), 'scripts'))
 from calculate_cost import init_fasttrips, run_calculate_cost
 
 # DIRECTORY LOCATIONS
-BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'test_scenario')
+BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'misc')
 TEST_FOLDER         = 'calculate_cost'
 DF_DIR              = os.path.join(BASE_DIR, TEST_FOLDER)
 
@@ -51,7 +54,7 @@ def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
             print df_join[~np.isclose(df_join[col_ctl], df_join[col_test])]
             assert False
 
-
+@pytest.mark.skip(reason="Need to re-evaluate setup of this test fixture")
 def test_calculate_cost():
     """Organizing script for Nostests to run to test calculate_cost"""
 

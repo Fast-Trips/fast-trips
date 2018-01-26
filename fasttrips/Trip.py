@@ -12,8 +12,8 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,os,sys
-from datetime import date
+import collections,datetime,os
+
 import numpy,pandas
 
 from .Error  import NetworkInputError
@@ -202,15 +202,17 @@ class Trip:
     #: Result column name: Number of MSA onboard passengers minus capacity. Float.
     SIM_COL_VEH_MSA_OVERCAP                     = 'msa_overcap'
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule, today, stops, routes, prepend_route_id_to_trip_id):
+    def __init__(self, input_archive, output_dir, gtfs_feed, today, stops, routes, prepend_route_id_to_trip_id):
         """
         Constructor. Read the gtfs data from the transitfeed schedule, and the additional
-        fast-trips stops data from the input files in *input_dir*.
+        fast-trips stops data from the input files in *input_archive*.
         """
         self.output_dir = output_dir
 
         # Read vehicles first
-        self.vehicles_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_VEHICLES_FILE), skipinitialspace=True)
+        self.vehicles_df = gtfs_feed.get(Trip.INPUT_VEHICLES_FILE)
+        trips_ft_df = gtfs_feed.get(Trip.INPUT_TRIPS_FILE)
+
         # verify the required columns are present
         assert(Trip.VEHICLES_COLUMN_VEHICLE_NAME in self.vehicles_df)
 
@@ -242,59 +244,14 @@ class Trip:
                              (len(self.vehicles_df), "vehicles", self.INPUT_VEHICLES_FILE))
 
         # Combine all gtfs Trip objects to a single pandas DataFrame
-        trip_dicts      = []
-        stop_time_dicts = []
-        #Only iterate through the active records for the day of the analysis
-        for gtfs_trip in (gtfs_trip for gtfs_trip in gtfs_schedule.GetTripList()
-                          if gtfs_trip.service_period.IsActiveOn(today.strftime("%Y%m%d"), date_object=today)):
-            trip_dicts.append({field_name: gtfs_trip.__dict__[field_name] for field_name in gtfs_trip._REQUIRED_FIELD_NAMES})
-            
-            # stop times
-            #   _REQUIRED_FIELD_NAMES = ['trip_id', 'arrival_time', 'departure_time',
-            #                            'stop_id', 'stop_sequence']
-            #   _OPTIONAL_FIELD_NAMES = ['stop_headsign', 'pickup_type',
-            #                            'drop_off_type', 'shape_dist_traveled', 'timepoint']
-            for gtfs_stop_time in gtfs_trip.GetStopTimes():
-                stop_time_dict = {}
-                stop_time_dict[Trip.STOPTIMES_COLUMN_TRIP_ID]         = gtfs_trip.__dict__[Trip.STOPTIMES_COLUMN_TRIP_ID]
-                stop_time_dict[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]    = gtfs_stop_time.arrival_time
-                stop_time_dict[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]  = gtfs_stop_time.departure_time
-                stop_time_dict[Trip.STOPTIMES_COLUMN_STOP_ID]         = gtfs_stop_time.stop_id
-                stop_time_dict[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]   = gtfs_stop_time.stop_sequence
-                # optional fields
-                try:
-                    stop_time_dict[Trip.STOPTIMES_COLUMN_HEADSIGN]            = gtfs_stop_time.stop_headsign
-                except:
-                    pass
-                try:
-                    stop_time_dict[Trip.STOPTIMES_COLUMN_PICKUP_TYPE]         = gtfs_stop_time.pickup_type
-                except:
-                    pass
-                try:
-                    stop_time_dict[Trip.STOPTIMES_COLUMN_DROP_OFF_TYPE]        = gtfs_stop_time.drop_off_type
-                except:
-                    pass
-                try:
-                    stop_time_dict[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = gtfs_stop_time.shape_dist_traveled
-                except:
-                    pass
-                try:
-                    stop_time_dict[Trip.STOPTIMES_COLUMN_TIMEPOINT]           = gtfs_stop_time.timepoint
-                except:
-                    pass
-                stop_time_dicts.append(stop_time_dict)
-
-        self.trips_df = pandas.DataFrame(data=trip_dicts)
+        self.trips_df = gtfs_feed.trips
         if len(self.trips_df) == 0:
             error_str = "No GTFS trips found for simulation day. Simulation day=%s" % (today.strftime("%B %d, %Y"))
             FastTripsLogger.fatal(error_str)
 
             raise NetworkInputError(Trip.INPUT_TRIPS_FILE, error_str)
 
-        # Read the fast-trips supplemental trips data file.  Make sure trip ID is read as a string.
-        trips_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_TRIPS_FILE),
-                                      skipinitialspace=True,
-                                      dtype={Trip.TRIPS_COLUMN_TRIP_ID:object})
+
         # verify required columns are present
         assert({Trip.TRIPS_COLUMN_TRIP_ID,Trip.TRIPS_COLUMN_VEHICLE_NAME}.issubset(trips_ft_df))
 
@@ -343,14 +300,11 @@ class Trip:
         FastTripsLogger.debug("Final (%d)\n%s" % (len(self.trips_df), str(self.trips_df.head())))
         FastTripsLogger.debug("\n"+str(self.trips_df.dtypes))
 
-        self.stop_times_df = pandas.DataFrame(data=stop_time_dicts)
+        self.stop_times_df = gtfs_feed.stop_times
 
         # Read the fast-trips supplemental stop times data file
-        if os.path.exists(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE)):
-            stop_times_ft_df = pandas.read_csv(os.path.join(input_dir, Trip.INPUT_STOPTIMES_FILE),
-                                               skipinitialspace=True,
-                                          dtype={Trip.STOPTIMES_COLUMN_TRIP_ID:object,
-                                                 Trip.STOPTIMES_COLUMN_STOP_ID:object})
+        stop_times_ft_df = gtfs_feed.get(Trip.INPUT_STOPTIMES_FILE)
+        if not stop_times_ft_df.empty:
             # verify required columns are present
             stop_times_ft_cols = list(stop_times_ft_df)
             assert({Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_ID}.issubset(stop_times_ft_df))
@@ -367,20 +321,18 @@ class Trip:
 
         self.add_shape_dist_traveled(stops)
 
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] / 60
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] / 60
+        self.stop_times_df.rename(columns={
+            Trip.STOPTIMES_COLUMN_ARRIVAL_TIME: Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
+            Trip.STOPTIMES_COLUMN_DEPARTURE_TIME: Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
+        }, inplace=True)
+
         # datetime version
         self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = \
-            self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN].map(lambda x: Util.parse_minutes_to_time(x))
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = \
-            self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: Util.read_time(x))
-
-        # float version
-        self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
-            self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + x.time().second/60.0 )
-        self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
-            self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + x.time().second/60.0 )
-
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN].map(lambda x: Util.parse_minutes_to_time(x))
 
         # Add numeric stop and trip ids
         self.stop_times_df = stops.add_numeric_stop_id(self.stop_times_df,
@@ -515,6 +467,9 @@ class Trip:
 
         """
         # temp column: null_shape_dist_traveled
+        if Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED not in self.stop_times_df:
+            self.stop_times_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED] = numpy.nan
+
         self.stop_times_df["null_shape_dist_traveled"] = pandas.isnull(self.stop_times_df[Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED])
         FastTripsLogger.debug("add_shape_dist_traveled: missing %d out of %d shape_dist_traveled values in the stop times dataframe" %
                               (self.stop_times_df["null_shape_dist_traveled"].sum(), len(self.stop_times_df["null_shape_dist_traveled"])))

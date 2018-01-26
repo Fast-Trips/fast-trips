@@ -1,10 +1,8 @@
-import datetime
 import os
 import pytest
 
 import numpy as np
 import pandas as pd
-import transitfeed
 
 from fasttrips import Route
 from fasttrips import Stop
@@ -14,27 +12,29 @@ from fasttrips import Trip
 HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", )
 NETWORK_HOME_DIR = os.path.join(HOME_DIR, 'networks')
 
+
 @pytest.fixture(scope='module', params=['simple'])
 def scenario(request):
     return request.param
 
-@pytest.fixture(scope="module")
-def gtfs_schedule(network_dir):
-    loader = transitfeed.Loader(network_dir, memory_db=True)
-    yield loader.Load()
 
 @pytest.fixture(scope="module")
 def network_dir(scenario):
     yield os.path.join(NETWORK_HOME_DIR, scenario)
 
-#@pytest.fixture(scope="module", params=["simple"])
-#def gtfs_build_date:
-#build_date = datetime.date(2016, 11, 23)
 
+def test_stops_load(network_dir, gtfs_feed, scenario_date):
+    '''
+    Test to ensure that the Stops are loaded and processed
+    '''
+    out_dir = os.path.join(HOME_DIR, 'output', 'test_gtfs_objects')
+    try:
+        os.makedirs(out_dir)
+    except OSError:
+        if not os.path.isdir(out_dir):
+            raise
 
-def test_stops_load(network_dir, gtfs_schedule):
-    stops = Stop(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                      gtfs_schedule, datetime.date(2015, 11, 23))
+    stops = Stop(network_dir, out_dir, gtfs_feed, scenario_date)
 
     #Test existence, length, and required columns
     assert not stops.stop_id_df.empty
@@ -46,8 +46,6 @@ def test_stops_load(network_dir, gtfs_schedule):
     assert not stops.stops_df.empty
     assert len(stops.stops_df == 8)
     stop_df_dtypes = {
-
-        'location_type': np.int64,
         Stop.STOPS_COLUMN_STOP_ID: object,
         Stop.STOPS_COLUMN_STOP_LATITUDE: np.float64,
         Stop.STOPS_COLUMN_STOP_LONGITUDE: np.float64,
@@ -75,13 +73,23 @@ def test_stops_load(network_dir, gtfs_schedule):
     assert not stops.trip_times_df
 
 
-def test_routes_load(network_dir, gtfs_schedule):
-    simulation_day = datetime.date(2015, 11, 23)
-    stops = Stop(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                      gtfs_schedule, simulation_day)
+def test_routes_load(network_dir, gtfs_feed, scenario_date):
+    """
+        Test to ensure that the Routes are loaded and processed
+        properly by the FastTrips initialization
+    """
+    out_dir = os.path.join(HOME_DIR, 'output', 'test_gtfs_objects')
+    try:
+        os.makedirs(out_dir)
+    except OSError:
+        if not os.path.isdir(out_dir):
+            raise
 
-    routes = Route(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                      gtfs_schedule, simulation_day, stops)
+    stops = Stop(network_dir, out_dir,
+                      gtfs_feed, scenario_date)
+
+    routes = Route(network_dir, out_dir,
+                      gtfs_feed, scenario_date, stops)
 
     #routes.routes_df
     assert not routes.routes_df.empty
@@ -158,10 +166,18 @@ def test_routes_load(network_dir, gtfs_schedule):
         .isin(routes.fare_attrs_df[Route.FARE_ATTR_COLUMN_FARE_PERIOD])]) == len(routes.fare_transfer_rules_df)
 
 
-
-def test_transfers_load(network_dir, gtfs_schedule):
-    transfers = Transfer(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                         gtfs_schedule)
+def test_transfers_load(network_dir, gtfs_feed):
+    """
+        Test to ensure that the Transfers are loaded and processed
+        properly by the FastTrips initialization
+    """
+    out_dir = os.path.join(HOME_DIR, 'output', 'test_gtfs_objects')
+    try:
+        os.makedirs(out_dir)
+    except OSError:
+        if not os.path.isdir(out_dir):
+            raise
+    transfers = Transfer(network_dir, out_dir, gtfs_feed)
 
     assert not transfers.transfers_df.empty
     transfers_df_dtypes = {
@@ -186,27 +202,40 @@ def test_transfers_load(network_dir, gtfs_schedule):
 
     assert len(transfers.transfers_df[transfers.transfers_df['min_transfer_time'] > 0]) == 1
 
-def test_trips_load(network_dir, gtfs_schedule):
-    simulation_day = datetime.date(2015, 11, 23)
-    stops = Stop(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                 gtfs_schedule, simulation_day)
 
-    routes = Route(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                   gtfs_schedule, simulation_day, stops)
+def test_trips_load(network_dir, gtfs_feed, scenario_date):
+    """
+        Test to ensure that the Trips are loaded and processed
+        properly by the FastTrips initialization
+    """
+    from fasttrips import Assignment
+    Assignment.NETWORK_BUILD_DATE = scenario_date
 
-    trips = Trip(network_dir, os.path.join(HOME_DIR, 'test_gtfs_objects'),
-                 gtfs_schedule, simulation_day, stops, routes, True)
+    out_dir = os.path.join(HOME_DIR, 'output', 'test_gtfs_objects')
+    try:
+        os.makedirs(out_dir)
+    except OSError:
+        if not os.path.isdir(out_dir):
+            raise
+
+    stops = Stop(network_dir, out_dir, gtfs_feed, scenario_date)
+
+    routes = Route(network_dir, out_dir, gtfs_feed, scenario_date, stops)
+
+    trips = Trip(network_dir, out_dir, gtfs_feed, scenario_date, stops, routes, True)
 
     assert not trips.trips_df.empty
     assert len(trips.trips_df) == 153
     trips_df_dtypes = {
         'route_id': object, 'service_id': object, 'trip_id': object, 'vehicle_name': object,
-        'trip_id_num': np.int64, 'seated_capacity': np.int64, 'standing_capacity': np.int64,
-        'max_speed': np.float64, 'acceleration': np.float64, 'deceleration': np.float64,
-        'dwell_formula': object, 'capacity': np.int64, 'max_speed_fps': np.float64,
-        'route_long_name': object, 'route_short_name': object, 'route_type': np.int64,
-        'mode': object, 'proof_of_payment': bool, 'mode_num': np.int64, 'mode_type': object,
-        'route_id_num': np.int64, 'max_stop_seq': np.int64, 'trip_departure_time': np.dtype('datetime64[ns]'),
+        'direction_id': np.int64, 'shape_id': object, 'trip_id_num': np.int64,
+        'seated_capacity': np.int64, 'standing_capacity': np.int64, 'max_speed': np.float64,
+        'acceleration': np.float64, 'deceleration': np.float64, 'dwell_formula': object,
+        'capacity': np.int64, 'max_speed_fps': np.float64, 'route_long_name': object,
+        'route_short_name': object, 'route_type': np.int64, 'mode': object,
+        'proof_of_payment': bool, 'mode_num': np.int64, 'mode_type': object,
+        'route_id_num': np.int64, 'max_stop_seq': np.int64,
+        'trip_departure_time': np.dtype('datetime64[ns]'),
     }
     assert (set(trips_df_dtypes.keys()).issubset(trips.trips_df))
     assert trips.trips_df.dtypes.to_dict() == trips_df_dtypes
@@ -239,17 +268,17 @@ def test_trips_load(network_dir, gtfs_schedule):
 
     assert not trips.stop_times_df.empty
     assert len(
-        trips.stop_times_df[(trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.month == simulation_day.month &
-                             trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.day == simulation_day.day &
-                             trips.stop_times_df[
-                                 Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.year == simulation_day.year)]) == len(
+        trips.stop_times_df[(trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.month == scenario_date.month) &
+                             (trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.day == scenario_date.day) &
+                            (trips.stop_times_df[
+                                 Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.year == scenario_date.year)]) == len(
         trips.stop_times_df)
 
     assert len(
-        trips.stop_times_df[(trips.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].dt.month == simulation_day.month &
-                             trips.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].dt.day == simulation_day.day &
-                             trips.stop_times_df[
-                                 Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].dt.year == simulation_day.year)]) == len(
+        trips.stop_times_df[(trips.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].dt.month == scenario_date.month) &
+                            (trips.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].dt.day == scenario_date.day) &
+                            (trips.stop_times_df[
+                                 Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].dt.year == scenario_date.year)]) == len(
         trips.stop_times_df)
 
     assert not trips.vehicles_df.empty
