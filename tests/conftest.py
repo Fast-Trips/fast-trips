@@ -34,7 +34,6 @@ def network_date(network):
     }
     yield dates[network]
 
-
 @pytest.fixture(scope="function")
 def gtfs_feed(zip_file, network_date):
     from fasttrips.Assignment import Assignment
