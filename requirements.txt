@@ -1,7 +1,7 @@
 ###### Requirements without Version Specifiers ######
 functools32;python_version<="2.7"
 numpy
-pandas<=0.20.3
+pandas!=0.21.*
 partridge==0.6.0.dev1
 psutil
 pytest

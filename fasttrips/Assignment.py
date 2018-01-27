@@ -1391,12 +1391,12 @@ class Assignment:
 
         #: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they're the next day
         #: if the linktime > 22 hours then the trip time is probably off by a day, so it's right after midnight -- back it up
-        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > np.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_B_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - np.timedelta64(24, 'h')
-        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] > np.timedelta64(22, 'h'), Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] / np.timedelta64(1, 'h') > 22, Assignment.SIM_COL_PAX_B_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - np.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] / np.timedelta64(1, 'h') > 22, Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
         #: if the linktime < -22 hours then the trip time is probably off by a day, so it's right before midnight -- back it up
-        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] < np.timedelta64(-22, 'h'), Assignment.SIM_COL_PAX_A_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] - np.timedelta64(24, 'h')
-        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] < np.timedelta64(-22, 'h'), Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] / np.timedelta64(-1, 'h') < -22, Assignment.SIM_COL_PAX_A_TIME   ] = pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] - np.timedelta64(24, 'h')
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] / np.timedelta64(-1, 'h') < -22, Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] - pathset_links_df[Assignment.SIM_COL_PAX_A_TIME]
 
 
         # new wait time
@@ -1404,7 +1404,7 @@ class Assignment:
 
         # invalid trips have negative wait time
         pathset_links_df[Assignment.SIM_COL_MISSED_XFER] = 0
-        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME]<np.timedelta64(0,'m'), Assignment.SIM_COL_MISSED_XFER] = 1
+        pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] / np.timedelta64(1,'m') < 0, Assignment.SIM_COL_MISSED_XFER] = 1
 
         # count how many are valid (sum of invalid = 0 for the trip list id + path)
         pathset_links_df_grouped = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, # sort by this
