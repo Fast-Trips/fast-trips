@@ -87,6 +87,9 @@ class PathSet:
     #: Allow departures and arrivals before / after preferred time
     ARRIVE_LATE_ALLOWED_MIN         = datetime.timedelta(minutes = 0)
     DEPART_EARLY_ALLOWED_MIN        = datetime.timedelta(minutes = 0)
+    LEARN_ROUTES                    = True
+    LEARN_ROUTES_RATE               = 0.006
+
 
     CONSTANT_GROWTH_MODEL            = 'constant'
     EXP_GROWTH_MODEL                 = 'exponential'
@@ -1266,6 +1269,14 @@ class PathSet:
                                                    Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                    Passenger.TRIP_LIST_COLUMN_TRACE,
                                                    Passenger.PF_COL_PATH_NUM])
+
+        if PathSet.LEARN_ROUTES:
+            pathset_paths_df['learn_discount'] = (1 + PathSet.LEARN_ROUTES_RATE) ** pathset_paths_df['success_flag']# * \
+#                                                 (1 - (PathSet.LEARN_ROUTES_RATE * 4)) ** pathset_paths_df['bump_flag']) - 1
+            pathset_paths_df['orig_sim_cost'] = pathset_paths_df[Assignment.SIM_COL_PAX_COST]
+            pathset_paths_df[Assignment.SIM_COL_PAX_COST] = pathset_paths_df[Assignment.SIM_COL_PAX_COST] * \
+                                                            (1 - pathset_paths_df['learn_discount'])
+
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: pathset_paths_df trace\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 
