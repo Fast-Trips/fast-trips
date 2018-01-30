@@ -752,6 +752,8 @@ class Assignment:
             'bump_flag'
         ])
 
+        bump_df['bump_flag'] = bump_df['bump_flag'].astype(np.float64)
+
         success_df = pd.DataFrame(columns=[
             Passenger.PERSONS_COLUMN_PERSON_ID,
             'person_trip_id',
@@ -759,33 +761,18 @@ class Assignment:
             'success_flag'
         ])
 
-        last_chosen_df = pd.DataFrame(columns=[
+        prior_choice = pd.DataFrame(columns=[
             Passenger.PERSONS_COLUMN_PERSON_ID,
-            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            'person_trip_id',
             Passenger.PF_COL_DESCRIPTION
         ])
 
-        success_df = pd.DataFrame(columns=[
-            Passenger.PERSONS_COLUMN_PERSON_ID,
-            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-            Passenger.PF_COL_DESCRIPTION,
-            PathSet.SUCCESS_FLAG_COLUMN
-        ])
-
-        bump_df = pd.DataFrame(columns=[
-            Passenger.PERSONS_COLUMN_PERSON_ID,
-            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-            Passenger.PF_COL_DESCRIPTION,
-            PathSet.BUMP_FLAG_COLUMN
-        ])
-
-        success_df[PathSet.SUCCESS_FLAG_COLUMN] = success_df[PathSet.SUCCESS_FLAG_COLUMN].astype(np.float64)
-        bump_df[PathSet.BUMP_FLAG_COLUMN] = bump_df[PathSet.BUMP_FLAG_COLUMN].astype(np.float64)
+        success_df['success_flag'] = success_df['success_flag'].astype(np.float64)
 
         # write 0-iter vehicle trips
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
-        for iteration in range(1,Assignment.MAX_ITERATIONS+1):
+        for iteration in range(1,Assignment.MAX_ITERATIONS+10):
 
             pathfinding_iteration = 1
 
@@ -830,10 +817,8 @@ class Assignment:
             else:
                 (pathset_paths_df, pathset_links_df) = Assignment.merge_pathsets(FT.passengers.pathfind_trip_list_df, pathset_paths_df, pathset_links_df, new_pathset_paths_df, new_pathset_links_df)
 
-            pathset_paths_df = pd.merge(pathset_paths_df, bump_df, on=['person_id', 'person_trip_id', 'description'], how='left')
-            pathset_paths_df.loc[pathset_paths_df['bump_flag'].isnull(), 'bump_flag'] = 0
-            pathset_paths_df = pd.merge(pathset_paths_df, success_df, on=['person_id', 'person_trip_id', 'description'], how='left')
-            pathset_paths_df.loc[pathset_paths_df['success_flag'].isnull(), 'success_flag'] = 0
+            pathset_paths_df, pathset_links_df = \
+                    Assignment.restore_prior_choices(pathset_paths_df, pathset_links_df, bump_df, success_df)
 
             # if we have new paths, simulate them
             if num_new_paths_found > 0:
@@ -862,19 +847,9 @@ class Assignment:
             if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                 PathSet.write_path_times(Passenger.get_chosen_links(pathset_links_df), output_dir)
 
-            chosen = Passenger.get_chosen_links(pathset_paths_df)
-            iter_bump_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER]>=0][['person_id', 'person_trip_id', 'description']]
-            iter_bump_df['bump_flag'] = 1
-            iter_bump_df = pd.concat([chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER]>=0][['person_id', 'person_trip_id', 'description','bump_flag']],
-                                     iter_bump_df])
-            bump_df = iter_bump_df.groupby(['person_id', 'person_trip_id', 'description'])['bump_flag'].sum().reset_index()
-
-            iter_success_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER].isnull()][['person_id', 'person_trip_id', 'description']]
-            iter_success_df['success_flag'] = 1
-            iter_success_df = pd.concat([chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER].isnull()][['person_id', 'person_trip_id', 'description', 'success_flag']],
-                                         iter_success_df])
-
-            success_df = iter_success_df.groupby(['person_id', 'person_trip_id', 'description'])['success_flag'].sum().reset_index()
+            new_choices, prior_choice = Assignment.compare_choices(pathset_paths_df, prior_choice)
+            print 'New CHOICES: {}'.format(new_choices)
+            bump_df, success_df = Assignment.save_choices(pathset_paths_df, bump_df, success_df)
 
             # capacity gap stuff
             num_paths_found = Assignment.number_of_pathsets(pathset_paths_df)
@@ -2169,84 +2144,72 @@ class Assignment:
         simulation_iteration   = 0
         num_passengers_arrived = 0 # will get returned from choose_paths
 
-        #while True:
-        FT.performance.record_step_start(iteration, pathfinding_iteration, simulation_iteration, "simulation iteration")
-        FastTripsLogger.info("Simulation Iteration %d" % simulation_iteration)
+        while True:
+            FT.performance.record_step_start(iteration, pathfinding_iteration, simulation_iteration, "simulation iteration")
+            FastTripsLogger.info("Simulation Iteration %d" % simulation_iteration)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 1. Find out board/alight times for all pathset links from vehicle times")
+            ######################################################################################################
+            FastTripsLogger.info("  Step 1. Find out board/alight times for all pathset links from vehicle times")
 
-        # could do this just to chosen path links but let's do this to the whole pathset
-        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df)
+            # could do this just to chosen path links but let's do this to the whole pathset
+            pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 2. Flag missed transfer links and paths in the pathsets")
-        (pathset_paths_df, pathset_links_df) = Assignment.flag_missed_transfers(pathset_paths_df, pathset_links_df)
+            ######################################################################################################
+            FastTripsLogger.info("  Step 2. Flag missed transfer links and paths in the pathsets")
+            (pathset_paths_df, pathset_links_df) = Assignment.flag_missed_transfers(pathset_paths_df, pathset_links_df)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
-        (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
+            ######################################################################################################
+            FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
+            (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
                 Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
                 FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
                 reset_bump_iter=simulation_iteration == 0)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")
+            ######################################################################################################
+            FastTripsLogger.info("  Step 4. Choose a path for each passenger from their pathset")
 
-        # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
-        # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
-        (num_passengers_arrived, num_chosen, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
-            Assignment.PATHFINDING_EVERYONE and simulation_iteration==0,  # choose for everyone if we just re-found all paths
-            iteration, pathfinding_iteration, simulation_iteration,
-            pathset_paths_df, pathset_links_df)
+            # Choose path for each passenger -- pathset_paths_df and pathset_links_df will now have
+            # SIM_COL_PAX_CHOSEN >=0 for chosen paths/path links
+            (num_passengers_arrived, num_chosen, pathset_paths_df, pathset_links_df) = Passenger.choose_paths(
+                Assignment.PATHFINDING_EVERYONE and simulation_iteration==0,  # choose for everyone if we just re-found all paths
+                iteration, pathfinding_iteration, simulation_iteration,
+                pathset_paths_df, pathset_links_df)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load and assess capacity constraints")
+            ######################################################################################################
+            FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load and assess capacity constraints")
 
-        (pathset_paths_df, pathset_links_df, veh_trips_df) = Assignment.load_passengers_on_vehicles_with_cap(
+            (pathset_paths_df, pathset_links_df, veh_trips_df) = Assignment.load_passengers_on_vehicles_with_cap(
                 iteration, pathfinding_iteration, simulation_iteration,
                 FT.trips, pathset_paths_df, pathset_links_df, veh_trips_df)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 6. Update dwell and travel times for transit vehicles")
-        # update the trip times -- accel/decel rates + stops affect travel times, and boards/alights affect dwell times
-        veh_trips_df   = Trip.update_trip_times(veh_trips_df, Assignment.MSA_RESULTS)
+            ######################################################################################################
+            FastTripsLogger.info("  Step 6. Update dwell and travel times for transit vehicles")
+            # update the trip times -- accel/decel rates + stops affect travel times, and boards/alights affect dwell times
+            veh_trips_df   = Trip.update_trip_times(veh_trips_df, Assignment.MSA_RESULTS)
 
-        ######################################################################################################
-        if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
-            FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
-            Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False,
-                                  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
-            Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,
-                                  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
-            # and vehicle trips
-            Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df)
+            ######################################################################################################
+            if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
+                FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
+                Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False,
+                                      Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,
+                                      Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
+                # and vehicle trips
+                Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df)
 
-        ######################################################################################################
-        FastTripsLogger.info("  Step 2. Flag missed transfer links and paths in the pathsets")
-        (pathset_paths_df, pathset_links_df) = Assignment.flag_missed_transfers(pathset_paths_df, pathset_links_df)
+            FT.performance.record_step_end(iteration, pathfinding_iteration, simulation_iteration)
+            simulation_iteration += 1
 
-        ######################################################################################################
-        if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
-            FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
-            Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False,
-                                  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
-            Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,
-                                  Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
-            # and vehicle trips
-            Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df)
+            if num_chosen <= 0:
+                FastTripsLogger.info("  No more path choices to make => Ending simulation loop")
+                break
 
+            if simulation_iteration > Assignment.MAX_SIMULATION_ITERS:
+                FastTripsLogger.info(
+                    "  Maximum simulation iterations reached (%d) => Ending simulation loop" % Assignment.MAX_SIMULATION_ITERS)
+                break
 
         FT.performance.record_step_end(iteration, pathfinding_iteration, simulation_iteration)
-            #simulation_iteration += 1
-
-        #    if num_chosen <= 0:
-        #        FastTripsLogger.info("  No more path choices to make => Ending simulation loop")
-        #        break
-
-        #    if simulation_iteration > Assignment.MAX_SIMULATION_ITERS:
-        #        FastTripsLogger.info("  Maximum simulation iterations reached (%d) => Ending simulation loop" % Assignment.MAX_SIMULATION_ITERS)
-        #        break
 
         FT.performance.record_step_start(iteration, pathfinding_iteration, simulation_iteration, "output_per_simulation")
 
@@ -2278,6 +2241,52 @@ class Assignment:
         FT.performance.record_step_end(iteration, pathfinding_iteration, simulation_iteration)
 
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
+
+    @staticmethod
+    def restore_prior_choices(pathset_paths_df, pathset_links_df, bump_df, success_df):
+        pathset_paths_df = pd.merge(pathset_paths_df, bump_df,
+                                    on=[Passenger.PERSONS_COLUMN_PERSON_ID, 'person_trip_id', 'description'],
+                                    how='left')
+        pathset_paths_df.loc[pathset_paths_df['bump_flag'].isnull(), 'bump_flag'] = 0
+
+        pathset_paths_df = pd.merge(pathset_paths_df, success_df,
+                                    on=[Passenger.PERSONS_COLUMN_PERSON_ID, 'person_trip_id', 'description'],
+                                    how='left')
+        pathset_paths_df.loc[pathset_paths_df['success_flag'].isnull(), 'success_flag'] = 0
+
+        pathset_links_df = pd.merge(pathset_links_df,
+                                    pathset_paths_df[['trip_list_id_num', 'pathnum', 'success_flag', 'bump_flag']],
+                                    on=['trip_list_id_num', 'pathnum'], how='left')
+
+        return pathset_paths_df, pathset_links_df
+
+
+    @staticmethod
+    def compare_choices(pathset_paths_df, prior_choice):
+        chosen = Passenger.get_chosen_links(pathset_paths_df)[['person_id', 'person_trip_id', 'description']]
+        match_choices = pd.merge(chosen, prior_choice, on=['person_id', 'person_trip_id', 'description'], how='inner')
+        new_choice = chosen.shape[0] - match_choices.shape[0]
+        return new_choice, chosen
+
+
+    @staticmethod
+    def save_choices(pathset_paths_df, bump_df, success_df):
+        chosen = Passenger.get_chosen_links(pathset_paths_df)
+        iter_bump_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER] >= 0][
+            ['person_id', 'person_trip_id', 'description']]
+        iter_bump_df['bump_flag'] = 1
+        iter_bump_df = pd.concat([bump_df, iter_bump_df])
+        bump_df = iter_bump_df.groupby(['person_id', 'person_trip_id', 'description'])['bump_flag'].sum().reset_index()
+
+        iter_success_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER].isnull()][
+            ['person_id', 'person_trip_id', 'description']]
+        iter_success_df['success_flag'] = 1
+        iter_success_df = pd.concat([success_df, iter_success_df])
+
+        success_df = iter_success_df.groupby(['person_id', 'person_trip_id', 'description'])[
+            'success_flag'].sum().reset_index()
+
+        return bump_df, success_df
 
 
 def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worker_num, input_network_dir, input_demand_dir, run_config, func_file,
