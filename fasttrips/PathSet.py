@@ -88,7 +88,7 @@ class PathSet:
     ARRIVE_LATE_ALLOWED_MIN         = datetime.timedelta(minutes = 0)
     DEPART_EARLY_ALLOWED_MIN        = datetime.timedelta(minutes = 0)
     LEARN_ROUTES                    = True
-    LEARN_ROUTES_RATE               = 0.006
+    LEARN_ROUTES_RATE               = 0.05
 
 
     CONSTANT_GROWTH_MODEL            = 'constant'
