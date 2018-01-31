@@ -746,9 +746,7 @@ class Assignment:
         pathset_paths_df = None
         pathset_links_df = None
 
-        last_chosen_df = pd.DataFrame(columns=[
-            ['person_id', 'person_trip_id', 'description']
-        ])
+        last_chosen_df = pd.DataFrame(columns=['person_id', 'person_trip_id', 'description'])
 
         success_df = pd.DataFrame(columns=[
             Passenger.PERSONS_COLUMN_PERSON_ID,
