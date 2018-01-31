@@ -285,6 +285,8 @@ class Assignment:
                       'max_pf_iterations'               :1,
                       'network_build_date'              : datetime.date.today().strftime("%m/%d/%Y"),
                       'simulation'                      :'True',
+                      'learning_convergence'            :'True',
+                      'learning_rate'                   :'0.01',
                       'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
                       'create_skims'                    :'False',
@@ -334,6 +336,8 @@ class Assignment:
                                                     parser.get('fasttrips', 'network_build_date'), '%m/%d/%Y').date()
         Assignment.NETWORK_BUILD_DATE_START_TIME = datetime.datetime.combine(Assignment.NETWORK_BUILD_DATE, datetime.time())
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
+        PathSet.LEARN_ROUTES                     = parser.getboolean('fasttrips', 'learning_convergence')
+        PathSet.LEARN_ROUTES_RATE                = parser.getfloat('fasttrips', 'learning_rate')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
