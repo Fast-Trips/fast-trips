@@ -861,7 +861,7 @@ class Assignment:
                 if num_new_paths_found == 0:
                     break
 
-            success_df = Assignment.save_choices(pathset_paths_df, success_df, bump_df)
+            success_df, bump_df = Assignment.save_choices(pathset_paths_df, success_df, bump_df)
             new_choices, last_chosen_df = Assignment.compare_choices(pathset_paths_df, last_chosen_df)
             capacity_gap = (1.0 * new_choices + num_bumped_passengers) / len(FT.passengers.trip_list_df)
 
@@ -960,7 +960,6 @@ class Assignment:
                                              )[PathSet.SUCCESS_FLAG_COLUMN].sum().reset_index()
 
         return success_df, bump_df
-
 
 
     @staticmethod
