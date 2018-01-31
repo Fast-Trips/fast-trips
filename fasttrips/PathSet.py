@@ -93,6 +93,9 @@ class PathSet:
 
     CONSTANT_GROWTH_MODEL            = 'constant'
     EXP_GROWTH_MODEL                 = 'exponential'
+    SUCCESS_FLAG_COLUMN             = 'success_flag'
+    BUMP_FLAG_COLUMN                = 'bump_flag'
+
     LOGARITHMIC_GROWTH_MODEL         = 'logarithmic'
     LOGISTIC_GROWTH_MODEL            = 'logistic'
 

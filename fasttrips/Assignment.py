@@ -733,24 +733,28 @@ class Assignment:
         pathset_paths_df = None
         pathset_links_df = None
 
-        last_chosen_df = pd.DataFrame(columns=['person_id', 'person_trip_id', 'description'])
+        last_chosen_df = pd.DataFrame(columns=[
+            Passenger.PERSONS_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            Passenger.PF_COL_DESCRIPTION
+        ])
 
         success_df = pd.DataFrame(columns=[
             Passenger.PERSONS_COLUMN_PERSON_ID,
-            'person_trip_id',
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.PF_COL_DESCRIPTION,
-            'success_flag'
+            PathSet.SUCCESS_FLAG_COLUMN
         ])
 
         bump_df = pd.DataFrame(columns=[
             Passenger.PERSONS_COLUMN_PERSON_ID,
-            'person_trip_id',
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
             Passenger.PF_COL_DESCRIPTION,
-            'bump_flag'
+            PathSet.BUMP_FLAG_COLUMN
         ])
 
-        success_df['success_flag'] = success_df['success_flag'].astype(np.float64)
-        bump_df['bump_flag'] = bump_df['bump_flag'].astype(np.float64)
+        success_df[PathSet.SUCCESS_FLAG_COLUMN] = success_df[PathSet.SUCCESS_FLAG_COLUMN].astype(np.float64)
+        bump_df[PathSet.BUMP_FLAG_COLUMN] = bump_df[PathSet.BUMP_FLAG_COLUMN].astype(np.float64)
 
         # write 0-iter vehicle trips
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
@@ -867,11 +871,18 @@ class Assignment:
                 "passengers_missed": num_bumped_passengers,
                 "passengers_demand": len(FT.passengers.trip_list_df) }
 
+
     @staticmethod
     def compare_choices(pathset_paths_df, prior_choice):
-        chosen = Passenger.get_chosen_links(pathset_paths_df)[['person_id', 'person_trip_id', 'description']]
-        match_choices = pd.merge(chosen, prior_choice, on=['person_id', 'person_trip_id', 'description'],
-                                      how='inner')
+        chosen = Passenger.get_chosen_links(pathset_paths_df)[
+            [Passenger.PERSONS_COLUMN_PERSON_ID,
+             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+             Passenger.PF_COL_DESCRIPTION]
+        ]
+        match_choices = pd.merge(chosen, prior_choice, on=[
+            Passenger.PERSONS_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            Passenger.PF_COL_DESCRIPTION], how='inner')
         new_choice = chosen.shape[0] - match_choices.shape[0]
         return new_choice, chosen
 
@@ -880,38 +891,50 @@ class Assignment:
     def save_choices(pathset_paths_df, success_df, bump_df):
         chosen = Passenger.get_chosen_links(pathset_paths_df)
         iter_bump_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER] >= 0][
-            ['person_id', 'person_trip_id', 'description']]
+            [Passenger.PERSONS_COLUMN_PERSON_ID,
+             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+             Passenger.PF_COL_DESCRIPTION]
+        ]
         iter_bump_df['bump_flag'] = 1
         iter_bump_df = pd.concat([bump_df, iter_bump_df])
-        bump_df = iter_bump_df.groupby(['person_id', 'person_trip_id', 'description'])['bump_flag'].sum().reset_index()
+        bump_df = iter_bump_df.groupby([Passenger.PERSONS_COLUMN_PERSON_ID,
+                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        Passenger.PF_COL_DESCRIPTION])[PathSet.BUMP_FLAG_COLUMN].sum().reset_index()
 
         iter_success_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER].isnull()][
-            ['person_id', 'person_trip_id', 'description']]
-        iter_success_df['success_flag'] = 1
+            [Passenger.PERSONS_COLUMN_PERSON_ID,
+             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+             Passenger.PF_COL_DESCRIPTION]
+        ]
+        iter_success_df[PathSet.SUCCESS_FLAG_COLUMN] = 1
         iter_success_df = pd.concat([success_df, iter_success_df])
 
-        success_df = iter_success_df.groupby(['person_id', 'person_trip_id', 'description'])['success_flag'].sum().reset_index()
+        success_df = iter_success_df.groupby([Passenger.PERSONS_COLUMN_PERSON_ID,
+                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                              Passenger.PF_COL_DESCRIPTION]
+                                             )[PathSet.SUCCESS_FLAG_COLUMN].sum().reset_index()
 
         return success_df
 
+
     @staticmethod
     def merge_prior_choices(pathset_paths_df, pathset_links_df, success_df):
-        if 'success_flag' in pathset_paths_df:
-            pathset_paths_df.drop(labels=['success_flag'], axis=1, inplace=True)
+        if PathSet.SUCCESS_FLAG_COLUMN in pathset_paths_df:
+            pathset_paths_df.drop(labels=[PathSet.SUCCESS_FLAG_COLUMN], axis=1, inplace=True)
 
-        if 'success_flag' in pathset_links_df:
-            pathset_links_df.drop(labels=['success_flag'], axis=1, inplace=True)
+        if PathSet.SUCCESS_FLAG_COLUMN in pathset_links_df:
+            pathset_links_df.drop(labels=[PathSet.SUCCESS_FLAG_COLUMN], axis=1, inplace=True)
 
         pathset_paths_df = pd.merge(pathset_paths_df, success_df,
                                     on = [
                                         Passenger.PERSONS_COLUMN_PERSON_ID,
-                                        'person_trip_id',
-                                        'description'], how = 'left')
-        pathset_paths_df.loc[pathset_paths_df['success_flag'].isnull(), 'success_flag'] = 0
+                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        Passenger.PF_COL_DESCRIPTION], how = 'left')
+        pathset_paths_df.loc[pathset_paths_df[PathSet.SUCCESS_FLAG_COLUMN].isnull(), PathSet.SUCCESS_FLAG_COLUMN] = 0
 
         pathset_links_df = pd.merge(pathset_links_df,pathset_paths_df[
-            ['trip_list_id_num', 'pathnum', 'success_flag', ]],
-                                    on = ['trip_list_id_num','pathnum'], how = 'left')
+            ['trip_list_id_num', Passenger.PF_COL_PATH_NUM, PathSet.SUCCESS_FLAG_COLUMN, ]],
+                                    on = ['trip_list_id_num', Passenger.PF_COL_PATH_NUM], how = 'left')
 
 
         return pathset_paths_df, pathset_links_df
