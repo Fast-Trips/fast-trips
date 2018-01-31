@@ -103,6 +103,8 @@ class PathSet:
     LEARN_ROUTES                    = True
     LEARN_ROUTES_RATE               = 0.05
 
+    SUCCESS_FLAG_COLUMN             = 'success_flag'
+    BUMP_FLAG_COLUMN                = 'bump_flag'
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
