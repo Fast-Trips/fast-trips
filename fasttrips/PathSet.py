@@ -84,7 +84,7 @@ class PathSet:
     OVERLAP_SPLIT_TRANSIT           = None
 
     LEARN_ROUTES                    = True
-    LEARN_ROUTES_RATE               = 0.006
+    LEARN_ROUTES_RATE               = 0.05
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
@@ -1099,8 +1099,7 @@ class PathSet:
                                                    Passenger.PF_COL_PATH_NUM])
 
         if PathSet.LEARN_ROUTES:
-            pathset_paths_df['learn_discount'] = (1 + PathSet.LEARN_ROUTES_RATE) ** pathset_paths_df['success_flag']# * \
-#                                                 (1 - (PathSet.LEARN_ROUTES_RATE * 4)) ** pathset_paths_df['bump_flag']) - 1
+            pathset_paths_df['learn_discount'] = (1 + PathSet.LEARN_ROUTES_RATE) ** pathset_paths_df['success_flag'] - 1
             pathset_paths_df['orig_sim_cost'] = pathset_paths_df[Assignment.SIM_COL_PAX_COST]
             pathset_paths_df[Assignment.SIM_COL_PAX_COST] = pathset_paths_df[Assignment.SIM_COL_PAX_COST] * \
                                                             (1 - pathset_paths_df['learn_discount'])
