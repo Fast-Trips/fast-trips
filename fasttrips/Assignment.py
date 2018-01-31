@@ -962,6 +962,7 @@ class Assignment:
         return success_df, bump_df
 
 
+
     @staticmethod
     def merge_prior_choices(pathset_paths_df, pathset_links_df, flag_df):
         """
