@@ -5,12 +5,13 @@ import pandas as pd
 
 from fasttrips import PathSet, Run
 
+
 BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
 TEST_FOLDER         = 'calculate_cost'
 
 # DIRECTORY LOCATIONS
 OUTPUT_DIR          = os.path.join(BASE_DIR, 'output')
-INPUT_NETWORK       = os.path.join(BASE_DIR, 'networks')
+INPUT_NETWORK       = os.path.join(BASE_DIR, 'networks', 'simple')
 INPUT_DEMAND        = os.path.join(BASE_DIR, 'demand', 'demand_twopaths')
 DF_DIR              = os.path.join(BASE_DIR, 'misc', TEST_FOLDER)
 
@@ -41,15 +42,8 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
 
     GLOBAL_ITERATIONS = 4
 
-    scenario_dir = os.path.join(INPUT_NETWORK, 'simple')
-    scenario_file = os.path.join(INPUT_NETWORK, 'simple.zip')
-    with zipfile.ZipFile(scenario_file, 'w') as zipf:
-        for root, dirs, files in os.walk(scenario_dir):
-            for file in files:
-                zipf.write(os.path.join(root, file), file)
-
     ft = Run.run_setup(
-        scenario_file,
+        INPUT_NETWORK,
         INPUT_DEMAND,
         INPUT_WEIGHTS,
         CONFIG_FILE,

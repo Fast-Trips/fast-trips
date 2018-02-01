@@ -12,15 +12,18 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,os,sys
-import numpy,pandas
+import datetime
+import os
+
+import numpy as np
+import pandas as pd
 
 from .Error      import NetworkInputError
 from .Logger     import FastTripsLogger
 from .Route      import Route
 from .Stop       import Stop
 from .Transfer   import Transfer
-from .Util       import Util
+
 
 class TAZ:
     """
@@ -217,12 +220,12 @@ class TAZ:
         """
         from .Assignment import Assignment
 
-        self.access_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
+        self.access_modes_df = pd.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
                                                       TAZ.MODE_COLUMN_MODE_NUM:TAZ.ACCESS_MODE_NUMS })
         self.access_modes_df[TAZ.MODE_COLUMN_MODE] = self.access_modes_df[TAZ.MODE_COLUMN_MODE]\
             .apply(lambda x:'%s_%s' % (x, Route.MODE_TYPE_ACCESS))
 
-        self.egress_modes_df = pandas.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
+        self.egress_modes_df = pd.DataFrame(data={TAZ.MODE_COLUMN_MODE    :TAZ.ACCESS_EGRESS_MODES,
                                                       TAZ.MODE_COLUMN_MODE_NUM:TAZ.EGRESS_MODE_NUMS })
         self.egress_modes_df[TAZ.MODE_COLUMN_MODE] = self.egress_modes_df[TAZ.MODE_COLUMN_MODE]\
             .apply(lambda x:'%s_%s' % (x, Route.MODE_TYPE_EGRESS))
@@ -289,7 +292,7 @@ class TAZ:
                 self.dap_df[TAZ.DAP_COLUMN_DROP_OFF] = True
 
         else:
-            self.dap_df = pandas.DataFrame()
+            self.dap_df = pd.DataFrame()
 
         FastTripsLogger.debug("=========== DAPS ===========\n" + str(self.dap_df.head()))
         FastTripsLogger.debug("\n"+str(self.dap_df.dtypes))
@@ -339,9 +342,9 @@ class TAZ:
 
             # drive access period start/end time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
-                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
-                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
+                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
 
 
             # convert time column from number to timedelta
@@ -353,13 +356,13 @@ class TAZ:
             pnr_dap_df = self.dap_df.loc[self.dap_df[TAZ.DAP_COLUMN_CAPACITY] > 0  ].copy()
             knr_dap_df['dap_type'] = 'KNR'
             pnr_dap_df['dap_type'] = 'PNR'
-            self.drive_access_df = pandas.merge(left=self.drive_access_df,
-                                                right=pandas.concat([knr_dap_df,pnr_dap_df], axis=0),
+            self.drive_access_df = pd.merge(left=self.drive_access_df,
+                                                right=pd.concat([knr_dap_df,pnr_dap_df], axis=0),
                                                 on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                                 how='left')
 
             # look for required column being null
-            lots_not_found = self.drive_access_df.loc[pandas.isnull(self.drive_access_df[TAZ.DAP_COLUMN_LOT_LATITUDE])]
+            lots_not_found = self.drive_access_df.loc[pd.isnull(self.drive_access_df[TAZ.DAP_COLUMN_LOT_LATITUDE])]
             if len(lots_not_found) > 0:
                 error_msg = "Found %d drive access links in %s with lots not specified in %s" % \
                     (len(lots_not_found), TAZ.INPUT_DRIVE_ACCESS_FILE, TAZ.INPUT_DAP_FILE)
@@ -379,20 +382,20 @@ class TAZ:
             drive_egress = self.drive_access_df.loc[self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_DIRECTION] == 'egress']
 
             # join with transfers to go from taz -> lot -> stop
-            drive_access = pandas.merge(left=drive_access,
+            drive_access = pd.merge(left=drive_access,
                                         right=transfers.transfers_df,
                                         left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                         right_on=Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                         how='left')
             drive_access[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_access[Transfer.TRANSFERS_COLUMN_TO_STOP]
             # join with transfers to go from stop -> lot -> taz
-            drive_egress = pandas.merge(left=drive_egress,
+            drive_egress = pd.merge(left=drive_egress,
                                         right=transfers.transfers_df,
                                         left_on=TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
                                         right_on=Transfer.TRANSFERS_COLUMN_TO_STOP,
                                         how='left')
             drive_egress[TAZ.DRIVE_ACCESS_COLUMN_STOP] = drive_egress[Transfer.TRANSFERS_COLUMN_FROM_STOP]
-            self.drive_access_df = pandas.concat([drive_access, drive_egress], axis=0)
+            self.drive_access_df = pd.concat([drive_access, drive_egress], axis=0)
 
             # drop redundant columns
             # TODO: assuming min_transfer_type and transfer_type from GTFS aren't relevant here, since
@@ -413,11 +416,11 @@ class TAZ:
                 self.drive_access_df.drop([Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN], axis=1, inplace=True)
 
             # some may have no lot to stop connections -- check for null stop ids
-            null_stop_ids =  self.drive_access_df.loc[pandas.isnull( self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
+            null_stop_ids =  self.drive_access_df.loc[pd.isnull( self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
             if len(null_stop_ids) > 0:
                 FastTripsLogger.warn("Dropping %d drive links that don't connect to stops:\n%s" % (len(null_stop_ids), str(null_stop_ids)))
                 # drop them
-                self.drive_access_df = self.drive_access_df.loc[ pandas.notnull(self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
+                self.drive_access_df = self.drive_access_df.loc[ pd.notnull(self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP])]
 
             # rename walk attributes to be clear
             self.drive_access_df.rename(
@@ -440,13 +443,13 @@ class TAZ:
             self.has_drive_access = True
         else:
             self.has_drive_access = False
-            self.drive_access_df  = pandas.DataFrame(columns=[TAZ.DRIVE_ACCESS_COLUMN_TAZ, TAZ.DRIVE_ACCESS_COLUMN_LOT_ID])
+            self.drive_access_df  = pd.DataFrame(columns=[TAZ.DRIVE_ACCESS_COLUMN_TAZ, TAZ.DRIVE_ACCESS_COLUMN_LOT_ID])
             FastTripsLogger.debug("=========== NO DRIVE ACCESS ===========\n")
 
         # add DAPs IDs and TAZ IDs to stop ID list
         stops.add_daps_tazs_to_stops(self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_LOT_ID]],
                                      TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,
-                                     pandas.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
+                                     pd.concat([self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_TAZ]],
                                                     self.drive_access_df[[TAZ.DRIVE_ACCESS_COLUMN_TAZ]]], axis=0),
                                      TAZ.WALK_ACCESS_COLUMN_TAZ)
         # transfers can add stop numeric IDs now that DAPs are available
@@ -507,24 +510,24 @@ class TAZ:
         walk_dists.rename(columns={TAZ.WALK_ACCESS_COLUMN_DIST:"walk_dist"}, inplace=True)
 
         # walk access
-        links_df = pandas.merge(left    =links_df,
+        links_df = pd.merge(left    =links_df,
                                 left_on =["A_id_num","B_id_num","mode_num"],
                                 right   =walk_dists,
                                 right_on=[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM, TAZ.WALK_ACCESS_COLUMN_STOP_NUM, TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM],
                                 how     ="left")
-        links_df.loc[ pandas.notnull(links_df["walk_dist"]), dist_col ] = links_df["walk_dist"]
+        links_df.loc[ pd.notnull(links_df["walk_dist"]), dist_col ] = links_df["walk_dist"]
         links_df.drop([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
                        TAZ.WALK_ACCESS_COLUMN_STOP_NUM,
                        TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
                        "walk_dist"], axis=1, inplace=True)
 
         # walk egress
-        links_df = pandas.merge(left    =links_df,
+        links_df = pd.merge(left    =links_df,
                                 left_on =["A_id_num","B_id_num","mode_num"],
                                 right   =walk_dists,
                                 right_on=[TAZ.WALK_ACCESS_COLUMN_STOP_NUM, TAZ.WALK_ACCESS_COLUMN_TAZ_NUM, TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM],
                                 how     ="left")
-        links_df.loc[ pandas.notnull(links_df["walk_dist"]), dist_col ] = links_df["walk_dist"]
+        links_df.loc[ pd.notnull(links_df["walk_dist"]), dist_col ] = links_df["walk_dist"]
         links_df.drop([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
                        TAZ.WALK_ACCESS_COLUMN_STOP_NUM,
                        TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
@@ -544,25 +547,25 @@ class TAZ:
             drive_dists.drop([TAZ.DRIVE_ACCESS_COLUMN_DRIVE_DISTANCE, TAZ.DRIVE_ACCESS_COLUMN_WALK_DISTANCE], axis=1, inplace=True)
 
             # drive access
-            links_df = pandas.merge(left    =links_df,
+            links_df = pd.merge(left    =links_df,
                                     left_on =["A_id_num","B_id_num","mode_num"],
                                     right   =drive_dists,
                                     right_on=[TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
                                     how     ="left")
             # TODO: drop those with drive access links covering different times
-            links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
+            links_df.loc[ pd.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
             links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
                            TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
                            TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
                            "drive_total_dist"], axis=1, inplace=True)
 
             # drive egress
-            links_df = pandas.merge(left    =links_df,
+            links_df = pd.merge(left    =links_df,
                                     left_on =["A_id_num","B_id_num","mode_num"],
                                     right   =drive_dists,
                                     right_on=[TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM, TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM, TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM],
                                     how     ="left")
-            links_df.loc[ pandas.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
+            links_df.loc[ pd.notnull(links_df["drive_total_dist"]), dist_col ] = links_df["drive_total_dist"]
             links_df.drop([TAZ.DRIVE_ACCESS_COLUMN_TAZ_NUM,
                            TAZ.DRIVE_ACCESS_COLUMN_STOP_NUM,
                            TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE_NUM,
@@ -579,10 +582,10 @@ class TAZ:
         # FastTripsLogger.debug("warn_on_stops_without_walk_access: \n%s", self.walk_access_df.head() )
 
         # join stops to walk access
-        no_access_stops = pandas.merge(left  = stops.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
+        no_access_stops = pd.merge(left  = stops.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
                                        right = self.walk_access_df[[TAZ.WALK_ACCESS_COLUMN_STOP, TAZ.WALK_ACCESS_COLUMN_TAZ]],
                                        how   = "left")
-        no_access_stops = no_access_stops.loc[pandas.isnull(no_access_stops[TAZ.WALK_ACCESS_COLUMN_TAZ])]
+        no_access_stops = no_access_stops.loc[pd.isnull(no_access_stops[TAZ.WALK_ACCESS_COLUMN_TAZ])]
         if len(no_access_stops) > 0:
             FastTripsLogger.warn("The following %d stop ids have no walk access: \n%s" % (len(no_access_stops), no_access_stops.to_string()))
 
@@ -666,7 +669,7 @@ class TAZ:
             # the remaining columns collapse to variable name, variable value
 
             # put walk and drive together
-            access_df = pandas.concat([self.walk_df.stack(), self.drive_df.stack()], axis=0).to_frame()
+            access_df = pd.concat([self.walk_df.stack(), self.drive_df.stack()], axis=0).to_frame()
         else:
             access_df = self.walk_df.stack().to_frame()
 
@@ -680,12 +683,12 @@ class TAZ:
         FastTripsLogger.debug("\n" + str(access_df.tail()))
 
         # Check for null stop ids
-        null_stop_ids = access_df.loc[pandas.isnull(access_df["stop_id_num"])]
+        null_stop_ids = access_df.loc[pd.isnull(access_df["stop_id_num"])]
         if len(null_stop_ids) > 0:
             FastTripsLogger.warn("write_access_egress_for_extension null_stop_ids:\n%s" % str(null_stop_ids))
 
             # for now, drop rows with null stop id nums
-            access_df = access_df.loc[ pandas.notnull(access_df["stop_id_num"]) ]
+            access_df = access_df.loc[ pd.notnull(access_df["stop_id_num"]) ]
 
         access_df["stop_id_num"] = access_df["stop_id_num"].astype(int)
 

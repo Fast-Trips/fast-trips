@@ -12,14 +12,14 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os,sys
+import datetime
+import os
 
-import numpy
-import pandas
+import pandas as pd
 
 from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
-from .Stop   import Stop
+
 
 class Transfer:
     """
@@ -123,7 +123,7 @@ class Transfer:
         # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),
         # and we don't want to drop them
         if len(transfers_ft_df) > 0:
-            self.transfers_df = pandas.merge(left=self.transfers_df, right=transfers_ft_df,
+            self.transfers_df = pd.merge(left=self.transfers_df, right=transfers_ft_df,
                                              how='right',
                                              on=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                                  Transfer.TRANSFERS_COLUMN_TO_STOP])
@@ -236,11 +236,11 @@ class Transfer:
             return transfer_links_df
 
         # these will be filled for route matches
-        transfer_links_done = pandas.DataFrame()
+        transfer_links_done = pd.DataFrame()
 
         # match on both from route and to route
         if Transfer.TRANSFERS_COLUMN_FROM_ROUTE not in self.transfers_df.columns.values:
-            transfers_with_routes_df = pandas.DataFrame()
+            transfers_with_routes_df = pd.DataFrame()
             transfers_wo_routes_df   = self.transfers_df
         else:
             transfers_with_routes_df = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].notnull() ]
@@ -262,7 +262,7 @@ class Transfer:
 
             # match transfer with trip's next link to get from route_id
             trip_links_df["next_link_num"] = trip_links_df[Passenger.PF_COL_LINK_NUM] + 1
-            transfer_links_df = pandas.merge(left      =transfer_links_df,
+            transfer_links_df = pd.merge(left      =transfer_links_df,
                                              left_on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                          Passenger.PF_COL_PATH_NUM,
@@ -282,7 +282,7 @@ class Transfer:
 
             # match transfer with trip's prev link to get to route_id
             trip_links_df["prev_link_num"] = trip_links_df[Passenger.PF_COL_LINK_NUM] - 1
-            transfer_links_df = pandas.merge(left      =transfer_links_df,
+            transfer_links_df = pd.merge(left      =transfer_links_df,
                                              left_on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                          Passenger.PF_COL_PATH_NUM,
@@ -304,7 +304,7 @@ class Transfer:
             # FastTripsLogger.debug("transfer_links_df after adding route info:\n%s" % transfer_links_df.head(20).to_string())
 
             # match on transfer attributes
-            transfer_links_df = pandas.merge(left     =transfer_links_df,
+            transfer_links_df = pd.merge(left     =transfer_links_df,
                                              left_on  =["A_id_num","B_id_num",
                                                         Transfer.TRANSFERS_COLUMN_FROM_ROUTE,
                                                         Transfer.TRANSFERS_COLUMN_TO_ROUTE],
@@ -330,7 +330,7 @@ class Transfer:
 
         # match on both from stops ONLY
         if len(transfers_wo_routes_df) > 0:
-            transfer_links_df = pandas.merge(left     =transfer_links_df,
+            transfer_links_df = pd.merge(left     =transfer_links_df,
                                              left_on  =["A_id_num","B_id_num"],
                                              right    =transfers_wo_routes_df,
                                              right_on =[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
@@ -340,7 +340,7 @@ class Transfer:
 
         # put the two parts back together
         if len(transfer_links_done) > 0:
-            transfer_links_df = pandas.concat([transfer_links_df, transfer_links_done], axis=0, ignore_index=True)
+            transfer_links_df = pd.concat([transfer_links_df, transfer_links_done], axis=0, ignore_index=True)
 
         # make sure we didn't lose anything
         assert(len_transfer_links_df == len(transfer_links_df))

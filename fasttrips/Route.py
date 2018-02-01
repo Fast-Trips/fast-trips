@@ -12,13 +12,15 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime, os
+import os
 
-import numpy,pandas
+import numpy as np
+import pandas as pd
 
-from .Error  import NetworkInputError,NotImplementedError,UnexpectedError
+from .Error  import NetworkInputError, NotImplementedError, UnexpectedError
 from .Logger import FastTripsLogger
 from .Util   import Util
+
 
 class Route(object):
     """
@@ -184,7 +186,7 @@ class Route(object):
             raise NetworkInputError(Route.INPUT_ROUTES_FILE, error_msg)
 
         # Join to the routes dataframe
-        self.routes_df = pandas.merge(left=self.routes_df, right=routes_ft_df,
+        self.routes_df = pd.merge(left=self.routes_df, right=routes_ft_df,
                                       how='left',
                                       on=Route.ROUTES_COLUMN_ROUTE_ID)
         # Get the mode list
@@ -238,7 +240,7 @@ class Route(object):
             assert(Route.FARE_ATTR_COLUMN_TRANSFERS         in fare_attrs_cols)
 
             if Route.FARE_ATTR_COLUMN_TRANSFER_DURATION not in fare_attrs_cols:
-                self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION] = numpy.nan
+                self.fare_attrs_df[Route.FARE_ATTR_COLUMN_TRANSFER_DURATION] = np.nan
 
             FastTripsLogger.debug("===> REPLACED BY FARE ATTRIBUTES FT\n" + str(self.fare_attrs_df.head()))
             FastTripsLogger.debug("\n"+str(self.fare_attrs_df.dtypes))
@@ -257,11 +259,11 @@ class Route(object):
             self.fare_ids_df = Util.add_numeric_column(self.fare_rules_df[[Route.FARE_RULES_COLUMN_FARE_ID]],
                                                        id_colname=Route.FARE_RULES_COLUMN_FARE_ID,
                                                        numeric_newcolname=Route.FARE_RULES_COLUMN_FARE_ID_NUM)
-            self.fare_rules_df = pandas.merge(left  =self.fare_rules_df,
+            self.fare_rules_df = pd.merge(left  =self.fare_rules_df,
                                               right =self.fare_ids_df,
                                               how   ="left")
         else:
-            self.fare_ids_df = pandas.DataFrame()
+            self.fare_ids_df = pd.DataFrame()
 
 
         # optionally reverse those with origin/destinations if configured
@@ -269,8 +271,8 @@ class Route(object):
         if Assignment.FARE_ZONE_SYMMETRY:
             FastTripsLogger.debug("applying FARE_ZONE_SYMMETRY to %d fare rules" % len(self.fare_rules_df))
             # select only those with an origin and destination
-            reverse_fare_rules = self.fare_rules_df.loc[ pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])&
-                                                         pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ].copy()
+            reverse_fare_rules = self.fare_rules_df.loc[ pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])&
+                                                         pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ].copy()
             # FastTripsLogger.debug("reverse_fare_rules 1 head()=\n%s" % str(reverse_fare_rules.head()))
 
             # reverse them
@@ -280,7 +282,7 @@ class Route(object):
             # FastTripsLogger.debug("reverse_fare_rules 2 head()=\n%s" % str(reverse_fare_rules.head()))
 
             # join them to eliminate dupes
-            reverse_fare_rules = pandas.merge(left     =reverse_fare_rules,
+            reverse_fare_rules = pd.merge(left     =reverse_fare_rules,
                                               right    =self.fare_rules_df,
                                               how      ="left",
                                               on       =[Route.FARE_RULES_COLUMN_FARE_ID,
@@ -295,7 +297,7 @@ class Route(object):
             reverse_fare_rules.drop(["_merge"], axis=1, inplace=True)
 
             # add them to fare rules
-            self.fare_rules_df = pandas.concat([self.fare_rules_df, reverse_fare_rules])
+            self.fare_rules_df = pd.concat([self.fare_rules_df, reverse_fare_rules])
             FastTripsLogger.debug("fare rules with symmetry %d head()=\n%s" % (len(self.fare_rules_df), str(self.fare_rules_df.head())))
 
         # sort by fare ID num so zone-to-zone and their reverse are together
@@ -315,7 +317,7 @@ class Route(object):
             fare_rules_ft_df = self.remove_fare_period_overlap(fare_rules_ft_df)
 
             # join to fare rules dataframe
-            self.fare_rules_df = pandas.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
+            self.fare_rules_df = pd.merge(left=self.fare_rules_df, right=fare_rules_ft_df,
                                               how='left',
                                               on=Route.FARE_RULES_COLUMN_FARE_ID)
 
@@ -326,13 +328,13 @@ class Route(object):
                                                                Route.FARE_RULES_COLUMN_ROUTE_ID_NUM)
             # add origin zone numbering if applicable
             if (Route.FARE_RULES_COLUMN_ORIGIN_ID in list(self.fare_rules_df.columns.values)) and \
-               (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID]).sum() > 0):
+               (pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID]).sum() > 0):
                 self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
                                                                     Route.FARE_RULES_COLUMN_ORIGIN_ID,
                                                                     Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM)
             # add destination zone numbering if applicable
             if (Route.FARE_RULES_COLUMN_DESTINATION_ID in list(self.fare_rules_df.columns.values)) and \
-                (pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]).sum() > 0):
+                (pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]).sum() > 0):
                 self.fare_rules_df = stops.add_numeric_stop_zone_id(self.fare_rules_df,
                                                                     Route.FARE_RULES_COLUMN_DESTINATION_ID,
                                                                     Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM)
@@ -344,8 +346,8 @@ class Route(object):
                     raise NotImplementedError(error_str)
 
                 # check for each row, either both are present or neither -- use xor, or ^
-                xor_id = self.fare_rules_df.loc[ pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])^
-                                                 pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ]
+                xor_id = self.fare_rules_df.loc[ pd.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID])^
+                                                 pd.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID]) ]
                 if len(xor_id) > 0:
                     error_str = "Fast-trips supports fare rules with both origin id and destination id specified, or neither ONLY.\n%s" % str(xor_id)
                     FastTripsLogger.fatal(error_str)
@@ -353,7 +355,7 @@ class Route(object):
 
             # We don't support contains_id
             if Route.FARE_RULES_COLUMN_CONTAINS_ID in list(self.fare_rules_df.columns.values):
-                non_null_contains_id = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_CONTAINS_ID])]
+                non_null_contains_id = self.fare_rules_df.loc[pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_CONTAINS_ID])]
                 if len(non_null_contains_id) > 0:
                     error_str = "Fast-trips does not support contains_id in fare rules:\n%s" % str(non_null_contains_id)
                     FastTripsLogger.fatal(error_str)
@@ -397,7 +399,7 @@ class Route(object):
             #: .. _fare_rules_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md
             #: .. _fare_attributes: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes.md
             #: .. _fare_attributes_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md
-            self.fare_rules_df = pandas.merge(left =self.fare_rules_df,
+            self.fare_rules_df = pd.merge(left =self.fare_rules_df,
                                               right=self.fare_attrs_df,
                                               how  ='left',
                                               on   = Route.FARE_RULES_COLUMN_FARE_PERIOD if self.fare_by_class else Route.FARE_RULES_COLUMN_FARE_ID)
@@ -437,7 +439,7 @@ class Route(object):
             FastTripsLogger.info("Read %7d %15s from %25s" %
                                  (len(self.fare_transfer_rules_df), "fare xfer rules", Route.INPUT_FARE_TRANSFER_RULES_FILE))
         else:
-            self.fare_transfer_rules_df = pandas.DataFrame()
+            self.fare_transfer_rules_df = pd.DataFrame()
 
         self.write_routes_for_extension()
 
@@ -458,11 +460,11 @@ class Route(object):
         """
         access_modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_ACCESS
         egress_modes_df[Route.ROUTES_COLUMN_MODE_TYPE] = Route.MODE_TYPE_EGRESS
-        implicit_modes_df = pandas.DataFrame({Route.ROUTES_COLUMN_MODE_TYPE: [Route.MODE_TYPE_TRANSFER],
+        implicit_modes_df = pd.DataFrame({Route.ROUTES_COLUMN_MODE_TYPE: [Route.MODE_TYPE_TRANSFER],
                                               Route.ROUTES_COLUMN_MODE:      [Route.MODE_TYPE_TRANSFER],
                                               Route.ROUTES_COLUMN_MODE_NUM:  [                       1]})
 
-        self.modes_df = pandas.concat([implicit_modes_df,
+        self.modes_df = pd.concat([implicit_modes_df,
                                       self.modes_df,
                                       access_modes_df,
                                       egress_modes_df], axis=0)
@@ -496,7 +498,7 @@ class Route(object):
         loop_iters = 0
         while True:
             # join with itself to see if any are contained
-            df = pandas.merge(left =fare_rules_ft_df,
+            df = pd.merge(left =fare_rules_ft_df,
                               right=fare_rules_ft_df,
                               on   =Route.FARE_RULES_COLUMN_FARE_ID,
                               how  ="outer")
@@ -554,7 +556,7 @@ class Route(object):
                    'fare_period_id'   :max_fare_period_id+1} # new
             max_fare_period_id += 1
 
-            new_df = pandas.DataFrame([y_1,x,y_2])
+            new_df = pd.DataFrame([y_1,x,y_2])
             FastTripsLogger.debug("\n%s" % str(new_df))
 
             # put it together with the unaffected fare_periodes we already had
@@ -601,13 +603,13 @@ class Route(object):
             fare_rules_df = self.fare_rules_df.copy()
 
             # replace with float versions
-            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
-            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME)/numpy.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
 
             # fillna with -1
             for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM]:
                 if num_col in list(fare_rules_df.columns.values):
-                    fare_rules_df.loc[ pandas.isnull(fare_rules_df[num_col]), num_col] = -1
+                    fare_rules_df.loc[ pd.isnull(fare_rules_df[num_col]), num_col] = -1
                     fare_rules_df[num_col] = fare_rules_df[num_col].astype(int)
                 else:
                     fare_rules_df[num_col] = -1
@@ -696,17 +698,17 @@ class Route(object):
 
         # initialize
         trip_links_unmatched = trip_links_df
-        trip_links_matched   = pandas.DataFrame()
+        trip_links_matched   = pd.DataFrame()
         del trip_links_df
 
         from .Passenger import Passenger
         # level 0: match on all three
-        fare_rules0 = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
-                                             pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
-                                             pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
+        fare_rules0 = self.fare_rules_df.loc[pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
+                                             pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
+                                             pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
 
         if len(fare_rules0) > 0:
-            trip_links_match0 = pandas.merge(left     =trip_links_unmatched,
+            trip_links_match0 = pd.merge(left     =trip_links_unmatched,
                                              right    =fare_rules0,
                                              how      ="inner",
                                              left_on  =[Route.FARE_RULES_COLUMN_ROUTE_ID,"A_zone_id","B_zone_id"],
@@ -714,7 +716,7 @@ class Route(object):
                                              suffixes =["","_fare_rules"])
 
             # delete rows where the board time is not within the fare period
-            trip_links_match0 = trip_links_match0.loc[ pandas.isnull(trip_links_match0[Route.FARE_ATTR_COLUMN_PRICE])|
+            trip_links_match0 = trip_links_match0.loc[ pd.isnull(trip_links_match0[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match0[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match0[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match0[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match0[Route.FARE_RULES_COLUMN_END_TIME])) ]
             FastTripsLogger.debug("add_fares level 0 (%d):\n%s" % (len(trip_links_match0), str(trip_links_match0.head(20))))
@@ -722,7 +724,7 @@ class Route(object):
             if len(trip_links_match0) > 0:
 
                 # update matched and unmatched == they should be disjoint with union = whole
-                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                trip_links_unmatched = pd.merge(left =trip_links_unmatched,
                                                     right=trip_links_match0[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                              Passenger.PF_COL_PATH_NUM,
@@ -736,7 +738,7 @@ class Route(object):
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
                 trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
 
-                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match0], axis=0, copy=False)
+                trip_links_matched = pd.concat([trip_links_matched, trip_links_match0], axis=0, copy=False)
                 FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
                 del trip_links_match0
 
@@ -749,25 +751,25 @@ class Route(object):
                 trip_links_matched.drop_duplicates(subset="trip_links_df index", keep="first", inplace=True)
 
         # level 1: match on route only
-        fare_rules1 = self.fare_rules_df.loc[pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
-                                             pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
-                                             pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
+        fare_rules1 = self.fare_rules_df.loc[pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
+                                             pd.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
+                                             pd.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
         if len(fare_rules1) > 0:
-            trip_links_match1 = pandas.merge(left     =trip_links_unmatched,
+            trip_links_match1 = pd.merge(left     =trip_links_unmatched,
                                              right    =fare_rules1,
                                              how      ="inner",
                                              on       =Route.FARE_RULES_COLUMN_ROUTE_ID,
                                              suffixes =["","_fare_rules"])
 
             # delete rows where the board time is not within the fare period
-            trip_links_match1 = trip_links_match1.loc[ pandas.isnull(trip_links_match1[Route.FARE_ATTR_COLUMN_PRICE])|
+            trip_links_match1 = trip_links_match1.loc[ pd.isnull(trip_links_match1[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match1[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match1[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match1[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match1[Route.FARE_RULES_COLUMN_END_TIME])) ]
             FastTripsLogger.debug("add_fares level 1 (%d):\n%s" % (len(trip_links_match1), str(trip_links_match1.head())))
 
             if len(trip_links_match1) > 0:
                 # update matched and unmatched == they should be disjoint with union = whole
-                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                trip_links_unmatched = pd.merge(left =trip_links_unmatched,
                                                     right=trip_links_match1[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                              Passenger.PF_COL_PATH_NUM,
@@ -781,16 +783,16 @@ class Route(object):
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
                 trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
 
-                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match1], axis=0, copy=False)
+                trip_links_matched = pd.concat([trip_links_matched, trip_links_match1], axis=0, copy=False)
                 FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
                 del trip_links_match1
 
         # level 2: match on origin and destination zones only
-        fare_rules2 = self.fare_rules_df.loc[pandas.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
-                                             pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
-                                             pandas.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
+        fare_rules2 = self.fare_rules_df.loc[pd.isnull (self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
+                                             pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
+                                             pd.notnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])]
         if len(fare_rules2) > 0:
-            trip_links_match2 = pandas.merge(left     =trip_links_unmatched,
+            trip_links_match2 = pd.merge(left     =trip_links_unmatched,
                                              right    =fare_rules2,
                                              how      ="inner",
                                              left_on  =["A_zone_id","B_zone_id"],
@@ -798,14 +800,14 @@ class Route(object):
                                              suffixes =["","_fare_rules"])
 
             # delete rows where the board time is not within the fare period
-            trip_links_match2 = trip_links_match2.loc[ pandas.isnull(trip_links_match2[Route.FARE_ATTR_COLUMN_PRICE])|
+            trip_links_match2 = trip_links_match2.loc[ pd.isnull(trip_links_match2[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match2[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match2[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match2[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match2[Route.FARE_RULES_COLUMN_END_TIME])) ]
             FastTripsLogger.debug("add_fares level 2 (%d):\n%s" % (len(trip_links_match2), str(trip_links_match2.head())))
 
             if len(trip_links_match2) > 0:
                 # update matched and unmatched == they should be disjoint with union = whole
-                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                trip_links_unmatched = pd.merge(left =trip_links_unmatched,
                                                     right=trip_links_match2[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                              Passenger.PF_COL_PATH_NUM,
@@ -819,14 +821,14 @@ class Route(object):
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
                 trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
 
-                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match2], axis=0, copy=False)
+                trip_links_matched = pd.concat([trip_links_matched, trip_links_match2], axis=0, copy=False)
                 FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
                 del trip_links_match2
 
         # level 3: no route, origin or destination specified
-        fare_rules3 = self.fare_rules_df.loc[pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
-                                             pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
-                                             pandas.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])].copy()
+        fare_rules3 = self.fare_rules_df.loc[pd.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ROUTE_ID      ])&
+                                             pd.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_ORIGIN_ID     ])&
+                                             pd.isnull(self.fare_rules_df[Route.FARE_RULES_COLUMN_DESTINATION_ID])].copy()
         if len(fare_rules3) > 0:
             # need a column to merge on
             merge_column = "fare level 3 merge col"
@@ -835,7 +837,7 @@ class Route(object):
 
             FastTripsLogger.debug("fare_rules3 (%d):\n%s" % (len(fare_rules3), str(fare_rules3.head())))
 
-            trip_links_match3 = pandas.merge(left     =trip_links_unmatched,
+            trip_links_match3 = pd.merge(left     =trip_links_unmatched,
                                              right    =fare_rules3,
                                              how      ="inner",
                                              on       =merge_column,
@@ -845,14 +847,14 @@ class Route(object):
             trip_links_unmatched.drop([merge_column], axis=1, inplace=True)
 
             # delete rows where the board time is not within the fare period
-            trip_links_match3 = trip_links_match3.loc[ pandas.isnull(trip_links_match3[Route.FARE_ATTR_COLUMN_PRICE])|
+            trip_links_match3 = trip_links_match3.loc[ pd.isnull(trip_links_match3[Route.FARE_ATTR_COLUMN_PRICE])|
                                                       ((trip_links_match3[Assignment.SIM_COL_PAX_BOARD_TIME] >= trip_links_match3[Route.FARE_RULES_COLUMN_START_TIME])&
                                                        (trip_links_match3[Assignment.SIM_COL_PAX_BOARD_TIME] <  trip_links_match3[Route.FARE_RULES_COLUMN_END_TIME])) ]
             FastTripsLogger.debug("add_fares level 3 (%d):\n%s" % (len(trip_links_match3), str(trip_links_match3.head())))
 
             if len(trip_links_match3) > 0:
                 # update matched and unmatched == they should be disjoint with union = whole
-                trip_links_unmatched = pandas.merge(left =trip_links_unmatched,
+                trip_links_unmatched = pd.merge(left =trip_links_unmatched,
                                                     right=trip_links_match3[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                              Passenger.PF_COL_PATH_NUM,
@@ -866,12 +868,12 @@ class Route(object):
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
                 trip_links_unmatched.drop(["_merge"], axis=1, inplace=True)
 
-                trip_links_matched = pandas.concat([trip_links_matched, trip_links_match3], axis=0, copy=False)
+                trip_links_matched = pd.concat([trip_links_matched, trip_links_match3], axis=0, copy=False)
                 FastTripsLogger.debug("matched: %d  unmatched: %d   total: %d" % (len(trip_links_matched), len(trip_links_unmatched), len(trip_links_matched)+len(trip_links_unmatched)))
                 del trip_links_match3
 
         # put them together
-        trip_links_df = pandas.concat([trip_links_matched, trip_links_unmatched], axis=0, copy=False)
+        trip_links_df = pd.concat([trip_links_matched, trip_links_unmatched], axis=0, copy=False)
         trip_links_df.sort_values(by=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                       Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                       Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
@@ -933,7 +935,7 @@ class Route(object):
 
         # previous trip link
         trip_links_df["%s prev" % Passenger.PF_COL_LINK_NUM] = trip_links_df[Passenger.PF_COL_LINK_NUM] - 2
-        trip_links_df = pandas.merge(left    =trip_links_df,
+        trip_links_df = pd.merge(left    =trip_links_df,
                                      right   =trip_links_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                              Passenger.PF_COL_PATH_NUM,
@@ -952,7 +954,7 @@ class Route(object):
         # extra columns are linknum prev, linknum_prev, fare_prev, fare_period_prev,
 
         # join with transfers table
-        trip_links_df = pandas.merge(left    =trip_links_df,
+        trip_links_df = pd.merge(left    =trip_links_df,
                                      right   =self.fare_transfer_rules_df,
                                      left_on =["fare_period_prev","fare_period"],
                                      right_on=[Route.FARE_TRANSFER_RULES_COLUMN_FROM_FARE_PERIOD,
@@ -969,17 +971,17 @@ class Route(object):
         # FastTripsLogger.debug("apply_fare_transfers (%d):\n%s" % (len(trip_links_df), str(trip_links_df.head(20))))
 
         # apply transfer discount
-        trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
+        trip_links_df.loc[ pd.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
                            (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_DISCOUNT),
                            Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Assignment.SIM_COL_PAX_FARE] - trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]
 
         # apply transfer free
-        trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
+        trip_links_df.loc[ pd.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
                            (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_FREE),
                            Assignment.SIM_COL_PAX_FARE ] = 0.0
 
         # apply transfer fare
-        trip_links_df.loc[ pandas.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
+        trip_links_df.loc[ pd.notnull(trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE])&
                            (trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_TYPE]==Route.TRANSFER_TYPE_TRANSFER_COST),
                            Assignment.SIM_COL_PAX_FARE ] = trip_links_df[Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT]
 
@@ -1018,7 +1020,7 @@ class Route(object):
                                           Assignment.SIM_COL_PAX_BOARD_TIME]].loc[trip_links_df["fare_index"]==0]
         FastTripsLogger.debug("apply_free_transfers: first_fare_board=\n%s" % str(first_fare_board.head(10)))
 
-        trip_links_df = pandas.merge(left    =trip_links_df,
+        trip_links_df = pd.merge(left    =trip_links_df,
                                      right   =first_fare_board,
                                      on      =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
@@ -1027,7 +1029,7 @@ class Route(object):
                                      how     ="left",
                                      suffixes=["","_ffb"])
         # calculate time from first board (for this fare period id) in seconds
-        trip_links_df["transfer_time_sec"] = (trip_links_df[Assignment.SIM_COL_PAX_BOARD_TIME]-trip_links_df["%s_ffb" % Assignment.SIM_COL_PAX_BOARD_TIME])/numpy.timedelta64(1,'s')
+        trip_links_df["transfer_time_sec"] = (trip_links_df[Assignment.SIM_COL_PAX_BOARD_TIME]-trip_links_df["%s_ffb" % Assignment.SIM_COL_PAX_BOARD_TIME])/np.timedelta64(1,'s')
 
         # FastTripsLogger.debug("apply_free_transfers: trip_links_df=\n%s" % str(trip_links_df.loc[ trip_links_df["transfer_time_sec"] >0 ]))
 

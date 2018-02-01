@@ -12,12 +12,14 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime, os
-import pandas
+import datetime
+import os
 
-from .Logger    import FastTripsLogger
+import pandas as pd
+
 from .Passenger import Passenger
 from .Util      import Util
+
 
 class Performance:
     """
@@ -193,7 +195,7 @@ class Performance:
         """
         Writes the pathfinding results to OUTPUT_PERFORMANCE_PF_FILE as a csv.
         """
-        performance_df = pandas.DataFrame.from_dict(self.performance_pf_dict)
+        performance_df = pd.DataFrame.from_dict(self.performance_pf_dict)
 
         Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_PF_FILE), append=append)
 
@@ -205,7 +207,7 @@ class Performance:
         """
         Writes the results to OUTPUT_PERFORMANCE_FILE as a csv.
         """
-        performance_df = pandas.DataFrame.from_dict(self.step_record_dict)
+        performance_df = pd.DataFrame.from_dict(self.step_record_dict)
 
         performance_df[Performance.PERFORMANCE_COL_STEP_DURATION] = performance_df[Performance.PERFORMANCE_COL_END_TIME] - performance_df[Performance.PERFORMANCE_COL_START_TIME]
 

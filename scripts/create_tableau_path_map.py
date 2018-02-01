@@ -1,6 +1,9 @@
-import argparse, os, sys
+import argparse, os
+
+import pandas as pd
+
 import fasttrips
-import pandas
+
 
 USAGE = r"""
 
@@ -12,11 +15,11 @@ def add_taz_coords(network_dir, pathset_links_df):
     fasttrips.FastTripsLogger.info("Adding TAZ coordinates")
     # just need the taz coords
     taz_coords_file = os.path.join(network_dir, "taz_coords.txt")
-    taz_coords_df = pandas.read_csv(taz_coords_file, dtype={"taz":object})
+    taz_coords_df = pd.read_csv(taz_coords_file, dtype={"taz":object})
     fasttrips.FastTripsLogger.debug("taz_coords_df=\n%s" % str(taz_coords_df.head()))
 
     # join to links
-    pathset_links_df = pandas.merge(left    =pathset_links_df,
+    pathset_links_df = pd.merge(left    =pathset_links_df,
                                     left_on ="A_id",
                                     right   =taz_coords_df,
                                     right_on="taz",
@@ -26,7 +29,7 @@ def add_taz_coords(network_dir, pathset_links_df):
     pathset_links_df.loc[pathset_links_df["linkmode"]=="access", "A_lon"] = pathset_links_df["lon"]
     pathset_links_df.drop(["taz","lat","lon"], axis=1, inplace=True)
 
-    pathset_links_df = pandas.merge(left    =pathset_links_df,
+    pathset_links_df = pd.merge(left    =pathset_links_df,
                                     left_on ="B_id",
                                     right   =taz_coords_df,
                                     right_on="taz",
@@ -75,7 +78,7 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
         raise
 
     # get next or prev link information on the link
-    pathset_links_df = pandas.merge(left    =pathset_links_df,
+    pathset_links_df = pd.merge(left    =pathset_links_df,
                                     right   =prevnext_links_df,
                                     how     ="left",
                                     on      =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"],
@@ -89,9 +92,9 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
         # A_id: if the previous link is access and the B_id is null, get the A_id (taz) and find a stop_id close to it
         # A_id: if the previous link is transfer and the B_id is null, get the A_id and find a stop_id close to it
         find_near_df = pathset_links_df.loc[ ((pathset_links_df["linkmode_prev"]=="access")|(pathset_links_df["linkmode_prev"]=="transfer"))&
-                                              pandas.isnull(pathset_links_df["A_id"]     )&
-                                              pandas.isnull(pathset_links_df["B_id_prev"])&
-                                              pandas.notnull(pathset_links_df["A_id_prev"]) ]
+                                              pd.isnull(pathset_links_df["A_id"]     )&
+                                              pd.isnull(pathset_links_df["B_id_prev"])&
+                                              pd.notnull(pathset_links_df["A_id_prev"]) ]
         fasttrips.FastTripsLogger.info("Imputing A_id from previous link for %d links" % len(find_near_df))
 
     else:
@@ -99,9 +102,9 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
         # B_id: if the next link is transfer and A_id is null, get the B_id and find a stop_id close to it
         # B_id: if the next link is egress and the A_id is null, get the B_id (taz) and find a stop_id close to it
         find_near_df = pathset_links_df.loc[ ((pathset_links_df["linkmode_next"]=="egress")|(pathset_links_df["linkmode_next"]=="transfer"))&
-                                              pandas.isnull(pathset_links_df["B_id"]     )&
-                                              pandas.isnull(pathset_links_df["A_id_next"])&
-                                              pandas.notnull(pathset_links_df["B_id_next"]) ]
+                                              pd.isnull(pathset_links_df["B_id"]     )&
+                                              pd.isnull(pathset_links_df["A_id_next"])&
+                                              pd.notnull(pathset_links_df["B_id_next"]) ]
         fasttrips.FastTripsLogger.info("Imputing B_id from next link for %d links" % len(find_near_df))
 
     # nothing to do
@@ -122,12 +125,12 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
         fasttrips.FastTripsLogger.debug("impute_id len=%d head()=\n%s" % (len(impute_id), str(impute_id.head())))
         fasttrips.FastTripsLogger.debug("service_vehicle_stops len=%d head()=\n%s" % (len(service_vehicle_stops), str(service_vehicle_stops.head())))
 
-        near_stops_df = pandas.merge(left =impute_id,
+        near_stops_df = pd.merge(left =impute_id,
                                      right=service_vehicle_stops,
                                      on   =["service_id","mode"],
                                      how  ="left")
         # no join success -- nothing we can do
-        if pandas.notnull(near_stops_df["stop_id"]).sum() == 0:
+        if pd.notnull(near_stops_df["stop_id"]).sum() == 0:
             fasttrips.FastTripsLogger.info("Imputing %6d out of %6d stops for %s" % (0, len(impute_id), service_id))
 
         else:
@@ -147,20 +150,20 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
             fasttrips.FastTripsLogger.debug("near_stops_df len=%d head()=\n%s" % (len(near_stops_df), str(near_stops_df.head())))
 
             # set it into pathset_links_df
-            pathset_links_df = pandas.merge(left=pathset_links_df,
+            pathset_links_df = pd.merge(left=pathset_links_df,
                                             right=near_stops_df,
                                             on=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"],
                                             how="left",
                                             suffixes=["","_near"])
-            fasttrips.FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"])].head()))
+            fasttrips.FastTripsLogger.debug("pathset_links_df head=\n%s" % str(pathset_links_df.loc[ pd.notnull(pathset_links_df["stop_id"])].head()))
             # set it
-            fasttrips.FastTripsLogger.info("Imputing %6d out of %6d stops for %s" % (pandas.notnull(pathset_links_df["stop_id"]).sum(), len(impute_id), service_id))
-            impute_count += pandas.notnull(pathset_links_df["stop_id"]).sum()
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"]), "%s_id"     % AB] = pathset_links_df["stop_id"    ]
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"]), "%s_id_num" % AB] = pathset_links_df["stop_id_num"]
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"]), "%s_lat"    % AB] = pathset_links_df["stop_lat"   ]
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"]), "%s_lon"    % AB] = pathset_links_df["stop_lon"   ]
-            pathset_links_df.loc[ pandas.notnull(pathset_links_df["stop_id"]), "%s_impute" % AB] = True
+            fasttrips.FastTripsLogger.info("Imputing %6d out of %6d stops for %s" % (pd.notnull(pathset_links_df["stop_id"]).sum(), len(impute_id), service_id))
+            impute_count += pd.notnull(pathset_links_df["stop_id"]).sum()
+            pathset_links_df.loc[ pd.notnull(pathset_links_df["stop_id"]), "%s_id"     % AB] = pathset_links_df["stop_id"    ]
+            pathset_links_df.loc[ pd.notnull(pathset_links_df["stop_id"]), "%s_id_num" % AB] = pathset_links_df["stop_id_num"]
+            pathset_links_df.loc[ pd.notnull(pathset_links_df["stop_id"]), "%s_lat"    % AB] = pathset_links_df["stop_lat"   ]
+            pathset_links_df.loc[ pd.notnull(pathset_links_df["stop_id"]), "%s_lon"    % AB] = pathset_links_df["stop_lon"   ]
+            pathset_links_df.loc[ pd.notnull(pathset_links_df["stop_id"]), "%s_impute" % AB] = True
 
             # we're done with these fields
             pathset_links_df.drop(["stop_id","stop_id_num","stop_name","stop_lat","stop_lon","stop_dist"], axis=1, inplace=True)
@@ -188,7 +191,7 @@ def impute_stop_from_adjacent_stop(ft, pathset_links_df, prev_next):
     else:
         raise
 
-    target_count = pandas.isnull(pathset_links_df["%s_id" % AB_set]).sum()
+    target_count = pd.isnull(pathset_links_df["%s_id" % AB_set]).sum()
     if target_count == 0: return pathset_links_df
 
     # fill in unknown Bs from next link
@@ -200,33 +203,33 @@ def impute_stop_from_adjacent_stop(ft, pathset_links_df, prev_next):
     else:
         prevnext_links_df["linknum"] = prevnext_links_df["linknum"]+1
 
-    pathset_links_df = pandas.merge(left    =pathset_links_df,
+    pathset_links_df = pd.merge(left    =pathset_links_df,
                                     right   =prevnext_links_df,
                                     how     ="left",
                                     on      =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","linknum"],
                                     suffixes=["","_%s" % prev_next])
 
     # inpute the AB_set
-    impute_count = len(pathset_links_df.loc[ pandas.isnull(pathset_links_df["%s_id" % AB_set])&pandas.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)])])
-    pathset_links_df.loc[ pandas.isnull(pathset_links_df["%s_id" % AB_set])&pandas.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_impute" % AB_set] = True
-    pathset_links_df.loc[ pandas.isnull(pathset_links_df["%s_id" % AB_set])&pandas.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_id_num" % AB_set] = pathset_links_df["%s_id_num_%s" % (AB_use, prev_next)]
-    pathset_links_df.loc[ pandas.isnull(pathset_links_df["%s_id" % AB_set])&pandas.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_lat"    % AB_set] = pathset_links_df["%s_lat_%s"    % (AB_use, prev_next)]
-    pathset_links_df.loc[ pandas.isnull(pathset_links_df["%s_id" % AB_set])&pandas.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_lon"    % AB_set] = pathset_links_df["%s_lon_%s"    % (AB_use, prev_next)]
-    pathset_links_df.loc[ pandas.isnull(pathset_links_df["%s_id" % AB_set])&pandas.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_id"     % AB_set] = pathset_links_df["%s_id_%s"     % (AB_use, prev_next)]
+    impute_count = len(pathset_links_df.loc[ pd.isnull(pathset_links_df["%s_id" % AB_set])&pd.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)])])
+    pathset_links_df.loc[ pd.isnull(pathset_links_df["%s_id" % AB_set])&pd.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_impute" % AB_set] = True
+    pathset_links_df.loc[ pd.isnull(pathset_links_df["%s_id" % AB_set])&pd.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_id_num" % AB_set] = pathset_links_df["%s_id_num_%s" % (AB_use, prev_next)]
+    pathset_links_df.loc[ pd.isnull(pathset_links_df["%s_id" % AB_set])&pd.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_lat"    % AB_set] = pathset_links_df["%s_lat_%s"    % (AB_use, prev_next)]
+    pathset_links_df.loc[ pd.isnull(pathset_links_df["%s_id" % AB_set])&pd.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_lon"    % AB_set] = pathset_links_df["%s_lon_%s"    % (AB_use, prev_next)]
+    pathset_links_df.loc[ pd.isnull(pathset_links_df["%s_id" % AB_set])&pd.notnull(pathset_links_df["%s_id_%s" % (AB_use, prev_next)]), "%s_id"     % AB_set] = pathset_links_df["%s_id_%s"     % (AB_use, prev_next)]
     # done
     pathset_links_df.drop(["%s_id_%s"     % (AB_use, prev_next),
                            "%s_id_num_%s" % (AB_use, prev_next),
                            "%s_lat_%s"    % (AB_use, prev_next),
                            "%s_lon_%s"    % (AB_use, prev_next)], axis=1, inplace=True)
 
-    fasttrips.FastTripsLogger.info("Imputed %8d values for %s_id => Have %8d null %s_id values" % (impute_count, AB_set, pandas.isnull(pathset_links_df["%s_id" % AB_set]).sum(), AB_set))
+    fasttrips.FastTripsLogger.info("Imputed %8d values for %s_id => Have %8d null %s_id values" % (impute_count, AB_set, pd.isnull(pathset_links_df["%s_id" % AB_set]).sum(), AB_set))
     return pathset_links_df
 
 if __name__ == "__main__":
 
-    pandas.set_option('display.width',      1000)
-    pandas.set_option('display.max_rows',   1000)
-    pandas.set_option('display.max_columns', 100)
+    pd.set_option('display.width',      1000)
+    pd.set_option('display.max_rows',   1000)
+    pd.set_option('display.max_columns', 100)
 
     parser = argparse.ArgumentParser(description=USAGE)
     parser.add_argument('input_network_dir', type=str, nargs=1, help="Directory with input network")
@@ -288,8 +291,8 @@ if __name__ == "__main__":
     pathset_links_df = impute_stop_from_adjacent_stop(ft, pathset_links_df, "next")
 
     # split the pathset links into component bits -- only the ones with trip_ids
-    pathset_links_trip   = pathset_links_df.loc[pandas.notnull(pathset_links_df["trip_id"])].copy()
-    pathset_links_notrip = pathset_links_df.loc[pandas.isnull(pathset_links_df["trip_id"])]
+    pathset_links_trip   = pathset_links_df.loc[pd.notnull(pathset_links_df["trip_id"])].copy()
+    pathset_links_notrip = pathset_links_df.loc[pd.isnull(pathset_links_df["trip_id"])]
     fasttrips.FastTripsLogger.info("Splitting pathset_links_df (%d) into links with trip_id (%d) and links without (%d)" %
                                    (len(pathset_links_df), len(pathset_links_trip), len(pathset_links_notrip)))
 
@@ -306,7 +309,7 @@ if __name__ == "__main__":
 
     fasttrips.FastTripsLogger.debug("pathset_links_df.head(100)=\n%s" % str(pathset_links_df.head(100)))
 
-    missing_lat_lon = pathset_links_df.loc[pandas.isnull(pathset_links_df["A_lat"])|pandas.isnull(pathset_links_df["B_lat"])]
+    missing_lat_lon = pathset_links_df.loc[pd.isnull(pathset_links_df["A_lat"])|pd.isnull(pathset_links_df["B_lat"])]
     if len(missing_lat_lon) > 0:
         fasttrips.FastTripsLogger.info("Missing %d lat/lons" % len(missing_lat_lon))
 
@@ -379,7 +382,7 @@ if __name__ == "__main__":
         fasttrips.FastTripsLogger.info("Dropping duplicate path descriptions.  Went from %d to %d paths" % (num_paths, len(pathset_paths_df)))
 
         # join map points to them
-        map_points_df = pandas.merge(left    =pathset_paths_df,
+        map_points_df = pd.merge(left    =pathset_paths_df,
                                      left_on =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
                                      right   =map_points_df,
                                      right_on=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
@@ -390,7 +393,7 @@ if __name__ == "__main__":
         map_points_df.drop(["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"], axis=1, inplace=True)
     else:
         # just add descriptions
-        map_points_df = pandas.merge(left    =map_points_df,
+        map_points_df = pd.merge(left    =map_points_df,
                                      left_on =["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
                                      right   =pathset_paths_df[["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum","description"]],
                                      right_on=["person_id","person_trip_id","iteration","pathfinding_iteration","simulation_iteration","pathnum"],
