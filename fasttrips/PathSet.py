@@ -589,9 +589,9 @@ class PathSet:
         path2["split_first"] = False
 
         # delete anything irrelevant -- so keep non-transit links, and transit links WITH valid sequences
-        path2 = path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]!=Route.MODE_TYPE_TRANSIT) | 
-                           ( (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT) & 
-                             (path2["A_seq_veh"]>=path2["A_seq"]) & 
+        path2 = path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]!=Route.MODE_TYPE_TRANSIT) |
+                           ( (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT) &
+                             (path2["A_seq_veh"]>=path2["A_seq"]) &
                              (path2["B_seq_veh"]<=path2["B_seq"]) ) ]
         # These are the new columns -- incorporate them
         path2.loc[ (path2[Passenger.PF_COL_LINK_MODE]==Route.MODE_TYPE_TRANSIT)&(path2["A_seq_veh"]==path2["A_seq"]), "split_first"] = True
@@ -665,7 +665,8 @@ class PathSet:
         return path2
 
     @staticmethod
-    def calculate_cost(FT, STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df, reset_bump_iter=False):
+    def calculate_cost(STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
+                       trip_list_df, routes, tazs, transfers, stops=None, reset_bump_iter=False):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -695,17 +696,18 @@ class PathSet:
 
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: pathset_links_df trace\n%s" % str(pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
-            FastTripsLogger.debug("calculate_cost: trip_list_df trace\n%s" % str(FT.passengers.trip_list_df.loc[FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
+            FastTripsLogger.debug("calculate_cost: trip_list_df trace\n%s" % str(trip_list_df.loc[trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 
         # Add fares -- need stop zones first if they're not there.
         # We only need to do this once per pathset.
         # todo -- could remove non-transit links for this?
         FastTripsLogger.debug("calculate_cost columns:\n%s" % str(list(pathset_links_df.columns.values)))
         if "A_zone_id" not in list(pathset_links_df.columns.values):
-            pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
-            pathset_links_df = FT.stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+            assert(stops is not None)
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
         # This needs to be done fresh each time since simulation might change the board times and therefore the fare periods
-        pathset_links_df = FT.routes.add_fares(pathset_links_df)
+        pathset_links_df = routes.add_fares(pathset_links_df)
 
 
         # base this on pathfinding distance
@@ -713,13 +715,13 @@ class PathSet:
 
         pathset_links_to_use = pathset_links_df
         if PathSet.OVERLAP_SPLIT_TRANSIT:
-            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, FT.stops)
+            pathset_links_to_use = PathSet.split_transit_links(pathset_links_df, veh_trips_df, stops)
         else:
             pathset_links_to_use["split_first"] = True  # all transit links are first
 
         # First, we need user class, purpose, demand modes, and value of time
-        pathset_links_cost_df = pd.merge(left =pathset_links_to_use,
-                                             right=FT.passengers.trip_list_df[[
+        pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
+                                             right=trip_list_df[[
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
@@ -793,14 +795,14 @@ class PathSet:
 
             # make copies; we don't want to mess with originals
             if accegr_type == "walk":
-                link_df   = FT.tazs.walk_df.copy()
+                link_df   = tazs.walk_df.copy()
                 mode_list = TAZ.WALK_MODE_NUMS
             elif accegr_type == "bike":
                 mode_list = TAZ.BIKE_MODE_NUMS
                 # not supported yet
                 continue
             else:
-                link_df   = FT.tazs.drive_df.copy()
+                link_df   = tazs.drive_df.copy()
                 mode_list = TAZ.DRIVE_MODE_NUMS
 
             FastTripsLogger.debug("Access/egress link_df %s\n%s" % (accegr_type, link_df.head().to_string()))
@@ -841,8 +843,8 @@ class PathSet:
                                     (cost_accegr_df[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM].isin(mode_list)), "var_value"] = cost_accegr_df[new_colname]
 
         # Access/egress needs passenger trip departure, arrival and time_target
-        cost_accegr_df = pd.merge(left =cost_accegr_df,
-                                      right=FT.passengers.trip_list_df[[
+        cost_accegr_df = pandas.merge(left =cost_accegr_df,
+                                      right=trip_list_df[[
                                                 Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                 Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
@@ -953,8 +955,8 @@ class PathSet:
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
-        cost_transfer_df = FT.transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
-        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/np.timedelta64(1,'m')
+        cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
+        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
 
         # any numeric column can be used
         for colname in list(cost_transfer_df.select_dtypes(include=['float64','int64']).columns.values):
@@ -1140,7 +1142,7 @@ class PathSet:
         pathset_links_to_use = pd.merge(left  =pathset_links_to_use,
                                             right =chunk_list,
                                             how   ='left')
-        FastTripsLogger.debug("calculate_overlap() mem_use=%s pathset_links_to_use has length %d, head=\n%s" % (Util.get_process_mem_use_str(), 
+        FastTripsLogger.debug("calculate_overlap() mem_use=%s pathset_links_to_use has length %d, head=\n%s" % (Util.get_process_mem_use_str(),
                               len(pathset_links_to_use), pathset_links_to_use.head().to_string()))
         full_overlap_df = pd.DataFrame()
 
