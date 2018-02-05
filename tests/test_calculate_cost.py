@@ -141,6 +141,7 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
         GLOBAL_ITERATIONS,
         OUTPUT_DIR,
         pathfinding_type='stochastic',
+        learning_convergence=False,
         capacity=capacity_constrained,
         overlap_split_transit=split_transit,
         input_functions=INPUT_FUNCTIONS,

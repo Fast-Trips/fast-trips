@@ -1104,7 +1104,7 @@ class PathSet:
                                                    Passenger.PF_COL_PATH_NUM])
 
         if PathSet.LEARN_ROUTES:
-            pathset_paths_df['learn_discount'] = (1 + PathSet.LEARN_ROUTES_RATE) ** pathset_paths_df['success_flag'] - 1
+            pathset_paths_df['learn_discount'] = (1 + PathSet.LEARN_ROUTES_RATE) ** pathset_paths_df[PathSet.SUCCESS_FLAG_COLUMN] - 1
             pathset_paths_df['orig_sim_cost'] = pathset_paths_df[Assignment.SIM_COL_PAX_COST]
             pathset_paths_df[Assignment.SIM_COL_PAX_COST] = pathset_paths_df[Assignment.SIM_COL_PAX_COST] * \
                                                             (1 - pathset_paths_df['learn_discount'])
