@@ -928,6 +928,27 @@ class PathSet:
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
 
+        # depart before preferred or arrive after preferred means the passenger just missed something important
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = \
+            (cost_accegr_df[Passenger.PF_COL_PAX_B_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME])/np.timedelta64(1,'m')
+
+        # preferred delay_min - departure means want to depart after that time
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = \
+            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_A_TIME])/np.timedelta64(1,'m')
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
+
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "pat_variance") & \
+                           (cost_accegr_df['var_value'] < 0), "var_value"] = 0
+
         # Before we do any math, let's make sure we can use linear and exponentially interchangeably below.
         # linear growth = exponential growth with 0 percent growth rate
         assert PathSet.DEPART_EARLY_GROWTH_RATE == 0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
