@@ -83,6 +83,15 @@ class PathSet:
     #: into A-B-C-D-E for overlap calculations?
     OVERLAP_SPLIT_TRANSIT           = None
 
+    #: Allow departures and arrivals before / after preferred time
+    PAT_VARIANCE                   = 0
+
+    #: Weight applied to each minute before or after preferred time
+    PAT_PENALTY                    = 1.01
+
+    #: Does the penalty grow exponentially
+    PAT_PENALTY_EXP                = True
+
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
     #: Weights column: Purpose
@@ -150,12 +159,14 @@ class PathSet:
         #: Preferred time is a datetime.time object
         if trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "arrival":
             self.direction     = PathSet.DIR_OUTBOUND
-            self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].to_datetime().time()
-            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN]
+            #The addition "tricks" the C++ pathfinding code to return options after PAT
+            self.pref_time     = (trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] + PathSet.PAT_VARIANCE).to_datetime().time()
+            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] + (PathSet.PAT_VARIANCE.seconds / 60.0)
         elif trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "departure":
             self.direction     = PathSet.DIR_INBOUND
-            self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].to_datetime().time()
-            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN]
+            # The subtraction "tricks" the C++ pathfinding code to return options before PAT
+            self.pref_time     = (trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - PathSet.PAT_VARIANCE).to_datetime().time()
+            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] - (PathSet.PAT_VARIANCE.seconds / 60.0)
         else:
             raise Exception("Don't understand trip_list %s: %s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(trip_list_dict)))
 
@@ -720,7 +731,7 @@ class PathSet:
             pathset_links_to_use["split_first"] = True  # all transit links are first
 
         # First, we need user class, purpose, demand modes, and value of time
-        pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
+        pathset_links_cost_df = pd.merge(left =pathset_links_to_use,
                                              right=trip_list_df[[
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
@@ -843,7 +854,7 @@ class PathSet:
                                     (cost_accegr_df[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM].isin(mode_list)), "var_value"] = cost_accegr_df[new_colname]
 
         # Access/egress needs passenger trip departure, arrival and time_target
-        cost_accegr_df = pandas.merge(left =cost_accegr_df,
+        cost_accegr_df = pd.merge(left =cost_accegr_df,
                                       right=trip_list_df[[
                                                 Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
@@ -887,6 +898,27 @@ class PathSet:
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
+
+        # depart before preferred or arrive after preferred means the passenger just missed something important
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = \
+            (cost_accegr_df[Passenger.PF_COL_PAX_B_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME])/np.timedelta64(1,'m')
+
+        # preferred delay_min - departure means want to depart after that time
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = \
+            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_A_TIME])/np.timedelta64(1,'m')
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "pat_variance"    )& \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
+
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "pat_variance") & \
+                           (cost_accegr_df['var_value'] < 0), "var_value"] = 0
 
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("cost_accegr_df trace\n%s\ndtypes=\n%s" % (cost_accegr_df.loc[cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string(), str(cost_accegr_df.dtypes)))
@@ -956,7 +988,7 @@ class PathSet:
 
         ##################### Finally, handle Transfer link costs
         cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
-        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
+        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/np.timedelta64(1,'m')
 
         # any numeric column can be used
         for colname in list(cost_transfer_df.select_dtypes(include=['float64','int64']).columns.values):
