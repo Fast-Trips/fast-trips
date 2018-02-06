@@ -720,7 +720,7 @@ class PathSet:
             pathset_links_to_use["split_first"] = True  # all transit links are first
 
         # First, we need user class, purpose, demand modes, and value of time
-        pathset_links_cost_df = pandas.merge(left =pathset_links_to_use,
+        pathset_links_cost_df = pd.merge(left =pathset_links_to_use,
                                              right=trip_list_df[[
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
@@ -843,7 +843,7 @@ class PathSet:
                                     (cost_accegr_df[PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM].isin(mode_list)), "var_value"] = cost_accegr_df[new_colname]
 
         # Access/egress needs passenger trip departure, arrival and time_target
-        cost_accegr_df = pandas.merge(left =cost_accegr_df,
+        cost_accegr_df = pd.merge(left =cost_accegr_df,
                                       right=trip_list_df[[
                                                 Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
@@ -956,7 +956,7 @@ class PathSet:
 
         ##################### Finally, handle Transfer link costs
         cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
-        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/numpy.timedelta64(1,'m')
+        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/np.timedelta64(1,'m')
 
         # any numeric column can be used
         for colname in list(cost_transfer_df.select_dtypes(include=['float64','int64']).columns.values):
