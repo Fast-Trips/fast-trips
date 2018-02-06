@@ -8,6 +8,11 @@ from fasttrips import Run
 
 
 def test_pat_before_and_after():
+    """
+    Test to ensure that some of the pathfinder trips are returned before preferred departure
+    or after preferred arrival.
+    """
+
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
@@ -76,6 +81,11 @@ def test_pat_before_and_after():
 
 
 def test_pat_off():
+    """
+    Test to ensure that none of the pathfinder trips are returned before preferred departure
+    or after preferred arrival.
+    """
+
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
