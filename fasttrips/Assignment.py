@@ -363,9 +363,9 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
         PathSet.PAT_VARIANCE                        = datetime.timedelta(
-                                         minutes = parser.getfloat  ('fasttrips','pat_variance'))
-        PathSet.PAT_PENALTY                         = parser.getfloat  ('fasttrips', 'pat_penalty')
-        PathSet.PAT_PENALTY_EXP                     = parser.getboolean('fasttrips', 'pat_penalty_exp')
+                                         minutes = parser.getfloat  ('pathfinding','pat_variance'))
+        PathSet.PAT_PENALTY                         = parser.getfloat  ('pathfinding', 'pat_penalty')
+        PathSet.PAT_PENALTY_EXP                     = parser.getboolean('pathfinding', 'pat_penalty_exp')
 
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
@@ -492,6 +492,7 @@ class Assignment:
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
+                                         PathSet.PAT_VARIANCE.total_seconds() / 60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
