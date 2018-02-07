@@ -86,14 +86,18 @@ class PathSet:
 
     #: Allow departures and arrivals before / after preferred time
     ARRIVE_LATE_MIN                 = datetime.timedelta(minutes = 0)
-
     DEPART_EARLY_MIN                = datetime.timedelta(minutes = 0)
 
-    #: Weight applied to each minute before or after preferred time
-    PAT_PENALTY                    = 1.01
+    VALID_GROWTH_TYPES            = ['linear', 'exponential', 'logarithmic']
 
-    #: Does the penalty grow exponentially
-    PAT_PENALTY_EXP                = True
+    #: Growth Rate Types = ['linear', 'exponential', 'logarithmic']
+    ARRIVE_LATE_GROWTH_TYPE        = 'linear'
+    DEPART_EARLY_GROWTH_TYPE       = 'linear'
+
+    #: Growth Rate Factor per minute based on growth rate type. For linear growth type,
+    #: this value will always be read as zero. Express as a decimal. 0.01 = 1% growth rate.
+    ARRIVE_LATE_GROWTH_RATE        = 0.0
+    DEPART_EARLY_GROWTH_RATE       = 0.0
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
@@ -904,6 +908,11 @@ class PathSet:
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
 
+        # Before we do any math, let's make sure we can use linear and exponentially interchangeably below.
+        # linear growth = exponential growth with 0 percent growth rate
+        assert PathSet.DEPART_EARLY_GROWTH_RATE == 0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
+        assert PathSet.ARRIVE_LATE_GROWTH_RATE == 0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
+
         # depart before preferred or arrive after preferred means the passenger just missed something important
         # Arrive late only impacts the egress link, so set the var_value equal to zero for the access link
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "arrive_late_cost_min"    ) & \
@@ -948,6 +957,27 @@ class PathSet:
         # discount for taking your time.
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") & \
                            (cost_accegr_df['var_value'] < 0), "var_value"] = 0
+
+        # Apply appropriate factor depending on rate type selected by user
+        if PathSet.DEPART_EARLY_GROWTH_TYPE == 'exponential':
+            # Remember calculus, we've got to get the area under the curve... Integrals!!!
+            cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
+                ((1 + PathSet.DEPART_EARLY_GROWTH_RATE) ** cost_accegr_df['var_value'] - 1) / np.log(1 + PathSet.DEPART_EARLY_GROWTH_RATE)
+
+        elif PathSet.DEPART_EARLY_GROWTH_TYPE == 'logarithmic':
+            pass
+        #else (linear): Don't need to do anything if it is linear
+
+        # Apply appropriate factor depending on rate type selected by user
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'exponential':
+            # Remember calculus, we've got to get the area under the curve... Integrals!!!
+            cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") &
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
+                ((1 + PathSet.ARRIVE_LATE_GROWTH_RATE) ** cost_accegr_df['var_value'] - 1) / np.log(1 + PathSet.ARRIVE_LATE_GROWTH_RATE)
+        elif PathSet.ARRIVE_LATE_GROWTH_TYPE == 'logarithmic':
+            pass
+        # else (linear): Don't need to do anything if it is linear
 
         assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_cost_min","arrive_late_cost_min"])) & \
                                    (cost_accegr_df['var_value'].isnull())].shape[0]

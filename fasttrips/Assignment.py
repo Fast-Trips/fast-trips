@@ -321,8 +321,10 @@ class Assignment:
                       'user_class_function'             :'generic_user_class',
                       'arrive_late_min'                 : 0,
                       'depart_early_min'                : 0,
-                      'pat_penalty'                     : 1.01,
-                      'pat_penalty_exp'                 : 'True',
+                      'arrive_late_growth_type'         :'linear',
+                      'depart_early_growth_type'        :'linear',
+                      'arrive_late_growth_rate'         : 0.0,
+                      'depart_early_growth_rate'        : 0.0,
                      })
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
@@ -374,13 +376,19 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
-        PathSet.DEPART_EARLY_MIN         = datetime.timedelta(
+        PathSet.DEPART_EARLY_MIN                    = datetime.timedelta(
                                          minutes=parser.getfloat('pathfinding', 'depart_early_min'))
-        PathSet.ARRIVE_LATE_MIN          = datetime.timedelta(
+        PathSet.ARRIVE_LATE_MIN                     = datetime.timedelta(
                                          minutes = parser.getfloat  ('pathfinding','arrive_late_min'))
 
-        PathSet.PAT_PENALTY                         = parser.getfloat  ('pathfinding', 'pat_penalty')
-        PathSet.PAT_PENALTY_EXP                     = parser.getboolean('pathfinding', 'pat_penalty_exp')
+        PathSet.ARRIVE_LATE_GROWTH_TYPE             = parser.get('pathfinding', 'arrive_late_growth_type')
+        PathSet.DEPART_EARLY_GROWTH_TYPE            = parser.get('pathfinding', 'depart_early_growth_type')
+
+        PathSet.ARRIVE_LATE_GROWTH_RATE             = parser.getfloat('pathfinding', 'arrive_late_growth_rate')
+        PathSet.DEPART_EARLY_GROWTH_RATE            = parser.getfloat('pathfinding', 'depart_early_growth_rate')
+
+        PathSet.DEPART_EARLY_GROWTH_RATE = 0.0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
+        PathSet.ARRIVE_LATE_GROWTH_RATE = 0.0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
 
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
@@ -395,6 +403,11 @@ class Assignment:
             raise ConfigurationError(config_fullpath, msg)
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
             msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, Assignment.CONFIGURATION_FUNCTIONS_FILE)
+            FastTripsLogger.fatal(msg)
+            raise ConfigurationError(config_fullpath, msg)
+
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.VALID_GROWTH_TYPES or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.VALID_GROWTH_TYPES:
+            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.VALID_GROWTH_TYPES)
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
