@@ -7,6 +7,7 @@ debug_output_columns          = True
 [pathfinding]
 user_class_function           = generic_user_class
 pathweights_fixed_width       = True
-pat_variance                  = 10
+depart_early_min              = 10
+arrive_late_min               = 10
 pat_penalty                   = 1
 pat_penalty_exp               = True
