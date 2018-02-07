@@ -310,7 +310,8 @@ class Assignment:
                       'transfer_fare_ignore_pathfinding':'False',
                       'transfer_fare_ignore_pathenum'   :'False',
                       'user_class_function'             :'generic_user_class',
-                      'pat_variance'                    : 0,
+                      'arrive_late_min'                 : 0,
+                      'depart_early_min'                : 0,
                       'pat_penalty'                     : 1.01,
                       'pat_penalty_exp'                 : 'True',
                      })
@@ -362,8 +363,11 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
-        PathSet.PAT_VARIANCE                        = datetime.timedelta(
-                                         minutes = parser.getfloat  ('pathfinding','pat_variance'))
+        PathSet.DEPART_EARLY_MIN         = datetime.timedelta(
+                                         minutes=parser.getfloat('pathfinding', 'depart_early_min'))
+        PathSet.ARRIVE_LATE_MIN          = datetime.timedelta(
+                                         minutes = parser.getfloat  ('pathfinding','arrive_late_min'))
+
         PathSet.PAT_PENALTY                         = parser.getfloat  ('pathfinding', 'pat_penalty')
         PathSet.PAT_PENALTY_EXP                     = parser.getboolean('pathfinding', 'pat_penalty_exp')
 
@@ -490,9 +494,10 @@ class Assignment:
                                                     Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
                                                     overcap_col]].as_matrix().astype('float64'))
 
-        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
-                                         Assignment.BUMP_BUFFER.total_seconds()/60.0,
-                                         PathSet.PAT_VARIANCE.total_seconds() / 60.0,
+        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds() / 60.0,
+                                         Assignment.BUMP_BUFFER.total_seconds() / 60.0,
+                                         PathSet.DEPART_EARLY_MIN.total_seconds() / 60.0,
+                                         PathSet.ARRIVE_LATE_MIN.total_seconds() / 60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
