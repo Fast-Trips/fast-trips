@@ -97,7 +97,7 @@ class PathSet:
         LINEAR_GROWTH_MODEL,
         EXP_GROWTH_MODEL,
         LOGARITHMIC_GROWTH_MODEL,
-        #PathSet.LOGISTIC_GROWTH_MODEL
+        LOGISTIC_GROWTH_MODEL,
     ]
 
     ARRIVE_LATE_GROWTH_TYPE        = LINEAR_GROWTH_MODEL
@@ -105,11 +105,19 @@ class PathSet:
 
     #: Growth Rate Factor per minute based on growth rate type. For linear growth type,
     #: this value will always be read as zero. Express as a decimal. 0.01 = 1% growth rate.
-    ARRIVE_LATE_GROWTH_RATE        = 0.0
-    DEPART_EARLY_GROWTH_RATE       = 0.0
+    ARRIVE_LATE_GROWTH_RATE         = None
+    DEPART_EARLY_GROWTH_RATE        = None
 
-    # For Log-based penalty models, we need a log base factor
-    PENALTY_LOG_BASE = np.exp(1) #default to natural log
+    # For Logarithmic-based penalty models, we need a log base factor
+    DEPART_EARLY_PENALTY_LOG_BASE   = None
+    ARRIVE_LATE_PENALTY_LOG_BASE    = None
+
+    # For Logistic-based penalty models, we need the following factors
+    DEPART_EARLY_LOGIT_MAX          = None
+    DEPART_EARLY_SIGMOID_MID        = None
+
+    ARRIVE_LATE_LOGIT_MAX           = None
+    ARRIVE_LATE_SIGMOID_MID         = None
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
@@ -983,9 +991,15 @@ class PathSet:
                                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
                 PathSet.DEPART_EARLY_GROWTH_RATE *  \
                     ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
-                        np.log(PathSet.PENALTY_LOG_BASE)
+                        np.log(PathSet.DEPART_EARLY_PENALTY_LOG_BASE)
         elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            pass
+            max_integral = (PathSet.DEPART_EARLY_LOGIT_MAX / PathSet.DEPART_EARLY_GROWTH_RATE) * \
+                np.log(np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * cost_accegr_df['var_value']) + np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * PathSet.DEPART_EARLY_SIGMOID_MID))
+            min_integral = (PathSet.DEPART_EARLY_LOGIT_MAX / PathSet.DEPART_EARLY_GROWTH_RATE) * np.log(1 + np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * PathSet.DEPART_EARLY_SIGMOID_MID))
+            cost_accegr_df.loc[
+                (cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
+                (cost_accegr_df['var_value'] > 0), 'var_value'] = max_integral - min_integral
+
         #else (linear): Don't need to do anything if it is linear
 
         # Remember calculus, we've got to get the area under the curve... Integrals!!!
@@ -1002,9 +1016,14 @@ class PathSet:
                                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
                 PathSet.ARRIVE_LATE_GROWTH_RATE *  \
                     ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
-                        np.log(PathSet.PENALTY_LOG_BASE)
-        elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            pass
+                        np.log(PathSet.ARRIVE_LATE_PENALTY_LOG_BASE)
+        elif PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            max_integral = (PathSet.ARRIVE_LATE_LOGIT_MAX / PathSet.ARRIVE_LATE_GROWTH_RATE) * \
+                           np.log(np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * cost_accegr_df[
+                               'var_value']) + np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * PathSet.ARRIVE_LATE_SIGMOID_MID))
+            min_integral = (PathSet.ARRIVE_LATE_LOGIT_MAX / PathSet.ARRIVE_LATE_GROWTH_RATE) * np.log(1 + np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * PathSet.ARRIVE_LATE_SIGMOID_MID))
+            cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
+                (cost_accegr_df['var_value'] > 0), 'var_value'] = max_integral - min_integral
         # else (linear): Don't need to do anything if it is linear
 
         assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_cost_min","arrive_late_cost_min"])) & \
