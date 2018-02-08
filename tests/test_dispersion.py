@@ -47,5 +47,3 @@ def test_dispersion(dispersion_rate, passengers_arrived):
         test_size         = 100 )
 
     assert passengers_arrived == r["passengers_arrived"]
-    for dp in [1.0,0.3]:
-        test_dispersion(dp)

@@ -36,7 +36,6 @@ def test_max_stop_process_count(stop_process_count, passengers_arrived):
         overlap_variable = "None",
         output_folder     = "test_dispers_%4.2d" % stop_process_count,
         pf_iters         = 2,
-        output_folder    = "test_dispers_%4.2d" % max_stop_process_n,
         pathfinding_type  = "stochastic",
         max_stop_process_count = stop_process_count,
         iters             = 1,
