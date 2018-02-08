@@ -408,6 +408,20 @@ class Assignment:
             PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
             PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
 
+        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
+            PathSet.DEPART_EARLY_PENALTY_LOG_BASE = parser.getfloat('pathfinding', 'depart_early_log_base')
+
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
+            PathSet.ARRIVE_LATE_PENALTY_LOG_BASE    = parser.getfloat('pathfinding', 'arrive_late_log_base')
+
+        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            PathSet.DEPART_EARLY_LOGIT_MAX          = parser.getfloat('pathfinding', 'depart_early_logistic_max_value')
+            PathSet.DEPART_EARLY_SIGMOID_MID        = parser.getfloat('pathfinding', 'depart_early_logistic_sigmoid_mid')
+
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
+            PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
+
         PathSet.DEPART_EARLY_GROWTH_RATE = 0.0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
         PathSet.ARRIVE_LATE_GROWTH_RATE = 0.0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
 
