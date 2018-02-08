@@ -395,8 +395,8 @@ class Assignment:
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.VALID_GROWTH_TYPES or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.VALID_GROWTH_TYPES:
-            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.VALID_GROWTH_TYPES)
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS:
+            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.PENALTY_GROWTH_MODELS)
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
