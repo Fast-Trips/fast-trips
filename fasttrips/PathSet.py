@@ -88,16 +88,28 @@ class PathSet:
     ARRIVE_LATE_MIN                 = datetime.timedelta(minutes = 0)
     DEPART_EARLY_MIN                = datetime.timedelta(minutes = 0)
 
-    VALID_GROWTH_TYPES            = ['linear', 'exponential', 'logarithmic']
+    LINEAR_GROWTH_MODEL              = 'linear'
+    EXP_GROWTH_MODEL                 = 'exponential'
+    LOGARITHMIC_GROWTH_MODEL         = 'logarithmic'
+    LOGISTIC_GROWTH_MODEL            = 'logistic'
 
-    #: Growth Rate Types = ['linear', 'exponential', 'logarithmic']
-    ARRIVE_LATE_GROWTH_TYPE        = 'linear'
-    DEPART_EARLY_GROWTH_TYPE       = 'linear'
+    PENALTY_GROWTH_MODELS            = [
+        LINEAR_GROWTH_MODEL,
+        EXP_GROWTH_MODEL,
+        LOGARITHMIC_GROWTH_MODEL,
+        #PathSet.LOGISTIC_GROWTH_MODEL
+    ]
+
+    ARRIVE_LATE_GROWTH_TYPE        = LINEAR_GROWTH_MODEL
+    DEPART_EARLY_GROWTH_TYPE       = LINEAR_GROWTH_MODEL
 
     #: Growth Rate Factor per minute based on growth rate type. For linear growth type,
     #: this value will always be read as zero. Express as a decimal. 0.01 = 1% growth rate.
     ARRIVE_LATE_GROWTH_RATE        = 0.0
     DEPART_EARLY_GROWTH_RATE       = 0.0
+
+    # For Log-based penalty models, we need a log base factor
+    PENALTY_LOG_BASE = np.exp(1) #default to natural log
 
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
@@ -956,24 +968,42 @@ class PathSet:
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") & \
                            (cost_accegr_df['var_value'] < 0), "var_value"] = 0
 
-        # Apply appropriate factor depending on rate type selected by user
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == 'exponential':
-            # Remember calculus, we've got to get the area under the curve... Integrals!!!
+        # Remember calculus, we've got to get the area under the curve... Integrals!!!
+        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.EXP_GROWTH_MODEL:
+            # Growth Function: (1+Growth Rate)**Minutes Late
+            # Integrated Growth Function: ((1 + Growth Rate) ** Minutes Late - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
                                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
                 ((1 + PathSet.DEPART_EARLY_GROWTH_RATE) ** cost_accegr_df['var_value'] - 1) / np.log(1 + PathSet.DEPART_EARLY_GROWTH_RATE)
 
-        elif PathSet.DEPART_EARLY_GROWTH_TYPE == 'logarithmic':
+        elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
+            # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
+            # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
+            cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
+                PathSet.DEPART_EARLY_GROWTH_RATE *  \
+                    ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
+                        np.log(PathSet.PENALTY_LOG_BASE)
+        elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
             pass
         #else (linear): Don't need to do anything if it is linear
 
-        # Apply appropriate factor depending on rate type selected by user
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'exponential':
-            # Remember calculus, we've got to get the area under the curve... Integrals!!!
+        # Remember calculus, we've got to get the area under the curve... Integrals!!!
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.EXP_GROWTH_MODEL:
+            # Growth Function: (1+Growth Rate)**Minutes Late
+            # Integrated Growth Function: ((1 + Growth Rate) ** Minutes Late - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") &
                                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
                 ((1 + PathSet.ARRIVE_LATE_GROWTH_RATE) ** cost_accegr_df['var_value'] - 1) / np.log(1 + PathSet.ARRIVE_LATE_GROWTH_RATE)
-        elif PathSet.ARRIVE_LATE_GROWTH_TYPE == 'logarithmic':
+        elif PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
+            # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
+            # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
+            cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") &
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
+                PathSet.ARRIVE_LATE_GROWTH_RATE *  \
+                    ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
+                        np.log(PathSet.PENALTY_LOG_BASE)
+        elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
             pass
         # else (linear): Don't need to do anything if it is linear
 
