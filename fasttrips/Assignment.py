@@ -697,7 +697,7 @@ class Assignment:
         Finds the paths for the passengers.
         """
         # clear any state
-        _fasttrips.reset();
+        _fasttrips.reset()
 
         # write the initial load profile, iteration 0
         veh_trips_df     = FT.trips.get_full_trips()
