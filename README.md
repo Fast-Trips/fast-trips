@@ -224,18 +224,28 @@ The following is a partial list of possible weight names base don the demand mod
   
   * `time_min`  
   * `elevation_gain` 
-  * `preferred_delay_min`
+  * `arrive_early_min`
+  * `depart_late_min`
+  * `arrive_late_cost_min`
+  * `depart_early_cost_min`
   
 `demand_mode_type = egress` / `demand_mode = walk` / `supply_mode = walk_egress` 
   
   * `time_min` 
   * `elevation_gain` 
-  * `preferred_delay_min`
+  * `arrive_early_min`
+  * `depart_late_min`
+  * `arrive_late_cost_min`
+  * `depart_early_cost_min`
   
 `demand_mode_type = access` / `demand_mode = PNR` / `supply_mode = pnr_access` 
 
   * `walk_time_min`  
   * `drive_time_min` 
+  * `arrive_early_min`
+  * `depart_late_min`
+  * `arrive_late_cost_min`
+  * `depart_early_cost_min`
   
 `demand_mode_type = transfer` / `demand_mode = transfer` / `supply_mode = transfer`  
 

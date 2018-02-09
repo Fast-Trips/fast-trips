@@ -936,7 +936,8 @@ namespace fasttrips {
                 // inbound:  arrival time   = origin      + access
                 double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
                 // we start out with no delay
-                link_attr["preferred_delay_min"] = 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;  
                 link_attr["depart_early_cost_min"] = 0.0;
                 link_attr["arrive_late_cost_min"] = 0.0;
 
@@ -1182,7 +1183,8 @@ namespace fasttrips {
                 if (aelk.end_time_   <= earliest_dep_latest_arr_024) continue;
 
                 Attributes link_attr            = iter_aelk->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;  
                 link_attr["depart_early_cost_min"] = 0.0;
                 link_attr["arrive_late_cost_min"] = 0.0;
 
@@ -1441,7 +1443,8 @@ namespace fasttrips {
                         delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
-                        delay_attr["preferred_delay_min"  ] = wait_time;
+                        delay_attr["arrive_early_min"     ] = wait_time * path_spec.outbound_;
+                        delay_attr["depart_late_min"      ] = wait_time * !path_spec.outbound_;
                         delay_attr["depart_early_cost_min"] = 0;
                         delay_attr["arrive_late_cost_min" ] = 0;
                         
@@ -1744,7 +1747,8 @@ namespace fasttrips {
                 if (aelk.end_time_   <= earliest_dep_latest_arr) continue;
 
                 Attributes link_attr            = iter_aelk->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;   
                 link_attr["depart_early_cost_min"] = 0.0;
                 link_attr["arrive_late_cost_min"] = 0.0;
 
