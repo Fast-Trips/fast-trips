@@ -16,15 +16,15 @@ def test_pat_before_and_after():
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_pat")
+    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
     OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
     OUTPUT_FOLDER  = 'pat_scenario'
 
     r = Run.run_fasttrips(
         input_network_dir    = INPUT_NETWORK,
         input_demand_dir     = INPUT_DEMAND,
-        run_config           = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights        = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
+        run_config           = os.path.join(INPUT_DEMAND, "config_ft_pat.txt"),
+        input_weights        = os.path.join(INPUT_DEMAND, "pathweight_ft_pat.txt"),
         output_dir           = OUTPUT_DIR,
         output_folder        = OUTPUT_FOLDER,
         pathfinding_type     = "stochastic",

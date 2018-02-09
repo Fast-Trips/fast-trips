@@ -14,8 +14,8 @@ from fasttrips import Trip
 EXAMPLES_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
 
 
-@pytest.fixture(scope='module', params=['demand_reg', 'demand_pat'])
-def demand_folder(request):
+@pytest.fixture(scope='module', params=['', '_pat', '_alt'])
+def demand_scenario(request):
     """
     Grab the right input folders for the test.
     """
@@ -23,14 +23,14 @@ def demand_folder(request):
 
 
 @pytest.fixture(scope='module')
-def ft_instance(demand_folder):
+def ft_instance(demand_scenario):
     """
     The tests need a Fast-Trips instance. This is shared code for each demand folder under test.
     """
 
     INPUT_NETWORK = os.path.join(EXAMPLES_DIR, 'networks', 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', demand_folder)
-    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_assignment', demand_folder)
+    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', 'demand_reg')
+    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', 'demand_reg' + demand_scenario)
 
     try:
         os.makedirs(OUTPUT_FOLDER)
@@ -41,8 +41,8 @@ def ft_instance(demand_folder):
     ft = FastTrips(
         INPUT_NETWORK,
         INPUT_DEMAND,
-        os.path.join(INPUT_DEMAND, 'pathweight_ft.txt'),
-        os.path.join(INPUT_DEMAND, 'config_ft.txt'),
+        os.path.join(INPUT_DEMAND, 'pathweight_ft{}.txt'.format(demand_scenario)),
+        os.path.join(INPUT_DEMAND, 'config_ft{}.txt'.format(demand_scenario)),
         OUTPUT_FOLDER
     )
 
@@ -58,7 +58,7 @@ def ft_instance(demand_folder):
 
 
 @pytest.fixture(scope='module')
-def pathfinder_paths(ft_instance, demand_folder):
+def pathfinder_paths(ft_instance, demand_scenario):
     """
     Generate the C++ pathfinder results for a set of demand inputs. This method yields
     results, so that it could potentially be recycled for multiple tests.
@@ -66,7 +66,7 @@ def pathfinder_paths(ft_instance, demand_folder):
     """
 
     ft = ft_instance
-    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_assignment', demand_folder)
+    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', 'demand_reg' + demand_scenario)
 
     veh_trips_df = ft.trips.get_full_trips()
 
