@@ -84,6 +84,9 @@ class PathSet:
     #: into A-B-C-D-E for overlap calculations?
     OVERLAP_SPLIT_TRANSIT           = None
 
+    ARRIVE_EARLY_WEIGHT_NAME        = 'arrive_early_min'
+    DEPART_LATE_WEIGHT_NAME         = 'depart_late_min'
+
     #: Allow departures and arrivals before / after preferred time
     ARRIVE_LATE_MIN                 = datetime.timedelta(minutes = 0)
     DEPART_EARLY_MIN                = datetime.timedelta(minutes = 0)
@@ -924,20 +927,25 @@ class PathSet:
         cost_accegr_df = cost_accegr_df.loc[ cost_accegr_df["to_drop"]==False ]
         cost_accegr_df.drop(["check_time","to_drop"], axis=1, inplace=True)
 
-        # preferred delay_min - arrival means want to arrive before that time
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
-                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
-                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = 0.0
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
+        # penalty for arriving before preferred arrival time.
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.ARRIVE_EARLY_WEIGHT_NAME    )&
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.ARRIVE_EARLY_WEIGHT_NAME) &
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS) &
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.ARRIVE_EARLY_WEIGHT_NAME    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_B_TIME])/np.timedelta64(1,'m')
-        # preferred delay_min - departure means want to depart after that time
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
-                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)& \
-                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = (cost_accegr_df[Passenger.PF_COL_PAX_A_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME])/np.timedelta64(1,'m')
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "preferred_delay_min"    )& \
-                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
-                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
+
+        # penalty for departing after preferred departure time.
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.DEPART_LATE_WEIGHT_NAME) &
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.DEPART_LATE_WEIGHT_NAME    )&
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS)&
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.DEPART_LATE_WEIGHT_NAME) &
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS) &
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = (cost_accegr_df[Passenger.PF_COL_PAX_A_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME]) / np.timedelta64(1, 'm')
 
         # Before we do any math, let's make sure we can use linear and exponentially interchangeably below.
         # linear growth = exponential growth with 0 percent growth rate
