@@ -59,6 +59,11 @@ Another option is to install the requirements in an existing Python 2.7 environm
    pip install numpy pandas >=0.22 psutil pytest partridge==0.6.0.dev1
 ```
 
+***or***
+
+```Python
+pip install -r requirements.txt
+```
 **Please note: Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.**
 
 2 - Get and Install Fast-Trips
