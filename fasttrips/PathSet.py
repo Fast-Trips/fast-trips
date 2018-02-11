@@ -986,60 +986,36 @@ class PathSet:
 
         # Remember calculus, we've got to get the area under the curve... Integrals!!!
         if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.EXP_GROWTH_MODEL:
-            # Growth Function: (1+Growth Rate)**Minutes Late
-            # Integrated Growth Function: ((1 + Growth Rate) ** Minutes Late - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
-                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
-                ((1 + PathSet.DEPART_EARLY_GROWTH_RATE) ** cost_accegr_df['var_value'] - 1) / np.log(1 + PathSet.DEPART_EARLY_GROWTH_RATE)
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = Util.exponential_integration(cost_accegr_df['var_value'], PathSet.DEPART_EARLY_GROWTH_RATE)
 
         elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
-            # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
                                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
-                PathSet.DEPART_EARLY_GROWTH_RATE *  \
-                    ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
-                        np.log(PathSet.DEPART_EARLY_PENALTY_LOG_BASE)
+                Util.logarithmic_integration(cost_accegr_df['var_value'], PathSet.DEPART_EARLY_GROWTH_RATE, PathSet.DEPART_EARLY_PENALTY_LOG_BASE)
+
         elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            # Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
-            # Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
-            # Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
-            # Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
-            max_integral = (PathSet.DEPART_EARLY_LOGIT_MAX / PathSet.DEPART_EARLY_GROWTH_RATE) * \
-                np.log(np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * cost_accegr_df['var_value']) + np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * PathSet.DEPART_EARLY_SIGMOID_MID))
-            min_integral = (PathSet.DEPART_EARLY_LOGIT_MAX / PathSet.DEPART_EARLY_GROWTH_RATE) * np.log(1 + np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * PathSet.DEPART_EARLY_SIGMOID_MID))
             cost_accegr_df.loc[
                 (cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
-                (cost_accegr_df['var_value'] > 0), 'var_value'] = max_integral - min_integral
+                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
+                Util.logistic_integration(cost_accegr_df['var_value'], PathSet.DEPART_EARLY_GROWTH_RATE, PathSet.DEPART_EARLY_LOGIT_MAX, PathSet.DEPART_EARLY_SIGMOID_MID)
 
         #else (linear): Don't need to do anything if it is linear
 
         # Remember calculus, we've got to get the area under the curve... Integrals!!!
         if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.EXP_GROWTH_MODEL:
-            # Growth Function: (1+Growth Rate)**Minutes Late
-            # Integrated Growth Function: ((1 + Growth Rate) ** Minutes Late - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") &
-                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
-                ((1 + PathSet.ARRIVE_LATE_GROWTH_RATE) ** cost_accegr_df['var_value'] - 1) / np.log(1 + PathSet.ARRIVE_LATE_GROWTH_RATE)
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = Util.exponential_integration(cost_accegr_df['var_value'], PathSet.ARRIVE_LATE_GROWTH_RATE_GROWTH_RATE)
         elif PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
-            # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") &
-                               (cost_accegr_df['var_value'] > 0), 'var_value'] = \
-                PathSet.ARRIVE_LATE_GROWTH_RATE *  \
-                    ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
-                        np.log(PathSet.ARRIVE_LATE_PENALTY_LOG_BASE)
+                               (cost_accegr_df['var_value'] > 0), 'var_value'] = Util.logarithmic_integration(cost_accegr_df['var_value'], PathSet.ARRIVE_LATE_GROWTH_RATE, PathSet.ARRIVE_LATE_PENALTY_LOG_BASE)
         elif PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            # Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
-            # Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
-            # Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
-            # Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
-            max_integral = (PathSet.ARRIVE_LATE_LOGIT_MAX / PathSet.ARRIVE_LATE_GROWTH_RATE) * \
-                           np.log(np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * cost_accegr_df[
-                               'var_value']) + np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * PathSet.ARRIVE_LATE_SIGMOID_MID))
-            min_integral = (PathSet.ARRIVE_LATE_LOGIT_MAX / PathSet.ARRIVE_LATE_GROWTH_RATE) * np.log(1 + np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * PathSet.ARRIVE_LATE_SIGMOID_MID))
             cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") &
-                (cost_accegr_df['var_value'] > 0), 'var_value'] = max_integral - min_integral
+                (cost_accegr_df['var_value'] > 0), 'var_value'] = \
+                Util.logistic_integration(cost_accegr_df['var_value'],
+                                          PathSet.ARRIVE_LATE_GROWTH_RATE,
+                                          PathSet.ARRIVE_LATE_LOGIT_MAX,
+                                          PathSet.ARRIVE_LATE_SIGMOID_MID)
         # else (linear): Don't need to do anything if it is linear
 
         assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_cost_min","arrive_late_cost_min"])) & \
