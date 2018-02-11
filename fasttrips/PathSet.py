@@ -1001,6 +1001,10 @@ class PathSet:
                     ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
                         np.log(PathSet.DEPART_EARLY_PENALTY_LOG_BASE)
         elif PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            # Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
+            # Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
+            # Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
+            # Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
             max_integral = (PathSet.DEPART_EARLY_LOGIT_MAX / PathSet.DEPART_EARLY_GROWTH_RATE) * \
                 np.log(np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * cost_accegr_df['var_value']) + np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * PathSet.DEPART_EARLY_SIGMOID_MID))
             min_integral = (PathSet.DEPART_EARLY_LOGIT_MAX / PathSet.DEPART_EARLY_GROWTH_RATE) * np.log(1 + np.exp(PathSet.DEPART_EARLY_GROWTH_RATE * PathSet.DEPART_EARLY_SIGMOID_MID))
@@ -1026,6 +1030,10 @@ class PathSet:
                     ((cost_accegr_df['var_value'] + 1) * np.log(cost_accegr_df['var_value'] + 1) - cost_accegr_df['var_value']) / \
                         np.log(PathSet.ARRIVE_LATE_PENALTY_LOG_BASE)
         elif PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            # Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
+            # Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
+            # Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
+            # Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
             max_integral = (PathSet.ARRIVE_LATE_LOGIT_MAX / PathSet.ARRIVE_LATE_GROWTH_RATE) * \
                            np.log(np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * cost_accegr_df[
                                'var_value']) + np.exp(PathSet.ARRIVE_LATE_GROWTH_RATE * PathSet.ARRIVE_LATE_SIGMOID_MID))
