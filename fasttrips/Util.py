@@ -304,7 +304,7 @@ class Util:
                 elif units_str == "seconds":
                     units = np.timedelta64(1,'s')
                 else:
-                    raise
+                    raise Exception
 
                 # if the column already exists, continue
                 if new_colname in df_cols: continue
@@ -416,6 +416,53 @@ class Util:
     @staticmethod
     def parse_boolean(val):
         return val in ['true', 'True', 'TRUE', 1]
+
+    @staticmethod
+    def exponential_integration(penalty_min, growth_rate):
+        """
+        Returns the integrated value of an exponential function.
+        Growth Function: (1 + Growth Rate) ** Penalty Minutes
+        Integrated Growth Function: ((1 + Growth Rate) ** Penalty Minutes - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
+        :param penalty_min: float or :py:class:`pandas.Series` of floats
+        :param growth_rate: float: Exponetial growth factor
+        :return: float or :py:class:`pandas.Series` of floats depending on inputs
+        """
+        return ((1 + growth_rate) ** penalty_min - 1) / np.log(1 + growth_rate)
+
+
+    @staticmethod
+    def logarithmic_integration(penalty_min, growth_rate, log_base=np.exp(1)):
+        """
+        Returns the integrated value of an logarithmic function.
+        # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
+        # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
+        :param penalty_min: float or :py:class:`pandas.Series` of floats
+        :param growth_rate: log growth factor
+        :param log_base: log base to impact shape of curve
+        :return: float or :py:class:`pandas.Series` of floats depending on inputs
+        """
+        return growth_rate * ((penalty_min + 1) * np.log(penalty_min + 1) - penalty_min) / np.log(log_base)
+
+
+    @staticmethod
+    def logistic_integration(penalty_minute, growth_rate, max_logit, sigmoid_mid):
+        """
+        Returns the integrated value of an logistic function.
+        Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
+        Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
+        Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
+        Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
+        :param penalty_minute: float or :py:class:`pandas.Series` of floats
+        :param growth_rate: log growth factor
+        :param max_logit: assymtotic max value of curve
+        :param sigmoid_mid: x-midpoint of curve
+        :return: float or :py:class:`pandas.Series` of floats depending on inputs
+        """
+
+        max_integral = (max_logit / growth_rate) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
+        min_integral = (max_logit / growth_rate) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
+
+        return max_integral - min_integral
 
 
     @staticmethod
