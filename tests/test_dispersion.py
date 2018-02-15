@@ -1,9 +1,26 @@
 import os
+import pytest
 
 from fasttrips import Run
 
 
-def test_dispersion():
+@pytest.fixture(scope='module', params=[1.0, 0.7, 0.5, 0.4, 0.1])
+def dispersion_rate(request):
+    return request.param
+
+@pytest.fixture(scope='module')
+def passengers_arrived(dispersion_rate):
+    arrived = {
+        1.0: 723,
+        0.7: 726,
+        0.5: 726,
+        0.4: 726,
+        0.1: 726,
+    }
+
+    return arrived[dispersion_rate]
+
+def test_dispersion(dispersion_rate, passengers_arrived):
 
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples",)
 
@@ -11,24 +28,20 @@ def test_dispersion():
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
     OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
 
-    for d in [1.0, 0.7, 0.5, 0.4, 0.1]: 
-        
-        full_output_dir = os.path.join(OUTPUT_DIR, "test_dispers_%4.2f" % d)
-        if not os.path.exists(full_output_dir):
-            os.mkdir(full_output_dir)
+    full_output_dir = os.path.join(OUTPUT_DIR, "test_dispers_%4.2f" % dispersion_rate)
+    if not os.path.exists(full_output_dir):
+        os.mkdir(full_output_dir)
 
-        r = Run.run_fasttrips(
-            input_network_dir= INPUT_NETWORK,
-            input_demand_dir = INPUT_DEMAND,
-            run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
-            input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
-            output_dir       = OUTPUT_DIR,
-            output_folder    = "test_dispers_%4.2f" % d,
-            pathfinding_type = "stochastic",
-            iters            = 1,
-            dispersion       = d,
-            test_size        = 100 )
+    r = Run.run_fasttrips(
+        input_network_dir = INPUT_NETWORK,
+        input_demand_dir  = INPUT_DEMAND,
+        run_config        = os.path.join(INPUT_DEMAND,"config_ft.txt"),
+        input_weights     = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
+        output_dir        = OUTPUT_DIR,
+        output_folder     = "test_dispers_%4.2f" % dispersion_rate,
+        pathfinding_type  = "stochastic",
+        iters             = 1,
+        dispersion        = dispersion_rate,
+        test_size         = 100 )
 
-        assert r["passengers_arrived"] > 0
-        assert r["capacity_gap"]      < 0.001
-        assert r["passengers_missed"] == 0
+    assert passengers_arrived == r["passengers_arrived"]
