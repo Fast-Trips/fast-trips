@@ -431,13 +431,36 @@ class Assignment:
             sys.exit(2)
 
         if PathSet.WEIGHTS_FIXED_WIDTH:
-            PathSet.WEIGHTS_DF = pd.read_fwf(weights_file)
-            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_PURPOSE] = PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_PURPOSE].astype(str)
+            weights = pd.read_fwf(weights_file)
+            weights[PathSet.WEIGHTS_COLUMN_PURPOSE] = weights[PathSet.WEIGHTS_COLUMN_PURPOSE].astype(str)
         else:
-            PathSet.WEIGHTS_DF = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
+            weights = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
+
+        qualifiers = weights[weights.weight_name.str.contains('\.')]
+        weights = weights[~weights.weight_name.str.contains('\.')]
+
+        if qualifiers.shape[0]:
+            qualifiers.rename(columns={'weight_name': 'qualifier'}, inplace=True)
+            qualifiers['weight_name'] = qualifiers.qualifier.str.extract('(\w+(?=\.))', expand=False)
+            qualifiers['growth_type'] = qualifiers.qualifier.str.extract('((?<=\.)\w+(?=\.))', expand=False)
+            qualifiers['variable'] = qualifiers.qualifier.str.extract('(\w+$)', expand=False)
+
+            qualifier_values = qualifiers.pivot(columns='variable', values='weight_value')
+            qualifier_columns = qualifier_values.columns.values
+
+            qualifiers = pd.concat([qualifiers, qualifier_values], axis=1)
+
+            qualifiers = qualifiers.groupby(['user_class', 'purpose', 'demand_mode_type', 'demand_mode', 'supply_mode', 'weight_name'])[qualifier_columns].max().reset_index()
+
+            weights = pd.merge(weights, qualifiers,
+                               on=['user_class', 'purpose', 'demand_mode_type', 'demand_mode',
+                                   'supply_mode', 'weight_name'], how='left')
+
+        PathSet.WEIGHTS_DF = weights
+
+
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
-        
 
             
     @staticmethod

@@ -122,11 +122,11 @@ class PathSet:
     #: Weights column: Growth Rate
     WEIGHTS_GROWTH_RATE             = "growth_rate"
     #: Weights column: Log Base for logarithmic growth function
-    WEIGHTS_GROWTH_LOG_BASE         = "growth_log_base"
+    WEIGHTS_GROWTH_LOG_BASE         = "log_base"
     #: Weights column: Max value for logistic growth function
-    WEIGHTS_GROWTH_LOGISTIC_MAX     = "growth_logistic_max"
+    WEIGHTS_GROWTH_LOGISTIC_MAX     = "logistic_max"
     #: Weights column: Midpoint value for logistic growth function
-    WEIGHTS_GROWTH_LOGISTIC_MID     = "growth_logistic_mid"
+    WEIGHTS_GROWTH_LOGISTIC_MID     = "logistic_mid"
 
     # ========== Added by fasttrips =======================================================
     #: Weights column: Supply Mode number
