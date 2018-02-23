@@ -16,24 +16,6 @@ def test_pat_before_and_after():
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-import datetime
-import os
-
-import numpy as np
-import pandas as pd
-
-from fasttrips import Run
-
-
-def test_pat_before_and_after():
-    """
-    Test to ensure that some of the pathfinder trips are returned before preferred departure
-    or after preferred arrival.
-    """
-
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
     OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
     OUTPUT_FOLDER  = 'pat_scenario'
