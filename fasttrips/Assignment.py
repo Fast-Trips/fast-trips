@@ -466,31 +466,55 @@ class Assignment:
         else:
             weights = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
 
-        qualifiers = weights[weights.weight_name.str.contains('\.')]
-        weights = weights[~weights.weight_name.str.contains('\.')]
-
-        if qualifiers.shape[0]:
-            qualifiers.rename(columns={'weight_name': 'qualifier'}, inplace=True)
-            qualifiers['weight_name'] = qualifiers.qualifier.str.extract('(\w+(?=\.))', expand=False)
-            qualifiers['growth_type'] = qualifiers.qualifier.str.extract('((?<=\.)\w+(?=\.))', expand=False)
-            qualifiers['variable'] = qualifiers.qualifier.str.extract('(\w+$)', expand=False)
-
-            qualifier_values = qualifiers.pivot(columns='variable', values='weight_value')
-            qualifier_columns = qualifier_values.columns.values
-
-            qualifiers = pd.concat([qualifiers, qualifier_values], axis=1)
-
-            qualifiers = qualifiers.groupby(['user_class', 'purpose', 'demand_mode_type', 'demand_mode', 'supply_mode', 'weight_name'])[qualifier_columns].max().reset_index()
-
-            weights = pd.merge(weights, qualifiers,
-                               on=['user_class', 'purpose', 'demand_mode_type', 'demand_mode',
-                                   'supply_mode', 'weight_name'], how='left')
-
-        PathSet.WEIGHTS_DF = weights
-
+        PathSet.WEIGHTS_DF = Util.process_weight_qualifiers(weights)
 
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
+
+
+    @staticmethod
+    def process_weight_qualifiers(weights):
+        """
+        Qualifiers are used to change the default behavior of weight_names. Qualifiers
+        are added by adding a period (.) after the weight_name and specifying the
+        qualifier name. Qualifier attributes are specified after a second dot.
+
+        For example: depart_early_cost_min.logistic.growth_rate
+        depart_early_cost_min is being qualified as a logistic penalty instead of the default
+        behavior. growth_rate is an attribute of the logistic qualifier.
+        :param weights: vertically oriented qualifiers
+        :return: pivoted weights table with the qualifiers normalized horizontally.
+        """
+
+        qualifiers = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
+
+        if qualifiers.shape[0] == 0:
+            return weights
+
+        weights = weights[~weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
+        qualifiers = qualifiers.rename(columns={PathSet.WEIGHTS_COLUMN_WEIGHT_NAME: 'qualifier'})
+        qualifiers[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] = qualifiers['qualifier'].str.extract('(^\w+)', expand=False)
+        qualifiers[PathSet.WEIGHTS_GROWTH_TYPE] = qualifiers['qualifier'].str.extract('((?<=\.)\w+)', expand=False)
+        qualifiers['variable'] = qualifiers['qualifier'].str.extract('(\w+$)', expand=False)
+
+        if (~qualifiers[PathSet.WEIGHTS_GROWTH_TYPE].isin(PathSet.PENALTY_GROWTH_MODELS)).any():
+            FastTripsLogger.fatal("Invalid growth type qualifier specified.")
+            raise KeyError('Invalid growth type qualifier specified.')
+
+        qualifier_values = qualifiers.pivot(columns='variable', values=PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
+        qualifier_columns = qualifier_values.columns.values
+
+        qualifiers = pd.concat([qualifiers, qualifier_values], axis=1)
+
+        merge_cols = [
+            PathSet.WEIGHTS_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_PURPOSE,
+            PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE, PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+            PathSet.WEIGHTS_COLUMN_SUPPLY_MODE, PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
+        ]
+
+        qualifiers = qualifiers.groupby(merge_cols)[qualifier_columns].max().reset_index()
+
+        return pd.merge(weights, qualifiers, on=merge_cols, how='left')
 
 
 
