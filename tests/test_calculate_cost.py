@@ -44,9 +44,9 @@ def test_growth_type_cost_calculation():
         'var_value': [24., 3, 2.35, 15.431],
         'growth_type': ['linear', 'exponential', 'logarithmic', 'logistic'],
         'growth_rate': [1, .03, .3, .56],
-        'growth_log_base': [np.nan, np.nan, np.exp(1), np.nan],
-        'growth_logistic_max': [np.nan, np.nan, np.nan, 10.1],
-        'growth_logistic_mid': [np.nan, np.nan, np.nan, 2.45]
+        'log_base': [np.nan, np.nan, np.exp(1), np.nan],
+        'logistic_max': [np.nan, np.nan, np.nan, 10.1],
+        'logistic_mid': [np.nan, np.nan, np.nan, 2.45]
     }
 
     result_set = [24., 3.13704, 0.51001, 127.04425]

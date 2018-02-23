@@ -466,7 +466,7 @@ class Assignment:
         else:
             weights = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
 
-        PathSet.WEIGHTS_DF = Util.process_weight_qualifiers(weights)
+        PathSet.WEIGHTS_DF = Assignment.process_weight_qualifiers(weights)
 
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
