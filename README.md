@@ -37,11 +37,20 @@ For a description of how Fast-Trips does this sort of analysis differently than 
 
 ## Setup
 Follow the steps below to setup up fast-trips:
-*  Install [Git][git-url] and clone the fast-trips repository (https://github.com/MetropolitanTransportationCommission/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.
+*  Install [Git][git-url] and clone the fast-trips repository (https://github.com/BayAreaMetro/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.
 *  Switch to the `develop` branch of the repository.
-*  Download and install [numpy][numpy-url] and [pandas][pandas-url].  One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url].  Windows users can also find package installers [here][python-packages-windows-url].
+*  Download and install [numpy][numpy-url], [pandas][pandas-url], [partridge][partridge-url], and other project requirements.
+<b>Please note: Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.</b>  
+	*  One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url]. If you have Anaconda installed, you can create a virtual environment with the command below for fast-trips.
+	```Script
+    conda create -q -y -n test-environment python=2.7 numpy pandas>=0.22 psutil pytest
+    ```
+	
+	*  [pip][pip-url] install all of the necessary requirements can also be done with the command below.
+```Python
+pip install -r requirements.txt
+```
 *  If compiling on Windows, install [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url].  On Linux, install the python-dev package.
-*  Install the python package [transitfeed][python-transitfeed-url] for reading GTFS.
 *  Set the `PYTHONPATH` environment variable to the location of your fast-trips repo, which we're calling `<fast-trips-dir>`.
 *  To build, in the fast-trips directory `<fast-trips-dir>`, run the following in a command prompt:  `python setup.py build_ext --inplace`.
 
@@ -107,6 +116,19 @@ Option Name                         | Type   | Default | Description
 `transfer_fare_ignore_pathfinding`  | bool   | False   | In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
 `transfer_fare_ignore_pathenum`     | bool   | False   | In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
+`depart_early_min`                  | float  | 0.0     | Allow passengers to depart before their departure time time target
+`arrive_late_min`                   | float  | 0.0     | Allow passengers to arrive after their arrival time target
+`depart_early_growth_type`          | string | 'linear'| The pathfinding algorithm supports four types of penalty delay functions: `linear`,`exponential`,`logarithmic`,`logistic`.
+`arrive_late_growth_type`           | string | 'linear'| The pathfinding algorithm supports four types of penalty delay functions: `linear`,`exponential`,`logarithmic`,`logistic`.
+`depart_early_growth_rate`          | float  | 0.0     | Growth rates for depart early time penalaties. See [config_ft.txt](fasttrips/Examples/demand/demand_pat/config_ft.txt) for more notes.
+`arrive_late_growth_rate`           | float  | 0.0     | Growth rates for arrive late time penalties. See [config_ft.txt](fasttrips/Examples/demand/demand_pat/config_ft.txt) for more notes.
+`depart_early_log_base`             | float  | e       | Log bases are required if the using a logarithmic penalty function
+`arrive_late_log_base`              | float  | e       | Log bases are required if the using a logarithmic penalty function
+`depart_early_logistic_max_value`   | float  | 10      | A maximum assymtopic values are required if the using a logistic penalty function
+`arrive_late_logistic_max_value`    | float  | 10      | A maximum assymtopic values are required if the using a logistic penalty function
+`depart_early_logistic_sigmoid_mid` | float  | 5       | Sigmoid midpoints are required if the using a logistic penalty function
+`arrive_late_logistic_sigmoid_mid`  | float  | 5       | Sigmoid midpoints are required if the using a logistic penalty function
+
 
 #### More on Overlap Path Size Penalties
 
@@ -202,18 +224,28 @@ The following is a partial list of possible weight names base don the demand mod
   
   * `time_min`  
   * `elevation_gain` 
-  * `preferred_delay_min`
+  * `arrive_early_min`
+  * `depart_late_min`
+  * `arrive_late_cost_min`
+  * `depart_early_cost_min`
   
 `demand_mode_type = egress` / `demand_mode = walk` / `supply_mode = walk_egress` 
   
   * `time_min` 
   * `elevation_gain` 
-  * `preferred_delay_min`
+  * `arrive_early_min`
+  * `depart_late_min`
+  * `arrive_late_cost_min`
+  * `depart_early_cost_min`
   
 `demand_mode_type = access` / `demand_mode = PNR` / `supply_mode = pnr_access` 
 
   * `walk_time_min`  
   * `drive_time_min` 
+  * `arrive_early_min`
+  * `depart_late_min`
+  * `arrive_late_cost_min`
+  * `depart_early_cost_min`
   
 `demand_mode_type = transfer` / `demand_mode = transfer` / `supply_mode = transfer`  
 
@@ -391,7 +423,7 @@ There are multiple test runs in `\tests`.  They can be run by installing the [Py
 
 __Fares:__ `test_maxStopProcessCount.py`
 
-Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
+Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
 
  * **Overlap Variable:** `count`, `distance`, `time`   
  * **Overlap Split:** Boolean
@@ -479,9 +511,10 @@ To be filled in further but including:
 [pandas-url]: <http://pandas.pydata.org/>
 [anaconda-url]: <https://www.continuum.io/downloads>
 [python-packages-windows-url]: <http://www.lfd.uci.edu/~gohlke/pythonlibs/>
-[python-transitfeed-url]: <https://github.com/google/transitfeed/wiki/TransitFeed>
+[partridge-url]: <https://github.com/remix/partridge>
 [git-repo-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips.git>
 [network-standard-url]: <https://github.com/osplanning-data-standards/GTFS-PLUS>
 [demand-standard-url]: <https://github.com/osplanning-data-standards/dyno-demand>
 [stop-order-details-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22>
 [fast-trips-validation-url]: <https://github.com/psrc/fast-trips-validation>
+[pip-url]: <https://pip.pypa.io/en/stable/>

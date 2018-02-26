@@ -292,24 +292,38 @@ class Assignment:
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :'False',
+
                       # pathfinding
-                      'max_num_paths'                   :-1,
-                      'min_path_probability'            :0.005,
-                      'min_transfer_penalty'            :1.0,
-                      'overlap_chunk_size'              :500,
-                      'overlap_scale_parameter'         :1.0,
-                      'overlap_split_transit'           :'False',
-                      'overlap_variable'                :'count',
-                      'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                      'pathweights_fixed_width'         :'False',
-                      'stochastic_dispersion'           :1.0,
+                      'max_num_paths'                    :-1,
+                      'min_path_probability'             :0.005,
+                      'min_transfer_penalty'             :1.0,
+                      'overlap_chunk_size'               :500,
+                      'overlap_scale_parameter'          :1.0,
+                      'overlap_split_transit'            :'False',
+                      'overlap_variable'                 :'count',
+                      'pathfinding_type'                 :Assignment.PATHFINDING_TYPE_STOCHASTIC,
+                      'pathweights_fixed_width'          :'False',
+                      'stochastic_dispersion'            :1.0,
                       'stochastic_max_stop_process_count':20,
-                      'stochastic_pathset_size'         :1000,
-                      'time_window'                     :30,
-                      'transfer_fare_ignore_pathfinding':'False',
-                      'transfer_fare_ignore_pathenum'   :'False',
-                      'user_class_function'             :'generic_user_class'
+                      'stochastic_pathset_size'          :1000,
+                      'time_window'                      :30,
+                      'transfer_fare_ignore_pathfinding' :'False',
+                      'transfer_fare_ignore_pathenum'    :'False',
+                      'user_class_function'              :'generic_user_class',
+                      'arrive_late_min'                  : 0,
+                      'depart_early_min'                 : 0,
+                      'arrive_late_growth_type'          :'linear',
+                      'depart_early_growth_type'         :'linear',
+                      'arrive_late_growth_rate'          : 0.0,
+                      'depart_early_growth_rate'         : 0.0,
+                      'arrive_late_log_base'             : np.exp(1),
+                      'depart_early_log_base'            : np.exp(1),
+                      'arrive_late_logistic_max_value'   : 5,
+                      'depart_early_logistic_max_value'  : 5,
+                      'arrive_late_logistic_sigmoid_mid' : 2.5,
+                      'depart_early_logistic_sigmoid_mid': 2.5,
                      })
+
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
         parser.read(config_fullpath)
@@ -358,6 +372,33 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
+        PathSet.DEPART_EARLY_MIN                    = datetime.timedelta(
+                                         minutes=parser.getfloat('pathfinding', 'depart_early_min'))
+        PathSet.ARRIVE_LATE_MIN                     = datetime.timedelta(
+                                         minutes = parser.getfloat  ('pathfinding','arrive_late_min'))
+
+        PathSet.ARRIVE_LATE_GROWTH_TYPE             = parser.get('pathfinding', 'arrive_late_growth_type')
+        PathSet.DEPART_EARLY_GROWTH_TYPE            = parser.get('pathfinding', 'depart_early_growth_type')
+
+        PathSet.ARRIVE_LATE_GROWTH_RATE             = parser.getfloat('pathfinding', 'arrive_late_growth_rate')
+        PathSet.DEPART_EARLY_GROWTH_RATE            = parser.getfloat('pathfinding', 'depart_early_growth_rate')
+
+        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
+            PathSet.DEPART_EARLY_PENALTY_LOG_BASE = parser.getfloat('pathfinding', 'depart_early_log_base')
+
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
+            PathSet.ARRIVE_LATE_PENALTY_LOG_BASE    = parser.getfloat('pathfinding', 'arrive_late_log_base')
+
+        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            PathSet.DEPART_EARLY_LOGIT_MAX          = parser.getfloat('pathfinding', 'depart_early_logistic_max_value')
+            PathSet.DEPART_EARLY_SIGMOID_MID        = parser.getfloat('pathfinding', 'depart_early_logistic_sigmoid_mid')
+
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
+            PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
+            PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
+
+        PathSet.DEPART_EARLY_GROWTH_RATE = 0.0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
+        PathSet.ARRIVE_LATE_GROWTH_RATE = 0.0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
 
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
@@ -375,6 +416,11 @@ class Assignment:
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
+        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS:
+            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.PENALTY_GROWTH_MODELS)
+            FastTripsLogger.fatal(msg)
+            raise ConfigurationError(config_fullpath, msg)
+
     @staticmethod
     def read_weights(weights_file = INPUT_WEIGHTS):
         """
@@ -385,13 +431,60 @@ class Assignment:
             sys.exit(2)
 
         if PathSet.WEIGHTS_FIXED_WIDTH:
-            PathSet.WEIGHTS_DF = pd.read_fwf(weights_file)
-            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_PURPOSE] = PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_PURPOSE].astype(str)
+            weights = pd.read_fwf(weights_file)
+            weights[PathSet.WEIGHTS_COLUMN_PURPOSE] = weights[PathSet.WEIGHTS_COLUMN_PURPOSE].astype(str)
         else:
-            PathSet.WEIGHTS_DF = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
+            weights = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
+
+        PathSet.WEIGHTS_DF = Assignment.process_weight_qualifiers(weights)
+
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
-        
+
+
+    @staticmethod
+    def process_weight_qualifiers(weights):
+        """
+        Qualifiers are used to change the default behavior of weight_names. Qualifiers
+        are added by adding a period (.) after the weight_name and specifying the
+        qualifier name. Qualifier attributes are specified after a second dot.
+
+        For example: depart_early_cost_min.logistic.growth_rate
+        depart_early_cost_min is being qualified as a logistic penalty instead of the default
+        behavior. growth_rate is an attribute of the logistic qualifier.
+        :param weights: vertically oriented qualifiers
+        :return: pivoted weights table with the qualifiers normalized horizontally.
+        """
+
+        qualifiers = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
+
+        if qualifiers.shape[0] == 0:
+            return weights
+
+        weights = weights[~weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
+        qualifiers = qualifiers.rename(columns={PathSet.WEIGHTS_COLUMN_WEIGHT_NAME: 'qualifier'})
+        qualifiers[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] = qualifiers['qualifier'].str.extract('(^\w+)', expand=False)
+        qualifiers[PathSet.WEIGHTS_GROWTH_TYPE] = qualifiers['qualifier'].str.extract('((?<=\.)\w+)', expand=False)
+        qualifiers['variable'] = qualifiers['qualifier'].str.extract('(\w+$)', expand=False)
+
+        if (~qualifiers[PathSet.WEIGHTS_GROWTH_TYPE].isin(PathSet.PENALTY_GROWTH_MODELS)).any():
+            FastTripsLogger.fatal("Invalid growth type qualifier specified.")
+            raise KeyError('Invalid growth type qualifier specified.')
+
+        qualifier_values = qualifiers.pivot(columns='variable', values=PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
+        qualifier_columns = qualifier_values.columns.values
+
+        qualifiers = pd.concat([qualifiers, qualifier_values], axis=1)
+
+        merge_cols = [
+            PathSet.WEIGHTS_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_PURPOSE,
+            PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE, PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+            PathSet.WEIGHTS_COLUMN_SUPPLY_MODE, PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
+        ]
+
+        qualifiers = qualifiers.groupby(merge_cols)[qualifier_columns].max().reset_index()
+
+        return pd.merge(weights, qualifiers, on=merge_cols, how='left')
 
             
     @staticmethod
@@ -482,8 +575,10 @@ class Assignment:
                                                     Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
                                                     overcap_col]].as_matrix().astype('float64'))
 
-        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
-                                         Assignment.BUMP_BUFFER.total_seconds()/60.0,
+        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds() / 60.0,
+                                         Assignment.BUMP_BUFFER.total_seconds() / 60.0,
+                                         PathSet.DEPART_EARLY_MIN.total_seconds() / 60.0,
+                                         PathSet.ARRIVE_LATE_MIN.total_seconds() / 60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
@@ -616,7 +711,7 @@ class Assignment:
         Finds the paths for the passengers.
         """
         # clear any state
-        _fasttrips.reset();
+        _fasttrips.reset()
 
         # write the initial load profile, iteration 0
         veh_trips_df     = FT.trips.get_full_trips()

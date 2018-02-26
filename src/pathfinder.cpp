@@ -56,6 +56,8 @@ namespace fasttrips {
     void PathFinder::initializeParameters(
         double     time_window,
         double     bump_buffer,
+        double     depart_early_min,
+        double     arrive_late_min,
         int        stoch_pathset_size,
         double     stoch_dispersion,
         int        stoch_max_stop_process_count,
@@ -934,7 +936,10 @@ namespace fasttrips {
                 // inbound:  arrival time   = origin      + access
                 double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
                 // we start out with no delay
-                link_attr["preferred_delay_min"] = 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;  
+                link_attr["depart_early_cost_min"] = 0.0;
+                link_attr["arrive_late_cost_min"] = 0.0;
 
                 double cost;
                 if (path_spec.hyperpath_) {
@@ -1178,7 +1183,10 @@ namespace fasttrips {
                 if (aelk.end_time_   <= earliest_dep_latest_arr_024) continue;
 
                 Attributes link_attr            = iter_aelk->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;  
+                link_attr["depart_early_cost_min"] = 0.0;
+                link_attr["arrive_late_cost_min"] = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
                 double  access_dist             = link_attr.find("dist")->second;
@@ -1435,7 +1443,11 @@ namespace fasttrips {
                         delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
-                        delay_attr["preferred_delay_min"  ] = wait_time;
+                        delay_attr["arrive_early_min"     ] = wait_time * path_spec.outbound_;
+                        delay_attr["depart_late_min"      ] = wait_time * !path_spec.outbound_;
+                        delay_attr["depart_early_cost_min"] = 0;
+                        delay_attr["arrive_late_cost_min" ] = 0;
+                        
                         UserClassPurposeMode delay_ucpm = {
                             path_spec.user_class_, path_spec.purpose_,
                             path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
@@ -1735,7 +1747,10 @@ namespace fasttrips {
                 if (aelk.end_time_   <= earliest_dep_latest_arr) continue;
 
                 Attributes link_attr            = iter_aelk->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;   
+                link_attr["depart_early_cost_min"] = 0.0;
+                link_attr["arrive_late_cost_min"] = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
                 double  access_dist             = link_attr.find("dist")->second;

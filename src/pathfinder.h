@@ -439,6 +439,8 @@ namespace fasttrips {
          */
         void initializeParameters(double     time_window,
                                   double     bump_buffer,
+                                  double     depart_early_min,
+                                  double     arrive_late_min,
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion,
                                   int        stoch_max_stop_process_count,
