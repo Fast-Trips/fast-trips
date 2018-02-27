@@ -24,6 +24,7 @@ For a description of how Fast-Trips does this sort of analysis differently than 
     * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
+    * [Weight Qualifiers](#weight-qualifiers)
 * [Fares](#fares)
 * [Test Sample Input](#test-sample-input)
   * [Test Network](#test-network)  
@@ -217,29 +218,29 @@ The following is an example of a minimally specified `pathweight_ft.txt` :
 
 For most of the weights prefix mode is not needed. E.g. there is no need to label `weight_name` `time_min` for `supply_mode` `walk_access` as `walk_time_min`, because the fact that the `supply_mode` is `walk_access` means it is only assessed on walk links. The drive option (PNR/KNR access/egress), however, should have `walk_` and `drive_` prefixes, because the access can have both components: driving to the station from the origin and walking from the lot to the station. So for example, for `supply_mode` `pnr_access` there will be two weights associated with travel time: `walk_time_min` and `drive_time_min`.
 
-The following is a partial list of possible weight names base don the demand mode / supply mode combinations.
+The following is a partial list of possible weight names based on the demand mode / supply mode combinations.
 
 
 `demand_mode_type = access` / `demand_mode = walk` / `supply_mode = walk_access`
 
-  * `time_min`  
+  * `time_min`
   * `elevation_gain`
   * `depart_late_min`
-  * `depart_early_cost_min`
+  * `depart_early_min`
 
 `demand_mode_type = egress` / `demand_mode = walk` / `supply_mode = walk_egress`
 
   * `time_min`
   * `elevation_gain`
   * `arrive_early_min`
-  * `arrive_late_cost_min`
+  * `arrive_late_min`
 
 `demand_mode_type = access` / `demand_mode = PNR` / `supply_mode = pnr_access`
 
   * `walk_time_min`  
   * `drive_time_min`
   * `depart_late_min`
-  * `depart_early_cost_min`
+  * `depart_early_min`
 
 `demand_mode_type = transfer` / `demand_mode = transfer` / `supply_mode = transfer`  
 
@@ -252,7 +253,44 @@ The following is a partial list of possible weight names base don the demand mod
   * `in_vehicle_time_min`
   * `wait_time_min`
 
-Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.  
+Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.
+
+#### Weight Qualifiers  
+By default, Fast-Trips will apply all weights linearly on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied non-linearly. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the c
+
+Qualifier     | Formulation | Required Modifiers |
+--------------|-------------|--------------------|
+`linear`      |![Linear Weight Equations](/doc/pathweight_linear_equation.png "Linear Weight Equation")| N/A |
+`exponential` |![Exponential Weight Equations](/doc/pathweight_exponential_equation.png "Exponential Weight Equation")| N/A |
+`logarithmic` |![Logarithmic Weight Equations](/doc/pathweight_logarithmic_equation.png "Logarithmic Weight Equation")| `log_base` |
+`logistic`    |![Logistic Weight Equations](/doc/pathweight_logistic_equation.png "Logistic Weight Equation")| `logistic_max`<br/>`logistgic_mid` |
+
+*Example*:
+```
+#Pathweights_ft.txt snippet
+user_class purpose demand_mode_type demand_mode    supply_mode  weight_name                                   weight_value
+# default linear
+all        other   transit          transit        rapid_bus    wait_time_min                                 1.77
+
+# Explicitly linear
+all        other   transit          transit        rapid_bus    wait_time_min.linear                          1.77
+
+all        other   access           walk           walk_access  depart_early_min.logistic                     0.2
+all        other   access           walk           walk_access  depart_early_min.logistic.logistic_max        10
+all        other   access           walk           walk_access  depart_early_min.logistic.logistic_mid        9
+
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic                   0.3
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic.log_base          2.71828
+
+# Exponential
+all        work    access           walk           walk_access  depart_early_min.exponential                  0.02
+
+# Logarithmic
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic                   0.3
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic.log_base          2.71828
+
+```
+
 
 ## Fares
 
