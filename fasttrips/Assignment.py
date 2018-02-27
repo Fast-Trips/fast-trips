@@ -115,7 +115,7 @@ class Assignment:
     MIN_PATH_PROBABILITY            = None
 
     #: Route choice configuration: Dispersion parameter in the logit function.
-    #: Higher values result in less stochasticity. Must be nonnegative. 
+    #: Higher values result in less stochasticity. Must be nonnegative.
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
@@ -211,7 +211,7 @@ class Assignment:
     SIM_COL_PAX_WAIT_TIME           = 'new_waittime'     #: Wait time
     SIM_COL_PAX_MISSED_XFER         = 'missed_xfer'      #: Is this link a missed transfer
 
-    SIM_COL_PAX_OVERCAP             = Trip.SIM_COL_VEH_OVERCAP      #: 
+    SIM_COL_PAX_OVERCAP             = Trip.SIM_COL_VEH_OVERCAP      #:
     SIM_COL_PAX_OVERCAP_FRAC        = Trip.SIM_COL_VEH_OVERCAP_FRAC #: If board at an overcap stop, fraction of boards that are overcap
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BOARD_STATE         = 'board_state'      #: NaN if not relevent, 1 if lucky enough to board at an at- or over-capacity stop, 0 if bumped.  Set by :py:meth:`Assignment.flag_bump_overcap_passengers`
@@ -310,24 +310,14 @@ class Assignment:
                       'transfer_fare_ignore_pathfinding' :'False',
                       'transfer_fare_ignore_pathenum'    :'False',
                       'user_class_function'              :'generic_user_class',
-                      'arrive_late_min'                  : 0,
-                      'depart_early_min'                 : 0,
-                      'arrive_late_growth_type'          :'linear',
-                      'depart_early_growth_type'         :'linear',
-                      'arrive_late_growth_rate'          : 0.0,
-                      'depart_early_growth_rate'         : 0.0,
-                      'arrive_late_log_base'             : np.exp(1),
-                      'depart_early_log_base'            : np.exp(1),
-                      'arrive_late_logistic_max_value'   : 5,
-                      'depart_early_logistic_max_value'  : 5,
-                      'arrive_late_logistic_sigmoid_mid' : 2.5,
-                      'depart_early_logistic_sigmoid_mid': 2.5,
+                      'arrive_late_allowed_min'          : 0,
+                      'depart_early_allowed_min'         : 0,
                      })
 
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
         parser.read(config_fullpath)
-		
+
         Assignment.MAX_ITERATIONS                = parser.getint    ('fasttrips','max_iterations')
         Assignment.NETWORK_BUILD_DATE            = datetime.datetime.strptime(
                                                     parser.get('fasttrips', 'network_build_date'), '%m/%d/%Y').date()
@@ -372,33 +362,10 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
-        PathSet.DEPART_EARLY_MIN                    = datetime.timedelta(
-                                         minutes=parser.getfloat('pathfinding', 'depart_early_min'))
-        PathSet.ARRIVE_LATE_MIN                     = datetime.timedelta(
-                                         minutes = parser.getfloat  ('pathfinding','arrive_late_min'))
-
-        PathSet.ARRIVE_LATE_GROWTH_TYPE             = parser.get('pathfinding', 'arrive_late_growth_type')
-        PathSet.DEPART_EARLY_GROWTH_TYPE            = parser.get('pathfinding', 'depart_early_growth_type')
-
-        PathSet.ARRIVE_LATE_GROWTH_RATE             = parser.getfloat('pathfinding', 'arrive_late_growth_rate')
-        PathSet.DEPART_EARLY_GROWTH_RATE            = parser.getfloat('pathfinding', 'depart_early_growth_rate')
-
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            PathSet.DEPART_EARLY_PENALTY_LOG_BASE = parser.getfloat('pathfinding', 'depart_early_log_base')
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            PathSet.ARRIVE_LATE_PENALTY_LOG_BASE    = parser.getfloat('pathfinding', 'arrive_late_log_base')
-
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            PathSet.DEPART_EARLY_LOGIT_MAX          = parser.getfloat('pathfinding', 'depart_early_logistic_max_value')
-            PathSet.DEPART_EARLY_SIGMOID_MID        = parser.getfloat('pathfinding', 'depart_early_logistic_sigmoid_mid')
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
-            PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
-
-        PathSet.DEPART_EARLY_GROWTH_RATE = 0.0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
-        PathSet.ARRIVE_LATE_GROWTH_RATE = 0.0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
+        PathSet.DEPART_EARLY_ALLOWED_MIN            = datetime.timedelta(
+                                            minutes = parser.getfloat('pathfinding', 'depart_early_allowed_min'))
+        PathSet.ARRIVE_LATE_ALLOWED_MIN             = datetime.timedelta(
+                                            minutes = parser.getfloat  ('pathfinding','arrive_late_allowed_min'))
 
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
@@ -413,11 +380,6 @@ class Assignment:
             raise ConfigurationError(config_fullpath, msg)
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
             msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, Assignment.CONFIGURATION_FUNCTIONS_FILE)
-            FastTripsLogger.fatal(msg)
-            raise ConfigurationError(config_fullpath, msg)
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS:
-            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.PENALTY_GROWTH_MODELS)
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
@@ -486,7 +448,8 @@ class Assignment:
 
         return pd.merge(weights, qualifiers, on=merge_cols, how='left')
 
-            
+
+
     @staticmethod
     def write_configuration(output_dir):
         """
@@ -543,6 +506,9 @@ class Assignment:
 
         parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
+        parser.set('pathfinding','arrive_late_allowed_min',     '%f' % (PathSet.ARRIVE_LATE_ALLOWED_MIN.total_seconds()/60.0))
+        parser.set('pathfinding','depart_early_allowed_min',    '%f' % (PathSet.DEPART_EARLY_ALLOWED_MIN.total_seconds()/60.0))
+
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)
         output_file.close()
@@ -577,8 +543,8 @@ class Assignment:
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds() / 60.0,
                                          Assignment.BUMP_BUFFER.total_seconds() / 60.0,
-                                         PathSet.DEPART_EARLY_MIN.total_seconds() / 60.0,
-                                         PathSet.ARRIVE_LATE_MIN.total_seconds() / 60.0,
+                                         PathSet.DEPART_EARLY_ALLOWED_MIN.total_seconds() / 60.0,
+                                         PathSet.ARRIVE_LATE_ALLOWED_MIN.total_seconds() / 60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
@@ -817,15 +783,15 @@ class Assignment:
             # end condition for iterations loop
             if False and capacity_gap < 0.001:
                 break
-            
+
             # end for loop
-        
+
         return {"capacity_gap": capacity_gap,
                 "paths_found": num_paths_found,
                 "passengers_arrived": num_passengers_arrived,
                 "passengers_missed": num_bumped_passengers,
                 "passengers_demand": len(FT.passengers.trip_list_df) }
-        
+
     @staticmethod
     def filter_trip_list_to_not_arrived(trip_list_df, pathset_paths_df):
         """
@@ -1613,7 +1579,7 @@ class Assignment:
             FastTripsLogger.info("  Step 5.1 Put passengers on transit vehicles.")
             # Put passengers on vehicles, updating the vehicle's boards, alights, onboard, overcap, overcap_frac
             veh_loaded_df = Assignment.put_passengers_on_vehicles(pathset_links_df, veh_loaded_df)
-            FastTripsLogger.debug("after putting passengers on vehicles, veh_loaded_df with onboard.head(30) = \n%s" % 
+            FastTripsLogger.debug("after putting passengers on vehicles, veh_loaded_df with onboard.head(30) = \n%s" %
                                   veh_loaded_df.loc[ veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD]>0, vehicle_trip_debug_columns].head(30).to_string())
 
             if not Assignment.CAPACITY_CONSTRAINT:
@@ -1651,7 +1617,7 @@ class Assignment:
             pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull() &                               # trip links only
                                   pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER].isnull() &                         # not already bumped
                                   (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET)&  # unchosen
-                                  (pathset_links_df[Assignment.SIM_COL_PAX_OVERCAP]>=0),                                # overcap 
+                                  (pathset_links_df[Assignment.SIM_COL_PAX_OVERCAP]>=0),                                # overcap
                                         Assignment.SIM_COL_PAX_BOARD_STATE ] = "bumped_unchosen"
             pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull() &                               # trip links only
                                   pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER].isnull() &                         # not already bumped
@@ -1797,7 +1763,7 @@ class Assignment:
                                   (pathset_links_df[Assignment.SIM_COL_PAX_BOARD_STATE].isnull()|
                                    (pathset_links_df[Assignment.SIM_COL_PAX_BOARD_STATE]=="boarded")|
                                    (pathset_links_df[Assignment.SIM_COL_PAX_BOARD_STATE]=="board_easy"))&
-                                  pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull(), 
+                                  pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull(),
                                   Assignment.SIM_COL_PAX_BOARD_STATE ] = "bumped_othertrip"
             pathset_links_df.drop(["_merge"], axis=1, inplace=True)
 
@@ -1939,7 +1905,7 @@ class Assignment:
             ######################################################################################################
             if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
                 FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
-                Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False, 
+                Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False,
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
                 Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
@@ -2000,7 +1966,7 @@ def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worke
 
     from .FastTrips import FastTrips
     setupLogging(infoLogFilename  = None,
-                 debugLogFilename = os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str), 
+                 debugLogFilename = os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str),
                  logToConsole     = False,
                  append           = False if ((iteration==1) and (pathfinding_iteration==1)) else True)
     FastTripsLogger.info("Iteration %d Pathfinding Iteration %d Worker %2d starting" % (iteration, pathfinding_iteration, worker_num))

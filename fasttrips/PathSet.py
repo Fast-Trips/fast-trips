@@ -88,8 +88,8 @@ class PathSet:
     DEPART_LATE_WEIGHT_NAME         = 'depart_late_min'
 
     #: Allow departures and arrivals before / after preferred time
-    ARRIVE_LATE_MIN                 = datetime.timedelta(minutes = 0)
-    DEPART_EARLY_MIN                = datetime.timedelta(minutes = 0)
+    ARRIVE_LATE_ALLOWED_MIN         = datetime.timedelta(minutes = 0)
+    DEPART_EARLY_ALLOWED_MIN        = datetime.timedelta(minutes = 0)
 
     LINEAR_GROWTH_MODEL              = 'linear'
     EXP_GROWTH_MODEL                 = 'exponential'
@@ -180,14 +180,13 @@ class PathSet:
         #: Preferred time is a datetime.time object
         if trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "arrival":
             self.direction     = PathSet.DIR_OUTBOUND
-            #The addition "tricks" the C++ pathfinding code to return options after PAT
-            self.pref_time     = (trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] + PathSet.ARRIVE_LATE_MIN).to_datetime().time()
-            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] + (PathSet.ARRIVE_LATE_MIN.seconds / 60.0)
+            self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME]
+            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN]
         elif trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "departure":
             self.direction     = PathSet.DIR_INBOUND
             # The subtraction "tricks" the C++ pathfinding code to return options before PAT
-            self.pref_time     = (trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - PathSet.DEPART_EARLY_MIN).to_datetime().time()
-            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] - (PathSet.DEPART_EARLY_MIN.seconds / 60.0)
+            self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME]
+            self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN]
         else:
             raise Exception("Don't understand trip_list %s: %s" % (Passenger.TRIP_LIST_COLUMN_TIME_TARGET, str(trip_list_dict)))
 
@@ -914,6 +913,8 @@ class PathSet:
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.ARRIVE_EARLY_WEIGHT_NAME    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_B_TIME])/np.timedelta64(1,'m')
+        # arrive early is not negative - that would be arriving late
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.ARRIVE_EARLY_WEIGHT_NAME)&(cost_accegr_df["var_value"] < 0), "var_value"] = 0.0
 
         # penalty for departing after preferred departure time.
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.DEPART_LATE_WEIGHT_NAME) &
@@ -924,60 +925,58 @@ class PathSet:
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.DEPART_LATE_WEIGHT_NAME) &
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS) &
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = (cost_accegr_df[Passenger.PF_COL_PAX_A_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME]) / np.timedelta64(1, 'm')
+        # depart late is not negative - that would be departing early
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.DEPART_LATE_WEIGHT_NAME)&(cost_accegr_df["var_value"] < 0), "var_value"] = 0.0
 
-        # Before we do any math, let's make sure we can use linear and exponentially interchangeably below.
         # linear growth = exponential growth with 0 percent growth rate
-        assert PathSet.DEPART_EARLY_GROWTH_RATE == 0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
-        assert PathSet.ARRIVE_LATE_GROWTH_RATE == 0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
 
         # depart before preferred or arrive after preferred means the passenger just missed something important
         # Arrive late only impacts the egress link, so set the var_value equal to zero for the access link
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "arrive_late_cost_min"    ) & \
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "arrive_late_min"    ) & \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS), "var_value"] = 0.0
 
         # Arrive late only impacts those that have a preferred arrival time. If preferred departure time,
         # set arrive late equal to zero. --This could have been done with previous line, but it would
         # look ugly mixing and matching 'and' and 'or'.
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") & \
-            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_DEPARTURE), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "arrive_late_min") & \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_DEPARTURE), "var_value"] = 0.0
 
         # Calculate how late the person arrives after preferred time.
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "arrive_late_cost_min"    )& \
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "arrive_late_min"    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_ARRIVAL), "var_value"] = \
             (cost_accegr_df[Passenger.PF_COL_PAX_B_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME])/np.timedelta64(1,'m')
 
         # If arrived before preferred time, set the arrive late field to zero. You don't get a
         # discount for arriving early.
-        cost_accegr_df.loc[
-            (cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "arrive_late_cost_min") & \
-            (cost_accegr_df['var_value'] < 0), "var_value"] = 0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]    == "arrive_late_min") & \
+                           (cost_accegr_df['var_value'] < 0), "var_value"] = 0
 
         # preferred delay_min - departure means want to depart after that time
         # Depart early only impacts the access link, so set the var_value equal to zero for the egress link
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "depart_early_cost_min"    )& \
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "depart_early_min"    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS), "var_value"] = 0.0
 
         # Depart early only impacts those that have a preferred departure time. If preferred arrive time,
         # set depart early equal to zero. --This could have been done with previous line, but it would
         # look ugly mixing and matching 'and' and 'or'.
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") & \
-            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_ARRIVAL), "var_value"] = 0.0
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "depart_early_min") & \
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_ARRIVAL), "var_value"] = 0.0
 
         # Calculate how early the person departs before the preferred time.
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") & \
-                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_ACCESS) & \
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == "depart_early_min") & \
+                           (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS) & \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_DEPARTURE), "var_value"] = \
             (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_A_TIME]) / np.timedelta64(1, 'm')
 
         # If departing after preferred time, set the depart early field to zero. You don't get a
         # discount for taking your time.
-        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_cost_min") & \
+        cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "depart_early_min") & \
                            (cost_accegr_df['var_value'] < 0), "var_value"] = 0
 
-        assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_cost_min","arrive_late_cost_min"])) & \
+        assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_min","arrive_late_min"])) & \
                                    (cost_accegr_df['var_value'].isnull())].shape[0]
-        assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_cost_min", "arrive_late_cost_min"])) & \
+        assert 0 == cost_accegr_df[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].isin(["depart_early_min", "arrive_late_min"])) & \
                                    (cost_accegr_df['var_value']<0)].shape[0]
 
         if len(Assignment.TRACE_IDS) > 0:
