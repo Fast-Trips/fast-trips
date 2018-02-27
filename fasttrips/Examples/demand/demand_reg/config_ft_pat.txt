@@ -13,55 +13,8 @@ pathweights_fixed_width       = True
 # before their departure target. This set of functionality works in coordination with the following
 # weights in the pathweight_ft.txt file.
 #
-#    - arrive_late_cost_min
-#    - depart_early_cost_min
+#    - arrive_late_*
+#    - depart_early_*
 # *****************************************************************************************************
-depart_early_min              = 10
-arrive_late_min               = 10
-
-# *****************************************************************************************************
-# The pathfinding algorithm supports four types of penalty delay functions for the number
-# of minutes arrived after the preferred time target or the number of minutes leaving
-# before the preferred time target
-# Choices:
-#   - linear      (requires no additional fields)
-#   - exponential (requires growth rate)
-#   - logarithmic (requires growth_rate and log_base
-#   - logistic    (requires maximum value, growth_rate, and sigmoid midpoint)
-# *****************************************************************************************************
-depart_early_growth_type      = logistic
-arrive_late_growth_type       = linear
-
-# *****************************************************************************************************
-# Growth rates for arrive late / depart early time penalaties. These are required for any non-linear
-# penalty type. The growth rate is applied as described below for each function type.
-#  - Exponential: Penalty is assessed as: (1 + growth rate) ^ minutes late / early
-#  - Logarithmic: Penalty is assessed as: growth rate * LOG(1 + minutes late, log base)
-#  - Logistic: Penalty is assessed as: max value / (1 + e^(-growth rate * (minutes delay - sigmoid midpoint))
-# *****************************************************************************************************
-depart_early_growth_rate      = 0.2
-arrive_late_growth_rate       = 0.0
-
-# *****************************************************************************************************
-# Log bases are required if the using a logarithmic penalty function for arrive after / depart
-# early penalty. It is used as follows:
-#   - Logarithmic: Penalty is assessed as: growth rate * LOG(1 + minutes late, log base)
-# *****************************************************************************************************
-#depart_early_log_base        = 2.71828
-#arrive_early_log_base        = 2.71828
-
-# *****************************************************************************************************
-# A maximum assymtopic values are required if the using a logistic penalty function for arrive after /
-# depart early penalty. It is used as follows:
-#  - Logistic: Penalty is assessed as: max value / (1 + e^(-growth rate * (minutes delay - sigmoid midpoint))
-# *****************************************************************************************************
-depart_early_logistic_max_value  = 10
-#arrive_late_logistic_max_value   = 5
-
-# *****************************************************************************************************
-# Sigmoid midpoints are required if the using a logistic penalty function for arrive after / depart
-# early penalty. It is used as follows:
-#  - Logistic: Penalty is assessed as: max value / (1 + e^(-growth rate * (minutes delay - sigmoid midpoint))
-# *****************************************************************************************************
-depart_early_logistic_sigmoid_mid  = 9
-#arrive_late_logistic_sigmoid_mid   = 5
+depart_early_allowed_min              = 10
+arrive_late_allowed_min               = 10

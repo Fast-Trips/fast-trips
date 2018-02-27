@@ -319,18 +319,8 @@ class Assignment:
                       'transfer_fare_ignore_pathfinding' :'False',
                       'transfer_fare_ignore_pathenum'    :'False',
                       'user_class_function'              :'generic_user_class',
-                      'arrive_late_min'                  : 0,
-                      'depart_early_min'                 : 0,
-                      'arrive_late_growth_type'          :'linear',
-                      'depart_early_growth_type'         :'linear',
-                      'arrive_late_growth_rate'          : 0.0,
-                      'depart_early_growth_rate'         : 0.0,
-                      'arrive_late_log_base'             : np.exp(1),
-                      'depart_early_log_base'            : np.exp(1),
-                      'arrive_late_logistic_max_value'   : 5,
-                      'depart_early_logistic_max_value'  : 5,
-                      'arrive_late_logistic_sigmoid_mid' : 2.5,
-                      'depart_early_logistic_sigmoid_mid': 2.5,
+                      'arrive_late_allowed_min'          : 0,
+                      'depart_early_allowed_min'         : 0,
                      })
 
         # Read configuration from specified configuration directory
@@ -383,16 +373,10 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
-        PathSet.DEPART_EARLY_MIN                    = datetime.timedelta(
-                                         minutes=parser.getfloat('pathfinding', 'depart_early_min'))
-        PathSet.ARRIVE_LATE_MIN                     = datetime.timedelta(
-                                         minutes = parser.getfloat  ('pathfinding','arrive_late_min'))
-
-        PathSet.ARRIVE_LATE_GROWTH_TYPE             = parser.get('pathfinding', 'arrive_late_growth_type')
-        PathSet.DEPART_EARLY_GROWTH_TYPE            = parser.get('pathfinding', 'depart_early_growth_type')
-
-        PathSet.ARRIVE_LATE_GROWTH_RATE             = parser.getfloat('pathfinding', 'arrive_late_growth_rate')
-        PathSet.DEPART_EARLY_GROWTH_RATE            = parser.getfloat('pathfinding', 'depart_early_growth_rate')
+        PathSet.DEPART_EARLY_ALLOWED_MIN            = datetime.timedelta(
+                                            minutes = parser.getfloat('pathfinding', 'depart_early_allowed_min'))
+        PathSet.ARRIVE_LATE_ALLOWED_MIN             = datetime.timedelta(
+                                            minutes = parser.getfloat  ('pathfinding','arrive_late_allowed_min'))
 
         if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
             PathSet.DEPART_EARLY_PENALTY_LOG_BASE = parser.getfloat('pathfinding', 'depart_early_log_base')
@@ -407,23 +391,6 @@ class Assignment:
         if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
             PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
             PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
-
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            PathSet.DEPART_EARLY_PENALTY_LOG_BASE = parser.getfloat('pathfinding', 'depart_early_log_base')
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            PathSet.ARRIVE_LATE_PENALTY_LOG_BASE    = parser.getfloat('pathfinding', 'arrive_late_log_base')
-
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            PathSet.DEPART_EARLY_LOGIT_MAX          = parser.getfloat('pathfinding', 'depart_early_logistic_max_value')
-            PathSet.DEPART_EARLY_SIGMOID_MID        = parser.getfloat('pathfinding', 'depart_early_logistic_sigmoid_mid')
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
-            PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
-
-        PathSet.DEPART_EARLY_GROWTH_RATE = 0.0 if PathSet.DEPART_EARLY_GROWTH_TYPE == 'linear' else PathSet.DEPART_EARLY_GROWTH_RATE
-        PathSet.ARRIVE_LATE_GROWTH_RATE = 0.0 if PathSet.ARRIVE_LATE_GROWTH_TYPE == 'linear' else PathSet.ARRIVE_LATE_GROWTH_RATE
 
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
@@ -438,11 +405,6 @@ class Assignment:
             raise ConfigurationError(config_fullpath, msg)
         if PathSet.USER_CLASS_FUNCTION not in PathSet.CONFIGURED_FUNCTIONS:
             msg = "User class function [%s] not defined.  Please check your function file [%s]" % (PathSet.USER_CLASS_FUNCTION, Assignment.CONFIGURATION_FUNCTIONS_FILE)
-            FastTripsLogger.fatal(msg)
-            raise ConfigurationError(config_fullpath, msg)
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS:
-            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.PENALTY_GROWTH_MODELS)
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
@@ -575,6 +537,9 @@ class Assignment:
         parser.set('pathfinding','transfer_fare_ignore_pathenum',    'True' if Assignment.TRANSFER_FARE_IGNORE_PATHENUM else 'False')
 
         parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
+
+        parser.set('pathfinding','arrive_late_allowed_min',     '%f' % (PathSet.ARRIVE_LATE_ALLOWED_MIN.total_seconds()/60.0))
+        parser.set('pathfinding','depart_early_allowed_min',    '%f' % (PathSet.DEPART_EARLY_ALLOWED_MIN.total_seconds()/60.0))
 
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)

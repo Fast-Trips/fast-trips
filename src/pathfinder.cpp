@@ -29,7 +29,7 @@ const char kPathSeparator =
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( std::ostringstream() << std::dec << x ).str()
 
 // Uncomment for debug detail for link cost.
-// #define DEBUG_LINKCOST
+#define DEBUG_LINKCOST
 
 // Debug macros. If debug is not on, the if (trace) isn't even executed.
 #ifdef DEBUG_LINKCOST
@@ -68,6 +68,8 @@ namespace fasttrips {
         double     min_path_probability)
     {
         BUMP_BUFFER_                    = bump_buffer;
+        DEPART_EARLY_ALLOWED_MIN_       = depart_early_allowed_min;
+        ARRIVE_LATE_ALLOWED_MIN_        = arrive_late_allowed_min;
         STOCH_PATHSET_SIZE_             = stoch_pathset_size;
         STOCH_MAX_STOP_PROCESS_COUNT_   = stoch_max_stop_process_count;
         MAX_NUM_PATHS_                  = max_num_paths;
@@ -885,6 +887,8 @@ namespace fasttrips {
     {
         int     start_taz_id = path_spec.outbound_ ? path_spec.destination_taz_id_ : path_spec.origin_taz_id_;
         double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
+        // the stretch pref time -- allow late arrival or early departure
+        double  pref_time    = path_spec.outbound_ ? path_spec.preferred_time_ + ARRIVE_LATE_ALLOWED_MIN_ : path_spec.preferred_time_ - DEPART_EARLY_ALLOWED_MIN_;
 
         // are there any egress/access links for this TAZ?
         if (access_egress_links_.hasLinksForTaz(start_taz_id) == false) {
@@ -929,6 +933,7 @@ namespace fasttrips {
                 const AccessEgressLinkKey& aelk = iter_aelk->first;
 
                 // require preferrd_time_ in [start_time_, end_time)
+                // We could check the stretch pref time but I think we might as well check the actual preferred time since it's the goal
                 if (aelk.start_time_ >  path_spec.preferred_time_) continue;
                 if (aelk.end_time_   <= path_spec.preferred_time_) continue;
 
@@ -939,12 +944,12 @@ namespace fasttrips {
 
                 // outbound: departure time = destination - access
                 // inbound:  arrival time   = origin      + access
-                double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
+                double deparr_time = pref_time - (attr_time*dir_factor);
                 // we start out with no delay
                 link_attr["depart_late_min"]    = 0;
-                link_attr["arrive_early_min"]   = 0;  
-                link_attr["depart_early_cost_min"] = 0.0;
-                link_attr["arrive_late_cost_min"] = 0.0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min"]    = 0.0;
 
                 double cost;
                 if (path_spec.hyperpath_) {
@@ -967,7 +972,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_,                                                  // arrival/departure time
-					0.0                                                                         // link ivt weight
+                    0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
@@ -1192,9 +1197,9 @@ namespace fasttrips {
 
                 Attributes link_attr            = iter_aelk->second;
                 link_attr["depart_late_min"]    = 0;
-                link_attr["arrive_early_min"]   = 0;  
-                link_attr["depart_early_cost_min"] = 0.0;
-                link_attr["arrive_late_cost_min"] = 0.0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min"]    = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
                 double  access_dist             = link_attr.find("dist")->second;
@@ -1459,11 +1464,31 @@ namespace fasttrips {
                         delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
-                        delay_attr["arrive_early_min"     ] = wait_time * path_spec.outbound_;
-                        delay_attr["depart_late_min"      ] = wait_time * !path_spec.outbound_;
-                        delay_attr["depart_early_cost_min"] = 0;
-                        delay_attr["arrive_late_cost_min" ] = 0;
-                        
+
+                        if (path_spec.outbound_) {
+                          // outbound: if the wait_time < ARRIVE_LATE_ALLOWED_MIN_ then we've arrived later than our preferred time (by ARRIVE_LATE_ALLOWED_MIN_ - wait_time)
+                          //           otherwise, we've arrive before our preferred time (by wait_time - ARRIVE_LATE_MIN_)
+                          //           so ideal with wait_time = ARRIVE_LATE_ALLOWED_MIN_
+                          if (wait_time < ARRIVE_LATE_ALLOWED_MIN_) {
+                            delay_attr["arrive_late_min"      ] = ARRIVE_LATE_ALLOWED_MIN_ - wait_time;
+                            delay_attr["arrive_early_min"     ] = 0;
+                          } else {
+                            delay_attr["arrive_late_min"      ] = 0;
+                            delay_attr["arrive_early_min"     ] = wait_time - ARRIVE_LATE_ALLOWED_MIN_;
+                          }
+                        } else {
+                          // inbound: if the wait_time < DEPART_EARLY_ALLOWED_MIN_ then we've departed earlier than our preferred time (by DEPART_EARLY_ALLOWED_MIN_ - wait_time)
+                          //           otherwise, we've depart before our preferred time (by wait_time - DEPART_EARLY_MIN_)
+                          //           so ideal with wait_time = DEPART_EARLY_ALLOWED_MIN_
+                          if (wait_time < DEPART_EARLY_ALLOWED_MIN_) {
+                            delay_attr["depart_early_min"] = DEPART_EARLY_ALLOWED_MIN_ - wait_time;
+                            delay_attr["depart_late_min"      ] = 0;
+                          } else {
+                            delay_attr["depart_early_min"] = 0 ;
+                            delay_attr["depart_late_min"      ] = wait_time - DEPART_EARLY_ALLOWED_MIN_;
+                          }
+                        }
+
                         UserClassPurposeMode delay_ucpm = {
                             path_spec.user_class_, path_spec.purpose_,
                             path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
@@ -1766,9 +1791,9 @@ namespace fasttrips {
 
                 Attributes link_attr            = iter_aelk->second;
                 link_attr["depart_late_min"]    = 0;
-                link_attr["arrive_early_min"]   = 0;   
-                link_attr["depart_early_cost_min"] = 0.0;
-                link_attr["arrive_late_cost_min"] = 0.0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min" ]   = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
                 double  access_dist             = link_attr.find("dist")->second;

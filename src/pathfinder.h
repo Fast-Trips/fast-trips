@@ -176,6 +176,12 @@ namespace fasttrips {
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">fasttrips.Assignment.BUMP_BUFFER</a>
         double BUMP_BUFFER_;
 
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.DEPART_EARLY_MIN">fasttrips.PathSet.DEPART_EARLY_MIN</a>
+        double DEPART_EARLY_ALLOWED_MIN_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.ARRIVE_LATE_MIN">fasttrips.PathSet.ARRIVE_LATE_MIN</a>
+        double ARRIVE_LATE_ALLOWED_MIN_;
+
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a>
         int STOCH_PATHSET_SIZE_; // er....
 

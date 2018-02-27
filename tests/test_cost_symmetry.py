@@ -14,13 +14,12 @@ from fasttrips import Trip
 EXAMPLES_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
 
 
-@pytest.fixture(scope='module', params=['', '_pat', '_alt'])
+@pytest.fixture(scope='module', params=['', '_alt', '_pat'])
 def demand_scenario(request):
     """
     Grab the right input folders for the test.
     """
     return request.param
-
 
 @pytest.fixture(scope='module')
 def ft_instance(demand_scenario):
@@ -68,6 +67,9 @@ def pathfinder_paths(ft_instance, demand_scenario):
     ft = ft_instance
     OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', 'demand_reg' + demand_scenario)
 
+    # for debugging insight
+    Assignment.write_configuration(OUTPUT_FOLDER)
+
     veh_trips_df = ft.trips.get_full_trips()
 
     Trip.reset_onboard(veh_trips_df)
@@ -89,7 +91,7 @@ def pathfinder_paths(ft_instance, demand_scenario):
             Assignment.find_trip_based_pathset(1, 1, trip_pathset,
                                                Assignment.PATHFINDING_TYPE ==
                                                Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                                               trace=False)
+                                               trace=path_dict[Passenger.TRIP_LIST_COLUMN_TRACE])
 
         trip_pathset.pathdict = pathdict
 
