@@ -7,37 +7,32 @@ import pandas as pd
 from fasttrips import Assignment
 from fasttrips import PathSet
 
+sort_cols = ['user_class', 'purpose', 'demand_mode_type', 'demand_mode', 'supply_mode', 'weight_name']
 
 @pytest.fixture(scope='module')
 def sample_dataframe():
     sample_dict = {
-        'user_class': ['all'] * 10,
-        'purpose': ['other'] * 8 + ['work'] * 2,
-        'demand_mode_type': ['access'] * 4 + ['egress'] * 4 + ['access'] * 2,
-        'demand_mode': ['walk'] * 10,
-        'supply_mode': ['walk_access'] * 4 + ['walk_egress'] * 4 + ['walk_access'] * 2,
+        'user_class': ['all'] * 7,
+        'purpose': ['other'] * 6 + ['work'] * 1,
+        'demand_mode_type': ['access'] * 3 + ['egress'] * 3 + ['access'] * 1,
+        'demand_mode': ['walk'] * 7,
+        'supply_mode': ['walk_access'] * 3 + ['walk_egress'] * 3 + ['walk_access'] * 1,
         'weight_name': [
-            'depart_early_cost_min',
-            'depart_early_cost_min.logistic.growth_rate',
+            'depart_early_cost_min.logistic',
             'depart_early_cost_min.logistic.logistic_max',
             'depart_early_cost_min.logistic.logistic_mid',
             'time_min',
-            'arrive_late_cost_min',
-            'arrive_late_cost_min.logarithmic.growth_rate',
+            'arrive_late_cost_min.logarithmic',
             'arrive_late_cost_min.logarithmic.log_base',
-            'depart_early_cost_min',
-            'depart_early_cost_min.exponential.growth_rate',
+            'depart_early_cost_min.exponential',
         ],
         'weight_value': [
-            4.0,
             0.2,
             10,
             9,
             3.93,
-            4.0,
             0.3,
             2.71828,
-            4.0,
             0.02,
         ]
     }
@@ -60,12 +55,12 @@ def expected_dataframe():
             'depart_early_cost_min',
         ],
         'weight_value': [
-            4.0,
+            0.2,
             3.93,
-            4.0,
-            4.0,
+            0.3,
+            0.02,
         ],
-        'growth_rate': [0.2, np.nan, 0.3, 0.02],
+        'growth_type': ['logistic', 'linear', 'logarithmic', 'exponential'],
         'logistic_max': [10, np.nan, np.nan, np.nan],
         'logistic_mid': [9, np.nan, np.nan, np.nan],
         'log_base': [np.nan, np.nan, 2.71828, np.nan],
@@ -80,7 +75,9 @@ def test_parse_weight_qualifiers(sample_dataframe, expected_dataframe):
     """
     results_df = Assignment.process_weight_qualifiers(sample_dataframe)
 
-    pd.testing.assert_frame_equal(results_df, expected_dataframe, check_like=True)
+    pd.testing.assert_frame_equal(results_df.sort_values(sort_cols).reset_index(drop=True),
+                                  expected_dataframe.sort_values(sort_cols).reset_index(drop=True),
+                                  check_like=True)
 
 
 def test_parse_weight_qualifiers_bad_key(sample_dataframe):
@@ -99,4 +96,6 @@ def test_no_qualifiers(sample_dataframe):
      Test to ensure that dataframe without qualifiers is return the same as it went in.
     """
     weights = sample_dataframe[~sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')].copy()
-    pd.testing.assert_frame_equal(Assignment.process_weight_qualifiers(weights), weights, check_exact=True, check_frame_type=True)
+    result_df = Assignment.process_weight_qualifiers(weights)
+    weights['growth_type'] = 'linear'
+    pd.testing.assert_frame_equal(result_df, weights, check_exact=True, check_frame_type=True)
