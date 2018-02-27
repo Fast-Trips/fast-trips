@@ -438,33 +438,21 @@ class Util:
         """
         from fasttrips import PathSet
 
-        required_columns = [
-            'var_value',
-            PathSet.WEIGHTS_GROWTH_TYPE,
-            PathSet.WEIGHTS_GROWTH_RATE,
-            PathSet.WEIGHTS_GROWTH_LOG_BASE,
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
-        ]
-
-        if PathSet.WEIGHTS_GROWTH_TYPE not in df:
-            FastTripsLogger.log(logging.WARN, "Pathweight growth types not provided in pathweights_ft.txt. Defaulting to a linear formula: pathweight * value")
-            return df['var_value']
+        df = df.copy()
 
         if PathSet.EXP_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_RATE}.issubset(df), "Exponential pathweight growth_type formula specified. Missing var_value or growth_rate."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL, 'var_value'] = \
+                Util.exponential_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE])
 
         if PathSet.LOGARITHMIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_RATE, PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(df), "Logarithmic pathweight growth_type formula specified. Missing var_value, growth_rate, or growth_log_base."
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(df), "Logarithmic pathweight growth_type formula specified. Missing var_value, growth_rate, or growth_log_base."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL, 'var_value'] = \
+                Util.logarithmic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOG_BASE])
 
         if PathSet.LOGISTIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_RATE, PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_rate, growth_logistic_max, or growth_logistic_mid."
-
-        df = df[required_columns].copy()
-
-        df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL, 'var_value'] = Util.exponential_integration(df['var_value'], df[PathSet.WEIGHTS_GROWTH_RATE])
-        df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL, 'var_value'] = Util.logarithmic_integration(df['var_value'], df[PathSet.WEIGHTS_GROWTH_RATE], df[PathSet.WEIGHTS_GROWTH_LOG_BASE])
-        df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, 'var_value'] =  Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_GROWTH_RATE], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_rate, growth_logistic_max, or growth_logistic_mid."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, 'var_value'] = \
+                Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
 
         return df['var_value']
 

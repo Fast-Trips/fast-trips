@@ -40,10 +40,9 @@ PATHSET_LINKS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_links.csv')
 
 def test_growth_type_cost_calculation():
     sample_data = {
-        'weight_value': [3.93, 47.73, 4.0, 1.77],
+        'weight_value': [3.93, .03, .3, .56],
         'var_value': [24., 3, 2.35, 15.431],
         'growth_type': ['linear', 'exponential', 'logarithmic', 'logistic'],
-        'growth_rate': [1, .03, .3, .56],
         'log_base': [np.nan, np.nan, np.exp(1), np.nan],
         'logistic_max': [np.nan, np.nan, np.nan, 10.1],
         'logistic_mid': [np.nan, np.nan, np.nan, 2.45]

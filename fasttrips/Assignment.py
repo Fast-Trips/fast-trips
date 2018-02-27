@@ -448,20 +448,28 @@ class Assignment:
         :return: pivoted weights table with the qualifiers normalized horizontally.
         """
 
-        qualifiers = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
+        growth_type = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.count('\.') == 1].copy()
+        qualifiers = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.count('\.') == 2].copy()
+        weights = weights[~weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
+        weights[PathSet.WEIGHTS_GROWTH_TYPE] = 'linear'
+
+        if growth_type.shape[0] == 0:
+            return weights
+
+        growth_type[PathSet.WEIGHTS_GROWTH_TYPE] = growth_type[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.extract('((?<=\.)\w+)', expand=False)
+        growth_type[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] = growth_type[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.extract('(\w+(?=\.))', expand=False)
+        weights = pd.concat([weights, growth_type])
+
+        if (~weights[PathSet.WEIGHTS_GROWTH_TYPE].isin(PathSet.PENALTY_GROWTH_MODELS)).any():
+            FastTripsLogger.fatal("Invalid qualifier type specified.")
+            raise KeyError('Invalid qualifier type specified.')
 
         if qualifiers.shape[0] == 0:
             return weights
 
-        weights = weights[~weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')]
         qualifiers = qualifiers.rename(columns={PathSet.WEIGHTS_COLUMN_WEIGHT_NAME: 'qualifier'})
         qualifiers[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] = qualifiers['qualifier'].str.extract('(^\w+)', expand=False)
-        qualifiers[PathSet.WEIGHTS_GROWTH_TYPE] = qualifiers['qualifier'].str.extract('((?<=\.)\w+)', expand=False)
         qualifiers['variable'] = qualifiers['qualifier'].str.extract('(\w+$)', expand=False)
-
-        if (~qualifiers[PathSet.WEIGHTS_GROWTH_TYPE].isin(PathSet.PENALTY_GROWTH_MODELS)).any():
-            FastTripsLogger.fatal("Invalid growth type qualifier specified.")
-            raise KeyError('Invalid growth type qualifier specified.')
 
         qualifier_values = qualifiers.pivot(columns='variable', values=PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
         qualifier_columns = qualifier_values.columns.values
@@ -477,7 +485,6 @@ class Assignment:
         qualifiers = qualifiers.groupby(merge_cols)[qualifier_columns].max().reset_index()
 
         return pd.merge(weights, qualifiers, on=merge_cols, how='left')
-
 
 
     @staticmethod
