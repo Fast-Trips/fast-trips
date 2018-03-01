@@ -48,7 +48,7 @@ def test_growth_type_cost_calculation():
         'logistic_mid': [np.nan, np.nan, np.nan, 2.45]
     }
 
-    result_set = [24., 3.13704, 0.51001, 127.04425]
+    result_set = [94.32, 3.13704, 0.51001, 127.04425]
 
     sample_df = pd.DataFrame(data=sample_data)
 
