@@ -60,7 +60,7 @@ def expected_dataframe():
             0.3,
             0.02,
         ],
-        'growth_type': ['logistic', 'linear', 'logarithmic', 'exponential'],
+        'growth_type': ['logistic', 'constant', 'logarithmic', 'exponential'],
         'logistic_max': [10, np.nan, np.nan, np.nan],
         'logistic_mid': [9, np.nan, np.nan, np.nan],
         'log_base': [np.nan, np.nan, 2.71828, np.nan],
@@ -97,5 +97,5 @@ def test_no_qualifiers(sample_dataframe):
     """
     weights = sample_dataframe[~sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')].copy()
     result_df = Assignment.process_weight_qualifiers(weights)
-    weights['growth_type'] = 'linear'
+    weights['growth_type'] = PathSet.CONSTANT_GROWTH_MODEL
     pd.testing.assert_frame_equal(result_df, weights, check_exact=True, check_frame_type=True)

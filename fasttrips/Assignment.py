@@ -421,7 +421,7 @@ class Assignment:
         growth_type = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.count('\.') == 1].copy()
         qualifiers = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.count('\.') == 2].copy()
         weights = weights[~weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')].copy()
-        weights[PathSet.WEIGHTS_GROWTH_TYPE] = 'linear'
+        weights[PathSet.WEIGHTS_GROWTH_TYPE] = PathSet.CONSTANT_GROWTH_MODEL
 
         # if only 'linear' this process is done and can return
         if growth_type.shape[0] == 0:
@@ -435,7 +435,7 @@ class Assignment:
             FastTripsLogger.fatal("Invalid qualifier type specified.")
             raise KeyError('Invalid qualifier type specified.')
 
-        # if only 'linear' and 'exponential' this process is done and can return.
+        # if only 'constant' and 'exponential' this process is done and can return.
         if qualifiers.shape[0] == 0:
             return weights
 

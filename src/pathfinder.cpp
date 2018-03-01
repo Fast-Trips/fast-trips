@@ -407,7 +407,7 @@ namespace fasttrips {
             the_weight.logistic_max_ = 0.0;
             the_weight.logistic_mid_ = 0.0;
 
-            if (weight_type == "linear") {
+            if (weight_type == "constant") {
                 the_weight.type_ = WEIGHT_LINEAR;
             } else if (weight_type == "exponential") {
                 the_weight.type_ = WEIGHT_EXPONENTIAL;
