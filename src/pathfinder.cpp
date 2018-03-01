@@ -9,6 +9,7 @@
 #endif
 
 #include <assert.h>
+#include <cmath>
 #include <ctime>
 #include <sstream>
 #include <ios>
