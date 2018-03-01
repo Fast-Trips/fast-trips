@@ -116,8 +116,6 @@ class PathSet:
     WEIGHTS_COLUMN_WEIGHT_VALUE     = "weight_value"
     #: Weights column: Growth Type
     WEIGHTS_GROWTH_TYPE             = "growth_type"
-    #: Weights column: Growth Rate
-    WEIGHTS_GROWTH_RATE             = "growth_rate"
     #: Weights column: Log Base for logarithmic growth function
     WEIGHTS_GROWTH_LOG_BASE         = "log_base"
     #: Weights column: Max value for logistic growth function
@@ -403,7 +401,11 @@ class PathSet:
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                         PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
-                                        PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
+                                        PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE,
+                                        PathSet.WEIGHTS_GROWTH_TYPE,
+                                        PathSet.WEIGHTS_GROWTH_LOG_BASE,
+                                        PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+                                        PathSet.WEIGHTS_GROWTH_LOGISTIC_MID],
                                sep=" ", index=False)
 
         # add placeholder weights (-1) for fares - one for each user_class, purpose, transit demand mode
@@ -1102,7 +1104,6 @@ class PathSet:
                         PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE,
                         PathSet.WEIGHTS_GROWTH_TYPE,
-                        PathSet.WEIGHTS_GROWTH_RATE,
                         PathSet.WEIGHTS_GROWTH_LOG_BASE,
                         PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
                         PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
@@ -1117,9 +1118,8 @@ class PathSet:
 
         # FastTripsLogger.debug("calculate_cost: cost_df=\n%s\ndtypes=\n%s" % (cost_df.to_string(), str(cost_df.dtypes)))
 
-        # linkcost = weight x variable
-        cost_df['var_value'] = Util.calculate_pathweight_costs(cost_df)
-        cost_df[Assignment.SIM_COL_PAX_COST] = cost_df["var_value"]*cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
+        # calculate link cost a function of the variable, weight and weight type
+        Util.calculate_pathweight_costs(cost_df, Assignment.SIM_COL_PAX_COST)
 
         # TODO: option: make these more subtle?
         # missed_xfer has huge cost

@@ -52,8 +52,8 @@ def test_growth_type_cost_calculation():
 
     sample_df = pd.DataFrame(data=sample_data)
 
-    var_values = Util.calculate_pathweight_costs(sample_df)
-    np.testing.assert_almost_equal(var_values.values.tolist(), result_set, decimal=5)
+    Util.calculate_pathweight_costs(sample_df, 'test_cost')
+    np.testing.assert_almost_equal(sample_df['test_cost'].values.tolist(), result_set, decimal=5)
 
 
 def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):

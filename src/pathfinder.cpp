@@ -29,7 +29,7 @@ const char kPathSeparator =
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( std::ostringstream() << std::dec << x ).str()
 
 // Uncomment for debug detail for link cost.
-#define DEBUG_LINKCOST
+// #define DEBUG_LINKCOST
 
 // Debug macros. If debug is not on, the if (trace) isn't even executed.
 #ifdef DEBUG_LINKCOST
@@ -369,11 +369,13 @@ namespace fasttrips {
         ss_weights << output_dir_ << kPathSeparator << "ft_intermediate_weights.txt";
         weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
 
-        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value;
+        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value,
+            weight_type, string_log_base, string_logistic_max, string_logistic_mid;
         int supply_mode_num;
-        double weight_value;
+        Weight the_weight;
 
         weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> string_supply_mode_num >> weight_name >> string_weight_value;
+        weights_file >> weight_type >> string_log_base >> string_logistic_max >> string_logistic_mid;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_weights.str() << ": ";
             std::cout << "[" << user_class              << "] ";
@@ -383,9 +385,13 @@ namespace fasttrips {
             std::cout << "[" << string_supply_mode_num  << "] ";
             std::cout << "[" << weight_name             << "] ";
             std::cout << "[" << string_weight_value     << "] ";
+            std::cout << "[" << weight_type             << "] ";
+            std::cout << "[" << string_log_base         << "] ";
+            std::cout << "[" << string_logistic_max     << "] ";
+            std::cout << "[" << string_logistic_mid     << "] ";
         }
         int weights_read = 0;
-        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
+        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> the_weight.weight_ >> weight_type) {
             UserClassPurposeMode ucpm = { user_class, purpose, fasttrips::MODE_ACCESS, demand_mode };
             if      (demand_mode_type == "access"  ) { ucpm.demand_mode_type_ = MODE_ACCESS;  }
             else if (demand_mode_type == "egress"  ) { ucpm.demand_mode_type_ = MODE_EGRESS;  }
@@ -396,7 +402,25 @@ namespace fasttrips {
                 exit(2);
             }
 
-            weight_lookup_[ucpm][supply_mode_num][weight_name] = weight_value;
+            the_weight.log_base_     = 0.0;
+            the_weight.logistic_max_ = 0.0;
+            the_weight.logistic_mid_ = 0.0;
+
+            if (weight_type == "linear") {
+                the_weight.type_ = WEIGHT_LINEAR;
+            } else if (weight_type == "exponential") {
+                the_weight.type_ = WEIGHT_EXPONENTIAL;
+            } else if (weight_type == "logarithmic") {
+                the_weight.type_ = WEIGHT_LOGARITHMIC;
+                weights_file >> the_weight.log_base_;
+            } else if (weight_type == "logistic") {
+                the_weight.type_ = WEIGHT_LOGISTIC;
+                weights_file >> the_weight.logistic_max_ >> the_weight.logistic_mid_;
+            } else {
+                std::cerr << "Do not understand weight type [" << weight_type << "] in " << ss_weights.str() << std::endl;
+                exit(2);
+            }
+            weight_lookup_[ucpm][supply_mode_num][weight_name] = the_weight;
             weights_read++;
         }
         if (process_num_ <= 1) {
@@ -766,12 +790,59 @@ namespace fasttrips {
                 continue;
             }
 
-            cost += iter_weights->second * iter_attr->second;
             D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
-                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
-                trace_file << " x " << iter_attr->second << std::endl;
             );
+
+            if (iter_attr->second == 0.0) {
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_attr->second << std::endl;
+                );
+                continue;
+            }
+
+            double cost_part = 0.0;
+            const Weight& the_weight = iter_weights->second;
+
+            // handle constant and non constant weights
+            if (the_weight.type_ == WEIGHT_LINEAR) {
+                cost_part = the_weight.weight_ * iter_attr->second;
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << std::fixed << the_weight.weight_;
+                    trace_file << " x " << iter_attr->second << " = " << cost_part << " (constant)" << std::endl;
+                );
+            } else if (the_weight.type_ == WEIGHT_EXPONENTIAL) {
+                cost_part = (std::pow(1.0+the_weight.weight_, iter_attr->second) - 1.0) / std::log(1.0 + the_weight.weight_);
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (exponential on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
+                    trace_file << ")" << std::endl;
+                );                
+            } else if (the_weight.type_ == WEIGHT_LOGARITHMIC) {
+                cost_part = the_weight.weight_ * ((1.0 + iter_attr->second) * std::log(1.0 + iter_attr->second) - iter_attr->second) / std::log(the_weight.log_base_);
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (logarithmic on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
+                    trace_file << ", log_base " << the_weight.log_base_;
+                    trace_file << ")" << std::endl;
+                ); 
+            } else if (the_weight.type_ == WEIGHT_LOGISTIC) {
+                double max_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(std::exp(the_weight.weight_ * iter_attr->second) + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
+                double min_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(1.0 + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
+
+                cost_part = max_integral - min_integral;
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (logistic on " << iter_attr->second << " with weight " << std::setprecision(4) << std::fixed << the_weight.weight_;
+                    trace_file << ", logistic_mid " << the_weight.logistic_mid_;
+                    trace_file << ", logistic_max " << the_weight.logistic_max_;
+                    trace_file << ")" << std::endl;
+                ); 
+            }
+            // cost needs to be positive and within bounds
+            if ((cost_part >= 0) && (cost_part <= MAX_COST)) {
+                cost += cost_part;
+            }
         }
         // fare
         static const std::string fare_str("fare");

@@ -51,8 +51,23 @@ namespace fasttrips {
         }
     };
 
+    enum WeightType {
+        WEIGHT_LINEAR      = 0,  // default
+        WEIGHT_EXPONENTIAL = 1,
+        WEIGHT_LOGARITHMIC = 2,
+        WEIGHT_LOGISTIC    = 3
+    };
+
+    typedef struct  {
+      WeightType type_;          // the type of weight
+      double     weight_;        // this is the primary part -- the weight itself
+      double     log_base_;      // only for WEIGHT_LOGARITHMIC
+      double     logistic_max_;  // oly for WEIGHT_LOGISTIC
+      double     logistic_mid_;  // oly for WEIGHT_LOGISTIC
+    } Weight;
+
     // This is a lot of naming but it does make iterator construction easier
-    typedef std::map<std::string, double> NamedWeights;
+    typedef std::map<std::string, Weight> NamedWeights;
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
     typedef std::map< UserClassPurposeMode, SupplyModeToNamedWeights, struct fasttrips::UCPMCompare > WeightLookup;
 

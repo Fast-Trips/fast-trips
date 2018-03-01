@@ -418,19 +418,18 @@ class Util:
         return val in ['true', 'True', 'TRUE', 1]
 
     @staticmethod
-    def calculate_pathweight_costs(df):
+    def calculate_pathweight_costs(df, result_col):
         """
-        Calculates the var_value for a given :py:class:`pandas.DataFrame` given a impedance function and
+        Calculates the weighted cost for a given :py:class:`pandas.DataFrame` given a impedance function and
         value.
 
-        Returns a `pandas.Series` with the updated var_value for each row in the dataframe.
+        Sets the result into the column called result_col.
 
         ==================  ===============  =====================================================================================================
         column name          column type     description
         ==================  ===============  =====================================================================================================
-        `var_value`                 float64
+        `var_value`                 float64  The value to weight
         `growth_type`                   str  ['linear', 'exponential', 'logarithmic', 'logistic']
-        `growth_rate`               float64  growth rate to apply for each growth_type
         `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value
         `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve
         `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve
@@ -438,24 +437,25 @@ class Util:
         """
         from fasttrips import PathSet
 
-        df = df.copy()
+        # default is linear (constant weight)
+        df[result_col] = df['var_value']*df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
 
         if PathSet.EXP_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL, 'var_value'] = \
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL,  result_col] = \
                 Util.exponential_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE])
 
         if PathSet.LOGARITHMIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(df), "Logarithmic pathweight growth_type formula specified. Missing var_value, growth_rate, or growth_log_base."
-            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL, 'var_value'] = \
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(df), "Logarithmic pathweight growth_type formula specified. Missing var_value, or growth_log_base."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL, result_col] = \
                 Util.logarithmic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOG_BASE])
 
         if PathSet.LOGISTIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_rate, growth_logistic_max, or growth_logistic_mid."
-            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, 'var_value'] = \
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_logistic_max, or growth_logistic_mid."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, result_col] = \
                 Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
 
-        return df['var_value']
-
+        # negative cost is invalid
+        df.loc[ df[result_col] < 0, result_col ] = 0.0
 
     @staticmethod
     def exponential_integration(penalty_min, growth_rate):
@@ -467,7 +467,7 @@ class Util:
         :param growth_rate: float: Exponetial growth factor
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
-        return ((1 + growth_rate) ** penalty_min - 1) / np.log(1 + growth_rate)
+        return (np.power(1.0 + growth_rate, penalty_min) - 1) / np.log(1.0 + growth_rate)
 
 
     @staticmethod
