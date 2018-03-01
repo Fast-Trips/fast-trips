@@ -269,6 +269,42 @@ class PathSet:
         assert(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE      in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
         assert(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
+        assert(PathSet.WEIGHTS_GROWTH_TYPE             in weight_cols)
+
+        linear_exp_slice = PathSet.WEIGHTS_DF.loc[
+            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_GROWTH_TYPE].isin([PathSet.LINEAR_GROWTH_MODEL, PathSet.EXP_GROWTH_MODEL]),
+        ]
+        logrithmic_slice = PathSet.WEIGHTS_DF.loc[
+            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL,
+        ]
+        logistic_slice = PathSet.WEIGHTS_DF.loc[
+            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL,
+        ]
+
+        # Verify that no extraneous values are set for linear and exponential functions
+        assert pd.isnull(linear_exp_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOG_BASE,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
+        ],axis='columns')).values.all() , 'Linear or Exponential qualifier includes unnecessary modifier(s)'
+
+        assert pd.isnull(logrithmic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
+        ], axis='columns')).values.all(), 'Logarithmic qualifier includes unnecessary modifier(s)'
+
+        assert pd.isnull(logistic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOG_BASE,
+        ], axis='columns')).values.all(), 'Logistic qualifier includes log_base modifier'
+
+        assert pd.notnull(logrithmic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOG_BASE,
+        ])).values.all(), 'Logarithmic qualifier missing necessary log_base modifier'
+
+        assert not pd.notnull(logistic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
+        ])).values.all(), 'Logistic qualifier missing necessary modifiers'
 
         # Join - make sure that all demand combinations (user class, purpose, demand mode type and demand mode) are configured
         weight_check = pd.merge(left=modes_df,
