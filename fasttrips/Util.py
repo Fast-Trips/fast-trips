@@ -429,7 +429,7 @@ class Util:
         column name          column type     description
         ==================  ===============  =====================================================================================================
         `var_value`                 float64  The value to weight
-        `growth_type`                   str  ['linear', 'exponential', 'logarithmic', 'logistic']
+        `growth_type`                   str  ['constant', 'exponential', 'logarithmic', 'logistic']
         `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value
         `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve
         `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve
@@ -437,7 +437,7 @@ class Util:
         """
         from fasttrips import PathSet
 
-        # default is linear (constant weight)
+        # default is constant (constant weight)
         df[result_col] = df['var_value']*df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
 
         if PathSet.EXP_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:

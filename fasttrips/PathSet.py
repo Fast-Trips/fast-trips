@@ -88,13 +88,13 @@ class PathSet:
     ARRIVE_LATE_ALLOWED_MIN         = datetime.timedelta(minutes = 0)
     DEPART_EARLY_ALLOWED_MIN        = datetime.timedelta(minutes = 0)
 
-    LINEAR_GROWTH_MODEL              = 'linear'
+    CONSTANT_GROWTH_MODEL            = 'constant'
     EXP_GROWTH_MODEL                 = 'exponential'
     LOGARITHMIC_GROWTH_MODEL         = 'logarithmic'
     LOGISTIC_GROWTH_MODEL            = 'logistic'
 
     PENALTY_GROWTH_MODELS            = [
-        LINEAR_GROWTH_MODEL,
+        CONSTANT_GROWTH_MODEL,
         EXP_GROWTH_MODEL,
         LOGARITHMIC_GROWTH_MODEL,
         LOGISTIC_GROWTH_MODEL,
@@ -258,53 +258,7 @@ class PathSet:
 
         Returns updated trip_list_df.
         """
-        error_str = ""
-        # First, verify required columns are found
-        weight_cols     = list(PathSet.WEIGHTS_DF.columns.values)
-        FastTripsLogger.debug("verify_weight_config:\n%s" % PathSet.WEIGHTS_DF.to_string())
-        assert(PathSet.WEIGHTS_COLUMN_USER_CLASS       in weight_cols)
-        assert(PathSet.WEIGHTS_COLUMN_PURPOSE          in weight_cols)
-        assert(PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE in weight_cols)
-        assert(PathSet.WEIGHTS_COLUMN_DEMAND_MODE      in weight_cols)
-        assert(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE      in weight_cols)
-        assert(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME      in weight_cols)
-        assert(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE     in weight_cols)
-        assert(PathSet.WEIGHTS_GROWTH_TYPE             in weight_cols)
-
-        constant_exp_slice = PathSet.WEIGHTS_DF.loc[
-            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_GROWTH_TYPE].isin([PathSet.CONSTANT_GROWTH_MODEL, PathSet.EXP_GROWTH_MODEL]),
-        ]
-        logarithmic_slice = PathSet.WEIGHTS_DF.loc[
-            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL,
-        ]
-        logistic_slice = PathSet.WEIGHTS_DF.loc[
-            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL,
-        ]
-
-        # Verify that no extraneous values are set for constant and exponential functions
-        assert pd.isnull(constant_exp_slice.reindex([
-            PathSet.WEIGHTS_GROWTH_LOG_BASE,
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
-        ],axis='columns')).values.all() , 'Linear or Exponential qualifier includes unnecessary modifier(s)'
-
-        assert pd.isnull(logarithmic_slice.reindex([
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
-        ], axis='columns')).values.all(), 'Logarithmic qualifier includes unnecessary modifier(s)'
-
-        assert pd.isnull(logistic_slice.reindex([
-            PathSet.WEIGHTS_GROWTH_LOG_BASE,
-        ], axis='columns')).values.all(), 'Logistic qualifier includes log_base modifier'
-
-        assert pd.notnull(logarithmic_slice.reindex([
-            PathSet.WEIGHTS_GROWTH_LOG_BASE,
-        ], axis='columns')).values.all(), 'Logarithmic qualifier missing necessary log_base modifier'
-
-        assert pd.notnull(logistic_slice.reindex([
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
-            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
-        ], axis='columns')).values.all(), 'Logistic qualifier missing necessary modifiers'
+        (verify, error_str) = PathSet.verify_weights(PathSet.WEIGHTS_DF)
 
         # Join - make sure that all demand combinations (user class, purpose, demand mode type and demand mode) are configured
         weight_check = pd.merge(left=modes_df,
@@ -471,6 +425,75 @@ class PathSet:
         PathSet.WEIGHTS_DF = PathSet.WEIGHTS_DF.append(fare_weights)
         FastTripsLogger.debug("PathSet.WEIGHTS_DF with fare weights: \n%s" % PathSet.WEIGHTS_DF)
         return trip_list_df
+
+
+    @staticmethod
+    def verify_weights(weights):
+        # First, verify required columns are found
+        error_str = ""
+        weight_cols = list(weights.columns.values)
+        FastTripsLogger.debug("verify_weight_config:\n%s" % weights.to_string())
+        if (PathSet.WEIGHTS_COLUMN_USER_CLASS not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_USER_CLASS)
+        if (PathSet.WEIGHTS_COLUMN_PURPOSE not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_PURPOSE)
+        if (PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE)
+        if (PathSet.WEIGHTS_COLUMN_DEMAND_MODE not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_DEMAND_MODE)
+        if (PathSet.WEIGHTS_COLUMN_SUPPLY_MODE not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE)
+        if (PathSet.WEIGHTS_COLUMN_WEIGHT_NAME not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME)
+        if (PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
+        if (PathSet.WEIGHTS_GROWTH_TYPE not in weight_cols):
+            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_GROWTH_TYPE)
+
+        constant_exp_slice = weights.loc[
+            weights[PathSet.WEIGHTS_GROWTH_TYPE].isin(
+                [PathSet.CONSTANT_GROWTH_MODEL, PathSet.EXP_GROWTH_MODEL]),
+        ]
+        logarithmic_slice = weights.loc[
+            weights[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL,
+        ]
+        logistic_slice = PathSet.WEIGHTS_DF.loc[
+            weights[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL,
+        ]
+
+        # Verify that no extraneous values are set for constant and exponential functions
+        if not pd.isnull(constant_exp_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOG_BASE,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
+        ], axis='columns')).values.all():
+            error_str += 'Linear or Exponential qualifier includes unnecessary ' \
+                                           'modifier(s)'
+
+        if not pd.isnull(logarithmic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
+        ], axis='columns')).values.all():
+            error_str += 'Logarithmic qualifier includes unnecessary modifier(s)'
+
+        if not pd.isnull(logistic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOG_BASE,
+        ], axis='columns')).values.all():
+            error_str += 'Logistic qualifier includes log_base modifier'
+
+        if not pd.notnull(logarithmic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOG_BASE,
+        ],
+            axis='columns')).values.all():
+            error_str += 'Logarithmic qualifier missing necessary log_base modifier'
+
+        if not pd.notnull(logistic_slice.reindex([
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
+            PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
+        ], axis='columns')).values.all():
+            error_str += 'Logistic qualifier missing necessary modifiers'
+
+        return 0==len(error_str), error_str
 
     def __str__(self):
         """
@@ -989,7 +1012,7 @@ class PathSet:
         # depart late is not negative - that would be departing early
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_DEPART_LATE_MIN)&(cost_accegr_df["var_value"] < 0), "var_value"] = 0.0
 
-        # linear growth = exponential growth with 0 percent growth rate
+        # constant growth = exponential growth with 0 percent growth rate
 
         # depart before preferred or arrive after preferred means the passenger just missed something important
         # Arrive late only impacts the egress link, so set the var_value equal to zero for the access link
