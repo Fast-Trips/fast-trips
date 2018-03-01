@@ -246,7 +246,7 @@ The following is a partial list of possible weight names based on the demand mod
 Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.
 
 #### Weight Qualifiers  
-By default, Fast-Trips will apply all weights linearly on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied non-linearly. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the c
+By default, Fast-Trips will apply all weights linearly on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied non-linearly. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.
 
 Qualifier     | Formulation | Required Modifiers |
 --------------|-------------|--------------------|
