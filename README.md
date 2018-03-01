@@ -117,18 +117,8 @@ Option Name                         | Type   | Default | Description
 `transfer_fare_ignore_pathfinding`  | bool   | False   | In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
 `transfer_fare_ignore_pathenum`     | bool   | False   | In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
-`depart_early_min`                  | float  | 0.0     | Allow passengers to depart before their departure time time target
-`arrive_late_min`                   | float  | 0.0     | Allow passengers to arrive after their arrival time target
-`depart_early_growth_type`          | string | 'linear'| The pathfinding algorithm supports four types of penalty delay functions: `linear`,`exponential`,`logarithmic`,`logistic`.
-`arrive_late_growth_type`           | string | 'linear'| The pathfinding algorithm supports four types of penalty delay functions: `linear`,`exponential`,`logarithmic`,`logistic`.
-`depart_early_growth_rate`          | float  | 0.0     | Growth rates for depart early time penalaties. See [config_ft.txt](fasttrips/Examples/demand/demand_pat/config_ft.txt) for more notes.
-`arrive_late_growth_rate`           | float  | 0.0     | Growth rates for arrive late time penalties. See [config_ft.txt](fasttrips/Examples/demand/demand_pat/config_ft.txt) for more notes.
-`depart_early_log_base`             | float  | e       | Log bases are required if the using a logarithmic penalty function
-`arrive_late_log_base`              | float  | e       | Log bases are required if the using a logarithmic penalty function
-`depart_early_logistic_max_value`   | float  | 10      | A maximum assymtopic values are required if the using a logistic penalty function
-`arrive_late_logistic_max_value`    | float  | 10      | A maximum assymtopic values are required if the using a logistic penalty function
-`depart_early_logistic_sigmoid_mid` | float  | 5       | Sigmoid midpoints are required if the using a logistic penalty function
-`arrive_late_logistic_sigmoid_mid`  | float  | 5       | Sigmoid midpoints are required if the using a logistic penalty function
+`depart_early_allowed_min`          | float  | 0.0     | Allow passengers to depart before their departure time time target by this many minutes.
+`arrive_late_allowed_min`           | float  | 0.0     | Allow passengers to arrive after their arrival time target by this many minutes.
 
 
 #### More on Overlap Path Size Penalties
