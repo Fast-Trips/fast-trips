@@ -375,6 +375,7 @@ class PathSet:
                 transit_weights_df.drop_duplicates(inplace=True)
                 transit_weights_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ] = "at_capacity"
                 transit_weights_df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] = PathSet.HUGE_COST
+                transit_weights_df[PathSet.WEIGHTS_GROWTH_TYPE] = PathSet.CONSTANT_GROWTH_MODEL
                 FastTripsLogger.debug("Adding capacity-constraint weights:\n%s" % transit_weights_df.to_string())
 
                 PathSet.WEIGHTS_DF = pd.concat([PathSet.WEIGHTS_DF, transit_weights_df], axis=0)
@@ -434,21 +435,21 @@ class PathSet:
         weight_cols = list(weights.columns.values)
         FastTripsLogger.debug("verify_weight_config:\n%s" % weights.to_string())
         if (PathSet.WEIGHTS_COLUMN_USER_CLASS not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_USER_CLASS)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_USER_CLASS)
         if (PathSet.WEIGHTS_COLUMN_PURPOSE not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_PURPOSE)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_PURPOSE)
         if (PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE)
         if (PathSet.WEIGHTS_COLUMN_DEMAND_MODE not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_DEMAND_MODE)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_DEMAND_MODE)
         if (PathSet.WEIGHTS_COLUMN_SUPPLY_MODE not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_SUPPLY_MODE)
         if (PathSet.WEIGHTS_COLUMN_WEIGHT_NAME not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_WEIGHT_NAME)
         if (PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
         if (PathSet.WEIGHTS_GROWTH_TYPE not in weight_cols):
-            error_str+='{} not in weight_cols'.format(PathSet.WEIGHTS_GROWTH_TYPE)
+            error_str+='{} not in weight_cols\n'.format(PathSet.WEIGHTS_GROWTH_TYPE)
 
         constant_exp_slice = weights.loc[
             weights[PathSet.WEIGHTS_GROWTH_TYPE].isin(
@@ -457,7 +458,7 @@ class PathSet:
         logarithmic_slice = weights.loc[
             weights[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL,
         ]
-        logistic_slice = PathSet.WEIGHTS_DF.loc[
+        logistic_slice = weights.loc[
             weights[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL,
         ]
 
@@ -467,33 +468,36 @@ class PathSet:
             PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
             PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
         ], axis='columns')).values.all():
-            error_str += 'Linear or Exponential qualifier includes unnecessary ' \
-                                           'modifier(s)'
+            error_str += 'Linear or Exponential qualifier includes unnecessary modifier(s)\n'
 
         if not pd.isnull(logarithmic_slice.reindex([
             PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
             PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
         ], axis='columns')).values.all():
-            error_str += 'Logarithmic qualifier includes unnecessary modifier(s)'
+            error_str += 'Logarithmic qualifier includes unnecessary modifier(s)\n'
 
         if not pd.isnull(logistic_slice.reindex([
             PathSet.WEIGHTS_GROWTH_LOG_BASE,
         ], axis='columns')).values.all():
-            error_str += 'Logistic qualifier includes log_base modifier'
+            error_str += 'Logistic qualifier includes log_base modifier\n'
 
         if not pd.notnull(logarithmic_slice.reindex([
             PathSet.WEIGHTS_GROWTH_LOG_BASE,
         ],
             axis='columns')).values.all():
-            error_str += 'Logarithmic qualifier missing necessary log_base modifier'
+            error_str += 'Logarithmic qualifier missing necessary log_base modifier\n'
 
         if not pd.notnull(logistic_slice.reindex([
             PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
             PathSet.WEIGHTS_GROWTH_LOGISTIC_MID,
         ], axis='columns')).values.all():
-            error_str += 'Logistic qualifier missing necessary modifiers'
+            error_str += 'Logistic qualifier missing necessary modifiers\n'
 
-        return 0==len(error_str), error_str
+        if error_str:
+            error_str = '\n-------Errors: pathweight_ft.txt---------------\n' + error_str
+
+        return (not error_str), error_str
+
 
     def __str__(self):
         """
