@@ -246,11 +246,13 @@ The following is a partial list of possible weight names based on the demand mod
 Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.
 
 #### Weight Qualifiers  
-By default, Fast-Trips will apply all weights linearly on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied non-linearly. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.
+By default, Fast-Trips will apply all weights as a constant on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied using more complex models. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.
+
+If no qualifier is specified, `constant` will be assumed.
 
 Qualifier     | Formulation | Required Modifiers |
 --------------|-------------|--------------------|
-`linear`      |![Linear Weight Equations](/doc/pathweight_linear_equation.png "Linear Weight Equation")| N/A |
+`constant` (default)  |![Constant Weight Equations](/doc/pathweight_linear_equation.png "Constant Weight Equation")| N/A |
 `exponential` |![Exponential Weight Equations](/doc/pathweight_exponential_equation.png "Exponential Weight Equation")| N/A |
 `logarithmic` |![Logarithmic Weight Equations](/doc/pathweight_logarithmic_equation.png "Logarithmic Weight Equation")| `log_base` |
 `logistic`    |![Logistic Weight Equations](/doc/pathweight_logistic_equation.png "Logistic Weight Equation")| `logistic_max`<br/>`logistgic_mid` |
@@ -259,11 +261,11 @@ Qualifier     | Formulation | Required Modifiers |
 ```
 #Pathweights_ft.txt snippet
 user_class purpose demand_mode_type demand_mode    supply_mode  weight_name                                   weight_value
-# default linear
+# default constant
 all        other   transit          transit        rapid_bus    wait_time_min                                 1.77
 
-# Explicitly linear
-all        other   transit          transit        rapid_bus    wait_time_min.linear                          1.77
+# Explicitly constant
+all        other   transit          transit        rapid_bus    wait_time_min.constant                        1.77
 
 all        other   access           walk           walk_access  depart_early_min.logistic                     0.2
 all        other   access           walk           walk_access  depart_early_min.logistic.logistic_max        10
