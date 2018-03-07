@@ -496,7 +496,12 @@ class Util:
             }),
             (TAZ.INPUT_WALK_ACCESS_FILE, {
                 'converters': {
-                    TAZ.WALK_ACCESS_COLUMN_DIST: ptg.parsers.vparse_numeric
+                    TAZ.WALK_ACCESS_COLUMN_DIST: ptg.parsers.vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_ELEVATION_GAIN: ptg.parsers.vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_POPULATION_DENSITY: ptg.parsers.vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY: ptg.parsers.vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_AUTO_CAPACITY: ptg.parsers.vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_INDIRECTNESS: ptg.parsers.vparse_numeric,
                 }
             })
         ])
