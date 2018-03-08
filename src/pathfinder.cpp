@@ -772,13 +772,16 @@ namespace fasttrips {
         // fare
         static const std::string fare_str("fare");
         Attributes::const_iterator fare_attr = attributes.find(fare_str);
-        if (fare_attr != attributes.end()) {
-            //       (60 min/hour)*(hours/vot currency) x (currency)
-            cost += (60.0/path_spec.value_of_time_) * fare_attr->second;
+        // fare is first converted to minutes using vot and then into utils using IVT weight
+        static const std::string ivt_str("in_vehicle_time_min");
+        NamedWeights::const_iterator ivt_weight = weights.find(ivt_str);
+        if ((fare_attr != attributes.end()) && (ivt_weight != weights.end())) {
+            //       (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
+            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second * fare_attr->second;
 
             D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
-                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (60.0/path_spec.value_of_time_);
+                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (ivt_weight->second*60.0/path_spec.value_of_time_);
                 trace_file << " x " << fare_attr->second << std::endl;
             );
         }
@@ -956,7 +959,8 @@ namespace fasttrips {
                     attr_dist,                                                                  // link distance
                     cost,                                                                       // cost
                     0,                                                                          // iteration
-                    path_spec.preferred_time_                                                   // arrival/departure time
+                    path_spec.preferred_time_,                                                  // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
@@ -1022,7 +1026,8 @@ namespace fasttrips {
             0.0,                            // link distance
             cost,                           // cost
             label_iteration,                // label iteration
-            current_deparr_time             // arrival/departure time
+            current_deparr_time,            // arrival/departure time
+			0.0                             // link ivt weight
         );
         addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
 
@@ -1095,7 +1100,8 @@ namespace fasttrips {
                 transfer_dist,                  // link distance
                 cost,                           // cost
                 label_iteration,                // label iteration
-                current_deparr_time             // arrival/departure time
+                current_deparr_time,            // arrival/departure time
+				0.0                             // link ivt weight
             );
             addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
@@ -1230,7 +1236,8 @@ namespace fasttrips {
                     access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
-                    earliest_dep_latest_arr                                                     // arrival/departure time
+                    earliest_dep_latest_arr,                                                    // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
@@ -1371,6 +1378,7 @@ namespace fasttrips {
                 double  link_cost = 0;
                 double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
                 double  fare      = 0; // only calculate for hyperpath
+                double  ivtwt     = 0; // only calculate for hyperpath
                 const FarePeriod* fp = 0;
 
                 if (in_vehicle_time < 0) {
@@ -1411,6 +1419,11 @@ namespace fasttrips {
                                        << std::endl;
                         }
                     }
+
+                    //update link ivtwt so that it is available when fares/fare-utils calculations are updated
+                    static const std::string ivt_str("in_vehicle_time_min");
+                    NamedWeights::const_iterator ivt_weight = named_weights.find(ivt_str);
+                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second;
 
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
@@ -1483,6 +1496,7 @@ namespace fasttrips {
                     cost,                           // cost
                     label_iteration,                // label iteration
                     arrdep_time,                    // arrival/departure time
+					ivtwt,                          // link ivt weight
                     fp                              // fare period
                 );
                 addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
@@ -1807,7 +1821,8 @@ namespace fasttrips {
                     access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
-                    earliest_dep_latest_arr                                                     // arrival/departure time
+                    earliest_dep_latest_arr,                                                    // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
