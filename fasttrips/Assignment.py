@@ -1260,7 +1260,7 @@ class Assignment:
 
         #This is a little long winded, but it cuts down on memory dramatically, but only copying
         #what is actually needed during the merges.
-        intermediate = pd.merge(left=pathset_links_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq',
+        intermediate = pd.merge(left=pathset_links_df[[Passenger.PERSONS_COLUMN_PERSON_ID, Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq',
                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                         Passenger.PF_COL_PATH_NUM,
                                         Passenger.PF_COL_LINK_NUM,
@@ -1301,7 +1301,10 @@ class Assignment:
             FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df len=%d\n%s" % \
                                   (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
 
-        return pd.merge(pathset_links_df, intermediate, on=['person_trip_id', 'pathnum', 'linknum'], how='left')
+        return pd.merge(pathset_links_df, intermediate, on=[Passenger.PERSONS_COLUMN_PERSON_ID,
+                                                            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                            Passenger.PF_COL_PATH_NUM,
+                                                            Passenger.PF_COL_LINK_NUM,], how='left')
 
 
     @staticmethod
