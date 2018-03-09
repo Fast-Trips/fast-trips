@@ -1218,9 +1218,10 @@ class Assignment:
 
         veh_trips_df_len = len(veh_trips_df)
 
-        passengers_df = Passenger.get_chosen_links(pathset_links_df)
+        passengers_df = Passenger.get_chosen_links(pathset_links_df, transit_only=True, copy=False)
+
         # only care about trips
-        passengers_df = passengers_df.loc[passengers_df[Passenger.PF_COL_ROUTE_ID].notnull()]
+        #passengers_df = passengers_df.loc[passengers_df[Passenger.PF_COL_ROUTE_ID].notnull()]
 
         # Group to boards by counting trip_list_id_nums for a (trip_id, A_id as stop_id)
         passenger_trips_boards = passengers_df.loc[passengers_df[Assignment.SIM_COL_PAX_BUMP_ITER].isnull(),  # unbumped passengers
