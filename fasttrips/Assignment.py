@@ -1108,6 +1108,7 @@ class Assignment:
         }
         return (pathdict, perf_dict)
 
+
     @staticmethod
     def find_passenger_vehicle_times(pathset_links_df, veh_trips_df):
         """
@@ -1148,42 +1149,51 @@ class Assignment:
         if Trip.SIM_COL_VEH_OVERCAP_FRAC not in list(veh_trips_df.columns.values):
             veh_trip_cols.remove(Trip.SIM_COL_VEH_OVERCAP_FRAC)
 
-        pathset_links_df = pd.merge(
-            left    =pathset_links_df,
-            right   =veh_trips_df[veh_trip_cols],
-            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq'],
-            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                      Trip.STOPTIMES_COLUMN_STOP_ID,
-                      Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-            how     ='left')
-        pathset_links_df = pd.merge(
-            left    =pathset_links_df,
-            right   =veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                   Trip.STOPTIMES_COLUMN_STOP_ID,
-                                   Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
-            left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID,'B_id','B_seq'],
-            right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                      Trip.STOPTIMES_COLUMN_STOP_ID,
-                      Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-            how     ='left',
-            suffixes=("_A","_B"))
+        #This is a little long winded, but it cuts down on memory dramatically, but only copying
+        #what is actually needed during the merges.
+        intermediate = pd.merge(left=pathset_links_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq',
+                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        Passenger.PF_COL_PATH_NUM,
+                                        Passenger.PF_COL_LINK_NUM,
+                                        'B_id', 'B_seq']],
+                 right=veh_trips_df[veh_trip_cols],
+                 left_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq'],
+                 right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                          Trip.STOPTIMES_COLUMN_STOP_ID,
+                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                 how     ='inner')
 
-        pathset_links_df.rename(columns={
+        intermediate = intermediate.drop(columns=[Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                  'A_id', 'A_seq'])
+
+        intermediate = pd.merge(left=intermediate,
+                                right=veh_trips_df[[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                    Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                    Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]],
+                                left_on =[Trip.STOPTIMES_COLUMN_TRIP_ID,'B_id','B_seq'],
+                                right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                          Trip.STOPTIMES_COLUMN_STOP_ID,
+                                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                how     ='inner',)
+
+        intermediate = intermediate.drop(columns=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                                  Trip.STOPTIMES_COLUMN_STOP_ID,
+                                                  Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+                                                  'B_id','B_seq'])
+
+        intermediate = intermediate.rename(columns={
             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME:Assignment.SIM_COL_PAX_BOARD_TIME,   # transit vehicle depart time (at A) = board time for pax
             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME  :Assignment.SIM_COL_PAX_ALIGHT_TIME,  # transit vehicle arrive time (at B) = alight time for pax
-        }, inplace=True)
-
-        # redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time
-        pathset_links_df.drop(['%s_A' % Trip.STOPTIMES_COLUMN_STOP_ID,
-                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_ID,
-                               '%s_A' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                               '%s_B' % Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], axis=1, inplace=True)
+        })
 
         if False and len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df len=%d\n%s" % \
                                   (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
-        return pathset_links_df
+
+        return pd.merge(pathset_links_df, intermediate, on=['person_trip_id', 'pathnum', 'linknum'], how='left')
+
 
     @staticmethod
     def put_passengers_on_vehicles(pathset_links_df, veh_trips_df):
@@ -1430,7 +1440,7 @@ class Assignment:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def load_passengers_on_vehicles_with_cap(FT, iteration, pathfinding_iteration, simulation_iteration,
+    def load_passengers_on_vehicles_with_cap(iteration, pathfinding_iteration, simulation_iteration,
                                              trips, pathset_paths_df, pathset_links_df, veh_loaded_df):
         """
         Check if we have boards on over-capacity vehicles.  Mark them and mark the boards.
@@ -1833,7 +1843,7 @@ class Assignment:
             FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load and assess capacity constraints")
 
             (pathset_paths_df, pathset_links_df, veh_trips_df) = Assignment.load_passengers_on_vehicles_with_cap(
-                FT, iteration, pathfinding_iteration, simulation_iteration,
+                iteration, pathfinding_iteration, simulation_iteration,
                 FT.trips, pathset_paths_df, pathset_links_df, veh_trips_df)
 
             ######################################################################################################
