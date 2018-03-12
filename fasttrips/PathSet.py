@@ -365,9 +365,10 @@ class PathSet:
                                         PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
                                sep=" ", index=False)
 
-        # add placeholder weights (-1) for fares - one for each user_class, purpose, transit demand mode
+        # add placeholder weights (ivt weight) for fares - one for each user_class, purpose, transit demand mode
         # these will be updated based on the person's value of time in calculate_cost()
-        fare_weights = PathSet.WEIGHTS_DF.loc[ PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]==PathSet.STATE_MODE_TRIP]
+        fare_weights = PathSet.WEIGHTS_DF.loc[ (PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE]==PathSet.STATE_MODE_TRIP) &
+                                               (PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ]== "in_vehicle_time_min")]
         fare_weights = fare_weights[[PathSet.WEIGHTS_COLUMN_USER_CLASS,
                                      PathSet.WEIGHTS_COLUMN_PURPOSE,
                                      PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
@@ -375,7 +376,6 @@ class PathSet:
                                      PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
                                      PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM]].copy().drop_duplicates()
         fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ] = "fare"  # SIM_COL_PAX_FARE
-        fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE] = -1.0
         PathSet.WEIGHTS_DF = PathSet.WEIGHTS_DF.append(fare_weights)
         FastTripsLogger.debug("PathSet.WEIGHTS_DF with fare weights: \n%s" % PathSet.WEIGHTS_DF)
         return trip_list_df
@@ -771,9 +771,9 @@ class PathSet:
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
                                how     ="inner")
 
-        # update the fare weight placeholder based on value of time (currency per hour)
-        # since generalized cost is roughly in minutes, (60 min/1 hour)x(hour/vot currency) is the weight (minutes/currency)
-        cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] = 60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT]
+        # update the fare weight placeholder (ivt pathweight - utils per min)) based on value of time (currency per hour) 
+        # since generalized cost is in utils, (ivt utils/min)x(60 min/1 hour)x(hour/vot currency) is the weight (utils/currency)
+        cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] *= 60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT]
 
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].sort_values([

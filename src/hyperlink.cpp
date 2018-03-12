@@ -769,8 +769,8 @@ namespace fasttrips {
                         double link_fare_pre_update = ss.link_fare_;
                         updateFare(path_spec, trace_file, pf, last_trip_fp, path_spec.outbound_, *path_so_far, ss, ssk_log[ssk]);
                         if (abs(link_fare_pre_update - ss.link_fare_) > 0.001) {
-                            // update the link          (60 min/hour)*(hours/vot currency) x (currency)
-                            ss.link_cost_ = ss.link_cost_ + (60.0/path_spec.value_of_time_)*(ss.link_fare_-link_fare_pre_update);
+                            // update the link          (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
+                            ss.link_cost_ = ss.link_cost_ + (60.0/path_spec.value_of_time_)*(ss.link_ivtwt_)*(ss.link_fare_-link_fare_pre_update);
                         }
                     }
                 }

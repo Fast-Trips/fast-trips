@@ -607,7 +607,7 @@ class Route(object):
             fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
 
             # fillna with -1
-            for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM]:
+            for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM, Route.FARE_ATTR_COLUMN_TRANSFERS]:
                 if num_col in list(fare_rules_df.columns.values):
                     fare_rules_df.loc[ pd.isnull(fare_rules_df[num_col]), num_col] = -1
                     fare_rules_df[num_col] = fare_rules_df[num_col].astype(int)
