@@ -55,6 +55,8 @@ class TAZ:
     WALK_ACCESS_COLUMN_ELEVATION_GAIN       = 'elevation_gain'
     #: fasttrips Walk access links column name: Population Density, people per square mile.  Float.
     WALK_ACCESS_COLUMN_POPULATION_DENSITY   = 'population_density'
+    #: fasttrips Walk access links column name: Employment Density, employees per square mile. Float.
+    WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY       = 'employment_density'
     #: fasttrips Walk access links column name: Retail Density, employees per square mile. Float.
     WALK_ACCESS_COLUMN_RETAIL_DENSITY       = 'retail_density'
     #: fasttrips Walk access links column name: Auto Capacity, vehicles per hour per mile. Float.
