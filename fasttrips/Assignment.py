@@ -115,7 +115,7 @@ class Assignment:
     MIN_PATH_PROBABILITY            = None
 
     #: Route choice configuration: Dispersion parameter in the logit function.
-    #: Higher values result in less stochasticity. Must be nonnegative. 
+    #: Higher values result in less stochasticity. Must be nonnegative.
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
@@ -211,7 +211,7 @@ class Assignment:
     SIM_COL_PAX_WAIT_TIME           = 'new_waittime'     #: Wait time
     SIM_COL_PAX_MISSED_XFER         = 'missed_xfer'      #: Is this link a missed transfer
 
-    SIM_COL_PAX_OVERCAP             = Trip.SIM_COL_VEH_OVERCAP      #: 
+    SIM_COL_PAX_OVERCAP             = Trip.SIM_COL_VEH_OVERCAP      #:
     SIM_COL_PAX_OVERCAP_FRAC        = Trip.SIM_COL_VEH_OVERCAP_FRAC #: If board at an overcap stop, fraction of boards that are overcap
     SIM_COL_PAX_BUMP_ITER           = 'bump_iter'
     SIM_COL_PAX_BOARD_STATE         = 'board_state'      #: NaN if not relevent, 1 if lucky enough to board at an at- or over-capacity stop, 0 if bumped.  Set by :py:meth:`Assignment.flag_bump_overcap_passengers`
@@ -292,28 +292,32 @@ class Assignment:
                       'number_of_processes'             :0,
                       'bump_buffer'                     :5,
                       'bump_one_at_a_time'              :'False',
+
                       # pathfinding
-                      'max_num_paths'                   :-1,
-                      'min_path_probability'            :0.005,
-                      'min_transfer_penalty'            :1.0,
-                      'overlap_chunk_size'              :500,
-                      'overlap_scale_parameter'         :1.0,
-                      'overlap_split_transit'           :'False',
-                      'overlap_variable'                :'count',
-                      'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
-                      'pathweights_fixed_width'         :'False',
-                      'stochastic_dispersion'           :1.0,
+                      'max_num_paths'                    :-1,
+                      'min_path_probability'             :0.005,
+                      'min_transfer_penalty'             :1.0,
+                      'overlap_chunk_size'               :500,
+                      'overlap_scale_parameter'          :1.0,
+                      'overlap_split_transit'            :'False',
+                      'overlap_variable'                 :'count',
+                      'pathfinding_type'                 :Assignment.PATHFINDING_TYPE_STOCHASTIC,
+                      'pathweights_fixed_width'          :'False',
+                      'stochastic_dispersion'            :1.0,
                       'stochastic_max_stop_process_count':20,
-                      'stochastic_pathset_size'         :1000,
-                      'time_window'                     :30,
-                      'transfer_fare_ignore_pathfinding':'False',
-                      'transfer_fare_ignore_pathenum'   :'False',
-                      'user_class_function'             :'generic_user_class'
+                      'stochastic_pathset_size'          :1000,
+                      'time_window'                      :30,
+                      'transfer_fare_ignore_pathfinding' :'False',
+                      'transfer_fare_ignore_pathenum'    :'False',
+                      'user_class_function'              :'generic_user_class',
+                      'arrive_late_allowed_min'          : 0,
+                      'depart_early_allowed_min'         : 0,
                      })
+
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s" % config_fullpath)
         parser.read(config_fullpath)
-		
+
         Assignment.MAX_ITERATIONS                = parser.getint    ('fasttrips','max_iterations')
         Assignment.NETWORK_BUILD_DATE            = datetime.datetime.strptime(
                                                     parser.get('fasttrips', 'network_build_date'), '%m/%d/%Y').date()
@@ -358,6 +362,10 @@ class Assignment:
         Assignment.TRANSFER_FARE_IGNORE_PATHFINDING = parser.getboolean('pathfinding','transfer_fare_ignore_pathfinding')
         Assignment.TRANSFER_FARE_IGNORE_PATHENUM    = parser.getboolean('pathfinding','transfer_fare_ignore_pathenum')
         PathSet.USER_CLASS_FUNCTION                 = parser.get       ('pathfinding','user_class_function')
+        PathSet.DEPART_EARLY_ALLOWED_MIN            = datetime.timedelta(
+                                            minutes = parser.getfloat('pathfinding', 'depart_early_allowed_min'))
+        PathSet.ARRIVE_LATE_ALLOWED_MIN             = datetime.timedelta(
+                                            minutes = parser.getfloat  ('pathfinding','arrive_late_allowed_min'))
 
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
@@ -385,15 +393,72 @@ class Assignment:
             sys.exit(2)
 
         if PathSet.WEIGHTS_FIXED_WIDTH:
-            PathSet.WEIGHTS_DF = pd.read_fwf(weights_file)
-            PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_PURPOSE] = PathSet.WEIGHTS_DF[PathSet.WEIGHTS_COLUMN_PURPOSE].astype(str)
+            weights = pd.read_fwf(weights_file)
+            weights[PathSet.WEIGHTS_COLUMN_PURPOSE] = weights[PathSet.WEIGHTS_COLUMN_PURPOSE].astype(str)
         else:
-            PathSet.WEIGHTS_DF = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
+            weights = pd.read_csv(weights_file, dtype={PathSet.WEIGHTS_COLUMN_PURPOSE:object}, skipinitialspace=True)
+
+        PathSet.WEIGHTS_DF = Assignment.process_weight_qualifiers(weights)
+
         FastTripsLogger.debug("Weights =\n%s" % str(PathSet.WEIGHTS_DF))
         FastTripsLogger.debug("Weight types = \n%s" % str(PathSet.WEIGHTS_DF.dtypes))
-        
 
-            
+
+    @staticmethod
+    def process_weight_qualifiers(weights):
+        """
+        Qualifiers are used to change the default behavior of weight_names. Qualifiers
+        are added by adding a period (.) after the weight_name and specifying the
+        qualifier name. Qualifier attributes are specified after a second dot.
+
+        For example: depart_early_cost_min.logistic.growth_rate
+        depart_early_cost_min is being qualified as a logistic penalty instead of the default
+        behavior. growth_rate is an attribute of the logistic qualifier.
+        :param weights: vertically oriented qualifiers
+        :return: pivoted weights table with the qualifiers normalized horizontally.
+        """
+
+        growth_type = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.count('\.') == 1].copy()
+        qualifiers = weights[weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.count('\.') == 2].copy()
+        weights = weights[~weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('\.')].copy()
+        weights[PathSet.WEIGHTS_GROWTH_TYPE] = PathSet.CONSTANT_GROWTH_MODEL
+
+        # if only 'linear' this process is done and can return
+        if growth_type.shape[0] == 0:
+            return weights
+
+        growth_type[PathSet.WEIGHTS_GROWTH_TYPE] = growth_type[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.extract('((?<=\.)\w+)', expand=False)
+        growth_type[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] = growth_type[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.extract('(\w+(?=\.))', expand=False)
+        weights = pd.concat([weights, growth_type])
+
+        if (~weights[PathSet.WEIGHTS_GROWTH_TYPE].isin(PathSet.PENALTY_GROWTH_MODELS)).any():
+            FastTripsLogger.fatal("Invalid qualifier type specified.")
+            raise KeyError('Invalid qualifier type specified.')
+
+        # if only 'constant' and 'exponential' this process is done and can return.
+        if qualifiers.shape[0] == 0:
+            return weights
+
+        qualifiers = qualifiers.rename(columns={PathSet.WEIGHTS_COLUMN_WEIGHT_NAME: 'qualifier'})
+        qualifiers[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] = qualifiers['qualifier'].str.extract('(^\w+)', expand=False)
+        qualifiers['variable'] = qualifiers['qualifier'].str.extract('(\w+$)', expand=False)
+
+        qualifier_values = qualifiers.pivot(columns='variable', values=PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE)
+        qualifier_columns = qualifier_values.columns.values
+
+        qualifiers = pd.concat([qualifiers, qualifier_values], axis=1)
+
+        merge_cols = [
+            PathSet.WEIGHTS_COLUMN_USER_CLASS, PathSet.WEIGHTS_COLUMN_PURPOSE,
+            PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE, PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
+            PathSet.WEIGHTS_COLUMN_SUPPLY_MODE, PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
+        ]
+
+        qualifiers = qualifiers.groupby(merge_cols)[qualifier_columns].max().reset_index()
+
+        return pd.merge(weights, qualifiers, on=merge_cols, how='left')
+
+
     @staticmethod
     def write_configuration(output_dir):
         """
@@ -450,6 +515,9 @@ class Assignment:
 
         parser.set('pathfinding','user_class_function',         '%s' % PathSet.USER_CLASS_FUNCTION)
 
+        parser.set('pathfinding','arrive_late_allowed_min',     '%f' % (PathSet.ARRIVE_LATE_ALLOWED_MIN.total_seconds()/60.0))
+        parser.set('pathfinding','depart_early_allowed_min',    '%f' % (PathSet.DEPART_EARLY_ALLOWED_MIN.total_seconds()/60.0))
+
         output_file = open(os.path.join(output_dir, Assignment.CONFIGURATION_OUTPUT_FILE), 'w')
         parser.write(output_file)
         output_file.close()
@@ -482,8 +550,10 @@ class Assignment:
                                                     Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
                                                     overcap_col]].as_matrix().astype('float64'))
 
-        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
-                                         Assignment.BUMP_BUFFER.total_seconds()/60.0,
+        _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds() / 60.0,
+                                         Assignment.BUMP_BUFFER.total_seconds() / 60.0,
+                                         PathSet.DEPART_EARLY_ALLOWED_MIN.total_seconds() / 60.0,
+                                         PathSet.ARRIVE_LATE_ALLOWED_MIN.total_seconds() / 60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
@@ -616,7 +686,7 @@ class Assignment:
         Finds the paths for the passengers.
         """
         # clear any state
-        _fasttrips.reset();
+        _fasttrips.reset()
 
         # write the initial load profile, iteration 0
         veh_trips_df     = FT.trips.get_full_trips()
@@ -722,15 +792,15 @@ class Assignment:
             # end condition for iterations loop
             if False and capacity_gap < 0.001:
                 break
-            
+
             # end for loop
-        
+
         return {"capacity_gap": capacity_gap,
                 "paths_found": num_paths_found,
                 "passengers_arrived": num_passengers_arrived,
                 "passengers_missed": num_bumped_passengers,
                 "passengers_demand": len(FT.passengers.trip_list_df) }
-        
+
     @staticmethod
     def filter_trip_list_to_not_arrived(trip_list_df, pathset_paths_df):
         """
@@ -1518,7 +1588,7 @@ class Assignment:
             FastTripsLogger.info("  Step 5.1 Put passengers on transit vehicles.")
             # Put passengers on vehicles, updating the vehicle's boards, alights, onboard, overcap, overcap_frac
             veh_loaded_df = Assignment.put_passengers_on_vehicles(pathset_links_df, veh_loaded_df)
-            FastTripsLogger.debug("after putting passengers on vehicles, veh_loaded_df with onboard.head(30) = \n%s" % 
+            FastTripsLogger.debug("after putting passengers on vehicles, veh_loaded_df with onboard.head(30) = \n%s" %
                                   veh_loaded_df.loc[ veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD]>0, vehicle_trip_debug_columns].head(30).to_string())
 
             if not Assignment.CAPACITY_CONSTRAINT:
@@ -1556,7 +1626,7 @@ class Assignment:
             pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull() &                               # trip links only
                                   pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER].isnull() &                         # not already bumped
                                   (pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]==Assignment.CHOSEN_NOT_CHOSEN_YET)&  # unchosen
-                                  (pathset_links_df[Assignment.SIM_COL_PAX_OVERCAP]>=0),                                # overcap 
+                                  (pathset_links_df[Assignment.SIM_COL_PAX_OVERCAP]>=0),                                # overcap
                                         Assignment.SIM_COL_PAX_BOARD_STATE ] = "bumped_unchosen"
             pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull() &                               # trip links only
                                   pathset_links_df[Assignment.SIM_COL_PAX_BUMP_ITER].isnull() &                         # not already bumped
@@ -1702,7 +1772,7 @@ class Assignment:
                                   (pathset_links_df[Assignment.SIM_COL_PAX_BOARD_STATE].isnull()|
                                    (pathset_links_df[Assignment.SIM_COL_PAX_BOARD_STATE]=="boarded")|
                                    (pathset_links_df[Assignment.SIM_COL_PAX_BOARD_STATE]=="board_easy"))&
-                                  pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull(), 
+                                  pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull(),
                                   Assignment.SIM_COL_PAX_BOARD_STATE ] = "bumped_othertrip"
             pathset_links_df.drop(["_merge"], axis=1, inplace=True)
 
@@ -1844,7 +1914,7 @@ class Assignment:
             ######################################################################################################
             if Assignment.OUTPUT_PATHSET_PER_SIM_ITER:
                 FastTripsLogger.info("  Step 7. Write pathsets (paths and links)")
-                Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False, 
+                Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_paths_df, False,
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
                 Passenger.write_paths(output_dir, iteration, pathfinding_iteration, simulation_iteration, pathset_links_df, True,
                                       Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, not Assignment.DEBUG_OUTPUT_COLUMNS)
@@ -1905,7 +1975,7 @@ def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worke
 
     from .FastTrips import FastTrips
     setupLogging(infoLogFilename  = None,
-                 debugLogFilename = os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str), 
+                 debugLogFilename = os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str),
                  logToConsole     = False,
                  append           = False if ((iteration==1) and (pathfinding_iteration==1)) else True)
     FastTripsLogger.info("Iteration %d Pathfinding Iteration %d Worker %2d starting" % (iteration, pathfinding_iteration, worker_num))

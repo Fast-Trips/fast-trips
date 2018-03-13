@@ -51,8 +51,23 @@ namespace fasttrips {
         }
     };
 
+    enum WeightType {
+        WEIGHT_LINEAR      = 0,  // default
+        WEIGHT_EXPONENTIAL = 1,
+        WEIGHT_LOGARITHMIC = 2,
+        WEIGHT_LOGISTIC    = 3
+    };
+
+    typedef struct  {
+      WeightType type_;          // the type of weight
+      double     weight_;        // this is the primary part -- the weight itself
+      double     log_base_;      // only for WEIGHT_LOGARITHMIC
+      double     logistic_max_;  // oly for WEIGHT_LOGISTIC
+      double     logistic_mid_;  // oly for WEIGHT_LOGISTIC
+    } Weight;
+
     // This is a lot of naming but it does make iterator construction easier
-    typedef std::map<std::string, double> NamedWeights;
+    typedef std::map<std::string, Weight> NamedWeights;
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
     typedef std::map< UserClassPurposeMode, SupplyModeToNamedWeights, struct fasttrips::UCPMCompare > WeightLookup;
 
@@ -175,6 +190,12 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">fasttrips.Assignment.BUMP_BUFFER</a>
         double BUMP_BUFFER_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.DEPART_EARLY_MIN">fasttrips.PathSet.DEPART_EARLY_MIN</a>
+        double DEPART_EARLY_ALLOWED_MIN_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.ARRIVE_LATE_MIN">fasttrips.PathSet.ARRIVE_LATE_MIN</a>
+        double ARRIVE_LATE_ALLOWED_MIN_;
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a>
         int STOCH_PATHSET_SIZE_; // er....
@@ -439,6 +460,8 @@ namespace fasttrips {
          */
         void initializeParameters(double     time_window,
                                   double     bump_buffer,
+                                  double     depart_early_allowed_min,
+                                  double     arrive_late_allowed_min,
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion,
                                   int        stoch_max_stop_process_count,
