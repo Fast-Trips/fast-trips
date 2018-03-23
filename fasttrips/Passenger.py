@@ -836,6 +836,18 @@ class Passenger:
         else:
             pathset_paths_df[Passenger.PF_COL_DESCRIPTION] = ""
 
+        pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64] = \
+            pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64].astype(np.float32)
+        pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64] = \
+            pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64].apply(pd.to_numeric,
+                                                                               downcast='integer')
+
+        pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64] = \
+            pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64].astype(np.float32)
+        pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64] = \
+            pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64].apply(pd.to_numeric,
+                                                                               downcast='integer')
+
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
