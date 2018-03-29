@@ -1,0 +1,7 @@
+user_class,purpose,demand_mode_type,demand_mode,supply_mode,weight_name,weight_value
+all,bunny_biz,transfer,transfer,transfer,walk_time_min,0.0
+all,bunny_biz,transfer,transfer,transfer,transfer_penalty,1.5
+all,bunny_biz,access,walk,walk_access,time_min,0.0
+all,bunny_biz,egress,walk,walk_egress,time_min,0.0
+all,bunny_biz,transit,transit,local_bus,in_vehicle_time_min,0.1
+all,bunny_biz,transit,transit,local_bus,wait_time_min,0.0

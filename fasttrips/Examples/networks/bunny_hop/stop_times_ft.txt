@@ -1,0 +1,11 @@
+trip_id,stop_id
+ABt1,A
+ABt1,B
+ACt1,A
+ACt1,C
+BC1t1,B
+BC1t1,C
+BC2t1,B
+BC2t1,C
+BC3t1,B
+BC3t1,C
