@@ -1690,6 +1690,7 @@ namespace fasttrips {
 
     // This is currently not being used because it has been replaced with updateStopStatesForFinalLinks() but
     // it may come back for skimming so let's leave it in for now.
+    /*
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -1828,7 +1829,7 @@ namespace fasttrips {
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
-    }
+    }*/
 
 
     bool PathFinder::hyperpathGeneratePath(
