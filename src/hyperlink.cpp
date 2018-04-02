@@ -254,7 +254,7 @@ namespace fasttrips {
         {
             linkset.latest_dep_earliest_arr_ = ss.deparr_time_;
             linkset.lder_ssk_                = ssk;
-            linkset.sum_exp_cost_            = exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+            linkset.sum_exp_cost_            = exp(-1.0*ss.cost_/STOCH_DISPERSION_);
             linkset.hyperpath_cost_          = ss.cost_;
 
             // add to the map
@@ -322,11 +322,11 @@ namespace fasttrips {
                 // if the window changes, we need to prune states out of bounds -- this recalculates sum_exp_cost_
                 pruneWindow(trace_file, path_spec, pf, isTrip(ssk.deparr_mode_));
             } else {
-                linkset.sum_exp_cost_         += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                linkset.sum_exp_cost_         += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
             }
 
             // check if the hyperpath cost is affected -- this would be a state update
-            double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
+            double hyperpath_cost  = (-1.0*STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
             if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
             {
                 std::ostringstream oss;
@@ -358,7 +358,7 @@ namespace fasttrips {
         linkset.cost_map_.insert (std::pair<double, StopStateKey>(ss.cost_,ssk));
 
         // update the cost
-        linkset.sum_exp_cost_ -= exp(-1.0*STOCH_DISPERSION_*linkset.stop_state_map_[ssk].cost_);
+        linkset.sum_exp_cost_ -= exp(-1.0*linkset.stop_state_map_[ssk].cost_/STOCH_DISPERSION_);
 
         // we're replacing the stopstate so delete the old path
         if (linkset.stop_state_map_[ssk].low_cost_path_) {
@@ -368,7 +368,7 @@ namespace fasttrips {
         // and the other state elements
         linkset.stop_state_map_[ssk] = ss;
         // stop_state_map_[ssk].iteration_ = old_iteration; // remove this
-        linkset.sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+        linkset.sum_exp_cost_ += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
 
         // if the the latest_dep_earliest_arr_ were set to the previous value, we need to check
         if (linkset.lder_ssk_ == ssk)
@@ -390,7 +390,7 @@ namespace fasttrips {
             pruneWindow(trace_file, path_spec, pf, isTrip(ssk.deparr_mode_));
         }
 
-        double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
+        double hyperpath_cost  = (-1.0*STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
         if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
         {
             std::ostringstream oss;
@@ -477,15 +477,15 @@ namespace fasttrips {
         {
             const StopState& ss = it->second;
             if (outbound && (ss.deparr_time_ >= arrdep_time)) {
-                sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                sum_exp += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
             } else if (!outbound && (arrdep_time >= ss.deparr_time_)) {
-                sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                sum_exp += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
             }
         }
         if (sum_exp == 0) {
             return MAX_COST;
         }
-        return (-1.0/STOCH_DISPERSION_)*log(sum_exp);
+        return (-1.0*STOCH_DISPERSION_)*log(sum_exp);
     }
 
 
@@ -678,7 +678,7 @@ namespace fasttrips {
                 (!path_spec.outbound_ && (ss.deparr_time_ > linkset.latest_dep_earliest_arr_ + TIME_WINDOW_))) {
                 prune_keys.push(ssk);
             } else {
-                linkset.sum_exp_cost_ += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                linkset.sum_exp_cost_ += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
             }
         }
 
@@ -777,7 +777,7 @@ namespace fasttrips {
 
                 // calculating denominator
                 ss.cum_prob_i_ = 0;
-                sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                sum_exp += exp(-1.0*ss.cost_);
                 valid_links += 1;
             }
             else
@@ -788,8 +788,8 @@ namespace fasttrips {
                 }
                 else {
                     // we have no additional information so we trust the hyperpath cost and can go ahead
-                    ss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) /
-                                      exp(-1.0*STOCH_DISPERSION_*linkset.hyperpath_cost_);
+                    ss.probability_ = exp(-1.0*ss.cost_/STOCH_DISPERSION_) /
+                                      exp(-1.0*linkset.hyperpath_cost_/STOCH_DISPERSION_);
                     // this will be true if it's not a real number -- e.g. the denom was too small and we ended up doing 0/0
                     if (ss.probability_ != ss.probability_) {
                         ss.probability_ = 0;
@@ -840,7 +840,7 @@ namespace fasttrips {
                 linkset.max_cum_prob_i_ = ss.cum_prob_i_;
             }
             else {
-                ss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) / sum_exp;
+                ss.probability_ = exp(-1.0*ss.cost_) / sum_exp;
                 int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
 
                 // make cum_prob_i_ cumulative

@@ -1980,7 +1980,7 @@ namespace fasttrips {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
                         pathset[new_path] = pi;
 
-                        logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
+                        logsum += exp(-1.0*new_path.cost());
                     }
                     if (path_spec.trace_) { trace_file << "pathsset size = " << pathset.size() << " new? " << (paths_iter == pathset.end()) << std::endl; }
                 } else {
@@ -2003,7 +2003,7 @@ namespace fasttrips {
 
             for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
+                paths_iter->second.probability_ = exp(-1.0*paths_iter->first.cost())/logsum;
                 path_count += 1;
 
                 // Is this under the min path probability AND we have enough paths?
