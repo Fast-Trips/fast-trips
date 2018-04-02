@@ -374,7 +374,9 @@ class PathSet:
                                      PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                      PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
                                      PathSet.WEIGHTS_COLUMN_SUPPLY_MODE,
-                                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM]].copy().drop_duplicates()
+                                     PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
+                                     PathSet.WEIGHTS_COLUMN_WEIGHT_NAME,
+                                     PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]].copy().drop_duplicates()
         fare_weights[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME ] = "fare"  # SIM_COL_PAX_FARE
         PathSet.WEIGHTS_DF = PathSet.WEIGHTS_DF.append(fare_weights)
         FastTripsLogger.debug("PathSet.WEIGHTS_DF with fare weights: \n%s" % PathSet.WEIGHTS_DF)
