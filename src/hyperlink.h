@@ -26,8 +26,10 @@ namespace fasttrips {
 
     /// Hyperpath cost when no links are there
     const double MAX_COST = 999999;
+    // Commenting MIN_COST out for now. If gencost is calculated in terms of IVT mins, negative costs unlikely.
+    // This also creates an issue with probabilities not adding up to 1.
     /// Hyperpath minimum cost (zero and negative costs are problematic)
-    const double MIN_COST = 0.001;
+    //const double MIN_COST = 0.001;
 
     bool isTrip(const int& mode);
 

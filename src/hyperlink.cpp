@@ -255,7 +255,7 @@ namespace fasttrips {
             linkset.latest_dep_earliest_arr_ = ss.deparr_time_;
             linkset.lder_ssk_                = ssk;
             linkset.sum_exp_cost_            = exp(-1.0*STOCH_DISPERSION_*ss.cost_);
-            linkset.hyperpath_cost_          = std::max(ss.cost_, MIN_COST);
+            linkset.hyperpath_cost_          = ss.cost_;
 
             // add to the map
             linkset.stop_state_map_[ssk] = ss;
@@ -326,7 +326,7 @@ namespace fasttrips {
             }
 
             // check if the hyperpath cost is affected -- this would be a state update
-            double hyperpath_cost  = std::max((-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_), MIN_COST);
+            double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
             if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
             {
                 std::ostringstream oss;
@@ -390,7 +390,7 @@ namespace fasttrips {
             pruneWindow(trace_file, path_spec, pf, isTrip(ssk.deparr_mode_));
         }
 
-        double hyperpath_cost  = std::max((-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_),MIN_COST);
+        double hyperpath_cost  = (-1.0/STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
         if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
         {
             std::ostringstream oss;
