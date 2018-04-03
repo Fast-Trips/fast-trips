@@ -17,6 +17,7 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
 {
     double     time_window;
     double     bump_buffer;
+    double     utils_conversion;
     int        stoch_pathset_size;
     double     stoch_dispersion;
     int        stoch_max_stop_process_count;
@@ -24,12 +25,12 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     int        transfer_fare_ignore_pe;
     int        max_num_paths;
     double     min_path_probability;
-    if (!PyArg_ParseTuple(args, "ddidiiiid", &time_window, &bump_buffer, &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count,
+    if (!PyArg_ParseTuple(args, "dddidiiiid", &time_window, &bump_buffer, &utils_conversion, &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count,
                                              &transfer_fare_ignore_pf, &transfer_fare_ignore_pe,
                                              &max_num_paths, &min_path_probability)) {
         return NULL;
     }
-    pathfinder.initializeParameters(time_window, bump_buffer, stoch_pathset_size, stoch_dispersion, stoch_max_stop_process_count, 
+    pathfinder.initializeParameters(time_window, bump_buffer, utils_conversion, stoch_pathset_size, stoch_dispersion, stoch_max_stop_process_count,
                                     (transfer_fare_ignore_pf==1), (transfer_fare_ignore_pe==1),
                                     max_num_paths, min_path_probability);
     Py_RETURN_NONE;

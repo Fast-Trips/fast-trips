@@ -89,6 +89,8 @@ namespace fasttrips {
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a>
         /// This could be configured per stop in the future.
         static double TIME_WINDOW_;
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.UTILS_CONVERSION">fasttrips.Assignment.UTILS_CONVERSION</a>
+        static double UTILS_CONVERSION_;
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         static double STOCH_DISPERSION_;
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING">fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING</a>

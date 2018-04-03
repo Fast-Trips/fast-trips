@@ -41,6 +41,7 @@ namespace fasttrips {
 
     double Hyperlink::TIME_WINDOW_          = 0.0;
     double Hyperlink::STOCH_DISPERSION_     = 0.0;
+    double Hyperlink::UTILS_CONVERSION_     = 0.0;
     bool   Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ = false;
     bool   Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_    = false;
 
@@ -777,7 +778,7 @@ namespace fasttrips {
 
                 // calculating denominator
                 ss.cum_prob_i_ = 0;
-                sum_exp += exp(-1.0*ss.cost_);
+                sum_exp += exp(-1.0*UTILS_CONVERSION_*ss.cost_);
                 valid_links += 1;
             }
             else
@@ -787,39 +788,16 @@ namespace fasttrips {
                     // leave it as is -- invalid -- but still log it
                 }
                 else {
-                    // we have no additional information so we trust the hyperpath cost and can go ahead
-                    ss.probability_ = exp(-1.0*ss.cost_/STOCH_DISPERSION_) /
-                                      exp(-1.0*linkset.hyperpath_cost_/STOCH_DISPERSION_);
-                    // this will be true if it's not a real number -- e.g. the denom was too small and we ended up doing 0/0
-                    if (ss.probability_ != ss.probability_) {
-                        ss.probability_ = 0;
-                    }
-                    else {
-                        int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
-                        valid_links    += 1;
-
-                        // make cum_prob_i_ cumulative
-                        ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
-                        linkset.max_cum_prob_i_ = ss.cum_prob_i_;
-                    }
+                    // calculating denominator
+                    ss.cum_prob_i_ = 0;
+                    sum_exp += exp(-1.0*UTILS_CONVERSION_*ss.cost_);
+                    valid_links += 1;
                 }
-
-                // these are ready to log
-                D_PROBS(
-                    Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
-                    trace_file << std::endl;
-                );
             }
         }
-        D_PROBS(
-            trace_file << "valid_links=" << valid_links << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << "; sum_exp=" << sum_exp << std::endl;
-        );
 
         // fail -- nothing is valid
         if (valid_links == 0) { return linkset.max_cum_prob_i_; }
-
-        // this set is ready
-        if (path_so_far == NULL) { return linkset.max_cum_prob_i_; }
 
         // fail -- nothing is valid because costs are too big
         if ((valid_links != 1) && (log(sum_exp) != log(sum_exp))) {
@@ -840,12 +818,16 @@ namespace fasttrips {
                 linkset.max_cum_prob_i_ = ss.cum_prob_i_;
             }
             else {
-                ss.probability_ = exp(-1.0*ss.cost_) / sum_exp;
-                int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
-
-                // make cum_prob_i_ cumulative
-                ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
-                linkset.max_cum_prob_i_ = ss.cum_prob_i_;
+                ss.probability_ = exp(-1.0*UTILS_CONVERSION_*ss.cost_) / sum_exp;
+                // this will be true if it's not a real number -- e.g. the denom was too small and we ended up doing 0/0
+                if (ss.probability_ != ss.probability_) {
+                    ss.probability_ = 0;
+                } else {
+                    int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
+                    // make cum_prob_i_ cumulative
+                    ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
+                    linkset.max_cum_prob_i_ = ss.cum_prob_i_;
+                }
             }
 
             // ready to log
@@ -854,6 +836,10 @@ namespace fasttrips {
                 trace_file << " " << ssk_log[ssk] << std::endl;
             }
         } // finish second pass
+        D_PROBS(
+            trace_file << "valid_links=" << valid_links << "; max_cum_prob_i=" << linkset.max_cum_prob_i_ << "; sum_exp=" << sum_exp << std::endl;
+        );
+
         return linkset.max_cum_prob_i_;
     }
 
