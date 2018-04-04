@@ -56,6 +56,7 @@ namespace fasttrips {
     void PathFinder::initializeParameters(
         double     time_window,
         double     bump_buffer,
+        double     utils_conversion,
         int        stoch_pathset_size,
         double     stoch_dispersion,
         int        stoch_max_stop_process_count,
@@ -72,6 +73,7 @@ namespace fasttrips {
 
         Hyperlink::TIME_WINDOW_         = time_window;
         Hyperlink::STOCH_DISPERSION_    = stoch_dispersion;
+        Hyperlink::UTILS_CONVERSION_    = utils_conversion;
         Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ = transfer_fare_ignore_pf;
         Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_    = transfer_fare_ignore_pe;
     }
@@ -1690,6 +1692,7 @@ namespace fasttrips {
 
     // This is currently not being used because it has been replaced with updateStopStatesForFinalLinks() but
     // it may come back for skimming so let's leave it in for now.
+    /*
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -1828,7 +1831,7 @@ namespace fasttrips {
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
-    }
+    }*/
 
 
     bool PathFinder::hyperpathGeneratePath(
@@ -1979,7 +1982,7 @@ namespace fasttrips {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
                         pathset[new_path] = pi;
 
-                        logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
+                        logsum += exp(-1.0*Hyperlink::UTILS_CONVERSION_*new_path.cost());
                     }
                     if (path_spec.trace_) { trace_file << "pathsset size = " << pathset.size() << " new? " << (paths_iter == pathset.end()) << std::endl; }
                 } else {
@@ -2002,7 +2005,7 @@ namespace fasttrips {
 
             for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
+                paths_iter->second.probability_ = exp(-1.0*Hyperlink::UTILS_CONVERSION_*paths_iter->first.cost())/logsum;
                 path_count += 1;
 
                 // Is this under the min path probability AND we have enough paths?
