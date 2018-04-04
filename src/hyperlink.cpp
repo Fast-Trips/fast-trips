@@ -831,7 +831,7 @@ namespace fasttrips {
             }
 
             // ready to log
-            if (path_spec.trace_) {
+            if ((path_spec.trace_) && (path_so_far != NULL)) {
                 Hyperlink::printStopState(trace_file, stop_id_, ss, path_spec, pf);
                 trace_file << " " << ssk_log[ssk] << std::endl;
             }
