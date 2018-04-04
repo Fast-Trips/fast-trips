@@ -119,6 +119,12 @@ class Assignment:
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
+    #: Route choice configuration: IVT mins to utils conversion factor.
+    #: Higher values result in higher differences in probabilities for a given  
+    #: difference in genaralized costs. Must be nonnegative. 
+    #: If unknown use a value of 0.02 Float.
+    UTILS_CONVERSION                = None
+
     #: In path-finding, suppress trying to adjust fares using transfer fare rules.
     #: This is for performance testing.
     TRANSFER_FARE_IGNORE_PATHFINDING = None
@@ -350,6 +356,7 @@ class Assignment:
         Assignment.PATHFINDING_TYPE              = parser.get       ('pathfinding','pathfinding_type')
         PathSet.WEIGHTS_FIXED_WIDTH              = parser.getboolean('pathfinding','pathweights_fixed_width')
         Assignment.STOCH_DISPERSION              = parser.getfloat  ('pathfinding','stochastic_dispersion')
+        Assignment.UTILS_CONVERSION              = parser.getfloat  ('pathfinding','utils_conversion_factor')
         Assignment.STOCH_MAX_STOP_PROCESS_COUNT  = parser.getint    ('pathfinding','stochastic_max_stop_process_count')
         Assignment.STOCH_PATHSET_SIZE            = parser.getint    ('pathfinding','stochastic_pathset_size')
         Assignment.TIME_WINDOW = datetime.timedelta(
@@ -441,6 +448,7 @@ class Assignment:
         parser.set('pathfinding','pathfinding_type',            Assignment.PATHFINDING_TYPE)
         parser.set('pathfinding','pathweights_fixed_width',     'True' if PathSet.WEIGHTS_FIXED_WIDTH else 'False')
         parser.set('pathfinding','stochastic_dispersion',       '%f' % Assignment.STOCH_DISPERSION)
+        parser.set('pathfinding','utils_conversion_factor',     '%f' % Assignment.UTILS_CONVERSION)
         parser.set('pathfinding','stochastic_max_stop_process_count', '%d' % Assignment.STOCH_MAX_STOP_PROCESS_COUNT)
         parser.set('pathfinding','stochastic_pathset_size',     '%d' % Assignment.STOCH_PATHSET_SIZE)
         parser.set('pathfinding','time_window',                 '%f' % (Assignment.TIME_WINDOW.total_seconds()/60.0))
@@ -484,6 +492,7 @@ class Assignment:
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/60.0,
+                                         Assignment.UTILS_CONVERSION,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,
@@ -1747,7 +1756,7 @@ class Assignment:
         ######################################################################################################
         FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
         (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, FT.veh_trips_df,
+            Assignment.UTILS_CONVERSION, pathset_paths_df, pathset_links_df, FT.veh_trips_df,
             FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
             reset_bump_iter=simulation_iteration==0)
 
@@ -1815,7 +1824,7 @@ class Assignment:
             ######################################################################################################
             FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
             (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-                Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
+                Assignment.UTILS_CONVERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
                 FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
                 reset_bump_iter=simulation_iteration == 0)
 
