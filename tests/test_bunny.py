@@ -6,15 +6,19 @@ from fasttrips import Run
 Run just the tests labeled basic using `pytest -v -m basic`
 """
 
+@pytest.mark.parametrize("demand", ["backward_bunnies","forward_bunnies"])
+@pytest.mark.parametrize("network", ["bunny_hop"])
+
+
 @pytest.mark.basic
-def test_bunny():
+def test_bunny(demand, network):
     """
     Test to ensure that the most simple of networks and demand is working.
     """
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'bunny_hop')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "bunnies")
+    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", network)
+    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", demand)
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     Run.run_fasttrips(
@@ -24,7 +28,7 @@ def test_bunny():
         input_functions=os.path.join(INPUT_DEMAND, 'config_ft.py'),
         input_weights=os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
         output_dir=OUTPUT_DIR,
-        output_folder="test_bunny",
+        output_folder=demand,
         pathfinding_type="stochastic",
         capacity=False,
         iters=1,
