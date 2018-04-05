@@ -328,7 +328,7 @@ namespace fasttrips {
 
             // check if the hyperpath cost is affected -- this would be a state update
             double hyperpath_cost  = (-1.0*STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
-            if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
+            if (fabs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
             {
                 std::ostringstream oss;
                 oss << " (hp cost " << std::setprecision(6) << std::fixed << linkset.hyperpath_cost_ << "->" << hyperpath_cost << ")";
@@ -392,7 +392,7 @@ namespace fasttrips {
         }
 
         double hyperpath_cost  = (-1.0*STOCH_DISPERSION_)*log(linkset.sum_exp_cost_);
-        if (abs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
+        if (fabs(hyperpath_cost - linkset.hyperpath_cost_) > 0.0001)
         {
             std::ostringstream oss;
             oss << " (hp cost " << std::setprecision(6) << std::fixed << linkset.hyperpath_cost_ << "->" << hyperpath_cost << ")";
@@ -764,12 +764,12 @@ namespace fasttrips {
                     {
                         // check for fare transfer updates that may affect cost
                         const FarePeriod* last_trip_fp = last_trip->second.fare_period_;
-    
+
                         // for outbound, path enumeration goes forwards  so last_trip is the *previous* trip
                         // for inbound,  path enumeration goes backwards so last_trip is the *next* trip
                         double link_fare_pre_update = ss.link_fare_;
                         updateFare(path_spec, trace_file, pf, last_trip_fp, path_spec.outbound_, *path_so_far, ss, ssk_log[ssk]);
-                        if (abs(link_fare_pre_update - ss.link_fare_) > 0.001) {
+                        if (fabs(link_fare_pre_update - ss.link_fare_) > 0.001) {
                             // update the link          (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
                             ss.link_cost_ = ss.link_cost_ + (60.0/path_spec.value_of_time_)*(ss.link_ivtwt_)*(ss.link_fare_-link_fare_pre_update);
                         }
@@ -820,14 +820,13 @@ namespace fasttrips {
             else {
                 ss.probability_ = exp(-1.0*UTILS_CONVERSION_*ss.cost_) / sum_exp;
                 // this will be true if it's not a real number -- e.g. the denom was too small and we ended up doing 0/0
-                if (ss.probability_ != ss.probability_) {
-                    ss.probability_ = 0;
-                } else {
-                    int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
-                    // make cum_prob_i_ cumulative
-                    ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
-                    linkset.max_cum_prob_i_ = ss.cum_prob_i_;
-                }
+                //if (ss.probability_ != ss.probability_) {
+                //    ss.probability_ = 0;
+                //} else {
+                int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
+                // make cum_prob_i_ cumulative
+                ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
+                linkset.max_cum_prob_i_ = ss.cum_prob_i_;
             }
 
             // ready to log
