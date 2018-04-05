@@ -7,7 +7,7 @@ Run just the tests labeled basic using `pytest -v -m basic`
 """
 
 @pytest.mark.parametrize("demand", ["backward_bunnies","forward_bunnies"])
-@pytest.mark.parametrize("network", ["bunny_hop"])
+@pytest.mark.parametrize("network", ["bunny_hop","many_bunny_hops"])
 
 
 @pytest.mark.basic
@@ -28,12 +28,12 @@ def test_bunny(demand, network):
         input_functions=os.path.join(INPUT_DEMAND, 'config_ft.py'),
         input_weights=os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
         output_dir=OUTPUT_DIR,
-        output_folder=demand,
+        output_folder=demand+"-"+network,
         pathfinding_type="stochastic",
         capacity=False,
         iters=1,
         OVERLAP = "None",
-        dispersion=0.5
+        dispersion=0.2
     )
 
 

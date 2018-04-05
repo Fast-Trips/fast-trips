@@ -1,0 +1,2 @@
+vehicle_name,seated_capacity,standing_capacity,max_speed,acceleration,deceleration,dwell_formula
+bus,5,5,25,3.4,4.0,"0*[boards] + 0*[alights]"
