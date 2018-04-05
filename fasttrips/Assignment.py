@@ -122,7 +122,6 @@ class Assignment:
     #: Route choice configuration: IVT mins to utils conversion factor.
     #: Higher values result in higher differences in probabilities for a given  
     #: difference in genaralized costs. Must be nonnegative. 
-    #: If unknown use a value of 0.02 Float.
     UTILS_CONVERSION                = None
 
     #: In path-finding, suppress trying to adjust fares using transfer fare rules.
@@ -308,6 +307,7 @@ class Assignment:
                       'overlap_variable'                :'count',
                       'pathfinding_type'                :Assignment.PATHFINDING_TYPE_STOCHASTIC,
                       'pathweights_fixed_width'         :'False',
+                      'utils_conversion_factor'         :1.0,
                       'stochastic_dispersion'           :1.0,
                       'stochastic_max_stop_process_count':20,
                       'stochastic_pathset_size'         :1000,

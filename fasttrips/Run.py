@@ -172,6 +172,9 @@ def run_setup(input_network_dir,
     if "time_window" in kwargs.keys():
         fasttrips.Assignment.TIME_WINDOW         = datetime.timedelta(minutes=float(kwargs["time_window"]))
 
+    if "utils_conversion_factor" in kwargs.keys():
+        fasttrips.Assignment.UTILS_CONVERSION    = kwargs["utils_conversion_factor"]
+        
     if "dispersion" in kwargs.keys():
         fasttrips.Assignment.STOCH_DISPERSION    = kwargs["dispersion"]
 
