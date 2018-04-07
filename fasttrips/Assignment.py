@@ -891,7 +891,7 @@ class Assignment:
 
 
             # end condition for iterations loop
-            if capacity_gap < 0.001:
+            if capacity_gap < Assignment.CONVERGENCE_GAP:
                 break
 
             # end for loop
