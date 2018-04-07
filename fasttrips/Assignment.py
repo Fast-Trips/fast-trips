@@ -62,6 +62,8 @@ class Assignment:
     #: relaxed the model will terminate after the first iteration
     MAX_ITERATIONS                  = None
 
+    CONVERGENCE_GAP                 = None
+
     NETWORK_BUILD_DATE              = datetime.datetime.today()
     NETWORK_BUILD_DATE_START_TIME   = datetime.datetime.combine(NETWORK_BUILD_DATE, datetime.time())
     #: Find paths deterministically, using shortest path search based on travel time.
@@ -278,6 +280,7 @@ class Assignment:
                       'simulation'                      :'True',
                       'learning_convergence'            :'True',
                       'learning_rate'                   :'0.01',
+                      'convergence_gap'                 : 0.001,
                       'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
                       'create_skims'                    :'False',
@@ -323,6 +326,7 @@ class Assignment:
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
         PathSet.LEARN_ROUTES                     = parser.getboolean('fasttrips', 'learning_convergence')
         PathSet.LEARN_ROUTES_RATE                = parser.getfloat('fasttrips', 'learning_rate')
+        Assignment.CONVERGENCE_GAP               = parser.getfloat('fasttrips', 'convergence_gap')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
@@ -754,7 +758,7 @@ class Assignment:
 
 
             # end condition for iterations loop
-            if capacity_gap < 0.001:
+            if capacity_gap < Assignment.CONVERGENCE_GAP:
                 break
             
             # end for loop

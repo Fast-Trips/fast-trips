@@ -3,11 +3,11 @@ import os
 from fasttrips import Run
 
 
-def run_convergence():
+def test_convergence():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORKS = os.path.join(EXAMPLES_DIR, "networks")
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "demand_twopaths")
+    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, "demand", "demand_converge")
     OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
 
     scenario_dir = os.path.join(INPUT_NETWORKS, 'simple')
@@ -22,10 +22,10 @@ def run_convergence():
         output_folder="test_convergence",
         pathfinding_type="stochastic",
         capacity=True,
-        iters=4,
+        iters=10,
         dispersion=0.50
     )
 
 
 if __name__ == '__main__':
-    run_convergence()
+    test_convergence()
