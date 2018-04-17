@@ -6,8 +6,11 @@ from fasttrips import Run
 Run just the tests labeled basic using `pytest -v -m basic`
 """
 
-@pytest.mark.parametrize("demand", ["backward_bunnies","forward_bunnies"])
-@pytest.mark.parametrize("network", ["bunny_hop","many_bunny_hops"])
+demand_options  = ["backward_bunnies","forward_bunnies"]
+network_options = ["bunny_hop","many_bunny_hops"]
+
+@pytest.mark.parametrize("demand", demand_options)
+@pytest.mark.parametrize("network", network_options)
 
 
 @pytest.mark.basic
@@ -33,9 +36,12 @@ def test_bunny(demand, network):
         capacity=False,
         iters=1,
         OVERLAP = "None",
-        dispersion=0.2
+        dispersion=0.5
     )
 
 
 if __name__ == '__main__':
-    test_bunny()
+    import itertools
+    for demand,network in list(itertools.product(demand_options, network_options)):
+        print("running %s %s" % (demand,network))
+        test_bunny(demand, network)
