@@ -823,7 +823,7 @@ namespace fasttrips {
                 if (ss.probability_ != ss.probability_) {
                     ss.probability_ = 0;
                 } else {
-                    int prob_i      = static_cast<int>(RAND_MAX*ss.probability_);
+                    int prob_i      = static_cast<int>(fasttrips::MAX_COST*ss.probability_);
                     // make cum_prob_i_ cumulative
                     ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
                     linkset.max_cum_prob_i_ = ss.cum_prob_i_;

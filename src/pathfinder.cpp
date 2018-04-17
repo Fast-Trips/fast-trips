@@ -2019,7 +2019,7 @@ namespace fasttrips {
                 }
 
                 // why?  :p
-                int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
+                int prob_i = static_cast<int>(MAX_COST*paths_iter->second.probability_);
 
                 cum_prob += prob_i;
                 paths_iter->second.prob_i_ = cum_prob;
