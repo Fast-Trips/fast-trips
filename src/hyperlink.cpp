@@ -778,7 +778,7 @@ namespace fasttrips {
 
                 // calculating denominator
                 ss.cum_prob_i_ = 0;
-                sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                sum_exp += exp(-1.0*ss.cost_/STOCH_DISPERSION_*);
                 valid_links += 1;
             }
             else
@@ -818,7 +818,7 @@ namespace fasttrips {
                 linkset.max_cum_prob_i_ = ss.cum_prob_i_;
             }
             else {
-                ss.probability_ = exp(-1.0*STOCH_DISPERSION_*ss.cost_) / sum_exp;
+                ss.probability_ = exp(-1.0*ss.cost_/STOCH_DISPERSION_) / sum_exp;
                 // this will be true if it's not a real number -- e.g. the denom was too small and we ended up doing 0/0
                 if (ss.probability_ != ss.probability_) {
                     ss.probability_ = 0;
