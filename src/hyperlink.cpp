@@ -778,7 +778,7 @@ namespace fasttrips {
 
                 // calculating denominator
                 ss.cum_prob_i_ = 0;
-                sum_exp += exp(-1.0*ss.cost_/STOCH_DISPERSION_*);
+                sum_exp += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
                 valid_links += 1;
             }
             else
@@ -790,7 +790,7 @@ namespace fasttrips {
                 else {
                     // calculating denominator
                     ss.cum_prob_i_ = 0;
-                    sum_exp += exp(-1.0*STOCH_DISPERSION_*ss.cost_);
+                    sum_exp += exp(-1.0*ss.cost_/STOCH_DISPERSION_);
                     valid_links += 1;
                 }
             }
