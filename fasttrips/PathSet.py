@@ -667,7 +667,7 @@ class PathSet:
         return path2
 
     @staticmethod
-    def calculate_cost(UTILS_CONVERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
+    def calculate_cost(STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
                        trip_list_df, routes, tazs, transfers, stops=None, reset_bump_iter=False):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
@@ -1102,7 +1102,7 @@ class PathSet:
             FastTripsLogger.debug("calculate_cost: pathset_paths_df trace\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 
         ###################### logsum and probabilities
-        pathset_paths_df["logsum_component"] = np.exp((UTILS_CONVERSION)*(-1.0*pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS]))
+        pathset_paths_df["logsum_component"] = np.exp((-1.0*pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS])/STOCH_DISPERSION)
 
         # sum across all paths
         pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,

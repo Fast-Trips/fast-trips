@@ -1756,7 +1756,7 @@ class Assignment:
         ######################################################################################################
         FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
         (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-            Assignment.UTILS_CONVERSION, pathset_paths_df, pathset_links_df, FT.veh_trips_df,
+            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, FT.veh_trips_df,
             FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
             reset_bump_iter=simulation_iteration==0)
 
@@ -1824,7 +1824,7 @@ class Assignment:
             ######################################################################################################
             FastTripsLogger.info("  Step 3. Calculate costs and probabilities for all pathset paths")
             (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-                Assignment.UTILS_CONVERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
+                Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
                 FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
                 reset_bump_iter=simulation_iteration == 0)
 
