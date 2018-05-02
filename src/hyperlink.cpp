@@ -823,7 +823,7 @@ namespace fasttrips {
                 if (ss.probability_ != ss.probability_) {
                     ss.probability_ = 0;
                 } else {
-                    int prob_i      = static_cast<int>(fasttrips::MAX_COST*ss.probability_);
+                    int prob_i      = static_cast<int>(INT_MULT*ss.probability_);
                     // make cum_prob_i_ cumulative
                     ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
                     linkset.max_cum_prob_i_ = ss.cum_prob_i_;
@@ -850,7 +850,10 @@ namespace fasttrips {
     {
         const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
 
-        int random_num = rand();
+        int random_num;
+        do {
+            random_num = rand();
+        } while (random_num >= INT_MULT);
         if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
 
         // mod it by max prob
