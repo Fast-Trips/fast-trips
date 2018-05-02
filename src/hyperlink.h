@@ -35,7 +35,6 @@ namespace fasttrips {
     // This also creates an issue with probabilities not adding up to 1.
     /// Hyperpath minimum cost (zero and negative costs are problematic)
     //const double MIN_COST = 0.001;
-    const double INT_MULT = 32767;
 
     bool isTrip(const int& mode);
 
