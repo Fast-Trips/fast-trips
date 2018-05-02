@@ -103,7 +103,7 @@ namespace fasttrips {
         int trip_id_num;
 
         trip_id_file >> string_trip_id_num >> string_trip_id;
-        if (process_num_ <= 1) { 
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_trip.str() << ": ";
             std::cout << "[" << string_trip_id_num   << "] ";
             std::cout << "[" << string_trip_id       << "] ";
@@ -161,7 +161,7 @@ namespace fasttrips {
         int route_id_num;
 
         route_id_file >> string_route_id_num >> string_route_id;
-        if (process_num_ <= 1) { 
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_route.str() << ": ";
             std::cout << "[" << string_route_id_num   << "] ";
             std::cout << "[" << string_route_id       << "] ";
@@ -547,7 +547,7 @@ namespace fasttrips {
 
         transfer_links_o_d_.clear();
         transfer_links_d_o_.clear();
-        
+
         trip_info_.clear();
         trip_stop_times_.clear();
         stop_trip_times_.clear();
@@ -559,7 +559,7 @@ namespace fasttrips {
         stop_num_to_stop_.clear();
         route_num_to_str_.clear();
         mode_num_to_str_.clear();
-        
+
         bump_wait_.clear();
     }
 
@@ -1908,10 +1908,7 @@ namespace fasttrips {
         PathSet& paths,
         int max_prob_i) const
     {
-        int random_num;
-        do {
-            random_num = rand();
-        } while (random_num >= INT_MULT);
+        int random_num = rand();
         if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
 
         // mod it by max prob
