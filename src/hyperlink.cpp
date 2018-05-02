@@ -814,7 +814,7 @@ namespace fasttrips {
             if (ss.cum_prob_i_ == -1) {
                 // marked as invalid
             } else if (valid_links == 1) {
-                ss.cum_prob_i_          = 1.0;
+                ss.cum_prob_i_          = 1.0*fasttrips::INT_MULT;
                 linkset.max_cum_prob_i_ = ss.cum_prob_i_;
             }
             else {
@@ -823,11 +823,14 @@ namespace fasttrips {
                 if (ss.probability_ != ss.probability_) {
                     ss.probability_ = 0;
                 } else {
-                    int prob_i      = static_cast<int>(fasttrips::MAX_COST*ss.probability_);
+                    int prob_i      = static_cast<int>(round(fasttrips::INT_MULT*ss.probability_));
                     // make cum_prob_i_ cumulative
                     ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
+                    printf("prob_i: %d  ", prob_i);
                     linkset.max_cum_prob_i_ = ss.cum_prob_i_;
                 }
+            //printf("probability,cum_prob_i, max_cum_prob_i: %2.6f %d %d",ss.probability_, ss.cum_prob_i_, linkset.max_cum_prob_i_);
+            //getchar();
             }
 
             // ready to log
@@ -850,11 +853,14 @@ namespace fasttrips {
     {
         const LinkSet& linkset = (prev_link && !isTrip(prev_link->deparr_mode_) ? linkset_trip_ : linkset_nontrip_);
 
-        int random_num = rand();
+        int random_num  = rand();
+        //printf("INIT: %d, ",random_num);
         if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
 
         // mod it by max prob
         random_num = random_num % linkset.max_cum_prob_i_;
+        //printf("CUMPROB; NewRand: %d %d",linkset.max_cum_prob_i_,random_num);
+        //getchar();
         if (path_spec.trace_) { trace_file << random_num << std::endl; }
 
         for (CostToStopState::const_iterator iter = linkset.cost_map_.begin(); iter != linkset.cost_map_.end(); ++iter)

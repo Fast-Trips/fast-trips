@@ -26,6 +26,11 @@ namespace fasttrips {
 
     /// Hyperpath cost when no links are there
     const double MAX_COST = 999999;
+
+    /// What we multiply the fractional cumulative probabilities by to get an integer to compare with random numbers
+    /// Must be less than, but close to RAND_MAX for the system, which is 32767 on windows
+    const double INT_MULT = 10000;
+
     // Commenting MIN_COST out for now. If gencost is calculated in terms of IVT mins, negative costs unlikely.
     // This also creates an issue with probabilities not adding up to 1.
     /// Hyperpath minimum cost (zero and negative costs are problematic)
