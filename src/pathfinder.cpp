@@ -1908,7 +1908,10 @@ namespace fasttrips {
         PathSet& paths,
         int max_prob_i) const
     {
-        int random_num = rand();
+        int random_num;
+        do {
+            random_num = rand();
+        } while (random_num >= INT_MULT);
         if (path_spec.trace_) { trace_file << "random_num " << random_num << " -> "; }
 
         // mod it by max prob
@@ -2019,7 +2022,7 @@ namespace fasttrips {
                 }
 
                 // why?  :p
-                int prob_i = static_cast<int>(MAX_COST*paths_iter->second.probability_);
+                int prob_i = static_cast<int>(fasttrips::INT_MULT*paths_iter->second.probability_);
 
                 cum_prob += prob_i;
                 paths_iter->second.prob_i_ = cum_prob;
