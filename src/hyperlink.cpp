@@ -826,7 +826,6 @@ namespace fasttrips {
                     int prob_i      = static_cast<int>(round(fasttrips::INT_MULT*ss.probability_));
                     // make cum_prob_i_ cumulative
                     ss.cum_prob_i_          = linkset.max_cum_prob_i_ + prob_i;
-                    printf("prob_i: %d  ", prob_i);
                     linkset.max_cum_prob_i_ = ss.cum_prob_i_;
                 }
             //printf("probability,cum_prob_i, max_cum_prob_i: %2.6f %d %d",ss.probability_, ss.cum_prob_i_, linkset.max_cum_prob_i_);
