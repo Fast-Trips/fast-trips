@@ -300,7 +300,7 @@ class Assignment:
                       # pathfinding
                       'max_num_paths'                   :-1,
                       'min_path_probability'            :0.005,
-                      'min_transfer_penalty'            :1.0,
+                      'min_transfer_penalty'            :0.1,
                       'overlap_chunk_size'              :500,
                       'overlap_scale_parameter'         :1.0,
                       'overlap_split_transit'           :'False',
