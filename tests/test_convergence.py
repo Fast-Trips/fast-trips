@@ -1,8 +1,8 @@
 import os
-
+import pytest
 from fasttrips import Run
 
-
+@pytest.mark.skip(reason="Convergence not yet implemented")
 def run_convergence():
     EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
@@ -23,7 +23,8 @@ def run_convergence():
         pathfinding_type="stochastic",
         capacity=True,
         iters=4,
-        dispersion=0.50
+        dispersion=0.50,
+        test_size= 10,
     )
 
 

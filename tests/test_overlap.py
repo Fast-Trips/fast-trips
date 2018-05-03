@@ -1,181 +1,35 @@
 import os
-
+import pytest
 from fasttrips import Run
 
-def test_overlap_none():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
+OVERLAP_VARIABLES = ["None","count","distance","time"]
+
+@pytest.mark.parametrize("overlap_var", OVERLAP_VARIABLES)
+@pytest.mark.parametrize("split_links", [False, True])
+
+
+def test_overlap(overlap_var, split_links ):
+    EXAMPLES_DIR  = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
     INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
+    INPUT_DEMAND  = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
+    OUTPUT_DIR    = os.path.join(EXAMPLES_DIR, "output")
 
-    OVERLAP_TYPE   = "None"
-    
+
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
         input_demand_dir = INPUT_DEMAND,
         run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
         input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
         output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
+        output_folder    = "test_overlap_var-%s_split-%s" % (overlap_var, split_links),
+        overlap_variable = overlap_var,
+        max_stop_process_count = 2,
+        pf_iters         = 2,
         pathfinding_type = "stochastic",
+        overlap_split_transit = split_links,
         iters            = 1,
         dispersion       = 0.50,
-        test_size        = 100 )
-    
-    assert r["passengers_arrived"] > 0
+        test_size        = 2)
 
-
-def test_overlap_count():
-
-    EXAMPLES_DIR   = os.path.join(os.getcwd(),"fasttrips","Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR,'demand',"demand_reg")
-    OUTPUT_DIR     = os.path.join(EXAMPLES_DIR,"output")
-
-    OVERLAP_TYPE   = "count"
-    
-    r = Run.run_fasttrips(
-        input_network_dir= INPUT_NETWORK,
-        input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
-        pathfinding_type = "stochastic",
-        iters            = 1,
-        dispersion       = 0.50,
-        test_size        = 100 )
-    
-    assert r["passengers_arrived"] > 0
-
-    
-def test_overlap_distance():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
-
-    OVERLAP_TYPE   = "distance"
-    
-    r = Run.run_fasttrips(
-        input_network_dir= INPUT_NETWORK,
-        input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
-        pathfinding_type = "stochastic",
-        iters            = 1,
-        dispersion       = 0.50,
-        test_size        = 100 )
-    
-    assert r["passengers_arrived"] > 0
-
-    
-def test_overlap_time():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
-
-    OVERLAP_TYPE   = "time"
-    
-    r = Run.run_fasttrips(
-        input_network_dir= INPUT_NETWORK,
-        input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
-        pathfinding_type = "stochastic",
-        iters            = 1,
-        dispersion       = 0.50,
-        test_size        = 100 )
-    
-    assert r["passengers_arrived"] > 0
-
-
-def test_overlap_count_with_split():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
-
-    OVERLAP_TYPE   = "count"
-    
-    r = Run.run_fasttrips(
-        input_network_dir= INPUT_NETWORK,
-        input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s_wSplit" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
-        pathfinding_type = "stochastic",
-        overlap_split_transit = True,
-        iters            = 1,
-        dispersion       = 0.50,
-        test_size        = 100 )
-    
-    assert r["passengers_arrived"] > 0
-
-    
-def test_overlap_distance_with_split():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
-
-    OVERLAP_TYPE   = "distance"
-    
-    r = Run.run_fasttrips(
-        input_network_dir= INPUT_NETWORK,
-        input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s_wSplit" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
-        pathfinding_type = "stochastic",
-        overlap_split_transit = True,
-        iters            = 1,
-        dispersion       = 0.50,
-        test_size        = 100 )
-    
-    assert r["passengers_arrived"] > 0
-    
-    
-def test_overlap_time_with_split():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR = os.path.join(EXAMPLES_DIR, "output")
-
-    OVERLAP_TYPE   = "time"
-    
-    r = Run.run_fasttrips(
-        input_network_dir= INPUT_NETWORK,
-        input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_overlap_%s_wSplit" % (OVERLAP_TYPE),
-        overlap_variable = OVERLAP_TYPE,
-        overlap_split_transit = True,
-        pathfinding_type = "stochastic",
-        iters            = 1,
-        dispersion       = 0.50,
-        test_size        = 100 )
-    
     assert r["passengers_arrived"] > 0
