@@ -12,7 +12,7 @@ def test_dispersion(dispersion_parameter):
     INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
     OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
 
-    full_output_dir = os.path.join(OUTPUT_DIR, "test_dispers_%4.2f" % d)
+    full_output_dir = os.path.join(OUTPUT_DIR, "test_dispers_%4.2f" % dispersion_parameter)
     if not os.path.exists(full_output_dir):
         os.mkdir(full_output_dir)
 
@@ -32,3 +32,7 @@ def test_dispersion(dispersion_parameter):
         test_size        = 2)
 
     assert r["passengers_arrived"] > 0
+
+if __name__ == "__main__":
+    for dp in [1.0,0.3]:
+        test_dispersion(dp)
