@@ -436,7 +436,7 @@ namespace fasttrips {
             PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_ = new Attributes();
             // TODO: make this configurable
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["walk_time_min"   ] = 0.0;
-            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 1.0;
+            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 0.1;
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["elevation_gain"  ] = 0.0;
         }
 
@@ -1056,7 +1056,7 @@ namespace fasttrips {
             if (path_spec.hyperpath_)
             {
                 Attributes link_attr            = transfer_it->second;
-                link_attr["transfer_penalty"]   = 1.0;
+                link_attr["transfer_penalty"]   = 0.1; // TODO: make configurable or base off of IVT coefficient
                 link_cost                       = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, link_attr);
                 cost                            = nonwalk_label + link_cost;
             }
@@ -1471,7 +1471,7 @@ namespace fasttrips {
                     if ((best_guess_link.deparr_mode_ == MODE_ACCESS) || (best_guess_link.deparr_mode_ == MODE_EGRESS)) {
                         link_attr["transfer_penalty"] = 0.0;
                     } else {
-                        link_attr["transfer_penalty"] = 1.0;
+                        link_attr["transfer_penalty"] = 0.1; //TODO: make configurable or based off of IVT coeff
                     }
 
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
