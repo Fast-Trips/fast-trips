@@ -1246,7 +1246,8 @@ namespace fasttrips {
                 // set label_cutoff
                 double low_cost = stop_states[end_taz_id].hyperpathCost(false);
                 // estimate of the max path cost that would have probability > MIN_PATH_PROBABILITY
-                double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))/Hyperlink::STOCH_DISPERSION_;
+
+                double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))*Hyperlink::STOCH_DISPERSION_;
                 est_max_path_cost = std::min(est_max_path_cost, max_cost);
 
             } // end iteration through links for the given supply mode
@@ -1982,7 +1983,7 @@ namespace fasttrips {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
                         pathset[new_path] = pi;
 
-                        logsum += exp(-1.0*Hyperlink::UTILS_CONVERSION_*new_path.cost());
+                        logsum += exp(-1.0*new_path.cost()/Hyperlink::STOCH_DISPERSION_);
                     }
                     if (path_spec.trace_) { trace_file << "pathsset size = " << pathset.size() << " new? " << (paths_iter == pathset.end()) << std::endl; }
                 } else {
@@ -2005,7 +2006,7 @@ namespace fasttrips {
 
             for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*Hyperlink::UTILS_CONVERSION_*paths_iter->first.cost())/logsum;
+                paths_iter->second.probability_ = exp(-1.0*paths_iter->first.cost()/Hyperlink::STOCH_DISPERSION_)/logsum;
                 path_count += 1;
 
                 // Is this under the min path probability AND we have enough paths?
