@@ -58,7 +58,9 @@ class TAZ:
     #: fasttrips Walk access links column name: Employment Density, employees per square mile. Float.
     WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY       = 'employment_density'
     #: fasttrips Walk access links column name: Retail Density, employees per square mile. Float.
-    WALK_ACCESS_COLUMN_RETAIL_DENSITY       = 'retail_density'
+    #WALK_ACCESS_COLUMN_RETAIL_DENSITY       = 'retail_density'
+    #: fasttrips Walk access links column name: Employment Density, employees per square mile. Float.
+    WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY       = 'employment_density'
     #: fasttrips Walk access links column name: Auto Capacity, vehicles per hour per mile. Float.
     WALK_ACCESS_COLUMN_AUTO_CAPACITY        = 'auto_capacity'
     #: fasttrips Walk access links column name: Indirectness, ratio of Manhattan distance to crow-fly distance. Float.
