@@ -378,20 +378,6 @@ class Assignment:
         PathSet.ARRIVE_LATE_ALLOWED_MIN             = datetime.timedelta(
                                             minutes = parser.getfloat  ('pathfinding','arrive_late_allowed_min'))
 
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            PathSet.DEPART_EARLY_PENALTY_LOG_BASE = parser.getfloat('pathfinding', 'depart_early_log_base')
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGARITHMIC_GROWTH_MODEL:
-            PathSet.ARRIVE_LATE_PENALTY_LOG_BASE    = parser.getfloat('pathfinding', 'arrive_late_log_base')
-
-        if PathSet.DEPART_EARLY_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            PathSet.DEPART_EARLY_LOGIT_MAX          = parser.getfloat('pathfinding', 'depart_early_logistic_max_value')
-            PathSet.DEPART_EARLY_SIGMOID_MID        = parser.getfloat('pathfinding', 'depart_early_logistic_sigmoid_mid')
-
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE == PathSet.LOGISTIC_GROWTH_MODEL:
-            PathSet.ARRIVE_LATE_LOGIT_MAX           = parser.getfloat('pathfinding', 'arrive_late_logistic_max_value')
-            PathSet.ARRIVE_LATE_SIGMOID_MID         = parser.getfloat('pathfinding', 'arrive_late_logistic_sigmoid_mid')
-
         if Assignment.PATHFINDING_TYPE not in [Assignment.PATHFINDING_TYPE_STOCHASTIC, \
                                                Assignment.PATHFINDING_TYPE_DETERMINISTIC, \
                                                Assignment.PATHFINDING_TYPE_READ_FILE]:
@@ -408,10 +394,6 @@ class Assignment:
             FastTripsLogger.fatal(msg)
             raise ConfigurationError(config_fullpath, msg)
 
-        if PathSet.ARRIVE_LATE_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS or PathSet.DEPART_EARLY_GROWTH_TYPE not in PathSet.PENALTY_GROWTH_MODELS:
-            msg = "pathfinding.depart_early_growth_type or pathfinding.arrive_late_growth_type [{}, {}] not defined. Expected values: {}".format(PathSet.DEPART_EARLY_GROWTH_TYPE, PathSet.ARRIVE_LATE_GROWTH_TYPE, PathSet.PENALTY_GROWTH_MODELS)
-            FastTripsLogger.fatal(msg)
-            raise ConfigurationError(config_fullpath, msg)
 
     @staticmethod
     def read_weights(weights_file = INPUT_WEIGHTS):
@@ -585,8 +567,8 @@ class Assignment:
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds() / 60.0,
                                          Assignment.BUMP_BUFFER.total_seconds() / 60.0,
                                          Assignment.UTILS_CONVERSION,
-                                         PathSet.DEPART_EARLY_MIN.total_seconds() / 60.0,
-                                         PathSet.ARRIVE_LATE_MIN.total_seconds() / 60.0,
+                                         PathSet.DEPART_EARLY_ALLOWED_MIN.total_seconds() / 60.0,
+                                         PathSet.ARRIVE_LATE_ALLOWED_MIN.total_seconds() / 60.0,
                                          Assignment.STOCH_PATHSET_SIZE,
                                          Assignment.STOCH_DISPERSION,
                                          Assignment.STOCH_MAX_STOP_PROCESS_COUNT,

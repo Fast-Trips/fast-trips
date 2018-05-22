@@ -100,17 +100,6 @@ class PathSet:
         LOGISTIC_GROWTH_MODEL,
     ]
 
-    # For Logarithmic-based penalty models, we need a log base factor
-    DEPART_EARLY_PENALTY_LOG_BASE   = None
-    ARRIVE_LATE_PENALTY_LOG_BASE    = None
-
-    # For Logistic-based penalty models, we need the following factors
-    DEPART_EARLY_LOGIT_MAX          = None
-    DEPART_EARLY_SIGMOID_MID        = None
-
-    ARRIVE_LATE_LOGIT_MAX           = None
-    ARRIVE_LATE_SIGMOID_MID         = None
-
     #: Weights column: User Class
     WEIGHTS_COLUMN_USER_CLASS       = "user_class"
     #: Weights column: Purpose
