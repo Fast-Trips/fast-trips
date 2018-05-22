@@ -855,7 +855,7 @@ namespace fasttrips {
         NamedWeights::const_iterator ivt_weight = weights.find(ivt_str);
         if ((fare_attr != attributes.end()) && (ivt_weight != weights.end())) {
             //       (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
-            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second * fare_attr->second;
+            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second.weight_ * fare_attr->second;
 
             D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
@@ -1511,7 +1511,7 @@ namespace fasttrips {
                     //update link ivtwt so that it is available when fares/fare-utils calculations are updated
                     static const std::string ivt_str("in_vehicle_time_min");
                     NamedWeights::const_iterator ivt_weight = named_weights.find(ivt_str);
-                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second;
+                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second.weight_;
 
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
