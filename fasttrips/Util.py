@@ -454,6 +454,12 @@ class Util:
             df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, result_col] = \
                 Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
 
+        # TODO: option: make these more subtle?
+        # missed_xfer has huge cost
+        df.loc[df['missed_xfer']==1, result_col] = PathSet.HUGE_COST
+        # bump iter means over capacity
+        df.loc[df['bump_iter']>=0, result_col] = PathSet.HUGE_COST
+
         # negative cost is invalid
         if (df[result_col] < 0).any():
             FastTripsLogger.warn("---Pathweight costs has negative values. Setting to zero.---\n{}".format(

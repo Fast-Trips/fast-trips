@@ -1186,12 +1186,6 @@ class PathSet:
         # calculate link cost a function of the variable, weight and weight type
         Util.calculate_pathweight_costs(cost_df, Assignment.SIM_COL_PAX_COST)
 
-        # TODO: option: make these more subtle?
-        # missed_xfer has huge cost
-        cost_df.loc[cost_df[Assignment.SIM_COL_MISSED_XFER  ]==1, Assignment.SIM_COL_PAX_COST] = PathSet.HUGE_COST
-        # bump iter means over capacity
-        cost_df.loc[cost_df[Assignment.SIM_COL_PAX_BUMP_ITER]>=0, Assignment.SIM_COL_PAX_COST] = PathSet.HUGE_COST
-
         cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                              Passenger.PF_COL_PATH_NUM,
