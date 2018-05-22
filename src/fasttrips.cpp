@@ -28,10 +28,10 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     int        max_num_paths;
     double     min_path_probability;
 
-    if (!PyArg_ParseTuple(args, "ddddidiiiid", &time_window, &bump_buffer, &utils_conversion, &depart_early_allowed_min, &arrive_late_allowed_min,
-                                             &stoch_pathset_size, &stoch_dispersion, &stoch_max_stop_process_count,
-                                             &transfer_fare_ignore_pf, &transfer_fare_ignore_pe,
-                                             &max_num_paths, &min_path_probability)) {
+    if (!PyArg_ParseTuple(args, "dddddidiiiid", &time_window, &bump_buffer, &utils_conversion, &depart_early_allowed_min,
+                                               &arrive_late_allowed_min, &stoch_pathset_size, &stoch_dispersion, 
+                                               &stoch_max_stop_process_count, &transfer_fare_ignore_pf, 
+                                               &transfer_fare_ignore_pe, &max_num_paths, &min_path_probability)) {
         return NULL;
     }
     pathfinder.initializeParameters(time_window, bump_buffer, utils_conversion, depart_early_allowed_min, arrive_late_allowed_min, stoch_pathset_size, 
