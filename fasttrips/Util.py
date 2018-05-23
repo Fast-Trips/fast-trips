@@ -456,9 +456,12 @@ class Util:
 
         # TODO: option: make these more subtle?
         # missed_xfer has huge cost
-        df.loc[df['missed_xfer']==1, result_col] = PathSet.HUGE_COST
+        if 'missed_xfer' in df:
+            df.loc[df['missed_xfer']==1, result_col] = PathSet.HUGE_COST
+
         # bump iter means over capacity
-        df.loc[df['bump_iter']>=0, result_col] = PathSet.HUGE_COST
+        if 'bump_iter' in df:
+            df.loc[df['bump_iter']>=0, result_col] = PathSet.HUGE_COST
 
         # negative cost is invalid
         if (df[result_col] < 0).any():
