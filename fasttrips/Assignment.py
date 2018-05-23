@@ -1514,7 +1514,7 @@ class Assignment:
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
-    def load_passengers_on_vehicles_with_cap(FT, iteration, pathfinding_iteration, simulation_iteration,
+    def load_passengers_on_vehicles_with_cap(iteration, pathfinding_iteration, simulation_iteration,
                                              trips, pathset_paths_df, pathset_links_df, veh_loaded_df):
         """
         Check if we have boards on over-capacity vehicles.  Mark them and mark the boards.
@@ -1917,7 +1917,7 @@ class Assignment:
             FastTripsLogger.info("  Step 5. Put passenger paths on transit vehicles to get vehicle boards/alights/load and assess capacity constraints")
 
             (pathset_paths_df, pathset_links_df, veh_trips_df) = Assignment.load_passengers_on_vehicles_with_cap(
-                FT, iteration, pathfinding_iteration, simulation_iteration,
+                iteration, pathfinding_iteration, simulation_iteration,
                 FT.trips, pathset_paths_df, pathset_links_df, veh_trips_df)
 
             ######################################################################################################
