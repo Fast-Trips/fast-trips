@@ -57,7 +57,7 @@ def run_setup(input_network_dir,
 
     Unnamed keyword arguments:
         num_trips -- if specified, will process this number of trips and ignore the rest
-
+        pf_iters -- Integer. If specified, will set the maximum number of pathfinding iterations(default: 10)
         dispersion -- theta parameter; essentially the nesting parameter. Good value is between 0.5-1. (default: 1.0)
         max_stop_process_count = maximum number of times you will re-processe a node (default: 20)
         capacity -- Boolean to activate capacity constraints (default: False)
@@ -131,6 +131,9 @@ def run_setup(input_network_dir,
     if iters > 0:
         fasttrips.Assignment.MAX_ITERATIONS          = int(iters)
 
+    if kwargs.has_key("pf_iters"):
+            fasttrips.Assignment.MAX_PF_ITERATIONS = kwargs["pf_iters"]
+
     if kwargs.has_key("number_of_processes"):
         fasttrips.Assignment.NUMBER_OF_PROCESSES = kwargs["number_of_processes"]
 
@@ -171,6 +174,9 @@ def run_setup(input_network_dir,
 
     if "time_window" in kwargs.keys():
         fasttrips.Assignment.TIME_WINDOW         = datetime.timedelta(minutes=float(kwargs["time_window"]))
+
+    if "utils_conversion_factor" in kwargs.keys():
+        fasttrips.Assignment.UTILS_CONVERSION    = kwargs["utils_conversion_factor"]
 
     if "dispersion" in kwargs.keys():
         fasttrips.Assignment.STOCH_DISPERSION    = kwargs["dispersion"]

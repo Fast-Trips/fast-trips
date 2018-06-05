@@ -26,8 +26,15 @@ namespace fasttrips {
 
     /// Hyperpath cost when no links are there
     const double MAX_COST = 999999;
+
+    /// What we multiply the fractional cumulative probabilities by to get an integer to compare with random numbers
+    /// Must be less than, but close to RAND_MAX for the system, which is 32767 on windows
+    const double INT_MULT = 10000;
+
+    // Commenting MIN_COST out for now. If gencost is calculated in terms of IVT mins, negative costs unlikely.
+    // This also creates an issue with probabilities not adding up to 1.
     /// Hyperpath minimum cost (zero and negative costs are problematic)
-    const double MIN_COST = 0.001;
+    //const double MIN_COST = 0.001;
 
     bool isTrip(const int& mode);
 
@@ -87,6 +94,8 @@ namespace fasttrips {
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a>
         /// This could be configured per stop in the future.
         static double TIME_WINDOW_;
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.UTILS_CONVERSION">fasttrips.Assignment.UTILS_CONVERSION</a>
+        static double UTILS_CONVERSION_;
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_DISPERSION">fasttrips.Assignment.STOCH_DISPERSION</a>
         static double STOCH_DISPERSION_;
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING">fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING</a>

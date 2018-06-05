@@ -112,6 +112,7 @@ namespace fasttrips {
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
         double  link_fare_;             ///< Link fare. Financial cost of the link.
         double  link_cost_;             ///< Link generalized cost.
+        double  link_ivtwt_;            ///< Link in-vehicle time path weight.
         double  link_dist_;             ///< Link distance, in units of shape_dist_traveled.
         double  cost_;                  ///< Cost from previous link(s) and this link together.
         int     iteration_;             ///< Labeling iteration that generated this stop state.
@@ -136,6 +137,7 @@ namespace fasttrips {
             link_time_    (0),
             link_fare_    (0),
             link_cost_    (0),
+			link_ivtwt_   (0),
             link_dist_    (0),
             cost_         (0),
             iteration_    (-1),
@@ -159,6 +161,7 @@ namespace fasttrips {
             double cost,
             int    iteration,
             double arrdep_time,
+			double link_ivtwt,
             const FarePeriod* fp=NULL) :
             deparr_time_  (deparr_time),
             deparr_mode_  (deparr_mode),
@@ -169,6 +172,7 @@ namespace fasttrips {
             link_time_    (link_time),
             link_fare_    (link_fare),
             link_cost_    (link_cost),
+			link_ivtwt_   (link_ivtwt),
             link_dist_    (link_dist),
             cost_         (cost),
             iteration_    (iteration),

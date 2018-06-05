@@ -1,5 +1,5 @@
 import os
-
+import pytest
 from fasttrips import Run
 
 
@@ -21,12 +21,16 @@ def test_psrc():
         input_functions=os.path.join(INPUT_DEMAND, 'config_ft.py'),
         input_weights=os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
         output_dir=OUTPUT_DIR,
+        max_stop_process_count = 2,
+        pf_iters = 2,
+        overlap_variable = "None",
         output_folder="test_psrc",
         pathfinding_type="stochastic",
         capacity=True,
         iters=1,
         OVERLAP = "None",
-        dispersion=1.0
+        dispersion=1.0,
+        test_size  = 2
     )
 
 

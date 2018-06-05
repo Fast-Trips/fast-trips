@@ -1,0 +1,10 @@
+[fasttrips]
+network_build_date            = 06/30/2015
+trace_ids                     = [('frogger','bounce_1')]
+number_of_processes           = 1
+debug_output_columns          = True
+
+[pathfinding]
+utils_conversion_factor       = 1
+user_class_function           = generic_user_class
+pathweights_fixed_width       = False

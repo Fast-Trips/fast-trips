@@ -21,7 +21,7 @@ namespace fasttrips {
     typedef struct {
         int     count_;             ///< Number of times this path was generated (for stochastic)
         double  probability_;       ///< Probability of this stop          (for stochastic)
-        int     prob_i_;            ///< Cumulative probability * RAND_MAX (for stochastic)
+        int     prob_i_;            ///< Cumulative probability * INT_MULT (for stochastic)
     } PathInfo;
 
     // Forward declarations

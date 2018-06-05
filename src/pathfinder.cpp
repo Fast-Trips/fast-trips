@@ -56,6 +56,7 @@ namespace fasttrips {
     void PathFinder::initializeParameters(
         double     time_window,
         double     bump_buffer,
+        double     utils_conversion,
         int        stoch_pathset_size,
         double     stoch_dispersion,
         int        stoch_max_stop_process_count,
@@ -72,6 +73,7 @@ namespace fasttrips {
 
         Hyperlink::TIME_WINDOW_         = time_window;
         Hyperlink::STOCH_DISPERSION_    = stoch_dispersion;
+        Hyperlink::UTILS_CONVERSION_    = utils_conversion;
         Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ = transfer_fare_ignore_pf;
         Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_    = transfer_fare_ignore_pe;
     }
@@ -101,7 +103,7 @@ namespace fasttrips {
         int trip_id_num;
 
         trip_id_file >> string_trip_id_num >> string_trip_id;
-        if (process_num_ <= 1) { 
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_trip.str() << ": ";
             std::cout << "[" << string_trip_id_num   << "] ";
             std::cout << "[" << string_trip_id       << "] ";
@@ -159,7 +161,7 @@ namespace fasttrips {
         int route_id_num;
 
         route_id_file >> string_route_id_num >> string_route_id;
-        if (process_num_ <= 1) { 
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_route.str() << ": ";
             std::cout << "[" << string_route_id_num   << "] ";
             std::cout << "[" << string_route_id       << "] ";
@@ -434,7 +436,7 @@ namespace fasttrips {
             PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_ = new Attributes();
             // TODO: make this configurable
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["walk_time_min"   ] = 0.0;
-            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 1.0;
+            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 0.1;
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["elevation_gain"  ] = 0.0;
         }
 
@@ -545,7 +547,7 @@ namespace fasttrips {
 
         transfer_links_o_d_.clear();
         transfer_links_d_o_.clear();
-        
+
         trip_info_.clear();
         trip_stop_times_.clear();
         stop_trip_times_.clear();
@@ -557,7 +559,7 @@ namespace fasttrips {
         stop_num_to_stop_.clear();
         route_num_to_str_.clear();
         mode_num_to_str_.clear();
-        
+
         bump_wait_.clear();
     }
 
@@ -772,13 +774,16 @@ namespace fasttrips {
         // fare
         static const std::string fare_str("fare");
         Attributes::const_iterator fare_attr = attributes.find(fare_str);
-        if (fare_attr != attributes.end()) {
-            //       (60 min/hour)*(hours/vot currency) x (currency)
-            cost += (60.0/path_spec.value_of_time_) * fare_attr->second;
+        // fare is first converted to minutes using vot and then into utils using IVT weight
+        static const std::string ivt_str("in_vehicle_time_min");
+        NamedWeights::const_iterator ivt_weight = weights.find(ivt_str);
+        if ((fare_attr != attributes.end()) && (ivt_weight != weights.end())) {
+            //       (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
+            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second * fare_attr->second;
 
             D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
-                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (60.0/path_spec.value_of_time_);
+                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (ivt_weight->second*60.0/path_spec.value_of_time_);
                 trace_file << " x " << fare_attr->second << std::endl;
             );
         }
@@ -956,7 +961,8 @@ namespace fasttrips {
                     attr_dist,                                                                  // link distance
                     cost,                                                                       // cost
                     0,                                                                          // iteration
-                    path_spec.preferred_time_                                                   // arrival/departure time
+                    path_spec.preferred_time_,                                                  // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
@@ -1022,7 +1028,8 @@ namespace fasttrips {
             0.0,                            // link distance
             cost,                           // cost
             label_iteration,                // label iteration
-            current_deparr_time             // arrival/departure time
+            current_deparr_time,            // arrival/departure time
+			0.0                             // link ivt weight
         );
         addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
 
@@ -1049,7 +1056,7 @@ namespace fasttrips {
             if (path_spec.hyperpath_)
             {
                 Attributes link_attr            = transfer_it->second;
-                link_attr["transfer_penalty"]   = 1.0;
+                link_attr["transfer_penalty"]   = 0.1; // TODO: make configurable or base off of IVT coefficient
                 link_cost                       = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, link_attr);
                 cost                            = nonwalk_label + link_cost;
             }
@@ -1095,7 +1102,8 @@ namespace fasttrips {
                 transfer_dist,                  // link distance
                 cost,                           // cost
                 label_iteration,                // label iteration
-                current_deparr_time             // arrival/departure time
+                current_deparr_time,            // arrival/departure time
+				0.0                             // link ivt weight
             );
             addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
@@ -1230,14 +1238,16 @@ namespace fasttrips {
                     access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
-                    earliest_dep_latest_arr                                                     // arrival/departure time
+                    earliest_dep_latest_arr,                                                    // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
                 // set label_cutoff
                 double low_cost = stop_states[end_taz_id].hyperpathCost(false);
                 // estimate of the max path cost that would have probability > MIN_PATH_PROBABILITY
-                double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))/Hyperlink::STOCH_DISPERSION_;
+
+                double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))*Hyperlink::STOCH_DISPERSION_;
                 est_max_path_cost = std::min(est_max_path_cost, max_cost);
 
             } // end iteration through links for the given supply mode
@@ -1371,6 +1381,7 @@ namespace fasttrips {
                 double  link_cost = 0;
                 double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
                 double  fare      = 0; // only calculate for hyperpath
+                double  ivtwt     = 0; // only calculate for hyperpath
                 const FarePeriod* fp = 0;
 
                 if (in_vehicle_time < 0) {
@@ -1411,6 +1422,11 @@ namespace fasttrips {
                                        << std::endl;
                         }
                     }
+
+                    //update link ivtwt so that it is available when fares/fare-utils calculations are updated
+                    static const std::string ivt_str("in_vehicle_time_min");
+                    NamedWeights::const_iterator ivt_weight = named_weights.find(ivt_str);
+                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second;
 
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
@@ -1456,7 +1472,7 @@ namespace fasttrips {
                     if ((best_guess_link.deparr_mode_ == MODE_ACCESS) || (best_guess_link.deparr_mode_ == MODE_EGRESS)) {
                         link_attr["transfer_penalty"] = 0.0;
                     } else {
-                        link_attr["transfer_penalty"] = 1.0;
+                        link_attr["transfer_penalty"] = 0.1; //TODO: make configurable or based off of IVT coeff
                     }
 
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
@@ -1483,6 +1499,7 @@ namespace fasttrips {
                     cost,                           // cost
                     label_iteration,                // label iteration
                     arrdep_time,                    // arrival/departure time
+					ivtwt,                          // link ivt weight
                     fp                              // fare period
                 );
                 addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
@@ -1676,6 +1693,7 @@ namespace fasttrips {
 
     // This is currently not being used because it has been replaced with updateStopStatesForFinalLinks() but
     // it may come back for skimming so let's leave it in for now.
+    /*
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -1807,13 +1825,14 @@ namespace fasttrips {
                     access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
-                    earliest_dep_latest_arr                                                     // arrival/departure time
+                    earliest_dep_latest_arr,                                                    // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
-    }
+    }*/
 
 
     bool PathFinder::hyperpathGeneratePath(
@@ -1964,7 +1983,7 @@ namespace fasttrips {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
                         pathset[new_path] = pi;
 
-                        logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
+                        logsum += exp(-1.0*new_path.cost()/Hyperlink::STOCH_DISPERSION_);
                     }
                     if (path_spec.trace_) { trace_file << "pathsset size = " << pathset.size() << " new? " << (paths_iter == pathset.end()) << std::endl; }
                 } else {
@@ -1987,7 +2006,7 @@ namespace fasttrips {
 
             for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
+                paths_iter->second.probability_ = exp(-1.0*paths_iter->first.cost()/Hyperlink::STOCH_DISPERSION_)/logsum;
                 path_count += 1;
 
                 // Is this under the min path probability AND we have enough paths?
@@ -2001,7 +2020,7 @@ namespace fasttrips {
                 }
 
                 // why?  :p
-                int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
+                int prob_i = static_cast<int>(floor(fasttrips::INT_MULT*paths_iter->second.probability_ + 0.5));
 
                 cum_prob += prob_i;
                 paths_iter->second.prob_i_ = cum_prob;

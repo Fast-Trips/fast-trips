@@ -1,0 +1,6 @@
+route_id,mode,proof_of_payment
+AB,local_bus,FALSE
+AC,local_bus,FALSE
+BC1,local_bus,FALSE
+BC2,local_bus,FALSE
+BC3,local_bus,FALSE

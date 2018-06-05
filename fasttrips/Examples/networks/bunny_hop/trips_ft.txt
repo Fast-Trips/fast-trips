@@ -1,0 +1,6 @@
+trip_id,vehicle_name
+ABt1,bus
+ACt1,bus
+BC1t1,bus
+BC2t1,bus
+BC3t1,bus

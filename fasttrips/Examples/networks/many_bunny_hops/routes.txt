@@ -1,0 +1,23 @@
+route_id,route_short_name,route_long_name,route_type
+AB,Rt A-B,Route from A to B,3
+AC,Rt A-C,Route from A to C,3
+BC1,Rt1 B-C,Route No 1 from B to C,3
+BC2,Rt2 B-C,Route No 2 from B to C,3
+BC3,Rt3 B-C,Route No 3 from B to C,3
+BC4,Rt4 B-C,Route No 4 from B to C,3
+BC5,Rt5 B-C,Route No 5 from B to C,3
+BC6,Rt6 B-C,Route No 6 from B to C,3
+BC7,Rt7 B-C,Route No 7 from B to C,3
+BC8,Rt8 B-C,Route No 8 from B to C,3
+BC9,Rt9 B-C,Route No 9 from B to C,3
+BC10,Rt10 B-C,Route No 10 from B to C,3
+BC11,Rt11 B-C,Route No 11 from B to C,3
+BC12,Rt12 B-C,Route No 12 from B to C,3
+BC13,Rt13 B-C,Route No 13 from B to C,3
+BC14,Rt14 B-C,Route No 14 from B to C,3
+BC15,Rt15 B-C,Route No 15 from B to C,3
+BC16,Rt16 B-C,Route No 16 from B to C,3
+BC17,Rt17 B-C,Route No 17 from B to C,3
+BC18,Rt18 B-C,Route No 18 from B to C,3
+BC19,Rt19 B-C,Route No 19 from B to C,3
+BC20,Rt20 B-C,Route No 20 from B to C,3

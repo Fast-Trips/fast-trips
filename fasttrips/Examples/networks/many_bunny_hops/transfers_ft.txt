@@ -1,0 +1,1 @@
+from_stop_id,to_stop_id,dist,from_route_id,to_route_id,elevation_gain,schedule_precedence
