@@ -192,7 +192,6 @@ class PathSet:
             self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN]
         elif trip_list_dict[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == "departure":
             self.direction     = PathSet.DIR_INBOUND
-            # The subtraction "tricks" the C++ pathfinding code to return options before PAT
             self.pref_time     = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME]
             self.pref_time_min = trip_list_dict[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN]
         else:
