@@ -103,7 +103,7 @@ def test_pat_off():
         output_dir           = OUTPUT_DIR,
         output_folder        = OUTPUT_FOLDER,
         pathfinding_type     = "stochastic",
-        overlap_variable     = "count",
+        overlap_variable     = "None",
         iters                = 1,
         dispersion           = 0.50
     )
