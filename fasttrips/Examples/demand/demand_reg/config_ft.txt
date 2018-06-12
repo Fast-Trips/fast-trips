@@ -7,3 +7,4 @@ debug_output_columns          = True
 [pathfinding]
 user_class_function           = generic_user_class
 pathweights_fixed_width       = True
+overlap_chunk_size            = 50

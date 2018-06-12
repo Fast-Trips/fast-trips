@@ -16,5 +16,6 @@ pathweights_fixed_width       = True
 #    - arrive_late_*
 #    - depart_early_*
 # *****************************************************************************************************
-depart_early_allowed_min              = 10
-arrive_late_allowed_min               = 10
+depart_early_allowed_min      = 10
+arrive_late_allowed_min       = 10
+overlap_chunk_size            = 50
