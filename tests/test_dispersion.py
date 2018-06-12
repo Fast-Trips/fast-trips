@@ -10,7 +10,7 @@ def dispersion_rate(request):
 @pytest.fixture(scope='module')
 def passengers_arrived(dispersion_rate):
     arrived = {
-        1.0: 723,
+        1.0: 726,
         0.7: 726,
         0.5: 726,
         0.4: 726,
