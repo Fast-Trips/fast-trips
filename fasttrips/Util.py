@@ -210,7 +210,7 @@ class Util:
     def read_time(x, end_of_day=False):
         from .Assignment import Assignment
         try:
-            if x=='' or x.lower()=='default':
+            if x=='' or x.lower()=='default' or pd.isnull(x):
                 x = '24:00:00' if end_of_day else '00:00:00'
         except:
             if pd.isnull(x):
@@ -304,7 +304,7 @@ class Util:
                 elif units_str == "seconds":
                     units = np.timedelta64(1,'s')
                 else:
-                    raise
+                    raise Exception
 
                 # if the column already exists, continue
                 if new_colname in df_cols: continue
@@ -416,6 +416,107 @@ class Util:
     @staticmethod
     def parse_boolean(val):
         return val in ['true', 'True', 'TRUE', 1]
+
+    @staticmethod
+    def calculate_pathweight_costs(df, result_col):
+        """
+        Calculates the weighted cost for a given :py:class:`pandas.DataFrame` given a impedance function and
+        value.
+
+        Sets the result into the column called result_col.
+
+        ==================  ===============  =====================================================================================================
+        column name          column type     description
+        ==================  ===============  =====================================================================================================
+        `var_value`                 float64  The value to weight
+        `growth_type`                   str  ['constant', 'exponential', 'logarithmic', 'logistic']
+        `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value
+        `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve
+        `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve
+        ==================  ===============  =====================================================================================================
+        """
+        from fasttrips import PathSet
+
+        # default is constant (constant weight)
+        df[result_col] = df['var_value']*df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
+
+        if PathSet.EXP_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL,  result_col] = \
+                Util.exponential_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE])
+
+        if PathSet.LOGARITHMIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(df), "Logarithmic pathweight growth_type formula specified. Missing var_value, or growth_log_base."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL, result_col] = \
+                Util.logarithmic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOG_BASE])
+
+        if PathSet.LOGISTIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_logistic_max, or growth_logistic_mid."
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, result_col] = \
+                Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
+
+        # TODO: option: make these more subtle?
+        # missed_xfer has huge cost
+        if 'missed_xfer' in df:
+            df.loc[df['missed_xfer']==1, result_col] = PathSet.HUGE_COST
+
+        # bump iter means over capacity
+        if 'bump_iter' in df:
+            df.loc[df['bump_iter']>=0, result_col] = PathSet.HUGE_COST
+
+        # negative cost is invalid
+        if (df[result_col] < 0).any():
+            FastTripsLogger.warn("---Pathweight costs has negative values. Setting to zero.---\n{}".format(
+                df[df[result_col] < 0].to_string())
+            )
+            df.loc[ df[result_col] < 0, result_col ] = 0.0
+
+
+    @staticmethod
+    def exponential_integration(penalty_min, growth_rate):
+        """
+        Returns the integrated value of an exponential function.
+        Growth Function: (1 + Growth Rate) ** Penalty Minutes
+        Integrated Growth Function: ((1 + Growth Rate) ** Penalty Minutes - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
+        :param penalty_min: float or :py:class:`pandas.Series` of floats
+        :param growth_rate: float: Exponetial growth factor
+        :return: float or :py:class:`pandas.Series` of floats depending on inputs
+        """
+        return (np.power(1.0 + growth_rate, penalty_min) - 1) / np.log(1.0 + growth_rate)
+
+
+    @staticmethod
+    def logarithmic_integration(penalty_min, growth_rate, log_base=np.exp(1)):
+        """
+        Returns the integrated value of an logarithmic function.
+        # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
+        # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
+        :param penalty_min: float or :py:class:`pandas.Series` of floats
+        :param growth_rate: log growth factor
+        :param log_base: log base to impact shape of curve
+        :return: float or :py:class:`pandas.Series` of floats depending on inputs
+        """
+        return growth_rate * ((penalty_min + 1) * np.log(penalty_min + 1) - penalty_min) / np.log(log_base)
+
+
+    @staticmethod
+    def logistic_integration(penalty_minute, growth_rate, max_logit, sigmoid_mid):
+        """
+        Returns the integrated value of an logistic function.
+        Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
+        Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
+        Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
+        Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
+        :param penalty_minute: float or :py:class:`pandas.Series` of floats
+        :param growth_rate: log growth factor
+        :param max_logit: assymtotic max value of curve
+        :param sigmoid_mid: x-midpoint of curve
+        :return: float or :py:class:`pandas.Series` of floats depending on inputs
+        """
+
+        max_integral = (max_logit / growth_rate) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
+        min_integral = (max_logit / growth_rate) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
+
+        return max_integral - min_integral
 
 
     @staticmethod

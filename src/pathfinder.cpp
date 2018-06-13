@@ -9,6 +9,7 @@
 #endif
 
 #include <assert.h>
+#include <cmath>
 #include <ctime>
 #include <sstream>
 #include <ios>
@@ -57,6 +58,8 @@ namespace fasttrips {
         double     time_window,
         double     bump_buffer,
         double     utils_conversion,
+        double     depart_early_allowed_min,
+        double     arrive_late_allowed_min,
         int        stoch_pathset_size,
         double     stoch_dispersion,
         int        stoch_max_stop_process_count,
@@ -66,6 +69,8 @@ namespace fasttrips {
         double     min_path_probability)
     {
         BUMP_BUFFER_                    = bump_buffer;
+        DEPART_EARLY_ALLOWED_MIN_       = depart_early_allowed_min;
+        ARRIVE_LATE_ALLOWED_MIN_        = arrive_late_allowed_min;
         STOCH_PATHSET_SIZE_             = stoch_pathset_size;
         STOCH_MAX_STOP_PROCESS_COUNT_   = stoch_max_stop_process_count;
         MAX_NUM_PATHS_                  = max_num_paths;
@@ -367,11 +372,13 @@ namespace fasttrips {
         ss_weights << output_dir_ << kPathSeparator << "ft_intermediate_weights.txt";
         weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
 
-        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value;
+        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value,
+            weight_type, string_log_base, string_logistic_max, string_logistic_mid;
         int supply_mode_num;
-        double weight_value;
+        Weight the_weight;
 
         weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> string_supply_mode_num >> weight_name >> string_weight_value;
+        weights_file >> weight_type >> string_log_base >> string_logistic_max >> string_logistic_mid;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_weights.str() << ": ";
             std::cout << "[" << user_class              << "] ";
@@ -381,9 +388,13 @@ namespace fasttrips {
             std::cout << "[" << string_supply_mode_num  << "] ";
             std::cout << "[" << weight_name             << "] ";
             std::cout << "[" << string_weight_value     << "] ";
+            std::cout << "[" << weight_type             << "] ";
+            std::cout << "[" << string_log_base         << "] ";
+            std::cout << "[" << string_logistic_max     << "] ";
+            std::cout << "[" << string_logistic_mid     << "] ";
         }
         int weights_read = 0;
-        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
+        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> the_weight.weight_ >> weight_type) {
             UserClassPurposeMode ucpm = { user_class, purpose, fasttrips::MODE_ACCESS, demand_mode };
             if      (demand_mode_type == "access"  ) { ucpm.demand_mode_type_ = MODE_ACCESS;  }
             else if (demand_mode_type == "egress"  ) { ucpm.demand_mode_type_ = MODE_EGRESS;  }
@@ -394,7 +405,25 @@ namespace fasttrips {
                 exit(2);
             }
 
-            weight_lookup_[ucpm][supply_mode_num][weight_name] = weight_value;
+            the_weight.log_base_     = 0.0;
+            the_weight.logistic_max_ = 0.0;
+            the_weight.logistic_mid_ = 0.0;
+
+            if (weight_type == "constant") {
+                the_weight.type_ = WEIGHT_LINEAR;
+            } else if (weight_type == "exponential") {
+                the_weight.type_ = WEIGHT_EXPONENTIAL;
+            } else if (weight_type == "logarithmic") {
+                the_weight.type_ = WEIGHT_LOGARITHMIC;
+                weights_file >> the_weight.log_base_;
+            } else if (weight_type == "logistic") {
+                the_weight.type_ = WEIGHT_LOGISTIC;
+                weights_file >> the_weight.logistic_max_ >> the_weight.logistic_mid_;
+            } else {
+                std::cerr << "Do not understand weight type [" << weight_type << "] in " << ss_weights.str() << std::endl;
+                exit(2);
+            }
+            weight_lookup_[ucpm][supply_mode_num][weight_name] = the_weight;
             weights_read++;
         }
         if (process_num_ <= 1) {
@@ -764,12 +793,59 @@ namespace fasttrips {
                 continue;
             }
 
-            cost += iter_weights->second * iter_attr->second;
             D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
-                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
-                trace_file << " x " << iter_attr->second << std::endl;
             );
+
+            if (iter_attr->second == 0.0) {
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_attr->second << std::endl;
+                );
+                continue;
+            }
+
+            double cost_part = 0.0;
+            const Weight& the_weight = iter_weights->second;
+
+            // handle constant and non constant weights
+            if (the_weight.type_ == WEIGHT_LINEAR) {
+                cost_part = the_weight.weight_ * iter_attr->second;
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << std::fixed << the_weight.weight_;
+                    trace_file << " x " << iter_attr->second << " = " << cost_part << " (constant)" << std::endl;
+                );
+            } else if (the_weight.type_ == WEIGHT_EXPONENTIAL) {
+                cost_part = (std::pow(1.0+the_weight.weight_, iter_attr->second) - 1.0) / std::log(1.0 + the_weight.weight_);
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (exponential on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
+                    trace_file << ")" << std::endl;
+                );                
+            } else if (the_weight.type_ == WEIGHT_LOGARITHMIC) {
+                cost_part = the_weight.weight_ * ((1.0 + iter_attr->second) * std::log(1.0 + iter_attr->second) - iter_attr->second) / std::log(the_weight.log_base_);
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (logarithmic on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
+                    trace_file << ", log_base " << the_weight.log_base_;
+                    trace_file << ")" << std::endl;
+                ); 
+            } else if (the_weight.type_ == WEIGHT_LOGISTIC) {
+                double max_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(std::exp(the_weight.weight_ * iter_attr->second) + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
+                double min_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(1.0 + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
+
+                cost_part = max_integral - min_integral;
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (logistic on " << iter_attr->second << " with weight " << std::setprecision(4) << std::fixed << the_weight.weight_;
+                    trace_file << ", logistic_mid " << the_weight.logistic_mid_;
+                    trace_file << ", logistic_max " << the_weight.logistic_max_;
+                    trace_file << ")" << std::endl;
+                ); 
+            }
+            // cost needs to be positive and within bounds
+            if ((cost_part >= 0) && (cost_part <= MAX_COST)) {
+                cost += cost_part;
+            }
         }
         // fare
         static const std::string fare_str("fare");
@@ -779,7 +855,7 @@ namespace fasttrips {
         NamedWeights::const_iterator ivt_weight = weights.find(ivt_str);
         if ((fare_attr != attributes.end()) && (ivt_weight != weights.end())) {
             //       (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
-            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second * fare_attr->second;
+            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second.weight_ * fare_attr->second;
 
             D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
@@ -883,6 +959,8 @@ namespace fasttrips {
     {
         int     start_taz_id = path_spec.outbound_ ? path_spec.destination_taz_id_ : path_spec.origin_taz_id_;
         double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
+        // the stretch pref time -- allow late arrival or early departure
+        double  pref_time    = path_spec.outbound_ ? path_spec.preferred_time_ + ARRIVE_LATE_ALLOWED_MIN_ : path_spec.preferred_time_ - DEPART_EARLY_ALLOWED_MIN_;
 
         // are there any egress/access links for this TAZ?
         if (access_egress_links_.hasLinksForTaz(start_taz_id) == false) {
@@ -927,6 +1005,7 @@ namespace fasttrips {
                 const AccessEgressLinkKey& aelk = iter_aelk->first;
 
                 // require preferrd_time_ in [start_time_, end_time)
+                // We could check the stretch pref time but I think we might as well check the actual preferred time since it's the goal
                 if (aelk.start_time_ >  path_spec.preferred_time_) continue;
                 if (aelk.end_time_   <= path_spec.preferred_time_) continue;
 
@@ -937,9 +1016,12 @@ namespace fasttrips {
 
                 // outbound: departure time = destination - access
                 // inbound:  arrival time   = origin      + access
-                double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
+                double deparr_time = pref_time - (attr_time*dir_factor);
                 // we start out with no delay
-                link_attr["preferred_delay_min"] = 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min"]    = 0.0;
 
                 double cost;
                 if (path_spec.hyperpath_) {
@@ -962,7 +1044,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     0,                                                                          // iteration
                     path_spec.preferred_time_,                                                  // arrival/departure time
-					0.0                                                                         // link ivt weight
+                    0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
@@ -1056,7 +1138,7 @@ namespace fasttrips {
             if (path_spec.hyperpath_)
             {
                 Attributes link_attr            = transfer_it->second;
-                link_attr["transfer_penalty"]   = 0.1; // TODO: make configurable or base off of IVT coefficient
+                link_attr["transfer_penalty"]   = 1.0; // TODO: make configurable or base off of IVT coefficient
                 link_cost                       = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, link_attr);
                 cost                            = nonwalk_label + link_cost;
             }
@@ -1186,7 +1268,10 @@ namespace fasttrips {
                 if (aelk.end_time_   <= earliest_dep_latest_arr_024) continue;
 
                 Attributes link_attr            = iter_aelk->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min"]    = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
                 double  access_dist             = link_attr.find("dist")->second;
@@ -1426,7 +1511,7 @@ namespace fasttrips {
                     //update link ivtwt so that it is available when fares/fare-utils calculations are updated
                     static const std::string ivt_str("in_vehicle_time_min");
                     NamedWeights::const_iterator ivt_weight = named_weights.find(ivt_str);
-                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second;
+                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second.weight_;
 
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
@@ -1451,7 +1536,31 @@ namespace fasttrips {
                         delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
-                        delay_attr["preferred_delay_min"  ] = wait_time;
+
+                        if (path_spec.outbound_) {
+                          // outbound: if the wait_time < ARRIVE_LATE_ALLOWED_MIN_ then we've arrived later than our preferred time (by ARRIVE_LATE_ALLOWED_MIN_ - wait_time)
+                          //           otherwise, we've arrive before our preferred time (by wait_time - ARRIVE_LATE_MIN_)
+                          //           so ideal with wait_time = ARRIVE_LATE_ALLOWED_MIN_
+                          if (wait_time < ARRIVE_LATE_ALLOWED_MIN_) {
+                            delay_attr["arrive_late_min"      ] = ARRIVE_LATE_ALLOWED_MIN_ - wait_time;
+                            delay_attr["arrive_early_min"     ] = 0;
+                          } else {
+                            delay_attr["arrive_late_min"      ] = 0;
+                            delay_attr["arrive_early_min"     ] = wait_time - ARRIVE_LATE_ALLOWED_MIN_;
+                          }
+                        } else {
+                          // inbound: if the wait_time < DEPART_EARLY_ALLOWED_MIN_ then we've departed earlier than our preferred time (by DEPART_EARLY_ALLOWED_MIN_ - wait_time)
+                          //           otherwise, we've depart before our preferred time (by wait_time - DEPART_EARLY_MIN_)
+                          //           so ideal with wait_time = DEPART_EARLY_ALLOWED_MIN_
+                          if (wait_time < DEPART_EARLY_ALLOWED_MIN_) {
+                            delay_attr["depart_early_min"] = DEPART_EARLY_ALLOWED_MIN_ - wait_time;
+                            delay_attr["depart_late_min"      ] = 0;
+                          } else {
+                            delay_attr["depart_early_min"] = 0 ;
+                            delay_attr["depart_late_min"      ] = wait_time - DEPART_EARLY_ALLOWED_MIN_;
+                          }
+                        }
+
                         UserClassPurposeMode delay_ucpm = {
                             path_spec.user_class_, path_spec.purpose_,
                             path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
@@ -1472,7 +1581,7 @@ namespace fasttrips {
                     if ((best_guess_link.deparr_mode_ == MODE_ACCESS) || (best_guess_link.deparr_mode_ == MODE_EGRESS)) {
                         link_attr["transfer_penalty"] = 0.0;
                     } else {
-                        link_attr["transfer_penalty"] = 0.1; //TODO: make configurable or based off of IVT coeff
+                        link_attr["transfer_penalty"] = 1.0; //TODO: make configurable or based off of IVT coeff
                     }
 
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
@@ -1753,7 +1862,10 @@ namespace fasttrips {
                 if (aelk.end_time_   <= earliest_dep_latest_arr) continue;
 
                 Attributes link_attr            = iter_aelk->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min" ]   = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
                 double  access_dist             = link_attr.find("dist")->second;

@@ -38,6 +38,24 @@ PATHSET_PATHS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_paths.csv')
 PATHSET_LINKS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_links.csv')
 
 
+def test_growth_type_cost_calculation():
+    sample_data = {
+        'weight_value': [3.93, .03, .3, .56],
+        'var_value': [24., 3, 2.35, 15.431],
+        'growth_type': ['constant', 'exponential', 'logarithmic', 'logistic'],
+        'log_base': [np.nan, np.nan, np.exp(1), np.nan],
+        'logistic_max': [np.nan, np.nan, np.nan, 10.1],
+        'logistic_mid': [np.nan, np.nan, np.nan, 2.45]
+    }
+
+    result_set = [94.32, 3.13704, 0.51001, 127.04425]
+
+    sample_df = pd.DataFrame(data=sample_data)
+
+    Util.calculate_pathweight_costs(sample_df, 'test_cost')
+    np.testing.assert_almost_equal(sample_df['test_cost'].values.tolist(), result_set, decimal=5)
+
+
 def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
     """
     Method to verify that a test dataframe is equal (or nearly equal for floats)
@@ -120,7 +138,6 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
     Initialize the FastTrips object. The FastTrips object is necessary to
     run the static calculate_cost method.
 
-    TODO: Remove the FastTrips object dependency in the calculate_cost function
     :param capacity_constrained: Whether the calculate_cost method should be capacity constrained
     :type capacity_constrained: bool.
     :param split_transit: Whether split_transit_links should be called as part of the calculate_cost method

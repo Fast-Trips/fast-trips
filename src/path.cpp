@@ -389,12 +389,27 @@ namespace fasttrips {
             {
                 // inbound: preferred time is origin departure time
                 double orig_departure_time        = (path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.deparr_time_ - stop_state.link_time_);
-                double preference_delay           = (path_spec.outbound_ ? 0 : orig_departure_time - path_spec.preferred_time_);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_ACCESS, path_spec.access_mode_, stop_state.trip_id_);
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop, orig_departure_time ));
-                attributes["preferred_delay_min"] = preference_delay;
+
+                attributes["arrive_early_min"]     = 0;
+                attributes["arrive_late_min"]      = 0;
+                attributes["depart_early_min"]     = 0;
+                attributes["depart_late_min"]      = 0;
+
+                if (!path_spec.outbound_) {
+                  // early -- use early function
+                  if (orig_departure_time < path_spec.preferred_time_) {
+                    attributes["depart_early_min"] = path_spec.preferred_time_ - orig_departure_time;
+                  }
+                  else {
+                    attributes["depart_late_min"]  = orig_departure_time - path_spec.preferred_time_;
+                  }
+                }
+
+
 
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
             }
@@ -403,12 +418,27 @@ namespace fasttrips {
             {
                 // outbound: preferred time is destination arrival time
                 double dest_arrival_time          = (path_spec.outbound_ ? stop_state.deparr_time_ + stop_state.link_time_ : stop_state.deparr_time_);
-                double preference_delay           = (path_spec.outbound_ ? path_spec.preferred_time_ - dest_arrival_time : 0);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
                 const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, path_spec.purpose_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
                 Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
-                attributes["preferred_delay_min"] = preference_delay;
+
+                attributes["arrive_early_min"]    = 0;
+                attributes["arrive_late_min"]     = 0;
+                attributes["depart_early_min"]    = 0;
+                attributes["depart_late_min"]     = 0;
+
+                if (path_spec.outbound_) {
+                  // late -- use late function
+                  if (dest_arrival_time > path_spec.preferred_time_) {
+                    attributes["arrive_late_min"] = dest_arrival_time - path_spec.preferred_time_;
+                  }
+                  else {
+                    attributes["arrive_early_min"]= path_spec.preferred_time_ - dest_arrival_time;
+                  }
+                }
+
+
 
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
 
