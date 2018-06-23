@@ -468,7 +468,32 @@ class Assignment:
 
         qualifiers = qualifiers.groupby(merge_cols)[qualifier_columns].max().reset_index()
 
-        return pd.merge(weights, qualifiers, on=merge_cols, how='left')
+        weights_df = pd.merge(weights, qualifiers, on=merge_cols, how='left')
+
+        #Check for required logarithmic attributes and that they are all non-zero and positive
+        if len(weights_df[weights_df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL]) > 0:
+            assert(PathSet.WEIGHTS_GROWTH_LOG_BASE in weights_df)
+            assert(
+                len(weights_df[
+                    (weights_df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL) &
+                    (weights_df[PathSet.WEIGHTS_GROWTH_LOG_BASE] <= 0)
+                ]) == 0)
+
+        if len(weights_df[weights_df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL]) > 0:
+            assert(PathSet.WEIGHTS_GROWTH_LOGISTIC_MID in weights_df)
+            assert (PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX in weights_df)
+            assert(
+                len(weights_df[
+                    (weights_df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL) &
+                    (weights_df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX] <= 0)
+                ]) == 0)
+            assert (
+                len(weights_df[
+                    (weights_df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL) &
+                    (weights_df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID] <= 0)
+                ]) == 0)
+
+        return weights_df
 
 
     @staticmethod

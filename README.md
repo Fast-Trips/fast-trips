@@ -24,6 +24,7 @@ For a description of how Fast-Trips does this sort of analysis differently than 
     * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
+    * [Weight Qualifiers](#weight-qualifiers)
 * [Fares](#fares)
 * [Test Sample Input](#test-sample-input)
   * [Test Network](#test-network)  
@@ -238,7 +239,45 @@ The following is a partial list of possible weight names base don the demand mod
   * `in_vehicle_time_min`
   * `wait_time_min`
 
-Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.  
+Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`. 
+
+#### Weight Qualifiers  
+By default, Fast-Trips will apply all weights as a constant on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied using more complex models. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.
+
+If no qualifier is specified, `constant` will be assumed.
+
+Qualifier     | Formulation | Required Modifiers |
+--------------|-------------|--------------------|
+`constant` (default)  |![Constant Weight Equations](/doc/pathweight_linear_equation.png "Constant Weight Equation")| N/A |
+`exponential` |![Exponential Weight Equations](/doc/pathweight_exponential_equation.png "Exponential Weight Equation")| N/A |
+`logarithmic` |![Logarithmic Weight Equations](/doc/pathweight_logarithmic_equation.png "Logarithmic Weight Equation")| `log_base` |
+`logistic`    |![Logistic Weight Equations](/doc/pathweight_logistic_equation.png "Logistic Weight Equation")| `logistic_max`<br/>`logistgic_mid` |
+
+*Example*:
+```
+#Pathweights_ft.txt snippet
+user_class purpose demand_mode_type demand_mode    supply_mode  weight_name                                   weight_value
+# default constant
+all        other   transit          transit        rapid_bus    wait_time_min                                 1.77
+
+# Explicitly constant
+all        other   transit          transit        rapid_bus    wait_time_min.constant                        1.77
+
+all        other   access           walk           walk_access  depart_early_min.logistic                     0.2
+all        other   access           walk           walk_access  depart_early_min.logistic.logistic_max        10
+all        other   access           walk           walk_access  depart_early_min.logistic.logistic_mid        9
+
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic                   0.3
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic.log_base          2.71828
+
+# Exponential
+all        work    access           walk           walk_access  depart_early_min.exponential                  0.02
+
+# Logarithmic
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic                   0.3
+all        other   egress           walk           walk_egress  arrive_late_min.logarithmic.log_base          2.71828
+
+``` 
 
 ## Fares
 
