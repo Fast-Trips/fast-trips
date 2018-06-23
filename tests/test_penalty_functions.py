@@ -2,7 +2,7 @@ import pandas as pd
 
 from fasttrips import Util
 
-
+@pytest.mark.travis
 def test_exponential_integral():
     test_series = pd.Series(
         data=[6., 5./3, 111./11, 45./7, 524./13],
@@ -20,7 +20,7 @@ def test_exponential_integral():
 
     pd.testing.assert_series_equal(validation_series, output, check_less_precise=6)
 
-
+@pytest.mark.travis
 def test_logarithmic_integral():
     test_series = pd.Series(
         data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],
@@ -38,7 +38,7 @@ def test_logarithmic_integral():
 
     pd.testing.assert_series_equal(validation_series, output, check_less_precise=6)
 
-
+@pytest.mark.travis
 def test_logistic_integral():
     test_series = pd.Series(
         data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],

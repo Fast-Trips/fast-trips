@@ -24,7 +24,7 @@ def run_convergence():
         capacity=True,
         iters=4,
         dispersion=0.50,
-        test_size= 10,
+        num_trips= 10,
     )
 
 

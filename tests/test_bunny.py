@@ -14,6 +14,7 @@ network_options = ["bunny_hop","many_bunny_hops"]
 
 
 @pytest.mark.basic
+@pytest.mark.travis
 def test_bunny(demand, network):
     """
     Test to ensure that the most simple of networks and demand is working.

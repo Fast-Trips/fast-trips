@@ -2,7 +2,7 @@ import os
 import pytest
 from fasttrips import Run
 
-
+@pytest.mark.travis
 def test_psrc():
     """
     Test to ensure that more complex network, PSRC, is working. Also a
@@ -30,7 +30,7 @@ def test_psrc():
         iters=1,
         OVERLAP = "None",
         dispersion=1.0,
-        test_size  = 2
+        num_trips  = 5,
     )
 
 

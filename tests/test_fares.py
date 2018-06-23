@@ -2,9 +2,14 @@ import os
 import pytest
 from fasttrips import Run
 
-@pytest.mark.parametrize("ignore_PF_fares", [True])
-@pytest.mark.parametrize("ignore_EN_fares", [False, True])
 
+ignore_PF_fares_options = [True]
+ignore_EN_fares_options = [False, True]
+
+@pytest.mark.parametrize("ignore_PF_fares", ignore_PF_fares_options)
+@pytest.mark.parametrize("ignore_EN_fares", ignore_EN_fares_options)
+
+@pytest.mark.travis
 def test_fares(ignore_PF_fares,ignore_EN_fares):
 
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
@@ -26,8 +31,14 @@ def test_fares(ignore_PF_fares,ignore_EN_fares):
         overlap_variable = "None",
         iters            = 1,
         dispersion       = 0.50,
-        test_size        = 2,
+        num_trips        = 5,
         transfer_fare_ignore_pathfinding = ignore_PF_fares,
         transfer_fare_ignore_pathenum    = ignore_EN_fares)
 
     assert r["passengers_arrived"] > 0
+
+if __name__ == '__main__':
+    import itertools
+    for ignore_PF_fares,ignore_EN_fares in list(itertools.product(ignore_PF_fares_options, ignore_EN_fares_options)):
+        print("running %s %s" % (ignore_PF_fares,ignore_EN_fares))
+        test_fares(ignore_PF_fares,ignore_EN_fares)

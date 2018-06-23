@@ -25,7 +25,7 @@ def test_assignment_type(assignment_type):
         pathfinding_type = assignment_type,
         iters            = 1,
         dispersion       = 0.50,
-        test_size        = 2)
+        num_trips  = 5)
 
     assert r["passengers_arrived"] > 0
 

@@ -7,7 +7,7 @@ OVERLAP_VARIABLES = ["None","count","distance","time"]
 @pytest.mark.parametrize("overlap_var", OVERLAP_VARIABLES)
 @pytest.mark.parametrize("split_links", [False, True])
 
-
+@pytest.mark.travis
 def test_overlap(overlap_var, split_links ):
     EXAMPLES_DIR  = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
@@ -30,6 +30,6 @@ def test_overlap(overlap_var, split_links ):
         overlap_split_transit = split_links,
         iters            = 1,
         dispersion       = 0.50,
-        test_size        = 2)
+        num_trips        = 5)
 
     assert r["passengers_arrived"] > 0
