@@ -90,8 +90,7 @@ def test_parse_weight_qualifiers_bad_key(sample_dataframe):
     with raises(KeyError, message="Expecting KeyError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
-<<<<<<< HEAD
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logrithmic_qualifier(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
@@ -102,7 +101,7 @@ def test_parse_weight_qualifiers_bad_logrithmic_qualifier(sample_dataframe):
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logrithmic_qualifier_value(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
@@ -112,7 +111,7 @@ def test_parse_weight_qualifiers_bad_logrithmic_qualifier_value(sample_dataframe
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logistic_qualifier(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
@@ -123,7 +122,7 @@ def test_parse_weight_qualifiers_bad_logistic_qualifier(sample_dataframe):
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logistic_max_qualifier_value(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
@@ -133,7 +132,7 @@ def test_parse_weight_qualifiers_bad_logistic_max_qualifier_value(sample_datafra
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logistic_mid_qualifier_value(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
@@ -143,10 +142,7 @@ def test_parse_weight_qualifiers_bad_logistic_mid_qualifier_value(sample_datafra
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
-
-=======
 @pytest.mark.travis
->>>>>>> test-cleanup
 def test_no_qualifiers(sample_dataframe):
     """
      Test to ensure that dataframe without qualifiers is return the same as it went in.

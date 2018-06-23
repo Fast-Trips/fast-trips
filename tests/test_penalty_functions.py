@@ -1,5 +1,7 @@
 import pandas as pd
 
+import pytest
+
 from fasttrips import Util
 
 @pytest.mark.travis
