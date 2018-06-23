@@ -38,7 +38,7 @@ social  lowinc      transit           transit      local_bus      in_vehicle_tim
 social  lowinc      transit           transit      local_bus      wait_time_min          0.05
 social  lowinc      transit           transit      premium_bus    in_vehicle_time_min    0.02
 social  lowinc      egress            walk         walk_egress    arrive_early_min       0.038
-social  lowinc      egress            walk         walk_egress    darrive_late_min       0.038
+social  lowinc      egress            walk         walk_egress    arrive_late_min       0.038
 social  lowinc      transit           transit      commuter_rail  wait_time_min          0.04
 social  medhighinc  transfer          transfer     transfer       walk_time_min          0.062
 social  medhighinc  transfer          transfer     transfer       transfer_penalty       0.24
