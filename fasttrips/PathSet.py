@@ -878,7 +878,7 @@ class PathSet:
                                          PathSet.WEIGHTS_COLUMN_SUPPLY_MODE],
                                how     ="inner")
 
-        # update the fare weight placeholder (ivt pathweight - utils per min)) based on value of time (currency per hour) 
+        # update the fare weight placeholder (ivt pathweight - utils per min)) based on value of time (currency per hour)
         # since generalized cost is in utils, (ivt utils/min)x(60 min/1 hour)x(hour/vot currency) is the weight (utils/currency)
         cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] *= 60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT]
 
@@ -1149,6 +1149,8 @@ class PathSet:
 
         # abort here if we're missing anything
         if len(missing_accegr_costs) + len(missing_trip_costs) + len(missing_transfer_costs) > 0:
+            abort_error_msg = "\nMissing %d accegr_costs\nMissing %d trip_costs\nMissing %d transfer_costs" % (len(missing_accegr_costs), len(missing_trip_costs), len(missing_transfer_costs))
+            FastTripsLogger.debug(abort_error_msg)
             raise NotImplementedError("Missing var_values; See log")
 
         ##################### Put them back together into a single dataframe

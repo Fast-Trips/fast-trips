@@ -37,7 +37,7 @@ STOCHASTIC_DISPERSION = 0.5
 PATHSET_PATHS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_paths.csv')
 PATHSET_LINKS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_links.csv')
 
-
+@pytest.mark.travis
 def test_growth_type_cost_calculation():
     sample_data = {
         'weight_value': [3.93, .03, .3, .56],

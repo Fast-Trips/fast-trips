@@ -25,7 +25,7 @@ def test_user_classes():
         pathfinding_type    = "stochastic",
         iters               = 1,
         dispersion          = 0.50,
-        test_size           = 10,
+        num_trips     = 5,
         number_of_processes = 1)
 
     assert r["passengers_arrived"] > 0

@@ -2,23 +2,20 @@ import os
 import pytest
 from fasttrips import Run
 
+test_thetas = [1.0, 0.5, 0.1]
+test_size   = 5
 
-@pytest.fixture(scope='module', params=[1.0, 0.7, 0.5, 0.4, 0.1])
+@pytest.fixture(scope='module', params=test_thetas)
 def dispersion_rate(request):
     return request.param
 
 @pytest.fixture(scope='module')
 def passengers_arrived(dispersion_rate):
-    arrived = {
-        1.0: 726,
-        0.7: 726,
-        0.5: 726,
-        0.4: 726,
-        0.1: 726,
-    }
+    arrived = dict(zip(test_thetas,[test_size]*len(test_thetas)))
 
     return arrived[dispersion_rate]
 
+@pytest.mark.travis
 def test_dispersion(dispersion_rate, passengers_arrived):
 
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples",)
@@ -44,6 +41,6 @@ def test_dispersion(dispersion_rate, passengers_arrived):
         pathfinding_type  = "stochastic",
         iters             = 1,
         dispersion        = dispersion_rate,
-        test_size         = 100 )
+        num_trips         = test_size )
 
     assert passengers_arrived == r["passengers_arrived"]

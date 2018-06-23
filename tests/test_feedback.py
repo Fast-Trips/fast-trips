@@ -5,6 +5,7 @@ from fasttrips import Run
 @pytest.mark.parametrize("feedback_iters", [3])
 @pytest.mark.parametrize("capacity_const", [False, True])
 
+@pytest.mark.travis
 def test_feedback(feedback_iters,capacity_const):
 
     EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
@@ -26,6 +27,7 @@ def test_feedback(feedback_iters,capacity_const):
         pathfinding_type = "stochastic",
         capacity         = capacity_const,
         iters            = feedback_iters,
+        num_trips        = 5,
         dispersion       = 0.50)
 
     assert r["passengers_arrived"] > 0

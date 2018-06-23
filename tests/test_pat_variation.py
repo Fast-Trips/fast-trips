@@ -8,7 +8,7 @@ from fasttrips import Assignment
 from fasttrips import PathSet
 from fasttrips import Run
 
-
+@pytest.mark.travis
 def test_pat_before_and_after():
     """
     Test to ensure that some of the pathfinder trips are returned before preferred departure

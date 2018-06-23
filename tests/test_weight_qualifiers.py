@@ -68,7 +68,7 @@ def expected_dataframe():
 
     yield pd.DataFrame(data=expected_dict)
 
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers(sample_dataframe, expected_dataframe):
     """
     Test to ensure that the pathweight_ft pivot for qualifiers is working as expected.
@@ -79,7 +79,7 @@ def test_parse_weight_qualifiers(sample_dataframe, expected_dataframe):
                                   expected_dataframe.sort_values(sort_cols).reset_index(drop=True),
                                   check_like=True)
 
-
+@pytest.mark.travis
 def test_parse_weight_qualifiers_bad_key(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
@@ -90,6 +90,7 @@ def test_parse_weight_qualifiers_bad_key(sample_dataframe):
     with raises(KeyError, message="Expecting KeyError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
+<<<<<<< HEAD
 
 def test_parse_weight_qualifiers_bad_logrithmic_qualifier(sample_dataframe):
     """
@@ -143,6 +144,9 @@ def test_parse_weight_qualifiers_bad_logistic_mid_qualifier_value(sample_datafra
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 
+=======
+@pytest.mark.travis
+>>>>>>> test-cleanup
 def test_no_qualifiers(sample_dataframe):
     """
      Test to ensure that dataframe without qualifiers is return the same as it went in.

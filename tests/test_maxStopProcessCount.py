@@ -2,19 +2,17 @@ import os
 import pytest
 from fasttrips import Run
 
+test_mspc = [10, 50, 100]
+test_size   = 5
 
-@pytest.fixture(scope='module', params=[10, 50, 100])
+@pytest.fixture(scope='module', params=test_mspc)
 def stop_process_count(request):
     return request.param
 
 
 @pytest.fixture(scope='module')
 def passengers_arrived(stop_process_count):
-    arrived = {
-        10: 726,
-        50: 726,
-        100: 726,
-    }
+    arrived = dict(zip(test_mspc,[test_size]*len(test_mspc)))
 
     return arrived[stop_process_count]
 
@@ -39,7 +37,7 @@ def test_max_stop_process_count(stop_process_count, passengers_arrived):
         pathfinding_type  = "stochastic",
         max_stop_process_count = stop_process_count,
         iters             = 1,
-        test_size        = 2,
+        num_trips         = test_size ,
         dispersion        = 0.50 )
 
     assert passengers_arrived == r["passengers_arrived"]

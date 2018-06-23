@@ -38,7 +38,7 @@ def network_results(network):
     }
     yield results[network]
 
-
+@pytest.mark.travis
 def test_calculate_distance_miles():
     orig_lat, orig_lon = 32.707431, -117.157058
     dest_lat, dest_lon = 32.740792, -117.211333
