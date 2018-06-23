@@ -46,7 +46,7 @@ Follow the steps below to setup up fast-trips:
 	```Script
     conda create -q -y -n test-environment python=2.7 numpy pandas>=0.22 psutil pytest
     ```
-	
+
 	*  [pip][pip-url] install all of the necessary requirements can also be done with the command below.
 ```Python
 pip install -r requirements.txt
@@ -239,7 +239,7 @@ The following is a partial list of possible weight names base don the demand mod
   * `in_vehicle_time_min`
   * `wait_time_min`
 
-Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`. 
+Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.
 
 #### Weight Qualifiers  
 By default, Fast-Trips will apply all weights as a constant on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied using more complex models. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.
@@ -277,7 +277,7 @@ all        work    access           walk           walk_access  depart_early_min
 all        other   egress           walk           walk_egress  arrive_late_min.logarithmic                   0.3
 all        other   egress           walk           walk_egress  arrive_late_min.logarithmic.log_base          2.71828
 
-``` 
+```
 
 ## Fares
 
@@ -331,7 +331,7 @@ There are six required parameters that need to either be passed from the command
 
 All the other parameters described in the [configuration options](#configuration-options-fasttrips) can also be passed as keywords.  
 
-**NOTE: Any parameters passed in at run-time from the command line or via the script will overwrite any parameters read in from the `run_config` file.
+**NOTE: Any parameters passed in at run-time from the command line or via the script will overwrite any parameters read in from the `run_config` file.**
 
 ### Running the Example from a Script
 
@@ -438,21 +438,105 @@ Similar to network data standards, there also exists a [Demand Data Standards Re
 
 
 ## Tests
-There are multiple test runs in `\tests`.  They can be run by installing the [PyTest](https://docs.pytest.org/en/latest/) library and executing the command `pytest` from the command line within your `<fast-trips-dir>`.  
+There are a couple dozen tests that are stored in `\tests`.  They can be run by installing the [PyTest](https://docs.pytest.org/en/latest/) library (`pip install pytest`and executing the command `pytest` from the command line within your `<fast-trips-dir>`.  
 
-__Fares:__ `test_maxStopProcessCount.py`
+Most of the tests use test scenarios that can be found in the `fasttrips/Examples` directory.
 
-Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
+Many (but not all) of the tests can be individually run by giving the command `python tests/test_<TESTNAME>.py`.  
 
- * **Overlap Variable:** `count`, `distance`, `time`   
- * **Overlap Split:** Boolean
+Test output defaults to the foldoer `fasttrips/Examples/output`
+
+### Continuous Integration
+
+We use the [Travis-CI](travis-ci.org) continuous integration service as follows:  
+
+  - Every push to GitHub will run tests denoted by the `@pytest.mark.test.basic` function decorator, which is a small subset of system level tests.
+  - Every push to `master` or `develop` branches will run tests denoted by the `@pytest.mark.test.travis` function decorator.
+
+These subsets were created to limit the time it takes for Travis to run all the tests.  **When doing invasive development, they are not a substitute for running the entire test suite locally using the `py.test` command.**
+
+Additionally, it is important to understand that most of the tests are system-level tests that do not guarantee correct results so much as they make sure the system runs without an error.  
+
+For documentation-only commits, put `skip ci` somewhere in your commit message to not trigger the Travis testing.
+
+Some regression tests have regression output that needs to be refreshed an thus have a function decorator `@pytest.mark.skip` so that they are skipped.
+
+### Test Descriptions
+
+__Assignment Type:__ `test_assignment_type.py`
+
+Tests both deterministic and stochastic shortest path and hyperpaths.
+
+To run: `python tests/test_assignment_type.py`
+
+__Simple Bunny Hop Scenario:__ `test_bunny.py`
+
+Tests forward and backward stochastic hyperpaths as well as a sensitivity test with a different network.  Has the `basic` and `travis` label, so it runs with every push.
+
+To run: `python tests/test_bunny.py`
+
+__Calculate Cost:__ `test_calculate_cost.py`
+
+Regression tests of cost calculations.
+
+Status: SKIP
+
+To run: `python tests/test_calculate_cost.py`
+
+__Convergence:__ `test_convergence.py`
+
+Tests convergence.
+
+Status: SKIP
+
+To run: `python tests/test_convergence.py`
+
+__Cost Symmetry:__ `test_calculate_cost.py`
+
+Tests that the costs from the c++ pathfinding and the python calculate cost functions return the same values.
+
+Status: Manual
+
+To run: `python tests/test_cost_symmetry.py`
+
+__Dispersion Levels:__ `test_dispersion.py`
+
+ *  Runs dispersion levels at .0, 0.5, 0.1
+
+Status: Run on develop and master branch commits
+
+__Distance Calculation:__ `test_distance.py`
+
+Status: Out of date
 
 __Fares:__ `test_fares.py`
 
 Tests shortcuts in fare calculations
 
- * **Ignore Pathfinding**     
- * **Ignore Pathfinding and Path Enumeration**
+   * **Ignore Pathfinding**     
+   * **Ignore Pathfinding and Path Enumeration**
+
+Status: Run on develop and master branch commits
+
+To run: `python tests/test_fares.py`
+
+__Feedback:__ `test_feedback.py`
+
+Runs demand for three iterations with and without capacity constraint
+
+Status: Run on develop and master branch commits
+
+__GTFS:__ `test_gtfs_objects.py`
+
+Tests that we can read and process GTFS-PLUS.
+
+Status: Manual
+
+__Max Stop Process Count:__ `test_maxStopProcessCount.py`
+
+Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
+
+Status: Manual
 
 __Overlap Functions:__ `test_overlap.py`
 
@@ -461,22 +545,37 @@ Tests both overlap type and whether or not each transit segment is broken and co
  * **Overlap Variable:** `count`, `distance`, `time`   
  * **Overlap Split:** Boolean
 
-__Feedback:__ `test_feedback.py`
+Status: Run on develop and master branch commits
 
- *  Runs full demand for three iterations with and without capacity constraint
+__Flexible Departure/Arrival Windows:__ `test_pat_variation.py`
 
-__Dispersion Levels:__ `test_dispersion.py`
+Tests that flexible departure and arrival window penalties are working.
 
- *  Runs dispersion levels 0.1 to 1.0 at varying increments
+Status: Run on develop and master branch commits
+
+__Penalty Functions:__ `test_penalty_functions.py`
+
+Tests that penalty functions for flexible departure and arrival windows work.
+
+Status: Run on develop and master branch commits
+
+__Regional Network:__ `test_psrc.py`
+
+Tests that things work on a large, regional network.
+
+Status: Run on develop and master branch commits
 
 __User Classes:__ `test_user_classes.py`
 
- *  Uses multiple user classes as defined in `config_ft.py`
+Uses multiple user classes as defined in `config_ft.py`
 
-__Assignment Type:__ `test_assignment_type.py`
+Status: Manual
 
- *  "Deterministic" indicates use of a deterministic trip-based shortest path search algorithm
- *  "Stochastic" indicates use of a stochastic hyperpath-finding algorithm
+__Function Transformations:__ `test_weight_qualifiers.py`
+
+Uses multiple user classes as defined in `config_ft.py`
+
+Status: Run on develop and master branch commits
 
 __Note:__ Multiprocessing is not tested because it is [incompatible with PyTest](https://github.com/pytest-dev/pytest/issues/958)  
 

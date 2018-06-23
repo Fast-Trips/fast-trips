@@ -22,4 +22,4 @@ all         work     transit           transit      heavy_rail   wait_time_min  
 all         work     access            PNR          PNR_access   walk_time_min        0.04
 all         work     access            PNR          PNR_access   drive_time_min       0.03
 all         work     egress            PNR          PNR_egress   walk_time_min        0.04
-all         work     egress            PNR         PNR_egress    drive_time_min       0.03
+all         work     egress            PNR          PNR_egress   drive_time_min       0.03
