@@ -1,9 +1,5 @@
-Fast-Trips Task 7
-=================
-
-Small Test Network - Test Demand
+Springfield Network - Demand
 --------------------------------
-
 
 Initial test demand includes trip information without associated HH or person info. As such `person_id` is
 set to zero for all trips in the trip list. One trip occurs every 10 seconds on regular intervals. Each
@@ -29,6 +25,6 @@ vot	          |float   |1 to 30              |VOT in $/hr, for test net choose r
 pnr_ids	      |        |                     |Optional, empty list implies any accessible PNR can be used
 
 
-Files
+Config Files
 ------
-This folder contains three `pathweights_ft.txt` and `config_ft.txt` files each. The files with extensions (`_pat` and `_alt`) are used by the test scripts. These should not be modified as they are targeted to test specific features in the code.
+This folder contains three `pathweights_ft.txt` and `config_ft.txt` files each. The configs with extensions (`.pat` and `.alt`) are used by the test scripts. These should not be modified as they are targeted to test specific features in the code.

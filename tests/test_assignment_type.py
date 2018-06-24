@@ -2,30 +2,39 @@ import os
 import pytest
 from fasttrips import Run
 
-@pytest.mark.parametrize("assignment_type", ["stochastic","deterministic"])
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
+
+# DIRECTORY LOCATIONS
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+
+# INPUT FILE LOCATIONS
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+
+# LIST OF RUN PARAMETERS
+ASSIGNMENT_TYPES    = ["stochastic","deterministic"]
+
+@pytest.mark.parametrize("assignment_type", ASSIGNMENT_TYPES)
 
 def test_assignment_type(assignment_type):
-
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
-
+    OUTPUT_FOLDER       = "assignment_type_%s" % (assignment_type)
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
         input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
+        run_config       = CONFIG_FILE,
+        input_weights    = INPUT_WEIGHTS,
         output_dir       = OUTPUT_DIR,
+        output_folder    = OUTPUT_FOLDER,
         overlap_variable = "None",
         pf_iters         = 2,
         max_stop_process_count = 2,
-        output_folder    = assignment_type,
         pathfinding_type = assignment_type,
         iters            = 1,
         dispersion       = 0.50,
-        num_trips  = 5)
+        num_trips        = 5)
 
     assert r["passengers_arrived"] > 0
 

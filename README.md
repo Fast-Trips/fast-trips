@@ -333,41 +333,55 @@ All the other parameters described in the [configuration options](#configuration
 
 **NOTE: Any parameters passed in at run-time from the command line or via the script will overwrite any parameters read in from the `run_config` file.**
 
-### Running the Example from a Script
+### Running the Springfield Example
 
-Sample input files have been provided in `<fast-trips-dir>\Examples\test_network` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
+Sample input files have been provided in `<fast-trips-dir>\Examples\Springfield` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
 
+#### From a Script
 ```python
 
-# \scripts\run_example.py
+# Examples\Springfield\run_springfield.py
 
 import os
 from fasttrips import Run
 
-EXAMPLES_DIR   = os.path.join(os.path.dirname(os.getcwd()),"fasttrips","Examples","test_scenario")
+# DIRECTORY LOCATIONS
+EXAMPLE_DIR         = os.path.abspath(os.path.dirname(__file__))
+
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+OUTPUT_FOLDER       = "general_run"
+
+# INPUT FILE LOCATIONS
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+
+print "Running Fast-Trips in %s" % (ex_dir.split(os.sep)[-1:])
 
 Run.run_fasttrips(
-    input_network_dir     = os.path.join(EXAMPLES_DIR,"network"),
-    input_demand_dir      = os.path.join(EXAMPLES_DIR,"demand_reg"),
-    run_config            = os.path.join(EXAMPLES_DIR,"demand_reg","config_ft.txt"),
-    input_weights         = os.path.join(EXAMPLES_DIR,"demand_reg","pathweight_ft.txt"),
-    output_dir            = os.path.join(EXAMPLES_DIR,"output"),
-    output_folder         = "example",
-    pathfinding_type      = "stochastic",
-    overlap_variable      = "count",
+    input_network_dir= INPUT_NETWORK,
+    input_demand_dir = INPUT_DEMAND,
+    run_config       = CONFIG_FILE,
+    input_weights    = INPUT_WEIGHTS,
+    output_dir       = OUTPUT_DIR,
+    output_folder    = OUTPUT_FOLDER,
+    pathfinding_type = "stochastic",
+    overlap_variable = "count",
     overlap_split_transit = True,
-    iters                 = 1,
-    dispersion            = 0.50)
+    iters            = 1,
+    dispersion       = 0.50)
 ```
 
 To run the example:
 
 *  Make sure your `<fast-trips-dir>` is in your `PYTHONPATH` environment variable in *Advanced system settings* [Win] or terminal [OSX].
-*  Run `python run_example.py` from within `<fast-trips-dir>\scripts` in a command prompt [ Win ] or terminal [ OSX ].
+*  Run `python Examples/Springfield/run_springfield.py` from within `<fast-trips-dir>\scripts` in a command prompt [ Win ] or terminal [ OSX ].
 
-Output files from running fast-trips with the sample input data provided can be found in the `output` directory.
+Output files from running fast-trips with the sample input data provided can be found in the `Springfield/output` directory.
 
-### Running the Example from Command Line  
+#### From Command Line  
 
 The same example can be run from the command line by using the command from within the `<fast-trips-dir>` directory:
 
@@ -416,26 +430,30 @@ optional arguments:
                         In path-enumeration, suppress trying to adjust fares
                         using transfer rules. For performance.
 
-C:\Users\lzorn\Documents\fast-trips>rem Run it with Example test scenario and the demand_reg trip list
+C:\Users\lzorn\Documents\fast-trips>rem Run it with Springfield Example scenario
 C:\Users\lzorn\Documents\fast-trips>rem If using installed version, use 'run_fasttrips' instead of 'python fasttrips\Run.py'
 
-C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 fasttrips\Examples\test_scenario\demand_reg\config_ft.txt fasttrips\Examples\test_scenario\network fasttrips\Examples\test_scenario\demand_reg fasttrips\Examples\test_scenario\demand_reg\pathweight_ft.txt fasttrips\Examples\test_scenario\output_demand_reg
+C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 fasttrips\Examples\Springfield\configs\A\config_ft.txt fasttrips\Examples\Springfield\networks\vermont fasttrips\Examples\Springfield\demand\general fasttrips\Examples\Springfield\configs\A\pathweight_ft.txt fasttrips\Examples\test_scenario\output
 ```
 
-#### Example Network
+#### Springfield Network
 The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
-![alt text](/fasttrips/Examples/test_scenario/network/test_network.png "Transit Example Network")
+![alt text](/fasttrips/Examples/Springfield/networks/vermont/test_network.png "Transit Example Network")
 
 Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
-#### Example Demand
+#### Springfield Demand
 Two versions of sample demand have been prepared:
-*  `demand_reg` contains regular demand that consists only of a transit trip list. There are no multiple user classes and all trips use a single set of path weights (`pathweight_ft.txt`). Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](/Examples/test_network/demand_reg/Readme.md).
-*  `demand_twopaths` represents demand for two user classes that use different sets of path weights. Household and person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
+*  `general` contains regular demand that consists only of a transit trip list. Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](/Examples/test_network/demand_reg/Readme.md).
+*  `simpson_zorn` represents demand for two user classes that can use different sets of path weights. Household and person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
 
 Similar to network data standards, there also exists a [Demand Data Standards Repository][demand-standard-url].
 
+#### Springfield Configs
+There are several configurations for the Springfield setup, which are generally grouped as:  
+* `A` which doesn't use user classes, and
+* `B` which uses user classes and thus needs to use the `simpson_zorn` demand
 
 ## Tests
 There are a couple dozen tests that are stored in `\tests`.  They can be run by installing the [PyTest](https://docs.pytest.org/en/latest/) library (`pip install pytest`and executing the command `pytest` from the command line within your `<fast-trips-dir>`.  
@@ -525,6 +543,8 @@ __Feedback:__ `test_feedback.py`
 Runs demand for three iterations with and without capacity constraint
 
 Status: Run on develop and master branch commits
+
+To run: `python tests/test_feedback.py`
 
 __GTFS:__ `test_gtfs_objects.py`
 

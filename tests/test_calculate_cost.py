@@ -7,32 +7,25 @@ import pandas as pd
 
 from fasttrips import PathSet, Run, Util
 
-#sys.path.insert(0, os.path.join(os.getcwd(), 'scripts'))
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
 
 # DIRECTORY LOCATIONS
-#BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'misc')
-#TEST_FOLDER         = 'calculate_cost'
-#DF_DIR              = os.path.join(BASE_DIR, TEST_FOLDER)
-
-BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
-TEST_FOLDER         = 'calculate_cost'
-
-# DIRECTORY LOCATIONS
-OUTPUT_DIR          = os.path.join(BASE_DIR, 'output')
-INPUT_NETWORK       = os.path.join(BASE_DIR, 'networks')
-INPUT_DEMAND        = os.path.join(BASE_DIR, 'demand', 'demand_twopaths')
-DF_DIR              = os.path.join(BASE_DIR, 'misc', TEST_FOLDER)
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'simpson_zorn')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'B')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+TEST_FOLDER         = os.path.join(EXAMPLE_DIR, 'output','calculate_cost')
+DF_DIR              = os.path.join(EXAMPLE_DIR, 'misc', 'test_controls', 'calculate_cost')
 
 # INPUT FILE LOCATIONS
-CONFIG_FILE         = os.path.join(INPUT_DEMAND, 'config_ft.txt')
-INPUT_FUNCTIONS     = os.path.join(INPUT_DEMAND, 'config_ft.py')
-INPUT_WEIGHTS       = os.path.join(INPUT_DEMAND, 'pathweight_ft.txt')
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_FUNCTIONS     = os.path.join(INPUT_CONFIG, 'config_ft.py')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 PATHSET_PATHS_OUT   = os.path.join(DF_DIR, 'output_pathset_paths_calculate_cost.csv')
 PATHSET_LINKS_OUT   = os.path.join(DF_DIR, 'output_pathset_links_calculate_cost.csv')
 
-
 STOCHASTIC_DISPERSION = 0.5
-
 
 PATHSET_PATHS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_paths.csv')
 PATHSET_LINKS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_links.csv')
@@ -57,7 +50,7 @@ def test_growth_type_cost_calculation():
 
 
 def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
-    """
+    '''
     Method to verify that a test dataframe is equal (or nearly equal for floats)
     to a known control dataframe with specified join columns and comparison columns.
 
@@ -67,7 +60,7 @@ def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
     :param join_cols: List of columns to join dataframes for comparison
     :param compare_cols: List of columns to compare values.
     :return: AssertionError if dataframes do not match on compare_cols.
-    """
+    '''
 
     df_test = pd.read_csv(ctl_path, usecols=list(dtypes.keys()), dtype=dtypes)
     df_control = pd.read_csv(test_path, usecols=list(dtypes.keys()), dtype=dtypes)
@@ -93,7 +86,7 @@ def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
 
 @pytest.mark.skip(reason='Need to refresh the comparison csv')
 def test_calculate_cost():
-    """Organizing script for Nostests to run to test calculate_cost"""
+    '''Organizing script for Nostests to run to test calculate_cost'''
 
     ft = init_fasttrips(split_transit=False)
     paths_csv, links_csv = run_calculate_cost(ft)
@@ -134,7 +127,7 @@ def test_calculate_cost():
 
 
 def init_fasttrips(capacity_constrained=True, split_transit=False):
-    """
+    '''
     Initialize the FastTrips object. The FastTrips object is necessary to
     run the static calculate_cost method.
 
@@ -144,14 +137,12 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
     :type split_transit:
     :return: FastTrips Object
 
-    """
+    '''
 
     GLOBAL_ITERATIONS = 4
 
-    scenario_dir = os.path.join(INPUT_NETWORK, 'simple')
-
     ft = Run.run_setup(
-        scenario_dir,
+        INPUT_NETWORK,
         INPUT_DEMAND,
         INPUT_WEIGHTS,
         CONFIG_FILE,
@@ -171,7 +162,7 @@ def init_fasttrips(capacity_constrained=True, split_transit=False):
 
 
 def run_calculate_cost(ft):
-    """
+    '''
     Runs PathSet.calculate_cost with as a static method with configured pathset_links,
     pathset_paths, and veh_trips.
 
@@ -179,7 +170,7 @@ def run_calculate_cost(ft):
     :type ft: py:class:FastTrips
     :return: (str, str) system paths to pathset_links and pathset_paths csv outputs.
 
-    """
+    '''
 
     ######## LOAD IN PATHSET PATHS #################
     pathset_paths_loc = os.path.join(DF_DIR, 'input_pathset_paths.csv')
@@ -227,5 +218,10 @@ def run_calculate_cost(ft):
 
     return (PATHSET_PATHS_OUT, PATHSET_LINKS_OUT)
 
-if __name__ == "__main__":
-    test_calculate_cost()
+if __name__ == '__main__':
+    import traceback
+    try:
+        test_growth_type_cost_calculation()
+        test_calculate_cost()
+    except Exception, err:
+        traceback.print_exc()

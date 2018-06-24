@@ -2,6 +2,19 @@ import os
 import pytest
 from fasttrips import Run
 
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
+
+# DIRECTORY LOCATIONS
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+
+# INPUT FILE LOCATIONS
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+
+# TEST PARAMETERS
 OVERLAP_VARIABLES = ["None","count","distance","time"]
 
 @pytest.mark.parametrize("overlap_var", OVERLAP_VARIABLES)
@@ -9,24 +22,18 @@ OVERLAP_VARIABLES = ["None","count","distance","time"]
 
 @pytest.mark.travis
 def test_overlap(overlap_var, split_links ):
-    EXAMPLES_DIR  = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND  = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR    = os.path.join(EXAMPLES_DIR, "output")
-
 
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
         input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
+        run_config       = CONFIG_FILE,
+        input_weights    = INPUT_WEIGHTS,
         output_dir       = OUTPUT_DIR,
         output_folder    = "test_overlap_var-%s_split-%s" % (overlap_var, split_links),
-        overlap_variable = overlap_var,
         max_stop_process_count = 2,
         pf_iters         = 2,
         pathfinding_type = "stochastic",
+        overlap_variable = overlap_var,
         overlap_split_transit = split_links,
         iters            = 1,
         dispersion       = 0.50,

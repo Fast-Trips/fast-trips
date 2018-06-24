@@ -8,22 +8,21 @@ import pytest
 from fasttrips import Trip
 from fasttrips import Util
 
+TEST_NETWORKS = {"Seattle_Region": "psrc_1_1",
+                 "Springfield"   : "vermont"}
 
-HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", )
-TEST_HOME_DIR = os.path.join(HOME_DIR, 'test_trip_distance')
-OUTPUT_DIR = os.path.join(TEST_HOME_DIR, 'output')
-
+EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
 
 @pytest.fixture(scope="module")
 def network_results(network):
     results = {
-        'simple':
+        'Seattle_Region':
             {
                 't1': [0.0000, 0.18204, 0.85835, 1.59093, 1.73259],
                 't55': [0.0000, 1.40889],
                 't140': [0.0000, 0.39525, 0.91519],
             },
-        'psrc_1_1':
+        'Seattle_Region':
             {
                 '690': [0.00000, 0.24679, 0.52990, 0.58124, 0.68396, 0.82198,
                         1.10185, 1.30837, 1.63678, 1.68605, 1.88833, 2.01921,

@@ -2,7 +2,19 @@ import os
 import pytest
 from fasttrips import Run
 
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
 
+# DIRECTORY LOCATIONS
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+
+# INPUT FILE LOCATIONS
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+
+# LIST OF RUN PARAMETERS
 ignore_PF_fares_options = [True]
 ignore_EN_fares_options = [False, True]
 
@@ -12,17 +24,11 @@ ignore_EN_fares_options = [False, True]
 @pytest.mark.travis
 def test_fares(ignore_PF_fares,ignore_EN_fares):
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR     = os.path.join(EXAMPLES_DIR,"output")
-
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
         input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND,"config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND,"pathweight_ft.txt"),
+        run_config       = CONFIG_FILE,
+        input_weights    = INPUT_WEIGHTS,
         output_dir       = OUTPUT_DIR,
         output_folder    = "test_ignore_fares_PF-%s_EN-%s" % (ignore_PF_fares,ignore_EN_fares),
         pathfinding_type = "stochastic",

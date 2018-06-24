@@ -2,28 +2,39 @@ import os
 import pytest
 from fasttrips import Run
 
-@pytest.mark.parametrize("feedback_iters", [3])
-@pytest.mark.parametrize("capacity_const", [False, True])
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
+
+# DIRECTORY LOCATIONS
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+
+# INPUT FILE LOCATIONS
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+
+# LIST OF RUN PARAMETERS
+ITERS = [3]
+CAPACITY_CONSTRAINT = [False, True]
+
+
+@pytest.mark.parametrize("feedback_iters", ITERS)
+@pytest.mark.parametrize("capacity_const", CAPACITY_CONSTRAINT)
 
 @pytest.mark.travis
 def test_feedback(feedback_iters,capacity_const):
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
-
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
         input_demand_dir = INPUT_DEMAND,
-        run_config       = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights    = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
+        run_config       = CONFIG_FILE,
+        input_weights    = INPUT_WEIGHTS,
+        output_dir       = OUTPUT_DIR,
+        output_folder    = "test_feedback_iters-%d_capConst-%s" % (feedback_iters,capacity_const),
         max_stop_process_count = 2,
         pf_iters         = 2,
         overlap_variable = "None",
-        output_dir       = OUTPUT_DIR,
-        output_folder    = "test_feedback_iters-%d_capConst-%s" % (feedback_iters,capacity_const),
         pathfinding_type = "stochastic",
         capacity         = capacity_const,
         iters            = feedback_iters,
@@ -31,3 +42,9 @@ def test_feedback(feedback_iters,capacity_const):
         dispersion       = 0.50)
 
     assert r["passengers_arrived"] > 0
+
+if __name__ == '__main__':
+    import itertools
+    for iter, cap_const in list(itertools.product(ITERS,CAPACITY_CONSTRAINT)):
+        print("running %s %s" % (iter, cap_const))
+        test_feedback(iter, cap_const)

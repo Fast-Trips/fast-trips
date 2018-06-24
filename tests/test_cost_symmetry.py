@@ -11,25 +11,28 @@ from fasttrips import PathSet
 from fasttrips import Trip
 
 
-EXAMPLES_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
+EXAMPLE_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples', "Springfield")
 
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
 
-@pytest.fixture(scope='module', params=['', '_alt', '_pat'])
-def demand_scenario(request):
+CONFIGS        = ['A', 'A.alt', 'A.pat']
+
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+
+@pytest.fixture(scope='module', params=CONFIGS)
+def config_scenario(request):
     """
     Grab the right input folders for the test.
     """
     return request.param
 
 @pytest.fixture(scope='module')
-def ft_instance(demand_scenario):
+def ft_instance(config_scenario):
     """
     The tests need a Fast-Trips instance. This is shared code for each demand folder under test.
     """
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, 'networks', 'simple')
-    INPUT_DEMAND = os.path.join(EXAMPLES_DIR, 'demand', 'demand_reg')
-    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', 'demand_reg' + demand_scenario)
+    OUTPUT_FOLDER = os.path.join(EXAMPLE_DIR, 'output', 'test_cost_symmetry', config_scenario)
 
     try:
         os.makedirs(OUTPUT_FOLDER)
@@ -40,8 +43,8 @@ def ft_instance(demand_scenario):
     ft = FastTrips(
         INPUT_NETWORK,
         INPUT_DEMAND,
-        os.path.join(INPUT_DEMAND, 'pathweight_ft{}.txt'.format(demand_scenario)),
-        os.path.join(INPUT_DEMAND, 'config_ft{}.txt'.format(demand_scenario)),
+        os.path.join(EXAMPLE_DIR,'configs', config_scenario, 'pathweight_ft.txt'),
+        os.path.join(EXAMPLE_DIR,'configs', config_scenario, 'config_ft.txt'),
         OUTPUT_FOLDER
     )
 
@@ -57,7 +60,7 @@ def ft_instance(demand_scenario):
 
 
 @pytest.fixture(scope='module')
-def pathfinder_paths(ft_instance, demand_scenario):
+def pathfinder_paths(ft_instance, config_scenario):
     """
     Generate the C++ pathfinder results for a set of demand inputs. This method yields
     results, so that it could potentially be recycled for multiple tests.
@@ -65,7 +68,7 @@ def pathfinder_paths(ft_instance, demand_scenario):
     """
 
     ft = ft_instance
-    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', 'demand_reg' + demand_scenario)
+    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', config_scenario)
 
     # for debugging insight
     Assignment.write_configuration(OUTPUT_FOLDER)
@@ -129,7 +132,7 @@ def simulation_paths(ft_instance, pathfinder_paths):
         reset_bump_iter=False
     )
 
-
+@pytest.mark.cost
 def test_cost_symmetry(pathfinder_paths, simulation_paths):
     paths_join_col = ['trip_list_id_num', 'pathnum']
     links_join_col = paths_join_col + ['linknum']

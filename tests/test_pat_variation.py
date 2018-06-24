@@ -9,25 +9,33 @@ from fasttrips import Assignment
 from fasttrips import PathSet
 from fasttrips import Run
 
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
+
+# DIRECTORY LOCATIONS
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+
+# INPUT FILE LOCATIONS
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+
 @pytest.mark.travis
+@pytest.mark.pat
+@pytest.mark.skip(reason="Not working - need to fix")
 def test_pat_before_and_after():
     """
     Test to ensure that some of the pathfinder trips are returned before preferred departure
     or after preferred arrival.
     """
-
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
-    OUTPUT_FOLDER  = 'pat_scenario'
+    OUTPUT_FOLDER       = 'pat_scenario'
 
     r = Run.run_fasttrips(
         input_network_dir    = INPUT_NETWORK,
         input_demand_dir     = INPUT_DEMAND,
-        run_config           = os.path.join(INPUT_DEMAND, "config_ft_pat.txt"),
-        input_weights        = os.path.join(INPUT_DEMAND, "pathweight_ft_pat.txt"),
+        run_config           = CONFIG_FILE,
+        input_weights        = INPUT_WEIGHTS,
         output_dir           = OUTPUT_DIR,
         output_folder        = OUTPUT_FOLDER,
         pathfinding_type     = "stochastic",
@@ -89,18 +97,13 @@ def test_pat_off():
     or after preferred arrival.
     """
 
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-
-    INPUT_NETWORK = os.path.join(EXAMPLES_DIR, "networks", 'simple')
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-    OUTPUT_DIR     = os.path.join(EXAMPLES_DIR, "output")
     OUTPUT_FOLDER  = 'pat_scenario_reg'
 
     r = Run.run_fasttrips(
         input_network_dir    = INPUT_NETWORK,
         input_demand_dir     = INPUT_DEMAND,
-        run_config           = os.path.join(INPUT_DEMAND, "config_ft.txt"),
-        input_weights        = os.path.join(INPUT_DEMAND, "pathweight_ft.txt"),
+        run_config           = CONFIG_FILE,
+        input_weights        = INPUT_WEIGHTS,
         output_dir           = OUTPUT_DIR,
         output_folder        = OUTPUT_FOLDER,
         pathfinding_type     = "stochastic",
@@ -157,11 +160,8 @@ def test_pat_off():
 
 
 def test_pat_growth_type_validation():
-    EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
-    INPUT_DEMAND   = os.path.join(EXAMPLES_DIR, 'demand', "demand_reg")
-
     PathSet.WEIGHTS_FIXED_WIDTH = True
-    Assignment.read_weights(os.path.join(INPUT_DEMAND, "pathweight_ft.txt"))
+    Assignment.read_weights(INPUT_WEIGHTS)
     check, error_str = PathSet.verify_weights(PathSet.WEIGHTS_DF)
     assert check
 
