@@ -136,8 +136,8 @@ class Passenger:
     PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
 
     #: pathfinding results
-    PF_PATHS_CSV                    = r"pathsfound_paths.csv"
-    PF_LINKS_CSV                    = r"pathsfound_links.csv"
+    PF_PATHS_CSV                    = r"enumerated_paths.csv"
+    PF_LINKS_CSV                    = r"enumerated_links.csv"
 
     #: results - PathSets
     PATHSET_PATHS_CSV               = r"pathset_paths.csv"
@@ -422,7 +422,7 @@ class Passenger:
         return self.id_to_pathset[trip_list_id]
 
     def get_person_id(self, trip_list_id):
-        to_ret = self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id, 
+        to_ret = self.trip_list_df.loc[self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]==trip_list_id,
                                         [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]]
         return(to_ret.iloc[0,0], to_ret.iloc[0,1])
@@ -1043,4 +1043,3 @@ class Passenger:
             pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].cat.set_categories(Assignment.CHOSEN_CATEGORIES, ordered=True, inplace=True)
 
         return pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>Assignment.CHOSEN_NOT_CHOSEN_YET,].copy()
-
