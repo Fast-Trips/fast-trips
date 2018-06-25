@@ -116,7 +116,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html#documentation">Documentation</a></li>
 </ul>
 
             
@@ -228,7 +227,7 @@
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">initialize_fasttrips_extension</span></code>(…)</td>
 <td>Initialize the C++ fasttrips extension by passing it the network supply.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">load_passengers_on_vehicles_with_cap</span></code>(FT,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">load_passengers_on_vehicles_with_cap</span></code>(…)</td>
 <td>Check if we have boards on over-capacity vehicles.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">merge_pathsets</span></code>(pathfind_trip_list_df,&nbsp;…)</td>
@@ -237,28 +236,31 @@
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">number_of_pathsets</span></code>(pathset_paths_df)</td>
 <td>Counts the number of passenger trips with pathsets and returns it.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">put_passengers_on_vehicles</span></code>(pathset_links_df,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">process_weight_qualifiers</span></code>(weights)</td>
+<td>Qualifiers are used to change the default behavior of weight_names.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">put_passengers_on_vehicles</span></code>(pathset_links_df,&nbsp;…)</td>
 <td>Puts the chosen passenger trips specified in pathset_links_df onto the transit vehicle trips specified by veh_trip_df.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_configuration</span></code>(config_fullpath)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_configuration</span></code>(config_fullpath)</td>
 <td>Read the configuration parameters from <a class="reference internal" href="#fasttrips.Assignment.CONFIGURATION_FILE" title="fasttrips.Assignment.CONFIGURATION_FILE"><code class="xref py py-attr docutils literal"><span class="pre">Assignment.CONFIGURATION_FILE</span></code></a></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_functions</span></code>(func_file)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_functions</span></code>(func_file)</td>
 <td>Read the functions from :py:attr:<a href="#id1"><span class="problematic" id="id2">`</span></a>Assignment.CONFIGURATION_FUNCTIONS_FILE</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_weights</span></code>([weights_file])</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_weights</span></code>([weights_file])</td>
 <td>Read the weights from :py:attr:<a href="#id3"><span class="problematic" id="id4">`</span></a>Assignment.INPUT_WEIGHTS</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">set_fasttrips_bump_wait</span></code>(bump_wait_df)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_fasttrips_bump_wait</span></code>(bump_wait_df)</td>
 <td>Sends the bump wait information to the fasttrips extension</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">simulate</span></code>(FT,&nbsp;output_dir,&nbsp;iteration,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">simulate</span></code>(FT,&nbsp;output_dir,&nbsp;iteration,&nbsp;…)</td>
 <td>Given a pathset for each passenger, choose a path (if relevant) and then actually assign the passengers trips to the vehicles.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_configuration</span></code>(output_dir)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_configuration</span></code>(output_dir)</td>
 <td>Write the configuration parameters to function as a record with the output.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_vehicle_trips</span></code>(output_dir,&nbsp;iteration,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_vehicle_trips</span></code>(output_dir,&nbsp;iteration,&nbsp;…)</td>
 <td></td>
 </tr>
 </tbody>
@@ -399,7 +401,7 @@ stochastic trip-based hyperpath (TBHP).</p>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Assignment.load_passengers_on_vehicles_with_cap">
-<em class="property">static </em><code class="descname">load_passengers_on_vehicles_with_cap</code><span class="sig-paren">(</span><em>FT</em>, <em>iteration</em>, <em>pathfinding_iteration</em>, <em>simulation_iteration</em>, <em>trips</em>, <em>pathset_paths_df</em>, <em>pathset_links_df</em>, <em>veh_loaded_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.load_passengers_on_vehicles_with_cap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.load_passengers_on_vehicles_with_cap" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">load_passengers_on_vehicles_with_cap</code><span class="sig-paren">(</span><em>iteration</em>, <em>pathfinding_iteration</em>, <em>simulation_iteration</em>, <em>trips</em>, <em>pathset_paths_df</em>, <em>pathset_links_df</em>, <em>veh_loaded_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.load_passengers_on_vehicles_with_cap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.load_passengers_on_vehicles_with_cap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if we have boards on over-capacity vehicles.  Mark them and mark the boards.</p>
 <p>If <a class="reference internal" href="#fasttrips.Assignment.CAPACITY_CONSTRAINT" title="fasttrips.Assignment.CAPACITY_CONSTRAINT"><code class="xref py py-attr docutils literal"><span class="pre">Assignment.CAPACITY_CONSTRAINT</span></code></a>, then bump off overcapacity passengers.</p>
 <p>The process is:</p>
@@ -428,6 +430,19 @@ If non-null, this represents the iteration the passenger got bumped.</li>
 <dt id="fasttrips.Assignment.number_of_pathsets">
 <em class="property">static </em><code class="descname">number_of_pathsets</code><span class="sig-paren">(</span><em>pathset_paths_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.number_of_pathsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.number_of_pathsets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Counts the number of passenger trips with pathsets and returns it.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Assignment.process_weight_qualifiers">
+<em class="property">static </em><code class="descname">process_weight_qualifiers</code><span class="sig-paren">(</span><em>weights</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Assignment.html#Assignment.process_weight_qualifiers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Assignment.process_weight_qualifiers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Qualifiers are used to change the default behavior of weight_names. Qualifiers
+are added by adding a period (.) after the weight_name and specifying the
+qualifier name. Qualifier attributes are specified after a second dot.</p>
+<p>For example: depart_early_cost_min.logistic.growth_rate
+depart_early_cost_min is being qualified as a logistic penalty instead of the default
+behavior. growth_rate is an attribute of the logistic qualifier.
+:param weights: vertically oriented qualifiers
+:return: pivoted weights table with the qualifiers normalized horizontally.</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -597,8 +612,8 @@ loads, and iterate until we have no capacity issues.  Boolean.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Assignment.INPUT_NETWORK_DIR">
-<code class="descname">INPUT_NETWORK_DIR</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.INPUT_NETWORK_DIR" title="Permalink to this definition">¶</a></dt>
+<dt id="fasttrips.Assignment.INPUT_NETWORK_ARCHIVE">
+<code class="descname">INPUT_NETWORK_ARCHIVE</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.INPUT_NETWORK_ARCHIVE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration: Input network directory</p>
 </dd></dl>
 
@@ -624,6 +639,11 @@ Used in conjuntion with <a class="reference internal" href="#fasttrips.Assignmen
 </dd></dl>
 
 <dl class="attribute">
+<dt id="fasttrips.Assignment.MAX_PF_ITERATIONS">
+<code class="descname">MAX_PF_ITERATIONS</code><em class="property"> = 10</em><a class="headerlink" href="#fasttrips.Assignment.MAX_PF_ITERATIONS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="fasttrips.Assignment.MAX_SIMULATION_ITERS">
 <code class="descname">MAX_SIMULATION_ITERS</code><em class="property"> = 10</em><a class="headerlink" href="#fasttrips.Assignment.MAX_SIMULATION_ITERS" title="Permalink to this definition">¶</a></dt>
 <dd><p>How many Simulation Iterations should we do before going back to path-finding?</p>
@@ -646,7 +666,12 @@ this threshhold.</p>
 
 <dl class="attribute">
 <dt id="fasttrips.Assignment.NETWORK_BUILD_DATE">
-<code class="descname">NETWORK_BUILD_DATE</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.NETWORK_BUILD_DATE" title="Permalink to this definition">¶</a></dt>
+<code class="descname">NETWORK_BUILD_DATE</code><em class="property"> = datetime.datetime(2018, 6, 25, 13, 4, 26, 359844)</em><a class="headerlink" href="#fasttrips.Assignment.NETWORK_BUILD_DATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.NETWORK_BUILD_DATE_START_TIME">
+<code class="descname">NETWORK_BUILD_DATE_START_TIME</code><em class="property"> = datetime.datetime(2018, 6, 25, 0, 0)</em><a class="headerlink" href="#fasttrips.Assignment.NETWORK_BUILD_DATE_START_TIME" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -927,6 +952,14 @@ This is for performance testing.</p>
 <code class="descname">TRANSFER_FARE_IGNORE_PATHFINDING</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.TRANSFER_FARE_IGNORE_PATHFINDING" title="Permalink to this definition">¶</a></dt>
 <dd><p>In path-finding, suppress trying to adjust fares using transfer fare rules.
 This is for performance testing.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.Assignment.UTILS_CONVERSION">
+<code class="descname">UTILS_CONVERSION</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Assignment.UTILS_CONVERSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route choice configuration: IVT mins to utils conversion factor.
+Higher values result in higher differences in probabilities for a given
+difference in genaralized costs. Must be nonnegative.</p>
 </dd></dl>
 
 <dl class="attribute">

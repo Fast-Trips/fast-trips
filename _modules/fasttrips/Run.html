@@ -176,8 +176,13 @@
 <span class="s2">    See the License for the specific language governing permissions and</span>
 <span class="s2">    limitations under the License.</span>
 <span class="s2">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
 <span class="kn">import</span> <span class="nn">fasttrips</span>
-<span class="kn">import</span> <span class="nn">argparse</span><span class="o">,</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">pandas</span><span class="o">,</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">datetime</span>
+
 
 <div class="viewcode-block" id="run_setup"><a class="viewcode-back" href="../../_generated/fasttrips.Run.html#fasttrips.Run.run_setup">[docs]</a><span class="k">def</span> <span class="nf">run_setup</span><span class="p">(</span><span class="n">input_network_dir</span><span class="p">,</span>
               <span class="n">input_demand_dir</span><span class="p">,</span>
@@ -212,7 +217,7 @@
 
 <span class="sd">    Unnamed keyword arguments:</span>
 <span class="sd">        num_trips -- if specified, will process this number of trips and ignore the rest</span>
-
+<span class="sd">        pf_iters -- Integer. If specified, will set the maximum number of pathfinding iterations(default: 10)</span>
 <span class="sd">        dispersion -- theta parameter; essentially the nesting parameter. Good value is between 0.5-1. (default: 1.0)</span>
 <span class="sd">        max_stop_process_count = maximum number of times you will re-processe a node (default: 20)</span>
 <span class="sd">        capacity -- Boolean to activate capacity constraints (default: False)</span>
@@ -286,6 +291,9 @@
     <span class="k">if</span> <span class="n">iters</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_ITERATIONS</span>          <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">iters</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s2">&quot;pf_iters&quot;</span><span class="p">):</span>
+            <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_PF_ITERATIONS</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;pf_iters&quot;</span><span class="p">]</span>
+
     <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s2">&quot;number_of_processes&quot;</span><span class="p">):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">NUMBER_OF_PROCESSES</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;number_of_processes&quot;</span><span class="p">]</span>
 
@@ -326,6 +334,9 @@
 
     <span class="k">if</span> <span class="s2">&quot;time_window&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TIME_WINDOW</span>         <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;time_window&quot;</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="s2">&quot;utils_conversion_factor&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">UTILS_CONVERSION</span>    <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;utils_conversion_factor&quot;</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="s2">&quot;dispersion&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">STOCH_DISPERSION</span>    <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dispersion&quot;</span><span class="p">]</span>

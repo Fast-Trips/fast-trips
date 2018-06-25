@@ -172,12 +172,14 @@
 <span class="s2">    See the License for the specific language governing permissions and</span>
 <span class="s2">    limitations under the License.</span>
 <span class="s2">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">datetime</span><span class="o">,</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">.Logger</span>    <span class="k">import</span> <span class="n">FastTripsLogger</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
 <span class="kn">from</span> <span class="nn">.Passenger</span> <span class="k">import</span> <span class="n">Passenger</span>
 <span class="kn">from</span> <span class="nn">.Util</span>      <span class="k">import</span> <span class="n">Util</span>
+
 
 <div class="viewcode-block" id="Performance"><a class="viewcode-back" href="../../_generated/fasttrips.Performance.html#fasttrips.Performance">[docs]</a><span class="k">class</span> <span class="nc">Performance</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -353,7 +355,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Writes the pathfinding results to OUTPUT_PERFORMANCE_PF_FILE as a csv.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">performance_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">performance_pf_dict</span><span class="p">)</span>
+        <span class="n">performance_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">performance_pf_dict</span><span class="p">)</span>
 
         <span class="n">Util</span><span class="o">.</span><span class="n">write_dataframe</span><span class="p">(</span><span class="n">performance_df</span><span class="p">,</span> <span class="s2">&quot;performance_df&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">Performance</span><span class="o">.</span><span class="n">OUTPUT_PERFORMANCE_PF_FILE</span><span class="p">),</span> <span class="n">append</span><span class="o">=</span><span class="n">append</span><span class="p">)</span>
 
@@ -365,7 +367,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Writes the results to OUTPUT_PERFORMANCE_FILE as a csv.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">performance_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_record_dict</span><span class="p">)</span>
+        <span class="n">performance_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_record_dict</span><span class="p">)</span>
 
         <span class="n">performance_df</span><span class="p">[</span><span class="n">Performance</span><span class="o">.</span><span class="n">PERFORMANCE_COL_STEP_DURATION</span><span class="p">]</span> <span class="o">=</span> <span class="n">performance_df</span><span class="p">[</span><span class="n">Performance</span><span class="o">.</span><span class="n">PERFORMANCE_COL_END_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">performance_df</span><span class="p">[</span><span class="n">Performance</span><span class="o">.</span><span class="n">PERFORMANCE_COL_START_TIME</span><span class="p">]</span>
 

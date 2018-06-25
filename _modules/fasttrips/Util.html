@@ -172,14 +172,18 @@
 <span class="s2">    See the License for the specific language governing permissions and</span>
 <span class="s2">    limitations under the License.</span>
 <span class="s2">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">import</span> <span class="nn">csv</span><span class="o">,</span> <span class="nn">datetime</span><span class="o">,</span> <span class="nn">logging</span><span class="o">,</span> <span class="nn">os</span>
-
-<span class="kn">import</span> <span class="nn">numpy</span>
-<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">partridge</span> <span class="k">as</span> <span class="nn">ptg</span>
 
 <span class="kn">from</span> <span class="nn">.Error</span>  <span class="k">import</span> <span class="n">UnexpectedError</span>
 <span class="kn">from</span> <span class="nn">.Logger</span> <span class="k">import</span> <span class="n">FastTripsLogger</span>
+
 
 <div class="viewcode-block" id="Util"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util">[docs]</a><span class="k">class</span> <span class="nc">Util</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -188,9 +192,9 @@
 <span class="sd">    Collect useful stuff here that doesn&#39;t belong in any particular existing class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1">#: Use this as the date</span>
-    <span class="n">SIMULATION_DAY</span>                  <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1">#SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)</span>
     <span class="c1">#: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`</span>
-    <span class="n">SIMULATION_DAY_START</span>            <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">SIMULATION_DAY</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+    <span class="c1">#SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())</span>
 
     <span class="c1">#: Maps timedelta columns to units for :py:meth:`Util.write_dataframe`</span>
     <span class="n">TIMEDELTA_COLUMNS_TO_UNITS</span>      <span class="o">=</span> <span class="p">{</span>
@@ -254,7 +258,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">input_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="c1"># add the new id column</span>
-        <span class="n">return_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">input_df</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">mapping_df</span><span class="p">,</span>
+        <span class="n">return_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">input_df</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">mapping_df</span><span class="p">,</span>
                                  <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
                                  <span class="n">left_on</span><span class="o">=</span><span class="n">id_colname</span><span class="p">,</span>
                                  <span class="n">right_on</span><span class="o">=</span><span class="n">mapping_id_colname</span><span class="p">,</span>
@@ -267,21 +271,21 @@
         <span class="n">mapping_newid_colname_chk</span> <span class="o">=</span> <span class="n">mapping_id_colname</span> <span class="o">+</span> <span class="s2">&quot;_mapping&quot;</span> <span class="k">if</span> <span class="n">mapping_newid_colname</span> <span class="ow">in</span> <span class="n">input_cols</span> <span class="k">else</span> <span class="n">mapping_newid_colname</span>
 
         <span class="c1"># Make sure all ids were mapped to numbers.  If not warn or error</span>
-        <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">!=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">input_df</span><span class="p">[</span><span class="n">id_colname</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">!=</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">input_df</span><span class="p">[</span><span class="n">id_colname</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">():</span>
 
             <span class="n">msg_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span>
             <span class="k">if</span> <span class="n">warn</span><span class="p">:</span> <span class="n">msg_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARN</span>
 
             <span class="k">if</span> <span class="n">warn_msg</span><span class="p">:</span> <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg_level</span><span class="p">,</span> <span class="n">warn_msg</span><span class="p">)</span>
             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg_level</span><span class="p">,</span><span class="s2">&quot;Util.add_new_id failed to map all ids to numbers&quot;</span><span class="p">)</span>
-            <span class="c1"># FastTripsLogger.log(msg_level,&quot;pandas.isnull(return_df[%s]).sum() = %d&quot; % (mapping_newid_colname_chk, pandas.isnull(return_df[mapping_newid_colname_chk]).sum()))</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg_level</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">return_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">]),[</span><span class="n">id_colname</span><span class="p">,</span><span class="n">mapping_newid_colname_chk</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()))</span>
-            <span class="c1"># FastTripsLogger.log(msg_level,&quot;pandas.isnull(input_df[%s]).sum() = %d&quot; % (id_colname, pandas.isnull(input_df[id_colname]).sum()))</span>
+            <span class="c1"># FastTripsLogger.log(msg_level,&quot;pd.isnull(return_df[%s]).sum() = %d&quot; % (mapping_newid_colname_chk, pd.isnull(return_df[mapping_newid_colname_chk]).sum()))</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg_level</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">return_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">]),[</span><span class="n">id_colname</span><span class="p">,</span><span class="n">mapping_newid_colname_chk</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()))</span>
+            <span class="c1"># FastTripsLogger.log(msg_level,&quot;pd.isnull(input_df[%s]).sum() = %d&quot; % (id_colname, pd.isnull(input_df[id_colname]).sum()))</span>
 
 
             <span class="k">if</span> <span class="n">drop_failures</span><span class="p">:</span>
                 <span class="c1"># remove them</span>
-                <span class="n">return_df</span> <span class="o">=</span> <span class="n">return_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pandas</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">])]</span>
+                <span class="n">return_df</span> <span class="o">=</span> <span class="n">return_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">])]</span>
                 <span class="c1"># make it an int</span>
                 <span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">]</span> <span class="o">=</span> <span class="n">return_df</span><span class="p">[</span><span class="n">mapping_newid_colname_chk</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
@@ -316,7 +320,7 @@
         <span class="k">for</span> <span class="n">colname</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">input_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">[</span><span class="n">colname</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="k">continue</span>
 
-            <span class="n">null_count</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">input_df</span><span class="p">[</span><span class="n">colname</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">null_count</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">input_df</span><span class="p">[</span><span class="n">colname</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">null_count</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_df</span><span class="p">):</span>
                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Dropping null column [</span><span class="si">%s</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">colname</span><span class="p">)</span>
                 <span class="n">input_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">colname</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">)</span>
@@ -328,7 +332,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Formatter to convert :py:class:`numpy.datetime64` to string that looks like `HH:MM:SS`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S.</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span></div>
 
 <div class="viewcode-block" id="Util.pretty"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.pretty">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">pretty</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
@@ -348,36 +352,48 @@
 <span class="sd">        Formatter to convert :py:class:`numpy.datetime64` to minutes after midnight</span>
 <span class="sd">        (with two decimal places)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">hour</span><span class="o">*</span><span class="mf">60.0</span> <span class="o">+</span> \
-                         <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> \
-                         <span class="n">pandas</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">hour</span><span class="o">*</span><span class="mf">60.0</span> <span class="o">+</span> \
+                         <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> \
+                         <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Util.timedelta_formatter"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.timedelta_formatter">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">timedelta_formatter</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">seconds</span> <span class="o">=</span> <span class="n">x</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="n">x</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
         <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="o">/</span><span class="mi">60</span><span class="p">)</span>
         <span class="n">seconds</span> <span class="o">-=</span> <span class="n">minutes</span><span class="o">*</span><span class="mi">60</span>
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%4d</span><span class="s1">m </span><span class="si">%04.1f</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">minutes</span><span class="p">,</span><span class="n">seconds</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Util.read_time"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.read_time">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">read_time</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">end_of_day</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.Assignment</span> <span class="k">import</span> <span class="n">Assignment</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">x</span><span class="o">==</span><span class="s1">&#39;&#39;</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;default&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">==</span><span class="s1">&#39;&#39;</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">==</span><span class="s1">&#39;default&#39;</span> <span class="ow">or</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
                 <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;24:00:00&#39;</span> <span class="k">if</span> <span class="n">end_of_day</span> <span class="k">else</span> <span class="s1">&#39;00:00:00&#39;</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
                 <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;24:00:00&#39;</span> <span class="k">if</span> <span class="n">end_of_day</span> <span class="k">else</span> <span class="s1">&#39;00:00:00&#39;</span>
         <span class="n">time_split</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
         <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time_split</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">day</span> <span class="o">=</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span>
+        <span class="n">day</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span>
         <span class="k">if</span> <span class="n">hour</span> <span class="o">&gt;=</span> <span class="mi">24</span><span class="p">:</span> 
             <span class="n">time_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%02d</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">hour</span><span class="o">-</span><span class="mi">24</span><span class="p">)</span>
             <span class="n">day</span> <span class="o">+=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">time_split</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">day</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">time</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Util.read_end_time"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.read_end_time">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">read_end_time</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Util</span><span class="o">.</span><span class="n">read_time</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Util.parse_minutes_to_time"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.parse_minutes_to_time">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_minutes_to_time</span><span class="p">(</span><span class="n">minutes</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">.Assignment</span> <span class="k">import</span> <span class="n">Assignment</span>
+        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">+</span> <span class="n">elapsed_time</span></div>
+
 
 <div class="viewcode-block" id="Util.write_dataframe"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.write_dataframe">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">write_dataframe</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">keep_duration_columns</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">drop_debug_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_pathfinding_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -442,13 +458,13 @@
                 <span class="n">units_str</span>   <span class="o">=</span> <span class="n">Util</span><span class="o">.</span><span class="n">TIMEDELTA_COLUMNS_TO_UNITS</span><span class="p">[</span><span class="n">old_colname</span><span class="p">]</span>
                 <span class="n">new_colname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">old_colname</span><span class="p">,</span> <span class="n">units_str</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">units_str</span> <span class="o">==</span> <span class="s2">&quot;milliseconds&quot;</span><span class="p">:</span>
-                    <span class="n">units</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;ms&#39;</span><span class="p">)</span>
+                    <span class="n">units</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;ms&#39;</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="n">units_str</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
-                    <span class="n">units</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+                    <span class="n">units</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="n">units_str</span> <span class="o">==</span> <span class="s2">&quot;seconds&quot;</span><span class="p">:</span>
-                    <span class="n">units</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+                    <span class="n">units</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span>
 
                 <span class="c1"># if the column already exists, continue</span>
                 <span class="k">if</span> <span class="n">new_colname</span> <span class="ow">in</span> <span class="n">df_cols</span><span class="p">:</span> <span class="k">continue</span>
@@ -487,14 +503,14 @@
 <span class="sd">        Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance</span>
 <span class="sd">        in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">radius</span> <span class="o">=</span> <span class="mf">3959.0</span> <span class="c1"># mi</span>
+        <span class="n">radius</span> <span class="o">=</span> <span class="mf">3963.190592</span> <span class="c1"># mi</span>
 
         <span class="c1"># assume these aren&#39;t in here</span>
-        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lat&quot;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">destination_lat</span><span class="p">]</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="n">origin_lat</span><span class="p">])</span>
-        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lon&quot;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">destination_lon</span><span class="p">]</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="n">origin_lon</span><span class="p">])</span>
-        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lat&quot;</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lat&quot;</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">+</span> \
-                                 <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">origin_lat</span><span class="p">]))</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">destination_lat</span><span class="p">]))</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lon&quot;</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lon&quot;</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
-        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_havc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">]),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">]))</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lat&quot;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">destination_lat</span><span class="p">]</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="n">origin_lat</span><span class="p">])</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lon&quot;</span> <span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">destination_lon</span><span class="p">]</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="n">origin_lon</span><span class="p">])</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lat&quot;</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lat&quot;</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">+</span> \
+                                 <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">origin_lat</span><span class="p">]))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">destination_lat</span><span class="p">]))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lon&quot;</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_lon&quot;</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_havc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">]))</span>
         <span class="n">dataframe</span><span class="p">[</span><span class="n">distance_colname</span><span class="p">]</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;dist_havc&quot;</span><span class="p">]</span>
 
         <span class="c1"># FastTripsLogger.debug(&quot;calculate_distance_miles\n%s&quot;, dataframe.to_string())</span>
@@ -508,6 +524,7 @@
             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;calculate_distance_miles: max is greater than 1k</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="n">distance_colname</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">1000</span><span class="p">]</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
 
         <span class="n">dataframe</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;dist_lat&quot;</span><span class="p">,</span><span class="s2">&quot;dist_lon&quot;</span><span class="p">,</span><span class="s2">&quot;dist_hava&quot;</span><span class="p">,</span><span class="s2">&quot;dist_havc&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="Util.get_process_mem_use_bytes"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.get_process_mem_use_bytes">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_process_mem_use_bytes</span><span class="p">():</span>
@@ -539,7 +556,218 @@
             <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> KB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">bytes</span><span class="o">/</span><span class="mf">1000.0</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">bytes</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> MB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">bytes</span><span class="o">/</span><span class="p">(</span><span class="mf">1000.0</span><span class="o">*</span><span class="mf">1000.0</span><span class="p">))</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> GB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">bytes</span><span class="o">/</span><span class="p">(</span><span class="mf">1000.0</span><span class="o">*</span><span class="mf">1000.0</span><span class="o">*</span><span class="mf">1000.0</span><span class="p">))</span></div></div>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2"> GB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">bytes</span><span class="o">/</span><span class="p">(</span><span class="mf">1000.0</span><span class="o">*</span><span class="mf">1000.0</span><span class="o">*</span><span class="mf">1000.0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Util.merge_two_dicts"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.merge_two_dicts">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">merge_two_dicts</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A helper method for Python 2.7 to &#39;zip&#39; two dictionary objects</span>
+
+<span class="sd">        :param x: This dictionary will be copied and y appended to the copy.</span>
+<span class="sd">        :type x: dict.</span>
+<span class="sd">        :param y: This dictionary will be appended with a copy of x.</span>
+<span class="sd">        :type y: dict.</span>
+<span class="sd">        :returns: dict</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">z</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z</span></div>
+
+<div class="viewcode-block" id="Util.parse_boolean"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.parse_boolean">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_boolean</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">val</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="s1">&#39;True&#39;</span><span class="p">,</span> <span class="s1">&#39;TRUE&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Util.calculate_pathweight_costs"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.calculate_pathweight_costs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">calculate_pathweight_costs</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">result_col</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the weighted cost for a given :py:class:`pandas.DataFrame` given a impedance function and</span>
+<span class="sd">        value.</span>
+
+<span class="sd">        Sets the result into the column called result_col.</span>
+
+<span class="sd">        ==================  ===============  =====================================================================================================</span>
+<span class="sd">        column name          column type     description</span>
+<span class="sd">        ==================  ===============  =====================================================================================================</span>
+<span class="sd">        `var_value`                 float64  The value to weight</span>
+<span class="sd">        `growth_type`                   str  [&#39;constant&#39;, &#39;exponential&#39;, &#39;logarithmic&#39;, &#39;logistic&#39;]</span>
+<span class="sd">        `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value</span>
+<span class="sd">        `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve</span>
+<span class="sd">        `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve</span>
+<span class="sd">        ==================  ===============  =====================================================================================================</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">fasttrips</span> <span class="k">import</span> <span class="n">PathSet</span>
+
+        <span class="c1"># default is constant (constant weight)</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">result_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;var_value&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">EXP_GROWTH_MODEL</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">]</span> <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">EXP_GROWTH_MODEL</span><span class="p">,</span>  <span class="n">result_col</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">Util</span><span class="o">.</span><span class="n">exponential_integration</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;var_value&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">LOGARITHMIC_GROWTH_MODEL</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">{</span><span class="s1">&#39;var_value&#39;</span><span class="p">,</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOG_BASE</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="s2">&quot;Logarithmic pathweight growth_type formula specified. Missing var_value, or growth_log_base.&quot;</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">]</span> <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">LOGARITHMIC_GROWTH_MODEL</span><span class="p">,</span> <span class="n">result_col</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">Util</span><span class="o">.</span><span class="n">logarithmic_integration</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;var_value&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOG_BASE</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">LOGISTIC_GROWTH_MODEL</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="p">{</span><span class="s1">&#39;var_value&#39;</span><span class="p">,</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MAX</span><span class="p">,</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MID</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="s2">&quot;Logistic pathweight growth_type formula specified. Missing var_value, growth_logistic_max, or growth_logistic_mid.&quot;</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">]</span> <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">LOGISTIC_GROWTH_MODEL</span><span class="p">,</span> <span class="n">result_col</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">Util</span><span class="o">.</span><span class="n">logistic_integration</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;var_value&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_VALUE</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MAX</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MID</span><span class="p">])</span>
+
+        <span class="c1"># TODO: option: make these more subtle?</span>
+        <span class="c1"># missed_xfer has huge cost</span>
+        <span class="k">if</span> <span class="s1">&#39;missed_xfer&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;missed_xfer&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">,</span> <span class="n">result_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">HUGE_COST</span>
+
+        <span class="c1"># bump iter means over capacity</span>
+        <span class="k">if</span> <span class="s1">&#39;bump_iter&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;bump_iter&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">,</span> <span class="n">result_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">HUGE_COST</span>
+
+        <span class="c1"># negative cost is invalid</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">result_col</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;---Pathweight costs has negative values. Setting to zero.---</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">result_col</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+            <span class="p">)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span> <span class="n">df</span><span class="p">[</span><span class="n">result_col</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">result_col</span> <span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="Util.exponential_integration"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.exponential_integration">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">exponential_integration</span><span class="p">(</span><span class="n">penalty_min</span><span class="p">,</span> <span class="n">growth_rate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the integrated value of an exponential function.</span>
+<span class="sd">        Growth Function: (1 + Growth Rate) ** Penalty Minutes</span>
+<span class="sd">        Integrated Growth Function: ((1 + Growth Rate) ** Penalty Minutes - 1) / LN(1 + Growth Rate), dx=Penalty Minutes</span>
+<span class="sd">        :param penalty_min: float or :py:class:`pandas.Series` of floats</span>
+<span class="sd">        :param growth_rate: float: Exponetial growth factor</span>
+<span class="sd">        :return: float or :py:class:`pandas.Series` of floats depending on inputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">growth_rate</span><span class="p">,</span> <span class="n">penalty_min</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">growth_rate</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Util.logarithmic_integration"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.logarithmic_integration">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">logarithmic_integration</span><span class="p">(</span><span class="n">penalty_min</span><span class="p">,</span> <span class="n">growth_rate</span><span class="p">,</span> <span class="n">log_base</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the integrated value of an logarithmic function.</span>
+<span class="sd">        # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)</span>
+<span class="sd">        # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes</span>
+<span class="sd">        :param penalty_min: float or :py:class:`pandas.Series` of floats</span>
+<span class="sd">        :param growth_rate: log growth factor</span>
+<span class="sd">        :param log_base: log base to impact shape of curve</span>
+<span class="sd">        :return: float or :py:class:`pandas.Series` of floats depending on inputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">growth_rate</span> <span class="o">*</span> <span class="p">((</span><span class="n">penalty_min</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">penalty_min</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">penalty_min</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_base</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Util.logistic_integration"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.logistic_integration">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">logistic_integration</span><span class="p">(</span><span class="n">penalty_minute</span><span class="p">,</span> <span class="n">growth_rate</span><span class="p">,</span> <span class="n">max_logit</span><span class="p">,</span> <span class="n">sigmoid_mid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the integrated value of an logistic function.</span>
+<span class="sd">        Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))</span>
+<span class="sd">        Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)</span>
+<span class="sd">        Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))</span>
+<span class="sd">        Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))</span>
+<span class="sd">        :param penalty_minute: float or :py:class:`pandas.Series` of floats</span>
+<span class="sd">        :param growth_rate: log growth factor</span>
+<span class="sd">        :param max_logit: assymtotic max value of curve</span>
+<span class="sd">        :param sigmoid_mid: x-midpoint of curve</span>
+<span class="sd">        :return: float or :py:class:`pandas.Series` of floats depending on inputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">max_integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_logit</span> <span class="o">/</span> <span class="n">growth_rate</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">penalty_minute</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">sigmoid_mid</span><span class="p">))</span>
+        <span class="n">min_integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_logit</span> <span class="o">/</span> <span class="n">growth_rate</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">sigmoid_mid</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">max_integral</span> <span class="o">-</span> <span class="n">min_integral</span></div>
+
+
+<div class="viewcode-block" id="Util.get_fast_trips_config"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.get_fast_trips_config">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_fast_trips_config</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds additional nodes to the Partridge graph to</span>
+<span class="sd">        support Fast Trip extension files.</span>
+
+<span class="sd">        :return: Partridge configuration customized for</span>
+<span class="sd">                 Fast-Trips (_ft) loads and type casting.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.Route</span> <span class="k">import</span> <span class="n">Route</span>
+        <span class="kn">from</span> <span class="nn">.Stop</span> <span class="k">import</span> <span class="n">Stop</span>
+        <span class="kn">from</span> <span class="nn">.TAZ</span> <span class="k">import</span> <span class="n">TAZ</span>
+        <span class="kn">from</span> <span class="nn">.Transfer</span> <span class="k">import</span> <span class="n">Transfer</span>
+        <span class="kn">from</span> <span class="nn">.Trip</span> <span class="k">import</span> <span class="n">Trip</span>
+
+        <span class="n">config</span> <span class="o">=</span> <span class="n">ptg</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">default_config</span><span class="p">()</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">([</span>
+            <span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DRIVE_ACCESS_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_COST</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_TRAVEL_TIME</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_DISTANCE</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_START_TIME</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">read_time</span><span class="p">),</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DRIVE_ACCESS_COLUMN_END_TIME</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">read_end_time</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_DAP_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_LATITUDE</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_LOT_LONGITUDE</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">DAP_COLUMN_CAPACITY</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Route</span><span class="o">.</span><span class="n">INPUT_FARE_ATTRIBUTES_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_ATTR_COLUMN_PAYMENT_METHOD</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_ATTR_COLUMN_PRICE</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_ATTR_COLUMN_TRANSFERS</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_ATTR_COLUMN_TRANSFER_DURATION</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Route</span><span class="o">.</span><span class="n">INPUT_FARE_PERIODS_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_RULES_COLUMN_START_TIME</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">read_time</span><span class="p">),</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_RULES_COLUMN_END_TIME</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">read_end_time</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Route</span><span class="o">.</span><span class="n">INPUT_FARE_TRANSFER_RULES_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">FARE_TRANSFER_RULES_COLUMN_AMOUNT</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Route</span><span class="o">.</span><span class="n">INPUT_ROUTES_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">Route</span><span class="o">.</span><span class="n">ROUTES_COLUMN_PROOF_OF_PAYMENT</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">Util</span><span class="o">.</span><span class="n">parse_boolean</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Stop</span><span class="o">.</span><span class="n">INPUT_STOPS_FILE</span><span class="p">,</span> <span class="p">{}),</span>
+            <span class="p">(</span><span class="n">Transfer</span><span class="o">.</span><span class="n">INPUT_TRANSFERS_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_DISTANCE</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_ELEVATION_GAIN</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">INPUT_TRIPS_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">INPUT_VEHICLES_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">Trip</span><span class="o">.</span><span class="n">VEHICLES_COLUMN_ACCELERATION</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Trip</span><span class="o">.</span><span class="n">VEHICLES_COLUMN_DECELERATION</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Trip</span><span class="o">.</span><span class="n">VEHICLES_COLUMN_MAXIMUM_SPEED</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Trip</span><span class="o">.</span><span class="n">VEHICLES_COLUMN_SEATED_CAPACITY</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">Trip</span><span class="o">.</span><span class="n">VEHICLES_COLUMN_STANDING_CAPACITY</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">}),</span>
+            <span class="p">(</span><span class="n">TAZ</span><span class="o">.</span><span class="n">INPUT_WALK_ACCESS_FILE</span><span class="p">,</span> <span class="p">{</span>
+                <span class="s1">&#39;converters&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_DIST</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_ELEVATION_GAIN</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_POPULATION_DENSITY</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_AUTO_CAPACITY</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                    <span class="n">TAZ</span><span class="o">.</span><span class="n">WALK_ACCESS_COLUMN_INDIRECTNESS</span><span class="p">:</span> <span class="n">ptg</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">vparse_numeric</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">})</span>
+        <span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">config</span></div></div>
 </pre></div>
 
            </div>

@@ -16,11 +16,20 @@ fasttrips\.Util
       ~Util.add_new_id
       ~Util.add_numeric_column
       ~Util.calculate_distance_miles
+      ~Util.calculate_pathweight_costs
       ~Util.datetime64_formatter
       ~Util.datetime64_min_formatter
+      ~Util.exponential_integration
+      ~Util.get_fast_trips_config
       ~Util.get_process_mem_use_bytes
       ~Util.get_process_mem_use_str
+      ~Util.logarithmic_integration
+      ~Util.logistic_integration
+      ~Util.merge_two_dicts
+      ~Util.parse_boolean
+      ~Util.parse_minutes_to_time
       ~Util.pretty
+      ~Util.read_end_time
       ~Util.read_time
       ~Util.remove_null_columns
       ~Util.timedelta_formatter

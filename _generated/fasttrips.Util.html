@@ -196,7 +196,7 @@
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">add_new_id</span></code>(input_df,&nbsp;id_colname,&nbsp;…[,&nbsp;…])</td>
-<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>, adds the numeric id as a column named <em>newid_colname</em> and returns it.</td>
+<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>, adds the numeric id as a column named <em>newid_colname</em> and returns it.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_numeric_column</span></code>(input_df,&nbsp;id_colname,&nbsp;…)</td>
 <td>Method to create numerical ID to map to an existing ID.</td>
@@ -204,31 +204,58 @@
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_distance_miles</span></code>(dataframe,&nbsp;…)</td>
 <td>Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance in miles between origin and destination based on Haversine.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_formatter</span></code>(x)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_pathweight_costs</span></code>(df,&nbsp;result_col)</td>
+<td>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_formatter</span></code>(x)</td>
 <td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM:SS</cite></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_min_formatter</span></code>(x)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">datetime64_min_formatter</span></code>(x)</td>
 <td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to minutes after midnight</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_process_mem_use_bytes</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">exponential_integration</span></code>(penalty_min,&nbsp;growth_rate)</td>
+<td>Returns the integrated value of an exponential function.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_fast_trips_config</span></code>()</td>
+<td>Adds additional nodes to the Partridge graph to support Fast Trip extension files.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_process_mem_use_bytes</span></code>()</td>
 <td>Returns the process memory usage in bytes</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">get_process_mem_use_str</span></code>()</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">get_process_mem_use_str</span></code>()</td>
 <td>Returns a string representing the process memory use.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">logarithmic_integration</span></code>(penalty_min,&nbsp;growth_rate)</td>
+<td>Returns the integrated value of an logarithmic function.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">logistic_integration</span></code>(penalty_minute,&nbsp;…)</td>
+<td>Returns the integrated value of an logistic function.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">merge_two_dicts</span></code>(x,&nbsp;y)</td>
+<td>A helper method for Python 2.7 to ‘zip’ two dictionary objects</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">parse_boolean</span></code>(val)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">parse_minutes_to_time</span></code>(minutes)</td>
+<td></td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">pretty</span></code>(df)</td>
 <td>Make a pretty version of the dataframe and return it.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_time</span></code>(x[,&nbsp;end_of_day])</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_end_time</span></code>(x)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">remove_null_columns</span></code>(input_df[,&nbsp;inplace])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_time</span></code>(x[,&nbsp;end_of_day])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">remove_null_columns</span></code>(input_df[,&nbsp;inplace])</td>
 <td>Remove columns from the dataframe if they’re <em>all</em> null since they’re not useful and make thinks harder to look at.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">timedelta_formatter</span></code>(x)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">timedelta_formatter</span></code>(x)</td>
 <td>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.timedelta64</span></code> to string that looks like <cite>4m 35.6s</cite></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_dataframe</span></code>(df,&nbsp;name,&nbsp;output_file[,&nbsp;…])</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_dataframe</span></code>(df,&nbsp;name,&nbsp;output_file[,&nbsp;…])</td>
 <td>Convenience method to write a dataframe but make some of the fields more usable.</td>
 </tr>
 </tbody>
@@ -236,7 +263,7 @@
 <dl class="staticmethod">
 <dt id="fasttrips.Util.add_new_id">
 <em class="property">static </em><code class="descname">add_new_id</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>newid_colname</em>, <em>mapping_df</em>, <em>mapping_id_colname</em>, <em>mapping_newid_colname</em>, <em>warn=False</em>, <em>warn_msg=None</em>, <em>drop_failures=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.add_new_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.add_new_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>,
+<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>,
 adds the numeric id as a column named <em>newid_colname</em> and returns it.</p>
 <p><em>mapping_df</em> is defines the mapping from an ID (<em>mapping_id_colname</em>) 
 to a numeric ID (<em>mapping_newid_colname</em>).</p>
@@ -259,6 +286,14 @@ in miles between origin and destination based on Haversine.  Results are added t
 </dd></dl>
 
 <dl class="staticmethod">
+<dt id="fasttrips.Util.calculate_pathweight_costs">
+<em class="property">static </em><code class="descname">calculate_pathweight_costs</code><span class="sig-paren">(</span><em>df</em>, <em>result_col</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.calculate_pathweight_costs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.calculate_pathweight_costs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and
+value.</p>
+<p>Sets the result into the column called result_col.</p>
+</dd></dl>
+
+<dl class="staticmethod">
 <dt id="fasttrips.Util.datetime64_formatter">
 <em class="property">static </em><code class="descname">datetime64_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.datetime64_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.datetime64_formatter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM:SS</cite></p>
@@ -269,6 +304,33 @@ in miles between origin and destination based on Haversine.  Results are added t
 <em class="property">static </em><code class="descname">datetime64_min_formatter</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.datetime64_min_formatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.datetime64_min_formatter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatter to convert <code class="xref py py-class docutils literal"><span class="pre">numpy.datetime64</span></code> to minutes after midnight
 (with two decimal places)</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.exponential_integration">
+<em class="property">static </em><code class="descname">exponential_integration</code><span class="sig-paren">(</span><em>penalty_min</em>, <em>growth_rate</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.exponential_integration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.exponential_integration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the integrated value of an exponential function.
+Growth Function: (1 + Growth Rate) ** Penalty Minutes
+Integrated Growth Function: ((1 + Growth Rate) ** Penalty Minutes - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
+:param penalty_min: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.Series</span></code></a> of floats
+:param growth_rate: float: Exponetial growth factor
+:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.get_fast_trips_config">
+<em class="property">static </em><code class="descname">get_fast_trips_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.get_fast_trips_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.get_fast_trips_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds additional nodes to the Partridge graph to
+support Fast Trip extension files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Partridge configuration customized for
+Fast-Trips (_ft) loads and type casting.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -285,10 +347,73 @@ Use SI prefixes (not binary prefixes).  1KB = 1000 bytes</p>
 </dd></dl>
 
 <dl class="staticmethod">
+<dt id="fasttrips.Util.logarithmic_integration">
+<em class="property">static </em><code class="descname">logarithmic_integration</code><span class="sig-paren">(</span><em>penalty_min</em>, <em>growth_rate</em>, <em>log_base=2.718281828459045</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.logarithmic_integration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.logarithmic_integration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the integrated value of an logarithmic function.
+# Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
+# Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
+:param penalty_min: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.Series</span></code></a> of floats
+:param growth_rate: log growth factor
+:param log_base: log base to impact shape of curve
+:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.logistic_integration">
+<em class="property">static </em><code class="descname">logistic_integration</code><span class="sig-paren">(</span><em>penalty_minute</em>, <em>growth_rate</em>, <em>max_logit</em>, <em>sigmoid_mid</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.logistic_integration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.logistic_integration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the integrated value of an logistic function.
+Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
+Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
+Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
+Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
+:param penalty_minute: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.Series</span></code></a> of floats
+:param growth_rate: log growth factor
+:param max_logit: assymtotic max value of curve
+:param sigmoid_mid: x-midpoint of curve
+:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.merge_two_dicts">
+<em class="property">static </em><code class="descname">merge_two_dicts</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.merge_two_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.merge_two_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper method for Python 2.7 to ‘zip’ two dictionary objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>dict.</em>) – This dictionary will be copied and y appended to the copy.</li>
+<li><strong>y</strong> (<em>dict.</em>) – This dictionary will be appended with a copy of x.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.parse_boolean">
+<em class="property">static </em><code class="descname">parse_boolean</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.parse_boolean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.parse_boolean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.parse_minutes_to_time">
+<em class="property">static </em><code class="descname">parse_minutes_to_time</code><span class="sig-paren">(</span><em>minutes</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.parse_minutes_to_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.parse_minutes_to_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
 <dt id="fasttrips.Util.pretty">
 <em class="property">static </em><code class="descname">pretty</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.pretty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.pretty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a pretty version of the dataframe and return it.</p>
 </dd></dl>
+
+<dl class="staticmethod">
+<dt id="fasttrips.Util.read_end_time">
+<em class="property">static </em><code class="descname">read_end_time</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.read_end_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.read_end_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Util.read_time">
@@ -316,7 +441,7 @@ Use SI prefixes (not binary prefixes).  1KB = 1000 bytes</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>) – The dataframe to write</li>
+<li><strong>df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a>) – The dataframe to write</li>
 <li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – Name of the dataframe. Just used for logging.</li>
 <li><strong>output_file</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – The name of the file to which the dataframe will be written</li>
 <li><strong>append</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Pass true to append to the existing output file, false otherwise</li>
@@ -345,21 +470,11 @@ duration columns will be kept if <em>keep_duration_columns</em> is True.</p>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="fasttrips.Util.SIMULATION_DAY">
-<code class="descname">SIMULATION_DAY</code><em class="property"> = datetime.date(2016, 1, 1)</em><a class="headerlink" href="#fasttrips.Util.SIMULATION_DAY" title="Permalink to this definition">¶</a></dt>
-<dd><p>Use this as the date</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="fasttrips.Util.SIMULATION_DAY_START">
-<code class="descname">SIMULATION_DAY_START</code><em class="property"> = datetime.datetime(2016, 1, 1, 0, 0)</em><a class="headerlink" href="#fasttrips.Util.SIMULATION_DAY_START" title="Permalink to this definition">¶</a></dt>
-<dd><p>Use this for the start time - the start of <a class="reference internal" href="#fasttrips.Util.SIMULATION_DAY" title="fasttrips.Util.SIMULATION_DAY"><code class="xref py py-attr docutils literal"><span class="pre">Util.SIMULATION_DAY</span></code></a></p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="fasttrips.Util.TIMEDELTA_COLUMNS_TO_UNITS">
 <code class="descname">TIMEDELTA_COLUMNS_TO_UNITS</code><em class="property"> = {'time enumerating': 'milliseconds', 'new_waittime': 'min', 'pf_waittime': 'min', 'time labeling': 'milliseconds', 'step_duration': 'seconds', 'pf_linktime': 'min', 'new_linktime': 'min', 'pf_linkcost': 'min'}</em><a class="headerlink" href="#fasttrips.Util.TIMEDELTA_COLUMNS_TO_UNITS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maps timedelta columns to units for <a class="reference internal" href="#fasttrips.Util.write_dataframe" title="fasttrips.Util.write_dataframe"><code class="xref py py-meth docutils literal"><span class="pre">Util.write_dataframe()</span></code></a></p>
+<dd><p>Use this as the date
+Use this for the start time - the start of <code class="xref py py-attr docutils literal"><span class="pre">Util.SIMULATION_DAY</span></code>
+Maps timedelta columns to units for <a class="reference internal" href="#fasttrips.Util.write_dataframe" title="fasttrips.Util.write_dataframe"><code class="xref py py-meth docutils literal"><span class="pre">Util.write_dataframe()</span></code></a></p>
 </dd></dl>
 
 </dd></dl>

@@ -103,7 +103,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html#documentation">Documentation</a></li>
 </ul>
 
             
@@ -213,7 +212,7 @@
 
 <dl class="type">
 <dt id="_CPPv2N9fasttrips12NamedWeightsE">
-<span id="fasttrips::NamedWeights"></span><span class="target" id="namespacefasttrips_1a732c1b8e508cfe4d5cbc042185f6017e"></span><em class="property">typedef </em>std::map&lt;std::string, double&gt; <code class="descname">NamedWeights</code><a class="headerlink" href="#_CPPv2N9fasttrips12NamedWeightsE" title="Permalink to this definition">¶</a><br /></dt>
+<span id="fasttrips::NamedWeights"></span><span class="target" id="namespacefasttrips_1a6a696e4186552c6ad6a0c879f67de245"></span><em class="property">typedef </em>std::map&lt;std::string, <a class="reference internal" href="#_CPPv2N9fasttrips6WeightE" title="fasttrips::Weight">Weight</a>&gt; <code class="descname">NamedWeights</code><a class="headerlink" href="#_CPPv2N9fasttrips12NamedWeightsE" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 <dl class="type">
@@ -283,6 +282,32 @@
 </dd></dl>
 
 <dl class="type">
+<dt id="_CPPv2N9fasttrips10WeightTypeE">
+<span id="fasttrips::WeightType"></span><span class="target" id="namespacefasttrips_1aeb8328391584f0f574453317bc4b41ae"></span><em class="property">enum </em><code class="descname">WeightType</code><a class="headerlink" href="#_CPPv2N9fasttrips10WeightTypeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><em>Values:</em></p>
+<dl class="enumerator">
+<dt id="_CPPv2N9fasttrips13WEIGHT_LINEARE">
+<span class="target" id="namespacefasttrips_1aeb8328391584f0f574453317bc4b41aeaa7ed146c1b71378dc848894c7b8d9e31"></span><code class="descname">WEIGHT_LINEAR</code> = 0<a class="headerlink" href="#_CPPv2N9fasttrips13WEIGHT_LINEARE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv2N9fasttrips18WEIGHT_EXPONENTIALE">
+<span class="target" id="namespacefasttrips_1aeb8328391584f0f574453317bc4b41aea0b50f6b770f1d70132cb0000dbd4e4ee"></span><code class="descname">WEIGHT_EXPONENTIAL</code> = 1<a class="headerlink" href="#_CPPv2N9fasttrips18WEIGHT_EXPONENTIALE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv2N9fasttrips18WEIGHT_LOGARITHMICE">
+<span class="target" id="namespacefasttrips_1aeb8328391584f0f574453317bc4b41aeab43ac33fa023441fab9dfeebeb467bc4"></span><code class="descname">WEIGHT_LOGARITHMIC</code> = 2<a class="headerlink" href="#_CPPv2N9fasttrips18WEIGHT_LOGARITHMICE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv2N9fasttrips15WEIGHT_LOGISTICE">
+<span class="target" id="namespacefasttrips_1aeb8328391584f0f574453317bc4b41aeae39344bf76e16602f96294731388949b"></span><code class="descname">WEIGHT_LOGISTIC</code> = 3<a class="headerlink" href="#_CPPv2N9fasttrips15WEIGHT_LOGISTICE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="type">
 <dt id="_CPPv2N9fasttrips16FareTransferTypeE">
 <span id="fasttrips::FareTransferType"></span><span class="target" id="namespacefasttrips_1a8759dd01f0036427973a1dc6d34fe882"></span><em class="property">enum </em><code class="descname">FareTransferType</code><a class="headerlink" href="#_CPPv2N9fasttrips16FareTransferTypeE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Fare transfer types. </p>
@@ -319,7 +344,8 @@
 <dl class="function">
 <dt id="_CPPv2N9fasttrips6isTripERKi">
 <span id="fasttrips::isTrip__iCR"></span><span class="target" id="namespacefasttrips_1acf9257739931df9ecbc636f6b2b30ddc"></span>bool <code class="descname">isTrip</code><span class="sig-paren">(</span><em class="property">const</em> int &amp;<em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips6isTripERKi" title="Permalink to this definition">¶</a><br /></dt>
-<dd></dd></dl>
+<dd><p>Hyperpath minimum cost (zero and negative costs are problematic) </p>
+</dd></dl>
 
 <dl class="function">
 <dt id="_CPPv2N9fasttrips14fix_time_rangeEd">
@@ -337,9 +363,9 @@
 </dd></dl>
 
 <dl class="member">
-<dt id="_CPPv2N9fasttrips8MIN_COSTE">
-<span id="fasttrips::MIN_COST__doubleC"></span><span class="target" id="namespacefasttrips_1acf2b25ab59c52ae1893ed28996c44541"></span><em class="property">const</em> double <code class="descname">MIN_COST</code> = 0.001<a class="headerlink" href="#_CPPv2N9fasttrips8MIN_COSTE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Hyperpath minimum cost (zero and negative costs are problematic) </p>
+<dt id="_CPPv2N9fasttrips8INT_MULTE">
+<span id="fasttrips::INT_MULT__doubleC"></span><span class="target" id="namespacefasttrips_1acd997bd7c811ed8cd7a4603caeac2a70"></span><em class="property">const</em> double <code class="descname">INT_MULT</code> = 10000<a class="headerlink" href="#_CPPv2N9fasttrips8INT_MULTE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>What we multiply the fractional cumulative probabilities by to get an integer to compare with random numbers Must be less than, but close to RAND_MAX for the system, which is 32767 on windows </p>
 </dd></dl>
 
 </div>
@@ -770,6 +796,12 @@
 <dt id="_CPPv2N9fasttrips9Hyperlink12TIME_WINDOW_E">
 <span id="fasttrips::Hyperlink::TIME_WINDOW___double"></span><span class="target" id="classfasttrips_1_1_hyperlink_1a255309a822d4ec5b2ad266905f08f576"></span>double <code class="descname">TIME_WINDOW_</code> = 0.0<a class="headerlink" href="#_CPPv2N9fasttrips9Hyperlink12TIME_WINDOW_E" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.TIME_WINDOW">fasttrips.Assignment.TIME_WINDOW</a> This could be configured per stop in the future. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips9Hyperlink17UTILS_CONVERSION_E">
+<span id="fasttrips::Hyperlink::UTILS_CONVERSION___double"></span><span class="target" id="classfasttrips_1_1_hyperlink_1a7107c4cff6885a4204cb9d68c4b97f8f"></span>double <code class="descname">UTILS_CONVERSION_</code> = 0.0<a class="headerlink" href="#_CPPv2N9fasttrips9Hyperlink17UTILS_CONVERSION_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.UTILS_CONVERSION">fasttrips.Assignment.UTILS_CONVERSION</a> </p>
 </dd></dl>
 
 <dl class="member">
@@ -1248,6 +1280,18 @@
 </dd></dl>
 
 <dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder25DEPART_EARLY_ALLOWED_MIN_E">
+<span id="fasttrips::PathFinder::DEPART_EARLY_ALLOWED_MIN___double"></span><span class="target" id="classfasttrips_1_1_path_finder_1afaf2d3bb3a80089ba217629d08ac902b"></span>double <code class="descname">DEPART_EARLY_ALLOWED_MIN_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder25DEPART_EARLY_ALLOWED_MIN_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.DEPART_EARLY_MIN">fasttrips.PathSet.DEPART_EARLY_MIN</a> </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips10PathFinder24ARRIVE_LATE_ALLOWED_MIN_E">
+<span id="fasttrips::PathFinder::ARRIVE_LATE_ALLOWED_MIN___double"></span><span class="target" id="classfasttrips_1_1_path_finder_1a2aaaf897064c7af871cfee9df48c8507"></span>double <code class="descname">ARRIVE_LATE_ALLOWED_MIN_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder24ARRIVE_LATE_ALLOWED_MIN_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.ARRIVE_LATE_MIN">fasttrips.PathSet.ARRIVE_LATE_MIN</a> </p>
+</dd></dl>
+
+<dl class="member">
 <dt id="_CPPv2N9fasttrips10PathFinder19STOCH_PATHSET_SIZE_E">
 <span id="fasttrips::PathFinder::STOCH_PATHSET_SIZE___i"></span><span class="target" id="classfasttrips_1_1_path_finder_1a68adebd2cad826b2683974f4b6660b89"></span>int <code class="descname">STOCH_PATHSET_SIZE_</code><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder19STOCH_PATHSET_SIZE_E" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>See <a class="reference external" href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a> </p>
@@ -1339,8 +1383,8 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips10PathFinder20initializeParametersEddidibbid">
-<span id="fasttrips::PathFinder::initializeParameters__double.double.i.double.i.b.b.i.double"></span><span class="target" id="classfasttrips_1_1_path_finder_1a71531f9050ed8c1d1ed25a3bb15c5cb5"></span>void <code class="descname">initializeParameters</code><span class="sig-paren">(</span>double <em>time_window</em>, double <em>bump_buffer</em>, int <em>stoch_pathset_size</em>, double <em>stoch_dispersion</em>, int <em>stoch_max_stop_process_count</em>, bool <em>transfer_fare_ignore_pf</em>, bool <em>transfer_fare_ignore_pe</em>, int <em>max_num_paths</em>, double <em>min_path_probability</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder20initializeParametersEddidibbid" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv2N9fasttrips10PathFinder20initializeParametersEdddddidibbid">
+<span id="fasttrips::PathFinder::initializeParameters__double.double.double.double.double.i.double.i.b.b.i.double"></span><span class="target" id="classfasttrips_1_1_path_finder_1aa770ed41b86a19ad75c8b2d6972320eb"></span>void <code class="descname">initializeParameters</code><span class="sig-paren">(</span>double <em>time_window</em>, double <em>bump_buffer</em>, double <em>utils_conversion</em>, double <em>depart_early_allowed_min</em>, double <em>arrive_late_allowed_min</em>, int <em>stoch_pathset_size</em>, double <em>stoch_dispersion</em>, int <em>stoch_max_stop_process_count</em>, bool <em>transfer_fare_ignore_pf</em>, bool <em>transfer_fare_ignore_pe</em>, int <em>max_num_paths</em>, double <em>min_path_probability</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips10PathFinder20initializeParametersEdddddidibbid" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Setup the path finding parameters. </p>
 </dd></dl>
 
@@ -1798,7 +1842,7 @@
 <dl class="member">
 <dt id="_CPPv2N9fasttrips8PathInfo7prob_i_E">
 <span id="fasttrips::PathInfo::prob_i___i"></span><span class="target" id="structfasttrips_1_1_path_info_1a82d96af739574d7adce247c3aca6d1d0"></span>int <code class="descname">prob_i_</code><a class="headerlink" href="#_CPPv2N9fasttrips8PathInfo7prob_i_E" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Cumulative probability * RAND_MAX (for stochastic) </p>
+<dd><p>Cumulative probability * INT_MULT (for stochastic) </p>
 </dd></dl>
 
 </div>
@@ -2039,8 +2083,8 @@
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddddidPK10FarePeriod">
-<span id="fasttrips::StopState::StopState__double.i.i.i.i.i.double.double.double.double.double.i.double.FarePeriodCP"></span><span class="target" id="structfasttrips_1_1_stop_state_1ab31b24167e583be1e163e2bb6a96b9e5"></span><code class="descname">StopState</code><span class="sig-paren">(</span>double <em>deparr_time</em>, int <em>deparr_mode</em>, int <em>trip_id</em>, int <em>stop_succpred</em>, int <em>seq</em>, int <em>seq_succpred</em>, double <em>link_time</em>, double <em>link_fare</em>, double <em>link_cost</em>, double <em>link_dist</em>, double <em>cost</em>, int <em>iteration</em>, double <em>arrdep_time</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10FarePeriodE" title="fasttrips::FarePeriod">FarePeriod</a> *<em>fp</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddddidPK10FarePeriod" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddddiddPK10FarePeriod">
+<span id="fasttrips::StopState::StopState__double.i.i.i.i.i.double.double.double.double.double.i.double.double.FarePeriodCP"></span><span class="target" id="structfasttrips_1_1_stop_state_1a4b2c7a10396b5b926933ca2c93e5b4d6"></span><code class="descname">StopState</code><span class="sig-paren">(</span>double <em>deparr_time</em>, int <em>deparr_mode</em>, int <em>trip_id</em>, int <em>stop_succpred</em>, int <em>seq</em>, int <em>seq_succpred</em>, double <em>link_time</em>, double <em>link_fare</em>, double <em>link_cost</em>, double <em>link_dist</em>, double <em>cost</em>, int <em>iteration</em>, double <em>arrdep_time</em>, double <em>link_ivtwt</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv2N9fasttrips10FarePeriodE" title="fasttrips::FarePeriod">FarePeriod</a> *<em>fp</em> = NULL<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddddiddPK10FarePeriod" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 </div>
@@ -2098,6 +2142,12 @@
 <dt id="_CPPv2N9fasttrips9StopState10link_cost_E">
 <span id="fasttrips::StopState::link_cost___double"></span><span class="target" id="structfasttrips_1_1_stop_state_1a19ff20ed829944e9e437071d0498f747"></span>double <code class="descname">link_cost_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState10link_cost_E" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Link generalized cost. </p>
+</dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips9StopState11link_ivtwt_E">
+<span id="fasttrips::StopState::link_ivtwt___double"></span><span class="target" id="structfasttrips_1_1_stop_state_1a424ce22aff9281d4adc89a36a7c4a230"></span>double <code class="descname">link_ivtwt_</code><a class="headerlink" href="#_CPPv2N9fasttrips9StopState11link_ivtwt_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Link in-vehicle time path weight. </p>
 </dd></dl>
 
 <dl class="member">
@@ -2367,7 +2417,7 @@
 <dl class="class">
 <dt id="_CPPv2N9fasttrips20UserClassPurposeModeE">
 <span id="fasttrips::UserClassPurposeMode"></span><span class="target" id="structfasttrips_1_1_user_class_purpose_mode"></span><em class="property">struct </em><code class="descname">UserClassPurposeMode</code><a class="headerlink" href="#_CPPv2N9fasttrips20UserClassPurposeModeE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><em>#include &lt;pathfinder.h&gt;</em><p>Weight lookup. </p>
+<dd><em>#include &lt;pathfinder.h&gt;</em><p><a class="reference internal" href="#structfasttrips_1_1_weight"><span class="std std-ref">Weight</span></a> lookup. </p>
 <div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric">Public Members</p>
 <dl class="member">
@@ -2388,6 +2438,39 @@
 <dl class="member">
 <dt id="_CPPv2N9fasttrips20UserClassPurposeMode12demand_mode_E">
 <span id="fasttrips::UserClassPurposeMode::demand_mode___ss"></span><span class="target" id="structfasttrips_1_1_user_class_purpose_mode_1a012e170b30a9c556c2bbeddf708d9ab5"></span>std::string <code class="descname">demand_mode_</code><a class="headerlink" href="#_CPPv2N9fasttrips20UserClassPurposeMode12demand_mode_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv2N9fasttrips6WeightE">
+<span id="fasttrips::Weight"></span><span class="target" id="structfasttrips_1_1_weight"></span><em class="property">struct </em><code class="descname">Weight</code><a class="headerlink" href="#_CPPv2N9fasttrips6WeightE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><em>#include &lt;pathfinder.h&gt;</em><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv2N9fasttrips6Weight5type_E">
+<span id="fasttrips::Weight::type___WeightType"></span><span class="target" id="structfasttrips_1_1_weight_1a1b37b5ce3459b5e85e3b5c0c05a0afa7"></span><a class="reference internal" href="#_CPPv2N9fasttrips10WeightTypeE" title="fasttrips::WeightType">WeightType</a> <code class="descname">type_</code><a class="headerlink" href="#_CPPv2N9fasttrips6Weight5type_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips6Weight7weight_E">
+<span id="fasttrips::Weight::weight___double"></span><span class="target" id="structfasttrips_1_1_weight_1ae71c4a6f7ba9ac5ed872bf914d395be8"></span>double <code class="descname">weight_</code><a class="headerlink" href="#_CPPv2N9fasttrips6Weight7weight_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips6Weight9log_base_E">
+<span id="fasttrips::Weight::log_base___double"></span><span class="target" id="structfasttrips_1_1_weight_1a386ed15e06d93fd302a402bb168248f9"></span>double <code class="descname">log_base_</code><a class="headerlink" href="#_CPPv2N9fasttrips6Weight9log_base_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips6Weight13logistic_max_E">
+<span id="fasttrips::Weight::logistic_max___double"></span><span class="target" id="structfasttrips_1_1_weight_1a50e3b317e967cab35f963862e06f802c"></span>double <code class="descname">logistic_max_</code><a class="headerlink" href="#_CPPv2N9fasttrips6Weight13logistic_max_E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="member">
+<dt id="_CPPv2N9fasttrips6Weight13logistic_mid_E">
+<span id="fasttrips::Weight::logistic_mid___double"></span><span class="target" id="structfasttrips_1_1_weight_1a83a796f6b27c022dba5accfccf96c5f7"></span>double <code class="descname">logistic_mid_</code><a class="headerlink" href="#_CPPv2N9fasttrips6Weight13logistic_mid_E" title="Permalink to this definition">¶</a><br /></dt>
 <dd></dd></dl>
 
 </div>

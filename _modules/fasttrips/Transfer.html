@@ -172,12 +172,14 @@
 <span class="s2">    See the License for the specific language governing permissions and</span>
 <span class="s2">    limitations under the License.</span>
 <span class="s2">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">datetime</span><span class="o">,</span><span class="nn">os</span><span class="o">,</span><span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">.Error</span>  <span class="k">import</span> <span class="n">NetworkInputError</span>
 <span class="kn">from</span> <span class="nn">.Logger</span> <span class="k">import</span> <span class="n">FastTripsLogger</span>
-<span class="kn">from</span> <span class="nn">.Stop</span>   <span class="k">import</span> <span class="n">Stop</span>
+
 
 <div class="viewcode-block" id="Transfer"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer">[docs]</a><span class="k">class</span> <span class="nc">Transfer</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -251,52 +253,26 @@
     <span class="c1">#: initialize_fasttrips_extension() because of the strings involved</span>
     <span class="n">OUTPUT_TRANSFERS_FILE</span>       <span class="o">=</span> <span class="s2">&quot;ft_intermediate_transfers.txt&quot;</span>
 
-<div class="viewcode-block" id="Transfer.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">gtfs_schedule</span><span class="p">):</span>
+<div class="viewcode-block" id="Transfer.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.Transfer.html#fasttrips.Transfer.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_archive</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">gtfs_feed</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional</span>
-<span class="sd">        fast-trips transfers data from the input files in *input_dir*.</span>
+<span class="sd">        fast-trips transfers data from the input files in *input_archive*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span>       <span class="o">=</span> <span class="n">output_dir</span>
 
         <span class="c1"># Combine all gtfs Transfer objects to a single pandas DataFrame</span>
-        <span class="n">transfer_dicts</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">gtfs_transfer</span> <span class="ow">in</span> <span class="n">gtfs_schedule</span><span class="o">.</span><span class="n">GetTransferList</span><span class="p">():</span>
-            <span class="n">transfer_dict</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">fieldname</span> <span class="ow">in</span> <span class="n">gtfs_transfer</span><span class="o">.</span><span class="n">_FIELD_NAMES</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">fieldname</span> <span class="ow">in</span> <span class="n">gtfs_transfer</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
-                    <span class="n">transfer_dict</span><span class="p">[</span><span class="n">fieldname</span><span class="p">]</span> <span class="o">=</span> <span class="n">gtfs_transfer</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">fieldname</span><span class="p">]</span>
-            <span class="n">transfer_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">transfer_dict</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transfer_dicts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">transfer_dicts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span> <span class="o">=</span> <span class="n">gtfs_feed</span><span class="o">.</span><span class="n">transfers</span>
 
-            <span class="c1"># these are strings - empty string should mean 0 min transfer time</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">to_replace</span><span class="o">=</span><span class="p">{</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_MIN_TRANSFER_TIME</span><span class="p">:{</span><span class="s2">&quot;&quot;</span><span class="p">:</span><span class="s2">&quot;0&quot;</span><span class="p">}},</span>
-                                      <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="c1"># make it numerical</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_MIN_TRANSFER_TIME</span><span class="p">]</span> <span class="o">=</span> \
-                <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_MIN_TRANSFER_TIME</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="c1"># make it zero if transfer_type != 2, since that&#39;s the only time it applies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TRANSFER_TYPE</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">,</span> \
+                              <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_MIN_TRANSFER_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-            <span class="c1"># make it zero if transfer_type != 2, since that&#39;s the only time it applies</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TRANSFER_TYPE</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">,</span> \
-                                  <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_MIN_TRANSFER_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-
-            <span class="c1"># these are from transfers.txt so they don&#39;t involve lots</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_STOP_TO_STOP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span><span class="p">,</span>
-                                                          <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP_NUM</span><span class="p">,</span>
-                                                          <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">,</span>
-                                                          <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP_NUM</span><span class="p">,</span>
-                                                          <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TIME</span><span class="p">,</span>
-                                                          <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TIME_MIN</span><span class="p">])</span>
-            <span class="c1"># set this up as a boolean column</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_STOP_TO_STOP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># these are from transfers.txt so they don&#39;t involve lots</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_STOP_TO_STOP</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># Read the fast-trips supplemental transfers data file</span>
-        <span class="n">transfers_ft_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">Transfer</span><span class="o">.</span><span class="n">INPUT_TRANSFERS_FILE</span><span class="p">),</span>
-                                          <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                          <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span><span class="p">:</span><span class="nb">object</span><span class="p">,</span> <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">:</span><span class="nb">object</span><span class="p">})</span>
+        <span class="n">transfers_ft_df</span> <span class="o">=</span> <span class="n">gtfs_feed</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Transfer</span><span class="o">.</span><span class="n">INPUT_TRANSFERS_FILE</span><span class="p">)</span>
+
         <span class="c1"># verify required columns are present</span>
         <span class="n">transfer_ft_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">transfers_ft_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span>           <span class="ow">in</span> <span class="n">transfer_ft_cols</span><span class="p">)</span>
@@ -307,7 +283,7 @@
         <span class="c1"># it may have PNR lot id to/from stop transfers (while gtfs transfers does not),</span>
         <span class="c1"># and we don&#39;t want to drop them</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transfers_ft_df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">transfers_ft_df</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">transfers_ft_df</span><span class="p">,</span>
                                              <span class="n">how</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">,</span>
                                              <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP</span><span class="p">,</span>
                                                  <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_STOP</span><span class="p">])</span>
@@ -420,11 +396,11 @@
             <span class="k">return</span> <span class="n">transfer_links_df</span>
 
         <span class="c1"># these will be filled for route matches</span>
-        <span class="n">transfer_links_done</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="n">transfer_links_done</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
 
         <span class="c1"># match on both from route and to route</span>
         <span class="k">if</span> <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_ROUTE</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
-            <span class="n">transfers_with_routes_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="n">transfers_with_routes_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
             <span class="n">transfers_wo_routes_df</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">transfers_with_routes_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers_df</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_ROUTE</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span> <span class="p">]</span>
@@ -446,7 +422,7 @@
 
             <span class="c1"># match transfer with trip&#39;s next link to get from route_id</span>
             <span class="n">trip_links_df</span><span class="p">[</span><span class="s2">&quot;next_link_num&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">trip_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_NUM</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>      <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
+            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>      <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
                                              <span class="n">left_on</span>   <span class="o">=</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_ID</span><span class="p">,</span>
                                                          <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
                                                          <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">,</span>
@@ -466,7 +442,7 @@
 
             <span class="c1"># match transfer with trip&#39;s prev link to get to route_id</span>
             <span class="n">trip_links_df</span><span class="p">[</span><span class="s2">&quot;prev_link_num&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">trip_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_NUM</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>      <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
+            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>      <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
                                              <span class="n">left_on</span>   <span class="o">=</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_ID</span><span class="p">,</span>
                                                          <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
                                                          <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">,</span>
@@ -488,7 +464,7 @@
             <span class="c1"># FastTripsLogger.debug(&quot;transfer_links_df after adding route info:\n%s&quot; % transfer_links_df.head(20).to_string())</span>
 
             <span class="c1"># match on transfer attributes</span>
-            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>     <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
+            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>     <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
                                              <span class="n">left_on</span>  <span class="o">=</span><span class="p">[</span><span class="s2">&quot;A_id_num&quot;</span><span class="p">,</span><span class="s2">&quot;B_id_num&quot;</span><span class="p">,</span>
                                                         <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_ROUTE</span><span class="p">,</span>
                                                         <span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_TO_ROUTE</span><span class="p">],</span>
@@ -514,7 +490,7 @@
 
         <span class="c1"># match on both from stops ONLY</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transfers_wo_routes_df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>     <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
+            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>     <span class="o">=</span><span class="n">transfer_links_df</span><span class="p">,</span>
                                              <span class="n">left_on</span>  <span class="o">=</span><span class="p">[</span><span class="s2">&quot;A_id_num&quot;</span><span class="p">,</span><span class="s2">&quot;B_id_num&quot;</span><span class="p">],</span>
                                              <span class="n">right</span>    <span class="o">=</span><span class="n">transfers_wo_routes_df</span><span class="p">,</span>
                                              <span class="n">right_on</span> <span class="o">=</span><span class="p">[</span><span class="n">Transfer</span><span class="o">.</span><span class="n">TRANSFERS_COLUMN_FROM_STOP_NUM</span><span class="p">,</span>
@@ -524,7 +500,7 @@
 
         <span class="c1"># put the two parts back together</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transfer_links_done</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">transfer_links_df</span><span class="p">,</span> <span class="n">transfer_links_done</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">transfer_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">transfer_links_df</span><span class="p">,</span> <span class="n">transfer_links_done</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># make sure we didn&#39;t lose anything</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">len_transfer_links_df</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">transfer_links_df</span><span class="p">))</span>

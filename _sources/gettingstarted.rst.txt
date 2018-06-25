@@ -5,22 +5,24 @@ Getting Started
 Get Fast-Trips Running
 ------------------------
 
-1. **Setup a Python 2.7 virtual environment**
+1. **Setup a Python 2.7 virtual environment and install dependencies**
 This makes sure you don't interfere with other python installations. You can do this using the base virtenv package, conda, or using the Anaconda Navigator GUI.
 i.e. using conda:::
 
-  conda create -n fasttrips python=2.7 anaconda  source activate fasttrips
+  conda create -q -y -n fast-trips-env python=2.7 numpy pandas>=0.22 psutil pytest
+  source activate fast-trips-env
+  pip install partridge==0.6.0.dev1
 
-NOTE that Python 3.X will not work due to dependencies on the transitfeed package.  We are `working on removing this dependency <https://github.com/BayAreaMetro/fast-trips/issues/85>`_.
+Alternatively, you can install the dependencies into an existing python 2.7 environment:::
 
-2. **Add the required packages to your Virtual Environment**
-Required packages include: numpy,  Pandas, and transitfeed. Many data analytics Python distributions like Anaconda bundle numpy and pandas, but they can also be installed using the command :code:`pip install <packagename>` within the virtual environment. As a last resort, Windows users can also use `these binary package installers <https://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.
+  pip install numpy pandas >=0.22 psutil pytest partridge==0.6.0.dev1
 
-3. **Install Git and/or GitHub Desktop**
+NOTE that Python 3.X will not work yet. We are working on that.
+
+2. **Install Fast-Trips using Git or from PyPI**
 Fork and clone the main fast-trips repository to a local directory <fast-trips-dir>
 
-4. **Build Fast-Trips c++ Module**
-Switch to the develop branch of the repository (or whichever branch you want to build)
+Switch to the branch of the repository that you want to build (usually master or develop)
 
 | *Windows*: install Microsoft Visual C++ Compiler for Python 2.7.
 | *Linux*: install the python-dev package.
@@ -32,12 +34,19 @@ To build in <fast-trips-dir>, run the following in a command prompt: ::
 
 Using the develop command prompt makes sure that changes in the package are propagated to the shell without having to re-install the package.
 
-5. **Test Installation**
+-OR-
 
-Run the following command from a terminal that is open in the virtual environment from the fast-trips directory: ::
+Install compiled Beta version of Fast-Trips stored on PyPI using the command:::
 
-  python scripts/run_example.py
+  pip install fasttrips
 
+3. **Test Installation**
+
+To run an example to make sure it is installed correctly, run from the `<fast-trips-dir>`:::
+
+   python fasttrips\Examples\Bunny_Hop\run_bunny_hop.py
+
+ (remember to use file separators appropriate for your operating system).
 
 Go through Tutorials
 ------------------------

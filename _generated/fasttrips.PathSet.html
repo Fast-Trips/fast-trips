@@ -116,7 +116,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html#documentation">Documentation</a></li>
 </ul>
 
             
@@ -205,7 +204,7 @@ through a set of stops.</p>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(trip_list_dict)</td>
 <td>Constructor from dictionary mapping attribute to value.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_cost</span></code>(FT,&nbsp;simulation_iteration,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_cost</span></code>(STOCH_DISPERSION,&nbsp;…[,&nbsp;…])</td>
 <td>This is equivalent to the C++ Path::calculateCost() method.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_overlap</span></code>(pathset_links_to_use)</td>
@@ -232,17 +231,20 @@ through a set of stops.</p>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">verify_weight_config</span></code>(modes_df,&nbsp;output_dir,&nbsp;…)</td>
 <td>Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">verify_weights</span></code>(weights)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
 <td>Write the assigned path times to the given output file.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
 <td>Write the assigned paths to the given output file.</td>
 </tr>
 </tbody>
 </table>
 <dl class="staticmethod">
 <dt id="fasttrips.PathSet.calculate_cost">
-<em class="property">static </em><code class="descname">calculate_cost</code><span class="sig-paren">(</span><em>FT</em>, <em>simulation_iteration</em>, <em>STOCH_DISPERSION</em>, <em>pathset_paths_df</em>, <em>pathset_links_df</em>, <em>veh_trips_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.calculate_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.calculate_cost" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">calculate_cost</code><span class="sig-paren">(</span><em>STOCH_DISPERSION</em>, <em>pathset_paths_df</em>, <em>pathset_links_df</em>, <em>veh_trips_df</em>, <em>trip_list_df</em>, <em>routes</em>, <em>tazs</em>, <em>transfers</em>, <em>stops=None</em>, <em>reset_bump_iter=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.calculate_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.calculate_cost" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
 It would require us to package up the networks and paths and send back and forth.  :p</p>
 <p>I think if we can do it using vectorized pandas operations, it should be fast, but we can compare/test.</p>
@@ -311,6 +313,11 @@ to enforce it.</p>
 </dd></dl>
 
 <dl class="staticmethod">
+<dt id="fasttrips.PathSet.verify_weights">
+<em class="property">static </em><code class="descname">verify_weights</code><span class="sig-paren">(</span><em>weights</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.verify_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.verify_weights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
 <dt id="fasttrips.PathSet.write_path_times">
 <em class="property">static </em><code class="descname">write_path_times</code><span class="sig-paren">(</span><em>passengers_df</em>, <em>output_dir</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.write_path_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.write_path_times" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write the assigned path times to the given output file.</p>
@@ -319,7 +326,7 @@ to enforce it.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger path links</li>
+<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger path links</li>
 <li><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Output directory</li>
 </ul>
 </td>
@@ -337,13 +344,19 @@ to enforce it.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger paths assignment results</li>
+<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger paths assignment results</li>
 <li><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Output directory</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.ARRIVE_LATE_ALLOWED_MIN">
+<code class="descname">ARRIVE_LATE_ALLOWED_MIN</code><em class="property"> = datetime.timedelta(0)</em><a class="headerlink" href="#fasttrips.PathSet.ARRIVE_LATE_ALLOWED_MIN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allow departures and arrivals before / after preferred time</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -358,6 +371,16 @@ to enforce it.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="fasttrips.PathSet.CONSTANT_GROWTH_MODEL">
+<code class="descname">CONSTANT_GROWTH_MODEL</code><em class="property"> = 'constant'</em><a class="headerlink" href="#fasttrips.PathSet.CONSTANT_GROWTH_MODEL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.DEPART_EARLY_ALLOWED_MIN">
+<code class="descname">DEPART_EARLY_ALLOWED_MIN</code><em class="property"> = datetime.timedelta(0)</em><a class="headerlink" href="#fasttrips.PathSet.DEPART_EARLY_ALLOWED_MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="fasttrips.PathSet.DIR_INBOUND">
 <code class="descname">DIR_INBOUND</code><em class="property"> = 2</em><a class="headerlink" href="#fasttrips.PathSet.DIR_INBOUND" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trips inbound to home have preferred departure times</p>
@@ -370,8 +393,23 @@ to enforce it.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="fasttrips.PathSet.EXP_GROWTH_MODEL">
+<code class="descname">EXP_GROWTH_MODEL</code><em class="property"> = 'exponential'</em><a class="headerlink" href="#fasttrips.PathSet.EXP_GROWTH_MODEL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="fasttrips.PathSet.HUGE_COST">
 <code class="descname">HUGE_COST</code><em class="property"> = 9999</em><a class="headerlink" href="#fasttrips.PathSet.HUGE_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.LOGARITHMIC_GROWTH_MODEL">
+<code class="descname">LOGARITHMIC_GROWTH_MODEL</code><em class="property"> = 'logarithmic'</em><a class="headerlink" href="#fasttrips.PathSet.LOGARITHMIC_GROWTH_MODEL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.LOGISTIC_GROWTH_MODEL">
+<code class="descname">LOGISTIC_GROWTH_MODEL</code><em class="property"> = 'logistic'</em><a class="headerlink" href="#fasttrips.PathSet.LOGISTIC_GROWTH_MODEL" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -489,6 +527,11 @@ into A-B-C-D-E for overlap calculations?</p>
 <code class="descname">PATH_TIMES_OUTPUT_FILE</code><em class="property"> = 'ft_output_passengerTimes.txt'</em><a class="headerlink" href="#fasttrips.PathSet.PATH_TIMES_OUTPUT_FILE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Path times output file</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.PENALTY_GROWTH_MODELS">
+<code class="descname">PENALTY_GROWTH_MODELS</code><em class="property"> = ['constant', 'exponential', 'logarithmic', 'logistic']</em><a class="headerlink" href="#fasttrips.PathSet.PENALTY_GROWTH_MODELS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_ARRDEP">
@@ -659,6 +702,55 @@ into A-B-C-D-E for overlap calculations?</p>
 <code class="descname">WEIGHTS_FIXED_WIDTH</code><em class="property"> = False</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_FIXED_WIDTH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read weights file as fixed-width format.  If false, standard CSV format is read.</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX">
+<code class="descname">WEIGHTS_GROWTH_LOGISTIC_MAX</code><em class="property"> = 'logistic_max'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Max value for logistic growth function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_GROWTH_LOGISTIC_MID">
+<code class="descname">WEIGHTS_GROWTH_LOGISTIC_MID</code><em class="property"> = 'logistic_mid'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_GROWTH_LOGISTIC_MID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Midpoint value for logistic growth function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_GROWTH_LOG_BASE">
+<code class="descname">WEIGHTS_GROWTH_LOG_BASE</code><em class="property"> = 'log_base'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_GROWTH_LOG_BASE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Log Base for logarithmic growth function</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHTS_GROWTH_TYPE">
+<code class="descname">WEIGHTS_GROWTH_TYPE</code><em class="property"> = 'growth_type'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHTS_GROWTH_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weights column: Growth Type</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHT_NAME_ARRIVE_EARLY_MIN">
+<code class="descname">WEIGHT_NAME_ARRIVE_EARLY_MIN</code><em class="property"> = 'arrive_early_min'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHT_NAME_ARRIVE_EARLY_MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHT_NAME_ARRIVE_LATE_MIN">
+<code class="descname">WEIGHT_NAME_ARRIVE_LATE_MIN</code><em class="property"> = 'arrive_late_min'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHT_NAME_ARRIVE_LATE_MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHT_NAME_DEPART_EARLY_MIN">
+<code class="descname">WEIGHT_NAME_DEPART_EARLY_MIN</code><em class="property"> = 'depart_early_min'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHT_NAME_DEPART_EARLY_MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHT_NAME_DEPART_LATE_MIN">
+<code class="descname">WEIGHT_NAME_DEPART_LATE_MIN</code><em class="property"> = 'depart_late_min'</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHT_NAME_DEPART_LATE_MIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.WEIGHT_NAME_VALID_NAMES">
+<code class="descname">WEIGHT_NAME_VALID_NAMES</code><em class="property"> = ['depart_early_min', 'depart_late_min', 'arrive_early_min', 'arrive_late_min']</em><a class="headerlink" href="#fasttrips.PathSet.WEIGHT_NAME_VALID_NAMES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.PathSet.pathdict">

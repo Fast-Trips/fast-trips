@@ -116,7 +116,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../contributing.html#documentation">Documentation</a></li>
 </ul>
 
             
@@ -236,8 +235,9 @@ output_folder – where to put the outputs.  Will be created if it doesn’t alr
 trace_only – will only run demand for the trace.  Will not overwrite other output (default: False)</p>
 </dd>
 <dt>Unnamed keyword arguments:</dt>
-<dd><p class="first">num_trips – if specified, will process this number of trips and ignore the rest</p>
-<p>dispersion – theta parameter; essentially the nesting parameter. Good value is between 0.5-1. (default: 1.0)
+<dd><p class="first">num_trips – if specified, will process this number of trips and ignore the rest
+pf_iters – Integer. If specified, will set the maximum number of pathfinding iterations(default: 10)
+dispersion – theta parameter; essentially the nesting parameter. Good value is between 0.5-1. (default: 1.0)
 max_stop_process_count = maximum number of times you will re-processe a node (default: 20)
 capacity – Boolean to activate capacity constraints (default: False)</p>
 <p>overlap_variable – One of [‘None’,’count’,’distance’,’time’]. Variable to use for overlap penalty calculation (default: ‘count’)

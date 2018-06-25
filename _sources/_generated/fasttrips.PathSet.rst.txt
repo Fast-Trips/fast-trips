@@ -23,6 +23,7 @@ fasttrips\.PathSet
       ~PathSet.set_user_class
       ~PathSet.split_transit_links
       ~PathSet.verify_weight_config
+      ~PathSet.verify_weights
       ~PathSet.write_path_times
       ~PathSet.write_paths
    

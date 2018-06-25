@@ -172,10 +172,10 @@
 <span class="s2">    See the License for the specific language governing permissions and</span>
 <span class="s2">    limitations under the License.</span>
 <span class="s2">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">attrgetter</span>
-<span class="kn">import</span> <span class="nn">pandas</span>
-<span class="kn">import</span> <span class="nn">transitfeed</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">partridge</span> <span class="k">as</span> <span class="nn">ptg</span>
 
 <span class="kn">from</span> <span class="nn">.Assignment</span>  <span class="k">import</span> <span class="n">Assignment</span>
 <span class="kn">from</span> <span class="nn">.Logger</span>      <span class="k">import</span> <span class="n">FastTripsLogger</span><span class="p">,</span> <span class="n">setupLogging</span>
@@ -188,6 +188,7 @@
 <span class="kn">from</span> <span class="nn">.Trip</span>        <span class="k">import</span> <span class="n">Trip</span>
 <span class="kn">from</span> <span class="nn">.Util</span>        <span class="k">import</span> <span class="n">Util</span>
 
+
 <div class="viewcode-block" id="FastTrips"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips">[docs]</a><span class="k">class</span> <span class="nc">FastTrips</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is the model itself.  Should be simple and run pieces and store the big data structures.</span>
@@ -199,7 +200,7 @@
     <span class="c1">#: Debug log filename.  Detailed output goes here, including trace information.</span>
     <span class="n">DEBUG_LOG</span> <span class="o">=</span> <span class="s2">&quot;ft_debug</span><span class="si">%s</span><span class="s2">.log&quot;</span>
 
-<div class="viewcode-block" id="FastTrips.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_network_dir</span><span class="p">,</span> <span class="n">input_demand_dir</span><span class="p">,</span> <span class="n">input_weights</span><span class="p">,</span> <span class="n">run_config</span><span class="p">,</span> 
+<div class="viewcode-block" id="FastTrips.__init__"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_network_archive</span><span class="p">,</span> <span class="n">input_demand_dir</span><span class="p">,</span> <span class="n">input_weights</span><span class="p">,</span> <span class="n">run_config</span><span class="p">,</span>
         <span class="n">output_dir</span><span class="p">,</span> <span class="n">input_functions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logname_append</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">appendLog</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Constructor.</span>
@@ -240,7 +241,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">trips</span>           <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1">#: string representing directory with input network data</span>
-        <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span>  <span class="o">=</span> <span class="n">input_network_dir</span>
+        <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span>  <span class="o">=</span> <span class="n">input_network_archive</span>
 
         <span class="c1">#: string representing directory with input demand data</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_DEMAND_DIR</span>   <span class="o">=</span> <span class="n">input_demand_dir</span>
@@ -258,7 +259,7 @@
         <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span>         <span class="o">=</span> <span class="n">output_dir</span>
 
         <span class="c1">#: transitfeed schedule instance.  See https://github.com/google/transitfeed</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span>      <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1">#self.gtfs_schedule      = None</span>
 
         <span class="c1"># setup logging</span>
         <span class="n">setupLogging</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">FastTrips</span><span class="o">.</span><span class="n">INFO_LOG</span> <span class="o">%</span> <span class="n">logname_append</span><span class="p">),</span>
@@ -287,41 +288,38 @@
 
         <span class="c1"># Read the gtfs files first</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reading GTFS schedule&quot;</span><span class="p">)</span>
-        <span class="n">loader</span>             <span class="o">=</span> <span class="n">transitfeed</span><span class="o">.</span><span class="n">Loader</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">memory_db</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">Load</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="kc">False</span><span class="p">:</span>
-            <span class="c1"># Validate the GTFS</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Validating GTFS schedule&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="o">.</span><span class="n">Validate</span><span class="p">()</span>
-            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Done validating GTFS schedule&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Required: Trips, Routes, Stops, Stop Times, Agency, Calendar</span>
-        <span class="c1"># Optional: Transfers, Shapes, Calendar Dates...</span>
-
+        <span class="n">service_ids_by_date</span> <span class="o">=</span><span class="n">ptg</span><span class="o">.</span><span class="n">read_service_ids_by_date</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">)</span>
+        <span class="n">service_ids</span> <span class="o">=</span> <span class="n">service_ids_by_date</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">]</span>
+        <span class="n">gtfs_feed</span> <span class="o">=</span> <span class="n">ptg</span><span class="o">.</span><span class="n">feed</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">),</span>
+                                   <span class="n">config</span><span class="o">=</span><span class="n">Util</span><span class="o">.</span><span class="n">get_fast_trips_config</span><span class="p">(),</span> <span class="n">view</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;trips.txt&#39;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="s1">&#39;service_id&#39;</span><span class="p">:</span> <span class="n">service_ids</span>
+            <span class="p">},</span>
+        <span class="p">})</span>
         <span class="c1"># Read Stops (gtfs-required)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span> <span class="o">=</span> <span class="n">Stop</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
-                          <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stops</span> <span class="o">=</span> <span class="n">Stop</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                          <span class="n">gtfs_feed</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">)</span>
 
         <span class="c1"># Read routes, agencies, fares</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                            <span class="n">gtfs_feed</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">)</span>
 
         <span class="c1"># Read Transfers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span> <span class="o">=</span> <span class="n">Transfer</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
-                                  <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span> <span class="o">=</span> <span class="n">Transfer</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                                  <span class="n">gtfs_feed</span><span class="p">)</span>
 
         <span class="c1"># Read trips, vehicles, calendar and stoptimes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">trips</span> <span class="o">=</span> <span class="n">Trip</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
-                          <span class="bp">self</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trips</span> <span class="o">=</span> <span class="n">Trip</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span>
+                          <span class="n">gtfs_feed</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span>
                           <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">PREPEND_ROUTE_ID_TO_TRIP_ID</span><span class="p">)</span>
 
         <span class="c1"># read the TAZs into a TAZ instance</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tazs</span> <span class="o">=</span> <span class="n">TAZ</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tazs</span> <span class="o">=</span> <span class="n">TAZ</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">gtfs_feed</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transfers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">)</span>
 
         <span class="c1"># Read the demand int passenger_id -&gt; passenger instance</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">passengers</span> <span class="o">=</span> <span class="n">Passenger</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_DEMAND_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">Util</span><span class="o">.</span><span class="n">SIMULATION_DAY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">CAPACITY_CONSTRAINT</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">passengers</span> <span class="o">=</span> <span class="n">Passenger</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_DEMAND_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stops</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">CAPACITY_CONSTRAINT</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="FastTrips.run_assignment"><a class="viewcode-back" href="../../_generated/fasttrips.FastTrips.html#fasttrips.FastTrips.run_assignment">[docs]</a>    <span class="k">def</span> <span class="nf">run_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
 
