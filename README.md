@@ -16,7 +16,7 @@ Fast-trips can be used for analyzing short-term effects as a stand-along tool as
  - An analyst who wants to evaluate a service plan for a special event.
  - A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
 
-For a description of how Fast-Trips does this sort of analysis differently than the status quo, see [this post](http://fast-trips.mtc.ca.gov/2015/06/01/why/) on our blog.
+
 
 ## Contents
 * [Setup](#setup)
@@ -704,3 +704,4 @@ To be filled in further but including:
 [stop-order-details-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22>
 [fast-trips-validation-url]: <https://github.com/psrc/fast-trips-validation>
 [pip-url]: <https://pip.pypa.io/en/stable/>
+[virtenv-url]: <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>
