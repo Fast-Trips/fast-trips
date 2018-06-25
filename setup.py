@@ -3,7 +3,7 @@ import os,sys
 import numpy
 
 setup(name          = 'fasttrips',
-      version       = '1.0a14',
+      version       = '1.0b1',
       author        = 'MTC, SFCTA & PSRC',
       author_email  = 'lzorn@bayareametro.gov',
       description   = 'Dynamic Transit Assignment Model. Given a transit network and a list of transit demand, finds a pathset and chooses a path for each traveler.',
