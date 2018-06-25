@@ -1,8 +1,11 @@
-[![Build Status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
+**Build status**
+
+Master Branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)
+Develop Branch [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
 
 # fast-trips
+Fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:  
 
-fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:
  * Project Website: http://fast-trips.mtc.ca.gov/
  * Documentation for developers (contributing, API, etc.): http://bayareametro.github.io/fast-trips/
 
@@ -26,10 +29,8 @@ For a description of how Fast-Trips does this sort of analysis differently than 
   * [`pathweight_ft.txt`](#pathweight_fttxt)
     * [Weight Qualifiers](#weight-qualifiers)
 * [Fares](#fares)
-* [Test Sample Input](#test-sample-input)
-  * [Test Network](#test-network)  
-  * [Test Demand](#test-demand)
 * [Running Fast-Trips](#running-fast-trips)  
+* [Example Scenarios](#example-scenarios)
 * [Tests](#tests)  
 * [Summarizing Results](#summarizing-results)
 * [Frequently Asked Questions](#frequently-asked-questions)
@@ -38,25 +39,59 @@ For a description of how Fast-Trips does this sort of analysis differently than 
 
 ## Setup
 Follow the steps below to setup up fast-trips:
-*  Install [Git][git-url] and clone the fast-trips repository (https://github.com/BayAreaMetro/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.
-*  Switch to the `develop` branch of the repository.
-*  Download and install [numpy][numpy-url], [pandas][pandas-url], [partridge][partridge-url], and other project requirements.
-<b>Please note: Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.</b>  
-	*  One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url]. If you have Anaconda installed, you can create a virtual environment with the command below for fast-trips.
-	```Script
-    conda create -q -y -n test-environment python=2.7 numpy pandas>=0.22 psutil pytest
-    ```
 
-	*  [pip][pip-url] install all of the necessary requirements can also be done with the command below.
-```Python
-pip install -r requirements.txt
+1 - Set up your Python environment
+
+Right now Fast-Trips requires Python 2.7.  It also
+
+One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url]. If you have Anaconda installed, you can create a virtual environment with the command below for fast-trips.
+
+```Script
+  conda create -q -y -n fast-trips-env python=2.7 numpy pandas>=0.22 psutil pytest
+  source activate fast-trips-env
+  pip install partridge==0.6.0.dev1
 ```
+Note that Fast-trips currently uses a development version of the [Partridge][partridge-url] that is required in order to read unzipped GTFS files.
+
+Another option is to install the requirements in an existing Python 2.7 environment:
+
+```Script
+   pip install numpy pandas >=0.22 psutil pytest partridge==0.6.0.dev1
+```
+
+**Please note: Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.**
+
+2 - Get and Install Fast-Trips
+
+*Option 1 - From Source (Good for Developers or if you want "the latest")*
+
+* Install [Git][git-url] and if desired, a GUI for git like [GitHub Desktop](https://desktop.github.com/)  
+* [Clone](git-clone-url) or [fork-and-clone][git-fork-url] the fast-trips repository (https://github.com/BayAreaMetro/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.  
+*  Switch to the branch of the repository that you want to use by either using git from the command line (`git checkout master` or using a GUI.  The `master` branch should be the latest stable branch and the `develop` branch has the latest.  Features are developed on feature-branches.  
 *  If compiling on Windows, install [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url].  On Linux, install the python-dev package.
 *  Set the `PYTHONPATH` environment variable to the location of your fast-trips repo, which we're calling `<fast-trips-dir>`.
 *  To build, in the fast-trips directory `<fast-trips-dir>`, run the following in a command prompt:  `python setup.py build_ext --inplace`.
 
+*Option 2 - Latest Release*
+
+We occassionally put the latest release versions on [PyPI](https://pypi.org/), the Python Package Index
+
+```Script
+   pip install fasttrips
+```
+
+3 - Test the Install
+
+*  To run an example to make sure it is installed correctly, run from the `<fast-trips-dir>`:
+
+```Script
+   python fasttrips\Examples\Bunny_Hop\run_bunny_hop.py
+```
+ (remember to use file separators appropriate for your operating system).
+
 ## Input
 The input to fast-trips consists of:
+
 *  A Transit Network directory, including schedules, access, egress and transfer information, specified by the [GTFS-Plus Data Standards Repository][network-standard-url]
 *  A Transit Demand directory, including persons, households and trips, specified by the [Demand Data Standards Repository][demand-standard-url]
 *  fast-trips Configuration, specified below
@@ -159,15 +194,17 @@ def user_class(row_series):
     This function takes a single argument, the pandas.Series with person, household and
     trip_list attributes, and returns a user class string.
     """
-    if row_series["hh_id"] == "simpson":
-        return "not_real"
+    if row_series["hh_id"].lower() in ["simpson","brady","addams","jetsons","flintstones"]:
+        return "fictional"
     return "real"
 ```
 
 
 ###  `pathweight_ft.txt`
 
-The pathweight file is a *required* file that tells Fast-Trips how much to value each attribute of a path.  
+The pathweight file is a *required* file that tells Fast-Trips how much to value each attribute of a path. This will be used for the stop-labeling stage but also the path selection, which is done in a logit model.  Therefore, the weights should be consistent with with utility.  
+
+A good rule of thumb to consider is that typical in-vehicle-time coefficients for mode choice logit models range from 0.01 to 0.08.  If you consider route choice to be a nest of mode choice, you would divide whatever the in-vehicle-time coefficient is for mode choice by whatever that nesting coefficient is.  One assumption is that the nesting coefficient for route choice should have a smaller value than a typical mode choice model, meaning that people are more likely to switch routes than modes. So, if a mode-choice utility coefficient for in-vehicle time is 0.02 and an assumed nesting coefficient is 0.2, the value for route choice would be 0.10 (0.02 / 0.2).
 
 The file can be a csv or fixed-format.  If you use a fixed-format, make sure
 `pathweights_fixed_width = True` in the run configuration file (e.g., `config_ft.txt`).
@@ -188,16 +225,16 @@ _Notes_:
 
   1.   If demand mode X has supply mode Y, that means a trip specified as transit mode X in the `trip_list.txt` may use a transit link specified as Y in the network. Moreover, if the trip list were to specify that someone takes `commuter_rail` (like if the ABM chooses the primary mode for them as commuter rail), then they can still take a local bus or any lesser mode on their trip in addition to commuter rail. Often in this case, the weights are assumed to be higher for non-commuter rail modes and lower for commuter rail to induce them to ride. For example:
 
-`demand_mode`	| `supply_mode`	| `weight_name`	        | `weight_value`
---------------  | ------------- | --------------------- | -----------
-`commuter_rail` | `local_bus`	| `in_vehicle_time_min`	| 1.5
-`commuter_rail`	| `heavy_rail`  | `in_vehicle_time_min` | 1.0
+`demand_mode`   | `supply_mode` | `weight_name`         | `weight_value`
+-------------   | ------------- | --------------------- | -----------
+`commuter_rail` | `local_bus`   | `in_vehicle_time_min` | 1.5
+`commuter_rail` | `heavy_rail`  | `in_vehicle_time_min` | 1.0
 
 ### `Weight_Name` Values  
 
 The following is an example of a minimally specified `pathweight_ft.txt` :
 
-`demand_mode_type`| `demand_mode`	| `supply_mode`	| `weight_name`	       | `weight_value`
+`demand_mode_type`| `demand_mode`   | `supply_mode`  | `weight_name`       | `weight_value`
 ----------------  | --------------  | ------------- | -------------------- | -----------
 `access`          | `walk`          | `walk_access` | `time_min`           | 2
 `egress`          | `walk`          | `walk_egress` | `time_min`           | 2
@@ -214,30 +251,32 @@ The following is a partial list of possible weight names base don the demand mod
 `demand_mode_type = access` / `demand_mode = walk` / `supply_mode = walk_access`
 
   * `time_min`  
-  * `elevation_gain`
-  * `preferred_delay_min`
+  * `depart_early_min`  
+  * `depart_late_min`  
 
 `demand_mode_type = egress` / `demand_mode = walk` / `supply_mode = walk_egress`
 
   * `time_min`
-  * `elevation_gain`
-  * `preferred_delay_min`
+  * `arrive_early_min`  
+  * `arrive_late_min`  
 
 `demand_mode_type = access` / `demand_mode = PNR` / `supply_mode = pnr_access`
 
   * `walk_time_min`  
-  * `drive_time_min`
+  * `drive_time_min`  
+  * `arrive_early_min`
+  * `arrive_late_min`  
 
 `demand_mode_type = transfer` / `demand_mode = transfer` / `supply_mode = transfer`  
 
   * `transfer_penalty`
-  * `time_min`
-  * `wait_time_min`
+  * `time_min`  
+  * `wait_time_min`  
 
 `demand_mode_type = transit` / `demand_mode = transit` / `supply_mode = <pick a transit mode>`
 
-  * `in_vehicle_time_min`
-  * `wait_time_min`
+  * `in_vehicle_time_min`  
+  * `wait_time_min`  
 
 Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.
 
@@ -436,7 +475,15 @@ C:\Users\lzorn\Documents\fast-trips>rem If using installed version, use 'run_fas
 C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 fasttrips\Examples\Springfield\configs\A\config_ft.txt fasttrips\Examples\Springfield\networks\vermont fasttrips\Examples\Springfield\demand\general fasttrips\Examples\Springfield\configs\A\pathweight_ft.txt fasttrips\Examples\test_scenario\output
 ```
 
+## Example Scenarios
+
+Fast-Trips comes with a handful of scenarios in the `fasttrips/Examples` directory to use as examples or get your started. They can be viewed at a high-level using the [jupyter notebooks](http://jupyter.org/) contained in that directory.  Note that these notebooks may require you to install additional Python packages such as [jupyter](http://jupyter.org/), [ipywidgets](https://ipywidgets.readthedocs.io/en/latest/), and [bokeh](https://bokeh.pydata.org/en/latest/).
+
+### Springfield
+The Springfield scenario is what many of our tests use and is meant to be a generic example with enough complexity and modes to flex Fast-Trips muscles, but not too complex to understand what is going on.
+
 #### Springfield Network
+
 The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
 ![alt text](/fasttrips/Examples/Springfield/networks/vermont/test_network.png "Transit Example Network")
@@ -462,7 +509,7 @@ Most of the tests use test scenarios that can be found in the `fasttrips/Example
 
 Many (but not all) of the tests can be individually run by giving the command `python tests/test_<TESTNAME>.py`.  
 
-Test output defaults to the foldoer `fasttrips/Examples/output`
+Test output defaults to the folder `fasttrips/Examples/output`
 
 ### Continuous Integration
 
@@ -643,6 +690,7 @@ To be filled in further but including:
 * Port original FAST-TrIPs codebase to python with debug tracing (5/2015)
 
 [git-url]: <https://git-scm.com/>
+[git-clone-url]: <https://help.github.com/articles/cloning-a-repository/>
 [git-fork-url]: <https://help.github.com/articles/fork-a-repo/>
 [python-vcpp-url]: <http://www.microsoft.com/en-us/download/details.aspx?id=44266>
 [numpy-url]:  <http://www.numpy.org/>
