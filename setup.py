@@ -12,7 +12,7 @@ setup(name          = 'fasttrips',
       url           = 'http://fast-trips.mtc.ca.gov/',
       license       = 'Apache',
       classifiers   = [# How mature is this project?
-                       'Development Status :: 3 - Alpha',
+                       'Development Status :: 4 - Beta',
 
                        # Indicate who your project is intended for
                        'Intended Audience :: Other Audience',
