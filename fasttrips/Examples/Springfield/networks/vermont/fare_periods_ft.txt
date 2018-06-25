@@ -1,0 +1,9 @@
+fare_id,fare_period,start_time,end_time
+bus_local_fare_id,bus_local_fare_default,default,default
+bus_local_fare_id,bus_local_fare_am,06:00:00,09:00:00
+bus_local_fare_id,bus_local_fare_pm,13:00:00,17:00:00
+bus_local_b1_b3_id,bus_local_b1_b3_id_allday,00:00:00,24:00:00
+rail_fare_id,rail_fare_class,default,default
+b3_to_b1_fare_id,b3_to_b1_fare_am,00:00:00,12:00:00
+b3_to_b1_fare_id,b3_to_b1_fare_pm,12:00:00,24:00:00
+default_fare_id,default_fare_id_allday,00:00:00,24:00:00

@@ -1,4 +1,0 @@
-fare_id,price,currency_type,payment_method,transfers
-bus_local_fare_id,2,USD,0,0
-bus_express_fare_id,3,USD,0,0
-rail_fare_id,4,USD,1,0

@@ -1,0 +1,6 @@
+trip_id,route_id,service_id,direction_id
+ABt1,AB,BB,1
+ACt1,AC,BB,1
+BC1t1,BC1,BB,1
+BC2t1,BC2,BB,1
+BC3t1,BC3,BB,1

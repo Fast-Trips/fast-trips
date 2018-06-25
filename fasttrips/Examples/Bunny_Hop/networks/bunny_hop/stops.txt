@@ -1,0 +1,4 @@
+stop_id,stop_name,stop_lat,stop_lon
+A,Tree A,37.786397,-122.472648,
+B,Tree B,37.780689,-122.472314,
+C,Tree C,37.773182,-122.471829,

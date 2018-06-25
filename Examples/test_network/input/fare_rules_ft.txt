@@ -1,4 +1,0 @@
-fare_id,fare_class,start_time,end_time
-bus_local_fare_id,bus_local_fare_class,00:00:00,23:59:59
-bus_express_fare_id,bus_express_fare_class,00:00:00,23:59:59
-rail_fare_id,rail_fare_class,00:00:00,23:59:59

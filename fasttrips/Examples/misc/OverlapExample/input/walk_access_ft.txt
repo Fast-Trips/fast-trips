@@ -1,0 +1,6 @@
+taz,stop_id,direction,dist
+ZO,S1,access,0.02
+ZO,L1,access,0.02
+ZD,S2,egress,0.35
+ZD,S3,egress,0.2125
+ZD,L2,egress,0.3725

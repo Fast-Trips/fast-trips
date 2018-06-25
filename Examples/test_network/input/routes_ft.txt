@@ -1,5 +1,0 @@
-route_id,mode,fare_class,proof_of_payment
-A,local_bus,bus_local_fare_class,FALSE
-B,rapid_bus,bus_express_fare_class,FALSE
-C,heavy_rail,rail_fare_class,TRUE
-

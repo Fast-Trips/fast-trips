@@ -1,0 +1,3 @@
+route_id,mode,proof_of_payment
+Bus,local_bus,FALSE
+LR,light_rail,TRUE

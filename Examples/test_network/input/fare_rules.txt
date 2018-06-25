@@ -1,5 +1,0 @@
-fare_id,route_id
-bus_local_fare_id,A
-bus_express_fare_id,B
-rail_fare_id,C
-

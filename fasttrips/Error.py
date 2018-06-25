@@ -36,7 +36,7 @@ class NetworkInputError(Error):
         self.expr     = filename
         self.msg      = msg
 
-class DemandInputErorr(Error):
+class DemandInputError(Error):
     """
     Exception raised for errors in the demand input.
 

@@ -14,14 +14,16 @@ namespace fasttrips {
      */
     typedef struct {
         int     iteration_;             ///< Iteration
-        int     passenger_id_;          ///< The passenger ID
-        int     path_id_;               ///< The path ID - uniquely identifies a passenger+path
+        int     pathfinding_iteration_; ///< Pathfinding iteration
         bool    hyperpath_;             ///< If true, find path using stochastic algorithm
         int     origin_taz_id_;         ///< Origin of path
         int     destination_taz_id_;    ///< Destination of path
         bool    outbound_;              ///< If true, the preferred time is for arrival, otherwise it's departure
         double  preferred_time_;        ///< Preferred time of arrival or departure, minutes after midnight
+        double  value_of_time_;         ///< Value of time, in currency_type/hour
         bool    trace_;                 ///< If true, log copious details of the pathfinding into a trace log
+        std::string person_id_;         ///< Person ID
+        std::string person_trip_id_;    ///< Person Trip ID
         std::string user_class_;        ///< User class string
         std::string purpose_;           ///< Purpose string
         std::string access_mode_;       ///< Access demand mode
@@ -90,7 +92,13 @@ namespace fasttrips {
 
     // forward dec
     class Path;
+    struct FarePeriod;
 
+    /** Stop states are basically links in a hyperpath.
+      * Note that the time fields (deparr_time_ and arrdep_time_) are based around the preferred arrival or departure time
+      * and can be negative or over 24*60 if the travel crosses the midnight boundary.
+      * For example, if the preferred arrival time is 12:10a then links before it might have negative values.
+      **/
     struct StopState {
         double  deparr_time_;           ///< Departure time for outbound, arrival time for inbound
         int     deparr_mode_;           ///< Departure mode for outbound, arrival mode for inbound.
@@ -102,10 +110,20 @@ namespace fasttrips {
         int     seq_;                   ///< The sequence number of this stop on this trip. (-1 if not trip)
         int     seq_succpred_;          ///< The sequence number of the successor/predecessor stop
         double  link_time_;             ///< Link time.  For trips, includes wait time. Just walk time for others.
-        double  link_cost_;             ///< Link cost.
+        double  link_fare_;             ///< Link fare. Financial cost of the link.
+        double  link_cost_;             ///< Link generalized cost.
+        double  link_ivtwt_;            ///< Link in-vehicle time path weight.
+        double  link_dist_;             ///< Link distance, in units of shape_dist_traveled.
         double  cost_;                  ///< Cost from previous link(s) and this link together.
         int     iteration_;             ///< Labeling iteration that generated this stop state.
         double  arrdep_time_;           ///< Arrival time for outbound, departure time for inbound
+
+        const FarePeriod* fare_period_; ///< Trip links may have a FarePeriod
+
+        // previously in ProbabilityStopState
+        double  probability_;           ///< The probability of this link
+        int     cum_prob_i_;            ///< Cumulative integer version of probability
+
 
         Path*   low_cost_path_;         ///< Lowest cost path that includes this link.  Only set in labeling.
 
@@ -117,10 +135,16 @@ namespace fasttrips {
             seq_          (0),
             seq_succpred_ (0),
             link_time_    (0),
+            link_fare_    (0),
             link_cost_    (0),
+			link_ivtwt_   (0),
+            link_dist_    (0),
             cost_         (0),
             iteration_    (-1),
             arrdep_time_  (0),
+            fare_period_  (NULL),
+            probability_  (0),
+            cum_prob_i_   (0),
             low_cost_path_(NULL) {}
 
         StopState(
@@ -131,10 +155,14 @@ namespace fasttrips {
             int    seq,
             int    seq_succpred,
             double link_time,
+            double link_fare,
             double link_cost,
+            double link_dist,
             double cost,
             int    iteration,
-            double arrdep_time) :
+            double arrdep_time,
+			double link_ivtwt,
+            const FarePeriod* fp=NULL) :
             deparr_time_  (deparr_time),
             deparr_mode_  (deparr_mode),
             trip_id_      (trip_id),
@@ -142,10 +170,16 @@ namespace fasttrips {
             seq_          (seq),
             seq_succpred_ (seq_succpred),
             link_time_    (link_time),
+            link_fare_    (link_fare),
             link_cost_    (link_cost),
+			link_ivtwt_   (link_ivtwt),
+            link_dist_    (link_dist),
             cost_         (cost),
             iteration_    (iteration),
             arrdep_time_  (arrdep_time),
+            fare_period_  (fp),
+            probability_  (0),
+            cum_prob_i_   (0),
             low_cost_path_(NULL) {}
     };
 }

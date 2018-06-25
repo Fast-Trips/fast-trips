@@ -1,0 +1,6 @@
+vehicle_name,seated_capacity,standing_capacity
+ferry1,300,300
+commuter_rail1,200,300
+light_rail1,100,150
+premium_bus1,60,80
+local_bus1,60,80

@@ -9,6 +9,8 @@
 #endif
 
 #include <assert.h>
+#include <cmath>
+#include <ctime>
 #include <sstream>
 #include <ios>
 #include <iostream>
@@ -26,6 +28,16 @@ const char kPathSeparator =
 #endif
 
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( std::ostringstream() << std::dec << x ).str()
+
+// Uncomment for debug detail for link cost.
+// #define DEBUG_LINKCOST
+
+// Debug macros. If debug is not on, the if (trace) isn't even executed.
+#ifdef DEBUG_LINKCOST
+#  define D_LINKCOST(x) do { if (path_spec.trace_) { x } } while (0)
+#else
+#  define D_LINKCOST(x) do {} while (0)
+#endif
 
 static std::ofstream label_file;
 static std::ofstream stopids_file;
@@ -45,13 +57,20 @@ namespace fasttrips {
     void PathFinder::initializeParameters(
         double     time_window,
         double     bump_buffer,
+        double     utils_conversion,
+        double     depart_early_allowed_min,
+        double     arrive_late_allowed_min,
         int        stoch_pathset_size,
         double     stoch_dispersion,
         int        stoch_max_stop_process_count,
+        bool       transfer_fare_ignore_pf,
+        bool       transfer_fare_ignore_pe,
         int        max_num_paths,
         double     min_path_probability)
     {
         BUMP_BUFFER_                    = bump_buffer;
+        DEPART_EARLY_ALLOWED_MIN_       = depart_early_allowed_min;
+        ARRIVE_LATE_ALLOWED_MIN_        = arrive_late_allowed_min;
         STOCH_PATHSET_SIZE_             = stoch_pathset_size;
         STOCH_MAX_STOP_PROCESS_COUNT_   = stoch_max_stop_process_count;
         MAX_NUM_PATHS_                  = max_num_paths;
@@ -59,6 +78,9 @@ namespace fasttrips {
 
         Hyperlink::TIME_WINDOW_         = time_window;
         Hyperlink::STOCH_DISPERSION_    = stoch_dispersion;
+        Hyperlink::UTILS_CONVERSION_    = utils_conversion;
+        Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ = transfer_fare_ignore_pf;
+        Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_    = transfer_fare_ignore_pe;
     }
 
     void PathFinder::readIntermediateFiles()
@@ -66,6 +88,7 @@ namespace fasttrips {
         readTripIds();
         readStopIds();
         readRouteIds();
+        readFarePeriods();
         readModeIds();
         readAccessLinks();
         readTransferLinks();
@@ -85,7 +108,7 @@ namespace fasttrips {
         int trip_id_num;
 
         trip_id_file >> string_trip_id_num >> string_trip_id;
-        if (process_num_ <= 1) { 
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_trip.str() << ": ";
             std::cout << "[" << string_trip_id_num   << "] ";
             std::cout << "[" << string_trip_id       << "] ";
@@ -107,27 +130,33 @@ namespace fasttrips {
         ss_stop << output_dir_ << kPathSeparator << "ft_intermediate_stop_id.txt";
         stop_id_file.open(ss_stop.str().c_str(), std::ios_base::in);
 
-        std::string string_stop_id_num, string_stop_id;
-        int stop_id_num;
+        std::string line, string_stop_id_num, string_stop_id, string_zone_num, string_zone_id;
+        int stop_id_num, zone_num;
 
-        stop_id_file >> string_stop_id_num >> string_stop_id;
-        if (process_num_ <= 1) { 
+        stop_id_file >> string_stop_id_num >> string_stop_id >> string_zone_num >> string_zone_id;
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_stop.str() << ": ";
             std::cout << "[" << string_stop_id_num   << "] ";
             std::cout << "[" << string_stop_id       << "] ";
+            std::cout << "[" << string_zone_num      << "] ";
+            std::cout << "[" << string_zone_id       << "] ";
         }
-        while (stop_id_file >> stop_id_num >> string_stop_id) {
-            stop_num_to_str_[stop_id_num] = string_stop_id;
+        while (!stop_id_file.eof()) {
+            getline(stop_id_file, line);
+            std::istringstream iss(line);
+            iss >> stop_id_num >> string_stop_id >> zone_num >> string_zone_id;
+            stop_num_to_stop_[stop_id_num].stop_str_ = string_stop_id;
+            stop_num_to_stop_[stop_id_num].zone_num_ = zone_num;  // -1 means none
         }
         if (process_num_ <= 1) {
-            std::cout << " => Read " << stop_num_to_str_.size() << " lines" << std::endl;
+            std::cout << " => Read " << stop_num_to_stop_.size() << " lines" << std::endl;
         }
         stop_id_file.close();
     }
 
     void PathFinder::readRouteIds() {
         // Routes have been renumbered by fasttrips. Read string IDs.
-        // Route num -> id
+        // Route num -> id, fare_id
         std::ifstream route_id_file;
         std::ostringstream ss_route;
         ss_route << output_dir_ << kPathSeparator << "ft_intermediate_route_id.txt";
@@ -137,7 +166,7 @@ namespace fasttrips {
         int route_id_num;
 
         route_id_file >> string_route_id_num >> string_route_id;
-        if (process_num_ <= 1) { 
+        if (process_num_ <= 1) {
             std::cout << "Reading " << ss_route.str() << ": ";
             std::cout << "[" << string_route_id_num   << "] ";
             std::cout << "[" << string_route_id       << "] ";
@@ -149,6 +178,83 @@ namespace fasttrips {
             std::cout << " => Read " << route_num_to_str_.size() << " lines" << std::endl;
         }
         route_id_file.close();
+    }
+
+    void PathFinder::readFarePeriods() {
+        std::ifstream fare_period_file;
+        std::ostringstream ss_fare;
+        ss_fare << output_dir_ << kPathSeparator << "ft_intermediate_fare.txt";
+        fare_period_file.open(ss_fare.str().c_str(), std::ios_base::in);
+
+        //          fare_id_num         fare_id         fare_class          route_id_num         origin_id_num         destination_id_num, start_time              end_time
+        std::string string_fare_id_num, string_fare_id, string_fare_period, string_route_id_num, string_origin_id_num, string_dest_id_num, string_fare_start_time, string_fare_end_time;
+        //          price              transfers,             transfer_duration
+        std::string string_fare_price, string_fare_transfers, string_tdur;
+        int fare_id_num;
+
+        fare_period_file >> string_fare_id_num >> string_fare_id >> string_fare_period
+                         >> string_route_id_num >> string_origin_id_num >> string_dest_id_num
+                         >> string_fare_start_time >> string_fare_end_time >> string_fare_price >> string_fare_transfers >> string_tdur;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_fare.str()   << ": ";
+            std::cout << "[" << string_fare_id_num     << "] ";
+            std::cout << "[" << string_fare_id         << "] ";
+            std::cout << "[" << string_fare_period     << "] ";
+            std::cout << "[" << string_route_id_num    << "] ";
+            std::cout << "[" << string_origin_id_num   << "] ";
+            std::cout << "[" << string_dest_id_num     << "] ";
+            std::cout << "[" << string_fare_start_time << "] ";
+            std::cout << "[" << string_fare_end_time   << "] ";
+            std::cout << "[" << string_fare_price      << "] ";
+            std::cout << "[" << string_fare_transfers  << "] ";
+            std::cout << "[" << string_tdur            << "] ";
+        }
+        RouteStopZone rsz;
+        FarePeriod fp;
+        while (fare_period_file >> fare_id_num >> fp.fare_id_ >> fp.fare_period_ >> rsz.route_id_ >> rsz.origin_zone_ >> rsz.destination_zone_ >> fp.start_time_ >> fp.end_time_
+                                >> fp.price_ >> fp.transfers_ >> fp.transfer_duration_)
+        {
+            fare_periods_.insert(std::pair<RouteStopZone,FarePeriod>(rsz,fp));
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << fare_periods_.size() << " fare periods" << std::endl;
+        }
+        fare_period_file.close();
+
+        // read fare transfer rules
+        std::ifstream fare_transfer_file;
+        std::ostringstream ss_transfer_fare;
+        ss_transfer_fare << output_dir_ << kPathSeparator << "ft_intermediate_fare_transfers.txt";
+        fare_transfer_file.open(ss_transfer_fare.str().c_str(), std::ios_base::in);
+
+        std::string string_xferfrom, string_xferto, string_xfertype, string_xferamount;
+        fare_transfer_file >> string_xferfrom >> string_xferto >> string_xfertype >> string_xferamount;
+        if (process_num_ <= 1) {
+            std::cout << "Reading " << ss_transfer_fare.str() << ": ";
+            std::cout << "[" << string_xferfrom   << "]";
+            std::cout << "[" << string_xferto     << "]";
+            std::cout << "[" << string_xfertype   << "]";
+            std::cout << "[" << string_xferamount << "]";
+        }
+
+        FareTransfer faretransfer;
+        while (fare_transfer_file >> string_xferfrom >> string_xferto >> string_xfertype >> faretransfer.amount_) {
+            if (string_xfertype == "transfer_free") {
+                faretransfer.type_ = TRANSFER_FREE;
+            } else  if (string_xfertype == "transfer_discount") {
+                faretransfer.type_ = TRANSFER_DISCOUNT;
+            } else if (string_xfertype == "transfer_cost") {
+                faretransfer.type_ = TRANSFER_COST;
+            } else {
+                std::cerr << "Don't understand trasnfer_fare_type [" << string_xfertype << "]" << std::endl;
+                exit(2);
+            }
+            fare_transfer_rules_[ std::make_pair(string_xferfrom, string_xferto)] = faretransfer;
+        }
+        if (process_num_ <= 1) {
+            std::cout << " => Read " << fare_transfer_rules_.size() << " fare transfer rules" << std::endl;
+        }
+        fare_transfer_file.close();
     }
 
     void PathFinder::readModeIds() {
@@ -185,28 +291,7 @@ namespace fasttrips {
         ss_accegr << output_dir_ << kPathSeparator << "ft_intermediate_access_egress.txt";
         acceggr_file.open(ss_accegr.str().c_str(), std::ios_base::in);
 
-
-        std::string string_taz_num, string_supply_mode_num, string_stop_id_num, attr_name, string_attr_value;
-        int taz_num, supply_mode_num, stop_id_num;
-        double attr_value;
-
-        acceggr_file >> string_taz_num >> string_supply_mode_num >> string_stop_id_num >> attr_name >> string_attr_value;
-        if (process_num_ <= 1) {
-            std::cout << "Reading " << ss_accegr.str() << ": ";
-            std::cout << "[" << string_taz_num         << "] ";
-            std::cout << "[" << string_supply_mode_num << "] ";
-            std::cout << "[" << string_stop_id_num     << "] ";
-            std::cout << "[" << attr_name              << "] ";
-            std::cout << "[" << string_attr_value      << "] ";
-        }
-        int attrs_read = 0;
-        while (acceggr_file >> taz_num >> supply_mode_num >> stop_id_num >> attr_name >> attr_value) {
-            taz_access_links_[taz_num][supply_mode_num][stop_id_num][attr_name] = attr_value;
-            attrs_read++;
-        }
-        if (process_num_ <= 1) {
-            std::cout << " => Read " << attrs_read << " lines" << std::endl;
-        }
+        access_egress_links_.readLinks(acceggr_file, process_num_ <= 1);
         acceggr_file.close();
     }
 
@@ -287,11 +372,13 @@ namespace fasttrips {
         ss_weights << output_dir_ << kPathSeparator << "ft_intermediate_weights.txt";
         weights_file.open(ss_weights.str().c_str(), std::ios_base::in);
 
-        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value;
+        std::string user_class, purpose, demand_mode_type, demand_mode, string_supply_mode_num, weight_name, string_weight_value,
+            weight_type, string_log_base, string_logistic_max, string_logistic_mid;
         int supply_mode_num;
-        double weight_value;
+        Weight the_weight;
 
         weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> string_supply_mode_num >> weight_name >> string_weight_value;
+        weights_file >> weight_type >> string_log_base >> string_logistic_max >> string_logistic_mid;
         if (process_num_ <= 1) {
             std::cout << "Reading " << ss_weights.str() << ": ";
             std::cout << "[" << user_class              << "] ";
@@ -301,9 +388,13 @@ namespace fasttrips {
             std::cout << "[" << string_supply_mode_num  << "] ";
             std::cout << "[" << weight_name             << "] ";
             std::cout << "[" << string_weight_value     << "] ";
+            std::cout << "[" << weight_type             << "] ";
+            std::cout << "[" << string_log_base         << "] ";
+            std::cout << "[" << string_logistic_max     << "] ";
+            std::cout << "[" << string_logistic_mid     << "] ";
         }
         int weights_read = 0;
-        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> weight_value) {
+        while (weights_file >> user_class >> purpose >> demand_mode_type >> demand_mode >> supply_mode_num >> weight_name >> the_weight.weight_ >> weight_type) {
             UserClassPurposeMode ucpm = { user_class, purpose, fasttrips::MODE_ACCESS, demand_mode };
             if      (demand_mode_type == "access"  ) { ucpm.demand_mode_type_ = MODE_ACCESS;  }
             else if (demand_mode_type == "egress"  ) { ucpm.demand_mode_type_ = MODE_EGRESS;  }
@@ -314,7 +405,25 @@ namespace fasttrips {
                 exit(2);
             }
 
-            weight_lookup_[ucpm][supply_mode_num][weight_name] = weight_value;
+            the_weight.log_base_     = 0.0;
+            the_weight.logistic_max_ = 0.0;
+            the_weight.logistic_mid_ = 0.0;
+
+            if (weight_type == "constant") {
+                the_weight.type_ = WEIGHT_LINEAR;
+            } else if (weight_type == "exponential") {
+                the_weight.type_ = WEIGHT_EXPONENTIAL;
+            } else if (weight_type == "logarithmic") {
+                the_weight.type_ = WEIGHT_LOGARITHMIC;
+                weights_file >> the_weight.log_base_;
+            } else if (weight_type == "logistic") {
+                the_weight.type_ = WEIGHT_LOGISTIC;
+                weights_file >> the_weight.logistic_max_ >> the_weight.logistic_mid_;
+            } else {
+                std::cerr << "Do not understand weight type [" << weight_type << "] in " << ss_weights.str() << std::endl;
+                exit(2);
+            }
+            weight_lookup_[ucpm][supply_mode_num][weight_name] = the_weight;
             weights_read++;
         }
         if (process_num_ <= 1) {
@@ -342,21 +451,10 @@ namespace fasttrips {
     const Attributes* PathFinder::getAccessAttributes(
         int taz_id,
         int supply_mode_num,
-        int stop_id) const
+        int stop_id,
+        double tp_time) const
     {
-        TAZSupplyStopToAttr::const_iterator tssa_iter = taz_access_links_.find(taz_id);
-        if (tssa_iter == taz_access_links_.end()) { return NULL; }
-
-        //  tssa_iter->second is a SupplyStopToAttr
-        SupplyStopToAttr::const_iterator ssa_iter = tssa_iter->second.find(supply_mode_num);
-        if (ssa_iter == tssa_iter->second.end()) { return NULL; }
-
-        // ssa_iter->second is a StopToAttr
-        StopToAttr::const_iterator sa_iter = ssa_iter->second.find(stop_id);
-        if (sa_iter == ssa_iter->second.end()) { return NULL; }
-
-        // sa_iter->second is Attributes
-        return &(sa_iter->second);
+        return access_egress_links_.getAccessAttributes(taz_id, supply_mode_num, stop_id, tp_time);
     }
 
     const Attributes* PathFinder::getTransferAttributes(
@@ -367,7 +465,7 @@ namespace fasttrips {
             PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_ = new Attributes();
             // TODO: make this configurable
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["walk_time_min"   ] = 0.0;
-            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 1.0;
+            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 0.1;
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["elevation_gain"  ] = 0.0;
         }
 
@@ -393,6 +491,12 @@ namespace fasttrips {
         return &(it->second);
     }
 
+    int PathFinder::getRouteIdForTripId(int trip_id_num) const
+    {
+        const TripInfo* ti = getTripInfo(trip_id_num);
+        return ti->route_id_;
+    }
+
     // Accessor for TripStopTime for given trip id, stop sequence
     const TripStopTime& PathFinder::getTripStopTime(int trip_id, int stop_seq) const
     {
@@ -414,9 +518,11 @@ namespace fasttrips {
         process_num_ = process_num;
         if (trip_stop_times_.size() == 0)
         {
+            // nothing has run yet -- read intermediate files
             readIntermediateFiles();
         } else
         {
+            // previous iterations have run so the network is still valid, but we need to update the stop times
             // reset these
             trip_stop_times_.clear();
             stop_trip_times_.clear();
@@ -427,9 +533,10 @@ namespace fasttrips {
                 stoptime_index[3*i],    // trip id
                 stoptime_index[3*i+1],  // sequence
                 stoptime_index[3*i+2],  // stop id
-                stoptime_times[3*i],    // arrive time
-                stoptime_times[3*i+1],  // depart time
-                stoptime_times[3*i+2]   // overcap
+                stoptime_times[4*i],    // arrive time
+                stoptime_times[4*i+1],  // depart time
+                stoptime_times[4*i+2],  // shape_dist_traveled
+                stoptime_times[4*i+3]   // overcap
             };
             // verify the sequence number makes sense: sequential, starts with 1
             assert(stt.sequence_ == trip_stop_times_[stt.trip_id_].size()+1);
@@ -462,6 +569,29 @@ namespace fasttrips {
         }
     }
 
+    void PathFinder::reset()
+    {
+        weight_lookup_.clear();
+        access_egress_links_.clear();
+
+        transfer_links_o_d_.clear();
+        transfer_links_d_o_.clear();
+
+        trip_info_.clear();
+        trip_stop_times_.clear();
+        stop_trip_times_.clear();
+        route_fares_.clear();
+        fare_periods_.clear();
+        fare_transfer_rules_.clear();
+
+        trip_num_to_str_.clear();
+        stop_num_to_stop_.clear();
+        route_num_to_str_.clear();
+        mode_num_to_str_.clear();
+
+        bump_wait_.clear();
+    }
+
     /// This doesn't really do anything because the instance variables are all STL structures
     /// which take care of freeing memory.
     PathFinder::~PathFinder()
@@ -469,7 +599,7 @@ namespace fasttrips {
         // std::cout << "PathFinder destructor" << std::endl;
     }
 
-    void PathFinder::findPathSet(
+    int PathFinder::findPathSet(
         PathSpecification path_spec,
         PathSet           &pathset,
         PerformanceInfo   &performance_info) const
@@ -486,31 +616,33 @@ namespace fasttrips {
         if (path_spec.trace_) {
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
-            ss << "fasttrips_trace_" << path_spec.path_id_ << ".log";
+            ss << "fasttrips_trace_" << path_spec.person_id_ << "-" << path_spec.person_trip_id_ << ".log";
             // append because this will happen across iterations
             std::ios_base::openmode omode = std::ios_base::out;
-            if (path_spec.iteration_ != 1) {
+            if (path_spec.iteration_ > 1 || path_spec.pathfinding_iteration_ > 1) {
                 omode = omode | std::ios_base::app; // append
             }
             trace_file.open(ss.str().c_str(), omode);
-            trace_file << "Tracing assignment of passenger " << path_spec.passenger_id_ << " with path id " << path_spec.path_id_ << std::endl;
+            trace_file << "Tracing assignment of person " << path_spec.person_id_ << " with person_trip_id" << path_spec.person_trip_id_ << std::endl;
             trace_file << "iteration_       = " << path_spec.iteration_ << std::endl;
+            trace_file << "pathfinding_iter = " << path_spec.pathfinding_iteration_ << std::endl;
             trace_file << "outbound_        = " << path_spec.outbound_  << std::endl;
             trace_file << "hyperpath_       = " << path_spec.hyperpath_ << std::endl;
             trace_file << "preferred_time_  = ";
             printTime(trace_file, path_spec.preferred_time_);
             trace_file << " (" << path_spec.preferred_time_ << ")" << std::endl;
+            trace_file << "value_of_time_   = " << path_spec.value_of_time_<< std::endl;
             trace_file << "user_class_      = " << path_spec.user_class_   << std::endl;
             trace_file << "purpose_         = " << path_spec.purpose_      << std::endl;
             trace_file << "access_mode_     = " << path_spec.access_mode_  << std::endl;
             trace_file << "transit_mode_    = " << path_spec.transit_mode_ << std::endl;
             trace_file << "egress_mode_     = " << path_spec.egress_mode_  << std::endl;
-            trace_file << "orig_taz_id_     = " << stop_num_to_str_.find(path_spec.origin_taz_id_     )->second << std::endl;
-            trace_file << "dest_taz_id_     = " << stop_num_to_str_.find(path_spec.destination_taz_id_)->second << std::endl;
+            trace_file << "orig_taz_id_     = " << stopStringForId(path_spec.origin_taz_id_     ) << std::endl;
+            trace_file << "dest_taz_id_     = " << stopStringForId(path_spec.destination_taz_id_)<< std::endl;
 
             std::ostringstream ss2;
             ss2 << output_dir_ << kPathSeparator;
-            ss2 << "fasttrips_labels_ids_" << path_spec.path_id_ << ".csv";
+            ss2 << "fasttrips_labels_ids_" << path_spec.person_id_ << "-" << path_spec.person_trip_id_ << ".csv";
             stopids_file.open(ss2.str().c_str(), omode);
             stopids_file << "stop_id,stop_id_label_iter,is_trip,label_stop_cost" << std::endl;
         }
@@ -531,12 +663,38 @@ namespace fasttrips {
         gettimeofday(&labeling_start_time, NULL);
 #endif
 
-        // todo: handle failure
+        int pf_returnstatus = -1;
         bool success = initializeStopStates(path_spec, trace_file, stop_states, label_stop_queue);
+        if (!success) {
+            pf_returnstatus = PathFinder::RET_FAIL_INIT_STOP_STATES;
+            if (path_spec.trace_) {
+                trace_file << "initializeStopStates() failed.  Skipping labeling." << std::endl;
+            }
+        }
 
         // These are the stops that are reachable from the final TAZ
         std::map<int, int> reachable_final_stops;
-        success = setReachableFinalStops(path_spec, trace_file, reachable_final_stops);
+        if (success) {
+            success = setReachableFinalStops(path_spec, trace_file, reachable_final_stops);
+            if (!success) {
+                pf_returnstatus = PathFinder::RET_FAIL_SET_REACHABLE;
+                if (path_spec.trace_) {
+                    trace_file << "setReachableFinalStops() failed.  Skipping labeling." << std::endl;
+                }
+            }
+        }
+
+        // don't go further if we failed an earlier step
+        if (!success) {
+            stop_states.clear();
+
+            if (path_spec.trace_) {
+                trace_file.close();
+                label_file.close();
+                stopids_file.close();
+            }
+            return pf_returnstatus;
+        }
 
         performance_info.label_iterations_ = labelStops(path_spec, trace_file, reachable_final_stops,
                                                         stop_states, label_stop_queue, performance_info.max_process_count_);
@@ -548,7 +706,7 @@ namespace fasttrips {
         gettimeofday(&labeling_end_time, NULL);
 #endif
 
-        getPathSet(path_spec, trace_file, stop_states, pathset);
+        pf_returnstatus = getPathSet(path_spec, trace_file, stop_states, pathset);
 
 #ifdef _WIN32
         QueryPerformanceCounter(&pathfind_end_time);
@@ -574,6 +732,7 @@ namespace fasttrips {
         {
             performance_info.workingset_bytes_   = pmc.WorkingSetSize;
             performance_info.privateusage_bytes_ = pmc.PrivateUsage;
+            performance_info.mem_timestamp_      = (long)time((time_t*)0);
         }
 #else
         gettimeofday(&pathfind_end_time, NULL);
@@ -601,6 +760,7 @@ namespace fasttrips {
             label_file.close();
             stopids_file.close();
         }
+        return pf_returnstatus;
     }
 
     double PathFinder::tallyLinkCost(
@@ -613,10 +773,10 @@ namespace fasttrips {
     {
         // iterate through the weights
         double cost = 0;
-        if (true && path_spec.trace_ && !hush) {
+        D_LINKCOST(
             trace_file << "Link cost for " << std::setw(15) << std::setfill(' ') << std::left << modeStringForNum(supply_mode_num);
             trace_file << std::setw(15) << std::setfill(' ') << std::right << "weight" << " x attribute" <<std::endl;
-        }
+        );
 
         NamedWeights::const_iterator iter_weights;
         for (iter_weights  = weights.begin();
@@ -633,17 +793,80 @@ namespace fasttrips {
                 continue;
             }
 
-            cost += iter_weights->second * iter_attr->second;
-            if (true && path_spec.trace_ && !hush) {
+            D_LINKCOST(
                 trace_file << std::setw(26) << std::setfill(' ') << std::right << iter_weights->first << ":  + ";
-                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_weights->second;
-                trace_file << " x " << iter_attr->second << std::endl;
+            );
+
+            if (iter_attr->second == 0.0) {
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << std::fixed << iter_attr->second << std::endl;
+                );
+                continue;
+            }
+
+            double cost_part = 0.0;
+            const Weight& the_weight = iter_weights->second;
+
+            // handle constant and non constant weights
+            if (the_weight.type_ == WEIGHT_LINEAR) {
+                cost_part = the_weight.weight_ * iter_attr->second;
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << std::fixed << the_weight.weight_;
+                    trace_file << " x " << iter_attr->second << " = " << cost_part << " (constant)" << std::endl;
+                );
+            } else if (the_weight.type_ == WEIGHT_EXPONENTIAL) {
+                cost_part = (std::pow(1.0+the_weight.weight_, iter_attr->second) - 1.0) / std::log(1.0 + the_weight.weight_);
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (exponential on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
+                    trace_file << ")" << std::endl;
+                );                
+            } else if (the_weight.type_ == WEIGHT_LOGARITHMIC) {
+                cost_part = the_weight.weight_ * ((1.0 + iter_attr->second) * std::log(1.0 + iter_attr->second) - iter_attr->second) / std::log(the_weight.log_base_);
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (logarithmic on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
+                    trace_file << ", log_base " << the_weight.log_base_;
+                    trace_file << ")" << std::endl;
+                ); 
+            } else if (the_weight.type_ == WEIGHT_LOGISTIC) {
+                double max_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(std::exp(the_weight.weight_ * iter_attr->second) + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
+                double min_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(1.0 + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
+
+                cost_part = max_integral - min_integral;
+                D_LINKCOST(
+                    trace_file << std::setw(13) << std::setprecision(4) << cost_part;
+                    trace_file << " (logistic on " << iter_attr->second << " with weight " << std::setprecision(4) << std::fixed << the_weight.weight_;
+                    trace_file << ", logistic_mid " << the_weight.logistic_mid_;
+                    trace_file << ", logistic_max " << the_weight.logistic_max_;
+                    trace_file << ")" << std::endl;
+                ); 
+            }
+            // cost needs to be positive and within bounds
+            if ((cost_part >= 0) && (cost_part <= MAX_COST)) {
+                cost += cost_part;
             }
         }
-        if (true && path_spec.trace_ && !hush) {
+        // fare
+        static const std::string fare_str("fare");
+        Attributes::const_iterator fare_attr = attributes.find(fare_str);
+        // fare is first converted to minutes using vot and then into utils using IVT weight
+        static const std::string ivt_str("in_vehicle_time_min");
+        NamedWeights::const_iterator ivt_weight = weights.find(ivt_str);
+        if ((fare_attr != attributes.end()) && (ivt_weight != weights.end())) {
+            //       (60 min/hour)*(hours/vot currency)*(ivt_weight) x (currency)
+            cost += (60.0/path_spec.value_of_time_) * ivt_weight->second.weight_ * fare_attr->second;
+
+            D_LINKCOST(
+                trace_file << std::setw(26) << std::setfill(' ') << std::right << "fare" << ":  + ";
+                trace_file << std::setw(13) << std::setprecision(4) << std::fixed << (ivt_weight->second*60.0/path_spec.value_of_time_);
+                trace_file << " x " << fare_attr->second << std::endl;
+            );
+        }
+        D_LINKCOST(
             trace_file << std::setw(26) << std::setfill(' ') << "final cost" << ":  = ";
             trace_file << std::setw(13) << std::setprecision(4) << std::fixed << cost << std::endl;
-        }
+        );
         return cost;
     }
 
@@ -691,8 +914,8 @@ namespace fasttrips {
 
             std::ostringstream ss;
             ss << output_dir_ << kPathSeparator;
-            ss << "fasttrips_labels_" << path_spec.path_id_ << ".csv";
-            label_file.open(ss.str().c_str(), (path_spec.iteration_ == 1 ? std::ios_base::out : std::ios_base::out | std::ios_base::app));
+            ss << "fasttrips_labels_" << path_spec.person_id_ << "-" << path_spec.person_trip_id_ << ".csv";
+            label_file.open(ss.str().c_str(), ((path_spec.iteration_ == 1) && (path_spec.pathfinding_iteration_ == 1))? std::ios_base::out : std::ios_base::out | std::ios_base::app);
             label_file << "label_iteration,link,node ID,time,mode,trip_id,link_time,link_cost,cost,AB" << std::endl;
         }
 
@@ -702,8 +925,8 @@ namespace fasttrips {
             label_file << ss.iteration_ << ",";
             label_file << link_num      << ",";
 
-            if (o_d == 0) { label_file << stop_num_to_str_.find(stop_id)->second << ","; }
-            else          { label_file << stop_num_to_str_.find(ss.stop_succpred_)->second << ","; }
+            if (o_d == 0) { label_file << stopStringForId(stop_id) << ","; }
+            else          { label_file << stopStringForId(ss.stop_succpred_) << ","; }
 
             if (o_d == 0) { label_file << ss.deparr_time_ << ","; }
             else          { label_file << ss.arrdep_time_ << ","; }
@@ -736,10 +959,11 @@ namespace fasttrips {
     {
         int     start_taz_id = path_spec.outbound_ ? path_spec.destination_taz_id_ : path_spec.origin_taz_id_;
         double  dir_factor   = path_spec.outbound_ ? 1.0 : -1.0;
+        // the stretch pref time -- allow late arrival or early departure
+        double  pref_time    = path_spec.outbound_ ? path_spec.preferred_time_ + ARRIVE_LATE_ALLOWED_MIN_ : path_spec.preferred_time_ - DEPART_EARLY_ALLOWED_MIN_;
 
         // are there any egress/access links for this TAZ?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(start_taz_id);
-        if (iter_tss2a == taz_access_links_.end()) {
+        if (access_egress_links_.hasLinksForTaz(start_taz_id) == false) {
             return false;
         }
 
@@ -754,13 +978,13 @@ namespace fasttrips {
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class/purpose (1) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "egress mode [" : "access mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.egress_mode_ : path_spec.access_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return false;
         }
 
         if (path_spec.trace_) {
             // stop_id,stop_id_label_iter,is_trip,label_stop_cost
-            stopids_file << stop_num_to_str_.find(start_taz_id)->second << ",0,0,0" << std::endl;
+            stopids_file << stopStringForId(start_taz_id) << ",0,0,0" << std::endl;
         }
 
         // Iterate through valid supply modes
@@ -774,29 +998,30 @@ namespace fasttrips {
                 trace_file << mode_num_to_str_.find(supply_mode_num)->second << std::endl;
             }
 
-            // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
-            if (iter_ss2a == iter_tss2a->second.end()) {
-                if (path_spec.trace_) {
-                    trace_file << "No links for this supply mode" << std::endl;
-                }
-                continue;
-            }
-
-            // Iterate through the links for the given supply mode
-            StopToAttr::const_iterator link_iter;
-            for (link_iter  = iter_ss2a->second.begin();
-                 link_iter != iter_ss2a->second.end(); ++link_iter)
+            for (AccessEgressLinkAttr::const_iterator iter_aelk  = access_egress_links_.lower_bound(start_taz_id, supply_mode_num);
+                                                      iter_aelk != access_egress_links_.upper_bound(start_taz_id, supply_mode_num); ++iter_aelk)
             {
-                int stop_id = link_iter->first;
-                Attributes link_attr = link_iter->second;
+
+                const AccessEgressLinkKey& aelk = iter_aelk->first;
+
+                // require preferrd_time_ in [start_time_, end_time)
+                // We could check the stretch pref time but I think we might as well check the actual preferred time since it's the goal
+                if (aelk.start_time_ >  path_spec.preferred_time_) continue;
+                if (aelk.end_time_   <= path_spec.preferred_time_) continue;
+
+                int stop_id = aelk.stop_id_;
+                Attributes link_attr = iter_aelk->second;
                 double attr_time = link_attr.find("time_min")->second;
+                double attr_dist = link_attr.find("dist")->second;
 
                 // outbound: departure time = destination - access
                 // inbound:  arrival time   = origin      + access
-                double deparr_time = path_spec.preferred_time_ - (attr_time*dir_factor);
+                double deparr_time = pref_time - (attr_time*dir_factor);
                 // we start out with no delay
-                link_attr["preferred_delay_min"] = 0.0;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min"]    = 0.0;
 
                 double cost;
                 if (path_spec.hyperpath_) {
@@ -813,10 +1038,13 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     attr_time,                                                                  // link time
+                    0.0,                                                                        // link fare
                     cost,                                                                       // link cost
+                    attr_dist,                                                                  // link distance
                     cost,                                                                       // cost
                     0,                                                                          // iteration
-                    path_spec.preferred_time_                                                   // arrival/departure time
+                    path_spec.preferred_time_,                                                  // arrival/departure time
+                    0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, stop_id, ss, NULL, stop_states, label_stop_queue);
 
@@ -859,7 +1087,7 @@ namespace fasttrips {
         const Attributes* zerowalk_xfer = getTransferAttributes(xfer_stop_id, xfer_stop_id);
         double            transfer_time = zerowalk_xfer->find("walk_time_min")->second;  // todo: make this a different time?
         double            deparr_time   = current_deparr_time - (transfer_time*dir_factor);
-        double            link_cost, cost;
+        double            link_cost, cost, transfer_dist;
         if (path_spec.hyperpath_)
         {
             link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, *zerowalk_xfer);
@@ -877,10 +1105,13 @@ namespace fasttrips {
             -1,                             // sequence
             -1,                             // sequence succ/pred
             transfer_time,                  // link time
+            0.0,                            // link fare
             link_cost,                      // link cost
+            0.0,                            // link distance
             cost,                           // cost
             label_iteration,                // label iteration
-            current_deparr_time             // arrival/departure time
+            current_deparr_time,            // arrival/departure time
+			0.0                             // link ivt weight
         );
         addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
 
@@ -898,6 +1129,7 @@ namespace fasttrips {
         {
             xfer_stop_id    = transfer_it->first;
             transfer_time   = transfer_it->second.find("time_min")->second;
+            transfer_dist   = transfer_it->second.find("dist")->second;
             // outbound: departure time = latest departure - transfer
             //  inbound: arrival time   = earliest arrival + transfer
             deparr_time     = current_deparr_time - (transfer_time*dir_factor);
@@ -906,7 +1138,7 @@ namespace fasttrips {
             if (path_spec.hyperpath_)
             {
                 Attributes link_attr            = transfer_it->second;
-                link_attr["transfer_penalty"]   = 1.0;
+                link_attr["transfer_penalty"]   = 1.0; // TODO: make configurable or base off of IVT coefficient
                 link_cost                       = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, link_attr);
                 cost                            = nonwalk_label + link_cost;
             }
@@ -947,10 +1179,13 @@ namespace fasttrips {
                 -1,                             // sequence
                 -1,                             // sequence succ/pred
                 transfer_time,                  // link time
+                0.0,                            // link fare
                 link_cost,                      // link cost
+                transfer_dist,                  // link distance
                 cost,                           // cost
                 label_iteration,                // label iteration
-                current_deparr_time             // arrival/departure time
+                current_deparr_time,            // arrival/departure time
+				0.0                             // link ivt weight
             );
             addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
@@ -990,12 +1225,12 @@ namespace fasttrips {
             earliest_dep_latest_arr = current_stop_state.earliestDepartureLatestArrival(path_spec.outbound_, true);
         } else {
             earliest_dep_latest_arr = current_stop_state.lowestCostStopState(true).deparr_time_;
-
         }
+        double earliest_dep_latest_arr_024 = fix_time_range(earliest_dep_latest_arr);
+
 
         // are there any egress/access links?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
-        if (iter_tss2a == taz_access_links_.end()) {
+        if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
             // this shouldn't happen because of the shortcut
             return;
         }
@@ -1012,7 +1247,7 @@ namespace fasttrips {
             // this shouldn't happen because of the shortcut
             std::cerr << "Couldn't find any weights configured for user class/purpose (2) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return;
         }
 
@@ -1022,24 +1257,25 @@ namespace fasttrips {
              iter_s2w != iter_weights->second.end(); ++iter_s2w) {
             int supply_mode_num = iter_s2w->first;
 
-            // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
-            if (iter_ss2a == iter_tss2a->second.end()) {
-                continue;
-            }
+            for (AccessEgressLinkAttr::const_iterator iter_aelk  = access_egress_links_.lower_bound(end_taz_id, supply_mode_num, current_label_stop.stop_id_);
+                                                      iter_aelk != access_egress_links_.upper_bound(end_taz_id, supply_mode_num, current_label_stop.stop_id_); ++iter_aelk)
+            {
 
-            // If this supply mode reaches the given stop
-            StopToAttr::const_iterator link_iter = iter_ss2a->second.find(current_label_stop.stop_id_);
-            if (link_iter != iter_ss2a->second.end()) {
+                const AccessEgressLinkKey& aelk = iter_aelk->first;
 
-                Attributes link_attr            = link_iter->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                // require earliest_dep_latest_arr in [start_time_, end_time)
+                if (aelk.start_time_ >  earliest_dep_latest_arr_024) continue;
+                if (aelk.end_time_   <= earliest_dep_latest_arr_024) continue;
+
+                Attributes link_attr            = iter_aelk->second;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min"]    = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
-
-                bool    use_new_state           = false;
+                double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
-
 
                 if (path_spec.hyperpath_)
                 {
@@ -1082,17 +1318,21 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
+                    0.0,                                                                        // link fare
                     link_cost,                                                                  // link cost
+                    access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
-                    earliest_dep_latest_arr                                                     // arrival/departure time
+                    earliest_dep_latest_arr,                                                    // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
                 // set label_cutoff
                 double low_cost = stop_states[end_taz_id].hyperpathCost(false);
                 // estimate of the max path cost that would have probability > MIN_PATH_PROBABILITY
-                double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))/Hyperlink::STOCH_DISPERSION_;
+
+                double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))*Hyperlink::STOCH_DISPERSION_;
                 est_max_path_cost = std::min(est_max_path_cost, max_cost);
 
             } // end iteration through links for the given supply mode
@@ -1212,16 +1452,6 @@ namespace fasttrips {
                 int board_alight_stop = possible_board_alight.stop_id_;
                 StopStates::const_iterator possible_stop_state_iter = stop_states.find(board_alight_stop);
 
-                // hyperpath: potential successor/predessor can't be access or egress
-                /*
-                if (path_spec.hyperpath_) {
-                    if (possible_stop_state_iter != stop_states.end() && possible_stop_state_iter->second.size()>0) {
-                        int possible_mode = possible_stop_state_iter->second.lowestCostStopState().deparr_mode_; // first mode; why 0 index?
-                        if ((possible_mode == MODE_ACCESS) || (possible_mode == MODE_EGRESS)) { continue; }
-                    }
-                }
-                */
-
                 double  deparr_time     = path_spec.outbound_ ? possible_board_alight.depart_time_ : possible_board_alight.arrive_time_;
                 // the schedule crossed midnight
                 if (path_spec.outbound_ && arrdep_time < deparr_time) {
@@ -1234,6 +1464,10 @@ namespace fasttrips {
                 double  in_vehicle_time = (arrdep_time - deparr_time)*dir_factor;
                 double  cost      = 0;
                 double  link_cost = 0;
+                double  link_dist = dir_factor*(it->shape_dist_trav_ - possible_board_alight.shape_dist_trav_);
+                double  fare      = 0; // only calculate for hyperpath
+                double  ivtwt     = 0; // only calculate for hyperpath
+                const FarePeriod* fp = 0;
 
                 if (in_vehicle_time < 0) {
                     printf("in_vehicle_time < 0 -- this shouldn't happen\n");
@@ -1246,21 +1480,38 @@ namespace fasttrips {
                     double overcap     = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
                     double at_capacity = (overcap >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
                     if (overcap < 0) { overcap = 0; } // make it non-negative
+                    fp = getFarePeriod(trip_info.route_id_,
+                                       path_spec.outbound_ ? possible_board_alight.stop_id_ : current_label_stop.stop_id_,
+                                       path_spec.outbound_ ? current_label_stop.stop_id_ : possible_board_alight.stop_id_,
+                                       path_spec.outbound_ ? deparr_time : arrdep_time);
+                    // this is where it gets painful... if we have a fareperiod, try to check transfer fare rules and guess the right fare
+                    if (fp) { fare     = current_stop_state.getFareWithTransfer(path_spec, trace_file, *this, *fp, stop_states); }
 
-                    if (path_spec.trace_) {
+                    if (false && path_spec.trace_) {
                         if (path_spec.outbound_) {
                             trace_file << "trip " << tripStringForId(possible_board_alight.trip_id_)
                                        << ", stop " << stopStringForId(possible_board_alight.stop_id_)
                                        << ", seq " << possible_board_alight.seq_
-                                       << ", overcap " << possible_board_alight.overcap_ << std::endl;
+                                       << ", overcap " << possible_board_alight.overcap_
+                                       << ", route_id " << trip_info.route_id_
+                                       << ", fare " << fare
+                                       << std::endl;
                         }
                         else {
                             trace_file << "trip " << tripStringForId(it->trip_id_)
                                        << ", stop " << stopStringForId(it->stop_id_)
                                        << ", seq " << it->seq_
-                                       << ", overcap " << tst.overcap_ << std::endl;
+                                       << ", overcap " << tst.overcap_
+                                       << ", route_id " << trip_info.route_id_
+                                       << ", fare " << fare
+                                       << std::endl;
                         }
                     }
+
+                    //update link ivtwt so that it is available when fares/fare-utils calculations are updated
+                    static const std::string ivt_str("in_vehicle_time_min");
+                    NamedWeights::const_iterator ivt_weight = named_weights.find(ivt_str);
+                    if (ivt_weight != named_weights.end()) ivtwt = ivt_weight->second.weight_;
 
                     // start with trip info attributes
                     Attributes link_attr = trip_info.trip_attr_;
@@ -1268,6 +1519,7 @@ namespace fasttrips {
                     link_attr["wait_time_min"      ] = wait_time;
                     link_attr["overcap"            ] = overcap;
                     link_attr["at_capacity"        ] = at_capacity;
+                    link_attr["fare"               ] = fare;
 
                     link_cost = 0;
                     // If outbound, and the current link is egress, then it's as late as possible and the wait time isn't accurate.
@@ -1284,7 +1536,31 @@ namespace fasttrips {
                         delay_attr["drive_time_min"       ] = 0;
                         delay_attr["walk_time_min"        ] = 0;
                         delay_attr["elevation_gain"       ] = 0;
-                        delay_attr["preferred_delay_min"  ] = wait_time;
+
+                        if (path_spec.outbound_) {
+                          // outbound: if the wait_time < ARRIVE_LATE_ALLOWED_MIN_ then we've arrived later than our preferred time (by ARRIVE_LATE_ALLOWED_MIN_ - wait_time)
+                          //           otherwise, we've arrive before our preferred time (by wait_time - ARRIVE_LATE_MIN_)
+                          //           so ideal with wait_time = ARRIVE_LATE_ALLOWED_MIN_
+                          if (wait_time < ARRIVE_LATE_ALLOWED_MIN_) {
+                            delay_attr["arrive_late_min"      ] = ARRIVE_LATE_ALLOWED_MIN_ - wait_time;
+                            delay_attr["arrive_early_min"     ] = 0;
+                          } else {
+                            delay_attr["arrive_late_min"      ] = 0;
+                            delay_attr["arrive_early_min"     ] = wait_time - ARRIVE_LATE_ALLOWED_MIN_;
+                          }
+                        } else {
+                          // inbound: if the wait_time < DEPART_EARLY_ALLOWED_MIN_ then we've departed earlier than our preferred time (by DEPART_EARLY_ALLOWED_MIN_ - wait_time)
+                          //           otherwise, we've depart before our preferred time (by wait_time - DEPART_EARLY_MIN_)
+                          //           so ideal with wait_time = DEPART_EARLY_ALLOWED_MIN_
+                          if (wait_time < DEPART_EARLY_ALLOWED_MIN_) {
+                            delay_attr["depart_early_min"] = DEPART_EARLY_ALLOWED_MIN_ - wait_time;
+                            delay_attr["depart_late_min"      ] = 0;
+                          } else {
+                            delay_attr["depart_early_min"] = 0 ;
+                            delay_attr["depart_late_min"      ] = wait_time - DEPART_EARLY_ALLOWED_MIN_;
+                          }
+                        }
+
                         UserClassPurposeMode delay_ucpm = {
                             path_spec.user_class_, path_spec.purpose_,
                             path_spec.outbound_ ? MODE_EGRESS: MODE_ACCESS,
@@ -1305,7 +1581,7 @@ namespace fasttrips {
                     if ((best_guess_link.deparr_mode_ == MODE_ACCESS) || (best_guess_link.deparr_mode_ == MODE_EGRESS)) {
                         link_attr["transfer_penalty"] = 0.0;
                     } else {
-                        link_attr["transfer_penalty"] = 1.0;
+                        link_attr["transfer_penalty"] = 1.0; //TODO: make configurable or based off of IVT coeff
                     }
 
                     link_cost = link_cost + tallyLinkCost(trip_info.supply_mode_num_, path_spec, trace_file, named_weights, link_attr);
@@ -1326,10 +1602,14 @@ namespace fasttrips {
                     possible_board_alight.seq_,     // sequence
                     it->seq_,                       // sequence succ/pred
                     in_vehicle_time+wait_time,      // link time
+                    fare,                           // link fare
                     link_cost,                      // link cost
+                    link_dist,                      // link distance
                     cost,                           // cost
                     label_iteration,                // label iteration
-                    arrdep_time                     // arrival/departure time
+                    arrdep_time,                    // arrival/departure time
+					ivtwt,                          // link ivt weight
+                    fp                              // fare period
                 );
                 addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
 
@@ -1368,7 +1648,7 @@ namespace fasttrips {
             *                     from stop *predecessor*
             *                     and the total cost from the origin TAZ to the *stop_id* is *label*
             **************************************************************************************/
-            LabelStop current_label_stop = label_stop_queue.pop_top(stop_num_to_str_, path_spec.trace_, trace_file);
+            LabelStop current_label_stop = label_stop_queue.pop_top(stop_num_to_stop_, path_spec.trace_, trace_file);
 
             // if we just processed this one, then skip since it'll be a no-op
             if ((current_label_stop.stop_id_ == last_label_stop.stop_id_) && (current_label_stop.is_trip_ == last_label_stop.is_trip_)) { continue; }
@@ -1379,7 +1659,7 @@ namespace fasttrips {
                 if ((STOCH_MAX_STOP_PROCESS_COUNT_ > 0) &&
                     (stop_states[current_label_stop.stop_id_].processCount(current_label_stop.is_trip_) == STOCH_MAX_STOP_PROCESS_COUNT_)) {
                     if (path_spec.trace_) {
-                        trace_file << "Pulling from label_stop_queue but stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
+                        trace_file << "Pulling from label_stop_queue but stop " << stopStringForId(current_label_stop.stop_id_);
                         trace_file << " is_trip " << current_label_stop.is_trip_;
                         trace_file << " has been processed the limit " << STOCH_MAX_STOP_PROCESS_COUNT_ << " times so skipping." << std::endl;
                     }
@@ -1395,7 +1675,7 @@ namespace fasttrips {
 
             if (path_spec.trace_) {
                 trace_file << "Pulling from label_stop_queue (iteration " << std::setw( 6) << std::setfill(' ') << label_iterations;
-                trace_file << ", stop " << stop_num_to_str_.find(current_label_stop.stop_id_)->second;
+                trace_file << ", stop " << stopStringForId(current_label_stop.stop_id_);
                 trace_file << ", is_trip " << current_label_stop.is_trip_;
                 if (path_spec.hyperpath_) {
                     trace_file << ", label ";
@@ -1407,7 +1687,7 @@ namespace fasttrips {
                 trace_file << "==============================" << std::endl;
 
                 // stop_id,stop_id_label_iter,is_trip,label_stop_cost
-                stopids_file << stop_num_to_str_.find(current_label_stop.stop_id_)->second << "," << label_iterations << ",";
+                stopids_file << stopStringForId(current_label_stop.stop_id_) << "," << label_iterations << ",";
                 stopids_file << current_label_stop.is_trip_ << "," << current_label_stop.label_ << std::endl;
             }
 
@@ -1468,8 +1748,8 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
-        if (iter_tss2a == taz_access_links_.end()) {
+        if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
+            if (path_spec.trace_) { trace_file << "No links for end_taz_id" << end_taz_id << std::endl; }
             return false;
         }
 
@@ -1484,7 +1764,7 @@ namespace fasttrips {
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class/purpose (3) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return false;
         }
 
@@ -1499,21 +1779,12 @@ namespace fasttrips {
                 trace_file << mode_num_to_str_.find(supply_mode_num)->second << std::endl;
             }
 
-            // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
-            if (iter_ss2a == iter_tss2a->second.end()) {
-                if (path_spec.trace_) {
-                    trace_file << "No links for this supply mode" << std::endl;
-                }
-                continue;
-            }
-
-            // Iterate through the links for the given supply mode
-            StopToAttr::const_iterator link_iter;
-            for (link_iter  = iter_ss2a->second.begin();
-                 link_iter != iter_ss2a->second.end(); ++link_iter)
+            for (AccessEgressLinkAttr::const_iterator iter_aelk  = access_egress_links_.lower_bound(end_taz_id, supply_mode_num);
+                                                      iter_aelk != access_egress_links_.upper_bound(end_taz_id, supply_mode_num); ++iter_aelk)
             {
-                int     stop_id                 = link_iter->first;
+
+                // Iterate through the links for the given supply mode
+                int stop_id = iter_aelk->first.stop_id_;
                 if (reachable_final_stops.count(stop_id) == 0) {
                     reachable_final_stops[stop_id] = 0;
                 } else {
@@ -1531,6 +1802,7 @@ namespace fasttrips {
 
     // This is currently not being used because it has been replaced with updateStopStatesForFinalLinks() but
     // it may come back for skimming so let's leave it in for now.
+    /*
     bool PathFinder::finalizeTazState(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -1542,8 +1814,7 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
         // are there any egress/access links?
-        TAZSupplyStopToAttr::const_iterator iter_tss2a = taz_access_links_.find(end_taz_id);
-        if (iter_tss2a == taz_access_links_.end()) {
+        if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
             return false;
         }
 
@@ -1558,13 +1829,13 @@ namespace fasttrips {
         if (iter_weights == weight_lookup_.end()) {
             std::cerr << "Couldn't find any weights configured for user class/purpose (4) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
             std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
-            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for trip list id num " << path_spec.path_id_ << std::endl;
+            std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
             return false;
         }
 
         if (path_spec.trace_) {
             // stop_id,stop_id_label_iter,is_trip,label_stop_cost
-            stopids_file << stop_num_to_str_.find(end_taz_id)->second << "," << label_iteration << ",0,";
+            stopids_file << stopStringForId(end_taz_id) << "," << label_iteration << ",0,";
         }
 
         // Iterate through valid supply modes
@@ -1579,28 +1850,25 @@ namespace fasttrips {
             }
 
             // Are there any egress/access links for the supply mode?
-            SupplyStopToAttr::const_iterator iter_ss2a = iter_tss2a->second.find(supply_mode_num);
-            if (iter_ss2a == iter_tss2a->second.end()) {
-                if (path_spec.trace_) {
-                    trace_file << "No links for this supply mode" << std::endl;
-                }
-                continue;
-            }
-
-            // Iterate through the links for the given supply mode
-            StopToAttr::const_iterator link_iter;
-            for (link_iter  = iter_ss2a->second.begin();
-                 link_iter != iter_ss2a->second.end(); ++link_iter)
+            for (AccessEgressLinkAttr::const_iterator iter_aelk  = access_egress_links_.lower_bound(end_taz_id, supply_mode_num);
+                                                      iter_aelk != access_egress_links_.upper_bound(end_taz_id, supply_mode_num); ++iter_aelk)
             {
-                int     stop_id                 = link_iter->first;
-                Attributes link_attr            = link_iter->second;
-                link_attr["preferred_delay_min"]= 0.0;
+                int     stop_id                 = iter_aelk->first.stop_id_;
+                double  earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
+                const AccessEgressLinkKey& aelk = iter_aelk->first;
+
+                // require earliest_dep_latest_arr in [start_time_, end_time)
+                if (aelk.start_time_ >  earliest_dep_latest_arr) continue;
+                if (aelk.end_time_   <= earliest_dep_latest_arr) continue;
+
+                Attributes link_attr            = iter_aelk->second;
+                link_attr["depart_late_min"]    = 0;
+                link_attr["arrive_early_min"]   = 0;
+                link_attr["depart_early_min"]   = 0.0;
+                link_attr["arrive_late_min" ]   = 0.0;
 
                 double  access_time             = link_attr.find("time_min")->second;
-
-                double  earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
-
-                bool    use_new_state           = false;
+                double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
 
                 StopStates::const_iterator stop_states_iter = stop_states.find(stop_id);
@@ -1664,39 +1932,41 @@ namespace fasttrips {
                     -1,                                                                         // sequence
                     -1,                                                                         // sequence succ/pred
                     access_time,                                                                // link time
+                    0.0,                                                                        // link fare
                     link_cost,                                                                  // link cost
+                    access_dist,                                                                // link distance
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
-                    earliest_dep_latest_arr                                                     // arrival/departure time
+                    earliest_dep_latest_arr,                                                    // arrival/departure time
+					0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
             } // end iteration through links for the given supply mode
         } // end iteration through valid supply modes
-    }
+    }*/
 
 
     bool PathFinder::hyperpathGeneratePath(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
-        const StopStates& stop_states,
+        StopStates& stop_states,
         Path& path) const
     {
         int    start_state_id   = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor       = path_spec.outbound_ ? 1 : -1;
 
-        const Hyperlink& taz_state = stop_states.find(start_state_id)->second;
+        Hyperlink& taz_state    = stop_states.find(start_state_id)->second;
         double taz_label        = taz_state.hyperpathCost(false);
 
         // setup access/egress probabilities
-        std::vector<ProbabilityStopState> access_cum_prob;
-        taz_state.setupProbabilities(path_spec, trace_file, *this, access_cum_prob);
-        if (access_cum_prob.size() == 0) { return false; }
+        int maxcumi = taz_state.setupProbabilities(path_spec, trace_file, *this, false);
+        if (maxcumi == 0) { return false; }
 
         // choose the state and store it
         if (path_spec.trace_) { trace_file << " -> Chose access/egress " << std::endl; }
         path.addLink(start_state_id,
-                     taz_state.chooseState(path_spec, trace_file, access_cum_prob),
+                     taz_state.chooseState(path_spec, trace_file),
                      trace_file, path_spec, *this);
 
         // trip_id shouldn't repeat
@@ -1705,14 +1975,14 @@ namespace fasttrips {
         // moving on, ss is now the previous link
         while (true)
         {
-            const StopState& ss = path.back().second;
+            StopState& ss = path.back().second;
             int current_stop_id = ss.stop_succpred_;
 
-            StopStates::const_iterator ssi = stop_states.find(current_stop_id);
+            StopStates::iterator ssi = stop_states.find(current_stop_id);
             if (ssi == stop_states.end()) { return false; }
 
             if (path_spec.trace_) {
-                trace_file << "current_stop=" << stop_num_to_str_.find(current_stop_id)->second;
+                trace_file << "current_stop=" << stopStringForId(current_stop_id);
                 trace_file << (path_spec.outbound_ ? "; arrival_time=" : "; departure_time=");
                 printTime(trace_file, ss.arrdep_time_);
                 trace_file << "; prev_mode=";
@@ -1721,16 +1991,15 @@ namespace fasttrips {
             }
 
             // setup probabilities
-            std::vector<ProbabilityStopState> stop_cum_prob;
-            const Hyperlink& current_hyperlink = ssi->second;
-            current_hyperlink.setupProbabilities(path_spec, trace_file, *this, stop_cum_prob, &ss, last_trip_id);
+            Hyperlink& current_hyperlink = ssi->second;
+            maxcumi = current_hyperlink.setupProbabilities(path_spec, trace_file, *this, !isTrip(ss.deparr_mode_), &path);
 
-            if (stop_cum_prob.size() == 0) { return false; }
+            if (maxcumi == 0) { return false; }
 
             // choose next link and add it to the path
             if (path_spec.trace_) { trace_file << " -> Chose stop link " << std::endl; }
             path.addLink(current_stop_id,
-                         current_hyperlink.chooseState(path_spec, trace_file, stop_cum_prob, &ss),
+                         current_hyperlink.chooseState(path_spec, trace_file, &ss),
                          trace_file, path_spec, *this);
 
             // are we done?
@@ -1768,21 +2037,21 @@ namespace fasttrips {
         printf("PathFinder::choosePath() This should never happen!\n");
     }
 
-    // Return success
-    bool PathFinder::getPathSet(
+    // Returns PathFinder::RET_SUCCESS, etc.
+    int PathFinder::getPathSet(
         const PathSpecification&    path_spec,
         std::ofstream&              trace_file,
-        const StopStates&           stop_states,
+        StopStates&                 stop_states,
         PathSet&                    pathset) const
     {
         int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
 
         // no taz states -> no path found
         StopStates::const_iterator ssi_iter = stop_states.find(end_taz_id);
-        if (ssi_iter == stop_states.end()) { return false; }
+        if (ssi_iter == stop_states.end()) { return RET_FAIL_END_NOT_FOUND; }
 
         const Hyperlink& taz_state = ssi_iter->second;
-        if (taz_state.size() == 0) { return false; }
+        if (taz_state.size() == 0) { return RET_FAIL_END_NOT_FOUND; }
 
         // experimental-- look at the low cost path?
         if (false && path_spec.trace_)
@@ -1798,8 +2067,9 @@ namespace fasttrips {
         if (path_spec.hyperpath_)
         {
             double logsum = 0;
-            // random seed
-            srand(path_spec.path_id_);
+            // random seed -- possible todo: make this a function of more meaningful attributes, like o/d/time/outbound/userclass/purpose ?
+            // srand(path_spec.path_id_);
+            srand(42);
             // find a *set of Paths*
             for (int attempts = 1; attempts <= STOCH_PATHSET_SIZE_; ++attempts)
             {
@@ -1825,7 +2095,7 @@ namespace fasttrips {
                         PathInfo pi = { 1, 0, 0 };  // count is 1
                         pathset[new_path] = pi;
 
-                        logsum += exp(-1.0*Hyperlink::STOCH_DISPERSION_*new_path.cost());
+                        logsum += exp(-1.0*new_path.cost()/Hyperlink::STOCH_DISPERSION_);
                     }
                     if (path_spec.trace_) { trace_file << "pathsset size = " << pathset.size() << " new? " << (paths_iter == pathset.end()) << std::endl; }
                 } else {
@@ -1835,7 +2105,7 @@ namespace fasttrips {
                 }
             }
 
-            if (logsum == 0) { return false; } // fail
+            if (logsum == 0) { return PathFinder::RET_FAIL_NO_PATHS_GEN; } // fail
 
             // for integerized probability*1000000
             int cum_prob    = 0;
@@ -1848,7 +2118,7 @@ namespace fasttrips {
 
             for (PathSet::iterator paths_iter = pathset.begin(); paths_iter != pathset.end(); ++paths_iter)
             {
-                paths_iter->second.probability_ = exp(-1.0*Hyperlink::STOCH_DISPERSION_*paths_iter->first.cost())/logsum;
+                paths_iter->second.probability_ = exp(-1.0*paths_iter->first.cost()/Hyperlink::STOCH_DISPERSION_)/logsum;
                 path_count += 1;
 
                 // Is this under the min path probability AND we have enough paths?
@@ -1862,7 +2132,7 @@ namespace fasttrips {
                 }
 
                 // why?  :p
-                int prob_i = static_cast<int>(RAND_MAX*paths_iter->second.probability_);
+                int prob_i = static_cast<int>(floor(fasttrips::INT_MULT*paths_iter->second.probability_ + 0.5));
 
                 cum_prob += prob_i;
                 paths_iter->second.prob_i_ = cum_prob;
@@ -1887,7 +2157,7 @@ namespace fasttrips {
                 }
             }
 
-            if (cum_prob == 0) { return false; } // fail
+            if (cum_prob == 0) { return RET_FAIL_NO_PATH_PROB; } // fail
 
             // if we have more than the max num paths AND some are low probability, truncate
             if (trunc_iter != pathset.end()) {
@@ -1904,9 +2174,9 @@ namespace fasttrips {
             {
                 const Path* low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
                 if (low_cost_path == NULL) {
-                    std::cerr << "No low cost path found for path_id " << path_spec.path_id_ << std::endl;
+                    std::cerr << "No low cost path found for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
                 } else if (real_low_cost_path->cost() < low_cost_path->cost()) {
-                    std::cerr << "Real low cost path not found for path_id " << path_spec.path_id_ << std::endl;
+                    std::cerr << "Real low cost path not found for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
                 } else {
                     std::cerr << "Real low cost path found" << std::endl;
                 }
@@ -1915,7 +2185,7 @@ namespace fasttrips {
             // choose path
             // path = choosePath(path_spec, trace_file, pathsset, cum_prob);
             // path_info = paths[path];
-            return true;
+            return RET_SUCCESS;
         }
         else
         {
@@ -1945,7 +2215,7 @@ namespace fasttrips {
                 trace_file << "Final path" << std::endl;
                 path.print(trace_file, path_spec, *this);
             }
-            return true;
+            return RET_SUCCESS;
         }
     }
 
@@ -1967,6 +2237,67 @@ namespace fasttrips {
             }
         }
         return -1;
+    }
+
+    /**
+     * Returns the fare for the transit vehicle of the given route.
+     */
+    const FarePeriod* PathFinder::getFarePeriod(int route_id, int board_stop_id, int alight_stop_id, double trip_depart_time) const
+    {
+        int board_stop_zone  = stop_num_to_stop_.find(board_stop_id)->second.zone_num_;
+        int alight_stop_zone = stop_num_to_stop_.find(alight_stop_id)->second.zone_num_;
+        RouteStopZone rsz;
+
+        for (int search_type = 0; search_type < 4; ++search_type) {
+            // search for route + origin zone, dest zone
+            if (search_type == 0) {
+                if (board_stop_zone  < 0) { continue; }
+                if (alight_stop_zone < 0) { continue; }
+                rsz.route_id_         = route_id;
+                rsz.origin_zone_      = board_stop_zone;
+                rsz.destination_zone_ = alight_stop_zone;
+            } else if (search_type == 1) {
+                // search for route only
+                rsz.route_id_         = route_id;
+                rsz.origin_zone_      = -1;
+                rsz.destination_zone_ = -1;
+            } else if (search_type == 2) {
+                if (board_stop_zone  < 0) { continue; }
+                if (alight_stop_zone < 0) { continue; }
+                // search for origin zone, dest zone
+                rsz.route_id_         = -1;
+                rsz.origin_zone_      = board_stop_zone;
+                rsz.destination_zone_ = alight_stop_zone;
+            } else if (search_type == 3) {
+                // search for general fare
+                rsz.route_id_         = -1;
+                rsz.origin_zone_      = -1;
+                rsz.destination_zone_ = -1;
+            }
+
+            // find the right fare period
+            std::pair<FarePeriodMmap::const_iterator, FarePeriodMmap::const_iterator> iter_range = fare_periods_.equal_range(rsz);
+            FarePeriodMmap::const_iterator fp_iter = iter_range.first;
+            while (fp_iter != iter_range.second) {
+                if ((trip_depart_time >= fp_iter->second.start_time_) && (trip_depart_time < fp_iter->second.end_time_)) {
+                    return &(fp_iter->second);
+                }
+                ++fp_iter;
+            }
+        }
+        return (const FarePeriod*)0;
+    }
+
+    /**
+     * Returns the fare transfer given two fare periods.
+     */
+    const FareTransfer* PathFinder::getFareTransfer(const std::string from_fare_period, const std::string to_fare_period) const
+    {
+        FareTransferMap::const_iterator ftm_iter = fare_transfer_rules_.find( std::make_pair(from_fare_period, to_fare_period) );
+        if (ftm_iter != fare_transfer_rules_.end()) {
+            return &(ftm_iter->second);
+        }
+        return (const FareTransfer*)0;
     }
 
     /**
@@ -2006,7 +2337,7 @@ namespace fasttrips {
         ostr << std::setw( 2) << std::setfill(' ') << std::right << hours << ":"; // hours
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)      << ":"; // minutes
         int width = 3;
-        if (secpart < 10) { ostr << "0"; width = 2; }
+        if (secpart < 9.95) { ostr << "0"; width = 2; }
         ostr << std::left << std::setw(width) << std::setprecision( 1) << std::fixed << std::setfill(' ') << secpart << std::right; // seconds
     }
 
@@ -2016,12 +2347,25 @@ namespace fasttrips {
     void PathFinder::printTime(std::ostream& ostr, const double& timemin) const
     {
         double minpart, secpart;
-        int    hour = static_cast<int>(timemin/60.0);
+        double time_min_024 = timemin;
+        char   cross_day    = ' ';
 
-        secpart = modf(timemin, &minpart); // split into minutes and seconds
+        // this version is in [0,1440)
+        if (time_min_024 < 0) {
+            time_min_024 += 1440.0;
+            cross_day    = '-';
+        }
+        if (time_min_024 >= 1440.0) {
+            time_min_024 -= 1440.0;
+            cross_day     = '+';
+        }
+        int    hour = static_cast<int>(time_min_024/60.0);
+
+        secpart = modf(time_min_024, &minpart); // split into minutes and seconds
         minpart = minpart - hour*60.0;
         secpart = secpart*60.0;
         ostr << std::right;
+        ostr << std::setw( 1) << cross_day;
         ostr << std::setw( 2) << std::setfill('0') << hour                       << ":"; // hour
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(minpart)  << ":"; // minutes
         ostr << std::setw( 2) << std::setfill('0') << static_cast<int>(secpart);
@@ -2030,18 +2374,18 @@ namespace fasttrips {
     void PathFinder::printMode(std::ostream& ostr, const int& mode, const int& trip_id) const
     {
         if (mode == MODE_ACCESS) {
-            ostr << std::setw(10) << std::setfill(' ') << "Access";
+            ostr << std::setw(13) << std::setfill(' ') << "Access";
         } else if (mode == MODE_EGRESS) {
-            ostr << std::setw(10) << std::setfill(' ') << "Egress";
+            ostr << std::setw(13) << std::setfill(' ') << "Egress";
         } else if (mode == MODE_TRANSFER) {
-            ostr << std::setw(10) << std::setfill(' ') << "Transfer";
+            ostr << std::setw(13) << std::setfill(' ') << "Transfer";
         } else if (mode == MODE_TRANSIT) {
             // show the supply mode
             int supply_mode_num = trip_info_.find(trip_id)->second.supply_mode_num_;
-            ostr << std::setw(10) << std::setfill(' ') << mode_num_to_str_.find(supply_mode_num)->second;
+            ostr << std::setw(13) << std::setfill(' ') << mode_num_to_str_.find(supply_mode_num)->second;
         } else {
             // trip
-            ostr << std::setw(10) << std::setfill(' ') << "???";
+            ostr << std::setw(13) << std::setfill(' ') << "???";
         }
     }
 

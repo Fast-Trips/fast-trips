@@ -1,7 +1,0 @@
-from_fare_class,to_fare_class,is_flat_fee,transfer_rule
-bus_local_fare_class,bus_express_fare_class,TRUE,2.5
-bus_local_fare_class,rail_fare_class,TRUE,3.5
-bus_express_fare_class,bus_local_fare_class,TRUE,1.5
-bus_express_fare_class,rail_fare_class,TRUE,3.5
-rail_fare_class,bus_local_fare_class,TRUE,1.5
-rail_fare_class,bus_express_fare_class,TRUE,2.5

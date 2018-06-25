@@ -12,12 +12,14 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import datetime,os,sys
-import pandas
+import datetime
+import os
+
+import pandas as pd
 
 from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
-from .Stop   import Stop
+
 
 class Transfer:
     """
@@ -61,9 +63,11 @@ class Transfer:
     TRANSFERS_COLUMN_INDIRECTNESS           = 'indirectness'
 
     # ========== Added by fasttrips =======================================================
-    #: fasttrips Stops column name: Origin Stop Numerical Identifier. Int.
+    #: fasttrips Transfers column name: Is this a stop-to-stop transfer?  (e.g. from transfers.txt, and not involving a lot)
+    TRANSFERS_COLUMN_STOP_TO_STOP           = "stop2stop"
+    #: fasttrips Transfers column name: Origin Stop Numerical Identifier. Int.
     TRANSFERS_COLUMN_FROM_STOP_NUM          = 'from_stop_id_num'
-    #: fasttrips Stops column name: Destination Stop Numerical Identifier. Int.
+    #: fasttrips Transfers column name: Destination Stop Numerical Identifier. Int.
     TRANSFERS_COLUMN_TO_STOP_NUM            = 'to_stop_id_num'
     #: gtfs Transfers column name: Minimum transfer time for transfer_type=2.  Float, min.
     TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN  = 'min_transfer_time_min'
@@ -72,7 +76,7 @@ class Transfer:
     #:
     #: .. todo:: Make this configurable?
     #:
-    WALK_SPEED_MILES_PER_HOUR  = 3.0
+    WALK_SPEED_MILES_PER_HOUR  = 2.7
 
     #: Transfers column name: Link walk time.  This is a TimeDelta.
     #:
@@ -82,85 +86,87 @@ class Transfer:
     #: Transfers column name: Link walk time in minutes.  This is a float.
     TRANSFERS_COLUMN_TIME_MIN   = 'time_min'
     #: Transfers column name: Link generic cost.  Float.
+    TRANSFERS_COLUMN_PENALTY    = 'transfer_penalty'
 
     #: File with transfer links for C++ extension
     #: It's easier to pass it via file rather than through the
     #: initialize_fasttrips_extension() because of the strings involved
     OUTPUT_TRANSFERS_FILE       = "ft_intermediate_transfers.txt"
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule):
+    def __init__(self, input_archive, output_dir, gtfs_feed):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips transfers data from the input files in *input_dir*.
+        fast-trips transfers data from the input files in *input_archive*.
         """
         self.output_dir       = output_dir
 
         # Combine all gtfs Transfer objects to a single pandas DataFrame
-        transfer_dicts = []
-        for gtfs_transfer in gtfs_schedule.GetTransferList():
-            transfer_dict = {}
-            for fieldname in gtfs_transfer._FIELD_NAMES:
-                if fieldname in gtfs_transfer.__dict__:
-                    transfer_dict[fieldname] = gtfs_transfer.__dict__[fieldname]
-            transfer_dicts.append(transfer_dict)
-        if len(transfer_dicts) > 0:
-            self.transfers_df = pandas.DataFrame(data=transfer_dicts)
+        self.transfers_df = gtfs_feed.transfers
 
-            # these are strings - empty string should mean 0 min transfer time
-            self.transfers_df.replace(to_replace={Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME:{"":"0"}},
-                                      inplace=True)
-            # make it numerical
-            self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = \
-                self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME].astype(float)
+        # make it zero if transfer_type != 2, since that's the only time it applies
+        self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
+                              Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
 
-            # make it zero if transfer_type != 2, since that's the only time it applies
-            self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 2, \
-                                  Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME] = 0
-
-        else:
-            self.transfers_df = pandas.DataFrame(columns=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
-                                                          Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                                          Transfer.TRANSFERS_COLUMN_TO_STOP,
-                                                          Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
-                                                          Transfer.TRANSFERS_COLUMN_TIME,
-                                                          Transfer.TRANSFERS_COLUMN_TIME_MIN])
+        # these are from transfers.txt so they don't involve lots
+        self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP] = True
 
         # Read the fast-trips supplemental transfers data file
-        transfers_ft_df = pandas.read_csv(os.path.join(input_dir, Transfer.INPUT_TRANSFERS_FILE), 
-                                          dtype={Transfer.TRANSFERS_COLUMN_FROM_STOP:object, Transfer.TRANSFERS_COLUMN_TO_STOP:object})
+        transfers_ft_df = gtfs_feed.get(Transfer.INPUT_TRANSFERS_FILE)
+
         # verify required columns are present
         transfer_ft_cols = list(transfers_ft_df.columns.values)
         assert(Transfer.TRANSFERS_COLUMN_FROM_STOP           in transfer_ft_cols)
         assert(Transfer.TRANSFERS_COLUMN_TO_STOP             in transfer_ft_cols)
         assert(Transfer.TRANSFERS_COLUMN_DISTANCE            in transfer_ft_cols)
-        assert(Transfer.TRANSFERS_COLUMN_FROM_ROUTE          in transfer_ft_cols)
-        assert(Transfer.TRANSFERS_COLUMN_TO_ROUTE            in transfer_ft_cols)
-        assert(Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE in transfer_ft_cols)
 
         # join to the transfers dataframe -- need to use the transfers_ft as the primary because
         # it may have PNR lot id to/from stop transfers (while gtfs transfers does not),
         # and we don't want to drop them
         if len(transfers_ft_df) > 0:
-            self.transfers_df = pandas.merge(left=self.transfers_df, right=transfers_ft_df,
+            self.transfers_df = pd.merge(left=self.transfers_df, right=transfers_ft_df,
                                              how='right',
                                              on=[Transfer.TRANSFERS_COLUMN_FROM_STOP,
                                                  Transfer.TRANSFERS_COLUMN_TO_STOP])
 
             # fill in NAN
             self.transfers_df.fillna(value={Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME:0,
-                                            Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE:0},
+                                            Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE:0,
+                                            Transfer.TRANSFERS_COLUMN_STOP_TO_STOP:False},
                                      inplace=True)
 
+            if Transfer.TRANSFERS_COLUMN_FROM_ROUTE not in self.transfers_df.columns.values:
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE] = None
+            if Transfer.TRANSFERS_COLUMN_TO_ROUTE not in self.transfers_df.columns.values:
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_TO_ROUTE] = None
+
+            # support BOTH TRANSFERS_COLUMN_FROM_ROUTE and TRANSFERS_COLUMN_TO_ROUTE but not one
+            one_route_specified_df = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].notnull()^
+                                                            self.transfers_df[Transfer.TRANSFERS_COLUMN_TO_ROUTE].notnull() ]
+            if len(one_route_specified_df):
+                error_msg = "Only one of %s or %s specified for transfer: need both or neither:\n%s" % \
+                    (Transfer.TRANSFERS_COLUMN_FROM_ROUTE, Transfer.TRANSFERS_COLUMN_TO_ROUTE,
+                     str(one_route_specified_df))
+                FastTripsLogger.fatal(error_msg)
+                raise NetworkInputError(Transfer.INPUT_TRANSFERS_FILE, error_msg)
+
         # SPECIAL -- we rely on this in the extension
-        self.transfers_df["transfer_penalty"] = 1.0
+        self.transfers_df[Transfer.TRANSFERS_COLUMN_PENALTY] = 1.0
 
         FastTripsLogger.debug("=========== TRANSFERS ===========\n" + str(self.transfers_df.head()))
         FastTripsLogger.debug("\n"+str(self.transfers_df.dtypes))
 
         # TODO: this is to be consistent with original implementation. Remove?
         if len(self.transfers_df) > 0:
+
             self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN] = \
                 self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME]/60.0
+
+            # fill in null dist
+            null_dist = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE].isnull() ]
+            if len(null_dist) > 0:
+                FastTripsLogger.warn("Filling in %d transfers with null dist" % len(null_dist))
+                self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE].isnull(),
+                                        Transfer.TRANSFERS_COLUMN_DISTANCE ] = 0.0
 
             # transfer time is based on distance
             self.transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN] = \
@@ -210,50 +216,162 @@ class Transfer:
             # We're ready to write it
             self.write_transfers_for_extension()
 
-    def add_distance(self, links_df, dist_col):
+    def add_transfer_attributes(self, transfer_links_df, all_links_df):
         """
-        Sets distance column value for transfer links.
+        Adds transfer attributes for transfer links and returns those transfer links with the additional columns.
+
+        Pass all_links_df in order to get the from_route_id and to_route_id for the transfers.
         """
-        transfer_dists = self.transfers_df[[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                                            Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
-                                            Transfer.TRANSFERS_COLUMN_DISTANCE]].copy()
-        transfer_dists.rename(columns={Transfer.TRANSFERS_COLUMN_DISTANCE:"transfer_dist"}, inplace=True)
+        from .Passenger import Passenger
 
-        links_df = pandas.merge(left    =links_df,
-                                left_on =["A_id_num","B_id_num"],
-                                right   =transfer_dists,
-                                right_on=[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
-                                how     ="left")
+        len_transfer_links_df = len(transfer_links_df)
+        transfer_links_cols   = list(transfer_links_df.columns.values)
+        FastTripsLogger.debug("add_transfer_attributes: transfer_links_df(%d) head(20)=\n%s\ntransfers_df head(20)=\n%s" % \
+                              (len_transfer_links_df, transfer_links_df.head(20).to_string(), self.transfers_df.head(20).to_string()))
 
-        links_df.loc[links_df["linkmode"]=="transfer", dist_col] = links_df["transfer_dist"]
-        links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
-                       Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
-                       "transfer_dist"], axis=1, inplace=True)
+        # nothing to do
+        if len_transfer_links_df == 0:
+            return transfer_links_df
+        if len(self.transfers_df) == 0:
+            return transfer_links_df
 
-        # 0-distance transfers
-        links_df.loc[ (links_df["linkmode"]=="transfer")&(links_df["A_id_num"]==links_df["B_id_num"]), dist_col ] = 0.0
-        return links_df
+        # these will be filled for route matches
+        transfer_links_done = pd.DataFrame()
+
+        # match on both from route and to route
+        if Transfer.TRANSFERS_COLUMN_FROM_ROUTE not in self.transfers_df.columns.values:
+            transfers_with_routes_df = pd.DataFrame()
+            transfers_wo_routes_df   = self.transfers_df
+        else:
+            transfers_with_routes_df = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].notnull() ]
+            transfers_wo_routes_df   = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_FROM_ROUTE].isnull()  ]
+
+        FastTripsLogger.debug("add_transfer_attributes: have %d transfers with routes and %d transfers without routes" % \
+                              (len(transfers_with_routes_df), len(transfers_wo_routes_df)))
+
+        if len(transfers_with_routes_df) > 0:
+            # this is what we need of the trips
+            trip_links_df = all_links_df.loc[ all_links_df[Passenger.PF_COL_ROUTE_ID].notnull(),
+                                               [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                Passenger.PF_COL_PATH_NUM,
+                                                Passenger.PF_COL_LINK_NUM,
+                                                Passenger.PF_COL_ROUTE_ID]
+                                            ]
+            # FastTripsLogger.debug("trip_links_df head(20)=\n%s" % trip_links_df.head().to_string())
+
+            # match transfer with trip's next link to get from route_id
+            trip_links_df["next_link_num"] = trip_links_df[Passenger.PF_COL_LINK_NUM] + 1
+            transfer_links_df = pd.merge(left      =transfer_links_df,
+                                             left_on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                         Passenger.PF_COL_PATH_NUM,
+                                                         Passenger.PF_COL_LINK_NUM],
+                                             right     =trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                       Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                       Passenger.PF_COL_PATH_NUM,
+                                                                       "next_link_num",
+                                                                       Passenger.PF_COL_ROUTE_ID]],
+                                             right_on  =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                         Passenger.PF_COL_PATH_NUM,
+                                                         "next_link_num"],
+                                             suffixes=[""," from"],
+                                             how="left")
+            transfer_links_df.rename(columns={"%s from" % Passenger.PF_COL_ROUTE_ID:Transfer.TRANSFERS_COLUMN_FROM_ROUTE}, inplace=True)
+
+            # match transfer with trip's prev link to get to route_id
+            trip_links_df["prev_link_num"] = trip_links_df[Passenger.PF_COL_LINK_NUM] - 1
+            transfer_links_df = pd.merge(left      =transfer_links_df,
+                                             left_on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                         Passenger.PF_COL_PATH_NUM,
+                                                         Passenger.PF_COL_LINK_NUM],
+                                             right     =trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                       Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                                       Passenger.PF_COL_PATH_NUM,
+                                                                       "prev_link_num",
+                                                                       Passenger.PF_COL_ROUTE_ID]],
+                                             right_on  =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                         Passenger.PF_COL_PATH_NUM,
+                                                         "prev_link_num"],
+                                             suffixes=[""," to"],
+                                             how="left")
+            transfer_links_df.rename(columns={"%s to" % Passenger.PF_COL_ROUTE_ID:Transfer.TRANSFERS_COLUMN_TO_ROUTE}, inplace=True)
+            transfer_links_df.drop(["prev_link_num","next_link_num"], axis=1, inplace=True)
+
+            # FastTripsLogger.debug("transfer_links_df after adding route info:\n%s" % transfer_links_df.head(20).to_string())
+
+            # match on transfer attributes
+            transfer_links_df = pd.merge(left     =transfer_links_df,
+                                             left_on  =["A_id_num","B_id_num",
+                                                        Transfer.TRANSFERS_COLUMN_FROM_ROUTE,
+                                                        Transfer.TRANSFERS_COLUMN_TO_ROUTE],
+                                             right    =transfers_with_routes_df,
+                                             right_on =[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                        Transfer.TRANSFERS_COLUMN_TO_STOP_NUM,
+                                                        Transfer.TRANSFERS_COLUMN_FROM_ROUTE,
+                                                        Transfer.TRANSFERS_COLUMN_TO_ROUTE],
+                                             how      ="left",
+                                             indicator=True)
+            # FastTripsLogger.debug("transfer_links_df _merge: \n%s" % str(transfer_links_df["_merge"].value_counts()))
+            transfer_links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM], axis=1, inplace=True)
+
+            # now some of these have attributes, some still need
+            transfer_links_done = transfer_links_df.loc[transfer_links_df["_merge"]=="both"].copy()
+            transfer_links_done.drop(["_merge"], axis=1, inplace=True)
+
+            # select remainder and reset to original columns
+            transfer_links_df = transfer_links_df.loc[ transfer_links_df["_merge"]=="left_only", transfer_links_cols ]
+
+            # FastTripsLogger.debug("transfer_links_df split into %d done:\n%s" % (len(transfer_links_done), transfer_links_done.head(20).to_string()))
+            # FastTripsLogger.debug("transfer_links_df split into %d not done:\n%s" % (len(transfer_links_df), transfer_links_df.head(20).to_string()))
+
+        # match on both from stops ONLY
+        if len(transfers_wo_routes_df) > 0:
+            transfer_links_df = pd.merge(left     =transfer_links_df,
+                                             left_on  =["A_id_num","B_id_num"],
+                                             right    =transfers_wo_routes_df,
+                                             right_on =[Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,
+                                                        Transfer.TRANSFERS_COLUMN_TO_STOP_NUM],
+                                             how      ="left")
+            transfer_links_df.drop([Transfer.TRANSFERS_COLUMN_FROM_STOP_NUM,Transfer.TRANSFERS_COLUMN_TO_STOP_NUM], axis=1, inplace=True)
+
+        # put the two parts back together
+        if len(transfer_links_done) > 0:
+            transfer_links_df = pd.concat([transfer_links_df, transfer_links_done], axis=0, ignore_index=True)
+
+        # make sure we didn't lose anything
+        assert(len_transfer_links_df == len(transfer_links_df))
+
+        return transfer_links_df
 
     def write_transfers_for_extension(self):
         """
         This writes to an intermediate file a formatted file for the C++ extension.
         Since there are strings involved, it's easier than passing it to the extension.
+
+        Only write the stop/stop transfers since lot/stop transfers are only used for creating drive access links.
         """
-        transfers_df = self.transfers_df.copy()
+        transfers_df = self.transfers_df.loc[self.transfers_df[Transfer.TRANSFERS_COLUMN_STOP_TO_STOP]==True].copy()
 
         # drop transfer_type==3 => that means no transfer possible
         # https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/transfers.md
         transfers_df = transfers_df.loc[transfers_df[Transfer.TRANSFERS_COLUMN_TRANSFER_TYPE] != 3]
 
         # drop some of the attributes
-        transfers_df.drop([Transfer.TRANSFERS_COLUMN_TIME,                # use numerical version
-                           Transfer.TRANSFERS_COLUMN_FROM_STOP,           # use numerical version
-                           Transfer.TRANSFERS_COLUMN_TO_STOP,             # use numerical version
-                           Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,   # minute version is sufficient
-                           Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE, # don't know what to do with this
-                           Transfer.TRANSFERS_COLUMN_FROM_ROUTE,          # TODO?
-                           Transfer.TRANSFERS_COLUMN_TO_ROUTE             # TODO?
-                          ], axis=1, inplace=True)
+        drop_attrs = [Transfer.TRANSFERS_COLUMN_TIME,                # use numerical version
+                      Transfer.TRANSFERS_COLUMN_FROM_STOP,           # use numerical version
+                      Transfer.TRANSFERS_COLUMN_TO_STOP,             # use numerical version
+                      Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME,   # minute version is sufficient
+                      Transfer.TRANSFERS_COLUMN_SCHEDULE_PRECEDENCE, # don't know what to do with this
+                      Transfer.TRANSFERS_COLUMN_STOP_TO_STOP,        # not needed
+                      Transfer.TRANSFERS_COLUMN_FROM_ROUTE,          # TODO?
+                      Transfer.TRANSFERS_COLUMN_TO_ROUTE             # TODO?
+                     ]
+        keep_attrs = set(list(transfers_df.columns.values)) - set(drop_attrs)
+        transfers_df = transfers_df[list(keep_attrs)]
 
         # transfers time_min is really walk_time_min
         transfers_df["walk_time_min"] = transfers_df[Transfer.TRANSFERS_COLUMN_TIME_MIN]

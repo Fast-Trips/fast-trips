@@ -12,8 +12,9 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+import logging
+import multiprocessing
 
-import logging, multiprocessing
 
 __all__ = ['FastTripsLogger', 'setupLogging']
 

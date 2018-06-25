@@ -1,4 +1,8 @@
-import collections, csv, os, numpy, pandas, sys
+import os, sys
+
+import numpy as np
+import pandas as pd
+
 import fasttrips
 from fasttrips import FastTripsLogger
 
@@ -36,8 +40,8 @@ def compare_file(dir1, dir2, filename):
     sep = "\t"
     if filename == "ft_output_loadProfile.txt": sep = ","
 
-    df1 = pandas.read_csv(filename1, sep=sep)
-    df2 = pandas.read_csv(filename2, sep=sep)
+    df1 = pd.read_csv(filename1, sep=sep)
+    df2 = pd.read_csv(filename2, sep=sep)
     if filename == "ft_output_loadProfile.txt":
         index_cols = ['rownum','route_id', 'trip_id', 'direction', 'stop_id']
         if 'direction' not in df1.columns.values: index_cols.remove('direction')
@@ -63,8 +67,8 @@ def compare_file(dir1, dir2, filename):
         if str(df2[col].dtype) == 'float64':
             df2[col] = df2[col].map(lambda x: '%f' % x)
 
-        split_df1 = df1[col].apply(lambda x: pandas.Series(x.split(',')))
-        split_df2 = df2[col].apply(lambda x: pandas.Series(x.split(',')))
+        split_df1 = df1[col].apply(lambda x: pd.Series(x.split(',')))
+        split_df2 = df2[col].apply(lambda x: pd.Series(x.split(',')))
 
         if col.endswith('Times'):
             # these are formatted 11:12:13
@@ -80,14 +84,14 @@ def compare_file(dir1, dir2, filename):
         split_df2.rename(columns=rename_cols2, inplace=True)
         split_df1['num_%s' % col] = split_df1.notnull().sum(axis=1)
         split_df2['num_%s' % col] = split_df2.notnull().sum(axis=1)
-        df1 = pandas.concat(objs=[df1, split_df1], axis=1)
-        df2 = pandas.concat(objs=[df2, split_df2], axis=1)
+        df1 = pd.concat(objs=[df1, split_df1], axis=1)
+        df2 = pd.concat(objs=[df2, split_df2], axis=1)
         if len(rename_cols1) < len(rename_cols2):
             for k,v in rename_cols2.iteritems():
-                if k not in rename_cols1: df1[v] = numpy.NaN
+                if k not in rename_cols1: df1[v] = np.NaN
         if len(rename_cols2) < len(rename_cols1):
             for k,v in rename_cols1.iteritems():
-                if k not in rename_cols2: df2[v] = numpy.NaN
+                if k not in rename_cols2: df2[v] = np.NaN
 
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df1), filename1))
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df2), filename2))
@@ -166,8 +170,8 @@ def compare_pathset(dir1, dir2):
     filename2 = os.path.join(dir2, filename)
     FastTripsLogger.info("============== Comparing %s to %s" % (filename1, filename2))
 
-    df1 = pandas.read_csv(filename1, sep="\s+")
-    df2 = pandas.read_csv(filename2, sep="\s+")
+    df1 = pd.read_csv(filename1, sep="\s+")
+    df2 = pd.read_csv(filename2, sep="\s+")
 
     merge_cols = ['iteration','passenger_id_num','trip_list_id_num','path_board_stops','path_trips','path_alight_stops']
 
@@ -178,7 +182,7 @@ def compare_pathset(dir1, dir2):
     df_diff['path_cost'] = df_diff[['path_cost_1','path_cost_2']].min(axis=1)
 
     # create probabilities based on the union of the path sets
-    df_diff['exp_util'] = numpy.exp(-1.0*STOCH_DISPERSION*df_diff['path_cost'])
+    df_diff['exp_util'] = np.exp(-1.0*STOCH_DISPERSION*df_diff['path_cost'])
 
     # aggregate it to each person trip
     df_diff['num total paths'] = 1
@@ -198,10 +202,10 @@ def compare_pathset(dir1, dir2):
     FastTripsLogger.info("Wrote joined pathset diff info to %s" % join_filename)
 
     # look at the nulls
-    df1_only = df_diff.loc[pandas.isnull(df_diff.path_cost_2)].groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'union pathset probability':'max','path_cost_1':'count'})
+    df1_only = df_diff.loc[pd.isnull(df_diff.path_cost_2)].groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'union pathset probability':'max','path_cost_1':'count'})
     df1_only.rename(columns={'union pathset probability':'max prob missing from file2',
                              'path_cost_1':'num paths missing from file2'}, inplace=True)
-    df2_only = df_diff.loc[pandas.isnull(df_diff.path_cost_1)].groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'union pathset probability':'max','path_cost_2':'count'})
+    df2_only = df_diff.loc[pd.isnull(df_diff.path_cost_1)].groupby(['iteration','passenger_id_num','trip_list_id_num']).agg({'union pathset probability':'max','path_cost_2':'count'})
     df2_only.rename(columns={'union pathset probability':'max prob missing from file1',
                              'path_cost_2':'num paths missing from file1'}, inplace=True)
 
@@ -214,8 +218,8 @@ def compare_pathset(dir1, dir2):
     df_diff_summary['only in file2'] = 0
     df_diff_summary.loc[df_diff_summary['num paths missing from file1']==df_diff_summary['num total paths'],'only in file2'] = 1
     # NaN means zero
-    df_diff_summary.loc[pandas.isnull(df_diff_summary['num paths missing from file1']), 'num paths missing from file1'] = 0
-    df_diff_summary.loc[pandas.isnull(df_diff_summary['num paths missing from file2']), 'num paths missing from file2'] = 0
+    df_diff_summary.loc[pd.isnull(df_diff_summary['num paths missing from file1']), 'num paths missing from file1'] = 0
+    df_diff_summary.loc[pd.isnull(df_diff_summary['num paths missing from file2']), 'num paths missing from file2'] = 0
 
     # write detailed output
     detail_file = os.path.join(dir1, "ft_compare_pathset.csv")
@@ -258,8 +262,8 @@ def compare_performance(dir1, dir2):
     filename2 = os.path.join(dir2, filename)
     FastTripsLogger.info("============== Comparing %s to %s" % (filename1, filename2))
 
-    df1 = pandas.read_csv(filename1, sep="\t")
-    df2 = pandas.read_csv(filename2, sep="\t")
+    df1 = pd.read_csv(filename1, sep="\t")
+    df2 = pd.read_csv(filename2, sep="\t")
 
     # drop the text-y ones
     df1.drop([fasttrips.Performance.PERFORMANCE_COLUMN_TIME_LABELING, fasttrips.Performance.PERFORMANCE_COLUMN_TIME_ENUMERATING], axis=1, inplace=True)
@@ -285,7 +289,7 @@ if __name__ == "__main__":
     fasttrips.setupLogging(os.path.join(OUTPUT_DIR1, "ft_compare_info.log"),
                            os.path.join(OUTPUT_DIR1, "ft_compare_debug.log"), logToConsole=True)
 
-    pandas.set_option('display.width', 300)
+    pd.set_option('display.width', 300)
     for output_file in ["ft_output_passengerPaths.txt",
                         "ft_output_passengerTimes.txt",
                         "ft_output_loadProfile.txt"]:

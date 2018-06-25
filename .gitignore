@@ -3,15 +3,24 @@
 *.swp
 *.so
 *.bak
+.cache/*
+*.zip
 
-Examples/*/output
-Examples/*/output_bak
-Examples/simplest
+**/.ipynb_checkpoints/*
+
+
+**/Examples/**/output*
 create_tableau_path_map/*
 
 # Distribution / packaging
 build/
+dist/
+fasttrips.egg-info/
 
 # test
 sfcta/
 psrc/
+run*/
+
+#PyCharm IDE
+.idea/

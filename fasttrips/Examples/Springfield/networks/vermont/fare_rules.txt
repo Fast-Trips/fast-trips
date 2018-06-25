@@ -1,0 +1,7 @@
+fare_id,route_id,origin_id,destination_id
+bus_local_fare_id,A,,
+bus_local_b1_b3_id,A,B1_zone,B3_zone
+rail_fare_id,C,,
+b3_to_b1_fare_id,,B3_zone,B1_zone
+bus_local_fare_id,D,,
+default_fare_id,,,

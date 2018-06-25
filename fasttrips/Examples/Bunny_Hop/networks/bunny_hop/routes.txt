@@ -1,0 +1,6 @@
+route_id,route_short_name,route_long_name,route_type
+AB,Rt A-B,Route from A to B,3
+AC,Rt A-C,Route from A to C,3
+BC1,Rt1 B-C,Route No 1 from B to C,3
+BC2,Rt2 B-C,Route No 2 from B to C,3
+BC3,Rt3 B-C,Route No 3 from B to C,3

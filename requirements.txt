@@ -1,0 +1,7 @@
+###### Requirements without Version Specifiers ######
+functools32;python_version<="2.7"
+numpy
+pandas>=0.22
+partridge==0.6.0.dev1
+psutil
+pytest

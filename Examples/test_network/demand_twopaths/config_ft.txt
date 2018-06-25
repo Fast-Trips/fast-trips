@@ -1,8 +1,0 @@
-[fasttrips]
-number_of_processes           = 5
-trace_person_ids              = ['frogger','paperboy','marge']
-bump_one_at_a_time            = True
-
-[pathfinding]
-time_window                   = 50
-user_class_function           = user_class

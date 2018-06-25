@@ -1,0 +1,3 @@
+taz,stop_id,direction,dist
+O,A,access,0.00
+D,C,egress,0.00

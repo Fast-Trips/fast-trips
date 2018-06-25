@@ -4,24 +4,39 @@
  * Path implementation
  **/
 
+#include <cmath> // fmod
 #include "path.h"
 #include "pathfinder.h"
 #include "hyperlink.h"
 
 namespace fasttrips {
+    /// utility function to make sure time is in [0, 24*60) = [0, 1440)
+    double fix_time_range(double time) {
+        double ret_time = time;
+        while (ret_time <     0.0) { ret_time += 1440.0; }
+        while (ret_time >= 1440.0) { ret_time -= 1440.0; }
+        return ret_time;
+    }
+
     // Default constructor
     Path::Path() :
         outbound_(false),
         enumerating_(false),
+        fare_(0),
         cost_(0),
-        capacity_problem_(false)
+        capacity_problem_(false),
+        initial_fare_(0),
+        initial_cost_(0)
     {}
 
     Path::Path(bool outbound, bool enumerating) :
         outbound_(outbound),
         enumerating_(enumerating),
+        fare_(0),
         cost_(0),
-        capacity_problem_(false)
+        capacity_problem_(false),
+        initial_fare_(0),
+        initial_cost_(0)
     {}
 
     Path::~Path()
@@ -33,16 +48,31 @@ namespace fasttrips {
         return links_.size();
     }
 
-    // What's the cost of this path?
     double Path::cost() const
     {
         return cost_;
+    }
+
+    double Path::fare() const
+    {
+        return fare_;
+    }
+
+    double Path::initialCost() const
+    {
+        return initial_cost_;
+    }
+
+    double Path::initialFare() const
+    {
+        return initial_fare_;
     }
 
     // Clear
     void Path::clear()
     {
         links_.clear();
+        boards_per_fareperiod_.clear();
         cost_ = 0;
         capacity_problem_ = false;
     }
@@ -62,6 +92,34 @@ namespace fasttrips {
     {
         return links_.back();
     }
+
+    std::pair<int, StopState>& Path::back()
+    {
+        return links_.back();
+    }
+
+    const std::pair<int, StopState>* Path::lastAddedTrip() const
+    {
+        if (links_.size() <= 1) { return NULL; }
+        std::vector< std::pair<int, StopState> >::const_reverse_iterator riter;
+        for (riter = links_.rbegin(); riter != links_.rend(); ++riter) {
+            const StopState& ss = riter->second;
+            if (ss.deparr_mode_ == fasttrips::MODE_TRANSIT) {
+                return &(*riter);
+            }
+        }
+        return NULL;
+    }
+
+    int Path::boardsForFarePeriod(const std::string& fare_period) const
+    {
+        std::map< std::string, int >::const_iterator iter = boards_per_fareperiod_.find(fare_period);
+        if (iter != boards_per_fareperiod_.end()) {
+            return iter->second;
+        }
+        return 0;
+    }
+
 
     /// Comparison
     bool Path::operator<(const Path& path2) const
@@ -115,7 +173,7 @@ namespace fasttrips {
                 trace_file << std::endl;
 
                 // delete this later
-                trace_file << "--------------- path_before ---- (cost " << cost_ << ")" << std::endl;
+                trace_file << "--------------- path_before ---- (cost " << cost_ << ", fare " << fare_ << ")" << std::endl;
                 print(trace_file, path_spec, pf);
                 trace_file << "--------------------------------" << std::endl;
             }
@@ -215,8 +273,14 @@ namespace fasttrips {
             }
         }
         cost_          += new_link.link_cost_;
+        fare_          += new_link.link_fare_;
         new_link.cost_  = cost_;
         links_.push_back( std::make_pair(stop_id, new_link) );
+
+        // update boards_per_fareperiod_
+        if (link.fare_period_) {
+            boards_per_fareperiod_[link.fare_period_->fare_period_] += 1;
+        }
 
         if (path_spec.trace_)
         {
@@ -226,12 +290,48 @@ namespace fasttrips {
 
             // this is excessive but oh well
             if (links_.size() > 1) {
-                trace_file << "--------------- path so far ----" << (feasible ? " (feasible)" : " (infeasible)") << " (cost " << cost_ << ")" << std::endl;
+                trace_file << "--------------- path so far ----" << (feasible ? " (feasible)" : " (infeasible)") << " (cost " << cost_ << ", fare " << fare_ << ")" << std::endl;
                 print(trace_file, path_spec, pf);
                 trace_file << "--------------------------------" << std::endl;
             }
         }
         return feasible;
+    }
+
+    // Returns the fare given the relevant fare period, adjusting for transfer from last fare period as applicable
+    double Path::getFareWithTransfer(const PathFinder&  pf,
+                                     const std::string& last_fare_period,
+                                     const FarePeriod*  fare_period) const
+    {
+        // no fare period --> no fare
+        if (fare_period == 0) {
+            return 0.0;
+        }
+
+        double fare = fare_period->price_;
+        // no previous fare period -> no adjustment
+        if (last_fare_period == "") {
+            return fare;
+        }
+
+        // get the transfer info
+        const FareTransfer* ft = pf.getFareTransfer(last_fare_period, fare_period->fare_period_);
+        if (ft == (const FareTransfer*)0) {
+            return fare;
+        }
+
+        if (ft->type_ == TRANSFER_FREE) {
+            fare = 0.0;
+        } else if (ft->type_ == TRANSFER_DISCOUNT) {
+            fare = fare - ft->amount_;
+        } else if (ft->type_ == TRANSFER_COST) {
+            fare = ft->amount_;
+        }
+
+        // must be non-negative
+        if (fare < 0) { fare = 0; }
+
+        return fare;
     }
 
     /**
@@ -248,9 +348,14 @@ namespace fasttrips {
         // no stops - nothing to do
         if (links_.size()==0) { return; }
 
+        // save aside the fare and cost
+        initial_fare_ = fare_;
+        initial_cost_ = cost_;
+
         bool chrono_order   = (!outbound_ && !enumerating_) || (outbound_ && enumerating_);
         if (path_spec.trace_ && !hush) {
-            trace_file << "calculatePathCost: (chrono? " << (chrono_order ? "yes)" : "no)") << std::endl;
+            trace_file << "Path::calculateCost() (chrono? " << (chrono_order ? "yes, " : "no,");
+            trace_file << " cost: " << initial_cost_ << ", fare: " << initial_fare_ << ")" << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;
         }
@@ -264,22 +369,47 @@ namespace fasttrips {
         int inc             = chrono_order ? 1 : -1;
 
         cost_               = 0;
+        fare_               = 0;
+        std::string last_fare_period;
+
+        // for free transfer calculations -- fare_period -> (first board time, board count)
+        typedef std::map< std::string, std::pair<double,int> > FarePeriodForFreeTransfers;
+        FarePeriodForFreeTransfers fp_for_freexfers;
+
         for (int index = start_ind; index != end_ind; index += inc)
         {
             int stop_id             = links_[index].first;
             StopState& stop_state   = links_[index].second;
+
+            int orig_stop           = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
+            int dest_stop           = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
 
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
             {
                 // inbound: preferred time is origin departure time
                 double orig_departure_time        = (path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.deparr_time_ - stop_state.link_time_);
-                double preference_delay           = (path_spec.outbound_ ? 0 : orig_departure_time - path_spec.preferred_time_);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_state.stop_succpred_ : stop_id);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_ACCESS, path_spec.access_mode_, stop_state.trip_id_);
-                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop ));
-                attributes["preferred_delay_min"] = preference_delay;
+                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.origin_taz_id_, stop_state.trip_id_, transit_stop, orig_departure_time ));
+
+                attributes["arrive_early_min"]     = 0;
+                attributes["arrive_late_min"]      = 0;
+                attributes["depart_early_min"]     = 0;
+                attributes["depart_late_min"]      = 0;
+
+                if (!path_spec.outbound_) {
+                  // early -- use early function
+                  if (orig_departure_time < path_spec.preferred_time_) {
+                    attributes["depart_early_min"] = path_spec.preferred_time_ - orig_departure_time;
+                  }
+                  else {
+                    attributes["depart_late_min"]  = orig_departure_time - path_spec.preferred_time_;
+                  }
+                }
+
+
 
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
             }
@@ -288,12 +418,27 @@ namespace fasttrips {
             {
                 // outbound: preferred time is destination arrival time
                 double dest_arrival_time          = (path_spec.outbound_ ? stop_state.deparr_time_ + stop_state.link_time_ : stop_state.deparr_time_);
-                double preference_delay           = (path_spec.outbound_ ? path_spec.preferred_time_ - dest_arrival_time : 0);
 
                 int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
                 const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, path_spec.purpose_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
-                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop ));
-                attributes["preferred_delay_min"] = preference_delay;
+                Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
+
+                attributes["arrive_early_min"]    = 0;
+                attributes["arrive_late_min"]     = 0;
+                attributes["depart_early_min"]    = 0;
+                attributes["depart_late_min"]     = 0;
+
+                if (path_spec.outbound_) {
+                  // late -- use late function
+                  if (dest_arrival_time > path_spec.preferred_time_) {
+                    attributes["arrive_late_min"] = dest_arrival_time - path_spec.preferred_time_;
+                  }
+                  else {
+                    attributes["arrive_early_min"]= path_spec.preferred_time_ - dest_arrival_time;
+                  }
+                }
+
+
 
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
 
@@ -301,9 +446,6 @@ namespace fasttrips {
             // ============= transfer =============
             else if (stop_state.deparr_mode_ == MODE_TRANSFER)
             {
-                int orig_stop                     = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
-                int dest_stop                     = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
-
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
                 stop_state.link_cost_             = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
@@ -312,6 +454,7 @@ namespace fasttrips {
             else
             {
                 double trip_ivt_min               = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
+                double trip_depart_time           = path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_;
                 double wait_min                   = stop_state.link_time_ - trip_ivt_min;
 
                 const TripInfo& trip_info         = *(pf.getTripInfo(stop_state.trip_id_));
@@ -325,16 +468,51 @@ namespace fasttrips {
                 // overcap should be non-negative
                 if (link_attr["overcap"] < 0) { link_attr["overcap"] = 0; }
 
+                const FarePeriod* fp              = stop_state.fare_period_;
+                if (fp) {
+                    // adjust fare
+                    stop_state.link_fare_         = getFareWithTransfer(pf, last_fare_period, fp);
+
+                    // check if free transfer based on fare attributes
+                    FarePeriodForFreeTransfers::iterator fpft_iter = fp_for_freexfers.find(fp->fare_period_);
+                    if (fpft_iter == fp_for_freexfers.end()) {
+                        // initialize
+                        fp_for_freexfers[fp->fare_period_] = std::make_pair(trip_depart_time, 1);
+                    } else {
+                        // time since first board, in seconds
+                        double transfer_time_sec = (trip_depart_time - fp_for_freexfers[fp->fare_period_].first)*60.0;
+
+                        // check if free transfer
+                        if ((fp->transfers_ > 0) &&                                          // free transfer allowed
+                            (fp_for_freexfers[fp->fare_period_].second <= fp->transfers_) && // this one qualifies
+                            ((fp->transfer_duration_ < 0) ||                                 // no max transfer duration or
+                             (transfer_time_sec <= fp->transfer_duration_)))                 //   transfer time <= transfer duration
+                        {
+                            stop_state.link_fare_ = 0.0;
+                        }
+
+                        // bump the count
+                        fp_for_freexfers[fp->fare_period_].second += 1;
+                    }
+
+                    link_attr["fare"]             = stop_state.link_fare_;
+                    // store last fare period
+                    last_fare_period              = fp->fare_period_;
+                } else {
+                    last_fare_period              = "";
+                }
+
                 stop_state.link_cost_             = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
 
                 first_trip = false;
             }
             cost_                            += stop_state.link_cost_;
+            fare_                            += stop_state.link_fare_;
             stop_state.cost_                  = cost_;
         }
 
         if (path_spec.trace_ && !hush) {
-            trace_file << " ==================================================> cost: " << cost_ << std::endl;
+            trace_file << " ==================================================> cost: " << cost_ << ", fare: " << fare_ << std::endl;
             print(trace_file, path_spec, pf);
             trace_file << std::endl;
         }

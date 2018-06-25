@@ -1,0 +1,10 @@
+user_class purpose demand_mode_type demand_mode    supply_mode  weight_name         weight_value
+all        fun     transfer         transfer       transfer     walk_time_min       0.02
+all        fun     transfer         transfer       transfer     transfer_penalty    0.12
+all        fun     access           walk           walk_access  time_min            0.04
+all        fun     access           walk           walk_access  preferred_delay_min 0.04
+all        fun     egress           walk           walk_egress  time_min            0.04
+all        fun     transit          transit        local_bus    in_vehicle_time_min 0.022
+all        fun     transit          transit        local_bus    wait_time_min       0.04
+all        fun     transit          transit        light_rail   in_vehicle_time_min 0.02
+all        fun     transit          transit        light_rail   wait_time_min       0.04

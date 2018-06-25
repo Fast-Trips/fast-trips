@@ -12,13 +12,14 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import collections,datetime,os,sys
-import pandas
+import os
 
-from .Error import NetworkInputError
+import pandas as pd
+
 from .Logger import FastTripsLogger
 from .Trip import Trip
 from .Util import Util
+
 
 class Stop:
     """
@@ -41,6 +42,8 @@ class Stop:
     STOPS_COLUMN_STOP_LATITUDE              = 'stop_lat'
     #: gtfs Stops column name: Longitude
     STOPS_COLUMN_STOP_LONGITUDE             = 'stop_lon'
+    #: gtfs Stops column name: Zone ID
+    STOPS_COLUMN_ZONE_ID                    = 'zone_id'
 
     #: fasttrips Stops column name: Shelter
     STOPS_COLUMN_SHELTER                    = 'shelter'
@@ -62,44 +65,38 @@ class Stop:
     # ========== Added by fasttrips =======================================================
     #: fasttrips Stops column name: Stop Numerical Identifier. Int.
     STOPS_COLUMN_STOP_ID_NUM                = 'stop_id_num'
+    #: fasttrips Stops column name: Zone Numerical Identifier. Int.
+    STOPS_COLUMN_ZONE_ID_NUM                = 'zone_id_num'
 
 
     #: File with stop ID, stop ID number correspondence
     OUTPUT_STOP_ID_NUM_FILE                   = 'ft_intermediate_stop_id.txt'
 
-    def __init__(self, input_dir, output_dir, gtfs_schedule):
+    def __init__(self, input_archive, output_dir, gtfs, today):
         """
         Constructor.  Reads the gtfs data from the transitfeed schedule, and the additional
-        fast-trips stops data from the input files in *input_dir*.
+        fast-trips stops data from the input files in *input_archive*.
         """
         # keep this for later
         self.output_dir       = output_dir
 
-        # Combine all gtfs Stop objects to a single pandas DataFrame
-        stop_dicts = []
-        for gtfs_stop in gtfs_schedule.GetStopList():
-            stop_dict = {}
-            for fieldname in gtfs_stop._FIELD_NAMES:
-                if fieldname in gtfs_stop.__dict__:
-                    stop_dict[fieldname] = gtfs_stop.__dict__[fieldname]
-            stop_dicts.append(stop_dict)
-        self.stops_df = pandas.DataFrame(data=stop_dicts)
+        self.stops_df = gtfs.stops
+
+        FastTripsLogger.info("Read %7d %15s from %25d %25s" %
+                             (len(self.stops_df), 'date valid stop', len(gtfs.stops), 'total stops'))
 
         # Read the fast-trips supplemental stops data file. Make sure stop ID is read as a string.
-        stops_ft_df = pandas.read_csv(os.path.join(input_dir, Stop.INPUT_STOPS_FILE),
-                                      dtype={Stop.STOPS_COLUMN_STOP_ID:object})
+        stops_ft_df = gtfs.get(Stop.INPUT_STOPS_FILE)
+        assert(len(stops_ft_df) > 0)
+
         # verify required columns are present
         stops_ft_cols = list(stops_ft_df.columns.values)
         assert(Stop.STOPS_COLUMN_STOP_ID             in stops_ft_cols)
 
         # if more than one column, join to the stops dataframe
         if len(stops_ft_cols) > 1:
-            self.stops_df = pandas.merge(left=self.stops_df, right=stops_ft_df,
-                                         how='left',
-                                         on=Stop.STOPS_COLUMN_STOP_ID)
-
-        # skipping index setting for now -- it's annoying for joins
-        # self.stops_df.set_index(Stop.STOPS_COLUMN_STOP_ID, inplace=True, verify_integrity=True)
+            self.stops_df = pd.merge(left=self.stops_df, right=stops_ft_df,
+                                         how='left', on=Stop.STOPS_COLUMN_STOP_ID)
 
         # Stop IDs are strings. Create a unique numeric stop ID.
         self.stop_id_df = Util.add_numeric_column(self.stops_df[[Stop.STOPS_COLUMN_STOP_ID]],
@@ -115,6 +112,28 @@ class Stop:
         self.stops_df = self.add_numeric_stop_id(self.stops_df,
                                                  id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                                  numeric_newcolname=Stop.STOPS_COLUMN_STOP_ID_NUM)
+
+        # Zone IDs are strings.  Add numeric zone ID.
+        self.zone_id_df = pd.DataFrame()
+        if Stop.STOPS_COLUMN_ZONE_ID in list(self.stops_df.columns.values):
+            # Blank zone IDs should be null
+            self.stops_df.loc[ self.stops_df[Stop.STOPS_COLUMN_ZONE_ID]=="", Stop.STOPS_COLUMN_ZONE_ID] = None
+            zones_df = self.stops_df.loc[ pd.notnull(self.stops_df[Stop.STOPS_COLUMN_ZONE_ID]) ]
+            if len(zones_df) > 0:
+                self.zone_id_df = Util.add_numeric_column(zones_df[[Stop.STOPS_COLUMN_ZONE_ID]],
+                                                          id_colname=Stop.STOPS_COLUMN_ZONE_ID,
+                                                          numeric_newcolname=Stop.STOPS_COLUMN_ZONE_ID_NUM)
+                # add it to the stops
+                self.stops_df = pd.merge(left=self.stops_df, right=self.zone_id_df, how="left", on=Stop.STOPS_COLUMN_ZONE_ID)
+
+                # and the stop_id_df
+                self.stop_id_df = pd.merge(left =self.stops_df,
+                                               right=self.stops_df[[Stop.STOPS_COLUMN_STOP_ID_NUM,
+                                                                    Stop.STOPS_COLUMN_ZONE_ID,
+                                                                    Stop.STOPS_COLUMN_ZONE_ID_NUM]].drop_duplicates(),
+                                               how="left")
+
+        FastTripsLogger.debug("Zone ID to number correspondence\n" + str(self.zone_id_df.head()))
 
         FastTripsLogger.debug("=========== STOPS ===========\n" + str(self.stops_df.head()))
         FastTripsLogger.debug("\n"+str(self.stops_df.index.dtype)+"\n"+str(self.stops_df.dtypes))
@@ -139,16 +158,16 @@ class Stop:
 
         # make sure the DAP IDs are unique from Stop IDs
         daps_unique_df  = dap_df.drop_duplicates().reset_index(drop=True)
-        join_daps_stops = pandas.merge(left=daps_unique_df, right=self.stop_id_df,
+        join_daps_stops = pd.merge(left=daps_unique_df, right=self.stop_id_df,
                                        how="left",
                                        left_on=dap_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
         # there should be only NaNs since DAP lot IDs need to be unique from Stop IDs
-        # non_unique_lots = join_daps_stops.loc[ pandas.notnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]) ]
+        # non_unique_lots = join_daps_stops.loc[ pd.notnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]) ]
         # if len(non_unique_lots) > 0:
         #     error_str = "These drive access lot IDs are also stop IDs: \n%s" % str(non_unique_lots)
         #     FastTripsLogger.warn(error_str)
         #     raise NetworkInputError("drive_access_ft.txt", error_str)
-        # assert(pandas.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
+        # assert(pd.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
 
         # number them starting at self.max_stop_id_num
         daps_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = daps_unique_df.index + self.max_stop_id_num + 1
@@ -157,7 +176,7 @@ class Stop:
         daps_unique_df.rename(columns={dap_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
 
         # append daps to stop ids
-        self.stop_id_df = pandas.concat([self.stop_id_df, daps_unique_df], axis=0)
+        self.stop_id_df = pd.concat([self.stop_id_df, daps_unique_df], axis=0)
 
         self.max_dap_id_num = self.stop_id_df[Stop.STOPS_COLUMN_STOP_ID_NUM].max()
 
@@ -166,11 +185,11 @@ class Stop:
 
         # make sure the TAZ IDs are unique from Stop IDs
         tazs_unique_df  = taz_df.drop_duplicates().reset_index(drop=True)
-        join_tazs_stops = pandas.merge(left=tazs_unique_df,     right=self.stop_id_df,
+        join_tazs_stops = pd.merge(left=tazs_unique_df,     right=self.stop_id_df,
                                        how="left",
                                        left_on=taz_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
         # there should be only NaNs since TAZ IDs need to be unique from Stop IDs
-        assert(pandas.isnull(join_tazs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_tazs_stops))
+        assert(pd.isnull(join_tazs_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_tazs_stops))
 
         # number them starting at self.max_stop_id_num
         tazs_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = tazs_unique_df.index + self.max_dap_id_num + 1
@@ -179,26 +198,55 @@ class Stop:
         tazs_unique_df.rename(columns={taz_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
 
         # append daps to stop ids
-        self.stop_id_df = pandas.concat([self.stop_id_df, tazs_unique_df], axis=0)
+        self.stop_id_df = pd.concat([self.stop_id_df, tazs_unique_df], axis=0)
         ##############################################################################################
 
-        # write the stop id numbering file
-        self.stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
-                               columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID],
-                               sep=" ", index=False)
+        # write the stop ids and zone ids to numbering file
+        stop_id_df = self.stop_id_df  # local copy with filled NA
+        if Stop.STOPS_COLUMN_ZONE_ID_NUM not in stop_id_df.columns.values:
+            stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = -1
+        stop_id_df.fillna(value={Stop.STOPS_COLUMN_ZONE_ID_NUM:-1,
+                                 Stop.STOPS_COLUMN_ZONE_ID:"None"}, inplace=True)
+        stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM].astype(int)
+        stop_id_df.to_csv(os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE),
+                          columns=[Stop.STOPS_COLUMN_STOP_ID_NUM, Stop.STOPS_COLUMN_STOP_ID,
+                                   Stop.STOPS_COLUMN_ZONE_ID_NUM, Stop.STOPS_COLUMN_ZONE_ID],
+                          sep=" ", index=False)
         FastTripsLogger.debug("Wrote %s" % os.path.join(self.output_dir, Stop.OUTPUT_STOP_ID_NUM_FILE))
 
 
-    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None):
+    def add_numeric_stop_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None, drop_failures=True):
         """
         Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
         adds the numeric stop id as a column named *numeric_newcolname* and returns it.
         """
         return Util.add_new_id(input_df, id_colname, numeric_newcolname,
-                                   mapping_df=self.stop_id_df,
+                                   mapping_df=self.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]],
                                    mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID,
                                    mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
-                                   warn=warn, warn_msg=warn_msg)
+                                   warn=warn, warn_msg=warn_msg, drop_failures=drop_failures)
+
+    def add_stop_id_for_numeric_id(self, input_df, numeric_id, id_colname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop ID num column called *numeric_id*,
+        adds the string stop id as a column named *id_colname* and returns it.
+        """
+        return Util.add_new_id(input_df, id_colname=numeric_id, newid_colname=id_colname,
+                               mapping_df=self.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]],
+                               mapping_id_colname=Stop.STOPS_COLUMN_STOP_ID_NUM,
+                               mapping_newid_colname=Stop.STOPS_COLUMN_STOP_ID,
+                               warn=True, warn_msg=None)
+
+    def add_numeric_stop_zone_id(self, input_df, id_colname, numeric_newcolname, warn=False, warn_msg=None):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop zone ID column called *id_colname*,
+        adds the numeric stop zone id as a column named *numeric_newcolname* and returns it.
+        """
+        return Util.add_new_id(input_df, id_colname, numeric_newcolname,
+                               mapping_df=self.zone_id_df[[Stop.STOPS_COLUMN_ZONE_ID, Stop.STOPS_COLUMN_ZONE_ID_NUM]],
+                               mapping_id_colname=Stop.STOPS_COLUMN_ZONE_ID,
+                               mapping_newid_colname=Stop.STOPS_COLUMN_ZONE_ID_NUM,
+                               warn=warn, warn_msg=warn_msg)
 
     def add_stop_lat_lon(self, input_df, id_colname, new_lat_colname, new_lon_colname, new_stop_name_colname=None):
         """
@@ -211,7 +259,7 @@ class Stop:
         stop_cols = [Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_LATITUDE, Stop.STOPS_COLUMN_STOP_LONGITUDE]
         if new_stop_name_colname: stop_cols.append(Stop.STOPS_COLUMN_STOP_NAME)
 
-        input_df = pandas.merge(left    =input_df,
+        input_df = pd.merge(left    =input_df,
                                 right   =self.stops_df[stop_cols],
                                 how     ="left",
                                 left_on =id_colname,
@@ -224,6 +272,28 @@ class Stop:
                        Stop.STOPS_COLUMN_STOP_LONGITUDE:new_lon_colname}
         if new_stop_name_colname: rename_dict[Stop.STOPS_COLUMN_STOP_NAME] = new_stop_name_colname
         input_df.rename(columns=rename_dict, inplace=True)
+        return input_df
+
+    def add_stop_zone_id(self, input_df, id_colname, zone_colname):
+        """
+        Passing a :py:class:`pandas.DataFrame` with a stop ID column called *id_colname*,
+        adds the stop zone id as a column named *zone_colname* and returns it.
+
+        If no zone_ids specified, this is a no-op.
+        """
+        if Stop.STOPS_COLUMN_ZONE_ID not in self.stops_df.columns.values:
+            return input_df
+
+        input_df = pd.merge(left    =input_df,
+                                right   = self.stops_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_ZONE_ID]],
+                                how     ="left",
+                                left_on =id_colname,
+                                right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # don't want to add this column
+        if Stop.STOPS_COLUMN_STOP_ID != id_colname:
+            input_df.drop(Stop.STOPS_COLUMN_STOP_ID, axis=1, inplace=True)
+
+        input_df.rename(columns={Stop.STOPS_COLUMN_ZONE_ID:zone_colname}, inplace=True)
         return input_df
 
     def add_trips(self, stop_times_df):
@@ -309,3 +379,12 @@ class Stop:
             return True
         return False
 
+    def stop_min_max_lat_lon(self):
+        """
+        Returns (min_stop_lat, max_stop_lat,
+                 min_stop_lon, max_stop_lon)
+        """
+        return (self.stops_df[Stop.STOPS_COLUMN_STOP_LATITUDE].min(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LATITUDE].max(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LONGITUDE].min(),
+                self.stops_df[Stop.STOPS_COLUMN_STOP_LONGITUDE].max())

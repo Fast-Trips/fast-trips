@@ -1,0 +1,6 @@
+fare_id,price,currency_type,payment_method,transfers
+bus_local_fare_id,2,USD,0,0
+bus_local_b1_b3_id,2.25,USD,0,2
+rail_fare_id,4,USD,1,0
+b3_to_b1_fare_id,2.22,USD,0,0
+default_fare_id,0.05,USD,0,0

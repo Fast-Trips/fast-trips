@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include "pathspec.h"
+#include "access_egress.h"
 #include "LabelStopQueue.h"
 #include "hyperlink.h"
 #include "path.h"
@@ -22,11 +23,6 @@
 #include <tr1/unordered_set>
 #else
 #include <unordered_set>
-#endif
-
-#if _WIN32
-// suppress warning C4503: decorated name length exceeded, name was truncated
-#pragma warning(disable:4503)
 #endif
 
 namespace fasttrips {
@@ -55,18 +51,30 @@ namespace fasttrips {
         }
     };
 
+    enum WeightType {
+        WEIGHT_LINEAR      = 0,  // default
+        WEIGHT_EXPONENTIAL = 1,
+        WEIGHT_LOGARITHMIC = 2,
+        WEIGHT_LOGISTIC    = 3
+    };
+
+    typedef struct  {
+      WeightType type_;          // the type of weight
+      double     weight_;        // this is the primary part -- the weight itself
+      double     log_base_;      // only for WEIGHT_LOGARITHMIC
+      double     logistic_max_;  // oly for WEIGHT_LOGISTIC
+      double     logistic_mid_;  // oly for WEIGHT_LOGISTIC
+    } Weight;
+
     // This is a lot of naming but it does make iterator construction easier
-    typedef std::map<std::string, double> NamedWeights;
+    typedef std::map<std::string, Weight> NamedWeights;
     typedef std::map<int, NamedWeights> SupplyModeToNamedWeights;
     typedef std::map< UserClassPurposeMode, SupplyModeToNamedWeights, struct fasttrips::UCPMCompare > WeightLookup;
 
-    /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
-    typedef std::map<std::string, double> Attributes;
-    typedef std::map<int, Attributes> StopToAttr;
-    typedef std::map<int, StopToAttr> SupplyStopToAttr;
-    typedef std::map<int, SupplyStopToAttr> TAZSupplyStopToAttr;
+
 
     // Transfer information: stop id -> stop id -> attribute map
+    typedef std::map<int, Attributes> StopToAttr;
     typedef std::map<int, StopToAttr> StopStopToAttr;
 
 
@@ -77,12 +85,6 @@ namespace fasttrips {
         double  egress_cost_;   ///< general cost units
     } TazStopCost;
 
-    /// Supply data: transfer time and cost between stops
-    typedef struct {
-        double  time_;          ///< in minutes
-        double  cost_;          ///< general cost units
-    } TransferCost;
-
     /// Supply data: Transit trip data, indexed by trip ID
     typedef struct {
         int        supply_mode_num_;
@@ -92,12 +94,13 @@ namespace fasttrips {
 
     /// Supply data: Transit vehicle schedules
     typedef struct {
-        int     trip_id_;
-        int     seq_;           // start at 1
-        int     stop_id_;
-        double  arrive_time_;   // minutes after midnight
-        double  depart_time_;   // minutes after midnight
-        double  overcap_;       // number of passengers overcap
+        int     trip_id_;         /// trip ID
+        int     seq_;             /// stop sequence, starts at 1
+        int     stop_id_;         /// stop ID
+        double  arrive_time_;     /// minutes after midnight
+        double  depart_time_;     /// minutes after midnight
+        double  shape_dist_trav_; /// shape distance traveled
+        double  overcap_;         /// number of passengers overcap
     } TripStopTime;
 
     /// For capacity lookups: TripStop definition
@@ -115,6 +118,55 @@ namespace fasttrips {
         }
     };
 
+    /// For fare lookups FarePeriod index
+    typedef struct {
+        int         route_id_;          ///< Route id number, if applicable
+        int         origin_zone_;       ///< Origin stop zone number, if applicable
+        int         destination_zone_;  ///< Destination stop zone number, if applicable
+    } RouteStopZone;
+
+    struct RouteStopZoneCompare {
+        bool operator()(const RouteStopZone& rsz1, const RouteStopZone& rsz2) const {
+            if (rsz1.route_id_         < rsz2.route_id_        ) { return true;  }
+            if (rsz1.route_id_         > rsz2.route_id_        ) { return false; }
+            if (rsz1.origin_zone_      < rsz2.origin_zone_     ) { return true;  }
+            if (rsz1.origin_zone_      > rsz2.origin_zone_     ) { return false; }
+            if (rsz1.destination_zone_ < rsz2.destination_zone_) { return true;  }
+            if (rsz1.destination_zone_ > rsz2.destination_zone_) { return false; }
+            return false;
+        }
+    };
+
+    /// For fare lookups: FarePeriod definition
+    struct FarePeriod {
+        std::string fare_id_;           ///< Fare ID
+        std::string fare_period_;       ///< Name of the fare period
+        double      start_time_;        ///< Start time of the fare period
+        double      end_time_;          ///< End time of the fare period
+        double      price_;             ///< Currency unspecified but matches value_of_time_
+        int         transfers_;         ///< Number of free transfers allowed on this fare.
+        double      transfer_duration_; ///< Transfer duration, in seconds. -1 if no requirement.
+    };
+
+    /// Maps route id + origin zone + dest zone (any of these may be NA, or -1) => FarePeriod
+    typedef std::multimap<RouteStopZone, struct FarePeriod, struct RouteStopZoneCompare> FarePeriodMmap;
+
+    /// Fare transfer types
+    enum FareTransferType {
+      TRANSFER_FREE     = 1,            ///< free transfer
+      TRANSFER_DISCOUNT = 2,            ///< discount transfer
+      TRANSFER_COST     = 3             ///< set price transfer
+    };
+
+    /// For fare transfer rules
+    typedef struct {
+      FareTransferType  type_;            ///< what type of transfer is this
+      double            amount_;          ///< fare transfer type
+    } FareTransfer;
+
+    /// Fare Transfer Rules
+    typedef std::map< std::pair<std::string,std::string>, FareTransfer> FareTransferMap;
+
     /** Performance information to return. */
     typedef struct {
         int     label_iterations_;              ///< Number of label iterations performed
@@ -124,6 +176,7 @@ namespace fasttrips {
         long    milliseconds_enumerating_;      ///< Number of seconds spent in enumerating
         long    workingset_bytes_;              ///< Working set size, in bytes
         long    privateusage_bytes_;            ///< Private memory usage, in bytes
+        long    mem_timestamp_;                 ///< Time of memory query, in seconds since epoch
     } PerformanceInfo;
 
     /**
@@ -137,6 +190,12 @@ namespace fasttrips {
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">fasttrips.Assignment.BUMP_BUFFER</a>
         double BUMP_BUFFER_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.DEPART_EARLY_MIN">fasttrips.PathSet.DEPART_EARLY_MIN</a>
+        double DEPART_EARLY_ALLOWED_MIN_;
+
+        /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.PathSet.ARRIVE_LATE_MIN">fasttrips.PathSet.ARRIVE_LATE_MIN</a>
+        double ARRIVE_LATE_ALLOWED_MIN_;
 
         /// See <a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.STOCH_PATHSET_SIZE">fasttrips.Assignment.STOCH_PATHSET_SIZE</a>
         int STOCH_PATHSET_SIZE_; // er....
@@ -164,8 +223,8 @@ namespace fasttrips {
         WeightLookup weight_lookup_;
 
         // ================ Network supply ================
-        /// Access/Egress information: taz id -> supply_mode -> stop id -> attribute map
-        TAZSupplyStopToAttr taz_access_links_;
+        /// Access/Egress information: taz id -> supply_mode -> stop id -> (start time, end time) -> attribute map
+        AccessEgressLinks access_egress_links_;
 
         /// Transfer information: stop id -> stop id -> attributes
         StopStopToAttr transfer_links_o_d_;
@@ -176,10 +235,16 @@ namespace fasttrips {
         std::map<int, std::vector<TripStopTime> > trip_stop_times_;
         /// Stop information: stop id -> vector of [trip id, sequence, stop id, arrival time, departure time, overcap]
         std::map<int, std::vector<TripStopTime> > stop_trip_times_;
+        // Fare information: route id -> fare id
+        std::map<int, int> route_fares_;
+        // Fare information: route/origin zone/dest zone -> fare period
+        FarePeriodMmap fare_periods_;
+        // Fare transfer rules: (from_fare_period,to_fare_period) -> FareTransfer
+        FareTransferMap fare_transfer_rules_;
 
         // ================ ID numbers to ID strings ===============
         std::map<int, std::string> trip_num_to_str_;
-        std::map<int, std::string> stop_num_to_str_;
+        std::map<int, Stop>        stop_num_to_stop_;
         std::map<int, std::string> route_num_to_str_;
         std::map<int, std::string> mode_num_to_str_; // supply modes
         int transfer_supply_mode_;
@@ -202,6 +267,7 @@ namespace fasttrips {
         void readTripIds();
         void readStopIds();
         void readRouteIds();
+        void readFarePeriods();
         void readModeIds();
         void readAccessLinks();
         void readTransferLinks();
@@ -317,7 +383,7 @@ namespace fasttrips {
          */
         bool hyperpathGeneratePath(const PathSpecification& path_spec,
                                   std::ofstream& trace_file,
-                                  const StopStates& stop_states,
+                                  StopStates& stop_states,
                                   Path& path) const;
 
         /**
@@ -331,10 +397,10 @@ namespace fasttrips {
                         PathSet& paths,
                         int max_prob_i) const;
 
-        bool getPathSet(const PathSpecification&      path_spec,
-                        std::ofstream&                trace_file,
-                        const StopStates&             stop_states,
-                        PathSet&                      pathset) const;
+        int getPathSet(const PathSpecification&      path_spec,
+                       std::ofstream&                trace_file,
+                       StopStates&                   stop_states,
+                       PathSet&                      pathset) const;
 
         /**
          * If outbound, then we're searching backwards, so this returns trips that arrive at the given stop in time to depart at timepoint.
@@ -345,6 +411,14 @@ namespace fasttrips {
     public:
         const static int MAX_DATETIME   = 48*60; // 48 hours in minutes
 
+        /** Return statuses for PathFinder::findPathSet() **/
+        const static int RET_SUCCESS               = 0;    ///< Success. Paths found
+        const static int RET_FAIL_INIT_STOP_STATES = 1;    ///< PathFinder::initializeStopStates() failed
+        const static int RET_FAIL_SET_REACHABLE    = 2;    ///< PathFinder::setReachableFinalStops() failed
+        const static int RET_FAIL_END_NOT_FOUND    = 3;    ///< end taz not reached
+        const static int RET_FAIL_NO_PATHS_GEN     = 4;    ///< no paths successfully walked
+        const static int RET_FAIL_NO_PATH_PROB     = 5;    ///< no paths with probability found (?)
+
         /// PathFinder constructor.
         PathFinder();
 
@@ -352,11 +426,13 @@ namespace fasttrips {
         /// This is the transfer supply mode number
         int transferSupplyMode() const { return transfer_supply_mode_; }
         /// Accessor for access link attributes
-        const Attributes* getAccessAttributes(int taz_id, int supply_mode_num, int stop_id) const;
+        const Attributes* getAccessAttributes(int taz_id, int supply_mode_num, int stop_id, double tp_time) const;
         /// Accessor for transfer link attributes
         const Attributes* getTransferAttributes(int origin_stop_id, int destination_stop_id) const;
         /// Accessor for trip info
         const TripInfo* getTripInfo(int trip_id_num) const;
+        /// Accessor for route id
+        int getRouteIdForTripId(int trip_id_num) const;
         /// Accessor for TripStopTime for given trip id, stop sequence
         const TripStopTime& getTripStopTime(int trip_id, int stop_seq) const;
         /**
@@ -384,9 +460,14 @@ namespace fasttrips {
          */
         void initializeParameters(double     time_window,
                                   double     bump_buffer,
+                                  double     utils_conversion,
+                                  double     depart_early_allowed_min,
+                                  double     arrive_late_allowed_min,
                                   int        stoch_pathset_size,
                                   double     stoch_dispersion,
                                   int        stoch_max_stop_process_count,
+                                  bool       transfer_fare_ignore_pf,
+                                  bool       transfer_fare_ignore_pe,
                                   int        max_num_paths,
                                   double     min_path_probability);
 
@@ -421,6 +502,9 @@ namespace fasttrips {
                          double*    bw_data,
                          int        num_bw);
 
+        /// Reset - clear state
+        void reset();
+
         /// Destructor
         ~PathFinder();
 
@@ -433,13 +517,18 @@ namespace fasttrips {
          * @param path_spec     The specifications of that path to find
          * @param path          This is really a return fasttrips::Path
          * @param path_info     Also for returng information (e.g. about the Path cost)
+         * @returns             Return code signifying return status
          */
-        void findPathSet(
+        int findPathSet(
             PathSpecification path_spec,
             PathSet           &pathset,
             PerformanceInfo   &performance_info) const;
 
         double getScheduledDeparture(int trip_id, int stop_id, int sequence) const;
+
+        const FarePeriod* getFarePeriod(int route_id, int board_stop_id, int alight_stop_id, double trip_depart_time) const;
+
+        const FareTransfer* getFareTransfer(const std::string from_fare_period, const std::string to_fare_period) const;
 
         void printTimeDuration(std::ostream& ostr, const double& timedur) const;
 
@@ -448,7 +537,7 @@ namespace fasttrips {
         void printMode(std::ostream& ostr, const int& mode, const int& trip_id) const;
 
         /// Accessor for stop strings.  Assumes valid stop id.
-        const std::string& stopStringForId(int stop_id) const { return stop_num_to_str_.find(stop_id)->second; }
+        const std::string& stopStringForId(int stop_id) const { return stop_num_to_stop_.find(stop_id)->second.stop_str_; }
         /// Accessor for trip strings.  Assumes valid trip id.
         const std::string& tripStringForId(int trip_id) const { return trip_num_to_str_.find(trip_id)->second; }
         /// Accessor for mode strings.  Assumes valid mode number.
