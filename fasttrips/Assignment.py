@@ -743,6 +743,7 @@ class Assignment:
                 # First pathfinding_iteration, find paths for everyone
                 if pathfinding_iteration == 1:
                     Assignment.PATHFINDING_EVERYONE = True
+                    num_passengers_arrived = 0 
                 # Subsequent: just find paths for those without paths
                 else:
                     Assignment.PATHFINDING_EVERYONE = False
@@ -804,7 +805,7 @@ class Assignment:
                 # todo: pass back correct simulation iteration?
                 Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, "final", veh_trips_df)
 
-                if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
+                if num_new_paths_found > 0 and Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                     PathSet.write_path_times(Passenger.get_chosen_links(pathset_links_df), output_dir)
 
                 # capacity gap stuff
@@ -1838,7 +1839,8 @@ class Assignment:
 
         Returns (valid_linked_trips, pathset_paths_df, pathset_links_df)
         """
-        simulation_iteration = 0
+        simulation_iteration   = 0
+        num_passengers_arrived = 0
         ######################################################################################################
         FastTripsLogger.info("  Step 1. Find out board/alight times for all pathset links from vehicle times")
 
