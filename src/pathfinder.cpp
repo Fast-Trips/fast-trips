@@ -246,7 +246,7 @@ namespace fasttrips {
             } else if (string_xfertype == "transfer_cost") {
                 faretransfer.type_ = TRANSFER_COST;
             } else {
-                std::cerr << "Don't understand trasnfer_fare_type [" << string_xfertype << "]" << std::endl;
+                std::cerr << "Don't understand transfer_fare_type [" << string_xfertype << "]" << std::endl;
                 exit(2);
             }
             fare_transfer_rules_[ std::make_pair(string_xferfrom, string_xferto)] = faretransfer;
@@ -820,7 +820,7 @@ namespace fasttrips {
                     trace_file << std::setw(13) << std::setprecision(4) << cost_part;
                     trace_file << " (exponential on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
                     trace_file << ")" << std::endl;
-                );                
+                );
             } else if (the_weight.type_ == WEIGHT_LOGARITHMIC) {
                 cost_part = the_weight.weight_ * ((1.0 + iter_attr->second) * std::log(1.0 + iter_attr->second) - iter_attr->second) / std::log(the_weight.log_base_);
                 D_LINKCOST(
@@ -828,7 +828,7 @@ namespace fasttrips {
                     trace_file << " (logarithmic on " << iter_attr->second << " with weight " << std::fixed << the_weight.weight_;
                     trace_file << ", log_base " << the_weight.log_base_;
                     trace_file << ")" << std::endl;
-                ); 
+                );
             } else if (the_weight.type_ == WEIGHT_LOGISTIC) {
                 double max_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(std::exp(the_weight.weight_ * iter_attr->second) + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
                 double min_integral = (the_weight.logistic_max_ / the_weight.weight_) * std::log(1.0 + std::exp(the_weight.weight_ * the_weight.logistic_mid_));
@@ -840,7 +840,7 @@ namespace fasttrips {
                     trace_file << ", logistic_mid " << the_weight.logistic_mid_;
                     trace_file << ", logistic_max " << the_weight.logistic_max_;
                     trace_file << ")" << std::endl;
-                ); 
+                );
             }
             // cost needs to be positive and within bounds
             if ((cost_part >= 0) && (cost_part <= MAX_COST)) {
@@ -1111,7 +1111,7 @@ namespace fasttrips {
             cost,                           // cost
             label_iteration,                // label iteration
             current_deparr_time,            // arrival/departure time
-			0.0                             // link ivt weight
+      0.0                             // link ivt weight
         );
         addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
 
@@ -1185,7 +1185,7 @@ namespace fasttrips {
                 cost,                           // cost
                 label_iteration,                // label iteration
                 current_deparr_time,            // arrival/departure time
-				0.0                             // link ivt weight
+        0.0                             // link ivt weight
             );
             addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
@@ -1324,7 +1324,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr,                                                    // arrival/departure time
-					0.0                                                                         // link ivt weight
+          0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
@@ -1608,7 +1608,7 @@ namespace fasttrips {
                     cost,                           // cost
                     label_iteration,                // label iteration
                     arrdep_time,                    // arrival/departure time
-					ivtwt,                          // link ivt weight
+          ivtwt,                          // link ivt weight
                     fp                              // fare period
                 );
                 addStopState(path_spec, trace_file, board_alight_stop, ss, &current_stop_state, stop_states, label_stop_queue);
@@ -1730,11 +1730,21 @@ namespace fasttrips {
             // Should we call it a day?
             if (current_label_stop.label_ > 2*est_max_path_cost) {
                 if (path_spec.trace_) {
-                    trace_file << "ENDING LABELING LOOP.  label = " << current_label_stop.label_ << " > 2*est_max_path_cost = " << est_max_path_cost << std::endl;
+                    trace_file << "ENDING LABELING LOOP.  Maximum cost search range met. label = " << current_label_stop.label_ << " > 2*est_max_path_cost = " << est_max_path_cost << std::endl;
                 }
                 break;
             }
+
+            // Leave loop if encounter a negative cost because it isn't healthy.
+            if (current_label_stop.label_ < 0) {
+                if (path_spec.trace_) {
+                    trace_file << "ENDING LABELING LOOP.  Negative cost encountered. stop_id " <<  current_label_stop.stop_id_ << " label = " <<  current_label_stop.label_  << std::endl;
+                }
+                std::cerr << "ENDING LABELING LOOP.  Negative cost encountered. stop_id = " <<  current_label_stop.stop_id_ << " label = " <<  current_label_stop.label_  << std::endl;
+                exit(2);
+            }
         }
+
         return label_iterations;
     }
 
@@ -1938,7 +1948,7 @@ namespace fasttrips {
                     cost,                                                                       // cost
                     label_iteration,                                                            // label iteration
                     earliest_dep_latest_arr,                                                    // arrival/departure time
-					0.0                                                                         // link ivt weight
+          0.0                                                                         // link ivt weight
                 );
                 addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
 
