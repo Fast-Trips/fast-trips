@@ -121,9 +121,10 @@ class Assignment:
     #: If unknown use a value between 0.5 and 1. Float.
     STOCH_DISPERSION                = None
 
-    #: Route choice configuration: IVT mins to utils conversion factor.
-    #: Higher values result in higher differences in probabilities for a given
-    #: difference in genaralized costs. Must be nonnegative.
+    #: Stop labeling configuration: Multiplies the utilities by this factor
+    #: so that there are not negative costs labels which can result in
+    #: lengthy and ineffective path-finding. Must be positive; should be greater
+    #: than 1.0.  Double.
     UTILS_CONVERSION                = None
 
     #: In path-finding, suppress trying to adjust fares using transfer fare rules.
@@ -743,7 +744,7 @@ class Assignment:
                 # First pathfinding_iteration, find paths for everyone
                 if pathfinding_iteration == 1:
                     Assignment.PATHFINDING_EVERYONE = True
-                    num_passengers_arrived = 0 
+                    num_passengers_arrived = 0
                 # Subsequent: just find paths for those without paths
                 else:
                     Assignment.PATHFINDING_EVERYONE = False
