@@ -99,11 +99,15 @@ def test_pat_off():
 
     OUTPUT_FOLDER  = 'pat_scenario_reg'
 
+    in_cfg = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+    cfg_file = os.path.join(in_cfg, 'config_ft.txt')
+    in_weights = os.path.join(in_cfg, 'pathweight_ft.txt')
+
     r = Run.run_fasttrips(
         input_network_dir    = INPUT_NETWORK,
         input_demand_dir     = INPUT_DEMAND,
-        run_config           = CONFIG_FILE,
-        input_weights        = INPUT_WEIGHTS,
+        run_config           = cfg_file,
+        input_weights        = in_weights,
         output_dir           = OUTPUT_DIR,
         output_folder        = OUTPUT_FOLDER,
         pathfinding_type     = "stochastic",
