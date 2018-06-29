@@ -1063,3 +1063,11 @@ class Passenger:
             return pathset_links_df.loc[slicer,].copy()
 
         return pathset_links_df.loc[slicer,]
+
+        if transit_only:
+            slicer = slicer & pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull()
+
+        if copy:
+            return pathset_links_df.loc[slicer,].copy()
+
+        return pathset_links_df.loc[slicer,]
