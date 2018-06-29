@@ -84,7 +84,7 @@ def verify_dataframe(ctl_path, test_path, dtypes, join_cols, compare_cols):
             print df_join[~np.isclose(df_join[col_ctl], df_join[col_test])]
             assert False
 
-@pytest.mark.skip(reason='Need to refresh the comparison csv')
+#@pytest.mark.skip(reason='Need to refresh the comparison csv')
 def test_calculate_cost():
     '''Organizing script for Nostests to run to test calculate_cost'''
 
