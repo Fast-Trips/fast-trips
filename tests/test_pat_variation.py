@@ -14,7 +14,7 @@ EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield
 # DIRECTORY LOCATIONS
 INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
 INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
-INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A.pat')
 OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
 
 # INPUT FILE LOCATIONS
@@ -23,7 +23,7 @@ INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 
 @pytest.mark.travis
 @pytest.mark.pat
-@pytest.mark.skip(reason="Not working - need to fix")
+#@pytest.mark.skip(reason="Not working - need to fix")
 def test_pat_before_and_after():
     """
     Test to ensure that some of the pathfinder trips are returned before preferred departure
