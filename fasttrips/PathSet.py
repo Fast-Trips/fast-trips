@@ -384,8 +384,8 @@ class PathSet:
                                                     numeric_newcolname=PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM,
                                                     warn=True)  # don't fail if some supply modes are configured but not used, they may be for future runs
         FastTripsLogger.debug("PathSet weights: \n%s" % PathSet.WEIGHTS_DF)
-        PathSet.WEIGHTS_DF.to_csv(os.path.join(output_dir,PathSet.OUTPUT_WEIGHTS_FILE),
-                               columns=[PathSet.WEIGHTS_COLUMN_USER_CLASS,
+
+        export_columns = [PathSet.WEIGHTS_COLUMN_USER_CLASS,
                                         PathSet.WEIGHTS_COLUMN_PURPOSE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE,
                                         PathSet.WEIGHTS_COLUMN_DEMAND_MODE,
@@ -395,7 +395,10 @@ class PathSet:
                                         PathSet.WEIGHTS_GROWTH_TYPE,
                                         PathSet.WEIGHTS_GROWTH_LOG_BASE,
                                         PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX,
-                                        PathSet.WEIGHTS_GROWTH_LOGISTIC_MID],
+                                        PathSet.WEIGHTS_GROWTH_LOGISTIC_MID]
+
+        PathSet.WEIGHTS_DF.reindex(columns=export_columns).to_csv(os.path.join(output_dir,PathSet.OUTPUT_WEIGHTS_FILE),
+                               columns=export_columns,
                                sep=" ", index=False)
 
         # add placeholder weights (ivt weight) for fares - one for each user_class, purpose, transit demand mode
