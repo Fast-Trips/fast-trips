@@ -1,21 +1,17 @@
-**Build status**
-
-Master Branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)
-Develop Branch [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
+**Build Status**: master branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)    develop branch: [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
 
 # fast-trips
-Fast-trips is a Dynamic Transit Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:  
+Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:  
 
  * Project Website: http://fast-trips.mtc.ca.gov/
  * Documentation for developers (contributing, API, etc.): http://bayareametro.github.io/fast-trips/
 
 **Use Cases**  
-Fast-trips can be used for analyzing short-term effects as a stand-along tool as well as long range planning when linked up with a travel demand modeling tool:
+Fast-Trips can be used for analyzing short-term effects as a stand-along tool as well as long range planning when linked up with a travel demand modeling tool:
 
  - An analyst who wants to study the effect of a on service reliability of a schedule change.
  - An analyst who wants to evaluate a service plan for a special event.
  - A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
-
 
 
 ## Contents
@@ -27,11 +23,16 @@ Fast-trips can be used for analyzing short-term effects as a stand-along tool as
     * [More on Overlap Path Size Penalites](#more-on-overlap-path-size-penalties)
   * [`config_ft.py`](#config_ftpy)
   * [`pathweight_ft.txt`](#pathweight_fttxt)
+    * [`weight_name` Values](#weight_name-values)
     * [Weight Qualifiers](#weight-qualifiers)
 * [Fares](#fares)
-* [Running Fast-Trips](#running-fast-trips)  
+* [Running Fast-Trips](#running-fast-trips)
+  * [Running the Springfield Example](#running-the-springfield-example)
 * [Example Scenarios](#example-scenarios)
-* [Tests](#tests)  
+  * [Springfield](#springfield)
+* [Tests](#tests)
+  * [Continuous Integration](#continuous-integration)
+  * [Test Descriptions](#test-descriptions)
 * [Summarizing Results](#summarizing-results)
 * [Frequently Asked Questions](#frequently-asked-questions)
 * [References](#references)
@@ -40,18 +41,19 @@ Fast-trips can be used for analyzing short-term effects as a stand-along tool as
 ## Setup
 Follow the steps below to setup up fast-trips:
 
-1 - Set up your Python environment
+### 1 - Setup your Python environment
 
-Right now Fast-Trips requires Python 2.7.  It also
+Right now Fast-Trips requires Python 2.7.
 
-One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url]. If you have Anaconda installed, you can create a virtual environment with the command below for fast-trips.
+One option is to install a *data analytics* Python 2.7 distribution which bundles these, like [Anaconda][anaconda-url]. If you have Anaconda installed, you can create a virtual environment with the command below for Fast-Trips.
 
 ```Script
   conda create -q -y -n fast-trips-env python=2.7 numpy pandas>=0.22 psutil pytest
   source activate fast-trips-env
   pip install partridge==0.6.0.dev1
 ```
-Note that Fast-trips currently uses a development version of [Partridge][partridge-url] that is required in order to read unzipped GTFS files.
+
+Note that Fast-Trips currently uses a development version of [Partridge][partridge-url] that is required in order to read unzipped GTFS files.
 
 Another option is to install the requirements in an existing Python 2.7 environment:
 
@@ -61,7 +63,7 @@ Another option is to install the requirements in an existing Python 2.7 environm
 
 **Please note: Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.**
 
-2 - Get and Install Fast-Trips
+### 2 - Get and Install Fast-Trips
 
 *Option 1 - From Source (Good for Developers or if you want "the latest")*
 
@@ -72,7 +74,7 @@ Another option is to install the requirements in an existing Python 2.7 environm
 *  Set the `PYTHONPATH` environment variable to the location of your fast-trips repo, which we're calling `<fast-trips-dir>`.
 *  To build, in the fast-trips directory `<fast-trips-dir>`, run the following in a command prompt:  `python setup.py build_ext --inplace`.
 
-*Option 2 - Latest Release*
+*Option 2 - [Latest Release](https://pypi.org/project/fasttrips/)*
 
 We occassionally put the latest release versions on [PyPI](https://pypi.org/), the Python Package Index
 
@@ -80,7 +82,7 @@ We occassionally put the latest release versions on [PyPI](https://pypi.org/), t
    pip install fasttrips
 ```
 
-3 - Test the Install
+### 3 - Test the Install
 
 *  To run an example to make sure it is installed correctly, run from the `<fast-trips-dir>`:
 
@@ -92,22 +94,18 @@ We occassionally put the latest release versions on [PyPI](https://pypi.org/), t
 ## Input
 The input to fast-trips consists of:
 
-*  A Transit Network directory, including schedules, access, egress and transfer information, specified by the [GTFS-Plus Data Standards Repository][network-standard-url]
-*  A Transit Demand directory, including persons, households and trips, specified by the [Demand Data Standards Repository][demand-standard-url]
-*  fast-trips Configuration, specified below
+*  A Transit Network directory, including schedules, access, egress and transfer information, specified by the [GTFS-Plus data standard][network-standard-url]
+*  A Transit Demand directory, including persons, households and trips, specified by the [dyno-demand (Demand Data) standard][demand-standard-url]
+*  Fast-Trips Configuration, specified below
 
 Configuration is specified in the following files:
 
 ### `config_ft.txt`
 
-This is a *required* python file and may be included in both the Transit Supply and Transit Demand input directories.
-If the same options are specified in both, then the version specified in the Transit Demand input directory will be used.
-(Two versions may be specified because some configuration options are more relevant to demand and some are more relevant
-to network inputs.)
+This is a *required* configuration file that where a number of configuration parameters are specified for running FastTrips.
 
-The configuration files are parsed by python's [ConfigParser module](https://docs.python.org/2/library/configparser.html#module-ConfigParser) and therefore
-adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
-(See [Network Example](Examples/test_network/input/config_ft.txt) ) (See [Demand Example](Examples/test_network/demand_twopaths/config_ft.txt) )
+The configuration files are parsed by python's [ConfigParser module](https://docs.python.org/2/library/configparser.html#module-ConfigParser) and therefore adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
+(See [Bunny Hop example](fasttrips/Examples/Bunny_Hop/configs/base/config_ft.txt) and [Springfield examples](fasttrips/Examples/Springfield/configs) )
 
 #### Configuration Options: fasttrips
 
@@ -214,10 +212,10 @@ The file can be a csv or fixed-format.  If you use a fixed-format, make sure
 Column Name        | Type  | Description
 -----------        | ----  | -----------
 `user_class`       | Str   | Config functions can use trip list, person, and household attributes to return a user class string to the trip.  <br><br>The string that is returned determines the set of path weights that are used. <br><br>( ??? is default if no user class function ? )  
-`purpose`          | St    | This should match the trip purpose as specified in `trip_list.txt`  
-`demand_mode_type` | Str   | One of <br>- `transfer`, <br>- `access`, <br>- `egress`, or <br>-`transit`  
-`demand_mode`      | Str   | One of: <br>- `transfer`, <br>- a string specified as **access/egress mode** in `trip_list.txt` demand file (i.e. `walk`, `PNR`)  , or <br>- a string specified as a **transit mode** in `trip_list.txt` demand file (i.e. `local_bus`, `commuter_rail`)  
-`supply_mode`      | Str   | For `demand_mode_type=transit`, corresponds to the transit mode as defined in the [`GTFS-Plus`](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/variables.md#mode) input network.  <br><br>For `demand_mode_type=transfer` and `demand_mode=transfer`, is one of `walk`, `wait`, or `transfer_penalty`.  <br><br>For `demand_mode_type = access`, is one of `walk_access`, `bike_access`, `pnr_access`, or `knr_access`. <br><br>For `demand_mode_type = egress`, is one of `walk_egress`, `bike_egress`, `pnr_egress`, or `knr_egress`.
+`purpose`          | Str   | This should match the trip purpose as specified in `trip_list.txt`  
+`demand_mode_type` | Str   | One of `transfer`,`access`,`egress` or `transit`  
+`demand_mode`      | Str   | One of: `transfer`, a string specified as **access/egress mode** in the `trip_list.txt` demand file (i.e. `walk`, `PNR`), or a string specified as a **transit mode** in `trip_list.txt` demand file (i.e. `local_bus`, `commuter_rail`)  
+`supply_mode`      | Str   | <ul><li>For `demand_mode_type=transit`, corresponds to the transit mode as defined in the [`GTFS-Plus`](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/variables.md#mode) input network.<li>For `demand_mode_type=transfer` and `demand_mode=transfer`, is one of `walk`, `wait`, or `transfer_penalty`.<li>For `demand_mode_type = access`, is one of `walk_access`, `bike_access`, `pnr_access`, or `knr_access`.<li>For `demand_mode_type = egress`, is one of `walk_egress`, `bike_egress`, `pnr_egress`, or `knr_egress`.
 `weight_name`      | Str   | An attribute of the path link. See below for more details.
 `weight_value`     | Float |  The multiplier for the attribute named `weight_name`
 
@@ -226,16 +224,16 @@ _Notes_:
   1.   If demand mode X has supply mode Y, that means a trip specified as transit mode X in the `trip_list.txt` may use a transit link specified as Y in the network. Moreover, if the trip list were to specify that someone takes `commuter_rail` (like if the ABM chooses the primary mode for them as commuter rail), then they can still take a local bus or any lesser mode on their trip in addition to commuter rail. Often in this case, the weights are assumed to be higher for non-commuter rail modes and lower for commuter rail to induce them to ride. For example:
 
 `demand_mode`   | `supply_mode` | `weight_name`         | `weight_value`
--------------   | ------------- | --------------------- | -----------
+:-------------  |:------------- |:--------------------  |:-----------
 `commuter_rail` | `local_bus`   | `in_vehicle_time_min` | 1.5
 `commuter_rail` | `heavy_rail`  | `in_vehicle_time_min` | 1.0
 
-### `Weight_Name` Values  
+#### `weight_name` Values  
 
 The following is an example of a minimally specified `pathweight_ft.txt` :
 
-`demand_mode_type`| `demand_mode`   | `supply_mode`  | `weight_name`       | `weight_value`
-----------------  | --------------  | ------------- | -------------------- | -----------
+`demand_mode_type`| `demand_mode`   | `supply_mode` | `weight_name`        | `weight_value`
+:---------------  |:--------------  |:------------- |:-------------------  |:-----------
 `access`          | `walk`          | `walk_access` | `time_min`           | 2
 `egress`          | `walk`          | `walk_egress` | `time_min`           | 2
 `transit`         | `transit`       | `local_bus`   | `wait_time_min`      | 2
@@ -246,7 +244,6 @@ The following is an example of a minimally specified `pathweight_ft.txt` :
 For most of the weights prefix mode is not needed. E.g. there is no need to label `weight_name` `time_min` for `supply_mode` `walk_access` as `walk_time_min`, because the fact that the `supply_mode` is `walk_access` means it is only assessed on walk links. The drive option (PNR/KNR access/egress), however, should have `walk_` and `drive_` prefixes, because the access can have both components: driving to the station from the origin and walking from the lot to the station. So for example, for `supply_mode` `pnr_access` there will be two weights associated with travel time: `walk_time_min` and `drive_time_min`.
 
 The following is a partial list of possible weight names based on the demand mode / supply mode combinations.
-
 
 `demand_mode_type = access` / `demand_mode = walk` / `supply_mode = walk_access`
 
@@ -278,7 +275,7 @@ The following is a partial list of possible weight names based on the demand mod
   * `in_vehicle_time_min`  
   * `wait_time_min`  
 
-Note that the cost component is handled at the path level using the value of time column in `trip_list.txt`.
+Note that the cost component is handled at the path level using the value of time column in [`trip_list.txt`](https://github.com/osplanning-data-standards/dyno-demand/blob/master/files/trip_list.md).
 
 #### Weight Qualifiers  
 By default, Fast-Trips will apply all weights as a constant on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied using more complex models. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.
@@ -290,7 +287,7 @@ Qualifier     | Formulation | Required Modifiers |
 `constant` (default)  |![Constant Weight Equations](/doc/pathweight_linear_equation.png "Constant Weight Equation")| N/A |
 `exponential` |![Exponential Weight Equations](/doc/pathweight_exponential_equation.png "Exponential Weight Equation")| N/A |
 `logarithmic` |![Logarithmic Weight Equations](/doc/pathweight_logarithmic_equation.png "Logarithmic Weight Equation")| `log_base` |
-`logistic`    |![Logistic Weight Equations](/doc/pathweight_logistic_equation.png "Logistic Weight Equation")| `logistic_max`<br/>`logistgic_mid` |
+`logistic`    |![Logistic Weight Equations](/doc/pathweight_logistic_equation.png "Logistic Weight Equation")| `logistic_max`<br/>`logistic_mid` |
 
 *Example*:
 ```
@@ -320,7 +317,7 @@ all        other   egress           walk           walk_egress  arrive_late_min.
 
 ## Fares
 
-GTFS-plus fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.
+[GTFS-PLUS][network-standard-url] fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.
 
 However, because the columns `route_id`, `origin_id`, `destination_id` and `contains_id` are all optional in [fare_rules.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md) and therefore may be specified in different combinations, fast-trips implements fares with the following rules:
 
@@ -507,7 +504,7 @@ There are a couple dozen tests that are stored in `\tests`.  They can be run by 
 
 Most of the tests use test scenarios that can be found in the `fasttrips/Examples` directory.
 
-Many (but not all) of the tests can be individually run by giving the command `python tests/test_<TESTNAME>.py`.  
+Many (but not all) of the tests can be individually run by giving the command `pytest tests/test_<TESTNAME>.py`.  
 
 Test output defaults to the folder `fasttrips/Examples/output`
 
@@ -528,121 +525,55 @@ Some regression tests have regression output that needs to be refreshed an thus 
 
 ### Test Descriptions
 
-__Assignment Type:__ `test_assignment_type.py`
-
-Tests both deterministic and stochastic shortest path and hyperpaths.
-
-To run: `python tests/test_assignment_type.py`
-
-__Simple Bunny Hop Scenario:__ `test_bunny.py`
-
-Tests forward and backward stochastic hyperpaths as well as a sensitivity test with a different network.  Has the `basic` and `travis` label, so it runs with every push.
-
-To run: `python tests/test_bunny.py`
-
-__Calculate Cost:__ `test_calculate_cost.py`
-
-Regression tests of cost calculations.
-
-Status: SKIP
-
-To run: `python tests/test_calculate_cost.py`
-
-__Convergence:__ `test_convergence.py`
-
-Tests convergence.
-
-Status: SKIP
-
-To run: `python tests/test_convergence.py`
-
-__Cost Symmetry:__ `test_calculate_cost.py`
-
-Tests that the costs from the c++ pathfinding and the python calculate cost functions return the same values.
-
-Status: Manual
-
-To run: `python tests/test_cost_symmetry.py`
-
-__Dispersion Levels:__ `test_dispersion.py`
-
- *  Runs dispersion levels at .0, 0.5, 0.1
-
-Status: Run on develop and master branch commits
-
-__Distance Calculation:__ `test_distance.py`
-
-Status: Out of date
-
-__Fares:__ `test_fares.py`
-
-Tests shortcuts in fare calculations
-
+* __Assignment Type:__ `test_assignment_type.py`
+  * Tests both deterministic and stochastic shortest path and hyperpaths.
+* __Simple Bunny Hop Scenario:__ `test_bunny.py`
+  * Tests forward and backward stochastic hyperpaths as well as a sensitivity test with a different network.  Has the `basic` and `travis` label, so it runs with every push.
+* __Calculate Cost:__ `test_calculate_cost.py`
+  * Regression tests of cost calculations.
+* __Convergence:__ `test_convergence.py`
+  * Tests convergence.
+  * Status: SKIP
+* __Cost Symmetry:__ `test_calculate_cost.py`
+  * Tests that the costs from the c++ pathfinding and the python calculate cost functions return the same values.
+  * Status: Manual
+* __Dispersion Levels:__ `test_dispersion.py`
+  * Runs dispersion levels at .0, 0.5, 0.1
+  * Status: Run on develop and master branch commits
+* __Distance Calculation:__ `test_distance.py`
+  * Status: Out of date
+* __Fares:__ `test_fares.py`
+  * Tests shortcuts in fare calculations
    * **Ignore Pathfinding**     
    * **Ignore Pathfinding and Path Enumeration**
-
-Status: Run on develop and master branch commits
-
-To run: `python tests/test_fares.py`
-
-__Feedback:__ `test_feedback.py`
-
-Runs demand for three iterations with and without capacity constraint
-
-Status: Run on develop and master branch commits
-
-To run: `python tests/test_feedback.py`
-
-__GTFS:__ `test_gtfs_objects.py`
-
-Tests that we can read and process GTFS-PLUS.
-
-Status: Manual
-
-__Max Stop Process Count:__ `test_maxStopProcessCount.py`
-
-Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
-
-Status: Manual
-
-__Overlap Functions:__ `test_overlap.py`
-
-Tests both overlap type and whether or not each transit segment is broken and compared to each of its parts.
-
- * **Overlap Variable:** `count`, `distance`, `time`   
- * **Overlap Split:** Boolean
-
-Status: Run on develop and master branch commits
-
-__Flexible Departure/Arrival Windows:__ `test_pat_variation.py`
-
-Tests that flexible departure and arrival window penalties are working.
-
-Status: Run on develop and master branch commits
-
-__Penalty Functions:__ `test_penalty_functions.py`
-
-Tests that penalty functions for flexible departure and arrival windows work.
-
-Status: Run on develop and master branch commits
-
-__Regional Network:__ `test_psrc.py`
-
-Tests that things work on a large, regional network.
-
-Status: Run on develop and master branch commits
-
-__User Classes:__ `test_user_classes.py`
-
-Uses multiple user classes as defined in `config_ft.py`
-
-Status: Manual
-
-__Function Transformations:__ `test_weight_qualifiers.py`
-
-Uses multiple user classes as defined in `config_ft.py`
-
-Status: Run on develop and master branch commits
+  * Status: Run on develop and master branch commits
+* __Feedback:__ `test_feedback.py`
+  * Runs demand for three iterations with and without capacity constraint
+  * Status: Run on develop and master branch commits
+* __GTFS:__ `test_gtfs_objects.py`
+  * Tests that we can read and process GTFS-PLUS.
+  * Status: Manual
+* __Max Stop Process Count:__ `test_maxStopProcessCount.py`
+  * Tests 10, 50, and 100 for the value of `max stop process count` – the maximum number of times you will re-processe a node (default: None)
+  * Status: Manual
+* __Overlap Functions:__ `test_overlap.py`
+ * Tests both overlap variables (`count`, `distance` and `time`) and whether or not each transit segment is broken and compared to each of its parts.
+  * Status: Run on develop and master branch commits
+* __Flexible Departure/Arrival Windows:__ `test_pat_variation.py`
+  * Tests that flexible departure and arrival window penalties are working.
+  * Status: Run on develop and master branch commits
+* __Penalty Functions:__ `test_penalty_functions.py`
+  * Tests that penalty functions for flexible departure and arrival windows work.
+  * Status: Run on develop and master branch commits
+* __Regional Network:__ `test_psrc.py`
+  * Tests that things work on a large, regional network.
+  * Status: Run on develop and master branch commits
+* __User Classes:__ `test_user_classes.py`
+  * Uses multiple user classes as defined in `config_ft.py`
+  * Status: Manual
+* __Function Transformations:__ `test_weight_qualifiers.py`
+  * Uses multiple user classes as defined in `config_ft.py`
+  * Status: Run on develop and master branch commits
 
 __Note:__ Multiprocessing is not tested because it is [incompatible with PyTest](https://github.com/pytest-dev/pytest/issues/958)  
 
