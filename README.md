@@ -1,7 +1,4 @@
-**Build status**
-
-Master Branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)
-Develop Branch [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
+**Build Status**: master branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)    develop branch: [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
 
 # fast-trips
 Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:  
@@ -15,7 +12,6 @@ Fast-Trips can be used for analyzing short-term effects as a stand-along tool as
  - An analyst who wants to study the effect of a on service reliability of a schedule change.
  - An analyst who wants to evaluate a service plan for a special event.
  - A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
-
 
 
 ## Contents
@@ -40,7 +36,7 @@ Fast-Trips can be used for analyzing short-term effects as a stand-along tool as
 ## Setup
 Follow the steps below to setup up fast-trips:
 
-### 1 - Set up your Python environment
+### 1 - Setup your Python environment
 
 Right now Fast-Trips requires Python 2.7.
 
@@ -226,7 +222,7 @@ _Notes_:
 `commuter_rail` | `local_bus`   | `in_vehicle_time_min` | 1.5
 `commuter_rail` | `heavy_rail`  | `in_vehicle_time_min` | 1.0
 
-### `Weight_Name` Values  
+#### `weight_name` Values  
 
 The following is an example of a minimally specified `pathweight_ft.txt` :
 
@@ -242,7 +238,6 @@ The following is an example of a minimally specified `pathweight_ft.txt` :
 For most of the weights prefix mode is not needed. E.g. there is no need to label `weight_name` `time_min` for `supply_mode` `walk_access` as `walk_time_min`, because the fact that the `supply_mode` is `walk_access` means it is only assessed on walk links. The drive option (PNR/KNR access/egress), however, should have `walk_` and `drive_` prefixes, because the access can have both components: driving to the station from the origin and walking from the lot to the station. So for example, for `supply_mode` `pnr_access` there will be two weights associated with travel time: `walk_time_min` and `drive_time_min`.
 
 The following is a partial list of possible weight names base don the demand mode / supply mode combinations.
-
 
 `demand_mode_type = access` / `demand_mode = walk` / `supply_mode = walk_access`
 
