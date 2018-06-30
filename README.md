@@ -52,7 +52,8 @@ One option is to install a *data analytics* Python 2.7 distribution which bundle
   source activate fast-trips-env
   pip install partridge==0.6.0.dev1
 ```
-Note that Fast-Trips currently uses a development version of the [Partridge][partridge-url] that is required in order to read unzipped GTFS files.
+
+Note that Fast-Trips currently uses a development version of [Partridge][partridge-url] that is required in order to read unzipped GTFS files.
 
 Another option is to install the requirements in an existing Python 2.7 environment:
 
@@ -68,7 +69,7 @@ Another option is to install the requirements in an existing Python 2.7 environm
 
 * Install [Git][git-url] and if desired, a GUI for git like [GitHub Desktop](https://desktop.github.com/)  
 * [Clone](git-clone-url) or [fork-and-clone][git-fork-url] the fast-trips repository (https://github.com/BayAreaMetro/fast-trips.git) to a local directory: `<fast-trips-dir>`. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.  
-*  Switch to the branch of the repository that you want to use by either using git from the command line (`git checkout master` or using a GUI.  The `master` branch should be the latest stable branch and the `develop` branch has the latest.  Features are developed on feature-branches.  
+*  Switch to the branch of the repository that you want to use by either using git from the command line (`git checkout master` or using a GUI).  The `master` branch should be the latest stable branch and the `develop` branch has the latest.  Features are developed on feature-branches.  
 *  If compiling on Windows, install [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url].  On Linux, install the python-dev package.
 *  Set the `PYTHONPATH` environment variable to the location of your fast-trips repo, which we're calling `<fast-trips-dir>`.
 *  To build, in the fast-trips directory `<fast-trips-dir>`, run the following in a command prompt:  `python setup.py build_ext --inplace`.
@@ -138,7 +139,7 @@ Option Name                         | Type   | Default | Description
 `min_transfer_penalty`              | float  | 0.1     | Minimum transfer penalty. Safeguard against having no transfer penalty which can result in terrible paths with excessive transfers.
 `overlap_chunk_size`                | int    | 500     | How many person's trips to process at a time in overlap calculations in python simulation (more means faster but more memory required.)
 `overlap_scale_parameter`           | float  | 1       | Scale parameter for overlap path size variable.
-`overlap_split_transit`             | bool   | False   | For overlap calcs, split transit leg into component legs (A to E becauses A-B-C-D-E)
+`overlap_split_transit`             | bool   | False   | For overlap calcs, split transit leg into component legs (A to E becomes A-B-C-D-E)
 `overlap_variable`                  | string | 'count' | The variable upon which to base the overlap path size variable.  Can be one of `None`, `count`, `distance`, `time`.
 `pathfinding_type`                  | string | 'stochastic' | Pathfinding method.  Can be `stochastic`, `deterministic`, or `file`.
 `pathweights_fixed_width`           | bool   | False   | If true, read the pathweights file as a fixed width, left-justified table (as opposed to a CSV, which is the default).
@@ -164,7 +165,7 @@ When the pathsize overlap is penalized (pathfinding `overlap_variable` is not `N
 Where
   * *i* is the path alternative for individual *n*
   * &Gamma;<sub>*i*</sub> is the set of legs of path alternative *i*
-  * *l<sub>a</sub>* is the value of the `overlap_variable` for leg *a*.  So it is either 1, the distance or the time of leg *a* depending of if `overlap_scale_parameter` is `count`, `distance` or `time`, respectively.
+  * *l<sub>a</sub>* is the value of the `overlap_variable` for leg *a*.  So it is either 1, the distance or the time of leg *a* depending on whether `overlap_scale_parameter` is `count`, `distance` or `time`, respectively.
   * *L<sub>i</sub> is the total sum of the `overlap_variable` over all legs *l<sub>a</sub>* that make up path alternative *i*
   * *C<sub>in</sub> is the choice set of path alternatives for individual *n* that overlap with alternative *i*
   * &gamma; is the `overlap_scale_parameter`
@@ -242,7 +243,7 @@ The following is an example of a minimally specified `pathweight_ft.txt` :
 
 For most of the weights prefix mode is not needed. E.g. there is no need to label `weight_name` `time_min` for `supply_mode` `walk_access` as `walk_time_min`, because the fact that the `supply_mode` is `walk_access` means it is only assessed on walk links. The drive option (PNR/KNR access/egress), however, should have `walk_` and `drive_` prefixes, because the access can have both components: driving to the station from the origin and walking from the lot to the station. So for example, for `supply_mode` `pnr_access` there will be two weights associated with travel time: `walk_time_min` and `drive_time_min`.
 
-The following is a partial list of possible weight names base don the demand mode / supply mode combinations.
+The following is a partial list of possible weight names based on the demand mode / supply mode combinations.
 
 `demand_mode_type = access` / `demand_mode = walk` / `supply_mode = walk_access`
 
@@ -318,7 +319,7 @@ all        other   egress           walk           walk_egress  arrive_late_min.
 
 [GTFS-PLUS][network-standard-url] fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.
 
-However, since the columns `route_id`, `origin_id`, `destination_id` and `contains_id` are all optional in [fare_rules.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md) and therefore may be specified in different combinations, fast-trips implements fares with the following rules:
+However, because the columns `route_id`, `origin_id`, `destination_id` and `contains_id` are all optional in [fare_rules.txt](https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md) and therefore may be specified in different combinations, fast-trips implements fares with the following rules:
 
 * `contains_id` is not implemented in fast-trips, and its inclusion will result in an error
 * Specifying `origin_id` and not `destination_id` or vice versa will result in an error.  Each fare rule must specify both or neither.
@@ -473,7 +474,7 @@ C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 fasttri
 
 ## Example Scenarios
 
-Fast-Trips comes with a handful of scenarios in the `fasttrips/Examples` directory to use as examples or get your started. They can be viewed at a high-level using the [jupyter notebooks](http://jupyter.org/) contained in that directory.  Note that these notebooks may require you to install additional Python packages such as [jupyter](http://jupyter.org/), [ipywidgets](https://ipywidgets.readthedocs.io/en/latest/), and [bokeh](https://bokeh.pydata.org/en/latest/).
+Fast-Trips comes with a handful of scenarios in the `fasttrips/Examples` directory to use as examples or get you started. They can be viewed at a high-level using the [jupyter notebooks](http://jupyter.org/) contained in that directory.  Note that these notebooks may require you to install additional Python packages such as [jupyter](http://jupyter.org/), [ipywidgets](https://ipywidgets.readthedocs.io/en/latest/), and [bokeh](https://bokeh.pydata.org/en/latest/).
 
 ### Springfield
 The Springfield scenario is what many of our tests use and is meant to be a generic example with enough complexity and modes to flex Fast-Trips muscles, but not too complex to understand what is going on.
@@ -484,11 +485,11 @@ The hypothetical 5-zone example network was developed to help code development. 
 
 ![alt text](/fasttrips/Examples/Springfield/networks/vermont/test_network.png "Transit Example Network")
 
-Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
+Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. The `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
 #### Springfield Demand
 Two versions of sample demand have been prepared:
-*  `general` contains regular demand that consists only of a transit trip list. Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](/Examples/test_network/demand_reg/Readme.md).
+*  `general` contains regular demand that consists only of a transit trip list. Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](https://github.com/BayAreaMetro/fast-trips/blob/master/fasttrips/Examples/Springfield/Readme.md).
 *  `simpson_zorn` represents demand for two user classes that can use different sets of path weights. Household and person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
 
 Similar to network data standards, there also exists a [Demand Data Standards Repository][demand-standard-url].
