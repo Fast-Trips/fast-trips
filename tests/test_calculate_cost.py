@@ -10,7 +10,6 @@ from fasttrips import PathSet, Run, Util
 EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
 
 # DIRECTORY LOCATIONS
-OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
 INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
 INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'simpson_zorn')
 INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'B')
