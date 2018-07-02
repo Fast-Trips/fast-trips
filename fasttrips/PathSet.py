@@ -84,12 +84,14 @@ class PathSet:
     #: into A-B-C-D-E for overlap calculations?
     OVERLAP_SPLIT_TRANSIT           = None
 
+    LEARN_ROUTES                    = False
+    LEARN_ROUTES_RATE               = 0.05
+    SUCCESS_FLAG_COLUMN             = 'success_flag'
+    BUMP_FLAG_COLUMN                = 'bump_flag'
+
     #: Allow departures and arrivals before / after preferred time
     ARRIVE_LATE_ALLOWED_MIN         = datetime.timedelta(minutes = 0)
     DEPART_EARLY_ALLOWED_MIN        = datetime.timedelta(minutes = 0)
-    LEARN_ROUTES                    = True
-    LEARN_ROUTES_RATE               = 0.05
-
 
     CONSTANT_GROWTH_MODEL            = 'constant'
     EXP_GROWTH_MODEL                 = 'exponential'
@@ -1277,6 +1279,7 @@ class PathSet:
                                                    Passenger.PF_COL_PATH_NUM])
 
         if PathSet.LEARN_ROUTES:
+            #'learn_discount': Exponential decay function
             pathset_paths_df['learn_discount'] = np.exp(-PathSet.LEARN_ROUTES_RATE * pathset_paths_df[PathSet.SUCCESS_FLAG_COLUMN])
             pathset_paths_df['orig_sim_cost'] = pathset_paths_df[Assignment.SIM_COL_PAX_COST]
             pathset_paths_df[Assignment.SIM_COL_PAX_COST] = pathset_paths_df[Assignment.SIM_COL_PAX_COST] * pathset_paths_df['learn_discount']

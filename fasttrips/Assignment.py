@@ -285,8 +285,8 @@ class Assignment:
                       'max_pf_iterations'               :1,
                       'network_build_date'              : datetime.date.today().strftime("%m/%d/%Y"),
                       'simulation'                      :'True',
-                      'learning_convergence'            :'True',
-                      'learning_rate'                   :'0.01',
+                      'learning_convergence'            :'False',
+                      'learning_rate'                   : 0.01,
                       'convergence_gap'                 : 0.001,
                       'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
@@ -772,7 +772,7 @@ class Assignment:
         # write 0-iter vehicle trips
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
-        for iteration in range(1,Assignment.MAX_ITERATIONS+1):
+        for iteration in range(1, Assignment.MAX_ITERATIONS+1):
 
             #: todo make max_pathfinding_iterations configurable?
             for pathfinding_iteration in range(1, 11):
