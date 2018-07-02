@@ -14,7 +14,7 @@ OUTPUT_FOLDER       = "general_run"
 CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
 INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 
-print "Running Fast-Trips in %s" % (ex_dir.split(os.sep)[-1:])
+print "Running Fast-Trips in %s" % (EXAMPLE_DIR.split(os.sep)[-1:])
 
 Run.run_fasttrips(
     input_network_dir= INPUT_NETWORK,
@@ -26,5 +26,5 @@ Run.run_fasttrips(
     pathfinding_type = "stochastic",
     overlap_variable = "count",
     overlap_split_transit = True,
-    iters            = 1,
+    iters            = 3,
     dispersion       = 0.50)

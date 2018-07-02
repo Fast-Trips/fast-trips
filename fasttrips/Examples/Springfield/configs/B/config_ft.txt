@@ -9,3 +9,4 @@ debug_output_columns          = True
 [pathfinding]
 time_window                   = 50
 user_class_function           = user_class
+utils_conversion_factor       = 10

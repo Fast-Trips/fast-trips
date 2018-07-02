@@ -7,7 +7,7 @@ debug_output_columns          = True
 [pathfinding]
 user_class_function           = generic_user_class
 pathweights_fixed_width       = True
-
+utils_conversion_factor       = 10
 # *****************************************************************************************************
 # The pathfinding algorithm supports allowing passengers to arrive after their arrival time target or
 # before their departure target. This set of functionality works in coordination with the following

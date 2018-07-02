@@ -37,6 +37,7 @@ def test_fares(ignore_PF_fares,ignore_EN_fares):
         overlap_variable = "None",
         iters            = 1,
         dispersion       = 0.50,
+        utils_conversion_factor  = 10,
         num_trips        = 5,
         transfer_fare_ignore_pathfinding = ignore_PF_fares,
         transfer_fare_ignore_pathenum    = ignore_EN_fares)

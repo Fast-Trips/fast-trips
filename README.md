@@ -149,6 +149,7 @@ Option Name                         | Type   | Default | Description
 `stochastic_max_stop_process_count` | int    | -1      | In path-finding, how many times should we process a stop during labeling?  Specify -1 for no max.
 `stochastic_pathset_size`           | int    | 1000    | In path-finding, how many paths (not necessarily unique) determine a pathset?
 `time_window`                       | float  | 30      | In path-finding, the max time a passenger would wait at a stop.
+`utils_conversion_factor`           | float  | 1.0     | In the path-finding labeling stage, multiplies the utility by this factor to prevent negative costs.  
 `transfer_fare_ignore_pathfinding`  | bool   | False   | In path-finding, suppress trying to adjust fares using transfer rules.  For performance.
 `transfer_fare_ignore_pathenum`     | bool   | False   | In path-enumeration, suppress trying to adjust fares using transfer rules.  For performance.
 `user_class_function`               | string | 'generic_user_class' | A function to generate a user class string given a user record.
@@ -410,6 +411,7 @@ Run.run_fasttrips(
     overlap_variable = "count",
     overlap_split_transit = True,
     iters            = 1,
+    utils_conversion_factor = 10,
     dispersion       = 0.50)
 ```
 
@@ -668,26 +670,7 @@ Use the option `pathfinding_type=file`, via [`runTest.py`](scripts/runTest.py) o
 
  * Hoogendoorn-Lanser, S., R. Nes, and P. Bovy. Path Size Modeling in Multinomial Route Choice Analysis. 27 In *Transportation Research Record: Journal of the transportation Research Board, No 1921*, 28 Transportation Research Board of the National Academies, Washington, D.C., 2005, pp. 27-34.
 
-## Changelog
 
-Major changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
-
-To be filled in further but including:
-* Added pathfinding iterations to looping (so pathfinding_iteration=1 finds paths for everyone, and subsequently just find paths for people who don't have a valid path. Break when max or we don't find anymore)
-* Added time-period based drive access links (10/2016)
-* Added link distance to extension as part of StopState (10/2016)
-* Implemented overlap pathsize correction (8/2016)
-* Add purpose segmentation to cost weighting (7/2016)
-* Output pathsets in addition to chosen paths (4/2016)
-* Update transit trip vehicle times based on boards, alights and vehicle-configured accleration, deceleration and dwell formulas (4/2016)
-* Output performance measures (pathfinding and path enumeration times, number of stops processed) (3/2016)
-* Stop order update to pathfinding: when a stop state is updated, mark other reachable stops for reprocessing (3/2016) [details][stop-order-details-url]
-* Support KNR and PNR access (11/2015)
-* Read user-class based cost weighting (11/2015)
-* Switch input format to GTFS-plus network (10/2015)
-* Move path finding to C++ extension (9/2015)
-* Parallelized path finding with multiprocessing (7/2015)
-* Port original FAST-TrIPs codebase to python with debug tracing (5/2015)
 
 [git-url]: <https://git-scm.com/>
 [git-clone-url]: <https://help.github.com/articles/cloning-a-repository/>
