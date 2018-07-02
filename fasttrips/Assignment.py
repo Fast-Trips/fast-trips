@@ -343,7 +343,13 @@ class Assignment:
                                                    parser.get       ('fasttrips','skim_end_time'),'%H:%M')
         Assignment.CAPACITY_CONSTRAINT           = parser.getboolean('fasttrips','capacity_constraint')
         Assignment.SKIP_PERSON_IDS               = eval(parser.get       ('fasttrips','skip_person_ids'))
-        Assignment.TRACE_IDS                     = eval(parser.get       ('fasttrips','trace_ids'))
+        try:
+            Assignment.TRACE_IDS                     = eval(parser.get       ('fasttrips','trace_ids'))
+        except:
+            e = "Must have a TRACE_IDS line in config_ft.txt; even if it is trace_ids = []"
+            print e
+            FastTripsLogger.error(e)
+            raise
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
         Assignment.DEBUG_NUM_TRIPS               = parser.getint    ('fasttrips','debug_num_trips')
         Assignment.DEBUG_OUTPUT_COLUMNS          = parser.getboolean('fasttrips','debug_output_columns')
