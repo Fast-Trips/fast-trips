@@ -1138,7 +1138,7 @@ class PathSet:
                               (cost_transfer_df["A_id_num"]==cost_transfer_df["B_id_num"]), "var_value"] = 0.0
         # zero walk transfers have a transfer penalty although they're not otherwise configured
         cost_transfer_df.loc[ (cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "transfer_penalty")&
-                              (pd.isnull(cost_transfer_df["var_value"])), "var_value"] = 0.1
+                              (pd.isnull(cost_transfer_df["var_value"])), "var_value"] = 1.0
 
         # FastTripsLogger.debug("cost_transfer_df=\n%s\ndtypes=\n%s" % (cost_transfer_df.head().to_string(), str(cost_transfer_df.dtypes)))
 

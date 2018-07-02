@@ -16,7 +16,7 @@ EXAMPLE_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples', "Springfield")
 INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
 INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
 
-CONFIGS        = ['A.pat']
+CONFIGS        = ['A', 'A.alt', 'A.pat']
 
 OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
 

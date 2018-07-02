@@ -465,7 +465,7 @@ namespace fasttrips {
             PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_ = new Attributes();
             // TODO: make this configurable
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["walk_time_min"   ] = 0.0;
-            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 0.1;
+            (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["transfer_penalty"] = 1.0;
             (*PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_)["elevation_gain"  ] = 0.0;
         }
 
