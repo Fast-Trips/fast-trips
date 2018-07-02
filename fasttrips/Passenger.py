@@ -836,6 +836,18 @@ class Passenger:
         else:
             pathset_paths_df[Passenger.PF_COL_DESCRIPTION] = ""
 
+        pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64] = \
+            pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64].astype(np.float32)
+        pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64] = \
+            pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64].apply(pd.to_numeric,
+                                                                               downcast='integer')
+
+        pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64] = \
+            pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64].astype(np.float32)
+        pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64] = \
+            pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64].apply(pd.to_numeric,
+                                                                               downcast='integer')
+
         return (pathset_paths_df, pathset_links_df)
 
     @staticmethod
@@ -1030,7 +1042,7 @@ class Passenger:
 
 
     @staticmethod
-    def get_chosen_links(pathset_links_df):
+    def get_chosen_links(pathset_links_df, transit_only=False, copy=True):
         """
         Given the pathset paths and pathset links, returns the pathset links for the ones marked as chosen.
         """
@@ -1042,4 +1054,20 @@ class Passenger:
             pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN] = pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].astype('category')
             pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN].cat.set_categories(Assignment.CHOSEN_CATEGORIES, ordered=True, inplace=True)
 
-        return pathset_links_df.loc[pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>Assignment.CHOSEN_NOT_CHOSEN_YET,].copy()
+        slicer = pathset_links_df[Assignment.SIM_COL_PAX_CHOSEN]>Assignment.CHOSEN_NOT_CHOSEN_YET
+
+        if transit_only:
+            slicer = slicer & pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull()
+
+        if copy:
+            return pathset_links_df.loc[slicer,].copy()
+
+        return pathset_links_df.loc[slicer,]
+
+        if transit_only:
+            slicer = slicer & pathset_links_df[Passenger.PF_COL_ROUTE_ID].notnull()
+
+        if copy:
+            return pathset_links_df.loc[slicer,].copy()
+
+        return pathset_links_df.loc[slicer,]
