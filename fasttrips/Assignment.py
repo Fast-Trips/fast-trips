@@ -775,7 +775,7 @@ class Assignment:
         for iteration in range(1, Assignment.MAX_ITERATIONS+1):
 
             #: todo make max_pathfinding_iterations configurable?
-            for pathfinding_iteration in range(1, 11):
+            for pathfinding_iteration in range(1, Assignment.MAX_PF_ITERATIONS + 1):
 
                 # First pathfinding_iteration, find paths for everyone
                 if pathfinding_iteration == 1:
