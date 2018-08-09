@@ -3,8 +3,7 @@ import pytest
 from fasttrips import Run
 
 
-def test_convergence():
-    EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
+EXAMPLE_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples","Springfield")
 
 # DIRECTORY LOCATIONS
 OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
@@ -33,7 +32,6 @@ def test_convergence():
         input_weights    = INPUT_WEIGHTS,
         output_dir       = OUTPUT_DIR,
         output_folder    = OUTPUT_FOLDER,
-        pathfinding_type = "stochastic",
         capacity         = True,
         iters            = 10,
         dispersion       = 0.50,
