@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import zip
 import os
 import pytest
 from fasttrips import Run
@@ -22,7 +23,7 @@ def dispersion_rate(request):
 
 @pytest.fixture(scope='module')
 def passengers_arrived(dispersion_rate):
-    arrived = dict(zip(test_thetas,[test_size]*len(test_thetas)))
+    arrived = dict(list(zip(test_thetas,[test_size]*len(test_thetas))))
 
     return arrived[dispersion_rate]
 

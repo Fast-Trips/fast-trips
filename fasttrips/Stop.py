@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import str
+from builtins import object
+from past.utils import old_div
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +25,7 @@ from .Trip import Trip
 from .Util import Util
 
 
-class Stop:
+class Stop(object):
     """
     Stop class.
     
@@ -326,12 +330,12 @@ class Stop:
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
-        latest_arrival_min = 60.0*latest_arrival.hour + latest_arrival.minute + latest_arrival.second/60.0
+        latest_arrival_min = 60.0*latest_arrival.hour + latest_arrival.minute + old_div(latest_arrival.second,60.0)
         # filter to stop
         df = self.trip_times_df.loc[stop_id]
         # arrive before latest arrival and arrive within time window
         df = df.loc[(df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] < latest_arrival_min)&
-                    (df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] > (latest_arrival_min - time_window.total_seconds()/60.0))]
+                    (df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] > (latest_arrival_min - old_div(time_window.total_seconds(),60.0)))]
 
         to_return = []
         df = df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]]
@@ -352,12 +356,12 @@ class Stop:
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
-        earliest_departure_min = 60.0*earliest_departure.hour + earliest_departure.minute + earliest_departure.second/60.0
+        earliest_departure_min = 60.0*earliest_departure.hour + earliest_departure.minute + old_div(earliest_departure.second,60.0)
         # filter to stop
         df = self.trip_times_df.loc[stop_id]
         # depart after the earliest departure
         df = df.loc[(df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] > earliest_departure_min)&
-                    (df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] < (earliest_departure_min + time_window.total_seconds()/60.0))]
+                    (df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] < (earliest_departure_min + old_div(time_window.total_seconds(),60.0)))]
 
         to_return = []
         df = df[[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]]

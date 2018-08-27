@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import str
+from builtins import object
+from past.utils import old_div
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -603,8 +607,8 @@ class Route(object):
             fare_rules_df = self.fare_rules_df.copy()
 
             # replace with float versions
-            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = (fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
-            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = (fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
+            fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] = old_div((fare_rules_df[Route.FARE_RULES_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME),np.timedelta64(1,'m'))
+            fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] = old_div((fare_rules_df[Route.FARE_RULES_COLUMN_END_TIME  ] - Assignment.NETWORK_BUILD_DATE_START_TIME),np.timedelta64(1,'m'))
 
             # fillna with -1
             for num_col in [Route.FARE_RULES_COLUMN_ROUTE_ID_NUM, Route.FARE_RULES_COLUMN_ORIGIN_ID_NUM, Route.FARE_RULES_COLUMN_DESTINATION_ID_NUM, Route.FARE_ATTR_COLUMN_TRANSFERS]:
@@ -1029,7 +1033,7 @@ class Route(object):
                                      how     ="left",
                                      suffixes=["","_ffb"])
         # calculate time from first board (for this fare period id) in seconds
-        trip_links_df["transfer_time_sec"] = (trip_links_df[Assignment.SIM_COL_PAX_BOARD_TIME]-trip_links_df["%s_ffb" % Assignment.SIM_COL_PAX_BOARD_TIME])/np.timedelta64(1,'s')
+        trip_links_df["transfer_time_sec"] = old_div((trip_links_df[Assignment.SIM_COL_PAX_BOARD_TIME]-trip_links_df["%s_ffb" % Assignment.SIM_COL_PAX_BOARD_TIME]),np.timedelta64(1,'s'))
 
         # FastTripsLogger.debug("apply_free_transfers: trip_links_df=\n%s" % str(trip_links_df.loc[ trip_links_df["transfer_time_sec"] >0 ]))
 

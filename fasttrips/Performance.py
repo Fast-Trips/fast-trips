@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 __copyright__ = "Copyright 2016 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +24,7 @@ from .Passenger import Passenger
 from .Util      import Util
 
 
-class Performance:
+class Performance(object):
     """
     Performance class.  Keeps track of performance information
     (time spent, number of labeling iterations, etc) related to pathfinding
@@ -158,7 +161,7 @@ class Performance:
         """
         key     = (iteration, pathfinding_iteration, simulation_iteration)
         now     = datetime.datetime.now()
-        mem_use = Util.get_process_mem_use_bytes()/1000000.0
+        mem_use = old_div(Util.get_process_mem_use_bytes(),1000000.0)
 
         # if we were already doing something, record it
         if key in self.steps:
@@ -173,7 +176,7 @@ class Performance:
         """
         key       = (iteration, pathfinding_iteration, simulation_iteration)
         now       = datetime.datetime.now()
-        mem_use   = Util.get_process_mem_use_bytes()/1000000.0
+        mem_use   = old_div(Util.get_process_mem_use_bytes(),1000000.0)
 
         if key not in self.steps:
             return
@@ -200,7 +203,7 @@ class Performance:
         Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_PF_FILE), append=append)
 
         # reset dict to blank
-        for key in self.performance_pf_dict.keys():
+        for key in list(self.performance_pf_dict.keys()):
             self.performance_pf_dict[key] = []
 
     def write(self, output_dir):

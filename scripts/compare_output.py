@@ -1,4 +1,8 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import os, sys
 
 import numpy as np
@@ -47,9 +51,9 @@ def compare_file(dir1, dir2, filename):
         index_cols = ['rownum','route_id', 'trip_id', 'direction', 'stop_id']
         if 'direction' not in df1.columns.values: index_cols.remove('direction')
         # the keys are not unique since some stops come up twice; add rownum columns
-        df1['rownum'] = range(1, len(df1)+1)
+        df1['rownum'] = list(range(1, len(df1)+1))
         df1.set_index(keys=index_cols, inplace=True)
-        df2['rownum'] = range(1, len(df2)+1)
+        df2['rownum'] = list(range(1, len(df2)+1))
         df2.set_index(keys=index_cols, inplace=True)
     else:
         df1.set_index(keys=['person_id','trip_list_id_num','mode','originTaz','destinationTaz'], inplace=True)
@@ -88,10 +92,10 @@ def compare_file(dir1, dir2, filename):
         df1 = pd.concat(objs=[df1, split_df1], axis=1)
         df2 = pd.concat(objs=[df2, split_df2], axis=1)
         if len(rename_cols1) < len(rename_cols2):
-            for k,v in rename_cols2.iteritems():
+            for k,v in rename_cols2.items():
                 if k not in rename_cols1: df1[v] = np.NaN
         if len(rename_cols2) < len(rename_cols1):
-            for k,v in rename_cols1.iteritems():
+            for k,v in rename_cols1.items():
                 if k not in rename_cols2: df2[v] = np.NaN
 
     FastTripsLogger.info("Read   %10d rows from %s" % (len(df1), filename1))
@@ -192,7 +196,7 @@ def compare_pathset(dir1, dir2):
 
     # join it back to get the probability given a union pathset
     df_diff = df_diff.merge(df_diff_counts.reset_index()[['iteration','passenger_id_num','trip_list_id_num','sum_exp_util']], how='left')
-    df_diff['union pathset probability'] = df_diff['exp_util']/df_diff['sum_exp_util']
+    df_diff['union pathset probability'] = old_div(df_diff['exp_util'],df_diff['sum_exp_util'])
     # drop these
     df_diff.drop(['exp_util','sum_exp_util'], axis=1, inplace=True)
     df_diff_counts.drop(['sum_exp_util'], axis=1, inplace=True)

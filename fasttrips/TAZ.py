@@ -1,4 +1,8 @@
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import object
+from past.utils import old_div
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +30,7 @@ from .Stop       import Stop
 from .Transfer   import Transfer
 
 
-class TAZ:
+class TAZ(object):
     """
     TAZ class.
 
@@ -347,9 +351,9 @@ class TAZ:
 
             # drive access period start/end time: float version
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = \
-                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
+                old_div((self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME),np.timedelta64(1,'m'))
             self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = \
-                (self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
+                old_div((self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME] - Assignment.NETWORK_BUILD_DATE_START_TIME),np.timedelta64(1,'m'))
 
 
             # convert time column from number to timedelta

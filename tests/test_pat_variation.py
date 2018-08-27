@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import datetime
 import os
 
@@ -81,13 +83,13 @@ def test_pat_before_and_after():
     early_departure = departures[departures['new_A_time'] < departures['departure_time']]
     size = early_departure.shape[0]
     assert size > 0
-    confirm_size = early_departure[(early_departure['departure_time'] - early_departure['new_A_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = early_departure[old_div((early_departure['departure_time'] - early_departure['new_A_time']), np.timedelta64(1, 'm')) <= 10].shape[0]
     assert size == confirm_size
 
     late_arrivals = arrivals[arrivals['new_B_time'] > arrivals['arrival_time']]
     size = late_arrivals.shape[0]
     assert size > 0
-    confirm_size = late_arrivals[(late_arrivals['new_B_time'] - late_arrivals['arrival_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = late_arrivals[old_div((late_arrivals['new_B_time'] - late_arrivals['arrival_time']), np.timedelta64(1, 'm')) <= 10].shape[0]
     assert size == confirm_size
 
 
@@ -153,13 +155,13 @@ def test_pat_off():
     early_departure = departures[departures['new_A_time'] < departures['departure_time']]
     size = early_departure.shape[0]
     assert 0 == size
-    confirm_size = early_departure[(early_departure['departure_time'] - early_departure['new_A_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = early_departure[old_div((early_departure['departure_time'] - early_departure['new_A_time']), np.timedelta64(1, 'm')) <= 10].shape[0]
     assert 0 == confirm_size
 
     late_arrivals = arrivals[arrivals['new_B_time'] > arrivals['arrival_time']]
     size = late_arrivals.shape[0]
     assert 0 == size
-    confirm_size = late_arrivals[(late_arrivals['new_B_time'] - late_arrivals['arrival_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = late_arrivals[old_div((late_arrivals['new_B_time'] - late_arrivals['arrival_time']), np.timedelta64(1, 'm')) <= 10].shape[0]
     assert 0 == confirm_size
 
 

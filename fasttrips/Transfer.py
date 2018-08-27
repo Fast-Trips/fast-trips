@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import str
+from builtins import object
+from past.utils import old_div
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +25,7 @@ from .Error  import NetworkInputError
 from .Logger import FastTripsLogger
 
 
-class Transfer:
+class Transfer(object):
     """
     Transfer class.
 
@@ -159,7 +163,7 @@ class Transfer:
         if len(self.transfers_df) > 0:
 
             self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN] = \
-                self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME]/60.0
+                old_div(self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME],60.0)
 
             # fill in null dist
             null_dist = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE].isnull() ]
