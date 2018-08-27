@@ -24,7 +24,7 @@ import datetime
 import os
 import sys
 
-from . import fasttrips
+import fasttrips
 
 
 def run_setup(input_network_dir,

@@ -162,14 +162,14 @@ class Passenger(object):
         FastTripsLogger.info("Capacity constraint? %x" % capacity_constraint )
 
         self.trip_list_df  = pd.read_csv(os.path.join(input_dir, Passenger.INPUT_TRIP_LIST_FILE),
-                                             skipinitialspace=True,
-                                             dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :object,
-                                                    Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID    :object,
-                                                    Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :object,
-                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:object,
-                                                    Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME    :object,
-                                                    Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME      :object,
-                                                    Passenger.TRIP_LIST_COLUMN_PURPOSE           :object})
+                                             skipinitialspace=True, ##LMZ
+                                             dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID         :'S',
+                                                    Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID    :'S',
+                                                    Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID     :'S',
+                                                    Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID:'S',
+                                                    Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME    :'S',
+                                                    Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME      :'S',
+                                                    Passenger.TRIP_LIST_COLUMN_PURPOSE           :'S'})
         trip_list_cols     = list(self.trip_list_df.columns.values)
 
         assert(Passenger.TRIP_LIST_COLUMN_PERSON_ID          in trip_list_cols)
@@ -209,7 +209,7 @@ class Passenger(object):
 
             self.persons_df     = pd.read_csv(os.path.join(input_dir, Passenger.INPUT_PERSONS_FILE),
                                                   skipinitialspace=True,
-                                                  dtype={Passenger.PERSONS_COLUMN_PERSON_ID:object})
+                                                  dtype={Passenger.PERSONS_COLUMN_PERSON_ID:'S'})
             self.persons_id_df  = Util.add_numeric_column(self.persons_df[[Passenger.PERSONS_COLUMN_PERSON_ID]],
                                                           id_colname=Passenger.PERSONS_COLUMN_PERSON_ID,
                                                           numeric_newcolname=Passenger.PERSONS_COLUMN_PERSON_ID_NUM)
@@ -449,8 +449,8 @@ class Passenger(object):
         paths_file = os.path.join(pathset_dir, Passenger.PATHSET_PATHS_CSV if include_asgn else Passenger.PF_PATHS_CSV)
         pathset_paths_df = pd.read_csv(paths_file,
                                            skipinitialspace=True,
-                                           dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
-                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object})
+                                           dtype={Passenger.TRIP_LIST_COLUMN_PERSON_ID     :'S',
+                                                  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:'S'})
         FastTripsLogger.info("Read %s" % paths_file)
         FastTripsLogger.debug("pathset_paths_df.dtypes=\n%s" % str(pathset_paths_df.dtypes))
 
@@ -462,16 +462,16 @@ class Passenger(object):
                               Assignment.SIM_COL_PAX_ALIGHT_TIME,
                               Assignment.SIM_COL_PAX_A_TIME,
                               Assignment.SIM_COL_PAX_B_TIME])
-        links_dtypes = {Passenger.TRIP_LIST_COLUMN_PERSON_ID     :object,
-                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:object,
-                        Trip.TRIPS_COLUMN_TRIP_ID                :object,
-                        "A_id"                                   :object,
-                        "B_id"                                   :object,
-                        Passenger.PF_COL_ROUTE_ID                :object,
-                        Passenger.PF_COL_TRIP_ID                 :object}
+        links_dtypes = {Passenger.TRIP_LIST_COLUMN_PERSON_ID     :'S',
+                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID:'S',
+                        Trip.TRIPS_COLUMN_TRIP_ID                :'S',
+                        "A_id"                                   :'S',
+                        "B_id"                                   :'S',
+                        Passenger.PF_COL_ROUTE_ID                :'S',
+                        Passenger.PF_COL_TRIP_ID                 :'S'}
         # read datetimes as string initially
         for date_col in date_cols:
-            links_dtypes[date_col] = object
+            links_dtypes[date_col] = 'S'
 
         links_file = os.path.join(pathset_dir, Passenger.PATHSET_LINKS_CSV if include_asgn else Passenger.PF_LINKS_CSV)
         pathset_links_df = pd.read_csv(links_file, skipinitialspace=True, dtype=links_dtypes)
