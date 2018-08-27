@@ -29,13 +29,13 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     double     min_path_probability;
 
     if (!PyArg_ParseTuple(args, "dddddidiiiid", &time_window, &bump_buffer, &utils_conversion, &depart_early_allowed_min,
-                                               &arrive_late_allowed_min, &stoch_pathset_size, &stoch_dispersion, 
-                                               &stoch_max_stop_process_count, &transfer_fare_ignore_pf, 
+                                               &arrive_late_allowed_min, &stoch_pathset_size, &stoch_dispersion,
+                                               &stoch_max_stop_process_count, &transfer_fare_ignore_pf,
                                                &transfer_fare_ignore_pe, &max_num_paths, &min_path_probability)) {
         return NULL;
     }
-    pathfinder.initializeParameters(time_window, bump_buffer, utils_conversion, depart_early_allowed_min, arrive_late_allowed_min, stoch_pathset_size, 
-                                    stoch_dispersion, stoch_max_stop_process_count, 
+    pathfinder.initializeParameters(time_window, bump_buffer, utils_conversion, depart_early_allowed_min, arrive_late_allowed_min, stoch_pathset_size,
+                                    stoch_dispersion, stoch_max_stop_process_count,
                                     (transfer_fare_ignore_pf==1), (transfer_fare_ignore_pe==1),
                                     max_num_paths, min_path_probability);
     Py_RETURN_NONE;
@@ -217,32 +217,44 @@ static PyMethodDef fasttripsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-init_fasttrips(void)
+static struct PyModuleDef _fasttrips =
+{
+    PyModuleDef_HEAD_INIT,
+    "_fasttrips", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    fasttripsMethods
+};
+
+PyMODINIT_FUNC PyInit__fasttrips(void)
 {
     // printf("init_fasttrips called\n");
     std::priority_queue<std::string> myqueue;
 
-    PyObject *m = Py_InitModule("_fasttrips", fasttripsMethods);
+    PyObject *m = PyModule_Create(&_fasttrips);
+
     if (m == NULL)
-        return;
+      return NULL;
 
     import_array();
 
     pyError = PyErr_NewException("_fasttrips.error", NULL, NULL);
     Py_INCREF(pyError);
     PyModule_AddObject(m, "error", pyError);
+
+    return m;
 }
 
 int
 main(int argc, char *argv[])
 {
     /* Pass argv[0] to the Python interpreter */
-    Py_SetProgramName(argv[0]);
+    wchar_t *program = Py_DecodeLocale(argv[0], NULL);
+    Py_SetProgramName(program);
 
     /* Initialize the Python interpreter.  Required. */
     Py_Initialize();
 
     /* Add a static module */
-    init_fasttrips();
+    PyInit__fasttrips();
 }
