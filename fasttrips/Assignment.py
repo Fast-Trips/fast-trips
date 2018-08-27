@@ -1,3 +1,4 @@
+from __future__ import print_function
 __copyright__ = "Copyright 2015-2017 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -347,7 +348,7 @@ class Assignment:
             Assignment.TRACE_IDS                     = eval(parser.get       ('fasttrips','trace_ids'))
         except:
             e = "Must have a TRACE_IDS line in config_ft.txt; even if it is trace_ids = []"
-            print e
+            print(e)
             FastTripsLogger.error(e)
             raise
         Assignment.DEBUG_TRACE_ONLY              = parser.getboolean('fasttrips','debug_trace_only')
@@ -1047,7 +1048,7 @@ class Assignment:
 
                             del process_dict[worker_num]["working_on"]
                         else:
-                            print "Unexpected done queue contents: " + str(result)
+                            print("Unexpected done queue contents: " + str(result))
 
                     except Queue.Empty:
                         # This is normal

@@ -1,3 +1,4 @@
+from __future__ import print_function
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -174,7 +175,7 @@ class FastTrips:
             r = Assignment.assign_paths(output_dir, self)
 
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print(("Unexpected error:", sys.exc_info()[0]))
             FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))
             raise
 

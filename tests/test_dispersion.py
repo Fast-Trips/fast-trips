@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import pytest
 from fasttrips import Run
@@ -55,5 +56,5 @@ def test_dispersion(dispersion_rate, utils_conversion_factor, passengers_arrived
 if __name__ == "__main__":
     for dr in test_thetas:
         util_factor = dr*disperson_rate_util_multiplier_factor
-        print "Running test_dispersion.py with: disperson: %f1.2, util_factor: %f2.2, test_size: %d"  % (dr, util_factor, test_size)
+        print("Running test_dispersion.py with: disperson: %f1.2, util_factor: %f2.2, test_size: %d"  % (dr, util_factor, test_size))
         test_dispersion(dr, util_factor, test_size)

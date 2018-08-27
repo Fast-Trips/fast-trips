@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -284,7 +285,7 @@ class Util:
             # get the columns
             df_file = open(output_file, 'rb')
             df_reader = csv.reader(df_file, delimiter=",")
-            header_row = df_reader.next()
+            header_row = next(df_reader)
             df_file.close()
 
         for col_idx in range(len(df_cols)):
@@ -435,7 +436,7 @@ class Util:
         `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve
         ==================  ===============  =====================================================================================================
         """
-        from fasttrips import PathSet
+        from .fasttrips import PathSet
 
         # default is constant (constant weight)
         df[result_col] = df['var_value']*df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]

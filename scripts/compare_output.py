@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys
 
 import numpy as np
@@ -279,8 +280,8 @@ def compare_performance(dir1, dir2):
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:
-        print USAGE
-        print sys.argv
+        print(USAGE)
+        print(sys.argv)
         sys.exit(2)
 
     OUTPUT_DIR1 = sys.argv[1]

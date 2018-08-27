@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import numpy as np
@@ -48,5 +49,5 @@ def test_calculate_distance_miles():
     Util.calculate_distance_miles(df, cols[0], cols[1], cols[2], cols[3], cols[4])
     distance = df[cols[4]][0]
 
-    print 'test_calculate_distance_miles: {:.5f} mi'.format(distance)
+    print('test_calculate_distance_miles: {:.5f} mi'.format(distance))
     assert abs(distance - 3.9116) < 0.0001
