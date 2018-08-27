@@ -91,7 +91,7 @@ class Util:
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
 
-        *mapping_df* is defines the mapping from an ID (*mapping_id_colname*) 
+        *mapping_df* is defines the mapping from an ID (*mapping_id_colname*)
         to a numeric ID (*mapping_newid_colname*).
 
         If *warn* is True, then don't worry if some fail.  Just log and move on.  Otherwise, raise an exception.
@@ -218,7 +218,7 @@ class Util:
         time_split = x.split(':')
         hour = int(time_split[0])
         day = Assignment.NETWORK_BUILD_DATE
-        if hour >= 24: 
+        if hour >= 24:
             time_split[0] = '%02d' %(hour-24)
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)

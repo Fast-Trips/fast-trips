@@ -61,8 +61,8 @@ class Assignment:
     #: the transit system is not crowded or when capacity constraint is
     #: relaxed the model will terminate after the first iteration
     MAX_ITERATIONS                  = None
-
     MAX_PF_ITERATIONS               = 10
+    CONVERGENCE_GAP                 = None
 
     NETWORK_BUILD_DATE              = datetime.datetime.today()
     NETWORK_BUILD_DATE_START_TIME   = datetime.datetime.combine(NETWORK_BUILD_DATE, datetime.time())
@@ -285,6 +285,9 @@ class Assignment:
                       'max_pf_iterations'               :1,
                       'network_build_date'              : datetime.date.today().strftime("%m/%d/%Y"),
                       'simulation'                      :'True',
+                      'learning_convergence'            :'False',
+                      'learning_rate'                   : 0.01,
+                      'convergence_gap'                 : 0.001,
                       'output_pathset_per_sim_iter'     :'False',
                       'output_passenger_trajectories'   :'True',
                       'create_skims'                    :'False',
@@ -334,6 +337,9 @@ class Assignment:
                                                     parser.get('fasttrips', 'network_build_date'), '%m/%d/%Y').date()
         Assignment.NETWORK_BUILD_DATE_START_TIME = datetime.datetime.combine(Assignment.NETWORK_BUILD_DATE, datetime.time())
         Assignment.SIMULATION                    = parser.getboolean('fasttrips','simulation')
+        PathSet.LEARN_ROUTES                     = parser.getboolean('fasttrips', 'learning_convergence')
+        PathSet.LEARN_ROUTES_RATE                = parser.getfloat('fasttrips', 'learning_rate')
+        Assignment.CONVERGENCE_GAP               = parser.getfloat('fasttrips', 'convergence_gap')
         Assignment.OUTPUT_PASSENGER_TRAJECTORIES = parser.getboolean('fasttrips','output_passenger_trajectories')
         Assignment.OUTPUT_PATHSET_PER_SIM_ITER   = parser.getboolean('fasttrips','output_pathset_per_sim_iter')
         Assignment.CREATE_SKIMS                  = parser.getboolean('fasttrips','create_skims')
@@ -740,17 +746,39 @@ class Assignment:
         pathset_paths_df = None
         pathset_links_df = None
 
+        last_chosen_df = pd.DataFrame(columns=[
+            Passenger.PERSONS_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            Passenger.PF_COL_DESCRIPTION
+        ])
+
+        success_df = pd.DataFrame(columns=[
+            Passenger.PERSONS_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            Passenger.PF_COL_DESCRIPTION,
+            PathSet.SUCCESS_FLAG_COLUMN
+        ])
+
+        bump_df = pd.DataFrame(columns=[
+            Passenger.PERSONS_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            Passenger.PF_COL_DESCRIPTION,
+            PathSet.BUMP_FLAG_COLUMN
+        ])
+
+        success_df[PathSet.SUCCESS_FLAG_COLUMN] = success_df[PathSet.SUCCESS_FLAG_COLUMN].astype(np.float64)
+        bump_df[PathSet.BUMP_FLAG_COLUMN] = bump_df[PathSet.BUMP_FLAG_COLUMN].astype(np.float64)
+
         # write 0-iter vehicle trips
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
-        for iteration in range(1,Assignment.MAX_ITERATIONS+1):
+        for iteration in range(1, Assignment.MAX_ITERATIONS+1):
 
-            for pathfinding_iteration in range(1, Assignment.MAX_PF_ITERATIONS+1):
+            for pathfinding_iteration in range(1, Assignment.MAX_PF_ITERATIONS + 1):
 
                 # First pathfinding_iteration, find paths for everyone
                 if pathfinding_iteration == 1:
                     Assignment.PATHFINDING_EVERYONE = True
-                    num_passengers_arrived = 0
                 # Subsequent: just find paths for those without paths
                 else:
                     Assignment.PATHFINDING_EVERYONE = False
@@ -791,6 +819,7 @@ class Assignment:
 
                 # if we have new paths, simulate them
                 if num_new_paths_found > 0:
+                    pathset_paths_df, pathset_links_df = Assignment.merge_prior_choices(pathset_paths_df, pathset_links_df, success_df)
 
                     if Assignment.SIMULATION:
                         FastTripsLogger.info("***************************** ITERATION %d PATHFINDING ITERATION %d *** SIMULATING ***********************" % (iteration, pathfinding_iteration))
@@ -812,23 +841,20 @@ class Assignment:
                 # todo: pass back correct simulation iteration?
                 Assignment.write_vehicle_trips(output_dir, iteration, pathfinding_iteration, "final", veh_trips_df)
 
-                if num_new_paths_found > 0 and Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
+                if Assignment.OUTPUT_PASSENGER_TRAJECTORIES:
                     PathSet.write_path_times(Passenger.get_chosen_links(pathset_links_df), output_dir)
 
                 # capacity gap stuff
                 num_paths_found = Assignment.number_of_pathsets(pathset_paths_df)
                 num_bumped_passengers = num_paths_found - num_passengers_arrived
-                if num_paths_found > 0:
-                    capacity_gap = 100.0*num_bumped_passengers/num_paths_found
-                else:
-                    capacity_gap = 100
+
 
                 FastTripsLogger.info("")
                 FastTripsLogger.info("  Length of trip list:       %10d" % len(FT.passengers.trip_list_df))
                 FastTripsLogger.info("  Number of pathsets found:  %10d" % num_paths_found)
                 FastTripsLogger.info("  ARRIVED PASSENGERS:        %10d" % num_passengers_arrived)
                 FastTripsLogger.info("  MISSED PASSENGERS:         %10d" % num_bumped_passengers)
-                FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
+
 
                 FT.performance.record_step_end(iteration, pathfinding_iteration, -1)
 
@@ -836,8 +862,35 @@ class Assignment:
                 if num_new_paths_found == 0:
                     break
 
+            success_df, bump_df = Assignment.save_choices(pathset_paths_df, success_df, bump_df)
+            new_choices, last_chosen_df = Assignment.compare_choices(pathset_paths_df, last_chosen_df)
+            capacity_gap = (1.0 * new_choices + num_bumped_passengers) / len(FT.passengers.trip_list_df)
+
+            FastTripsLogger.info("###OUTER LOOP: Iteration {}###".format(iteration))
+            FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
+            FastTripsLogger.info("  NEW CHOICE FROM PRIOR:     %10d" % new_choices)
+
+
+            success_df, bump_df = Assignment.save_choices(pathset_paths_df, success_df, bump_df)
+            new_choices, last_chosen_df = Assignment.compare_choices(pathset_paths_df, last_chosen_df)
+            capacity_gap = (1.0 * new_choices + num_bumped_passengers) / len(FT.passengers.trip_list_df)
+
+            FastTripsLogger.info("###OUTER LOOP: Iteration {}###".format(iteration))
+            FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
+            FastTripsLogger.info("  NEW CHOICE FROM PRIOR:     %10d" % new_choices)
+
+
+            success_df, bump_df = Assignment.save_choices(pathset_paths_df, success_df, bump_df)
+            new_choices, last_chosen_df = Assignment.compare_choices(pathset_paths_df, last_chosen_df)
+            capacity_gap = (1.0 * new_choices + num_bumped_passengers) / len(FT.passengers.trip_list_df)
+
+            FastTripsLogger.info("###OUTER LOOP: Iteration {}###".format(iteration))
+            FastTripsLogger.info("  CAPACITY GAP:              %10.5f" % capacity_gap)
+            FastTripsLogger.info("  NEW CHOICE FROM PRIOR:     %10d" % new_choices)
+
+
             # end condition for iterations loop
-            if False and capacity_gap < 0.001:
+            if capacity_gap < Assignment.CONVERGENCE_GAP:
                 break
 
             # end for loop
@@ -847,6 +900,111 @@ class Assignment:
                 "passengers_arrived": num_passengers_arrived,
                 "passengers_missed": num_bumped_passengers,
                 "passengers_demand": len(FT.passengers.trip_list_df) }
+
+
+    @staticmethod
+    def compare_choices(pathset_paths_df, prior_choice):
+        """
+        Reads in a pathset_path_df and the pathset_path_df of a prior iteration
+        and returns the number of new choices made in the current iteration
+        along with a simplified chosen df to use in the next iteration.
+
+        :param pathset_paths_df: Current iteration of Pathset_Paths_DF
+        :param prior_choice: Pathset_Paths_DF of a prior iteration.
+        :return: new_choices_count: Total number of new choices in this iteration
+                                    compared to the input prior choice df.
+                 chosen: Simplified DF of 'person_id', 'person_trip_id_num', and 'description'
+                         that can be used in subsequent invocations of this method.
+        """
+
+        chosen = Passenger.get_chosen_links(pathset_paths_df)[
+            [Passenger.PERSONS_COLUMN_PERSON_ID,
+             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+             Passenger.PF_COL_DESCRIPTION]
+        ]
+        match_choices = pd.merge(chosen, prior_choice, on=[
+            Passenger.PERSONS_COLUMN_PERSON_ID,
+            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+            Passenger.PF_COL_DESCRIPTION], how='inner')
+
+        new_choices_count = chosen.shape[0] - match_choices.shape[0]
+
+        return new_choices_count, chosen
+
+
+    @staticmethod
+    def save_choices(pathset_paths_df, success_df, bump_df):
+        """
+        Returns an updated count of successfully chosen paths and
+        paths that were bumped for each user.
+        :param pathset_paths_df: Current iteration of pathset_paths_df after simulation.
+        :param success_df: Count of chosen paths for each user across prior iterations
+        :param bump_df: Count of bumped paths for each user across prior iterations
+        :return:
+            success_df: Updated count of chosen paths for each user across each iteration
+            bump_df: Updated count of bumped paths for each user across each iteration
+        """
+
+        chosen = Passenger.get_chosen_links(pathset_paths_df)
+        iter_bump_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER] >= 0][
+            [Passenger.PERSONS_COLUMN_PERSON_ID,
+             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+             Passenger.PF_COL_DESCRIPTION]
+        ]
+        iter_bump_df[PathSet.BUMP_FLAG_COLUMN] = 1
+        iter_bump_df = pd.concat([bump_df, iter_bump_df])
+        bump_df = iter_bump_df.groupby([Passenger.PERSONS_COLUMN_PERSON_ID,
+                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        Passenger.PF_COL_DESCRIPTION])[PathSet.BUMP_FLAG_COLUMN].sum().reset_index()
+
+        iter_success_df = chosen[chosen[Assignment.SIM_COL_PAX_BUMP_ITER].isnull()][
+            [Passenger.PERSONS_COLUMN_PERSON_ID,
+             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+             Passenger.PF_COL_DESCRIPTION]
+        ]
+        iter_success_df[PathSet.SUCCESS_FLAG_COLUMN] = 1
+        iter_success_df = pd.concat([success_df, iter_success_df])
+
+        success_df = iter_success_df.groupby([Passenger.PERSONS_COLUMN_PERSON_ID,
+                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                              Passenger.PF_COL_DESCRIPTION]
+                                             )[PathSet.SUCCESS_FLAG_COLUMN].sum().reset_index()
+
+        return success_df, bump_df
+
+
+    @staticmethod
+    def merge_prior_choices(pathset_paths_df, pathset_links_df, flag_df):
+        """
+        Join success or bump flag count information onto a pathset_paths_df and pathset_links_df
+        :param pathset_paths_df: Current iteration of pathset_paths_df.
+        :param pathset_links_df: Current iteration of pathset_links_df
+        :param flag_df: success or bump df
+        :return: pathset_paths_df and pathset_links_df with additional flag column.
+        """
+
+        assert((PathSet.SUCCESS_FLAG_COLUMN in flag_df) or (PathSet.BUMP_FLAG_COLUMN in flag_df))
+
+        flag_col = PathSet.SUCCESS_FLAG_COLUMN if PathSet.SUCCESS_FLAG_COLUMN in flag_df else PathSet.BUMP_FLAG_COLUMN
+
+        if flag_col in pathset_paths_df:
+            pathset_paths_df.drop(labels=[flag_col], axis=1, inplace=True)
+
+        if flag_col in pathset_links_df:
+            pathset_links_df.drop(labels=[flag_col], axis=1, inplace=True)
+
+        pathset_paths_df = pd.merge(pathset_paths_df, flag_df,
+                                    on = [
+                                        Passenger.PERSONS_COLUMN_PERSON_ID,
+                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        Passenger.PF_COL_DESCRIPTION], how = 'left')
+        pathset_paths_df.loc[pathset_paths_df[flag_col].isnull(), flag_col] = 0
+
+        pathset_links_df = pd.merge(pathset_links_df,pathset_paths_df[
+            ['trip_list_id_num', Passenger.PF_COL_PATH_NUM, flag_col, ]],
+                                    on = ['trip_list_id_num', Passenger.PF_COL_PATH_NUM], how = 'left')
+
+        return pathset_paths_df, pathset_links_df
 
     @staticmethod
     def filter_trip_list_to_not_arrived(trip_list_df, pathset_paths_df):
@@ -2014,6 +2172,7 @@ class Assignment:
         chosen_links_df.drop(["iteration", "pathfinding_iteration"], axis=1, inplace=True)
 
         chosen_paths_df = Passenger.get_chosen_links(pathset_paths_df)
+
         chosen_paths_df["iteration"            ] = iteration
         chosen_paths_df["pathfinding_iteration"] = pathfinding_iteration
         Util.write_dataframe(chosen_paths_df, "chosen_paths_df", os.path.join(output_dir, "chosenpaths_paths.csv"), append=((iteration>1) or (pathfinding_iteration>1)),
