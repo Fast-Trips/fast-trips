@@ -1311,7 +1311,7 @@ class PathSet(object):
         # CHUNKING because we run into memory problems
         # TODO: figure out more sophisticated chunk size
         chunk_list = pathset_links_to_use[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]].drop_duplicates().reset_index(drop=True)
-        num_chunks = (len(chunk_list)/PathSet.OVERLAP_CHUNK_SIZE) + 1
+        num_chunks = (len(chunk_list)//PathSet.OVERLAP_CHUNK_SIZE) + 1
         chunk_list["chunk_num"] = np.floor_divide(chunk_list.index, PathSet.OVERLAP_CHUNK_SIZE)
         FastTripsLogger.debug("calculate_overlap() chunk_list size=%d head=\n%s\ntail=\n%s" % (len(chunk_list), chunk_list.head().to_string(), chunk_list.tail().to_string()))
         pathset_links_to_use = pd.merge(left  =pathset_links_to_use,
