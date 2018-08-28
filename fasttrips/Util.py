@@ -402,8 +402,8 @@ class Util(object):
         if bytes < 1000*1000:
             return "%.1f KB" % (bytes/1000.0)
         if bytes < 1000*1000*1000:
-            return "%.1f MB" % (bytes/(1000.0*1000.0)))
-        return "%.1f GB" % (bytes/(1000.0*1000.0*1000.0)))
+            return "%.1f MB" % (bytes/(1000.0*1000.0))
+        return "%.1f GB" % (bytes/(1000.0*1000.0*1000.0))
 
     @staticmethod
     def merge_two_dicts(x, y):
