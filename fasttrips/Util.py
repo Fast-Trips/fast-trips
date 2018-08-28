@@ -289,7 +289,7 @@ class Util(object):
         header_row = None
         if append and os.path.exists(output_file):
             # get the columns
-            df_file = open(output_file, 'rb')
+            df_file = open(output_file, 'rt')
             df_reader = csv.reader(df_file, delimiter=",")
             header_row = next(df_reader)
             df_file.close()
