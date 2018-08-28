@@ -4,7 +4,7 @@ from builtins import next
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -201,15 +201,15 @@ class Util(object):
         """
         return '%.2f' % (pd.to_datetime(x).hour*60.0 + \
                          pd.to_datetime(x).minute + \
-                         old_div(pd.to_datetime(x).second,60.0))
+                         (pd.to_datetime(x).second/60.0))
 
     @staticmethod
     def timedelta_formatter(x):
         """
         Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
         """
-        seconds = old_div(x,np.timedelta64(1,'s'))
-        minutes = int(old_div(seconds,60))
+        seconds = (x/np.timedelta64(1,'s'))
+        minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
 
@@ -317,7 +317,7 @@ class Util(object):
                 if new_colname in df_cols: continue
 
                 # otherwise make the new one and add or replace it
-                df_toprint[new_colname] = old_div(df_toprint[old_colname],units)
+                df_toprint[new_colname] = (df_toprint[old_colname]/units)
                 if keep_duration_columns:           # add
                     df_cols.append(new_colname)
                 else:                               # replace
@@ -355,8 +355,8 @@ class Util(object):
         # assume these aren't in here
         dataframe["dist_lat" ] = np.radians(dataframe[destination_lat]-dataframe[origin_lat])
         dataframe["dist_lon" ] = np.radians(dataframe[destination_lon]-dataframe[origin_lon])
-        dataframe["dist_hava"] = (np.sin(old_div(dataframe["dist_lat"],2)) * np.sin(old_div(dataframe["dist_lat"],2))) + \
-                                 (np.cos(np.radians(dataframe[origin_lat])) * np.cos(np.radians(dataframe[destination_lat])) * np.sin(old_div(dataframe["dist_lon"],2.0)) * np.sin(old_div(dataframe["dist_lon"],2.0)))
+        dataframe["dist_hava"] = (np.sin(dataframe["dist_lat"]/2) * np.sin(dataframe["dist_lat"]/2)) + \
+                                 (np.cos(np.radians(dataframe[origin_lat])) * np.cos(np.radians(dataframe[destination_lat])) * np.sin(dataframe["dist_lon"]/2.0) * np.sin(dataframe["dist_lon"]/2.0))
         dataframe["dist_havc"] = 2.0*np.arctan2(np.sqrt(dataframe["dist_hava"]), np.sqrt(1.0-dataframe["dist_hava"]))
         dataframe[distance_colname] = radius * dataframe["dist_havc"]
 
@@ -400,10 +400,10 @@ class Util(object):
         if bytes < 1000:
             return "%d bytes" % bytes
         if bytes < 1000*1000:
-            return "%.1f KB" % (old_div(bytes,1000.0))
+            return "%.1f KB" % (bytes/1000.0)
         if bytes < 1000*1000*1000:
-            return "%.1f MB" % (old_div(bytes,(1000.0*1000.0)))
-        return "%.1f GB" % (old_div(bytes,(1000.0*1000.0*1000.0)))
+            return "%.1f MB" % (bytes/(1000.0*1000.0)))
+        return "%.1f GB" % (bytes/(1000.0*1000.0*1000.0)))
 
     @staticmethod
     def merge_two_dicts(x, y):
@@ -488,7 +488,7 @@ class Util(object):
         :param growth_rate: float: Exponetial growth factor
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
-        return old_div((np.power(1.0 + growth_rate, penalty_min) - 1), np.log(1.0 + growth_rate))
+        return (np.power(1.0 + growth_rate, penalty_min) - 1)/ np.log(1.0 + growth_rate)
 
 
     @staticmethod
@@ -520,8 +520,8 @@ class Util(object):
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
 
-        max_integral = (old_div(max_logit, growth_rate)) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
-        min_integral = (old_div(max_logit, growth_rate)) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
+        max_integral = ((max_logit/ growth_rate)) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
+        min_integral = ((max_logit/ growth_rate)) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
 
         return max_integral - min_integral
 

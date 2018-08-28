@@ -1,5 +1,9 @@
 #include <Python.h>
 
+#if PY_MAJOR_VERSION >= 3
+#define PY3K
+#endif
+
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
@@ -8,6 +12,8 @@
 #include <queue>
 
 static PyObject *pyError;
+
+
 
 // global variable
 fasttrips::PathFinder pathfinder;
@@ -217,6 +223,7 @@ static PyMethodDef fasttripsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
+#ifdef PY3K //If Python 3
 static struct PyModuleDef _fasttrips =
 {
     PyModuleDef_HEAD_INIT,
@@ -245,16 +252,44 @@ PyMODINIT_FUNC PyInit__fasttrips(void)
     return m;
 }
 
-int
-main(int argc, char *argv[])
+#else //For Python 2
+PyMODINIT_FUNC init_fasttrips(void)
+{
+    // printf("init_fasttrips called\n");
+    std::priority_queue<std::string> myqueue;
+
+    PyObject *m = Py_InitModule("_fasttrips", fasttripsMethods);
+
+    import_array();
+
+    pyError = PyErr_NewException("_fasttrips.error", NULL, NULL);
+    Py_INCREF(pyError);
+    PyModule_AddObject(m, "error", pyError);
+}
+#endif //end segmentation between Python 2 and Python 3
+int main(int argc, char *argv[])
 {
     /* Pass argv[0] to the Python interpreter */
-    wchar_t *program = Py_DecodeLocale(argv[0], NULL);
-    Py_SetProgramName(program);
+    #ifdef PY3K
+      wchar_t *program = Py_DecodeLocale(argv[0], NULL);
+      if (program == NULL) {
+          fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+          exit(1);
+      }
+
+      Py_SetProgramName(program);
+    #else
+      Py_SetProgramName(argv[0]);
+    #endif
+
 
     /* Initialize the Python interpreter.  Required. */
     Py_Initialize();
 
     /* Add a static module */
-    PyInit__fasttrips();
+    #ifdef PY3K
+      PyInit__fasttrips();
+    #else
+      init_fasttrips();
+    #endif
 }

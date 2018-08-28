@@ -2,7 +2,7 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -108,7 +108,7 @@ class Passenger(object):
     MODE_GENERIC_TRANSIT_NUM                    = 1000
 
     #: Minumum Value of Time: 1 dollar shouldn't be worth 180 minutes
-    MIN_VALUE_OF_TIME                           = old_div(60.0,180.0)
+    MIN_VALUE_OF_TIME                           = 60.0/180.0
 
     #: Trip list column: User class. String.
     TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
@@ -257,10 +257,10 @@ class Passenger(object):
         # float version
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = \
             self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + old_div(x.time().second,60.0) )
+                60*x.time().hour + x.time().minute + (x.time().second/60.0) )
         self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = \
             self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + old_div(x.time().second,60.0) )
+                60*x.time().hour + x.time().minute + (x.time().second/60.0) )
 
         # TODO: validate fields?
 
