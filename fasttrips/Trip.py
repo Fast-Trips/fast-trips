@@ -1,7 +1,7 @@
 from __future__ import division
 from builtins import str
 from builtins import object
-from past.utils import old_div
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -328,8 +328,8 @@ class Trip(object):
 
         self.add_shape_dist_traveled(stops)
 
-        self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = old_div(self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME], 60)
-        self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = old_div(self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME], 60)
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME] = self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]/ 60
+        self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] = self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]/ 60
         self.stop_times_df.rename(columns={
             Trip.STOPTIMES_COLUMN_ARRIVAL_TIME: Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
             Trip.STOPTIMES_COLUMN_DEPARTURE_TIME: Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
@@ -438,13 +438,13 @@ class Trip(object):
         # copy
         self.stop_times_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME    ] = self.stop_times_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]
         self.stop_times_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = \
-            (old_div(self.stop_times_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME],np.timedelta64(1, 's')))
+            (self.stop_times_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/np.timedelta64(1, 's'))
 
         # dwell time
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME] = \
             self.stop_times_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - self.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]
         self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC] = \
-            (old_div(self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME],np.timedelta64(1, 's')))
+            (self.stop_times_df[Trip.STOPTIMES_COLUMN_DWELL_TIME]/np.timedelta64(1, 's'))
 
     def add_trip_attrs_from_stoptimes(self):
         """
@@ -749,7 +749,7 @@ class Trip(object):
                          (trips_df[Trip.VEHICLES_COLUMN_ACCELERATION] > 0) &
                          (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]>1) & \
                          (trips_df[Trip.STOPTIMES_COLUMN_STOP_SEQUENCE]<trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]), "accel_secs"] = \
-                            old_div(trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS],trips_df[Trip.VEHICLES_COLUMN_ACCELERATION])
+                         trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_ACCELERATION]
         # Add deceleration to next stop.
         # Skip stop with next stop = last stop because we assume it's already there
         trips_df["decel_secs"] = 0.0
@@ -758,10 +758,10 @@ class Trip(object):
             trips_df.loc[(trips_df["next_does_stop"]) & \
                          (trips_df[Trip.VEHICLES_COLUMN_DECELERATION] > 0) &
                          (trips_df["next_is_last_stop"]==False), "decel_secs"] = \
-                            old_div(trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS],trips_df[Trip.VEHICLES_COLUMN_DECELERATION])
+                          trips_df[Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS]/trips_df[Trip.VEHICLES_COLUMN_DECELERATION]
 
         # update the travel time
-        trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = old_div(trips_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME],np.timedelta64(1, 's'))
+        trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = trips_df[Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME]/np.timedelta64(1, 's')
         trips_df.loc[ pd.notnull(trips_df["accel_secs"]), Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] + trips_df["accel_secs"]
         trips_df.loc[ pd.notnull(trips_df["decel_secs"]), Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] = trips_df[Trip.STOPTIMES_COLUMN_TRAVEL_TIME_SEC] + trips_df["decel_secs"]
 
@@ -812,10 +812,10 @@ class Trip(object):
         # float version
         trips_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] = \
             trips_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + old_div(x.time().second,60.0) )
+                60*x.time().hour + x.time().minute + (x.time().second / 60.0) )
         trips_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] = \
             trips_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
-                60*x.time().hour + x.time().minute + old_div(x.time().second,60.0) )
+                60*x.time().hour + x.time().minute + (x.time().second / 60.0) )
 
         FastTripsLogger.debug("Trips:update_trip_times() trips_df:\n%s\n" % \
             trips_df.loc[trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]>1,[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
@@ -941,7 +941,7 @@ class Trip(object):
         stop_group_df = stop_group.apply(lambda x: x.sort_values(Trip.STOPTIMES_COLUMN_DEPARTURE_TIME))
         # set headway, in minutes
         stop_group_shift_df = stop_group_df.shift()
-        stop_group_df['headway'] = old_div((stop_group_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - stop_group_shift_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]),np.timedelta64(1,'m'))
+        stop_group_df['headway'] = (stop_group_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME] - stop_group_shift_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME])/np.timedelta64(1,'m')
         # zero out the first in each group
         if has_direction_id:
             stop_group_df.loc[(stop_group_df.stop_id     !=stop_group_shift_df.stop_id     )|
@@ -963,4 +963,3 @@ class Trip(object):
                                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE])
         assert(len(trips_df)==trips_df_len)
         return trips_df
-

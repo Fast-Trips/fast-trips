@@ -1,6 +1,6 @@
 from __future__ import division
 from builtins import object
-from past.utils import old_div
+
 __copyright__ = "Copyright 2016 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -161,7 +161,7 @@ class Performance(object):
         """
         key     = (iteration, pathfinding_iteration, simulation_iteration)
         now     = datetime.datetime.now()
-        mem_use = old_div(Util.get_process_mem_use_bytes(),1000000.0)
+        mem_use = Util.get_process_mem_use_bytes()/1000000.0
 
         # if we were already doing something, record it
         if key in self.steps:
@@ -176,7 +176,7 @@ class Performance(object):
         """
         key       = (iteration, pathfinding_iteration, simulation_iteration)
         now       = datetime.datetime.now()
-        mem_use   = old_div(Util.get_process_mem_use_bytes(),1000000.0)
+        mem_use   = Util.get_process_mem_use_bytes()/1000000.0
 
         if key not in self.steps:
             return
@@ -215,4 +215,3 @@ class Performance(object):
         performance_df[Performance.PERFORMANCE_COL_STEP_DURATION] = performance_df[Performance.PERFORMANCE_COL_END_TIME] - performance_df[Performance.PERFORMANCE_COL_START_TIME]
 
         Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE), append=False)
-

@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
+
 import os, sys
 
 import numpy as np
@@ -196,7 +196,7 @@ def compare_pathset(dir1, dir2):
 
     # join it back to get the probability given a union pathset
     df_diff = df_diff.merge(df_diff_counts.reset_index()[['iteration','passenger_id_num','trip_list_id_num','sum_exp_util']], how='left')
-    df_diff['union pathset probability'] = old_div(df_diff['exp_util'],df_diff['sum_exp_util'])
+    df_diff['union pathset probability'] = df_diff['exp_util']/df_diff['sum_exp_util']
     # drop these
     df_diff.drop(['exp_util','sum_exp_util'], axis=1, inplace=True)
     df_diff_counts.drop(['sum_exp_util'], axis=1, inplace=True)

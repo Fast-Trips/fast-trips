@@ -1,7 +1,7 @@
 from __future__ import division
 from builtins import str
 from builtins import object
-from past.utils import old_div
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -163,7 +163,7 @@ class Transfer(object):
         if len(self.transfers_df) > 0:
 
             self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME_MIN] = \
-                old_div(self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME],60.0)
+                self.transfers_df[Transfer.TRANSFERS_COLUMN_MIN_TRANSFER_TIME]/60.0
 
             # fill in null dist
             null_dist = self.transfers_df.loc[ self.transfers_df[Transfer.TRANSFERS_COLUMN_DISTANCE].isnull() ]

@@ -2,7 +2,7 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
+
 __copyright__ = "Copyright 2015-2016 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -533,7 +533,7 @@ class PathSet(object):
         walk_links = passengers_df.loc[(passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_ACCESS  )| \
                                        (passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_TRANSFER)| \
                                        (passengers_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_EGRESS  )].copy()
-        walk_links['linktime_str'] = walk_links.pf_linktime.apply(lambda x: "%.2f" % (old_div(x,np.timedelta64(1,'m'))))
+        walk_links['linktime_str'] = walk_links.pf_linktime.apply(lambda x: "%.2f" % (x/np.timedelta64(1,'m')))
         walklink_group = walk_links[['person_id','trip_list_id_num','linktime_str']].groupby(['person_id','trip_list_id_num'])
         walktimes_str  = walklink_group.linktime_str.apply(lambda x:','.join(x))
 
@@ -888,7 +888,7 @@ class PathSet(object):
 
         # update the fare weight placeholder (ivt pathweight - utils per min)) based on value of time (currency per hour)
         # since generalized cost is in utils, (ivt utils/min)x(60 min/1 hour)x(hour/vot currency) is the weight (utils/currency)
-        cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] *= old_div(60.0,cost_df[Passenger.TRIP_LIST_COLUMN_VOT])
+        cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] *= (60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT])
 
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].sort_values([
@@ -972,7 +972,7 @@ class PathSet(object):
         # drop links that are irrelevant based on departure time for access links, or arrival time for egress links
         cost_accegr_df["check_time"] = cost_accegr_df[Assignment.SIM_COL_PAX_A_TIME]  # departure time for access
         cost_accegr_df.loc[ cost_accegr_df[TAZ.MODE_COLUMN_MODE_NUM].isin(TAZ.EGRESS_MODE_NUMS), "check_time" ] = cost_accegr_df[Assignment.SIM_COL_PAX_B_TIME] # arrival time for egress
-        cost_accegr_df["check_time"] = old_div((cost_accegr_df["check_time"] - Assignment.NETWORK_BUILD_DATE_START_TIME),np.timedelta64(1,'m'))
+        cost_accegr_df["check_time"] = (cost_accegr_df["check_time"] - Assignment.NETWORK_BUILD_DATE_START_TIME)/np.timedelta64(1,'m')
 
         # it's only drive links we need to check
         cost_accegr_df["to_drop"]    = False
@@ -996,7 +996,7 @@ class PathSet(object):
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = 0.0
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_ARRIVE_EARLY_MIN    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
-                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = old_div((cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_B_TIME]),np.timedelta64(1,'m'))
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_B_TIME])/np.timedelta64(1,'m')
         # arrive early is not negative - that would be arriving late
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_ARRIVE_EARLY_MIN)&(cost_accegr_df["var_value"] < 0), "var_value"] = 0.0
 
@@ -1008,7 +1008,7 @@ class PathSet(object):
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'arrival'), "var_value"] = 0.0
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_DEPART_LATE_MIN) &
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS) &
-                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = old_div((cost_accegr_df[Passenger.PF_COL_PAX_A_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME]), np.timedelta64(1, 'm'))
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == 'departure'), "var_value"] = (cost_accegr_df[Passenger.PF_COL_PAX_A_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME])/ np.timedelta64(1, 'm')
         # depart late is not negative - that would be departing early
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_DEPART_LATE_MIN)&(cost_accegr_df["var_value"] < 0), "var_value"] = 0.0
 
@@ -1029,7 +1029,7 @@ class PathSet(object):
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_ARRIVE_LATE_MIN    )& \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_EGRESS)& \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_ARRIVAL), "var_value"] = \
-            old_div((cost_accegr_df[Passenger.PF_COL_PAX_B_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME]),np.timedelta64(1,'m'))
+                           (cost_accegr_df[Passenger.PF_COL_PAX_B_TIME] - cost_accegr_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME])/np.timedelta64(1,'m')
 
         # If arrived before preferred time, set the arrive late field to zero. You don't get a
         # discount for arriving early.
@@ -1051,7 +1051,7 @@ class PathSet(object):
         cost_accegr_df.loc[(cost_accegr_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]     == PathSet.WEIGHT_NAME_DEPART_EARLY_MIN) & \
                            (cost_accegr_df[Passenger.PF_COL_LINK_MODE]             == PathSet.STATE_MODE_ACCESS) & \
                            (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] == Passenger.TIME_TARGET_DEPARTURE), "var_value"] = \
-            old_div((cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_A_TIME]), np.timedelta64(1, 'm'))
+                           (cost_accegr_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] - cost_accegr_df[Passenger.PF_COL_PAX_A_TIME])/ np.timedelta64(1, 'm')
 
         # If departing after preferred time, set the depart early field to zero. You don't get a
         # discount for taking your time.
@@ -1087,9 +1087,9 @@ class PathSet(object):
         # if there's a board time, in_vehicle_time = new_B_time - board_time
         #               otherwise, in_vehicle_time = B time - A time (for when we split)
         cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&pd.notnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = \
-            old_div((cost_trip_df[Assignment.SIM_COL_PAX_B_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]),np.timedelta64(1,'m'))
+             (cost_trip_df[Assignment.SIM_COL_PAX_B_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME])/np.timedelta64(1,'m')
         cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")& pd.isnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = \
-            old_div((cost_trip_df[Assignment.SIM_COL_PAX_B_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME]),np.timedelta64(1,'m'))
+             (cost_trip_df[Assignment.SIM_COL_PAX_B_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME])/np.timedelta64(1,'m')
 
         # if in vehicle time is less than 0 then off by 1 day error
         cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "in_vehicle_time_min")&(cost_trip_df["var_value"]<0), "var_value"] = cost_trip_df["var_value"] + (24*60)
@@ -1097,7 +1097,7 @@ class PathSet(object):
         # if there's a board time, wait time = board_time - A time
         #               otherwise, wait time = 0 (for when we split transit links)
         cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")&pd.notnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = \
-            old_div((cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME]),np.timedelta64(1,'m'))
+             (cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME] - cost_trip_df[Assignment.SIM_COL_PAX_A_TIME])/np.timedelta64(1,'m')
         cost_trip_df.loc[(cost_trip_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "wait_time_min")& pd.isnull(cost_trip_df[Assignment.SIM_COL_PAX_BOARD_TIME]), "var_value"] = 0
 
         # which overcap column to use?
@@ -1131,7 +1131,7 @@ class PathSet(object):
 
         ##################### Finally, handle Transfer link costs
         cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
-        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = old_div(cost_transfer_df[Passenger.PF_COL_LINK_TIME],np.timedelta64(1,'m'))
+        cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/np.timedelta64(1,'m')
 
         # any numeric column can be used
         for colname in list(cost_transfer_df.select_dtypes(include=['float64','int64']).columns.values):
@@ -1275,7 +1275,7 @@ class PathSet(object):
             FastTripsLogger.debug("calculate_cost: pathset_paths_df trace\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 
         ###################### logsum and probabilities
-        pathset_paths_df["logsum_component"] = np.exp(old_div((-1.0*pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS]),STOCH_DISPERSION))
+        pathset_paths_df["logsum_component"] = np.exp((-1.0*pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS])/STOCH_DISPERSION)
 
         # sum across all paths
         pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
@@ -1288,7 +1288,7 @@ class PathSet(object):
         pathset_paths_df = pd.merge(left=pathset_paths_df,
                                         right=pathset_logsum_df,
                                         how="left")
-        pathset_paths_df[Assignment.SIM_COL_PAX_PROBABILITY] = old_div(pathset_paths_df["logsum_component"],pathset_paths_df["logsum"])
+        pathset_paths_df[Assignment.SIM_COL_PAX_PROBABILITY] = pathset_paths_df["logsum_component"]/pathset_paths_df["logsum"]
 
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: pathset_paths_df trace\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
@@ -1311,7 +1311,7 @@ class PathSet(object):
         # CHUNKING because we run into memory problems
         # TODO: figure out more sophisticated chunk size
         chunk_list = pathset_links_to_use[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]].drop_duplicates().reset_index(drop=True)
-        num_chunks = old_div(len(chunk_list),PathSet.OVERLAP_CHUNK_SIZE) + 1
+        num_chunks = (len(chunk_list)/PathSet.OVERLAP_CHUNK_SIZE) + 1
         chunk_list["chunk_num"] = np.floor_divide(chunk_list.index, PathSet.OVERLAP_CHUNK_SIZE)
         FastTripsLogger.debug("calculate_overlap() chunk_list size=%d head=\n%s\ntail=\n%s" % (len(chunk_list), chunk_list.head().to_string(), chunk_list.tail().to_string()))
         pathset_links_to_use = pd.merge(left  =pathset_links_to_use,
@@ -1379,14 +1379,14 @@ class PathSet(object):
                             (overlap_df["mode_x"    ]==overlap_df["mode_y"    ])  , "match"] = 1
 
             if PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_COUNT:
-                overlap_df["link_prop_x"] = old_div(1.0,overlap_df["path_count_x"])                         # l_a/L_i
-                overlap_df["pathlen_x_y"] = old_div(overlap_df["path_count_x"],overlap_df["path_count_y"])  # L_i/L_j
+                overlap_df["link_prop_x"] = 1.0/overlap_df["path_count_x"]                                 # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_count_x"]/overlap_df["path_count_y"]          # L_i/L_j
             elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_TIME:
-                overlap_df["link_prop_x"] = old_div(overlap_df["new_linktime_x"],overlap_df["path_time_x"]) # l_a/L_i
-                overlap_df["pathlen_x_y"] = old_div(overlap_df["path_time_x"],overlap_df["path_time_y"])    # L_i/L_j
+                overlap_df["link_prop_x"] = overlap_df["new_linktime_x"]/overlap_df["path_time_x"]         # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_time_x"]/overlap_df["path_time_y"]            # L_i/L_j
             elif PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_DISTANCE:
-                overlap_df["link_prop_x"] = old_div(overlap_df["distance_x"],overlap_df["path_distance_x"]) # l_a/L_i
-                overlap_df["pathlen_x_y"] = old_div(overlap_df["path_distance_x"],overlap_df["path_distance_y"])    # L_i/L_j
+                overlap_df["link_prop_x"] = overlap_df["distance_x"]/overlap_df["path_distance_x"]         # l_a/L_i
+                overlap_df["pathlen_x_y"] = overlap_df["path_distance_x"]/overlap_df["path_distance_y"]    # L_i/L_j
 
             overlap_df["pathlen_x_y_scale"] = overlap_df[["pathlen_x_y"]].pow(PathSet.OVERLAP_SCALE_PARAMETER)  # (L_i/L_j)^gamma
             # zero it out if it's not a match
@@ -1407,7 +1407,7 @@ class PathSet(object):
                                              Passenger.TRIP_LIST_COLUMN_TRACE,
                                              "pathnum_x","linknum_x","link_prop_x"]).aggregate({"pathlen_x_y_scale":"sum"}).reset_index()
             # now pathlen_x_y_scale = SUM_j (L_i/L_j)^gamma x delta_aj
-            overlap_df["PS"] = old_div(overlap_df["link_prop_x"],overlap_df["pathlen_x_y_scale"])  # l_a/L_i * 1/(SUM_j (L_i/L_j)^gamma x delta_aj)
+            overlap_df["PS"] = overlap_df["link_prop_x"]/overlap_df["pathlen_x_y_scale"]  # l_a/L_i * 1/(SUM_j (L_i/L_j)^gamma x delta_aj)
             if len(Assignment.TRACE_IDS) > 0:
                 FastTripsLogger.debug("calculate_overlap() trace overlap_df\n%s" % str(overlap_df.loc[overlap_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 
