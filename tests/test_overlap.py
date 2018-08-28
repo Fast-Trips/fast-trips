@@ -15,13 +15,16 @@ CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
 INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 
 # TEST PARAMETERS
-OVERLAP_VARIABLES = ["None","count","distance","time"]
+OVERLAP_VARIABLES = ["none", "count", "distance", "time"]
 
 @pytest.mark.parametrize("overlap_var", OVERLAP_VARIABLES)
 @pytest.mark.parametrize("split_links", [False, True])
 
 @pytest.mark.travis
 def test_overlap(overlap_var, split_links ):
+
+    if overlap_var == "time" and sys.version_info > (3,0):
+        pytest.xfail("python and pandas updates make time division fail for now Issue #172")
 
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
@@ -40,3 +43,10 @@ def test_overlap(overlap_var, split_links ):
         num_trips        = 5)
 
     assert r["passengers_arrived"] > 0
+
+if __name__ == "__main__":
+    for var in OVERLAP_VARIABLES:
+        print("Running test_overlap.py with variable: %s, NO link split"  % (var))
+        test_overlap(var,False)
+        print("Running test_overlap.py with variable: %s, YES link split"  % (var))
+        test_overlap(var,True)
