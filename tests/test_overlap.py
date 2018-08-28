@@ -15,7 +15,7 @@ CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
 INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 
 # TEST PARAMETERS
-OVERLAP_VARIABLES = ["none", "count", "distance", "time"]
+OVERLAP_VARIABLES = ["None", "count", "distance", "time"]
 
 @pytest.mark.parametrize("overlap_var", OVERLAP_VARIABLES)
 @pytest.mark.parametrize("split_links", [False, True])
