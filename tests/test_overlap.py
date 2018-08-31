@@ -1,4 +1,4 @@
-import os
+import os,sys
 import pytest
 from fasttrips import Run
 
