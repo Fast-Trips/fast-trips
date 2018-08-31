@@ -153,7 +153,11 @@ def run_setup(input_network_dir,
     if "pathfinding_type" in list(kwargs.keys()):
         fasttrips.Assignment.PATHFINDING_TYPE        = kwargs["pathfinding_type"]
 
+    if "learning_convergence" in list(kwargs.keys()):
+        fasttrips.PathSet.LEARN_ROUTES = kwargs["learning_convergence"]
+
     if "max_stop_process_count" in list(kwargs.keys()):
+
         fasttrips.Assignment.STOCH_MAX_STOP_PROCESS_COUNT = kwargs["max_stop_process_count"]
 
     if "debug_output_columns" in list(kwargs.keys()):

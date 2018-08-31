@@ -5,7 +5,7 @@ import pytest
 from fasttrips import Run
 
 # TEST OPTIONS
-test_thetas = [1.0, 0.5, 0.1]
+test_thetas = [1.0, 0.5, 0.2]
 test_size   = 5
 disperson_rate_util_multiplier_factor = 10.0
 

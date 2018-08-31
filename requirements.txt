@@ -3,7 +3,7 @@ configparser
 functools32;python_version<="2.7"
 future
 numpy
-pandas>=0.22
+pandas==0.22
 partridge==0.6.0.dev1
 psutil
 pytest

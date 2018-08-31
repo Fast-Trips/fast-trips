@@ -89,6 +89,11 @@ class PathSet(object):
     #: into A-B-C-D-E for overlap calculations?
     OVERLAP_SPLIT_TRANSIT           = None
 
+    LEARN_ROUTES                    = False
+    LEARN_ROUTES_RATE               = 0.05
+    SUCCESS_FLAG_COLUMN             = 'success_flag'
+    BUMP_FLAG_COLUMN                = 'bump_flag'
+
     #: Allow departures and arrivals before / after preferred time
     ARRIVE_LATE_ALLOWED_MIN         = datetime.timedelta(minutes = 0)
     DEPART_EARLY_ALLOWED_MIN        = datetime.timedelta(minutes = 0)
@@ -1271,6 +1276,13 @@ class PathSet(object):
                                                    Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                    Passenger.TRIP_LIST_COLUMN_TRACE,
                                                    Passenger.PF_COL_PATH_NUM])
+
+        if PathSet.LEARN_ROUTES:
+            #'learn_discount': Exponential decay function
+            pathset_paths_df['learn_discount'] = np.exp(-PathSet.LEARN_ROUTES_RATE * pathset_paths_df[PathSet.SUCCESS_FLAG_COLUMN])
+            pathset_paths_df['orig_sim_cost'] = pathset_paths_df[Assignment.SIM_COL_PAX_COST]
+            pathset_paths_df[Assignment.SIM_COL_PAX_COST] = pathset_paths_df[Assignment.SIM_COL_PAX_COST] * pathset_paths_df['learn_discount']
+
         if len(Assignment.TRACE_IDS) > 0:
             FastTripsLogger.debug("calculate_cost: pathset_paths_df trace\n%s" % str(pathset_paths_df.loc[pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
 

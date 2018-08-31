@@ -1,0 +1,12 @@
+[fasttrips]
+network_build_date            = 06/30/2015
+trace_ids                     = [('tracey','trip_191')]
+number_of_processes           = 1
+debug_output_columns          = True
+max_iterations                = 10
+learning_convergence          = True
+learning_rate                 = 0.01
+
+[pathfinding]
+user_class_function           = generic_user_class
+pathweights_fixed_width       = True

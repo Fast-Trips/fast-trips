@@ -1,7 +1,6 @@
 import os
 import pytest
 
-
 import numpy as np
 import pandas as pd
 
@@ -38,6 +37,10 @@ def test_growth_type_cost_calculation():
         'log_base': [np.nan, np.nan, np.exp(1), np.nan],
         'logistic_max': [np.nan, np.nan, np.nan, 10.1],
         'logistic_mid': [np.nan, np.nan, np.nan, 2.45]
+    }
+
+    compare_dtypes = {
+            'sim_cost': np.float64,
     }
 
     result_set = [94.32, 3.13704, 0.51001, 127.04425]
