@@ -8,7 +8,6 @@ install:
   - sudo apt-get update
   - pip install -r requirements.txt
   - pip install .
-<<<<<<< HEAD
   - pip install sphinx numpydoc sphinx_rtd_theme breathe;
   - sudo apt-get install doxygen
 
@@ -19,19 +18,11 @@ script:
     fi
 
 after_success:
-  - if [ "$TRAVIS_BRANCH" == "develop" ] ;
-    then bin/update0-documentation.sh;
+  - if [ "$TRAVIS_BRANCH" == "develop" ];
+    then bin/update-documentation.sh;
     fi
 
 env:
   global:
    # GH_TOKEN BayAreaMetro/fast-trips public_repo token
   - secure: "ZhM0KwjxqZmGJndxXIoy+8qhbr+IVgGiyqc6itc1+YGlZonkrY0Fjodu+oZalUAtDzuG6gWOQwsPeV013p+867SkY0DsfyaCodjk5B//UQRjjBxFv+g/vxBYnpMrgD4nEqt7FutN7dQN/quWE+FlkfFuMlibmfi5ZFVMLbBaGv8="
-=======
-
-script:
-- if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
-  then travis_wait 70 py.test -v -m travis;
-  else travis_wait 30 py.test -v -m basic;
-  fi
->>>>>>> c3f58b040c26d0f84294ab5e3c9180f64b06819f
