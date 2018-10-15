@@ -1,3 +1,4 @@
+from builtins import zip
 import os
 import pytest
 
@@ -84,7 +85,7 @@ def pathfinder_paths(ft_instance, config_scenario):
 
     path_cols = list(ft.passengers.pathfind_trip_list_df.columns.values)
     for path_tuple in ft.passengers.pathfind_trip_list_df.itertuples(index=False):
-        path_dict = dict(zip(path_cols, path_tuple))
+        path_dict = dict(list(zip(path_cols, path_tuple)))
         trip_list_id = path_dict[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
 
         trip_pathset = PathSet(path_dict)

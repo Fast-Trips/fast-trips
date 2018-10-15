@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys
 import pandas as pd
 
@@ -22,10 +23,10 @@ USAGE = r"""
 
 if __name__ == "__main__":
 
-    print sys.argv
+    print(sys.argv)
 
     if len(sys.argv) != 2:
-        print USAGE
+        print(USAGE)
         sys.exit(2)
 
     INPUT_DIR = sys.argv[1]
@@ -33,13 +34,13 @@ if __name__ == "__main__":
     # read shapes file -- we'll start with this
     shapes_file = os.path.join(INPUT_DIR, "shapes.txt")
     shapes_df = pd.read_csv(shapes_file)
-    print "Read %d lines from %s" % (len(shapes_df), shapes_file)
+    print("Read %d lines from %s" % (len(shapes_df), shapes_file))
     # print shapes_df.head()
 
     # read node coordinates, including tazs
     node_coords_file = os.path.join(INPUT_DIR, "node_coords.csv")
     node_coords_df = pd.read_csv(node_coords_file)
-    print "Read %d lines from %s" % (len(node_coords_df), node_coords_file)
+    print("Read %d lines from %s" % (len(node_coords_df), node_coords_file))
 
     # rename column to match shapes
     node_coords_df.rename(columns={"X":"shape_pt_lon",
@@ -56,7 +57,7 @@ if __name__ == "__main__":
     walk_access_df = pd.read_csv(walk_access_file)
     # we only want taz, stop_id, dist
     walk_access_df = walk_access_df[["taz","stop_id","dist"]]
-    print "Read %d lines from %s" % (len(walk_access_df), walk_access_file)
+    print("Read %d lines from %s" % (len(walk_access_df), walk_access_file))
 
     # make the shape id and melt it for access links
     walk_access_df["shape_id"] = "access " + walk_access_df["taz"].map(str) + " " + walk_access_df["stop_id"].map(str)
@@ -88,10 +89,10 @@ if __name__ == "__main__":
     # print len(access_egress_df)
     # print access_egress_df.head()
 
-    print "Out of %d (non-unique) nodes, %d failed to find coordinates" % (len(access_egress_df), pd.isnull(access_egress_df["shape_pt_lon"]).sum())
+    print("Out of %d (non-unique) nodes, %d failed to find coordinates" % (len(access_egress_df), pd.isnull(access_egress_df["shape_pt_lon"]).sum()))
 
     # append to shapes and save
     shapes_df = pd.concat([shapes_df, access_egress_df])
     outfile = os.path.join(INPUT_DIR, "tableau_map_links.csv")
     shapes_df.to_csv(outfile, index=False, header=True)
-    print "Wrote %d lines to %s" % (len(shapes_df), outfile)
+    print("Wrote %d lines to %s" % (len(shapes_df), outfile))

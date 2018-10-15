@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import object
+
 __copyright__ = "Copyright 2016 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +24,7 @@ from .Passenger import Passenger
 from .Util      import Util
 
 
-class Performance:
+class Performance(object):
     """
     Performance class.  Keeps track of performance information
     (time spent, number of labeling iterations, etc) related to pathfinding
@@ -200,7 +203,7 @@ class Performance:
         Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_PF_FILE), append=append)
 
         # reset dict to blank
-        for key in self.performance_pf_dict.keys():
+        for key in list(self.performance_pf_dict.keys()):
             self.performance_pf_dict[key] = []
 
     def write(self, output_dir):
@@ -212,4 +215,3 @@ class Performance:
         performance_df[Performance.PERFORMANCE_COL_STEP_DURATION] = performance_df[Performance.PERFORMANCE_COL_END_TIME] - performance_df[Performance.PERFORMANCE_COL_START_TIME]
 
         Util.write_dataframe(performance_df, "performance_df", os.path.join(output_dir, Performance.OUTPUT_PERFORMANCE_FILE), append=False)
-

@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from builtins import next
+from builtins import str
+from builtins import range
+from builtins import object
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +32,7 @@ from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
 
 
-class Util:
+class Util(object):
     """
     Util class.
 
@@ -194,14 +201,14 @@ class Util:
         """
         return '%.2f' % (pd.to_datetime(x).hour*60.0 + \
                          pd.to_datetime(x).minute + \
-                         pd.to_datetime(x).second/60.0)
+                         (pd.to_datetime(x).second/60.0))
 
     @staticmethod
     def timedelta_formatter(x):
         """
         Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
         """
-        seconds = x/np.timedelta64(1,'s')
+        seconds = (x/np.timedelta64(1,'s'))
         minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
@@ -282,9 +289,9 @@ class Util:
         header_row = None
         if append and os.path.exists(output_file):
             # get the columns
-            df_file = open(output_file, 'rb')
+            df_file = open(output_file, 'rt')
             df_reader = csv.reader(df_file, delimiter=",")
-            header_row = df_reader.next()
+            header_row = next(df_reader)
             df_file.close()
 
         for col_idx in range(len(df_cols)):
@@ -310,7 +317,7 @@ class Util:
                 if new_colname in df_cols: continue
 
                 # otherwise make the new one and add or replace it
-                df_toprint[new_colname] = df_toprint[old_colname]/units
+                df_toprint[new_colname] = (df_toprint[old_colname]/units)
                 if keep_duration_columns:           # add
                     df_cols.append(new_colname)
                 else:                               # replace
@@ -481,7 +488,7 @@ class Util:
         :param growth_rate: float: Exponetial growth factor
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
-        return (np.power(1.0 + growth_rate, penalty_min) - 1) / np.log(1.0 + growth_rate)
+        return (np.power(1.0 + growth_rate, penalty_min) - 1)/ np.log(1.0 + growth_rate)
 
 
     @staticmethod
@@ -513,8 +520,8 @@ class Util:
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
 
-        max_integral = (max_logit / growth_rate) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
-        min_integral = (max_logit / growth_rate) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
+        max_integral = ((max_logit/ growth_rate)) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
+        min_integral = ((max_logit/ growth_rate)) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
 
         return max_integral - min_integral
 
