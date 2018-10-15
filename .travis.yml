@@ -19,7 +19,7 @@ script:
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "develop" ];
-    then bin/update-documentation.sh;
+    then sh bin/update-documentation.sh;
     fi
 
 env:
