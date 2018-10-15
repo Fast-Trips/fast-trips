@@ -26,32 +26,25 @@
 # Exit on error
 set -e
 
-ACTUAL_TRAVIS_JOB_NUMBER=`echo $TRAVIS_JOB_NUMBER| cut -d'.' -f 2`
+echo "Building docs"
+cd doc
+doxygen doxygen.conf
+sphinx-build -b html source build
 
-if [ "$TRAVIS_REPO_SLUG" == "BayAreaMetro/fast-trips" ] && \
-        [ "$TRAVIS_PULL_REQUEST" == "false" ] && \
-        [ "$ACTUAL_TRAVIS_JOB_NUMBER" == "1" ]; then
+cd ../../
+echo "Setting git attributes"
+git config --global user.email "easall@gmail.com"
+git config --global user.name "Elizabeth Sall"
 
-        echo "Building docs"
-        cd doc
-        doxygen doxygen.conf
-        sphinx-build -b html source build
+echo "Cloning repository"
+git clone --quiet --single-branch --branch=gh-pages https://${GH_TOKEN}@github.com/BayAreaMetro/fast-trips.git  gh-pages > /dev/null 2>&1
 
-        cd ../../
-        echo "Setting git attributes"
-        git config --global user.email "easall@gmail.com"
-        git config --global user.name "Elizabeth Sall"
+cd gh-pages
+rm -rf *
+cp -R ../fast-trips/doc/build/** ./
+touch .nojekyll
+git add -A .
 
-        echo "Cloning repository"
-        git clone --quiet --single-branch --branch=gh-pages https://${GH_TOKEN}@github.com/BayAreaMetro/fast-trips.git  gh-pages > /dev/null 2>&1
-
-        cd gh-pages
-        rm -rf *
-        cp -R ../fast-trips/doc/build/** ./
-        touch .nojekyll
-        git add -A .
-
-        git commit -am "Update documentation after building $TRAVIS_BUILD_NUMBER"
-        echo "Pushing commit"
-        git push -fq origin gh-pages > /dev/null 2>&1
-fi
+git commit -am "Update documentation after building $TRAVIS_BUILD_NUMBER"
+echo "Pushing commit"
+git push -fq origin gh-pages > /dev/null 2>&1
