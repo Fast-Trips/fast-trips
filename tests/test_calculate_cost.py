@@ -55,5 +55,5 @@ if __name__ == '__main__':
     import traceback
     try:
         test_growth_type_cost_calculation()
-    except Exception, err:
+    except Exception as err:
         traceback.print_exc()

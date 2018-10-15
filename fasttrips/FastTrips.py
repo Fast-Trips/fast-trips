@@ -1,3 +1,6 @@
+from __future__ import print_function
+from builtins import str
+from builtins import object
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +32,7 @@ from .Trip        import Trip
 from .Util        import Util
 
 
-class FastTrips:
+class FastTrips(object):
     """
     This is the model itself.  Should be simple and run pieces and store the big data structures.
     """
@@ -174,7 +177,7 @@ class FastTrips:
             r = Assignment.assign_paths(output_dir, self)
 
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print(("Unexpected error:", sys.exc_info()[0]))
             FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))
             raise
 

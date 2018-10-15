@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import str
+from builtins import object
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
