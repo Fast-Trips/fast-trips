@@ -18,7 +18,7 @@ script:
     fi
 
 after_success:
-  - if "$TRAVIS_BRANCH" == "develop";
+  - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
     then sh bin/update-documentation.sh;
     fi
 
