@@ -1,5 +1,5 @@
-fasttrips\.PathSet
-==================
+fasttrips.PathSet
+=================
 
 .. currentmodule:: fasttrips
 
@@ -30,5 +30,83 @@ fasttrips\.PathSet
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PathSet.ARRIVE_LATE_ALLOWED_MIN
+      ~PathSet.BUMP_EXPERIENCED_COST
+      ~PathSet.BUMP_FLAG_COLUMN
+      ~PathSet.CONFIGURED_FUNCTIONS
+      ~PathSet.CONSTANT_GROWTH_MODEL
+      ~PathSet.DEPART_EARLY_ALLOWED_MIN
+      ~PathSet.DIR_INBOUND
+      ~PathSet.DIR_OUTBOUND
+      ~PathSet.EXP_GROWTH_MODEL
+      ~PathSet.HUGE_COST
+      ~PathSet.LEARN_ROUTES
+      ~PathSet.LEARN_ROUTES_RATE
+      ~PathSet.LOGARITHMIC_GROWTH_MODEL
+      ~PathSet.LOGISTIC_GROWTH_MODEL
+      ~PathSet.MIN_TRANSFER_PENALTY
+      ~PathSet.OUTPUT_WEIGHTS_FILE
+      ~PathSet.OVERLAP_CHUNK_SIZE
+      ~PathSet.OVERLAP_COUNT
+      ~PathSet.OVERLAP_DISTANCE
+      ~PathSet.OVERLAP_NONE
+      ~PathSet.OVERLAP_SCALE_PARAMETER
+      ~PathSet.OVERLAP_SPLIT_TRANSIT
+      ~PathSet.OVERLAP_TIME
+      ~PathSet.OVERLAP_VARIABLE
+      ~PathSet.OVERLAP_VARIABLE_OPTIONS
+      ~PathSet.PATHS_OUTPUT_FILE
+      ~PathSet.PATH_KEY_COST
+      ~PathSet.PATH_KEY_FARE
+      ~PathSet.PATH_KEY_INIT_COST
+      ~PathSet.PATH_KEY_INIT_FARE
+      ~PathSet.PATH_KEY_PROBABILITY
+      ~PathSet.PATH_KEY_STATES
+      ~PathSet.PATH_TIMES_OUTPUT_FILE
+      ~PathSet.PENALTY_GROWTH_MODELS
+      ~PathSet.STATE_IDX_ARRDEP
+      ~PathSet.STATE_IDX_COST
+      ~PathSet.STATE_IDX_DEPARR
+      ~PathSet.STATE_IDX_DEPARRMODE
+      ~PathSet.STATE_IDX_LABEL
+      ~PathSet.STATE_IDX_LINKCOST
+      ~PathSet.STATE_IDX_LINKDIST
+      ~PathSet.STATE_IDX_LINKFARE
+      ~PathSet.STATE_IDX_LINKTIME
+      ~PathSet.STATE_IDX_SEQ
+      ~PathSet.STATE_IDX_SEQ_SUCCPRED
+      ~PathSet.STATE_IDX_SUCCPRED
+      ~PathSet.STATE_IDX_TRIP
+      ~PathSet.STATE_MODE_ACCESS
+      ~PathSet.STATE_MODE_EGRESS
+      ~PathSet.STATE_MODE_TRANSFER
+      ~PathSet.STATE_MODE_TRIP
+      ~PathSet.SUCCESS_FLAG_COLUMN
+      ~PathSet.USER_CLASS_FUNCTION
+      ~PathSet.WEIGHTS_COLUMN_DEMAND_MODE
+      ~PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE
+      ~PathSet.WEIGHTS_COLUMN_PURPOSE
+      ~PathSet.WEIGHTS_COLUMN_SUPPLY_MODE
+      ~PathSet.WEIGHTS_COLUMN_SUPPLY_MODE_NUM
+      ~PathSet.WEIGHTS_COLUMN_USER_CLASS
+      ~PathSet.WEIGHTS_COLUMN_WEIGHT_NAME
+      ~PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE
+      ~PathSet.WEIGHTS_DF
+      ~PathSet.WEIGHTS_FILE
+      ~PathSet.WEIGHTS_FIXED_WIDTH
+      ~PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX
+      ~PathSet.WEIGHTS_GROWTH_LOGISTIC_MID
+      ~PathSet.WEIGHTS_GROWTH_LOG_BASE
+      ~PathSet.WEIGHTS_GROWTH_TYPE
+      ~PathSet.WEIGHT_NAME_ARRIVE_EARLY_MIN
+      ~PathSet.WEIGHT_NAME_ARRIVE_LATE_MIN
+      ~PathSet.WEIGHT_NAME_DEPART_EARLY_MIN
+      ~PathSet.WEIGHT_NAME_DEPART_LATE_MIN
+      ~PathSet.WEIGHT_NAME_VALID_NAMES
    
    

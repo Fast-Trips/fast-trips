@@ -24,28 +24,20 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../index.html"/>
-        <link rel="up" title="Fast-Trips Classes and Functions" href="../api.html"/>
-        <link rel="next" title="fasttrips.FastTripsLogger" href="fasttrips.FastTripsLogger.html"/>
-        <link rel="prev" title="fasttrips.Error" href="fasttrips.Error.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="fasttrips.FastTripsLogger" href="fasttrips.FastTripsLogger.html" />
+    <link rel="prev" title="fasttrips.Error" href="fasttrips.Error.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -127,7 +119,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">fasttrips</a>
@@ -135,9 +127,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -186,7 +179,8 @@
 <dl class="class">
 <dt id="fasttrips.FastTrips">
 <em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">FastTrips</code><span class="sig-paren">(</span><em>input_network_archive</em>, <em>input_demand_dir</em>, <em>input_weights</em>, <em>run_config</em>, <em>output_dir</em>, <em>input_functions=None</em>, <em>logname_append=''</em>, <em>appendLog=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is the model itself.  Should be simple and run pieces and store the big data structures.</p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>This is the model itself.  Should be simple and run pieces and store the big data structures.</p>
 <dl class="method">
 <dt id="fasttrips.FastTrips.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>input_network_archive</em>, <em>input_demand_dir</em>, <em>input_weights</em>, <em>run_config</em>, <em>output_dir</em>, <em>input_functions=None</em>, <em>logname_append=''</em>, <em>appendLog=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/FastTrips.html#FastTrips.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.FastTrips.__init__" title="Permalink to this definition">¶</a></dt>
@@ -198,12 +192,12 @@ Writes output files to <em>output_dir</em>, including log files.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>input_network_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Location of network csv files to read</li>
-<li><strong>input_demand_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Location of demand csv files to read</li>
-<li><strong>input_weights</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Location of pathweight file</li>
-<li><strong>run_config</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Location of run configuraiton file.</li>
-<li><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Location to write output and log files.</li>
-<li><strong>logname_append</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Modifier for info and debug log filenames.  So workers can write their own logs.</li>
+<li><strong>input_network_dir</strong> (<em>string</em>) – Location of network csv files to read</li>
+<li><strong>input_demand_dir</strong> (<em>string</em>) – Location of demand csv files to read</li>
+<li><strong>input_weights</strong> (<em>string</em>) – Location of pathweight file</li>
+<li><strong>run_config</strong> (<em>string</em>) – Location of run configuraiton file.</li>
+<li><strong>output_dir</strong> (<em>string</em>) – Location to write output and log files.</li>
+<li><strong>logname_append</strong> (<em>string</em>) – Modifier for info and debug log filenames.  So workers can write their own logs.</li>
 <li><strong>appendLog</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Append to info and debug logs?  When FastTrips assignment iterations (to
 handle capacity bumps), we’d like to append rather than overwrite.</li>
 </ul>
@@ -220,17 +214,32 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(input_network_archive,&nbsp;…[,&nbsp;…])</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code>(input_network_archive,&nbsp;…[,&nbsp;…])</td>
 <td>Constructor.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">read_configuration</span></code>()</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_configuration</span></code>()</td>
 <td>Read the fast-trips assignment and path-finding configuration</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">read_input_files</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_input_files</span></code>()</td>
 <td>Reads in the input network and demand files and initializes the relevant data structures.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">run_assignment</span></code>(output_dir)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_assignment</span></code>(output_dir)</td>
 <td></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEBUG_LOG</span></code></td>
+<td>Debug log filename.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">INFO_LOG</span></code></td>
+<td>Info log filename.</td>
 </tr>
 </tbody>
 </table>
@@ -266,31 +275,31 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.passengers">
 <code class="descname">passengers</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.passengers" title="Permalink to this definition">¶</a></dt>
-<dd><p><code class="xref py py-class docutils literal"><span class="pre">collections.OrdederedDict</span></code> of <a class="reference internal" href="fasttrips.Passenger.html#fasttrips.Passenger" title="fasttrips.Passenger"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Passenger</span></code></a> instances indexed by passenger’s path ID</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.OrdederedDict</span></code> of <a class="reference internal" href="fasttrips.Passenger.html#fasttrips.Passenger" title="fasttrips.Passenger"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Passenger</span></code></a> instances indexed by passenger’s path ID</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.routes">
 <code class="descname">routes</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.routes" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal"><span class="pre">fasttrips.Route.route_id</span></code> key and <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route" title="fasttrips.Route"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Route</span></code></a> value</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Route.route_id</span></code> key and <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route" title="fasttrips.Route"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Route</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.stops">
 <code class="descname">stops</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.stops" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal"><span class="pre">fasttrips.Stop.stop_id</span></code> key and <a class="reference internal" href="fasttrips.Stop.html#fasttrips.Stop" title="fasttrips.Stop"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Stop</span></code></a> value</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Stop.stop_id</span></code> key and <a class="reference internal" href="fasttrips.Stop.html#fasttrips.Stop" title="fasttrips.Stop"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Stop</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.tazs">
 <code class="descname">tazs</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.tazs" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal"><span class="pre">fasttrips.TAZ.taz_id</span></code> key and <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.TAZ</span></code></a> value</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.TAZ.taz_id</span></code> key and <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.TAZ</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.trips">
 <code class="descname">trips</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.trips" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal"><span class="pre">fasttrips.Trip.trip_id</span></code> key and <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><code class="xref py py-class docutils literal"><span class="pre">fasttrips.Trip</span></code></a> value</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Trip.trip_id</span></code> key and <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Trip</span></code></a> value</p>
 </dd></dl>
 
 </dd></dl>
@@ -299,9 +308,7 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -319,11 +326,11 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -338,35 +345,24 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

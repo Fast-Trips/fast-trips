@@ -1,5 +1,5 @@
-fasttrips\.Run
-==============
+fasttrips.Run
+=============
 
 .. automodule:: fasttrips.Run
 

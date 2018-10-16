@@ -24,26 +24,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../genindex.html"/>
-        <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -105,7 +97,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">fasttrips</a>
@@ -113,9 +105,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -145,8 +138,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -158,7 +149,11 @@
            <div itemprop="articleBody">
             
   <h1>Source code for fasttrips.Stop</h1><div class="highlight"><pre>
-<span></span><span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015 Contributing Entities&quot;</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015 Contributing Entities&quot;</span>
 <span class="n">__license__</span>   <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="s2">    you may not use this file except in compliance with the License.</span>
@@ -181,12 +176,12 @@
 <span class="kn">from</span> <span class="nn">.Util</span> <span class="k">import</span> <span class="n">Util</span>
 
 
-<div class="viewcode-block" id="Stop"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop">[docs]</a><span class="k">class</span> <span class="nc">Stop</span><span class="p">:</span>
+<div class="viewcode-block" id="Stop"><a class="viewcode-back" href="../../_generated/fasttrips.Stop.html#fasttrips.Stop">[docs]</a><span class="k">class</span> <span class="nc">Stop</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stop class.</span>
-<span class="sd">    </span>
+
 <span class="sd">    One instance represents all of the Stops as well as their transfer links.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Stores stop information in :py:attr:`Stop.stops_df`, an instance of :py:class:`pandas.DataFrame`,</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -463,7 +458,7 @@
 <span class="sd">        :param stop_times_df: The :py:attr:`Trip.stop_times_df` table</span>
 <span class="sd">        :type stop_times_df: a :py:class:`pandas.DataFrame` instance</span>
 
-<span class="sd">        &quot;&quot;&quot;</span> 
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trip_times_df</span> <span class="o">=</span> <span class="n">stop_times_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trip_times_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trip_times_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_SEQUENCE</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -486,12 +481,12 @@
 <span class="sd">        :type time_window: a :py:class:`datetime.timedelta` instance</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">latest_arrival_min</span> <span class="o">=</span> <span class="mf">60.0</span><span class="o">*</span><span class="n">latest_arrival</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="n">latest_arrival</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="n">latest_arrival</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span>
+        <span class="n">latest_arrival_min</span> <span class="o">=</span> <span class="mf">60.0</span><span class="o">*</span><span class="n">latest_arrival</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="n">latest_arrival</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="p">(</span><span class="n">latest_arrival</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)</span>
         <span class="c1"># filter to stop</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trip_times_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">stop_id</span><span class="p">]</span>
         <span class="c1"># arrive before latest arrival and arrive within time window</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_MIN</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">latest_arrival_min</span><span class="p">)</span><span class="o">&amp;</span>
-                    <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_MIN</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">latest_arrival_min</span> <span class="o">-</span> <span class="n">time_window</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span><span class="p">))]</span>
+                    <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME_MIN</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">latest_arrival_min</span> <span class="o">-</span> <span class="p">(</span><span class="n">time_window</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)))]</span>
 
         <span class="n">to_return</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]]</span>
@@ -512,12 +507,12 @@
 <span class="sd">        :type time_window: a :py:class:`datetime.timedelta` instance</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">earliest_departure_min</span> <span class="o">=</span> <span class="mf">60.0</span><span class="o">*</span><span class="n">earliest_departure</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="n">earliest_departure</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="n">earliest_departure</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span>
+        <span class="n">earliest_departure_min</span> <span class="o">=</span> <span class="mf">60.0</span><span class="o">*</span><span class="n">earliest_departure</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="n">earliest_departure</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> <span class="p">(</span><span class="n">earliest_departure</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)</span>
         <span class="c1"># filter to stop</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trip_times_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">stop_id</span><span class="p">]</span>
         <span class="c1"># depart after the earliest departure</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_MIN</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">earliest_departure_min</span><span class="p">)</span><span class="o">&amp;</span>
-                    <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_MIN</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">earliest_departure_min</span> <span class="o">+</span> <span class="n">time_window</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span><span class="p">))]</span>
+                    <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME_MIN</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">earliest_departure_min</span> <span class="o">+</span> <span class="p">(</span><span class="n">time_window</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)))]</span>
 
         <span class="n">to_return</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">]]</span>
@@ -551,9 +546,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -562,11 +555,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -581,35 +574,24 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

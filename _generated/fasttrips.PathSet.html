@@ -24,28 +24,20 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../index.html"/>
-        <link rel="up" title="Fast-Trips Classes and Functions" href="../api.html"/>
-        <link rel="next" title="fasttrips.Performance" href="fasttrips.Performance.html"/>
-        <link rel="prev" title="fasttrips.Passenger" href="fasttrips.Passenger.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="fasttrips.Performance" href="fasttrips.Performance.html" />
+    <link rel="prev" title="fasttrips.Passenger" href="fasttrips.Passenger.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -127,7 +119,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">fasttrips</a>
@@ -135,9 +127,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -186,7 +179,8 @@
 <dl class="class">
 <dt id="fasttrips.PathSet">
 <em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">PathSet</code><span class="sig-paren">(</span><em>trip_list_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a path set for a passenger from an origin <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal"><span class="pre">TAZ</span></code></a> to a destination <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal"><span class="pre">TAZ</span></code></a>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents a path set for a passenger from an origin <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">TAZ</span></code></a> to a destination <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">TAZ</span></code></a>
 through a set of stops.</p>
 <dl class="method">
 <dt id="fasttrips.PathSet.__init__">
@@ -201,44 +195,272 @@ through a set of stops.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>(trip_list_dict)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code>(trip_list_dict)</td>
 <td>Constructor from dictionary mapping attribute to value.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_cost</span></code>(STOCH_DISPERSION,&nbsp;…[,&nbsp;…])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_cost</span></code>(STOCH_DISPERSION,&nbsp;…[,&nbsp;…])</td>
 <td>This is equivalent to the C++ Path::calculateCost() method.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">calculate_overlap</span></code>(pathset_links_to_use)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_overlap</span></code>(pathset_links_to_use)</td>
 <td>Given a set of pathset links, returns a the results of overlap calculations.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">goes_somewhere</span></code>()</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">goes_somewhere</span></code>()</td>
 <td>Does this path go somewhere?  Does the destination differ from the origin?</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">num_paths</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_paths</span></code>()</td>
 <td>Number of paths in the PathSet</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">path_found</span></code>()</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">path_found</span></code>()</td>
 <td>Was a a transit path found from the origin to the destination with the constraints?</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">reset</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</td>
 <td>Delete my states, something went wrong and it won’t work out.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">set_user_class</span></code>(trip_list_df,&nbsp;new_colname)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_user_class</span></code>(trip_list_df,&nbsp;new_colname)</td>
 <td>Adds a column called user_class by applying the configured user class function.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">split_transit_links</span></code>(pathset_links_df,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_transit_links</span></code>(pathset_links_df,&nbsp;…)</td>
 <td>Splits the transit links to their component links and returns.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">verify_weight_config</span></code>(modes_df,&nbsp;output_dir,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_weight_config</span></code>(modes_df,&nbsp;output_dir,&nbsp;…)</td>
 <td>Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">verify_weights</span></code>(weights)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_weights</span></code>(weights)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
 <td>Write the assigned path times to the given output file.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
 <td>Write the assigned paths to the given output file.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">ARRIVE_LATE_ALLOWED_MIN</span></code></td>
+<td>Allow departures and arrivals before / after preferred time</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">BUMP_EXPERIENCED_COST</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">BUMP_FLAG_COLUMN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">CONFIGURED_FUNCTIONS</span></code></td>
+<td>Configured functions, indexed by name</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">CONSTANT_GROWTH_MODEL</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEPART_EARLY_ALLOWED_MIN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DIR_INBOUND</span></code></td>
+<td>Trips inbound to home have preferred departure times</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DIR_OUTBOUND</span></code></td>
+<td>Trips outbound from home have preferred arrival times</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXP_GROWTH_MODEL</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">HUGE_COST</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">LEARN_ROUTES</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">LEARN_ROUTES_RATE</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOGARITHMIC_GROWTH_MODEL</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOGISTIC_GROWTH_MODEL</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">MIN_TRANSFER_PENALTY</span></code></td>
+<td>Configuration: Minimum transfer penalty.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OUTPUT_WEIGHTS_FILE</span></code></td>
+<td>File with weights for c++</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_CHUNK_SIZE</span></code></td>
+<td>Overlap chunk size.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_COUNT</span></code></td>
+<td>Overlap variable option: count.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_DISTANCE</span></code></td>
+<td>Overlap variable option: distance.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_NONE</span></code></td>
+<td>Overlap variable option: None.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_SCALE_PARAMETER</span></code></td>
+<td>Configuration: Overlap scale parameter.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_SPLIT_TRANSIT</span></code></td>
+<td>Overlap option: Split transit leg into component parts?  e.g.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_TIME</span></code></td>
+<td>Overlap variable option: time.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_VARIABLE</span></code></td>
+<td>Configuration: Overlap variable.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OVERLAP_VARIABLE_OPTIONS</span></code></td>
+<td>Valid values for OVERLAP_VARAIBLE</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATHS_OUTPUT_FILE</span></code></td>
+<td>Paths output file</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_KEY_COST</span></code></td>
+<td>path cost according to pathfinder</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_KEY_FARE</span></code></td>
+<td>path fare according to pathfinder</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_KEY_INIT_COST</span></code></td>
+<td>initial cost (in pathfinding, before path was finalized)</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_KEY_INIT_FARE</span></code></td>
+<td>initial fare (in pathfinding, before path was finalized)</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_KEY_PROBABILITY</span></code></td>
+<td>path probability according to pathfinder</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_KEY_STATES</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PATH_TIMES_OUTPUT_FILE</span></code></td>
+<td>Path times output file</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PENALTY_GROWTH_MODELS</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_ARRDEP</span></code></td>
+<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_COST</span></code></td>
+<td>cost float, for hyperpath/stochastic assignment</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_DEPARR</span></code></td>
+<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_DEPARRMODE</span></code></td>
+<td>mode id</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LABEL</span></code></td>
+<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LINKCOST</span></code></td>
+<td>link generalized cost, float for hyperpath/stochastic,</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LINKDIST</span></code></td>
+<td>link distance, float</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LINKFARE</span></code></td>
+<td>fare cost, float</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LINKTIME</span></code></td>
+<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_SEQ</span></code></td>
+<td>sequence (for trip)</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_SEQ_SUCCPRED</span></code></td>
+<td>sequence for successor/predecessor</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_SUCCPRED</span></code></td>
+<td>stop identifier or TAZ identifier</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_TRIP</span></code></td>
+<td>trip id</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_MODE_ACCESS</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_MODE_EGRESS</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_MODE_TRANSFER</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_MODE_TRIP</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">SUCCESS_FLAG_COLUMN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">USER_CLASS_FUNCTION</span></code></td>
+<td>Path configuration: Name of the function that defines user class</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_DEMAND_MODE</span></code></td>
+<td>Weights column: Demand Mode Type</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span></code></td>
+<td>Weights column: Demand Mode Type</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_PURPOSE</span></code></td>
+<td>Weights column: Purpose</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_SUPPLY_MODE</span></code></td>
+<td>Weights column: Supply Mode</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</span></code></td>
+<td>Weights column: Supply Mode number</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_USER_CLASS</span></code></td>
+<td>Weights column: User Class</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_WEIGHT_NAME</span></code></td>
+<td>Weights column: Weight Name</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_COLUMN_WEIGHT_VALUE</span></code></td>
+<td>Weights column: Weight Value</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_DF</span></code></td>
+<td>Path weights</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_FILE</span></code></td>
+<td>File with weights file.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_FIXED_WIDTH</span></code></td>
+<td>Read weights file as fixed-width format.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_GROWTH_LOGISTIC_MAX</span></code></td>
+<td>Weights column: Max value for logistic growth function</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_GROWTH_LOGISTIC_MID</span></code></td>
+<td>Weights column: Midpoint value for logistic growth function</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_GROWTH_LOG_BASE</span></code></td>
+<td>Weights column: Log Base for logarithmic growth function</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHTS_GROWTH_TYPE</span></code></td>
+<td>Weights column: Growth Type</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHT_NAME_ARRIVE_EARLY_MIN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHT_NAME_ARRIVE_LATE_MIN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHT_NAME_DEPART_EARLY_MIN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHT_NAME_DEPART_LATE_MIN</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WEIGHT_NAME_VALID_NAMES</span></code></td>
+<td></td>
 </tr>
 </tbody>
 </table>
@@ -326,8 +548,8 @@ to enforce it.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger path links</li>
-<li><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Output directory</li>
+<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger path links</li>
+<li><strong>output_dir</strong> (<em>string</em>) – Output directory</li>
 </ul>
 </td>
 </tr>
@@ -344,8 +566,8 @@ to enforce it.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger paths assignment results</li>
-<li><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) – Output directory</li>
+<li><strong>passengers_df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> instance) – Passenger paths assignment results</li>
+<li><strong>output_dir</strong> (<em>string</em>) – Output directory</li>
 </ul>
 </td>
 </tr>
@@ -362,6 +584,11 @@ to enforce it.</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.BUMP_EXPERIENCED_COST">
 <code class="descname">BUMP_EXPERIENCED_COST</code><em class="property"> = 999999</em><a class="headerlink" href="#fasttrips.PathSet.BUMP_EXPERIENCED_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.BUMP_FLAG_COLUMN">
+<code class="descname">BUMP_FLAG_COLUMN</code><em class="property"> = 'bump_flag'</em><a class="headerlink" href="#fasttrips.PathSet.BUMP_FLAG_COLUMN" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -400,6 +627,16 @@ to enforce it.</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.HUGE_COST">
 <code class="descname">HUGE_COST</code><em class="property"> = 9999</em><a class="headerlink" href="#fasttrips.PathSet.HUGE_COST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.LEARN_ROUTES">
+<code class="descname">LEARN_ROUTES</code><em class="property"> = False</em><a class="headerlink" href="#fasttrips.PathSet.LEARN_ROUTES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.LEARN_ROUTES_RATE">
+<code class="descname">LEARN_ROUTES_RATE</code><em class="property"> = 0.05</em><a class="headerlink" href="#fasttrips.PathSet.LEARN_ROUTES_RATE" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -536,7 +773,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_ARRDEP">
 <code class="descname">STATE_IDX_ARRDEP</code><em class="property"> = 12</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_ARRDEP" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Arrival if outbound/backwards, departure if inbound/forwards.</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance. Arrival if outbound/backwards, departure if inbound/forwards.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -548,7 +785,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_DEPARR">
 <code class="descname">STATE_IDX_DEPARR</code><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_DEPARR" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.datetime</span></code></a> instance. Departure if outbound/backwards, arrival if inbound/forwards.</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance. Departure if outbound/backwards, arrival if inbound/forwards.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -560,7 +797,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_LABEL">
 <code class="descname">STATE_IDX_LABEL</code><em class="property"> = 0</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_LABEL" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -584,7 +821,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_LINKTIME">
 <code class="descname">STATE_IDX_LINKTIME</code><em class="property"> = 7</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_LINKTIME" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">datetime.timedelta</span></code></a> instance</p>
+<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -629,6 +866,11 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_MODE_TRIP">
 <code class="descname">STATE_MODE_TRIP</code><em class="property"> = 'transit'</em><a class="headerlink" href="#fasttrips.PathSet.STATE_MODE_TRIP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="fasttrips.PathSet.SUCCESS_FLAG_COLUMN">
+<code class="descname">SUCCESS_FLAG_COLUMN</code><em class="property"> = 'success_flag'</em><a class="headerlink" href="#fasttrips.PathSet.SUCCESS_FLAG_COLUMN" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -764,9 +1006,7 @@ into A-B-C-D-E for overlap calculations?</p>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -784,11 +1024,11 @@ into A-B-C-D-E for overlap calculations?</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -803,35 +1043,24 @@ into A-B-C-D-E for overlap calculations?</p>
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

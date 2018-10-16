@@ -1,5 +1,5 @@
-fasttrips\.Util
-===============
+fasttrips.Util
+==============
 
 .. currentmodule:: fasttrips
 
@@ -38,5 +38,13 @@ fasttrips\.Util
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Util.DROP_DEBUG_COLUMNS
+      ~Util.DROP_PATHFINDING_COLUMNS
+      ~Util.TIMEDELTA_COLUMNS_TO_UNITS
    
    

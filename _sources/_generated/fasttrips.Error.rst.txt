@@ -1,5 +1,5 @@
-fasttrips\.Error
-================
+fasttrips.Error
+===============
 
 .. currentmodule:: fasttrips
 

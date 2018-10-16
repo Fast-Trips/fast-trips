@@ -25,25 +25,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="#"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="index.html"/> 
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -105,7 +98,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">fasttrips</a>
@@ -113,9 +106,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -206,6 +200,8 @@
 </li>
         <li><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.__init__">(fasttrips.Trip method)</a>
 </li>
+        <li><a href="_generated/fasttrips.Util.html#fasttrips.Util.__init__">(fasttrips.Util method)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -289,9 +285,11 @@
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_BUFFER">BUMP_BUFFER (fasttrips.Assignment attribute)</a>
 </li>
+      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.BUMP_EXPERIENCED_COST">BUMP_EXPERIENCED_COST (fasttrips.PathSet attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.BUMP_EXPERIENCED_COST">BUMP_EXPERIENCED_COST (fasttrips.PathSet attribute)</a>
+      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.BUMP_FLAG_COLUMN">BUMP_FLAG_COLUMN (fasttrips.PathSet attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.BUMP_ONE_AT_A_TIME">BUMP_ONE_AT_A_TIME (fasttrips.Assignment attribute)</a>
 </li>
@@ -321,13 +319,15 @@
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.choose_paths_without_simulation">choose_paths_without_simulation() (fasttrips.Assignment static method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_CATEGORIES">CHOSEN_CATEGORIES (fasttrips.Assignment attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_NOT_CHOSEN_YET">CHOSEN_NOT_CHOSEN_YET (fasttrips.Assignment attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CHOSEN_REJECTED">CHOSEN_REJECTED (fasttrips.Assignment attribute)</a>
+</li>
+      <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.compare_choices">compare_choices() (fasttrips.Assignment static method)</a>
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CONFIGURATION_FILE">CONFIGURATION_FILE (fasttrips.Assignment attribute)</a>
 </li>
@@ -338,6 +338,8 @@
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.CONFIGURED_FUNCTIONS">CONFIGURED_FUNCTIONS (fasttrips.PathSet attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.CONSTANT_GROWTH_MODEL">CONSTANT_GROWTH_MODEL (fasttrips.PathSet attribute)</a>
+</li>
+      <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CONVERGENCE_GAP">CONVERGENCE_GAP (fasttrips.Assignment attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.CREATE_SKIMS">CREATE_SKIMS (fasttrips.Assignment attribute)</a>
 </li>
@@ -519,7 +521,7 @@
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.FARE_ZONE_SYMMETRY">FARE_ZONE_SYMMETRY (fasttrips.Assignment attribute)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv29fasttrips">fasttrips (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv39fasttrips">fasttrips (C++ type)</a>
 </li>
       <li><a href="_generated/fasttrips.FastTrips.html#fasttrips.FastTrips">FastTrips (class in fasttrips)</a>
 </li>
@@ -527,707 +529,707 @@
 </li>
       <li><a href="_generated/fasttrips.Run.html#module-fasttrips.Run">fasttrips.Run (module)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20AccessEgressLinkAttrE">fasttrips::AccessEgressLinkAttr (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20AccessEgressLinkAttrE">fasttrips::AccessEgressLinkAttr (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips23AccessEgressLinkCompareE">fasttrips::AccessEgressLinkCompare (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips23AccessEgressLinkCompareE">fasttrips::AccessEgressLinkCompare (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips23AccessEgressLinkCompareclERK19AccessEgressLinkKeyRK19AccessEgressLinkKey">fasttrips::AccessEgressLinkCompare::operator() (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips23AccessEgressLinkCompareclERK19AccessEgressLinkKeyRK19AccessEgressLinkKey">fasttrips::AccessEgressLinkCompare::operator() (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKeyE">fasttrips::AccessEgressLinkKey (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKeyE">fasttrips::AccessEgressLinkKey (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey19AccessEgressLinkKeyEiiidd">fasttrips::AccessEgressLinkKey::AccessEgressLinkKey (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey19AccessEgressLinkKeyEv">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey19AccessEgressLinkKeyEiiidd">fasttrips::AccessEgressLinkKey::AccessEgressLinkKey (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey19AccessEgressLinkKeyEv">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey9end_time_E">fasttrips::AccessEgressLinkKey::end_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey9end_time_E">fasttrips::AccessEgressLinkKey::end_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey11start_time_E">fasttrips::AccessEgressLinkKey::start_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey11start_time_E">fasttrips::AccessEgressLinkKey::start_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey8stop_id_E">fasttrips::AccessEgressLinkKey::stop_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey8stop_id_E">fasttrips::AccessEgressLinkKey::stop_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey16supply_mode_num_E">fasttrips::AccessEgressLinkKey::supply_mode_num_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey16supply_mode_num_E">fasttrips::AccessEgressLinkKey::supply_mode_num_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19AccessEgressLinkKey7taz_id_E">fasttrips::AccessEgressLinkKey::taz_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19AccessEgressLinkKey7taz_id_E">fasttrips::AccessEgressLinkKey::taz_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinksE">fasttrips::AccessEgressLinks (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinksE">fasttrips::AccessEgressLinks (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks17AccessEgressLinksEv">fasttrips::AccessEgressLinks::AccessEgressLinks (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks17AccessEgressLinksEv">fasttrips::AccessEgressLinks::AccessEgressLinks (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks5clearEv">fasttrips::AccessEgressLinks::clear (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks5clearEv">fasttrips::AccessEgressLinks::clear (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips17AccessEgressLinks19getAccessAttributesEiiid">fasttrips::AccessEgressLinks::getAccessAttributes (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips17AccessEgressLinks19getAccessAttributesEiiid">fasttrips::AccessEgressLinks::getAccessAttributes (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips17AccessEgressLinks14hasLinksForTazEi">fasttrips::AccessEgressLinks::hasLinksForTaz (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips17AccessEgressLinks14hasLinksForTazEi">fasttrips::AccessEgressLinks::hasLinksForTaz (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips17AccessEgressLinks11lower_boundEii">fasttrips::AccessEgressLinks::lower_bound (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips17AccessEgressLinks11lower_boundEiii">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips17AccessEgressLinks11lower_boundEii">fasttrips::AccessEgressLinks::lower_bound (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips17AccessEgressLinks11lower_boundEiii">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks4map_E">fasttrips::AccessEgressLinks::map_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks4map_E">fasttrips::AccessEgressLinks::map_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks9readLinksERNSt8ifstreamEb">fasttrips::AccessEgressLinks::readLinks (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks9readLinksERNSt8ifstreamEb">fasttrips::AccessEgressLinks::readLinks (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks12stop_id_max_E">fasttrips::AccessEgressLinks::stop_id_max_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks12stop_id_max_E">fasttrips::AccessEgressLinks::stop_id_max_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks12stop_id_min_E">fasttrips::AccessEgressLinks::stop_id_min_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks12stop_id_min_E">fasttrips::AccessEgressLinks::stop_id_min_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks20supply_mode_num_max_E">fasttrips::AccessEgressLinks::supply_mode_num_max_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks20supply_mode_num_max_E">fasttrips::AccessEgressLinks::supply_mode_num_max_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinks20supply_mode_num_min_E">fasttrips::AccessEgressLinks::supply_mode_num_min_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinks20supply_mode_num_min_E">fasttrips::AccessEgressLinks::supply_mode_num_min_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips17AccessEgressLinks11upper_boundEii">fasttrips::AccessEgressLinks::upper_bound (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips17AccessEgressLinks11upper_boundEiii">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips17AccessEgressLinks11upper_boundEii">fasttrips::AccessEgressLinks::upper_bound (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips17AccessEgressLinks11upper_boundEiii">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17AccessEgressLinksD0Ev">fasttrips::AccessEgressLinks::~AccessEgressLinks (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17AccessEgressLinksD0Ev">fasttrips::AccessEgressLinks::~AccessEgressLinks (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10AttributesE">fasttrips::Attributes (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10AttributesE">fasttrips::Attributes (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15CostToStopStateE">fasttrips::CostToStopState (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15CostToStopStateE">fasttrips::CostToStopState (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14DemandModeTypeE">fasttrips::DemandModeType (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14DemandModeTypeE">fasttrips::DemandModeType (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriodE">fasttrips::FarePeriod (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriodE">fasttrips::FarePeriod (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod9end_time_E">fasttrips::FarePeriod::end_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod9end_time_E">fasttrips::FarePeriod::end_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod8fare_id_E">fasttrips::FarePeriod::fare_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod8fare_id_E">fasttrips::FarePeriod::fare_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod12fare_period_E">fasttrips::FarePeriod::fare_period_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod12fare_period_E">fasttrips::FarePeriod::fare_period_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod6price_E">fasttrips::FarePeriod::price_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod6price_E">fasttrips::FarePeriod::price_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod11start_time_E">fasttrips::FarePeriod::start_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod11start_time_E">fasttrips::FarePeriod::start_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod18transfer_duration_E">fasttrips::FarePeriod::transfer_duration_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod18transfer_duration_E">fasttrips::FarePeriod::transfer_duration_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10FarePeriod10transfers_E">fasttrips::FarePeriod::transfers_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10FarePeriod10transfers_E">fasttrips::FarePeriod::transfers_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14FarePeriodMmapE">fasttrips::FarePeriodMmap (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14FarePeriodMmapE">fasttrips::FarePeriodMmap (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12FareTransferE">fasttrips::FareTransfer (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12FareTransferE">fasttrips::FareTransfer (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12FareTransfer7amount_E">fasttrips::FareTransfer::amount_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12FareTransfer7amount_E">fasttrips::FareTransfer::amount_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12FareTransfer5type_E">fasttrips::FareTransfer::type_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12FareTransfer5type_E">fasttrips::FareTransfer::type_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15FareTransferMapE">fasttrips::FareTransferMap (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15FareTransferMapE">fasttrips::FareTransferMap (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips16FareTransferTypeE">fasttrips::FareTransferType (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips16FareTransferTypeE">fasttrips::FareTransferType (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14fix_time_rangeEd">fasttrips::fix_time_range (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14fix_time_rangeEd">fasttrips::fix_time_range (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9HyperlinkE">fasttrips::Hyperlink (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9HyperlinkE">fasttrips::Hyperlink (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink7addLinkERK9StopStatePK9HyperlinkRbRNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::addLink (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink7addLinkERK9StopStatePK9HyperlinkRbRNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::addLink (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink13bestGuessCostEbd">fasttrips::Hyperlink::bestGuessCost (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink13bestGuessCostEbd">fasttrips::Hyperlink::bestGuessCost (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink13bestGuessLinkEbd">fasttrips::Hyperlink::bestGuessLink (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink13bestGuessLinkEbd">fasttrips::Hyperlink::bestGuessLink (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink21calculateNonwalkLabelEv">fasttrips::Hyperlink::calculateNonwalkLabel (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink21calculateNonwalkLabelEv">fasttrips::Hyperlink::calculateNonwalkLabel (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink11chooseStateERK17PathSpecificationRNSt7ostreamEPK9StopState">fasttrips::Hyperlink::chooseState (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink11chooseStateERK17PathSpecificationRNSt7ostreamEPK9StopState">fasttrips::Hyperlink::chooseState (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink5clearEb">fasttrips::Hyperlink::clear (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink5clearEb">fasttrips::Hyperlink::clear (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink30collectFarePeriodProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderdRNSt3mapIPK10FarePerioddEE">fasttrips::Hyperlink::collectFarePeriodProbabilities (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink30collectFarePeriodProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderdRNSt3mapIPK10FarePerioddEE">fasttrips::Hyperlink::collectFarePeriodProbabilities (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink30earliestDepartureLatestArrivalEbb">fasttrips::Hyperlink::earliestDepartureLatestArrival (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink30earliestDepartureLatestArrivalEbb">fasttrips::Hyperlink::earliestDepartureLatestArrival (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink19getFareWithTransferERK17PathSpecificationRNSt7ostreamERK10PathFinderRK10FarePeriodRKNSt3mapIi9HyperlinkEE">fasttrips::Hyperlink::getFareWithTransfer (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink19getFareWithTransferERK17PathSpecificationRNSt7ostreamERK10PathFinderRK10FarePeriodRKNSt3mapIi9HyperlinkEE">fasttrips::Hyperlink::getFareWithTransfer (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink14getLowCostPathEb">fasttrips::Hyperlink::getLowCostPath (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink14getLowCostPathEb">fasttrips::Hyperlink::getLowCostPath (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink15getStopStateMapEb">fasttrips::Hyperlink::getStopStateMap (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink15getStopStateMapEb">fasttrips::Hyperlink::getStopStateMap (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink9HyperlinkEib">fasttrips::Hyperlink::Hyperlink (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink9HyperlinkEv">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink9HyperlinkEib">fasttrips::Hyperlink::Hyperlink (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink9HyperlinkEv">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink13hyperpathCostEb">fasttrips::Hyperlink::hyperpathCost (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink13hyperpathCostEb">fasttrips::Hyperlink::hyperpathCost (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink21incrementProcessCountEb">fasttrips::Hyperlink::incrementProcessCount (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink21incrementProcessCountEb">fasttrips::Hyperlink::incrementProcessCount (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink30latestDepartureEarliestArrivalEb">fasttrips::Hyperlink::latestDepartureEarliestArrival (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink30latestDepartureEarliestArrivalEb">fasttrips::Hyperlink::latestDepartureEarliestArrival (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink16linkset_nontrip_E">fasttrips::Hyperlink::linkset_nontrip_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink16linkset_nontrip_E">fasttrips::Hyperlink::linkset_nontrip_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink13linkset_trip_E">fasttrips::Hyperlink::linkset_trip_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink13linkset_trip_E">fasttrips::Hyperlink::linkset_trip_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink19lowestCostStopStateEb">fasttrips::Hyperlink::lowestCostStopState (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink19lowestCostStopStateEb">fasttrips::Hyperlink::lowestCostStopState (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink5printERNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::print (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink5printERNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::print (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink12printLinkSetERNSt7ostreamEibRK7LinkSetRK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::printLinkSet (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink12printLinkSetERNSt7ostreamEibRK7LinkSetRK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::printLinkSet (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink14printStopStateERNSt7ostreamEiRK9StopStateRK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::printStopState (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink14printStopStateERNSt7ostreamEiRK9StopStateRK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::printStopState (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink20printStopStateHeaderERNSt7ostreamERK17PathSpecification">fasttrips::Hyperlink::printStopStateHeader (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink20printStopStateHeaderERNSt7ostreamERK17PathSpecification">fasttrips::Hyperlink::printStopStateHeader (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink12processCountEb">fasttrips::Hyperlink::processCount (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink12processCountEb">fasttrips::Hyperlink::processCount (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink11pruneWindowERNSt7ostreamERK17PathSpecificationRK10PathFinderb">fasttrips::Hyperlink::pruneWindow (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink11pruneWindowERNSt7ostreamERK17PathSpecificationRK10PathFinderb">fasttrips::Hyperlink::pruneWindow (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink17removeFromCostMapERK12StopStateKeyRK9StopState">fasttrips::Hyperlink::removeFromCostMap (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink17removeFromCostMapERK12StopStateKeyRK9StopState">fasttrips::Hyperlink::removeFromCostMap (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink35resetLatestDepartureEarliestArrivalEbRK17PathSpecification">fasttrips::Hyperlink::resetLatestDepartureEarliestArrival (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink35resetLatestDepartureEarliestArrivalEbRK17PathSpecification">fasttrips::Hyperlink::resetLatestDepartureEarliestArrival (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink18setupProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderbPK4Path">fasttrips::Hyperlink::setupProbabilities (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink18setupProbabilitiesERK17PathSpecificationRNSt7ostreamERK10PathFinderbPK4Path">fasttrips::Hyperlink::setupProbabilities (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink4sizeEb">fasttrips::Hyperlink::size (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink4sizeEv">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink4sizeEb">fasttrips::Hyperlink::size (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink4sizeEv">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink17STOCH_DISPERSION_E">fasttrips::Hyperlink::STOCH_DISPERSION_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink17STOCH_DISPERSION_E">fasttrips::Hyperlink::STOCH_DISPERSION_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink8stop_id_E">fasttrips::Hyperlink::stop_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink8stop_id_E">fasttrips::Hyperlink::stop_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink12TIME_WINDOW_E">fasttrips::Hyperlink::TIME_WINDOW_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink12TIME_WINDOW_E">fasttrips::Hyperlink::TIME_WINDOW_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink30TRANSFER_FARE_IGNORE_PATHENUM_E">fasttrips::Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink30TRANSFER_FARE_IGNORE_PATHENUM_E">fasttrips::Hyperlink::TRANSFER_FARE_IGNORE_PATHENUM_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink33TRANSFER_FARE_IGNORE_PATHFINDING_E">fasttrips::Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink33TRANSFER_FARE_IGNORE_PATHFINDING_E">fasttrips::Hyperlink::TRANSFER_FARE_IGNORE_PATHFINDING_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips9Hyperlink10updateFareERK17PathSpecificationRNSt7ostreamERK10PathFinderPK10FarePeriodbRK4PathR9StopStateRNSt6stringE">fasttrips::Hyperlink::updateFare (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips9Hyperlink10updateFareERK17PathSpecificationRNSt7ostreamERK10PathFinderPK10FarePeriodbRK4PathR9StopStateRNSt6stringE">fasttrips::Hyperlink::updateFare (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink17updateLowCostPathERK12StopStateKeyPK9HyperlinkRNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::updateLowCostPath (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink17updateLowCostPathERK12StopStateKeyPK9HyperlinkRNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Hyperlink::updateLowCostPath (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9Hyperlink17UTILS_CONVERSION_E">fasttrips::Hyperlink::UTILS_CONVERSION_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9Hyperlink17UTILS_CONVERSION_E">fasttrips::Hyperlink::UTILS_CONVERSION_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9HyperlinkD0Ev">fasttrips::Hyperlink::~Hyperlink (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9HyperlinkD0Ev">fasttrips::Hyperlink::~Hyperlink (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8INT_MULTE">fasttrips::INT_MULT (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8INT_MULTE">fasttrips::INT_MULT (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6isTripERKi">fasttrips::isTrip (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6isTripERKi">fasttrips::isTrip (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9LabelStopE">fasttrips::LabelStop (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9LabelStopE">fasttrips::LabelStop (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9LabelStop8is_trip_E">fasttrips::LabelStop::is_trip_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9LabelStop8is_trip_E">fasttrips::LabelStop::is_trip_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9LabelStop6label_E">fasttrips::LabelStop::label_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9LabelStop6label_E">fasttrips::LabelStop::label_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9LabelStop8stop_id_E">fasttrips::LabelStop::stop_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9LabelStop8stop_id_E">fasttrips::LabelStop::stop_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips16LabelStopCompareE">fasttrips::LabelStopCompare (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips16LabelStopCompareE">fasttrips::LabelStopCompare (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips16LabelStopCompareclERK9LabelStopRK9LabelStop">fasttrips::LabelStopCompare::operator() (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips16LabelStopCompareclERK9LabelStopRK9LabelStop">fasttrips::LabelStopCompare::operator() (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueueE">fasttrips::LabelStopQueue (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueueE">fasttrips::LabelStopQueue (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips14LabelStopQueue5emptyEv">fasttrips::LabelStopQueue::empty (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips14LabelStopQueue5emptyEv">fasttrips::LabelStopQueue::empty (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue10LabelCountE">fasttrips::LabelStopQueue::LabelCount (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue10LabelCountE">fasttrips::LabelStopQueue::LabelCount (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue10LabelCount6count_E">fasttrips::LabelStopQueue::LabelCount::count_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue10LabelCount6count_E">fasttrips::LabelStopQueue::LabelCount::count_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue10LabelCount6label_E">fasttrips::LabelStopQueue::LabelCount::label_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue10LabelCount6label_E">fasttrips::LabelStopQueue::LabelCount::label_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue10LabelCount6valid_E">fasttrips::LabelStopQueue::LabelCount::valid_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue10LabelCount6valid_E">fasttrips::LabelStopQueue::LabelCount::valid_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue14labelstop_map_E">fasttrips::LabelStopQueue::labelstop_map_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue14labelstop_map_E">fasttrips::LabelStopQueue::labelstop_map_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue25labelstop_priority_queue_E">fasttrips::LabelStopQueue::labelstop_priority_queue_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue25labelstop_priority_queue_E">fasttrips::LabelStopQueue::labelstop_priority_queue_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue14LabelStopQueueEv">fasttrips::LabelStopQueue::LabelStopQueue (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue14LabelStopQueueEv">fasttrips::LabelStopQueue::LabelStopQueue (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue7pop_topERKNSt3mapIi4StopEEbRNSt8ofstreamE">fasttrips::LabelStopQueue::pop_top (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue7pop_topERKNSt3mapIi4StopEEbRNSt8ofstreamE">fasttrips::LabelStopQueue::pop_top (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue4pushERK9LabelStop">fasttrips::LabelStopQueue::push (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue4pushERK9LabelStop">fasttrips::LabelStopQueue::push (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips14LabelStopQueue4sizeEv">fasttrips::LabelStopQueue::size (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips14LabelStopQueue4sizeEv">fasttrips::LabelStopQueue::size (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueue12valid_count_E">fasttrips::LabelStopQueue::valid_count_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueue12valid_count_E">fasttrips::LabelStopQueue::valid_count_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14LabelStopQueueD0Ev">fasttrips::LabelStopQueue::~LabelStopQueue (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14LabelStopQueueD0Ev">fasttrips::LabelStopQueue::~LabelStopQueue (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19LabelStopQueueErrorE">fasttrips::LabelStopQueueError (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19LabelStopQueueErrorE">fasttrips::LabelStopQueueError (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19LabelStopQueueError19LabelStopQueueErrorEPKc">fasttrips::LabelStopQueueError::LabelStopQueueError (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19LabelStopQueueError19LabelStopQueueErrorERKNSt6stringE">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19LabelStopQueueError19LabelStopQueueErrorEPKc">fasttrips::LabelStopQueueError::LabelStopQueueError (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19LabelStopQueueError19LabelStopQueueErrorERKNSt6stringE">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips19LabelStopQueueErrorD0Ev">fasttrips::LabelStopQueueError::~LabelStopQueueError (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips19LabelStopQueueErrorD0Ev">fasttrips::LabelStopQueueError::~LabelStopQueueError (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSetE">fasttrips::LinkSet (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSetE">fasttrips::LinkSet (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet9cost_map_E">fasttrips::LinkSet::cost_map_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet9cost_map_E">fasttrips::LinkSet::cost_map_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet15hyperpath_cost_E">fasttrips::LinkSet::hyperpath_cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet15hyperpath_cost_E">fasttrips::LinkSet::hyperpath_cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet24latest_dep_earliest_arr_E">fasttrips::LinkSet::latest_dep_earliest_arr_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet24latest_dep_earliest_arr_E">fasttrips::LinkSet::latest_dep_earliest_arr_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet9lder_ssk_E">fasttrips::LinkSet::lder_ssk_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet9lder_ssk_E">fasttrips::LinkSet::lder_ssk_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet7LinkSetEb">fasttrips::LinkSet::LinkSet (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet7LinkSetEb">fasttrips::LinkSet::LinkSet (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet15max_cum_prob_i_E">fasttrips::LinkSet::max_cum_prob_i_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet15max_cum_prob_i_E">fasttrips::LinkSet::max_cum_prob_i_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet14process_count_E">fasttrips::LinkSet::process_count_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet14process_count_E">fasttrips::LinkSet::process_count_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet15stop_state_map_E">fasttrips::LinkSet::stop_state_map_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet15stop_state_map_E">fasttrips::LinkSet::stop_state_map_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7LinkSet13sum_exp_cost_E">fasttrips::LinkSet::sum_exp_cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7LinkSet13sum_exp_cost_E">fasttrips::LinkSet::sum_exp_cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8MAX_COSTE">fasttrips::MAX_COST (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8MAX_COSTE">fasttrips::MAX_COST (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11MODE_ACCESSE">fasttrips::MODE_ACCESS (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11MODE_ACCESSE">fasttrips::MODE_ACCESS (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11MODE_EGRESSE">fasttrips::MODE_EGRESS (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11MODE_EGRESSE">fasttrips::MODE_EGRESS (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13MODE_TRANSFERE">fasttrips::MODE_TRANSFER (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13MODE_TRANSFERE">fasttrips::MODE_TRANSFER (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12MODE_TRANSITE">fasttrips::MODE_TRANSIT (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12MODE_TRANSITE">fasttrips::MODE_TRANSIT (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10MODE_UNSETE">fasttrips::MODE_UNSET (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10MODE_UNSETE">fasttrips::MODE_UNSET (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12NamedWeightsE">fasttrips::NamedWeights (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12NamedWeightsE">fasttrips::NamedWeights (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttripslsERNSt7ostreamERK19AccessEgressLinkKey">fasttrips::operator&lt;&lt; (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttripslsERNSt7ostreamERK19AccessEgressLinkKey">fasttrips::operator&lt;&lt; (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4PathE">fasttrips::Path (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4PathE">fasttrips::Path (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path7addLinkEiRK9StopStateRNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Path::addLink (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path7addLinkEiRK9StopStateRNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Path::addLink (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4backEv">fasttrips::Path::back (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path4backEv">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path4backEv">fasttrips::Path::back (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path4backEv">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path22boards_per_fareperiod_E">fasttrips::Path::boards_per_fareperiod_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path22boards_per_fareperiod_E">fasttrips::Path::boards_per_fareperiod_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path19boardsForFarePeriodERKNSt6stringE">fasttrips::Path::boardsForFarePeriod (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path19boardsForFarePeriodERKNSt6stringE">fasttrips::Path::boardsForFarePeriod (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path13calculateCostERNSt7ostreamERK17PathSpecificationRK10PathFinderb">fasttrips::Path::calculateCost (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path13calculateCostERNSt7ostreamERK17PathSpecificationRK10PathFinderb">fasttrips::Path::calculateCost (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path17capacity_problem_E">fasttrips::Path::capacity_problem_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path17capacity_problem_E">fasttrips::Path::capacity_problem_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path5clearEv">fasttrips::Path::clear (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path5clearEv">fasttrips::Path::clear (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path4costEv">fasttrips::Path::cost (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path4costEv">fasttrips::Path::cost (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path5cost_E">fasttrips::Path::cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path5cost_E">fasttrips::Path::cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path12enumerating_E">fasttrips::Path::enumerating_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path12enumerating_E">fasttrips::Path::enumerating_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path4fareEv">fasttrips::Path::fare (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path4fareEv">fasttrips::Path::fare (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path5fare_E">fasttrips::Path::fare_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path5fare_E">fasttrips::Path::fare_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path19getFareWithTransferERK10PathFinderRKNSt6stringEPK10FarePeriod">fasttrips::Path::getFareWithTransfer (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path19getFareWithTransferERK10PathFinderRKNSt6stringEPK10FarePeriod">fasttrips::Path::getFareWithTransfer (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path13initial_cost_E">fasttrips::Path::initial_cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path13initial_cost_E">fasttrips::Path::initial_cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path13initial_fare_E">fasttrips::Path::initial_fare_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path13initial_fare_E">fasttrips::Path::initial_fare_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path11initialCostEv">fasttrips::Path::initialCost (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path11initialCostEv">fasttrips::Path::initialCost (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path11initialFareEv">fasttrips::Path::initialFare (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path11initialFareEv">fasttrips::Path::initialFare (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path13lastAddedTripEv">fasttrips::Path::lastAddedTrip (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path13lastAddedTripEv">fasttrips::Path::lastAddedTrip (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path6links_E">fasttrips::Path::links_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path6links_E">fasttrips::Path::links_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4PathltERK4Path">fasttrips::Path::operator&lt; (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4PathltERK4Path">fasttrips::Path::operator&lt; (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4PathixE6size_t">fasttrips::Path::operator[] (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4PathixE6size_t">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4PathixE6size_t">fasttrips::Path::operator[] (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4PathixE6size_t">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path9outbound_E">fasttrips::Path::outbound_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path9outbound_E">fasttrips::Path::outbound_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4PathEbb">fasttrips::Path::Path (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Path4PathEv">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path4PathEbb">fasttrips::Path::Path (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Path4PathEv">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path5printERNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Path::print (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path5printERNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Path::print (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path11printCompatERNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Path::printCompat (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path11printCompatERNSt7ostreamERK17PathSpecificationRK10PathFinder">fasttrips::Path::printCompat (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips4Path4sizeEv">fasttrips::Path::size (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips4Path4sizeEv">fasttrips::Path::size (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4PathD0Ev">fasttrips::Path::~Path (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4PathD0Ev">fasttrips::Path::~Path (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinderE">fasttrips::PathFinder (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinderE">fasttrips::PathFinder (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20access_egress_links_E">fasttrips::PathFinder::access_egress_links_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder20access_egress_links_E">fasttrips::PathFinder::access_egress_links_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder12addStopStateERK17PathSpecificationRNSt8ofstreamEKiRK9StopStatePK9HyperlinkR10StopStatesR14LabelStopQueue">fasttrips::PathFinder::addStopState (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder12addStopStateERK17PathSpecificationRNSt8ofstreamEKiRK9StopStatePK9HyperlinkR10StopStatesR14LabelStopQueue">fasttrips::PathFinder::addStopState (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder24ARRIVE_LATE_ALLOWED_MIN_E">fasttrips::PathFinder::ARRIVE_LATE_ALLOWED_MIN_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder24ARRIVE_LATE_ALLOWED_MIN_E">fasttrips::PathFinder::ARRIVE_LATE_ALLOWED_MIN_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12BUMP_BUFFER_E">fasttrips::PathFinder::BUMP_BUFFER_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder12BUMP_BUFFER_E">fasttrips::PathFinder::BUMP_BUFFER_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10bump_wait_E">fasttrips::PathFinder::bump_wait_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder10bump_wait_E">fasttrips::PathFinder::bump_wait_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder10choosePathERK17PathSpecificationRNSt8ofstreamER7PathSeti">fasttrips::PathFinder::choosePath (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder10choosePathERK17PathSpecificationRNSt8ofstreamER7PathSeti">fasttrips::PathFinder::choosePath (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder25DEPART_EARLY_ALLOWED_MIN_E">fasttrips::PathFinder::DEPART_EARLY_ALLOWED_MIN_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder25DEPART_EARLY_ALLOWED_MIN_E">fasttrips::PathFinder::DEPART_EARLY_ALLOWED_MIN_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder13fare_periods_E">fasttrips::PathFinder::fare_periods_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder13fare_periods_E">fasttrips::PathFinder::fare_periods_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20fare_transfer_rules_E">fasttrips::PathFinder::fare_transfer_rules_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder20fare_transfer_rules_E">fasttrips::PathFinder::fare_transfer_rules_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder16finalizeTazStateERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueuei">fasttrips::PathFinder::finalizeTazState (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder16finalizeTazStateERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueuei">fasttrips::PathFinder::finalizeTazState (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder11findPathSetE17PathSpecificationR7PathSetR15PerformanceInfo">fasttrips::PathFinder::findPathSet (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder11findPathSetE17PathSpecificationR7PathSetR15PerformanceInfo">fasttrips::PathFinder::findPathSet (C++ function)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder19getAccessAttributesEiiid">fasttrips::PathFinder::getAccessAttributes (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder19getAccessAttributesEiiid">fasttrips::PathFinder::getAccessAttributes (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder13getFarePeriodEiiid">fasttrips::PathFinder::getFarePeriod (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder13getFarePeriodEiiid">fasttrips::PathFinder::getFarePeriod (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder15getFareTransferEKNSt6stringEKNSt6stringE">fasttrips::PathFinder::getFareTransfer (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder15getFareTransferEKNSt6stringEKNSt6stringE">fasttrips::PathFinder::getFareTransfer (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder15getNamedWeightsERKNSt6stringERKNSt6stringE14DemandModeTypeRKNSt6stringEi">fasttrips::PathFinder::getNamedWeights (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder15getNamedWeightsERKNSt6stringERKNSt6stringE14DemandModeTypeRKNSt6stringEi">fasttrips::PathFinder::getNamedWeights (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder10getPathSetERK17PathSpecificationRNSt8ofstreamER10StopStatesR7PathSet">fasttrips::PathFinder::getPathSet (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder10getPathSetERK17PathSpecificationRNSt8ofstreamER10StopStatesR7PathSet">fasttrips::PathFinder::getPathSet (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder19getRouteIdForTripIdEi">fasttrips::PathFinder::getRouteIdForTripId (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder19getRouteIdForTripIdEi">fasttrips::PathFinder::getRouteIdForTripId (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder21getScheduledDepartureEiii">fasttrips::PathFinder::getScheduledDeparture (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder21getScheduledDepartureEiii">fasttrips::PathFinder::getScheduledDeparture (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder21getTransferAttributesEii">fasttrips::PathFinder::getTransferAttributes (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder21getTransferAttributesEii">fasttrips::PathFinder::getTransferAttributes (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder11getTripInfoEi">fasttrips::PathFinder::getTripInfo (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder11getTripInfoEi">fasttrips::PathFinder::getTripInfo (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder15getTripStopTimeEii">fasttrips::PathFinder::getTripStopTime (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder15getTripStopTimeEii">fasttrips::PathFinder::getTripStopTime (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder18getTripsWithinTimeEibdRNSt6vectorI12TripStopTimeEE">fasttrips::PathFinder::getTripsWithinTime (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder18getTripsWithinTimeEibdRNSt6vectorI12TripStopTimeEE">fasttrips::PathFinder::getTripsWithinTime (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamER10StopStatesR4Path">fasttrips::PathFinder::hyperpathGeneratePath (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder21hyperpathGeneratePathERK17PathSpecificationRNSt8ofstreamER10StopStatesR4Path">fasttrips::PathFinder::hyperpathGeneratePath (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder20initializeParametersEdddddidibbid">fasttrips::PathFinder::initializeParameters (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder20initializeParametersEdddddidibbid">fasttrips::PathFinder::initializeParameters (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder20initializeStopStatesERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueue">fasttrips::PathFinder::initializeStopStates (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder20initializeStopStatesERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueue">fasttrips::PathFinder::initializeStopStates (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder16initializeSupplyEPKciPiPdi">fasttrips::PathFinder::initializeSupply (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder16initializeSupplyEPKciPiPdi">fasttrips::PathFinder::initializeSupply (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder10labelStopsERK17PathSpecificationRNSt8ofstreamERKNSt3mapIiiEER10StopStatesR14LabelStopQueueRi">fasttrips::PathFinder::labelStops (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder10labelStopsERK17PathSpecificationRNSt8ofstreamERKNSt3mapIiiEER10StopStatesR14LabelStopQueueRi">fasttrips::PathFinder::labelStops (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12MAX_DATETIMEE">fasttrips::PathFinder::MAX_DATETIME (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder12MAX_DATETIMEE">fasttrips::PathFinder::MAX_DATETIME (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder14MAX_NUM_PATHS_E">fasttrips::PathFinder::MAX_NUM_PATHS_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder14MAX_NUM_PATHS_E">fasttrips::PathFinder::MAX_NUM_PATHS_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21MIN_PATH_PROBABILITY_E">fasttrips::PathFinder::MIN_PATH_PROBABILITY_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder21MIN_PATH_PROBABILITY_E">fasttrips::PathFinder::MIN_PATH_PROBABILITY_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder16mode_num_to_str_E">fasttrips::PathFinder::mode_num_to_str_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder16mode_num_to_str_E">fasttrips::PathFinder::mode_num_to_str_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder16modeStringForNumEi">fasttrips::PathFinder::modeStringForNum (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder16modeStringForNumEi">fasttrips::PathFinder::modeStringForNum (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11output_dir_E">fasttrips::PathFinder::output_dir_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11output_dir_E">fasttrips::PathFinder::output_dir_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10PathFinderEv">fasttrips::PathFinder::PathFinder (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder10PathFinderEv">fasttrips::PathFinder::PathFinder (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder9printModeERNSt7ostreamERKiRKi">fasttrips::PathFinder::printMode (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder9printModeERNSt7ostreamERKiRKi">fasttrips::PathFinder::printMode (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder9printTimeERNSt7ostreamERKd">fasttrips::PathFinder::printTime (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder9printTimeERNSt7ostreamERKd">fasttrips::PathFinder::printTime (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder17printTimeDurationERNSt7ostreamERKd">fasttrips::PathFinder::printTimeDuration (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder17printTimeDurationERNSt7ostreamERKd">fasttrips::PathFinder::printTimeDuration (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12process_num_E">fasttrips::PathFinder::process_num_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder12process_num_E">fasttrips::PathFinder::process_num_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder13processNumberEv">fasttrips::PathFinder::processNumber (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder13processNumberEv">fasttrips::PathFinder::processNumber (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder15readAccessLinksEv">fasttrips::PathFinder::readAccessLinks (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder15readAccessLinksEv">fasttrips::PathFinder::readAccessLinks (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder15readFarePeriodsEv">fasttrips::PathFinder::readFarePeriods (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder15readFarePeriodsEv">fasttrips::PathFinder::readFarePeriods (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21readIntermediateFilesEv">fasttrips::PathFinder::readIntermediateFiles (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder21readIntermediateFilesEv">fasttrips::PathFinder::readIntermediateFiles (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11readModeIdsEv">fasttrips::PathFinder::readModeIds (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11readModeIdsEv">fasttrips::PathFinder::readModeIds (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12readRouteIdsEv">fasttrips::PathFinder::readRouteIds (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder12readRouteIdsEv">fasttrips::PathFinder::readRouteIds (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11readStopIdsEv">fasttrips::PathFinder::readStopIds (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11readStopIdsEv">fasttrips::PathFinder::readStopIds (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder17readTransferLinksEv">fasttrips::PathFinder::readTransferLinks (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder17readTransferLinksEv">fasttrips::PathFinder::readTransferLinks (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11readTripIdsEv">fasttrips::PathFinder::readTripIds (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11readTripIdsEv">fasttrips::PathFinder::readTripIds (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12readTripInfoEv">fasttrips::PathFinder::readTripInfo (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder12readTripInfoEv">fasttrips::PathFinder::readTripInfo (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11readWeightsEv">fasttrips::PathFinder::readWeights (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11readWeightsEv">fasttrips::PathFinder::readWeights (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder5resetEv">fasttrips::PathFinder::reset (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder5resetEv">fasttrips::PathFinder::reset (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder22RET_FAIL_END_NOT_FOUNDE">fasttrips::PathFinder::RET_FAIL_END_NOT_FOUND (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder22RET_FAIL_END_NOT_FOUNDE">fasttrips::PathFinder::RET_FAIL_END_NOT_FOUND (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder25RET_FAIL_INIT_STOP_STATESE">fasttrips::PathFinder::RET_FAIL_INIT_STOP_STATES (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder25RET_FAIL_INIT_STOP_STATESE">fasttrips::PathFinder::RET_FAIL_INIT_STOP_STATES (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21RET_FAIL_NO_PATH_PROBE">fasttrips::PathFinder::RET_FAIL_NO_PATH_PROB (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder21RET_FAIL_NO_PATH_PROBE">fasttrips::PathFinder::RET_FAIL_NO_PATH_PROB (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21RET_FAIL_NO_PATHS_GENE">fasttrips::PathFinder::RET_FAIL_NO_PATHS_GEN (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder21RET_FAIL_NO_PATHS_GENE">fasttrips::PathFinder::RET_FAIL_NO_PATHS_GEN (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder22RET_FAIL_SET_REACHABLEE">fasttrips::PathFinder::RET_FAIL_SET_REACHABLE (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder22RET_FAIL_SET_REACHABLEE">fasttrips::PathFinder::RET_FAIL_SET_REACHABLE (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11RET_SUCCESSE">fasttrips::PathFinder::RET_SUCCESS (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11RET_SUCCESSE">fasttrips::PathFinder::RET_SUCCESS (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder12route_fares_E">fasttrips::PathFinder::route_fares_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder12route_fares_E">fasttrips::PathFinder::route_fares_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder17route_num_to_str_E">fasttrips::PathFinder::route_num_to_str_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder17route_num_to_str_E">fasttrips::PathFinder::route_num_to_str_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder11setBumpWaitEPiPdi">fasttrips::PathFinder::setBumpWait (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder11setBumpWaitEPiPdi">fasttrips::PathFinder::setBumpWait (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder22setReachableFinalStopsERK17PathSpecificationRNSt8ofstreamERNSt3mapIiiEE">fasttrips::PathFinder::setReachableFinalStops (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder22setReachableFinalStopsERK17PathSpecificationRNSt8ofstreamERNSt3mapIiiEE">fasttrips::PathFinder::setReachableFinalStops (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder29STOCH_MAX_STOP_PROCESS_COUNT_E">fasttrips::PathFinder::STOCH_MAX_STOP_PROCESS_COUNT_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder29STOCH_MAX_STOP_PROCESS_COUNT_E">fasttrips::PathFinder::STOCH_MAX_STOP_PROCESS_COUNT_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder19STOCH_PATHSET_SIZE_E">fasttrips::PathFinder::STOCH_PATHSET_SIZE_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder19STOCH_PATHSET_SIZE_E">fasttrips::PathFinder::STOCH_PATHSET_SIZE_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder17stop_num_to_stop_E">fasttrips::PathFinder::stop_num_to_stop_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder17stop_num_to_stop_E">fasttrips::PathFinder::stop_num_to_stop_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder16stop_trip_times_E">fasttrips::PathFinder::stop_trip_times_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder16stop_trip_times_E">fasttrips::PathFinder::stop_trip_times_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder15stopStringForIdEi">fasttrips::PathFinder::stopStringForId (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder15stopStringForIdEi">fasttrips::PathFinder::stopStringForId (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder13tallyLinkCostEKiRK17PathSpecificationRNSt7ostreamERK12NamedWeightsRK10Attributesb">fasttrips::PathFinder::tallyLinkCost (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder13tallyLinkCostEKiRK17PathSpecificationRNSt7ostreamERK12NamedWeightsRK10Attributesb">fasttrips::PathFinder::tallyLinkCost (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder19transfer_links_d_o_E">fasttrips::PathFinder::transfer_links_d_o_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder19transfer_links_d_o_E">fasttrips::PathFinder::transfer_links_d_o_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder19transfer_links_o_d_E">fasttrips::PathFinder::transfer_links_o_d_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder19transfer_links_o_d_E">fasttrips::PathFinder::transfer_links_o_d_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder21transfer_supply_mode_E">fasttrips::PathFinder::transfer_supply_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder21transfer_supply_mode_E">fasttrips::PathFinder::transfer_supply_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder18transferSupplyModeEv">fasttrips::PathFinder::transferSupplyMode (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder18transferSupplyModeEv">fasttrips::PathFinder::transferSupplyMode (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder10trip_info_E">fasttrips::PathFinder::trip_info_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder10trip_info_E">fasttrips::PathFinder::trip_info_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder16trip_num_to_str_E">fasttrips::PathFinder::trip_num_to_str_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder16trip_num_to_str_E">fasttrips::PathFinder::trip_num_to_str_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder16trip_stop_times_E">fasttrips::PathFinder::trip_stop_times_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder16trip_stop_times_E">fasttrips::PathFinder::trip_stop_times_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder15tripStringForIdEi">fasttrips::PathFinder::tripStringForId (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder15tripStringForIdEi">fasttrips::PathFinder::tripStringForId (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder29updateStopStatesForFinalLinksERK17PathSpecificationRNSt8ofstreamERKNSt3mapIiiEER10StopStatesR14LabelStopQueueiRK9LabelStopRd">fasttrips::PathFinder::updateStopStatesForFinalLinks (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder29updateStopStatesForFinalLinksERK17PathSpecificationRNSt8ofstreamERKNSt3mapIiiEER10StopStatesR14LabelStopQueueiRK9LabelStopRd">fasttrips::PathFinder::updateStopStatesForFinalLinks (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder28updateStopStatesForTransfersERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStop">fasttrips::PathFinder::updateStopStatesForTransfers (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder28updateStopStatesForTransfersERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStop">fasttrips::PathFinder::updateStopStatesForTransfers (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt3tr113unordered_setIiEE">fasttrips::PathFinder::updateStopStatesForTrips (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt3tr113unordered_setIiEE">fasttrips::PathFinder::updateStopStatesForTrips (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder14weight_lookup_E">fasttrips::PathFinder::weight_lookup_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder14weight_lookup_E">fasttrips::PathFinder::weight_lookup_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinder30ZERO_WALK_TRANSFER_ATTRIBUTES_E">fasttrips::PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinder30ZERO_WALK_TRANSFER_ATTRIBUTES_E">fasttrips::PathFinder::ZERO_WALK_TRANSFER_ATTRIBUTES_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10PathFinderD0Ev">fasttrips::PathFinder::~PathFinder (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10PathFinderD0Ev">fasttrips::PathFinder::~PathFinder (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8PathInfoE">fasttrips::PathInfo (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8PathInfoE">fasttrips::PathInfo (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8PathInfo6count_E">fasttrips::PathInfo::count_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8PathInfo6count_E">fasttrips::PathInfo::count_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8PathInfo7prob_i_E">fasttrips::PathInfo::prob_i_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8PathInfo7prob_i_E">fasttrips::PathInfo::prob_i_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8PathInfo12probability_E">fasttrips::PathInfo::probability_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8PathInfo12probability_E">fasttrips::PathInfo::probability_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips7PathSetE">fasttrips::PathSet (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips7PathSetE">fasttrips::PathSet (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecificationE">fasttrips::PathSpecification (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecificationE">fasttrips::PathSpecification (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification12access_mode_E">fasttrips::PathSpecification::access_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification12access_mode_E">fasttrips::PathSpecification::access_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification19destination_taz_id_E">fasttrips::PathSpecification::destination_taz_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification19destination_taz_id_E">fasttrips::PathSpecification::destination_taz_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification12egress_mode_E">fasttrips::PathSpecification::egress_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification12egress_mode_E">fasttrips::PathSpecification::egress_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification10hyperpath_E">fasttrips::PathSpecification::hyperpath_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification10hyperpath_E">fasttrips::PathSpecification::hyperpath_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification10iteration_E">fasttrips::PathSpecification::iteration_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification10iteration_E">fasttrips::PathSpecification::iteration_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification14origin_taz_id_E">fasttrips::PathSpecification::origin_taz_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification14origin_taz_id_E">fasttrips::PathSpecification::origin_taz_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification9outbound_E">fasttrips::PathSpecification::outbound_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification9outbound_E">fasttrips::PathSpecification::outbound_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification22pathfinding_iteration_E">fasttrips::PathSpecification::pathfinding_iteration_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification22pathfinding_iteration_E">fasttrips::PathSpecification::pathfinding_iteration_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification10person_id_E">fasttrips::PathSpecification::person_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification10person_id_E">fasttrips::PathSpecification::person_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification15person_trip_id_E">fasttrips::PathSpecification::person_trip_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification15person_trip_id_E">fasttrips::PathSpecification::person_trip_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification15preferred_time_E">fasttrips::PathSpecification::preferred_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification15preferred_time_E">fasttrips::PathSpecification::preferred_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification8purpose_E">fasttrips::PathSpecification::purpose_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification8purpose_E">fasttrips::PathSpecification::purpose_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification6trace_E">fasttrips::PathSpecification::trace_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification6trace_E">fasttrips::PathSpecification::trace_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification13transit_mode_E">fasttrips::PathSpecification::transit_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification13transit_mode_E">fasttrips::PathSpecification::transit_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification11user_class_E">fasttrips::PathSpecification::user_class_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification11user_class_E">fasttrips::PathSpecification::user_class_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17PathSpecification14value_of_time_E">fasttrips::PathSpecification::value_of_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17PathSpecification14value_of_time_E">fasttrips::PathSpecification::value_of_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfoE">fasttrips::PerformanceInfo (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfoE">fasttrips::PerformanceInfo (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo17label_iterations_E">fasttrips::PerformanceInfo::label_iterations_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo17label_iterations_E">fasttrips::PerformanceInfo::label_iterations_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo18max_process_count_E">fasttrips::PerformanceInfo::max_process_count_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo18max_process_count_E">fasttrips::PerformanceInfo::max_process_count_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo14mem_timestamp_E">fasttrips::PerformanceInfo::mem_timestamp_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo14mem_timestamp_E">fasttrips::PerformanceInfo::mem_timestamp_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo25milliseconds_enumerating_E">fasttrips::PerformanceInfo::milliseconds_enumerating_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo25milliseconds_enumerating_E">fasttrips::PerformanceInfo::milliseconds_enumerating_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo22milliseconds_labeling_E">fasttrips::PerformanceInfo::milliseconds_labeling_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo22milliseconds_labeling_E">fasttrips::PerformanceInfo::milliseconds_labeling_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo18num_labeled_stops_E">fasttrips::PerformanceInfo::num_labeled_stops_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo18num_labeled_stops_E">fasttrips::PerformanceInfo::num_labeled_stops_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo19privateusage_bytes_E">fasttrips::PerformanceInfo::privateusage_bytes_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo19privateusage_bytes_E">fasttrips::PerformanceInfo::privateusage_bytes_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15PerformanceInfo17workingset_bytes_E">fasttrips::PerformanceInfo::workingset_bytes_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15PerformanceInfo17workingset_bytes_E">fasttrips::PerformanceInfo::workingset_bytes_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZoneE">fasttrips::RouteStopZone (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13RouteStopZoneE">fasttrips::RouteStopZone (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZone17destination_zone_E">fasttrips::RouteStopZone::destination_zone_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13RouteStopZone17destination_zone_E">fasttrips::RouteStopZone::destination_zone_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZone12origin_zone_E">fasttrips::RouteStopZone::origin_zone_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13RouteStopZone12origin_zone_E">fasttrips::RouteStopZone::origin_zone_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13RouteStopZone9route_id_E">fasttrips::RouteStopZone::route_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13RouteStopZone9route_id_E">fasttrips::RouteStopZone::route_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20RouteStopZoneCompareE">fasttrips::RouteStopZoneCompare (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20RouteStopZoneCompareE">fasttrips::RouteStopZoneCompare (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips20RouteStopZoneCompareclERK13RouteStopZoneRK13RouteStopZone">fasttrips::RouteStopZoneCompare::operator() (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips20RouteStopZoneCompareclERK13RouteStopZoneRK13RouteStopZone">fasttrips::RouteStopZoneCompare::operator() (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4StopE">fasttrips::Stop (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4StopE">fasttrips::Stop (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Stop9stop_str_E">fasttrips::Stop::stop_str_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Stop9stop_str_E">fasttrips::Stop::stop_str_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips4Stop9zone_num_E">fasttrips::Stop::zone_num_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips4Stop9zone_num_E">fasttrips::Stop::zone_num_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopStateE">fasttrips::StopState (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopStateE">fasttrips::StopState (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12arrdep_time_E">fasttrips::StopState::arrdep_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState12arrdep_time_E">fasttrips::StopState::arrdep_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState5cost_E">fasttrips::StopState::cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState5cost_E">fasttrips::StopState::cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState11cum_prob_i_E">fasttrips::StopState::cum_prob_i_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState11cum_prob_i_E">fasttrips::StopState::cum_prob_i_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12deparr_mode_E">fasttrips::StopState::deparr_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState12deparr_mode_E">fasttrips::StopState::deparr_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12deparr_time_E">fasttrips::StopState::deparr_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState12deparr_time_E">fasttrips::StopState::deparr_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12fare_period_E">fasttrips::StopState::fare_period_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState12fare_period_E">fasttrips::StopState::fare_period_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10iteration_E">fasttrips::StopState::iteration_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState10iteration_E">fasttrips::StopState::iteration_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_cost_E">fasttrips::StopState::link_cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState10link_cost_E">fasttrips::StopState::link_cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_dist_E">fasttrips::StopState::link_dist_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState10link_dist_E">fasttrips::StopState::link_dist_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_fare_E">fasttrips::StopState::link_fare_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState10link_fare_E">fasttrips::StopState::link_fare_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState11link_ivtwt_E">fasttrips::StopState::link_ivtwt_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState11link_ivtwt_E">fasttrips::StopState::link_ivtwt_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState10link_time_E">fasttrips::StopState::link_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState10link_time_E">fasttrips::StopState::link_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState14low_cost_path_E">fasttrips::StopState::low_cost_path_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState14low_cost_path_E">fasttrips::StopState::low_cost_path_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState12probability_E">fasttrips::StopState::probability_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState12probability_E">fasttrips::StopState::probability_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState4seq_E">fasttrips::StopState::seq_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState4seq_E">fasttrips::StopState::seq_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState13seq_succpred_E">fasttrips::StopState::seq_succpred_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState13seq_succpred_E">fasttrips::StopState::seq_succpred_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState14stop_succpred_E">fasttrips::StopState::stop_succpred_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState14stop_succpred_E">fasttrips::StopState::stop_succpred_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState9StopStateEdiiiiidddddiddPK10FarePeriod">fasttrips::StopState::StopState (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState9StopStateEv">[1]</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState9StopStateEdiiiiidddddiddPK10FarePeriod">fasttrips::StopState::StopState (C++ function)</a>, <a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState9StopStateEv">[1]</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips9StopState8trip_id_E">fasttrips::StopState::trip_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips9StopState8trip_id_E">fasttrips::StopState::trip_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateKeyE">fasttrips::StopStateKey (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateKeyE">fasttrips::StopStateKey (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateKey12deparr_mode_E">fasttrips::StopStateKey::deparr_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateKey12deparr_mode_E">fasttrips::StopStateKey::deparr_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips12StopStateKeyneERK12StopStateKey">fasttrips::StopStateKey::operator!= (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips12StopStateKeyneERK12StopStateKey">fasttrips::StopStateKey::operator!= (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips12StopStateKeyltERK12StopStateKey">fasttrips::StopStateKey::operator&lt; (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips12StopStateKeyltERK12StopStateKey">fasttrips::StopStateKey::operator&lt; (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips12StopStateKeyeqERK12StopStateKey">fasttrips::StopStateKey::operator== (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips12StopStateKeyeqERK12StopStateKey">fasttrips::StopStateKey::operator== (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateKey4seq_E">fasttrips::StopStateKey::seq_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateKey4seq_E">fasttrips::StopStateKey::seq_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateKey13seq_succpred_E">fasttrips::StopStateKey::seq_succpred_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateKey13seq_succpred_E">fasttrips::StopStateKey::seq_succpred_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateKey14stop_succpred_E">fasttrips::StopStateKey::stop_succpred_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateKey14stop_succpred_E">fasttrips::StopStateKey::stop_succpred_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateKey8trip_id_E">fasttrips::StopStateKey::trip_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateKey8trip_id_E">fasttrips::StopStateKey::trip_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12StopStateMapE">fasttrips::StopStateMap (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12StopStateMapE">fasttrips::StopStateMap (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10StopStatesE">fasttrips::StopStates (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10StopStatesE">fasttrips::StopStates (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips14StopStopToAttrE">fasttrips::StopStopToAttr (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips14StopStopToAttrE">fasttrips::StopStopToAttr (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10StopToAttrE">fasttrips::StopToAttr (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10StopToAttrE">fasttrips::StopToAttr (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips24SupplyModeToNamedWeightsE">fasttrips::SupplyModeToNamedWeights (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips24SupplyModeToNamedWeightsE">fasttrips::SupplyModeToNamedWeights (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11TazStopCostE">fasttrips::TazStopCost (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11TazStopCostE">fasttrips::TazStopCost (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11TazStopCost12access_cost_E">fasttrips::TazStopCost::access_cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11TazStopCost12access_cost_E">fasttrips::TazStopCost::access_cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11TazStopCost12egress_cost_E">fasttrips::TazStopCost::egress_cost_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11TazStopCost12egress_cost_E">fasttrips::TazStopCost::egress_cost_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11TazStopCost5time_E">fasttrips::TazStopCost::time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11TazStopCost5time_E">fasttrips::TazStopCost::time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13TRANSFER_COSTE">fasttrips::TRANSFER_COST (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13TRANSFER_COSTE">fasttrips::TRANSFER_COST (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips17TRANSFER_DISCOUNTE">fasttrips::TRANSFER_DISCOUNT (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips17TRANSFER_DISCOUNTE">fasttrips::TRANSFER_DISCOUNT (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13TRANSFER_FREEE">fasttrips::TRANSFER_FREE (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13TRANSFER_FREEE">fasttrips::TRANSFER_FREE (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripInfoE">fasttrips::TripInfo (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripInfoE">fasttrips::TripInfo (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripInfo9route_id_E">fasttrips::TripInfo::route_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripInfo9route_id_E">fasttrips::TripInfo::route_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripInfo16supply_mode_num_E">fasttrips::TripInfo::supply_mode_num_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripInfo16supply_mode_num_E">fasttrips::TripInfo::supply_mode_num_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripInfo10trip_attr_E">fasttrips::TripInfo::trip_attr_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripInfo10trip_attr_E">fasttrips::TripInfo::trip_attr_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripStopE">fasttrips::TripStop (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripStopE">fasttrips::TripStop (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripStop4seq_E">fasttrips::TripStop::seq_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripStop4seq_E">fasttrips::TripStop::seq_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripStop8stop_id_E">fasttrips::TripStop::stop_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripStop8stop_id_E">fasttrips::TripStop::stop_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips8TripStop8trip_id_E">fasttrips::TripStop::trip_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips8TripStop8trip_id_E">fasttrips::TripStop::trip_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15TripStopCompareE">fasttrips::TripStopCompare (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15TripStopCompareE">fasttrips::TripStopCompare (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips15TripStopCompareclERK8TripStopRK8TripStop">fasttrips::TripStopCompare::operator() (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips15TripStopCompareclERK8TripStopRK8TripStop">fasttrips::TripStopCompare::operator() (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTimeE">fasttrips::TripStopTime (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTimeE">fasttrips::TripStopTime (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime12arrive_time_E">fasttrips::TripStopTime::arrive_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime12arrive_time_E">fasttrips::TripStopTime::arrive_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime12depart_time_E">fasttrips::TripStopTime::depart_time_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime12depart_time_E">fasttrips::TripStopTime::depart_time_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime8overcap_E">fasttrips::TripStopTime::overcap_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime8overcap_E">fasttrips::TripStopTime::overcap_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime4seq_E">fasttrips::TripStopTime::seq_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime4seq_E">fasttrips::TripStopTime::seq_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime16shape_dist_trav_E">fasttrips::TripStopTime::shape_dist_trav_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime16shape_dist_trav_E">fasttrips::TripStopTime::shape_dist_trav_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime8stop_id_E">fasttrips::TripStopTime::stop_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime8stop_id_E">fasttrips::TripStopTime::stop_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12TripStopTime8trip_id_E">fasttrips::TripStopTime::trip_id_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12TripStopTime8trip_id_E">fasttrips::TripStopTime::trip_id_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips11UCPMCompareE">fasttrips::UCPMCompare (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips11UCPMCompareE">fasttrips::UCPMCompare (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2NK9fasttrips11UCPMCompareclERK20UserClassPurposeModeRK20UserClassPurposeMode">fasttrips::UCPMCompare::operator() (C++ function)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3NK9fasttrips11UCPMCompareclERK20UserClassPurposeModeRK20UserClassPurposeMode">fasttrips::UCPMCompare::operator() (C++ function)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20UserClassPurposeModeE">fasttrips::UserClassPurposeMode (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20UserClassPurposeModeE">fasttrips::UserClassPurposeMode (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20UserClassPurposeMode12demand_mode_E">fasttrips::UserClassPurposeMode::demand_mode_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20UserClassPurposeMode12demand_mode_E">fasttrips::UserClassPurposeMode::demand_mode_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20UserClassPurposeMode17demand_mode_type_E">fasttrips::UserClassPurposeMode::demand_mode_type_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20UserClassPurposeMode17demand_mode_type_E">fasttrips::UserClassPurposeMode::demand_mode_type_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20UserClassPurposeMode8purpose_E">fasttrips::UserClassPurposeMode::purpose_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20UserClassPurposeMode8purpose_E">fasttrips::UserClassPurposeMode::purpose_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips20UserClassPurposeMode11user_class_E">fasttrips::UserClassPurposeMode::user_class_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips20UserClassPurposeMode11user_class_E">fasttrips::UserClassPurposeMode::user_class_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6WeightE">fasttrips::Weight (C++ class)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6WeightE">fasttrips::Weight (C++ class)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6Weight9log_base_E">fasttrips::Weight::log_base_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6Weight9log_base_E">fasttrips::Weight::log_base_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6Weight13logistic_max_E">fasttrips::Weight::logistic_max_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6Weight13logistic_max_E">fasttrips::Weight::logistic_max_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6Weight13logistic_mid_E">fasttrips::Weight::logistic_mid_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6Weight13logistic_mid_E">fasttrips::Weight::logistic_mid_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6Weight5type_E">fasttrips::Weight::type_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6Weight5type_E">fasttrips::Weight::type_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips6Weight7weight_E">fasttrips::Weight::weight_ (C++ member)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips6Weight7weight_E">fasttrips::Weight::weight_ (C++ member)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips18WEIGHT_EXPONENTIALE">fasttrips::WEIGHT_EXPONENTIAL (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips18WEIGHT_EXPONENTIALE">fasttrips::WEIGHT_EXPONENTIAL (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips13WEIGHT_LINEARE">fasttrips::WEIGHT_LINEAR (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips13WEIGHT_LINEARE">fasttrips::WEIGHT_LINEAR (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips18WEIGHT_LOGARITHMICE">fasttrips::WEIGHT_LOGARITHMIC (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips18WEIGHT_LOGARITHMICE">fasttrips::WEIGHT_LOGARITHMIC (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips15WEIGHT_LOGISTICE">fasttrips::WEIGHT_LOGISTIC (C++ enumerator)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips15WEIGHT_LOGISTICE">fasttrips::WEIGHT_LOGISTIC (C++ enumerator)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips12WeightLookupE">fasttrips::WeightLookup (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips12WeightLookupE">fasttrips::WeightLookup (C++ type)</a>
 </li>
-      <li><a href="fasttrips_c_extension.html#_CPPv2N9fasttrips10WeightTypeE">fasttrips::WeightType (C++ type)</a>
+      <li><a href="fasttrips_c_extension.html#_CPPv3N9fasttrips10WeightTypeE">fasttrips::WeightType (C++ type)</a>
 </li>
       <li><a href="_generated/fasttrips.FastTripsLogger.html#fasttrips.FastTripsLogger">FastTripsLogger (in module fasttrips)</a>
 </li>
@@ -1347,14 +1349,18 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.LEARN_ROUTES">LEARN_ROUTES (fasttrips.PathSet attribute)</a>
+</li>
+      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.LEARN_ROUTES_RATE">LEARN_ROUTES_RATE (fasttrips.PathSet attribute)</a>
+</li>
       <li><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.linkify_vehicle_trips">linkify_vehicle_trips() (fasttrips.Trip static method)</a>
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.load_passengers_on_vehicles_with_cap">load_passengers_on_vehicles_with_cap() (fasttrips.Assignment static method)</a>
 </li>
-      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.LOGARITHMIC_GROWTH_MODEL">LOGARITHMIC_GROWTH_MODEL (fasttrips.PathSet attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.LOGARITHMIC_GROWTH_MODEL">LOGARITHMIC_GROWTH_MODEL (fasttrips.PathSet attribute)</a>
+</li>
       <li><a href="_generated/fasttrips.Util.html#fasttrips.Util.logarithmic_integration">logarithmic_integration() (fasttrips.Util static method)</a>
 </li>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.LOGISTIC_GROWTH_MODEL">LOGISTIC_GROWTH_MODEL (fasttrips.PathSet attribute)</a>
@@ -1381,9 +1387,9 @@
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.merge_pathsets">merge_pathsets() (fasttrips.Assignment static method)</a>
 </li>
-      <li><a href="_generated/fasttrips.Util.html#fasttrips.Util.merge_two_dicts">merge_two_dicts() (fasttrips.Util static method)</a>
+      <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.merge_prior_choices">merge_prior_choices() (fasttrips.Assignment static method)</a>
 </li>
-      <li><a href="_generated/fasttrips.Error.html#fasttrips.Error.message">message (fasttrips.Error attribute)</a>
+      <li><a href="_generated/fasttrips.Util.html#fasttrips.Util.merge_two_dicts">merge_two_dicts() (fasttrips.Util static method)</a>
 </li>
       <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.MIN_PATH_PROBABILITY">MIN_PATH_PROBABILITY (fasttrips.Assignment attribute)</a>
 </li>
@@ -1745,6 +1751,8 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_generated/fasttrips.Assignment.html#fasttrips.Assignment.save_choices">save_choices() (fasttrips.Assignment static method)</a>
+</li>
       <li><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.SERVICE_COLUMN_END_DATE">SERVICE_COLUMN_END_DATE (fasttrips.Trip attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.SERVICE_COLUMN_END_DATE_STR">SERVICE_COLUMN_END_DATE_STR (fasttrips.Trip attribute)</a>
@@ -1956,6 +1964,8 @@
       <li><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.STOPTIMES_COLUMN_TRIP_ID">STOPTIMES_COLUMN_TRIP_ID (fasttrips.Trip attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.Trip.html#fasttrips.Trip.STOPTIMES_COLUMN_TRIP_ID_NUM">STOPTIMES_COLUMN_TRIP_ID_NUM (fasttrips.Trip attribute)</a>
+</li>
+      <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.SUCCESS_FLAG_COLUMN">SUCCESS_FLAG_COLUMN (fasttrips.PathSet attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -2223,10 +2233,10 @@
 </li>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHT_NAME_VALID_NAMES">WEIGHT_NAME_VALID_NAMES (fasttrips.PathSet attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHTS_COLUMN_DEMAND_MODE">WEIGHTS_COLUMN_DEMAND_MODE (fasttrips.PathSet attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHTS_COLUMN_DEMAND_MODE_TYPE">WEIGHTS_COLUMN_DEMAND_MODE_TYPE (fasttrips.PathSet attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHTS_COLUMN_PURPOSE">WEIGHTS_COLUMN_PURPOSE (fasttrips.PathSet attribute)</a>
@@ -2254,6 +2264,8 @@
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHTS_GROWTH_LOGISTIC_MID">WEIGHTS_GROWTH_LOGISTIC_MID (fasttrips.PathSet attribute)</a>
 </li>
       <li><a href="_generated/fasttrips.PathSet.html#fasttrips.PathSet.WEIGHTS_GROWTH_TYPE">WEIGHTS_GROWTH_TYPE (fasttrips.PathSet attribute)</a>
+</li>
+      <li><a href="_generated/fasttrips.Error.html#fasttrips.Error.with_traceback">with_traceback() (fasttrips.Error method)</a>
 </li>
       <li><a href="_generated/fasttrips.Performance.html#fasttrips.Performance.write">write() (fasttrips.Performance method)</a>
 </li>
@@ -2287,9 +2299,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -2298,11 +2308,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -2317,35 +2327,24 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

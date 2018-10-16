@@ -1,5 +1,5 @@
-fasttrips\.Performance
-======================
+fasttrips.Performance
+=====================
 
 .. currentmodule:: fasttrips
 
@@ -23,5 +23,38 @@ fasttrips\.Performance
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Performance.OUTPUT_PERFORMANCE_FILE
+      ~Performance.OUTPUT_PERFORMANCE_PF_FILE
+      ~Performance.PERFORMANCE_COL_END_MEM_MB
+      ~Performance.PERFORMANCE_COL_END_TIME
+      ~Performance.PERFORMANCE_COL_ITERATION
+      ~Performance.PERFORMANCE_COL_PATHFINDING_ITERATION
+      ~Performance.PERFORMANCE_COL_SIMULATION_ITERATION
+      ~Performance.PERFORMANCE_COL_START_MEM_MB
+      ~Performance.PERFORMANCE_COL_START_TIME
+      ~Performance.PERFORMANCE_COL_STEP_DURATION
+      ~Performance.PERFORMANCE_COL_STEP_NAME
+      ~Performance.PERFORMANCE_PF_COL_ITERATION
+      ~Performance.PERFORMANCE_PF_COL_LABEL_ITERATIONS
+      ~Performance.PERFORMANCE_PF_COL_MAX_STOP_PROCESS_COUNT
+      ~Performance.PERFORMANCE_PF_COL_MEM_TIMESTAMP
+      ~Performance.PERFORMANCE_PF_COL_NUM_LABELED_STOPS
+      ~Performance.PERFORMANCE_PF_COL_PATHFINDING_ITERATION
+      ~Performance.PERFORMANCE_PF_COL_PATHFINDING_STATUS
+      ~Performance.PERFORMANCE_PF_COL_PERSON_ID
+      ~Performance.PERFORMANCE_PF_COL_PERSON_TRIP_ID
+      ~Performance.PERFORMANCE_PF_COL_PRIVATE_USAGE_BYTES
+      ~Performance.PERFORMANCE_PF_COL_PROCESS_NUM
+      ~Performance.PERFORMANCE_PF_COL_TIME_ENUMERATING
+      ~Performance.PERFORMANCE_PF_COL_TIME_ENUMERATING_MS
+      ~Performance.PERFORMANCE_PF_COL_TIME_LABELING
+      ~Performance.PERFORMANCE_PF_COL_TIME_LABELING_MS
+      ~Performance.PERFORMANCE_PF_COL_TRACED
+      ~Performance.PERFORMANCE_PF_COL_WORKING_SET_BYTES
    
    

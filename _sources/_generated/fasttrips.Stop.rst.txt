@@ -1,5 +1,5 @@
-fasttrips\.Stop
-===============
+fasttrips.Stop
+==============
 
 .. currentmodule:: fasttrips
 
@@ -30,5 +30,27 @@ fasttrips\.Stop
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Stop.INPUT_STOPS_FILE
+      ~Stop.OUTPUT_STOP_ID_NUM_FILE
+      ~Stop.STOPS_COLUMN_BIKE_PARKING
+      ~Stop.STOPS_COLUMN_BIKE_SHARE_STATION
+      ~Stop.STOPS_COLUMN_LEVEL
+      ~Stop.STOPS_COLUMN_LIGHTING
+      ~Stop.STOPS_COLUMN_OFF_BOARD_PAYMENT
+      ~Stop.STOPS_COLUMN_PLATFORM_HEIGHT
+      ~Stop.STOPS_COLUMN_SEATING
+      ~Stop.STOPS_COLUMN_SHELTER
+      ~Stop.STOPS_COLUMN_STOP_ID
+      ~Stop.STOPS_COLUMN_STOP_ID_NUM
+      ~Stop.STOPS_COLUMN_STOP_LATITUDE
+      ~Stop.STOPS_COLUMN_STOP_LONGITUDE
+      ~Stop.STOPS_COLUMN_STOP_NAME
+      ~Stop.STOPS_COLUMN_ZONE_ID
+      ~Stop.STOPS_COLUMN_ZONE_ID_NUM
    
    

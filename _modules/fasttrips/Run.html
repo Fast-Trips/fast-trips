@@ -24,26 +24,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../genindex.html"/>
-        <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -105,7 +97,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">fasttrips</a>
@@ -113,9 +105,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -145,8 +138,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -161,7 +152,10 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Functions to simplify running Fast-Trips.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
 
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015-2017 Contributing Entities&quot;</span>
 <span class="n">__license__</span>   <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -233,7 +227,7 @@
 
 <span class="sd">        debug_output_columnns -- boolean to activate extra columns for debugging (default: False)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">print</span> <span class="n">kwargs</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">input_network_dir</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Must specify where to find input networks&quot;</span>
@@ -263,7 +257,7 @@
 
     <span class="c1"># Setup Output Directory</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">output_folder</span><span class="p">:</span>
-        <span class="n">output_folder</span> <span class="o">=</span> <span class="s2">&quot;output_</span><span class="si">%s</span><span class="s2">_iter</span><span class="si">%d</span><span class="s2">_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pathfinding_type</span><span class="p">,</span> <span class="n">iters</span><span class="p">,</span> <span class="s2">&quot;cap&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s2">&quot;capacity&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;capacity&quot;</span><span class="p">]</span><span class="o">==</span><span class="kc">True</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;nocap&quot;</span><span class="p">)</span>
+        <span class="n">output_folder</span> <span class="o">=</span> <span class="s2">&quot;output_</span><span class="si">%s</span><span class="s2">_iter</span><span class="si">%d</span><span class="s2">_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pathfinding_type</span><span class="p">,</span> <span class="n">iters</span><span class="p">,</span> <span class="s2">&quot;cap&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;capacity&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;capacity&quot;</span><span class="p">]</span><span class="o">==</span><span class="kc">True</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;nocap&quot;</span><span class="p">)</span>
 
     <span class="c1"># don&#39;t override full run results</span>
     <span class="k">if</span> <span class="n">trace_only</span><span class="p">:</span>
@@ -279,7 +273,7 @@
         <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">full_output_dir</span><span class="p">):</span>
-        <span class="nb">print</span> <span class="s2">&quot;Creating full output dir [</span><span class="si">%s</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">full_output_dir</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating full output dir [</span><span class="si">%s</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="n">full_output_dir</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">full_output_dir</span><span class="p">)</span>
 
     <span class="c1"># Create fast-trips instance</span>
@@ -291,66 +285,70 @@
     <span class="k">if</span> <span class="n">iters</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_ITERATIONS</span>          <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">iters</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s2">&quot;pf_iters&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;pf_iters&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
             <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_PF_ITERATIONS</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;pf_iters&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s2">&quot;number_of_processes&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s2">&quot;number_of_processes&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">NUMBER_OF_PROCESSES</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;number_of_processes&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;trace_ids&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;trace_ids&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;trace_ids&quot;</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">trace_only</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s2">&quot;Trace only requested but no trace IDs are specified in configuration.&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trace only requested but no trace IDs are specified in configuration.&quot;</span><span class="p">)</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">DEBUG_TRACE_ONLY</span>    <span class="o">=</span> <span class="kc">True</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">NUMBER_OF_PROCESSES</span> <span class="o">=</span> <span class="mi">1</span>
 
-    <span class="k">if</span> <span class="s2">&quot;pathfinding_type&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;pathfinding_type&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">PATHFINDING_TYPE</span>        <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;pathfinding_type&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;max_stop_process_count&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;learning_convergence&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">fasttrips</span><span class="o">.</span><span class="n">PathSet</span><span class="o">.</span><span class="n">LEARN_ROUTES</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;learning_convergence&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;max_stop_process_count&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">STOCH_MAX_STOP_PROCESS_COUNT</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;max_stop_process_count&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;debug_output_columns&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;debug_output_columns&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">DEBUG_OUTPUT_COLUMNS</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;debug_output_columns&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;overlap_variable&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;overlap_variable&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;overlap_variable&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;None&#39;</span><span class="p">,</span><span class="s1">&#39;count&#39;</span><span class="p">,</span><span class="s1">&#39;distance&#39;</span><span class="p">,</span><span class="s1">&#39;time&#39;</span><span class="p">]:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;pathfinding.overlap_variable [</span><span class="si">%s</span><span class="s2">] not defined. Expected values: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;overlap_variable&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">(</span><span class="n">fasttrips</span><span class="o">.</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_VARIABLE_OPTIONS</span><span class="p">))</span>
             <span class="n">fasttrips</span><span class="o">.</span><span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">fatal</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">fasttrips</span><span class="o">.</span><span class="n">ConfigurationError</span><span class="p">(</span><span class="s2">&quot;external override&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_VARIABLE</span>       <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;overlap_variable&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;overlap_split_transit&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;overlap_split_transit&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_SPLIT_TRANSIT</span>  <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;overlap_split_transit&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;transfer_fare_ignore_pathfinding&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;transfer_fare_ignore_pathfinding&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRANSFER_FARE_IGNORE_PATHFINDING</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;transfer_fare_ignore_pathfinding&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;transfer_fare_ignore_pathenum&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;transfer_fare_ignore_pathenum&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRANSFER_FARE_IGNORE_PATHENUM</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;transfer_fare_ignore_pathenum&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;time_window&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;time_window&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TIME_WINDOW</span>         <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;time_window&quot;</span><span class="p">]))</span>
 
-    <span class="k">if</span> <span class="s2">&quot;utils_conversion_factor&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;utils_conversion_factor&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">UTILS_CONVERSION</span>    <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;utils_conversion_factor&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;dispersion&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;dispersion&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">STOCH_DISPERSION</span>    <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dispersion&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;num_trips&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;num_trips&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">DEBUG_NUM_TRIPS</span>     <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;num_trips&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;capacity&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;capacity&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">CAPACITY_CONSTRAINT</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;capacity&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;output_pathset_per_sim_iter&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;output_pathset_per_sim_iter&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_PATHSET_PER_SIM_ITER</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;output_pathset_per_sim_iter&quot;</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;user_class_function&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;user_class_function&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="n">fasttrips</span><span class="o">.</span><span class="n">PathSet</span><span class="o">.</span><span class="n">USER_CLASS_FUNCTION</span>    <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;user_class_function&quot;</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">ft</span></div>
@@ -415,7 +413,7 @@
 
     <span class="c1"># don&#39;t pass on items that aren&#39;t set</span>
     <span class="n">args_dict</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">args_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">args_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
         <span class="k">if</span> <span class="n">args_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span> <span class="k">del</span> <span class="n">args_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
     <span class="c1"># if config_ft.py exists in demand dir, specify it for input_functions</span>
@@ -431,9 +429,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -442,11 +438,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -461,35 +457,24 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

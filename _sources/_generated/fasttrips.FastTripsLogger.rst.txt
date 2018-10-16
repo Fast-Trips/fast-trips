@@ -1,5 +1,5 @@
-fasttrips\.FastTripsLogger
-==========================
+fasttrips.FastTripsLogger
+=========================
 
 .. currentmodule:: fasttrips
 

@@ -24,26 +24,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../genindex.html"/>
-        <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -105,7 +97,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">fasttrips</a>
@@ -113,9 +105,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -145,8 +138,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -158,7 +149,12 @@
            <div itemprop="articleBody">
             
   <h1>Source code for fasttrips.PathSet</h1><div class="highlight"><pre>
-<span></span><span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015-2016 Contributing Entities&quot;</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015-2016 Contributing Entities&quot;</span>
 <span class="n">__license__</span>   <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="s2">    you may not use this file except in compliance with the License.</span>
@@ -192,7 +188,7 @@
 <span class="k">def</span> <span class="nf">generic_user_class</span><span class="p">(</span><span class="n">row_series</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;all&quot;</span>
 
-<div class="viewcode-block" id="PathSet"><a class="viewcode-back" href="../../_generated/fasttrips.PathSet.html#fasttrips.PathSet">[docs]</a><span class="k">class</span> <span class="nc">PathSet</span><span class="p">:</span>
+<div class="viewcode-block" id="PathSet"><a class="viewcode-back" href="../../_generated/fasttrips.PathSet.html#fasttrips.PathSet">[docs]</a><span class="k">class</span> <span class="nc">PathSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents a path set for a passenger from an origin :py:class:`TAZ` to a destination :py:class:`TAZ`</span>
 <span class="sd">    through a set of stops.</span>
@@ -243,6 +239,11 @@
     <span class="c1">#: Overlap option: Split transit leg into component parts?  e.g. split A-E</span>
     <span class="c1">#: into A-B-C-D-E for overlap calculations?</span>
     <span class="n">OVERLAP_SPLIT_TRANSIT</span>           <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">LEARN_ROUTES</span>                    <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">LEARN_ROUTES_RATE</span>               <span class="o">=</span> <span class="mf">0.05</span>
+    <span class="n">SUCCESS_FLAG_COLUMN</span>             <span class="o">=</span> <span class="s1">&#39;success_flag&#39;</span>
+    <span class="n">BUMP_FLAG_COLUMN</span>                <span class="o">=</span> <span class="s1">&#39;bump_flag&#39;</span>
 
     <span class="c1">#: Allow departures and arrivals before / after preferred time</span>
     <span class="n">ARRIVE_LATE_ALLOWED_MIN</span>         <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
@@ -544,8 +545,8 @@
                                                     <span class="n">numeric_newcolname</span><span class="o">=</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_SUPPLY_MODE_NUM</span><span class="p">,</span>
                                                     <span class="n">warn</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># don&#39;t fail if some supply modes are configured but not used, they may be for future runs</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;PathSet weights: </span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="p">)</span>
-        <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OUTPUT_WEIGHTS_FILE</span><span class="p">),</span>
-                               <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span><span class="p">,</span>
+
+        <span class="n">export_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_USER_CLASS</span><span class="p">,</span>
                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_PURPOSE</span><span class="p">,</span>
                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE_TYPE</span><span class="p">,</span>
                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_DEMAND_MODE</span><span class="p">,</span>
@@ -555,7 +556,10 @@
                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_TYPE</span><span class="p">,</span>
                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOG_BASE</span><span class="p">,</span>
                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MAX</span><span class="p">,</span>
-                                        <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MID</span><span class="p">],</span>
+                                        <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_GROWTH_LOGISTIC_MID</span><span class="p">]</span>
+
+        <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_DF</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">export_columns</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OUTPUT_WEIGHTS_FILE</span><span class="p">),</span>
+                               <span class="n">columns</span><span class="o">=</span><span class="n">export_columns</span><span class="p">,</span>
                                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># add placeholder weights (ivt weight) for fares - one for each user_class, purpose, transit demand mode</span>
@@ -654,7 +658,7 @@
 <span class="sd">        Note: If inbound trip, then the states are in reverse order (egress to access)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ret_str</span> <span class="o">=</span> <span class="s2">&quot;Dict vars:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">ret_str</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%30s</span><span class="s2"> =&gt; </span><span class="si">%-30s</span><span class="s2">   </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span>
         <span class="c1"># ret_str += PathSet.states_to_str(self.states, self.direction)</span>
         <span class="k">return</span> <span class="n">ret_str</span>
@@ -1040,7 +1044,7 @@
 
         <span class="c1"># update the fare weight placeholder (ivt pathweight - utils per min)) based on value of time (currency per hour)</span>
         <span class="c1"># since generalized cost is in utils, (ivt utils/min)x(60 min/1 hour)x(hour/vot currency) is the weight (utils/currency)</span>
-        <span class="n">cost_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span> <span class="n">cost_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span><span class="o">==</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_FARE</span><span class="p">,</span> <span class="s2">&quot;weight_value&quot;</span> <span class="p">]</span> <span class="o">*=</span> <span class="mf">60.0</span><span class="o">/</span><span class="n">cost_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_VOT</span><span class="p">]</span>
+        <span class="n">cost_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span> <span class="n">cost_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span><span class="o">==</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_FARE</span><span class="p">,</span> <span class="s2">&quot;weight_value&quot;</span> <span class="p">]</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">60.0</span><span class="o">/</span><span class="n">cost_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_VOT</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;calculate_cost: cost_df</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">cost_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">cost_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRACE</span><span class="p">]</span><span class="o">==</span><span class="kc">True</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span>
@@ -1160,7 +1164,7 @@
                            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;arrival&#39;</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">cost_accegr_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span>     <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHT_NAME_DEPART_LATE_MIN</span><span class="p">)</span> <span class="o">&amp;</span>
                            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_MODE</span><span class="p">]</span>             <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span><span class="p">)</span> <span class="o">&amp;</span>
-                           <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;departure&#39;</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_A_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DEPARTURE_TIME</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
+                           <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;departure&#39;</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_A_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DEPARTURE_TIME</span><span class="p">])</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
         <span class="c1"># depart late is not negative - that would be departing early</span>
         <span class="n">cost_accegr_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span>     <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHT_NAME_DEPART_LATE_MIN</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
 
@@ -1181,7 +1185,7 @@
         <span class="n">cost_accegr_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span>     <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHT_NAME_ARRIVE_LATE_MIN</span>    <span class="p">)</span><span class="o">&amp;</span> \
                            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_MODE</span><span class="p">]</span>             <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">STATE_MODE_EGRESS</span><span class="p">)</span><span class="o">&amp;</span> \
                            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">TIME_TARGET_ARRIVAL</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_ARRIVAL_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+                           <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_ARRIVAL_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
 
         <span class="c1"># If arrived before preferred time, set the arrive late field to zero. You don&#39;t get a</span>
         <span class="c1"># discount for arriving early.</span>
@@ -1203,7 +1207,7 @@
         <span class="n">cost_accegr_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span>     <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHT_NAME_DEPART_EARLY_MIN</span><span class="p">)</span> <span class="o">&amp;</span> \
                            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_MODE</span><span class="p">]</span>             <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">STATE_MODE_ACCESS</span><span class="p">)</span> <span class="o">&amp;</span> \
                            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TIME_TARGET</span><span class="p">]</span> <span class="o">==</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">TIME_TARGET_DEPARTURE</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DEPARTURE_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_A_TIME</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
+                           <span class="p">(</span><span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_DEPARTURE_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_accegr_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_A_TIME</span><span class="p">])</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
 
         <span class="c1"># If departing after preferred time, set the depart early field to zero. You don&#39;t get a</span>
         <span class="c1"># discount for taking your time.</span>
@@ -1239,9 +1243,9 @@
         <span class="c1"># if there&#39;s a board time, in_vehicle_time = new_B_time - board_time</span>
         <span class="c1">#               otherwise, in_vehicle_time = B time - A time (for when we split)</span>
         <span class="n">cost_trip_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;in_vehicle_time_min&quot;</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+             <span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
         <span class="n">cost_trip_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;in_vehicle_time_min&quot;</span><span class="p">)</span><span class="o">&amp;</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+             <span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
 
         <span class="c1"># if in vehicle time is less than 0 then off by 1 day error</span>
         <span class="n">cost_trip_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;in_vehicle_time_min&quot;</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="s2">&quot;var_value&quot;</span><span class="p">]</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
@@ -1249,7 +1253,7 @@
         <span class="c1"># if there&#39;s a board time, wait time = board_time - A time</span>
         <span class="c1">#               otherwise, wait time = 0 (for when we split transit links)</span>
         <span class="n">cost_trip_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;wait_time_min&quot;</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+             <span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
         <span class="n">cost_trip_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_WEIGHT_NAME</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;wait_time_min&quot;</span><span class="p">)</span><span class="o">&amp;</span> <span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">cost_trip_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]),</span> <span class="s2">&quot;var_value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="c1"># which overcap column to use?</span>
@@ -1423,6 +1427,13 @@
                                                    <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM</span><span class="p">,</span>
                                                    <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRACE</span><span class="p">,</span>
                                                    <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">LEARN_ROUTES</span><span class="p">:</span>
+            <span class="c1">#&#39;learn_discount&#39;: Exponential decay function</span>
+            <span class="n">pathset_paths_df</span><span class="p">[</span><span class="s1">&#39;learn_discount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">PathSet</span><span class="o">.</span><span class="n">LEARN_ROUTES_RATE</span> <span class="o">*</span> <span class="n">pathset_paths_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span><span class="p">])</span>
+            <span class="n">pathset_paths_df</span><span class="p">[</span><span class="s1">&#39;orig_sim_cost&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_paths_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_COST</span><span class="p">]</span>
+            <span class="n">pathset_paths_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_COST</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_paths_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_COST</span><span class="p">]</span> <span class="o">*</span> <span class="n">pathset_paths_df</span><span class="p">[</span><span class="s1">&#39;learn_discount&#39;</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;calculate_cost: pathset_paths_df trace</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_paths_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRACE</span><span class="p">]</span><span class="o">==</span><span class="kc">True</span><span class="p">]))</span>
 
@@ -1463,7 +1474,7 @@
         <span class="c1"># CHUNKING because we run into memory problems</span>
         <span class="c1"># TODO: figure out more sophisticated chunk size</span>
         <span class="n">chunk_list</span> <span class="o">=</span> <span class="n">pathset_links_to_use</span><span class="p">[[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM</span><span class="p">]]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">num_chunks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk_list</span><span class="p">)</span><span class="o">/</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_CHUNK_SIZE</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">num_chunks</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk_list</span><span class="p">)</span><span class="o">//</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_CHUNK_SIZE</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="n">chunk_list</span><span class="p">[</span><span class="s2">&quot;chunk_num&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor_divide</span><span class="p">(</span><span class="n">chunk_list</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_CHUNK_SIZE</span><span class="p">)</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;calculate_overlap() chunk_list size=</span><span class="si">%d</span><span class="s2"> head=</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s2">tail=</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk_list</span><span class="p">),</span> <span class="n">chunk_list</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">to_string</span><span class="p">(),</span> <span class="n">chunk_list</span><span class="o">.</span><span class="n">tail</span><span class="p">()</span><span class="o">.</span><span class="n">to_string</span><span class="p">()))</span>
         <span class="n">pathset_links_to_use</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span>  <span class="o">=</span><span class="n">pathset_links_to_use</span><span class="p">,</span>
@@ -1531,13 +1542,13 @@
                             <span class="p">(</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;mode_x&quot;</span>    <span class="p">]</span><span class="o">==</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;mode_y&quot;</span>    <span class="p">])</span>  <span class="p">,</span> <span class="s2">&quot;match&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
             <span class="k">if</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_VARIABLE</span> <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_COUNT</span><span class="p">:</span>
-                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;link_prop_x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_count_x&quot;</span><span class="p">]</span>                         <span class="c1"># l_a/L_i</span>
-                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;pathlen_x_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_count_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_count_y&quot;</span><span class="p">]</span>  <span class="c1"># L_i/L_j</span>
+                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;link_prop_x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_count_x&quot;</span><span class="p">]</span>                                 <span class="c1"># l_a/L_i</span>
+                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;pathlen_x_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_count_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_count_y&quot;</span><span class="p">]</span>          <span class="c1"># L_i/L_j</span>
             <span class="k">elif</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_VARIABLE</span> <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_TIME</span><span class="p">:</span>
-                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;link_prop_x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;new_linktime_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_time_x&quot;</span><span class="p">]</span> <span class="c1"># l_a/L_i</span>
-                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;pathlen_x_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_time_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_time_y&quot;</span><span class="p">]</span>    <span class="c1"># L_i/L_j</span>
+                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;link_prop_x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;new_linktime_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_time_x&quot;</span><span class="p">]</span>         <span class="c1"># l_a/L_i</span>
+                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;pathlen_x_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_time_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_time_y&quot;</span><span class="p">]</span>            <span class="c1"># L_i/L_j</span>
             <span class="k">elif</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_VARIABLE</span> <span class="o">==</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_DISTANCE</span><span class="p">:</span>
-                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;link_prop_x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;distance_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_distance_x&quot;</span><span class="p">]</span> <span class="c1"># l_a/L_i</span>
+                <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;link_prop_x&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;distance_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_distance_x&quot;</span><span class="p">]</span>         <span class="c1"># l_a/L_i</span>
                 <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;pathlen_x_y&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_distance_x&quot;</span><span class="p">]</span><span class="o">/</span><span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;path_distance_y&quot;</span><span class="p">]</span>    <span class="c1"># L_i/L_j</span>
 
             <span class="n">overlap_df</span><span class="p">[</span><span class="s2">&quot;pathlen_x_y_scale&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlap_df</span><span class="p">[[</span><span class="s2">&quot;pathlen_x_y&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">PathSet</span><span class="o">.</span><span class="n">OVERLAP_SCALE_PARAMETER</span><span class="p">)</span>  <span class="c1"># (L_i/L_j)^gamma</span>
@@ -1601,9 +1612,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -1612,11 +1621,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -1631,35 +1640,24 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

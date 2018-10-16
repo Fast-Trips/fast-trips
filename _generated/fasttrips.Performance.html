@@ -24,28 +24,20 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../index.html"/>
-        <link rel="up" title="Fast-Trips Classes and Functions" href="../api.html"/>
-        <link rel="next" title="fasttrips.Route" href="fasttrips.Route.html"/>
-        <link rel="prev" title="fasttrips.PathSet" href="fasttrips.PathSet.html"/> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="fasttrips.Route" href="fasttrips.Route.html" />
+    <link rel="prev" title="fasttrips.PathSet" href="fasttrips.PathSet.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -127,7 +119,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">fasttrips</a>
@@ -135,9 +127,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -186,7 +179,8 @@
 <dl class="class">
 <dt id="fasttrips.Performance">
 <em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Performance</code><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performance class.  Keeps track of performance information
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Performance class.  Keeps track of performance information
 (time spent, number of labeling iterations, etc) related to pathfinding
 in Fast-Trips and for the the bigger loops.</p>
 <dl class="method">
@@ -202,23 +196,116 @@ in Fast-Trips and for the the bigger loops.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">__init__</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code>()</td>
 <td>Constructor.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">add_info</span></code>(iteration,&nbsp;pathfinding_iteration,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_info</span></code>(iteration,&nbsp;pathfinding_iteration,&nbsp;…)</td>
 <td>Add this row to the performance dict of arrays.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">record_step_end</span></code>(iteration,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_step_end</span></code>(iteration,&nbsp;…)</td>
 <td>Explicitly ends whatever step was happening at this level.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">record_step_start</span></code>(iteration,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_step_start</span></code>(iteration,&nbsp;…)</td>
 <td>Records the step start.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">write</span></code>(output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code>(output_dir)</td>
 <td>Writes the results to OUTPUT_PERFORMANCE_FILE as a csv.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal"><span class="pre">write_pathfinding</span></code>(output_dir,&nbsp;append)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_pathfinding</span></code>(output_dir,&nbsp;append)</td>
 <td>Writes the pathfinding results to OUTPUT_PERFORMANCE_PF_FILE as a csv.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OUTPUT_PERFORMANCE_FILE</span></code></td>
+<td>File to write performance results</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">OUTPUT_PERFORMANCE_PF_FILE</span></code></td>
+<td>File to write performance results</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_END_MEM_MB</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_END_TIME</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_ITERATION</span></code></td>
+<td>Performance column: Iteration.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_PATHFINDING_ITERATION</span></code></td>
+<td>Performance column: Pathfinding Iteration.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_SIMULATION_ITERATION</span></code></td>
+<td>Performance column: Simulation Iteration.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_START_MEM_MB</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_START_TIME</span></code></td>
+<td>Performance column: step start time</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_STEP_DURATION</span></code></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_COL_STEP_NAME</span></code></td>
+<td>For general performance (not pathfinding) Performance column: Step name (e.g.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_ITERATION</span></code></td>
+<td>Performance column: Iteration</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_LABEL_ITERATIONS</span></code></td>
+<td>Performance column: Number of label iterations</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_MAX_STOP_PROCESS_COUNT</span></code></td>
+<td>Performance column: Maximum number of times a stop was processed</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_MEM_TIMESTAMP</span></code></td>
+<td>Performance column: Timestamp of memory query, in a datetime.datetime</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_NUM_LABELED_STOPS</span></code></td>
+<td>Performance column: Number of labeled stops</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_PATHFINDING_ITERATION</span></code></td>
+<td>Performance column: Pathfinding Iteration</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_PATHFINDING_STATUS</span></code></td>
+<td>Performance column: Pathfinding status</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_PERSON_ID</span></code></td>
+<td>Performance column: Person ID</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_PERSON_TRIP_ID</span></code></td>
+<td>Performance column: Person Trip ID</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_PRIVATE_USAGE_BYTES</span></code></td>
+<td>Performance column: Private usage in memory, in bytes</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_PROCESS_NUM</span></code></td>
+<td>Performance column: Process number</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_TIME_ENUMERATING</span></code></td>
+<td>Performance column: Time spent enumerating (timedelta)</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_TIME_ENUMERATING_MS</span></code></td>
+<td>Performance column: Time spent enumerating (milliseconds)</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_TIME_LABELING</span></code></td>
+<td>Performance column: Time spent labeling (timedelta)</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_TIME_LABELING_MS</span></code></td>
+<td>Performance column: Time spent labeling (milliseconds)</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_TRACED</span></code></td>
+<td>Performance column: Traced, since this affects performance</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">PERFORMANCE_PF_COL_WORKING_SET_BYTES</span></code></td>
+<td>Performance column: Working set in memory, in bytes</td>
 </tr>
 </tbody>
 </table>
@@ -425,9 +512,7 @@ Performance column: Step name (e.g. read inputs). String.</p>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -445,11 +530,11 @@ Performance column: Step name (e.g. read inputs). String.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -464,35 +549,24 @@ Performance column: Step name (e.g. read inputs). String.</p>
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

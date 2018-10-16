@@ -1,5 +1,5 @@
-fasttrips\.Assignment
-=====================
+fasttrips.Assignment
+====================
 
 .. currentmodule:: fasttrips
 
@@ -16,6 +16,7 @@ fasttrips\.Assignment
       ~Assignment.__init__
       ~Assignment.assign_paths
       ~Assignment.choose_paths_without_simulation
+      ~Assignment.compare_choices
       ~Assignment.filter_trip_list_to_not_arrived
       ~Assignment.find_passenger_vehicle_times
       ~Assignment.find_trip_based_pathset
@@ -24,12 +25,14 @@ fasttrips\.Assignment
       ~Assignment.initialize_fasttrips_extension
       ~Assignment.load_passengers_on_vehicles_with_cap
       ~Assignment.merge_pathsets
+      ~Assignment.merge_prior_choices
       ~Assignment.number_of_pathsets
       ~Assignment.process_weight_qualifiers
       ~Assignment.put_passengers_on_vehicles
       ~Assignment.read_configuration
       ~Assignment.read_functions
       ~Assignment.read_weights
+      ~Assignment.save_choices
       ~Assignment.set_fasttrips_bump_wait
       ~Assignment.simulate
       ~Assignment.write_configuration
@@ -38,5 +41,83 @@ fasttrips\.Assignment
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Assignment.BOARD_STATE_CATEGORICAL
+      ~Assignment.BUMP_BUFFER
+      ~Assignment.BUMP_ONE_AT_A_TIME
+      ~Assignment.CAPACITY_CONSTRAINT
+      ~Assignment.CHOSEN_CATEGORIES
+      ~Assignment.CHOSEN_NOT_CHOSEN_YET
+      ~Assignment.CHOSEN_REJECTED
+      ~Assignment.CONFIGURATION_FILE
+      ~Assignment.CONFIGURATION_FUNCTIONS_FILE
+      ~Assignment.CONFIGURATION_OUTPUT_FILE
+      ~Assignment.CONVERGENCE_GAP
+      ~Assignment.CREATE_SKIMS
+      ~Assignment.DEBUG_NUM_TRIPS
+      ~Assignment.DEBUG_OUTPUT_COLUMNS
+      ~Assignment.DEBUG_TRACE_ONLY
+      ~Assignment.FARE_ZONE_SYMMETRY
+      ~Assignment.INPUT_DEMAND_DIR
+      ~Assignment.INPUT_NETWORK_ARCHIVE
+      ~Assignment.INPUT_WEIGHTS
+      ~Assignment.MAX_ITERATIONS
+      ~Assignment.MAX_NUM_PATHS
+      ~Assignment.MAX_PF_ITERATIONS
+      ~Assignment.MAX_SIMULATION_ITERS
+      ~Assignment.MIN_PATH_PROBABILITY
+      ~Assignment.MSA_RESULTS
+      ~Assignment.NETWORK_BUILD_DATE
+      ~Assignment.NETWORK_BUILD_DATE_START_TIME
+      ~Assignment.NUMBER_OF_PROCESSES
+      ~Assignment.OUTPUT_DIR
+      ~Assignment.OUTPUT_PASSENGER_TRAJECTORIES
+      ~Assignment.OUTPUT_PATHSET_PER_SIM_ITER
+      ~Assignment.PATHFINDING_EVERYONE
+      ~Assignment.PATHFINDING_TYPE
+      ~Assignment.PATHFINDING_TYPE_DETERMINISTIC
+      ~Assignment.PATHFINDING_TYPE_READ_FILE
+      ~Assignment.PATHFINDING_TYPE_STOCHASTIC
+      ~Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID
+      ~Assignment.SIMULATION
+      ~Assignment.SIM_COL_MISSED_XFER
+      ~Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN
+      ~Assignment.SIM_COL_PAX_ALIGHT_TIME
+      ~Assignment.SIM_COL_PAX_A_TIME
+      ~Assignment.SIM_COL_PAX_BOARD_STATE
+      ~Assignment.SIM_COL_PAX_BOARD_TIME
+      ~Assignment.SIM_COL_PAX_BUMP_ITER
+      ~Assignment.SIM_COL_PAX_B_TIME
+      ~Assignment.SIM_COL_PAX_CHOSEN
+      ~Assignment.SIM_COL_PAX_COST
+      ~Assignment.SIM_COL_PAX_DISTANCE
+      ~Assignment.SIM_COL_PAX_FARE
+      ~Assignment.SIM_COL_PAX_FARE_PERIOD
+      ~Assignment.SIM_COL_PAX_FREE_TRANSFER
+      ~Assignment.SIM_COL_PAX_LINK_TIME
+      ~Assignment.SIM_COL_PAX_LNPS
+      ~Assignment.SIM_COL_PAX_LOGSUM
+      ~Assignment.SIM_COL_PAX_MISSED_XFER
+      ~Assignment.SIM_COL_PAX_OVERCAP
+      ~Assignment.SIM_COL_PAX_OVERCAP_FRAC
+      ~Assignment.SIM_COL_PAX_PROBABILITY
+      ~Assignment.SIM_COL_PAX_WAIT_TIME
+      ~Assignment.SKIM_END_TIME
+      ~Assignment.SKIM_START_TIME
+      ~Assignment.SKIP_PERSON_IDS
+      ~Assignment.STOCH_DISPERSION
+      ~Assignment.STOCH_MAX_STOP_PROCESS_COUNT
+      ~Assignment.STOCH_PATHSET_SIZE
+      ~Assignment.TIME_WINDOW
+      ~Assignment.TRACE_IDS
+      ~Assignment.TRANSFER_FARE_IGNORE_PATHENUM
+      ~Assignment.TRANSFER_FARE_IGNORE_PATHFINDING
+      ~Assignment.UTILS_CONVERSION
+      ~Assignment.bump_wait
+      ~Assignment.bump_wait_df
    
    

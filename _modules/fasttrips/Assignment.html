@@ -24,26 +24,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../genindex.html"/>
-        <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -105,7 +97,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">fasttrips</a>
@@ -113,9 +105,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -145,8 +138,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -158,7 +149,17 @@
            <div itemprop="articleBody">
             
   <h1>Source code for fasttrips.Assignment</h1><div class="highlight"><pre>
-<span></span><span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015-2017 Contributing Entities&quot;</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">past.builtins</span> <span class="k">import</span> <span class="n">execfile</span>
+<span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="n">standard_library</span>
+<span class="n">standard_library</span><span class="o">.</span><span class="n">install_aliases</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">zip</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015-2017 Contributing Entities&quot;</span>
 <span class="n">__license__</span>   <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="s2">    you may not use this file except in compliance with the License.</span>
@@ -172,12 +173,12 @@
 <span class="s2">    See the License for the specific language governing permissions and</span>
 <span class="s2">    limitations under the License.</span>
 <span class="s2">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">configparser</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">Queue</span>
+<span class="kn">import</span> <span class="nn">queue</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
 
@@ -194,7 +195,7 @@
 <span class="kn">from</span> <span class="nn">.Util</span> <span class="k">import</span> <span class="n">Util</span>
 
 
-<div class="viewcode-block" id="Assignment"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment">[docs]</a><span class="k">class</span> <span class="nc">Assignment</span><span class="p">:</span>
+<div class="viewcode-block" id="Assignment"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment">[docs]</a><span class="k">class</span> <span class="nc">Assignment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Assignment class.  Documentation forthcoming.</span>
 
@@ -221,8 +222,8 @@
     <span class="c1">#: the transit system is not crowded or when capacity constraint is</span>
     <span class="c1">#: relaxed the model will terminate after the first iteration</span>
     <span class="n">MAX_ITERATIONS</span>                  <span class="o">=</span> <span class="kc">None</span>
-
     <span class="n">MAX_PF_ITERATIONS</span>               <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">CONVERGENCE_GAP</span>                 <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">NETWORK_BUILD_DATE</span>              <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
     <span class="n">NETWORK_BUILD_DATE_START_TIME</span>   <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
@@ -281,9 +282,10 @@
     <span class="c1">#: If unknown use a value between 0.5 and 1. Float.</span>
     <span class="n">STOCH_DISPERSION</span>                <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="c1">#: Route choice configuration: IVT mins to utils conversion factor.</span>
-    <span class="c1">#: Higher values result in higher differences in probabilities for a given</span>
-    <span class="c1">#: difference in genaralized costs. Must be nonnegative.</span>
+    <span class="c1">#: Stop labeling configuration: Multiplies the utilities by this factor</span>
+    <span class="c1">#: so that there are not negative costs labels which can result in</span>
+    <span class="c1">#: lengthy and ineffective path-finding. Must be positive; should be greater</span>
+    <span class="c1">#: than 1.0.  Double.</span>
     <span class="n">UTILS_CONVERSION</span>                <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1">#: In path-finding, suppress trying to adjust fares using transfer fare rules.</span>
@@ -439,11 +441,14 @@
         <span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_rows&#39;</span><span class="p">,</span>   <span class="mi">1000</span><span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_columns&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">RawConfigParser</span><span class="p">(</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">RawConfigParser</span><span class="p">(</span>
             <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max_iterations&#39;</span>                  <span class="p">:</span><span class="mi">1</span><span class="p">,</span>
                       <span class="s1">&#39;max_pf_iterations&#39;</span>               <span class="p">:</span><span class="mi">1</span><span class="p">,</span>
                       <span class="s1">&#39;network_build_date&#39;</span>              <span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%m/</span><span class="si">%d</span><span class="s2">/%Y&quot;</span><span class="p">),</span>
                       <span class="s1">&#39;simulation&#39;</span>                      <span class="p">:</span><span class="s1">&#39;True&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;learning_convergence&#39;</span>            <span class="p">:</span><span class="s1">&#39;False&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;learning_rate&#39;</span>                   <span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+                      <span class="s1">&#39;convergence_gap&#39;</span>                 <span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
                       <span class="s1">&#39;output_pathset_per_sim_iter&#39;</span>     <span class="p">:</span><span class="s1">&#39;False&#39;</span><span class="p">,</span>
                       <span class="s1">&#39;output_passenger_trajectories&#39;</span>   <span class="p">:</span><span class="s1">&#39;True&#39;</span><span class="p">,</span>
                       <span class="s1">&#39;create_skims&#39;</span>                    <span class="p">:</span><span class="s1">&#39;False&#39;</span><span class="p">,</span>
@@ -493,6 +498,9 @@
                                                     <span class="n">parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span> <span class="s1">&#39;network_build_date&#39;</span><span class="p">),</span> <span class="s1">&#39;%m/</span><span class="si">%d</span><span class="s1">/%Y&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">date</span><span class="p">()</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE_START_TIME</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">SIMULATION</span>                    <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;simulation&#39;</span><span class="p">)</span>
+        <span class="n">PathSet</span><span class="o">.</span><span class="n">LEARN_ROUTES</span>                     <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span> <span class="s1">&#39;learning_convergence&#39;</span><span class="p">)</span>
+        <span class="n">PathSet</span><span class="o">.</span><span class="n">LEARN_ROUTES_RATE</span>                <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getfloat</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span> <span class="s1">&#39;learning_rate&#39;</span><span class="p">)</span>
+        <span class="n">Assignment</span><span class="o">.</span><span class="n">CONVERGENCE_GAP</span>               <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getfloat</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span> <span class="s1">&#39;convergence_gap&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_PASSENGER_TRAJECTORIES</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;output_passenger_trajectories&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">OUTPUT_PATHSET_PER_SIM_ITER</span>   <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;output_pathset_per_sim_iter&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">CREATE_SKIMS</span>                  <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;create_skims&#39;</span><span class="p">)</span>
@@ -502,7 +510,13 @@
                                                    <span class="n">parser</span><span class="o">.</span><span class="n">get</span>       <span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;skim_end_time&#39;</span><span class="p">),</span><span class="s1">&#39;%H:%M&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">CAPACITY_CONSTRAINT</span>           <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;capacity_constraint&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">SKIP_PERSON_IDS</span>               <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get</span>       <span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;skip_person_ids&#39;</span><span class="p">))</span>
-        <span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span>                     <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get</span>       <span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;trace_ids&#39;</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span>                     <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get</span>       <span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;trace_ids&#39;</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="s2">&quot;Must have a TRACE_IDS line in config_ft.txt; even if it is trace_ids = []&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">DEBUG_TRACE_ONLY</span>              <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;debug_trace_only&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">DEBUG_NUM_TRIPS</span>               <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getint</span>    <span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;debug_num_trips&#39;</span><span class="p">)</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">DEBUG_OUTPUT_COLUMNS</span>          <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;debug_output_columns&#39;</span><span class="p">)</span>
@@ -568,7 +582,9 @@
             <span class="n">weights</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_fwf</span><span class="p">(</span><span class="n">weights_file</span><span class="p">)</span>
             <span class="n">weights</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_PURPOSE</span><span class="p">]</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_PURPOSE</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">weights</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">weights_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_PURPOSE</span><span class="p">:</span><span class="nb">object</span><span class="p">},</span> <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span> <span class="p">(</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_PURPOSE</span><span class="p">)</span>
+            <span class="c1">##LMZ</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">weights_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_COLUMN_PURPOSE</span><span class="p">:</span><span class="s1">&#39;S&#39;</span><span class="p">},</span> <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">PathSet</span><span class="o">.</span><span class="n">WEIGHTS_DF</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">process_weight_qualifiers</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
 
@@ -661,7 +677,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write the configuration parameters to function as a record with the output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">()</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">SafeConfigParser</span><span class="p">()</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_section</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;input_demand_dir&#39;</span><span class="p">,</span>              <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_DEMAND_DIR</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s1">&#39;fasttrips&#39;</span><span class="p">,</span><span class="s1">&#39;input_network_dir&#39;</span><span class="p">,</span>             <span class="n">Assignment</span><span class="o">.</span><span class="n">INPUT_NETWORK_ARCHIVE</span><span class="p">)</span>
@@ -749,11 +765,11 @@
                                                     <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED</span><span class="p">,</span>
                                                     <span class="n">overcap_col</span><span class="p">]]</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float64&#39;</span><span class="p">))</span>
 
-        <span class="n">_fasttrips</span><span class="o">.</span><span class="n">initialize_parameters</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TIME_WINDOW</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
-                                         <span class="n">Assignment</span><span class="o">.</span><span class="n">BUMP_BUFFER</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
+        <span class="n">_fasttrips</span><span class="o">.</span><span class="n">initialize_parameters</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TIME_WINDOW</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
+                                         <span class="n">Assignment</span><span class="o">.</span><span class="n">BUMP_BUFFER</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
                                          <span class="n">Assignment</span><span class="o">.</span><span class="n">UTILS_CONVERSION</span><span class="p">,</span>
-                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">DEPART_EARLY_ALLOWED_MIN</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
-                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">ARRIVE_LATE_ALLOWED_MIN</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
+                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">DEPART_EARLY_ALLOWED_MIN</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
+                                         <span class="n">PathSet</span><span class="o">.</span><span class="n">ARRIVE_LATE_ALLOWED_MIN</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mf">60.0</span><span class="p">,</span>
                                          <span class="n">Assignment</span><span class="o">.</span><span class="n">STOCH_PATHSET_SIZE</span><span class="p">,</span>
                                          <span class="n">Assignment</span><span class="o">.</span><span class="n">STOCH_DISPERSION</span><span class="p">,</span>
                                          <span class="n">Assignment</span><span class="o">.</span><span class="n">STOCH_MAX_STOP_PROCESS_COUNT</span><span class="p">,</span>
@@ -893,12 +909,35 @@
         <span class="n">pathset_paths_df</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">pathset_links_df</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="n">last_chosen_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span>
+        <span class="p">])</span>
+
+        <span class="n">success_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">,</span>
+            <span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span>
+        <span class="p">])</span>
+
+        <span class="n">bump_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">,</span>
+            <span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span>
+        <span class="p">])</span>
+
+        <span class="n">success_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span><span class="p">]</span> <span class="o">=</span> <span class="n">success_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">bump_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span><span class="p">]</span> <span class="o">=</span> <span class="n">bump_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
         <span class="c1"># write 0-iter vehicle trips</span>
         <span class="n">Assignment</span><span class="o">.</span><span class="n">write_vehicle_trips</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">veh_trips_df</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_ITERATIONS</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_ITERATIONS</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
 
-            <span class="k">for</span> <span class="n">pathfinding_iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_PF_ITERATIONS</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">pathfinding_iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">MAX_PF_ITERATIONS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
 
                 <span class="c1"># First pathfinding_iteration, find paths for everyone</span>
                 <span class="k">if</span> <span class="n">pathfinding_iteration</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -943,6 +982,7 @@
 
                 <span class="c1"># if we have new paths, simulate them</span>
                 <span class="k">if</span> <span class="n">num_new_paths_found</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">pathset_links_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">merge_prior_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">pathset_links_df</span><span class="p">,</span> <span class="n">success_df</span><span class="p">)</span>
 
                     <span class="k">if</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIMULATION</span><span class="p">:</span>
                         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;***************************** ITERATION </span><span class="si">%d</span><span class="s2"> PATHFINDING ITERATION </span><span class="si">%d</span><span class="s2"> *** SIMULATING ***********************&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">pathfinding_iteration</span><span class="p">))</span>
@@ -970,17 +1010,14 @@
                 <span class="c1"># capacity gap stuff</span>
                 <span class="n">num_paths_found</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">number_of_pathsets</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">)</span>
                 <span class="n">num_bumped_passengers</span> <span class="o">=</span> <span class="n">num_paths_found</span> <span class="o">-</span> <span class="n">num_passengers_arrived</span>
-                <span class="k">if</span> <span class="n">num_paths_found</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">capacity_gap</span> <span class="o">=</span> <span class="mf">100.0</span><span class="o">*</span><span class="n">num_bumped_passengers</span><span class="o">/</span><span class="n">num_paths_found</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">capacity_gap</span> <span class="o">=</span> <span class="mi">100</span>
+
 
                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  Length of trip list:       </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">trip_list_df</span><span class="p">))</span>
                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  Number of pathsets found:  </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">num_paths_found</span><span class="p">)</span>
                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  ARRIVED PASSENGERS:        </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">num_passengers_arrived</span><span class="p">)</span>
                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  MISSED PASSENGERS:         </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">num_bumped_passengers</span><span class="p">)</span>
-                <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  CAPACITY GAP:              </span><span class="si">%10.5f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">capacity_gap</span><span class="p">)</span>
+
 
                 <span class="n">FT</span><span class="o">.</span><span class="n">performance</span><span class="o">.</span><span class="n">record_step_end</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">pathfinding_iteration</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
@@ -988,8 +1025,35 @@
                 <span class="k">if</span> <span class="n">num_new_paths_found</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">break</span>
 
+            <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">save_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span><span class="p">)</span>
+            <span class="n">new_choices</span><span class="p">,</span> <span class="n">last_chosen_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">compare_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">last_chosen_df</span><span class="p">)</span>
+            <span class="n">capacity_gap</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">new_choices</span> <span class="o">+</span> <span class="n">num_bumped_passengers</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">trip_list_df</span><span class="p">)</span>
+
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;###OUTER LOOP: Iteration </span><span class="si">{}</span><span class="s2">###&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">iteration</span><span class="p">))</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  CAPACITY GAP:              </span><span class="si">%10.5f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">capacity_gap</span><span class="p">)</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  NEW CHOICE FROM PRIOR:     </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">new_choices</span><span class="p">)</span>
+
+
+            <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">save_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span><span class="p">)</span>
+            <span class="n">new_choices</span><span class="p">,</span> <span class="n">last_chosen_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">compare_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">last_chosen_df</span><span class="p">)</span>
+            <span class="n">capacity_gap</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">new_choices</span> <span class="o">+</span> <span class="n">num_bumped_passengers</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">trip_list_df</span><span class="p">)</span>
+
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;###OUTER LOOP: Iteration </span><span class="si">{}</span><span class="s2">###&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">iteration</span><span class="p">))</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  CAPACITY GAP:              </span><span class="si">%10.5f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">capacity_gap</span><span class="p">)</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  NEW CHOICE FROM PRIOR:     </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">new_choices</span><span class="p">)</span>
+
+
+            <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">save_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span><span class="p">)</span>
+            <span class="n">new_choices</span><span class="p">,</span> <span class="n">last_chosen_df</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">compare_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">last_chosen_df</span><span class="p">)</span>
+            <span class="n">capacity_gap</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">new_choices</span> <span class="o">+</span> <span class="n">num_bumped_passengers</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">trip_list_df</span><span class="p">)</span>
+
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;###OUTER LOOP: Iteration </span><span class="si">{}</span><span class="s2">###&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">iteration</span><span class="p">))</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  CAPACITY GAP:              </span><span class="si">%10.5f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">capacity_gap</span><span class="p">)</span>
+            <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  NEW CHOICE FROM PRIOR:     </span><span class="si">%10d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">new_choices</span><span class="p">)</span>
+
+
             <span class="c1"># end condition for iterations loop</span>
-            <span class="k">if</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">capacity_gap</span> <span class="o">&lt;</span> <span class="mf">0.001</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">capacity_gap</span> <span class="o">&lt;</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">CONVERGENCE_GAP</span><span class="p">:</span>
                 <span class="k">break</span>
 
             <span class="c1"># end for loop</span>
@@ -999,6 +1063,111 @@
                 <span class="s2">&quot;passengers_arrived&quot;</span><span class="p">:</span> <span class="n">num_passengers_arrived</span><span class="p">,</span>
                 <span class="s2">&quot;passengers_missed&quot;</span><span class="p">:</span> <span class="n">num_bumped_passengers</span><span class="p">,</span>
                 <span class="s2">&quot;passengers_demand&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">trip_list_df</span><span class="p">)</span> <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Assignment.compare_choices"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment.compare_choices">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">compare_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">prior_choice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reads in a pathset_path_df and the pathset_path_df of a prior iteration</span>
+<span class="sd">        and returns the number of new choices made in the current iteration</span>
+<span class="sd">        along with a simplified chosen df to use in the next iteration.</span>
+
+<span class="sd">        :param pathset_paths_df: Current iteration of Pathset_Paths_DF</span>
+<span class="sd">        :param prior_choice: Pathset_Paths_DF of a prior iteration.</span>
+<span class="sd">        :return: new_choices_count: Total number of new choices in this iteration</span>
+<span class="sd">                                    compared to the input prior choice df.</span>
+<span class="sd">                 chosen: Simplified DF of &#39;person_id&#39;, &#39;person_trip_id_num&#39;, and &#39;description&#39;</span>
+<span class="sd">                         that can be used in subsequent invocations of this method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">chosen</span> <span class="o">=</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">get_chosen_links</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">)[</span>
+            <span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+             <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+             <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">match_choices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">chosen</span><span class="p">,</span> <span class="n">prior_choice</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+            <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">)</span>
+
+        <span class="n">new_choices_count</span> <span class="o">=</span> <span class="n">chosen</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">match_choices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">new_choices_count</span><span class="p">,</span> <span class="n">chosen</span></div>
+
+
+<div class="viewcode-block" id="Assignment.save_choices"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment.save_choices">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">save_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns an updated count of successfully chosen paths and</span>
+<span class="sd">        paths that were bumped for each user.</span>
+<span class="sd">        :param pathset_paths_df: Current iteration of pathset_paths_df after simulation.</span>
+<span class="sd">        :param success_df: Count of chosen paths for each user across prior iterations</span>
+<span class="sd">        :param bump_df: Count of bumped paths for each user across prior iterations</span>
+<span class="sd">        :return:</span>
+<span class="sd">            success_df: Updated count of chosen paths for each user across each iteration</span>
+<span class="sd">            bump_df: Updated count of bumped paths for each user across each iteration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">chosen</span> <span class="o">=</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">get_chosen_links</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">)</span>
+        <span class="n">iter_bump_df</span> <span class="o">=</span> <span class="n">chosen</span><span class="p">[</span><span class="n">chosen</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BUMP_ITER</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">][</span>
+            <span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+             <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+             <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">iter_bump_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">iter_bump_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">bump_df</span><span class="p">,</span> <span class="n">iter_bump_df</span><span class="p">])</span>
+        <span class="n">bump_df</span> <span class="o">=</span> <span class="n">iter_bump_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">])[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="n">iter_success_df</span> <span class="o">=</span> <span class="n">chosen</span><span class="p">[</span><span class="n">chosen</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BUMP_ITER</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()][</span>
+            <span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+             <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+             <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">iter_success_df</span><span class="p">[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">iter_success_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">success_df</span><span class="p">,</span> <span class="n">iter_success_df</span><span class="p">])</span>
+
+        <span class="n">success_df</span> <span class="o">=</span> <span class="n">iter_success_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+                                              <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+                                              <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">]</span>
+                                             <span class="p">)[</span><span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">success_df</span><span class="p">,</span> <span class="n">bump_df</span></div>
+
+
+<div class="viewcode-block" id="Assignment.merge_prior_choices"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment.merge_prior_choices">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">merge_prior_choices</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">pathset_links_df</span><span class="p">,</span> <span class="n">flag_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Join success or bump flag count information onto a pathset_paths_df and pathset_links_df</span>
+<span class="sd">        :param pathset_paths_df: Current iteration of pathset_paths_df.</span>
+<span class="sd">        :param pathset_links_df: Current iteration of pathset_links_df</span>
+<span class="sd">        :param flag_df: success or bump df</span>
+<span class="sd">        :return: pathset_paths_df and pathset_links_df with additional flag column.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">assert</span><span class="p">((</span><span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span> <span class="ow">in</span> <span class="n">flag_df</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span> <span class="ow">in</span> <span class="n">flag_df</span><span class="p">))</span>
+
+        <span class="n">flag_col</span> <span class="o">=</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span> <span class="k">if</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">SUCCESS_FLAG_COLUMN</span> <span class="ow">in</span> <span class="n">flag_df</span> <span class="k">else</span> <span class="n">PathSet</span><span class="o">.</span><span class="n">BUMP_FLAG_COLUMN</span>
+
+        <span class="k">if</span> <span class="n">flag_col</span> <span class="ow">in</span> <span class="n">pathset_paths_df</span><span class="p">:</span>
+            <span class="n">pathset_paths_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="n">flag_col</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">flag_col</span> <span class="ow">in</span> <span class="n">pathset_links_df</span><span class="p">:</span>
+            <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="n">flag_col</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">pathset_paths_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">flag_df</span><span class="p">,</span>
+                                    <span class="n">on</span> <span class="o">=</span> <span class="p">[</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_DESCRIPTION</span><span class="p">],</span> <span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span><span class="p">)</span>
+        <span class="n">pathset_paths_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_paths_df</span><span class="p">[</span><span class="n">flag_col</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">(),</span> <span class="n">flag_col</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">pathset_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">,</span><span class="n">pathset_paths_df</span><span class="p">[</span>
+            <span class="p">[</span><span class="s1">&#39;trip_list_id_num&#39;</span><span class="p">,</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">,</span> <span class="n">flag_col</span><span class="p">,</span> <span class="p">]],</span>
+                                    <span class="n">on</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;trip_list_id_num&#39;</span><span class="p">,</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">],</span> <span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pathset_paths_df</span><span class="p">,</span> <span class="n">pathset_links_df</span></div>
 
 <div class="viewcode-block" id="Assignment.filter_trip_list_to_not_arrived"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment.filter_trip_list_to_not_arrived">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">filter_trip_list_to_not_arrived</span><span class="p">(</span><span class="n">trip_list_df</span><span class="p">,</span> <span class="n">pathset_paths_df</span><span class="p">):</span>
@@ -1078,7 +1247,7 @@
             <span class="n">num_processes</span>   <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
         <span class="c1"># it&#39;s not worth it unless each process does 3</span>
         <span class="k">if</span> <span class="n">num_processes</span> <span class="o">&gt;</span> <span class="n">est_paths_to_find</span><span class="o">*</span><span class="mi">3</span><span class="p">:</span>
-            <span class="n">num_processes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">est_paths_to_find</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">num_processes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">est_paths_to_find</span><span class="o">//</span><span class="mi">3</span><span class="p">)</span>
 
         <span class="c1"># this is probalby time consuming... put in a try block</span>
         <span class="k">try</span><span class="p">:</span>
@@ -1108,7 +1277,7 @@
             <span class="n">num_paths_sought</span>      <span class="o">=</span> <span class="mi">0</span>
             <span class="n">path_cols</span>             <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">pathfind_trip_list_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">path_tuple</span> <span class="ow">in</span> <span class="n">FT</span><span class="o">.</span><span class="n">passengers</span><span class="o">.</span><span class="n">pathfind_trip_list_df</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-                <span class="n">path_dict</span>         <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">path_cols</span><span class="p">,</span> <span class="n">path_tuple</span><span class="p">))</span>
+                <span class="n">path_dict</span>         <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">path_cols</span><span class="p">,</span> <span class="n">path_tuple</span><span class="p">)))</span>
                 <span class="n">trip_list_id</span>      <span class="o">=</span> <span class="n">path_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM</span><span class="p">]</span>
                 <span class="n">person_id</span>         <span class="o">=</span> <span class="n">path_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_ID</span><span class="p">]</span>
                 <span class="n">person_trip_id</span>    <span class="o">=</span> <span class="n">path_dict</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">]</span>
@@ -1153,14 +1322,14 @@
                         <span class="n">time_elapsed</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
                         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot; </span><span class="si">%6d</span><span class="s2"> paths sought, </span><span class="si">%6d</span><span class="s2"> paths found of </span><span class="si">%d</span><span class="s2"> paths total.  Time elapsed: </span><span class="si">%2d</span><span class="s2">h:</span><span class="si">%2d</span><span class="s2">m:</span><span class="si">%2d</span><span class="s2">s&quot;</span> <span class="o">%</span> <span class="p">(</span>
                                              <span class="n">num_paths_sought</span><span class="p">,</span> <span class="n">num_paths_found_now</span><span class="p">,</span> <span class="n">est_paths_to_find</span><span class="p">,</span>
-                                             <span class="nb">int</span><span class="p">(</span> <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">),</span>
-                                             <span class="nb">int</span><span class="p">(</span> <span class="p">(</span><span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">/</span> <span class="mi">60</span><span class="p">),</span>
+                                             <span class="nb">int</span><span class="p">(</span> <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mi">3600</span><span class="p">),</span>
+                                             <span class="nb">int</span><span class="p">(</span> <span class="p">(</span><span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span><span class="o">/</span> <span class="mi">60</span><span class="p">),</span>
                                              <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">60</span><span class="p">))</span>
 
             <span class="c1"># multiprocessing follow-up</span>
             <span class="k">if</span> <span class="n">num_processes</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="c1"># we&#39;re done, let each process know</span>
-                <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                     <span class="n">todo_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;DONE&#39;</span><span class="p">)</span>
 
                 <span class="c1"># get results</span>
@@ -1193,15 +1362,15 @@
                                 <span class="n">time_elapsed</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
                                 <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">%6d</span><span class="s2"> paths sought, </span><span class="si">%6d</span><span class="s2"> paths found of </span><span class="si">%d</span><span class="s2"> paths total.  Time elapsed: </span><span class="si">%2d</span><span class="s2">h:</span><span class="si">%2d</span><span class="s2">m:</span><span class="si">%2d</span><span class="s2">s&quot;</span> <span class="o">%</span> <span class="p">(</span>
                                                      <span class="n">num_paths_sought</span><span class="p">,</span> <span class="n">num_paths_found_now</span><span class="p">,</span> <span class="n">est_paths_to_find</span><span class="p">,</span>
-                                                     <span class="nb">int</span><span class="p">(</span> <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">),</span>
-                                                     <span class="nb">int</span><span class="p">(</span> <span class="p">(</span><span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">/</span> <span class="mi">60</span><span class="p">),</span>
+                                                     <span class="nb">int</span><span class="p">(</span> <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mi">3600</span><span class="p">),</span>
+                                                     <span class="nb">int</span><span class="p">(</span> <span class="p">(</span><span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span><span class="o">/</span> <span class="mi">60</span><span class="p">),</span>
                                                      <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">60</span><span class="p">))</span>
 
                             <span class="k">del</span> <span class="n">process_dict</span><span class="p">[</span><span class="n">worker_num</span><span class="p">][</span><span class="s2">&quot;working_on&quot;</span><span class="p">]</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="nb">print</span> <span class="s2">&quot;Unexpected done queue contents: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unexpected done queue contents: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
 
-                    <span class="k">except</span> <span class="n">Queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+                    <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
                         <span class="c1"># This is normal</span>
                         <span class="k">pass</span>
                     <span class="k">except</span><span class="p">:</span>
@@ -1209,18 +1378,18 @@
                         <span class="k">pass</span>
 
                     <span class="c1"># check if any processes are not alive</span>
-                    <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                         <span class="k">if</span> <span class="n">process_dict</span><span class="p">[</span><span class="n">process_idx</span><span class="p">][</span><span class="s2">&quot;alive&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">process_dict</span><span class="p">[</span><span class="n">process_idx</span><span class="p">][</span><span class="s2">&quot;process&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
                             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Process </span><span class="si">%d</span><span class="s2"> is not alive&quot;</span> <span class="o">%</span> <span class="n">process_idx</span><span class="p">)</span>
                             <span class="n">process_dict</span><span class="p">[</span><span class="n">process_idx</span><span class="p">][</span><span class="s2">&quot;alive&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
                             <span class="n">done_procs</span> <span class="o">+=</span> <span class="mi">1</span>
 
                 <span class="c1"># join up my processes</span>
-                <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                     <span class="n">process_dict</span><span class="p">[</span><span class="n">process_idx</span><span class="p">][</span><span class="s2">&quot;process&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
 
                 <span class="c1"># check if any processes crashed</span>
-                <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">process_idx</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">process_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">process_dict</span><span class="p">[</span><span class="n">process_idx</span><span class="p">][</span><span class="s2">&quot;done&quot;</span><span class="p">]:</span>
                         <span class="k">if</span> <span class="s2">&quot;working_on&quot;</span> <span class="ow">in</span> <span class="n">process_dict</span><span class="p">[</span><span class="n">process_idx</span><span class="p">]:</span>
                             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Process </span><span class="si">%d</span><span class="s2"> appears to have crashed; it was working on </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> \
@@ -1248,8 +1417,8 @@
         <span class="n">time_elapsed</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finished finding </span><span class="si">%6d</span><span class="s2"> passenger paths.  Time elapsed: </span><span class="si">%2d</span><span class="s2">h:</span><span class="si">%2d</span><span class="s2">m:</span><span class="si">%2d</span><span class="s2">s&quot;</span> <span class="o">%</span> <span class="p">(</span>
                                  <span class="n">num_paths_found_now</span><span class="p">,</span>
-                                 <span class="nb">int</span><span class="p">(</span> <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span><span class="p">),</span>
-                                 <span class="nb">int</span><span class="p">(</span> <span class="p">(</span><span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">/</span> <span class="mi">60</span><span class="p">),</span>
+                                 <span class="nb">int</span><span class="p">(</span> <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">/</span> <span class="mi">3600</span><span class="p">),</span>
+                                 <span class="nb">int</span><span class="p">(</span> <span class="p">(</span><span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span><span class="o">/</span> <span class="mi">60</span><span class="p">),</span>
                                  <span class="n">time_elapsed</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">%</span> <span class="mi">60</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">num_paths_found_now</span> <span class="o">+</span> <span class="n">num_paths_found_prev</span></div>
@@ -1377,6 +1546,7 @@
         <span class="p">}</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">pathdict</span><span class="p">,</span> <span class="n">perf_dict</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="Assignment.find_passenger_vehicle_times"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment.find_passenger_vehicle_times">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">find_passenger_vehicle_times</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">,</span> <span class="n">veh_trips_df</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1417,42 +1587,54 @@
         <span class="k">if</span> <span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP_FRAC</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">veh_trips_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
             <span class="n">veh_trip_cols</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP_FRAC</span><span class="p">)</span>
 
-        <span class="n">pathset_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
-            <span class="n">left</span>    <span class="o">=</span><span class="n">pathset_links_df</span><span class="p">,</span>
-            <span class="n">right</span>   <span class="o">=</span><span class="n">veh_trips_df</span><span class="p">[</span><span class="n">veh_trip_cols</span><span class="p">],</span>
-            <span class="n">left_on</span> <span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span><span class="s1">&#39;A_id&#39;</span><span class="p">,</span><span class="s1">&#39;A_seq&#39;</span><span class="p">],</span>
-            <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
-                      <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
-                      <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">],</span>
-            <span class="n">how</span>     <span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
-        <span class="n">pathset_links_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
-            <span class="n">left</span>    <span class="o">=</span><span class="n">pathset_links_df</span><span class="p">,</span>
-            <span class="n">right</span>   <span class="o">=</span><span class="n">veh_trips_df</span><span class="p">[[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
-                                   <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">,</span>
-                                   <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
-                                   <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]],</span>
-            <span class="n">left_on</span> <span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span><span class="s1">&#39;B_id&#39;</span><span class="p">,</span><span class="s1">&#39;B_seq&#39;</span><span class="p">],</span>
-            <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
-                      <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
-                      <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">],</span>
-            <span class="n">how</span>     <span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
-            <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;_A&quot;</span><span class="p">,</span><span class="s2">&quot;_B&quot;</span><span class="p">))</span>
+        <span class="c1">#This is a little long winded, but it cuts down on memory dramatically, but only copying</span>
+        <span class="c1">#what is actually needed during the merges.</span>
+        <span class="n">intermediate</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">pathset_links_df</span><span class="p">[[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span><span class="s1">&#39;A_id&#39;</span><span class="p">,</span><span class="s1">&#39;A_seq&#39;</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">,</span>
+                                        <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_NUM</span><span class="p">,</span>
+                                        <span class="s1">&#39;B_id&#39;</span><span class="p">,</span> <span class="s1">&#39;B_seq&#39;</span><span class="p">]],</span>
+                 <span class="n">right</span><span class="o">=</span><span class="n">veh_trips_df</span><span class="p">[</span><span class="n">veh_trip_cols</span><span class="p">],</span>
+                 <span class="n">left_on</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span> <span class="s1">&#39;A_id&#39;</span><span class="p">,</span> <span class="s1">&#39;A_seq&#39;</span><span class="p">],</span>
+                 <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
+                          <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
+                          <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">],</span>
+                 <span class="n">how</span>     <span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">)</span>
 
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">intermediate</span> <span class="o">=</span> <span class="n">intermediate</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
+                                                  <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">,</span>
+                                                  <span class="s1">&#39;A_id&#39;</span><span class="p">,</span> <span class="s1">&#39;A_seq&#39;</span><span class="p">])</span>
+
+        <span class="n">intermediate</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">intermediate</span><span class="p">,</span>
+                                <span class="n">right</span><span class="o">=</span><span class="n">veh_trips_df</span><span class="p">[[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
+                                                    <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">,</span>
+                                                    <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
+                                                    <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span><span class="p">]],</span>
+                                <span class="n">left_on</span> <span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span><span class="s1">&#39;B_id&#39;</span><span class="p">,</span><span class="s1">&#39;B_seq&#39;</span><span class="p">],</span>
+                                <span class="n">right_on</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
+                                          <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
+                                          <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">],</span>
+                                <span class="n">how</span>     <span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,)</span>
+
+        <span class="n">intermediate</span> <span class="o">=</span> <span class="n">intermediate</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_TRIP_ID</span><span class="p">,</span>
+                                                  <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
+                                                  <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">,</span>
+                                                  <span class="s1">&#39;B_id&#39;</span><span class="p">,</span><span class="s1">&#39;B_seq&#39;</span><span class="p">])</span>
+
+        <span class="n">intermediate</span> <span class="o">=</span> <span class="n">intermediate</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
             <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_DEPARTURE_TIME</span><span class="p">:</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">,</span>   <span class="c1"># transit vehicle depart time (at A) = board time for pax</span>
             <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_ARRIVAL_TIME</span>  <span class="p">:</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">,</span>  <span class="c1"># transit vehicle arrive time (at B) = alight time for pax</span>
-        <span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># redundant with A_id, B_id, A_seq, B_seq, B_time is just alight time</span>
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_A&#39;</span> <span class="o">%</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
-                               <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_B&#39;</span> <span class="o">%</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_ID</span><span class="p">,</span>
-                               <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_A&#39;</span> <span class="o">%</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">,</span>
-                               <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_B&#39;</span> <span class="o">%</span> <span class="n">Trip</span><span class="o">.</span><span class="n">STOPTIMES_COLUMN_STOP_SEQUENCE</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">})</span>
 
         <span class="k">if</span> <span class="kc">False</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">Assignment</span><span class="o">.</span><span class="n">TRACE_IDS</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;find_passenger_vehicle_times(): output pathset_links_df len=</span><span class="si">%d</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> \
                                   <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">),</span> <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRACE</span><span class="p">]</span><span class="o">==</span><span class="kc">True</span><span class="p">]</span><span class="o">.</span><span class="n">to_string</span><span class="p">()))</span>
-        <span class="k">return</span> <span class="n">pathset_links_df</span></div>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">,</span> <span class="n">intermediate</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PERSONS_COLUMN_PERSON_ID</span><span class="p">,</span>
+                                                            <span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_PERSON_TRIP_ID</span><span class="p">,</span>
+                                                            <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PATH_NUM</span><span class="p">,</span>
+                                                            <span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_LINK_NUM</span><span class="p">,],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="Assignment.put_passengers_on_vehicles"><a class="viewcode-back" href="../../_generated/fasttrips.Assignment.html#fasttrips.Assignment.put_passengers_on_vehicles">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">put_passengers_on_vehicles</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">,</span> <span class="n">veh_trips_df</span><span class="p">):</span>
@@ -1474,9 +1656,10 @@
 
         <span class="n">veh_trips_df_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">veh_trips_df</span><span class="p">)</span>
 
-        <span class="n">passengers_df</span> <span class="o">=</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">get_chosen_links</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">)</span>
+        <span class="n">passengers_df</span> <span class="o">=</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">get_chosen_links</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">,</span> <span class="n">transit_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
         <span class="c1"># only care about trips</span>
-        <span class="n">passengers_df</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_ROUTE_ID</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()]</span>
+        <span class="c1">#passengers_df = passengers_df.loc[passengers_df[Passenger.PF_COL_ROUTE_ID].notnull()]</span>
 
         <span class="c1"># Group to boards by counting trip_list_id_nums for a (trip_id, A_id as stop_id)</span>
         <span class="n">passenger_trips_boards</span> <span class="o">=</span> <span class="n">passengers_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">passengers_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BUMP_ITER</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">(),</span>  <span class="c1"># unbumped passengers</span>
@@ -1541,7 +1724,7 @@
         <span class="c1"># overcap_frac = what percentage of boards are problematic</span>
         <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP</span>     <span class="p">]</span> <span class="o">=</span> <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_ONBOARD</span><span class="p">]</span> <span class="o">-</span> <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">VEHICLES_COLUMN_TOTAL_CAPACITY</span><span class="p">]</span>
         <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP_FRAC</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="n">veh_loaded_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_BOARDS</span> <span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP_FRAC</span><span class="p">]</span> <span class="o">=</span> <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP</span><span class="p">]</span><span class="o">/</span><span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_BOARDS</span><span class="p">]</span>
+        <span class="n">veh_loaded_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_BOARDS</span> <span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">,</span> <span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP_FRAC</span><span class="p">]</span> <span class="o">=</span> <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_OVERCAP</span><span class="p">]</span> <span class="o">/</span> <span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_BOARDS</span><span class="p">]</span>
 
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;veh_loaded_df with onboard&gt;0: (showing head)</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> \
                               <span class="n">veh_loaded_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">veh_loaded_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">SIM_COL_VEH_ONBOARD</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
@@ -1594,13 +1777,13 @@
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;flag_missed_transfers() pathset_links_df (</span><span class="si">%d</span><span class="s2">):</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">),</span> <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span><span class="o">.</span><span class="n">to_string</span><span class="p">()))</span>
         <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Trip</span><span class="o">.</span><span class="n">TRIPS_COLUMN_TRIP_ID</span><span class="p">]),</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">((</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">]</span><span class="o">-</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_B_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">))</span>
+            <span class="p">((</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">]</span><span class="o">-</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_B_TIME</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">))</span>
 
         <span class="c1">#: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they&#39;re the next day</span>
         <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">22</span><span class="o">*</span><span class="mi">60</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span> <span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_BOARD_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
         <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">22</span><span class="o">*</span><span class="mi">60</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
         <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">22</span><span class="o">*</span><span class="mi">60</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span> <span class="o">=</span> \
-            <span class="p">((</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">]</span><span class="o">-</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_B_TIME</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">))</span>
+            <span class="p">((</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_TIME</span><span class="p">]</span><span class="o">-</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Passenger</span><span class="o">.</span><span class="n">PF_COL_PAX_B_TIME</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">))</span>
 
         <span class="n">max_alight_delay_min</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_ALIGHT_DELAY_MIN</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Biggest alight_delay = </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">max_alight_delay_min</span><span class="p">)</span>
@@ -1660,12 +1843,12 @@
 
         <span class="c1">#: todo: is there a more elegant way to take care of this?  some trips have times after midnight so they&#39;re the next day</span>
         <span class="c1">#: if the linktime &gt; 22 hours then the trip time is probably off by a day, so it&#39;s right after midnight -- back it up</span>
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span>   <span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">]</span>
+        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span>   <span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
+        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">]</span>
 
         <span class="c1">#: if the linktime &lt; -22 hours then the trip time is probably off by a day, so it&#39;s right before midnight -- back it up</span>
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span>   <span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">]</span>
+        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span>   <span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span>
+        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">22</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_LINK_TIME</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_B_TIME</span><span class="p">]</span> <span class="o">-</span> <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_A_TIME</span><span class="p">]</span>
 
 
         <span class="c1"># new wait time</span>
@@ -1673,7 +1856,7 @@
 
         <span class="c1"># invalid trips have negative wait time</span>
         <span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_MISSED_XFER</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_WAIT_TIME</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_MISSED_XFER</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pathset_links_df</span><span class="p">[</span><span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_PAX_WAIT_TIME</span><span class="p">]</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">SIM_COL_MISSED_XFER</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="c1"># count how many are valid (sum of invalid = 0 for the trip list id + path)</span>
         <span class="n">pathset_links_df_grouped</span> <span class="o">=</span> <span class="n">pathset_links_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">Passenger</span><span class="o">.</span><span class="n">TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM</span><span class="p">,</span> <span class="c1"># sort by this</span>
@@ -1998,7 +2181,8 @@
 
 <span class="sd">        Returns (valid_linked_trips, pathset_paths_df, pathset_links_df)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">simulation_iteration</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">simulation_iteration</span>   <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">num_passengers_arrived</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="c1">######################################################################################################</span>
         <span class="n">FastTripsLogger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;  Step 1. Find out board/alight times for all pathset links from vehicle times&quot;</span><span class="p">)</span>
 
@@ -2151,6 +2335,7 @@
         <span class="n">chosen_links_df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;iteration&quot;</span><span class="p">,</span> <span class="s2">&quot;pathfinding_iteration&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">chosen_paths_df</span> <span class="o">=</span> <span class="n">Passenger</span><span class="o">.</span><span class="n">get_chosen_links</span><span class="p">(</span><span class="n">pathset_paths_df</span><span class="p">)</span>
+
         <span class="n">chosen_paths_df</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span>            <span class="p">]</span> <span class="o">=</span> <span class="n">iteration</span>
         <span class="n">chosen_paths_df</span><span class="p">[</span><span class="s2">&quot;pathfinding_iteration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathfinding_iteration</span>
         <span class="n">Util</span><span class="o">.</span><span class="n">write_dataframe</span><span class="p">(</span><span class="n">chosen_paths_df</span><span class="p">,</span> <span class="s2">&quot;chosen_paths_df&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;chosenpaths_paths.csv&quot;</span><span class="p">),</span> <span class="n">append</span><span class="o">=</span><span class="p">((</span><span class="n">iteration</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">pathfinding_iteration</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">)),</span>
@@ -2225,9 +2410,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -2236,11 +2419,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -2255,35 +2438,24 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

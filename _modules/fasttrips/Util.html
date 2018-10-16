@@ -24,26 +24,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../../genindex.html"/>
-        <link rel="search" title="Search" href="../../search.html"/>
-    <link rel="top" title="fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation" href="../../index.html"/>
-        <link rel="up" title="Module code" href="../index.html"/> 
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
 
   
   <script src="../../_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -105,7 +97,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">fasttrips</a>
@@ -113,9 +105,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -145,8 +138,6 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
-        
       </li>
     
   </ul>
@@ -158,7 +149,14 @@
            <div itemprop="articleBody">
             
   <h1>Source code for fasttrips.Util</h1><div class="highlight"><pre>
-<span></span><span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015 Contributing Entities&quot;</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">next</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2015 Contributing Entities&quot;</span>
 <span class="n">__license__</span>   <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="s2">    you may not use this file except in compliance with the License.</span>
@@ -185,7 +183,7 @@
 <span class="kn">from</span> <span class="nn">.Logger</span> <span class="k">import</span> <span class="n">FastTripsLogger</span>
 
 
-<div class="viewcode-block" id="Util"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util">[docs]</a><span class="k">class</span> <span class="nc">Util</span><span class="p">:</span>
+<div class="viewcode-block" id="Util"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util">[docs]</a><span class="k">class</span> <span class="nc">Util</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Util class.</span>
 
@@ -251,7 +249,7 @@
 <span class="sd">        Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,</span>
 <span class="sd">        adds the numeric id as a column named *newid_colname* and returns it.</span>
 
-<span class="sd">        *mapping_df* is defines the mapping from an ID (*mapping_id_colname*) </span>
+<span class="sd">        *mapping_df* is defines the mapping from an ID (*mapping_id_colname*)</span>
 <span class="sd">        to a numeric ID (*mapping_newid_colname*).</span>
 
 <span class="sd">        If *warn* is True, then don&#39;t worry if some fail.  Just log and move on.  Otherwise, raise an exception.</span>
@@ -354,14 +352,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">hour</span><span class="o">*</span><span class="mf">60.0</span> <span class="o">+</span> \
                          <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">minute</span> <span class="o">+</span> \
-                         <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">)</span></div>
+                         <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">second</span><span class="o">/</span><span class="mf">60.0</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Util.timedelta_formatter"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.timedelta_formatter">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">timedelta_formatter</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">seconds</span> <span class="o">=</span> <span class="n">x</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;s&#39;</span><span class="p">))</span>
         <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="o">/</span><span class="mi">60</span><span class="p">)</span>
         <span class="n">seconds</span> <span class="o">-=</span> <span class="n">minutes</span><span class="o">*</span><span class="mi">60</span>
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%4d</span><span class="s1">m </span><span class="si">%04.1f</span><span class="s1">s&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">minutes</span><span class="p">,</span><span class="n">seconds</span><span class="p">)</span></div>
@@ -378,7 +376,7 @@
         <span class="n">time_split</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
         <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time_split</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">day</span> <span class="o">=</span> <span class="n">Assignment</span><span class="o">.</span><span class="n">NETWORK_BUILD_DATE</span>
-        <span class="k">if</span> <span class="n">hour</span> <span class="o">&gt;=</span> <span class="mi">24</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="n">hour</span> <span class="o">&gt;=</span> <span class="mi">24</span><span class="p">:</span>
             <span class="n">time_split</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%02d</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">hour</span><span class="o">-</span><span class="mi">24</span><span class="p">)</span>
             <span class="n">day</span> <span class="o">+=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">time_split</span><span class="p">)</span>
@@ -442,9 +440,9 @@
         <span class="n">header_row</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">append</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_file</span><span class="p">):</span>
             <span class="c1"># get the columns</span>
-            <span class="n">df_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+            <span class="n">df_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s1">&#39;rt&#39;</span><span class="p">)</span>
             <span class="n">df_reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">df_file</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
-            <span class="n">header_row</span> <span class="o">=</span> <span class="n">df_reader</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="n">header_row</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">df_reader</span><span class="p">)</span>
             <span class="n">df_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="k">for</span> <span class="n">col_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_cols</span><span class="p">)):</span>
@@ -470,7 +468,7 @@
                 <span class="k">if</span> <span class="n">new_colname</span> <span class="ow">in</span> <span class="n">df_cols</span><span class="p">:</span> <span class="k">continue</span>
 
                 <span class="c1"># otherwise make the new one and add or replace it</span>
-                <span class="n">df_toprint</span><span class="p">[</span><span class="n">new_colname</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_toprint</span><span class="p">[</span><span class="n">old_colname</span><span class="p">]</span><span class="o">/</span><span class="n">units</span>
+                <span class="n">df_toprint</span><span class="p">[</span><span class="n">new_colname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df_toprint</span><span class="p">[</span><span class="n">old_colname</span><span class="p">]</span><span class="o">/</span><span class="n">units</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">keep_duration_columns</span><span class="p">:</span>           <span class="c1"># add</span>
                     <span class="n">df_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_colname</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>                               <span class="c1"># replace</span>
@@ -641,7 +639,7 @@
 <span class="sd">        :param growth_rate: float: Exponetial growth factor</span>
 <span class="sd">        :return: float or :py:class:`pandas.Series` of floats depending on inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">growth_rate</span><span class="p">,</span> <span class="n">penalty_min</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">growth_rate</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">growth_rate</span><span class="p">,</span> <span class="n">penalty_min</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">growth_rate</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Util.logarithmic_integration"><a class="viewcode-back" href="../../_generated/fasttrips.Util.html#fasttrips.Util.logarithmic_integration">[docs]</a>    <span class="nd">@staticmethod</span>
@@ -673,8 +671,8 @@
 <span class="sd">        :return: float or :py:class:`pandas.Series` of floats depending on inputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">max_integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_logit</span> <span class="o">/</span> <span class="n">growth_rate</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">penalty_minute</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">sigmoid_mid</span><span class="p">))</span>
-        <span class="n">min_integral</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_logit</span> <span class="o">/</span> <span class="n">growth_rate</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">sigmoid_mid</span><span class="p">))</span>
+        <span class="n">max_integral</span> <span class="o">=</span> <span class="p">((</span><span class="n">max_logit</span><span class="o">/</span> <span class="n">growth_rate</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">penalty_minute</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">sigmoid_mid</span><span class="p">))</span>
+        <span class="n">min_integral</span> <span class="o">=</span> <span class="p">((</span><span class="n">max_logit</span><span class="o">/</span> <span class="n">growth_rate</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">growth_rate</span> <span class="o">*</span> <span class="n">sigmoid_mid</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">max_integral</span> <span class="o">-</span> <span class="n">min_integral</span></div>
 
@@ -771,9 +769,7 @@
 </pre></div>
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -782,11 +778,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn.
+        &copy; Copyright 2015-2017, Lisa Zorn
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -801,35 +797,24 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../../',
-            VERSION:'Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../../_static/jquery.js"></script>
-      <script type="text/javascript" src="../../_static/underscore.js"></script>
-      <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="../../_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
