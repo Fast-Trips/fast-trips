@@ -179,13 +179,13 @@
 <dl class="class">
 <dt id="fasttrips.Util">
 <em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Util</code><a class="reference internal" href="../_modules/fasttrips/Util.html#Util"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/2.7/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">future.types.newobject.newobject</span></code></p>
 <p>Util class.</p>
 <p>Collect useful stuff here that doesn’t belong in any particular existing class.</p>
 <dl class="method">
 <dt id="fasttrips.Util.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fasttrips.Util.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dd><p>x.__init__(…) initializes x; see help(type(x)) for signature</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -234,28 +234,31 @@
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_two_dicts</span></code>(x,&nbsp;y)</td>
 <td>A helper method for Python 2.7 to ‘zip’ two dictionary objects</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_boolean</span></code>(val)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">next</span></code>()</td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_minutes_to_time</span></code>(minutes)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_boolean</span></code>(val)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretty</span></code>(df)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_minutes_to_time</span></code>(minutes)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretty</span></code>(df)</td>
 <td>Make a pretty version of the dataframe and return it.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_end_time</span></code>(x)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_end_time</span></code>(x)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_time</span></code>(x[,&nbsp;end_of_day])</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_time</span></code>(x[,&nbsp;end_of_day])</td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_null_columns</span></code>(input_df[,&nbsp;inplace])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_null_columns</span></code>(input_df[,&nbsp;inplace])</td>
 <td>Remove columns from the dataframe if they’re <em>all</em> null since they’re not useful and make thinks harder to look at.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">timedelta_formatter</span></code>(x)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">timedelta_formatter</span></code>(x)</td>
 <td>Formatter to convert <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.timedelta64</span></code> to string that looks like <cite>4m 35.6s</cite></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_dataframe</span></code>(df,&nbsp;name,&nbsp;output_file[,&nbsp;…])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_dataframe</span></code>(df,&nbsp;name,&nbsp;output_file[,&nbsp;…])</td>
 <td>Convenience method to write a dataframe but make some of the fields more usable.</td>
 </tr>
 </tbody>
@@ -366,7 +369,7 @@ Use SI prefixes (not binary prefixes).  1KB = 1000 bytes</p>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Util.logarithmic_integration">
-<em class="property">static </em><code class="descname">logarithmic_integration</code><span class="sig-paren">(</span><em>penalty_min</em>, <em>growth_rate</em>, <em>log_base=2.7182818284590451</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.logarithmic_integration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.logarithmic_integration" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="descname">logarithmic_integration</code><span class="sig-paren">(</span><em>penalty_min</em>, <em>growth_rate</em>, <em>log_base=2.718281828459045</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.logarithmic_integration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.logarithmic_integration" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the integrated value of an logarithmic function.
 # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
 # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
@@ -411,6 +414,11 @@ Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoi
 </tbody>
 </table>
 </dd></dl>
+
+<dl class="method">
+<dt id="fasttrips.Util.next">
+<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fasttrips.Util.next" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="staticmethod">
 <dt id="fasttrips.Util.parse_boolean">

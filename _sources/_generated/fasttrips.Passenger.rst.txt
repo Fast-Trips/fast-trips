@@ -19,6 +19,7 @@ fasttrips.Passenger
       ~Passenger.get_chosen_links
       ~Passenger.get_pathset
       ~Passenger.get_person_id
+      ~Passenger.next
       ~Passenger.read_passenger_pathsets
       ~Passenger.setup_passenger_pathsets
       ~Passenger.write_paths
