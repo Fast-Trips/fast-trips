@@ -1346,7 +1346,7 @@ namespace fasttrips {
         LabelStopQueue& label_stop_queue,
         int label_iteration,
         const LabelStop& current_label_stop,
-        std::tr1::unordered_set<int>& trips_done) const
+        std::unordered_set<int>& trips_done) const
     {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
@@ -1627,8 +1627,8 @@ namespace fasttrips {
         int& max_process_count) const
     {
         int label_iterations = 1;
-        std::tr1::unordered_set<int> stop_done;
-        std::tr1::unordered_set<int> trips_done;
+        std::unordered_set<int> stop_done;
+        std::unordered_set<int> trips_done;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
         LabelStop last_label_stop;
 

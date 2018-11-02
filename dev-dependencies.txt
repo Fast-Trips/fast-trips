@@ -1,0 +1,5 @@
+sphinx
+numpydoc
+sphinx_rtd_theme
+breathe
+pytest
