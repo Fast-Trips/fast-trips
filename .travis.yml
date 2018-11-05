@@ -5,15 +5,25 @@ matrix:
     - os: linux
       sudo: required
       python: 2.7
+      packages:
+        - g++-4.9
+      env:
+        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
     - os: linux
       sudo: required
       python: 3.6
+      packages:
+        - g++-4.9
+      env:
+        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
     - os: osx
       sudo: required
-      python: 2.7
+      env:
+        - pyv: 2.7
     - os: osx
       sudo: required
-      python: 3.6
+      env:
+        - pyv: 3.6
   allow_failures:
     - os: osx
 
@@ -21,11 +31,14 @@ compiler:
   - gcc
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      sudo apt-get update;
+      eval "${MATRIX_EVAL}";
+      fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew update
       brew install pyenv
-      pyenv install $PYTHON;
+      pyenv install "${PYV}";
       fi
 
 install:
