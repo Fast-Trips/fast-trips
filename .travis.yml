@@ -5,25 +5,31 @@ matrix:
     - os: linux
       sudo: required
       python: 2.7
-      addons:
+      compiler:
+        - gcc
+        addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
+            - g++-6
+            - gcc-6
       env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     - os: linux
       sudo: required
       python: 3.6
+      compiler:
+        - gcc
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
+            - g++-6
+            - gcc-6
       env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     - os: osx
       sudo: required
       env:
@@ -41,13 +47,19 @@ compiler:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sudo apt-get update;
-      eval "${MATRIX_EVAL}";
       fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew update
       brew install pyenv
       pyenv install "${PYV}";
       fi
+
+script:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    export CC=/usr/bin/gcc-6 ;
+    export CXX=/usr/bin/g++-6 ;
+    gcc -v && g++ -v;
+  fi
 
 install:
   - pip install -r requirements.txt
