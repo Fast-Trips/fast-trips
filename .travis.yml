@@ -5,15 +5,23 @@ matrix:
     - os: linux
       sudo: required
       python: 2.7
-      packages:
-        - g++-4.9
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
       env:
         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
     - os: linux
       sudo: required
       python: 3.6
-      packages:
-        - g++-4.9
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
       env:
         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
     - os: osx
