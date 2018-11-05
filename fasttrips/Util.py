@@ -432,15 +432,20 @@ class Util(object):
 
         Sets the result into the column called result_col.
 
-        ==================  ===============  =====================================================================================================
-        column name          column type     description
-        ==================  ===============  =====================================================================================================
-        `var_value`                 float64  The value to weight
-        `growth_type`                   str  ['constant', 'exponential', 'logarithmic', 'logistic']
-        `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value
-        `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve
-        `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve
-        ==================  ===============  =====================================================================================================
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        | *column name*         | *column type*| *description*                                                             |
+        +=======================+==============+===========================================================================+
+        |``var_value``          | float64      | The value to weight                                                       |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_type``        |          str | one of ``constant``, ``exponential``, ``logarithmic``, ``logistic``       |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_log_base``    |      float64 | *logarithmic only* log base for logarithmic base value                    |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_logistic_max``|      float64 | *logistic only* Maximum assymtotic value for logistic curve               |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_logistic_mid``|      float64 | *logistic only* X-Axis location of the midpoint of the curve              |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+
         """
         from fasttrips import PathSet
 

@@ -1,25 +1,51 @@
 language: python
 
-python:
-  - "2.7.13"
-  - "3.6"
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      python: 2.7
+    - os: linux
+      sudo: required
+      python: 3.6
+    - os: osx
+      sudo: required
+      python: 2.7
+    - os: osx
+      sudo: required
+      python: 3.6
+  allow_failures:
+    - os: osx
+
+compiler:
+  - gcc
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update
+      brew install pyenv
+      pyenv install $PYTHON;
+      fi
 
 install:
-  - sudo apt-get update
   - pip install -r requirements.txt
   - pip install .
   - pip install sphinx numpydoc sphinx_rtd_theme breathe;
-  - sudo apt-get install doxygen
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install doxygen; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew doxygen; fi
 
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
-    then travis_wait 70 py.test -v -m basic;
+    then travis_wait 70 py.test -v -m travis;
     else travis_wait 30 py.test -v -m basic;
     fi
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
+    if [ "$PYTHON" == "3.5" ] && [ "$OS" == "linux" ];
     then sh bin/update-documentation.sh;
+    fi;
     fi
 
 env:

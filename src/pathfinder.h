@@ -17,13 +17,7 @@
 #include "hyperlink.h"
 #include "path.h"
 
-#if __APPLE__
 #include <unordered_set>
-#elif __linux__
-#include <tr1/unordered_set>
-#else
-#include <unordered_set>
-#endif
 
 namespace fasttrips {
 
