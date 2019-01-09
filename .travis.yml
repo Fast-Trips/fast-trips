@@ -17,10 +17,14 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
+  - conda config --add channels conda-forge
   - conda info -a
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION sphinx numpydoc sphinx_rtd_theme
+
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION sphinx numpydoc sphinx_rtd_theme breathe numpy future psutil configparser pytest
+  - pip install pandas==0.22
+  - pip install partridge==0.6.0.dev1
+  - pip install functools32;python_version<="2.7"
   - source activate test-environment
-  - pip install breathe
   - python setup.py build_ext --inplace
   - sudo apt-get install doxygen
 
