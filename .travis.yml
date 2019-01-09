@@ -1,39 +1,27 @@
 language: python
-
-matrix:
-  include:
-    - os: linux
-      sudo: required
-      python: 2.7
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-            - gcc-6
-    - os: linux
-      sudo: required
-      python: 3.6
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-6
-            - gcc-6
+python:
+  - "2.7"
+  - "3.6"
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      sudo apt-get update;
-      eval "CC=gcc-6 && CXX=g++-6";
-      fi
+  - sudo apt-get update;
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
 
 install:
-  - pip install -r requirements.txt
-  - pip install .
-  - pip install sphinx numpydoc sphinx_rtd_theme breathe;
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install doxygen; fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION sphinx numpydoc sphinx_rtd_theme breathe
+  - source activate test-environment
+  - python setup.py build_ext --inplace
+  - sudo apt-get install doxygen
 
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
@@ -43,7 +31,7 @@ script:
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
-    if [ "$PYTHON" == "3.5" ] && [ "$OS" == "linux" ];
+    if [ "$PYTHON" == "3.5" ];
     then sh bin/update-documentation.sh;
     fi;
     fi
