@@ -6,7 +6,7 @@ import numpy
 
 ### Settings for Extension Building
 compile_args = sysconfig.get_config_var('CFLAGS').split()
-compile_args+=["-std=c++11"]
+compile_args=["-std=c++11"]+compile_args
 
 if sys.platform == 'darwin':
     compile_args+=["-mmacosx-version-min=10.9"]
