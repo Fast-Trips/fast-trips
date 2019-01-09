@@ -5,8 +5,6 @@ matrix:
     - os: linux
       sudo: required
       python: 2.7
-      compiler:
-        - gcc
       addons:
         apt:
           sources:
@@ -14,13 +12,9 @@ matrix:
           packages:
             - g++-6
             - gcc-6
-      env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     - os: linux
       sudo: required
       python: 3.6
-      compiler:
-        - gcc
       addons:
         apt:
           sources:
@@ -28,35 +22,11 @@ matrix:
           packages:
             - g++-6
             - gcc-6
-      env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
-    - os: osx
-      osx_image: xcode8
-      sudo: required
-      env:
-        - pyv: 2.7
-        - MATRIX_EVAL="brew install gcc6 && CC=gcc-6 && CXX=g++-6"
-    - os: osx
-      osx_image: xcode8
-      sudo: required
-      env:
-        - pyv: 3.6
-        - MATRIX_EVAL="brew install gcc6 && CC=gcc-6 && CXX=g++-6"
-  allow_failures:
-    - os: osx
-
-compiler:
-  - gcc
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sudo apt-get update;
-      eval "${MATRIX_EVAL}"
-      fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew update
-      brew install pyenv
-      pyenv install "${PYV}";
+      eval "CC=gcc-6 && CXX=g++-6";
       fi
 
 install:
@@ -64,7 +34,6 @@ install:
   - pip install .
   - pip install sphinx numpydoc sphinx_rtd_theme breathe;
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install doxygen; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew doxygen; fi
 
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
