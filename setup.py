@@ -1,12 +1,15 @@
 from setuptools import setup, Extension
 import os,sys
+import sysconfig
 import numpy
 
+
 ### Settings for Extension Building
+compile_args = sysconfig.get_config_var('CFLAGS').split()
+compile_args+=["-std=c++11"]
+
 if sys.platform == 'darwin':
-    compile_args=['-stdlib=libc++', "-mmacosx-version-min=10.9"]
-else:
-    compile_args=['-std=libc++']
+    compile_args+=["-mmacosx-version-min=10.9"]
 
 extension = Extension('_fasttrips',
                       sources=['src/fasttrips.cpp',
@@ -15,7 +18,7 @@ extension = Extension('_fasttrips',
                                'src/path.cpp',
                                'src/pathfinder.cpp',
                                ],
-                      language='c++',
+                      language='c++11',
                       extra_compile_args = compile_args,
                       include_dirs=[numpy.get_include()],
                       )
