@@ -2,6 +2,24 @@ from setuptools import setup, Extension
 import os,sys
 import numpy
 
+### Settings for Extension Building
+if sys.platform == 'darwin':
+    compile_args=['-stdlib=libc++', "-mmacosx-version-min=10.9"]
+else:
+    compile_args=['-std=libc++']
+
+extension = Extension('_fasttrips',
+                      sources=['src/fasttrips.cpp',
+                               'src/hyperlink.cpp',
+                               'src/access_egress.cpp',
+                               'src/path.cpp',
+                               'src/pathfinder.cpp',
+                               ],
+                      language='c++',
+                      extra_compile_args = compile_args,
+                      include_dirs=[numpy.get_include()],
+                      )
+
 setup(name          = 'fasttrips',
       version       = '1.0a14',
       author        = 'MTC, SFCTA & PSRC',
@@ -42,15 +60,5 @@ setup(name          = 'fasttrips',
       entry_points  = { 'console_scripts': ['run_fasttrips=fasttrips.Run:main']},
       scripts       = [ 'scripts/create_tableau_path_map.py',
                         'scripts/run_example.py'],
-      ext_modules   = [Extension('_fasttrips',
-                                 sources=['src/fasttrips.cpp',
-                                          'src/hyperlink.cpp',
-                                          'src/access_egress.cpp',
-                                          'src/path.cpp',
-                                          'src/pathfinder.cpp',
-                                          ],
-                                 include_dirs=[numpy.get_include()],
-                                 libraries=['psapi'] if sys.platform=='win32' else []
-                                 )
-                      ]
+      ext_modules   = [extension]
       )
