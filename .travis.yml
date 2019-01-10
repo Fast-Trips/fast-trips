@@ -20,7 +20,7 @@ install:
   - conda config --add channels conda-forge
   - conda info -a
 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION sphinx numpydoc sphinx_rtd_theme breathe numpy future psutil configparser pytest pandas==0.22
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION sphinx numpydoc sphinx_rtd_theme breathe numpy>=1.15.1 future psutil configparser pytest pandas==0.22
   - source activate test-environment
   - pip install partridge==0.6.0.dev1
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
