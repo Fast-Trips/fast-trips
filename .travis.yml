@@ -1,45 +1,25 @@
 language: python
+
 python:
-  - "2.7"
+  - "2.7.13"
   - "3.6"
 
-before_install:
-  - sudo apt-get update;
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-
 install:
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  - conda config --add channels conda-forge
-  - conda info -a
-
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION sphinx numpydoc sphinx_rtd_theme breathe numpy>=1.15.1 future psutil configparser pytest pandas==0.22
-  - source activate test-environment
-  - pip install partridge==0.6.0.dev1
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install functools32;
-    fi
-  - python setup.py build_ext --inplace
+  - sudo apt-get update
+  - pip install -r requirements.txt
+  - pip install .
+  - pip install sphinx numpydoc sphinx_rtd_theme breathe;
   - sudo apt-get install doxygen
 
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
-    then travis_wait 70 py.test -v -m travis;
+    then travis_wait 70 py.test -v -m basic;
     else travis_wait 30 py.test -v -m basic;
     fi
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
-    if [ "$PYTHON" == "3.5" ];
     then sh bin/update-documentation.sh;
-    fi;
     fi
 
 env:
