@@ -84,8 +84,11 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">Fast-Trips Classes and Functions</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#fast-trips-classes">fast-trips Classes</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
@@ -108,6 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -312,6 +316,41 @@ in miles between origin and destination based on Haversine.  Results are added t
 <dd><p>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and
 value.</p>
 <p>Sets the result into the column called result_col.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="21%" />
+<col width="13%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>column name</em></th>
+<th class="head"><em>column type</em></th>
+<th class="head"><em>description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">var_value</span></code></td>
+<td>float64</td>
+<td>The value to weight</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">growth_type</span></code></td>
+<td>str</td>
+<td>one of <code class="docutils literal notranslate"><span class="pre">constant</span></code>, <code class="docutils literal notranslate"><span class="pre">exponential</span></code>, <code class="docutils literal notranslate"><span class="pre">logarithmic</span></code>, <code class="docutils literal notranslate"><span class="pre">logistic</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">growth_log_base</span></code></td>
+<td>float64</td>
+<td><em>logarithmic only</em> log base for logarithmic base value</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">growth_logistic_max</span></code></td>
+<td>float64</td>
+<td><em>logistic only</em> Maximum assymtotic value for logistic curve</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">growth_logistic_mid</span></code></td>
+<td>float64</td>
+<td><em>logistic only</em> X-Axis location of the midpoint of the curve</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -468,12 +507,12 @@ Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoi
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – The dataframe to write</li>
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – Name of the dataframe. Just used for logging.</li>
-<li><strong>output_file</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – The name of the file to which the dataframe will be written</li>
-<li><strong>append</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Pass true to append to the existing output file, false otherwise</li>
-<li><strong>keep_duration_columns</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Pass True to keep the original duration columns (e.g. “0 days 00:12:00.000000000”)</li>
-<li><strong>drop_debug_columns</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Pass True to drop debug columns specified in <a class="reference internal" href="#fasttrips.Util.DROP_DEBUG_COLUMNS" title="fasttrips.Util.DROP_DEBUG_COLUMNS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Util.DROP_DEBUG_COLUMNS</span></code></a></li>
-<li><strong>drop_pathfinding_columns</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Pass True to drop pathfinding columns specified in <a class="reference internal" href="#fasttrips.Util.DROP_PATHFINDING_COLUMNS" title="fasttrips.Util.DROP_PATHFINDING_COLUMNS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Util.DROP_PATHFINDING_COLUMNS</span></code></a></li>
+<li><strong>name</strong> (<em>str</em>) – Name of the dataframe. Just used for logging.</li>
+<li><strong>output_file</strong> (<em>str</em>) – The name of the file to which the dataframe will be written</li>
+<li><strong>append</strong> (<em>bool</em>) – Pass true to append to the existing output file, false otherwise</li>
+<li><strong>keep_duration_columns</strong> (<em>bool</em>) – Pass True to keep the original duration columns (e.g. “0 days 00:12:00.000000000”)</li>
+<li><strong>drop_debug_columns</strong> (<em>bool</em>) – Pass True to drop debug columns specified in <a class="reference internal" href="#fasttrips.Util.DROP_DEBUG_COLUMNS" title="fasttrips.Util.DROP_DEBUG_COLUMNS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Util.DROP_DEBUG_COLUMNS</span></code></a></li>
+<li><strong>drop_pathfinding_columns</strong> (<em>bool</em>) – Pass True to drop pathfinding columns specified in <a class="reference internal" href="#fasttrips.Util.DROP_PATHFINDING_COLUMNS" title="fasttrips.Util.DROP_PATHFINDING_COLUMNS"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Util.DROP_PATHFINDING_COLUMNS</span></code></a></li>
 </ul>
 </td>
 </tr>
@@ -525,7 +564,7 @@ duration columns will be kept if <em>keep_duration_columns</em> is True.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -550,7 +589,8 @@ duration columns will be kept if <em>keep_duration_columns</em> is True.</p>
         <script type="text/javascript" src="../_static/jquery.js"></script>
         <script type="text/javascript" src="../_static/underscore.js"></script>
         <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

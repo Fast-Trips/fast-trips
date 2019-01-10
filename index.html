@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Getting Started" href="gettingstarted.html" /> 
+    <link rel="next" title="Use Cases" href="usecases.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -83,10 +83,14 @@
             
             
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
             
@@ -196,14 +200,32 @@
 <h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#get-fast-trips-running">Get Fast-Trips Running</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#install-fast-trips">Install Fast-Trips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#i-o">I/O</a></li>
 <li class="toctree-l2"><a class="reference internal" href="gettingstarted.html#go-through-tutorials">Go through Tutorials</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="howitworks.html#dynamic-passenger-assignment-dpa-algorithms">Dynamic Passenger Assignment(DPA) Algorithms</a></li>
 <li class="toctree-l2"><a class="reference internal" href="howitworks.html#system-design">System Design</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">Input/Output Files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="io.html#id1">Passenger Demand</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#id2">Transport Network</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#configuration-files">Configuration Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#passenger-path-output">Passenger Path Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#vehicle-based-output">Vehicle Based Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#trace-output">Trace  Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#computing-performance-output">Computing Performance Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html#settings-output">Settings Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Fast-Trips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#localization-process">Localization Process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#scenario-evaluation">Scenario Evaluation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a><ul>
@@ -221,6 +243,7 @@
 <li class="toctree-l2"><a class="reference internal" href="contributing.html#releases">Releases</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 </div>
 </div>
@@ -242,7 +265,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="gettingstarted.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="usecases.html" class="btn btn-neutral float-right" title="Use Cases" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>
@@ -252,7 +275,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -277,7 +300,8 @@
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

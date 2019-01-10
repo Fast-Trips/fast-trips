@@ -84,8 +84,11 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">Fast-Trips Classes and Functions</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#fast-trips-classes">fast-trips Classes</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
@@ -108,6 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -184,7 +188,7 @@
 <p>One instance represents all of the Routes.</p>
 <p>Stores route information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.routes_df</span></code> and agency information in
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.agencies_df</span></code>. Each are instances of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
-<p>Fare information is in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_attrs_df</span></code>, <a class="reference internal" href="#fasttrips.Route.fare_rules_df" title="fasttrips.Route.fare_rules_df"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_rules_df</span></code></a> and
+<p>Fare information is in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_attrs_df</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_rules_df</span></code> and
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_transfer_rules_df</span></code>.</p>
 <dl class="method">
 <dt id="fasttrips.Route.__init__">
@@ -776,12 +780,6 @@ See <a class="reference external" href="https://github.com/osplanning-data-stand
 <dd><p>fares are by fare_period rather than by fare_id</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="fasttrips.Route.fare_rules_df">
-<code class="descname">fare_rules_df</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.Route.fare_rules_df" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fare ID/class (fare period)/attribute mapping.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -806,7 +804,7 @@ See <a class="reference external" href="https://github.com/osplanning-data-stand
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -831,7 +829,8 @@ See <a class="reference external" href="https://github.com/osplanning-data-stand
         <script type="text/javascript" src="../_static/jquery.js"></script>
         <script type="text/javascript" src="../_static/underscore.js"></script>
         <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

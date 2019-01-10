@@ -84,8 +84,11 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="api.html#fast-trips-classes">fast-trips Classes</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="api.html#fast-trips-c-extension-classes">fast-trips C++ Extension Classes</a><ul class="current">
@@ -95,6 +98,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
             
@@ -750,7 +754,7 @@
 <dl class="function">
 <dt id="_CPPv3NK9fasttrips9Hyperlink19getFareWithTransferERK17PathSpecificationRNSt7ostreamERK10PathFinderRK10FarePeriodRKNSt3mapIi9HyperlinkEE">
 <span id="_CPPv2NK9fasttrips9Hyperlink19getFareWithTransferERK17PathSpecificationRNSt7ostreamERK10PathFinderRK10FarePeriodRKNSt3mapIi9HyperlinkEE"></span><span id="fasttrips::Hyperlink::getFareWithTransfer__PathSpecificationCR.osR.PathFinderCR.FarePeriodCR.std::map:i.Hyperlink:CRC"></span><span class="target" id="classfasttrips_1_1_hyperlink_1a087895ca51436fb0586d70f25e261fed"></span>double <code class="descname">getFareWithTransfer</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ostream &amp;<em>trace_file</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips10PathFinderE" title="fasttrips::PathFinder">PathFinder</a> &amp;<em>pf</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips10FarePeriodE" title="fasttrips::FarePeriod">FarePeriod</a> &amp;<em>fare_period</em>, <em class="property">const</em> std::map&lt;int, <a class="reference internal" href="#_CPPv3N9fasttrips9HyperlinkE" title="fasttrips::Hyperlink">Hyperlink</a>&gt; &amp;<em>stop_states</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv3NK9fasttrips9Hyperlink19getFareWithTransferERK17PathSpecificationRNSt7ostreamERK10PathFinderRK10FarePeriodRKNSt3mapIi9HyperlinkEE" title="Permalink to this definition">¶</a><br /></dt>
-<dd><p>Estimate the fare during pathfinding given transfer possibilities. This is called on the previous (transfer) link by <a class="reference internal" href="#classfasttrips_1_1_path_finder_1ac92b62c7420fe5725a30ec36ad996b02"><span class="std std-ref">PathFinder::updateStopStatesForTrips()</span></a>. </p>
+<dd><p>Estimate the fare during pathfinding given transfer possibilities. This is called on the previous (transfer) link by <a class="reference internal" href="#classfasttrips_1_1_path_finder_1a237545bc440302fb71c5528678ebb0b6"><span class="std std-ref">PathFinder::updateStopStatesForTrips()</span></a>. </p>
 </dd></dl>
 
 </div>
@@ -1986,8 +1990,8 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="_CPPv3NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt3tr113unordered_setIiEE">
-<span id="_CPPv2NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt3tr113unordered_setIiEE"></span><span id="fasttrips::PathFinder::updateStopStatesForTrips__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.i.LabelStopCR.std::tr1::unordered_set:i:RC"></span><span class="target" id="classfasttrips_1_1_path_finder_1ac92b62c7420fe5725a30ec36ad996b02"></span>void <code class="descname">updateStopStatesForTrips</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv3N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv3N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, int <em>label_iteration</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>current_label_stop</em>, std::tr1::unordered_set&lt;int&gt; &amp;<em>trips_done</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv3NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt3tr113unordered_setIiEE" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="_CPPv3NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt13unordered_setIiEE">
+<span id="_CPPv2NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt13unordered_setIiEE"></span><span id="fasttrips::PathFinder::updateStopStatesForTrips__PathSpecificationCR.std::ofstreamR.StopStatesR.LabelStopQueueR.i.LabelStopCR.std::unordered_set:i:RC"></span><span class="target" id="classfasttrips_1_1_path_finder_1a237545bc440302fb71c5528678ebb0b6"></span>void <code class="descname">updateStopStatesForTrips</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips17PathSpecificationE" title="fasttrips::PathSpecification">PathSpecification</a> &amp;<em>path_spec</em>, std::ofstream &amp;<em>trace_file</em>, <a class="reference internal" href="#_CPPv3N9fasttrips10StopStatesE" title="fasttrips::StopStates">StopStates</a> &amp;<em>stop_states</em>, <a class="reference internal" href="#_CPPv3N9fasttrips14LabelStopQueueE" title="fasttrips::LabelStopQueue">LabelStopQueue</a> &amp;<em>label_stop_queue</em>, int <em>label_iteration</em>, <em class="property">const</em> <a class="reference internal" href="#_CPPv3N9fasttrips9LabelStopE" title="fasttrips::LabelStop">LabelStop</a> &amp;<em>current_label_stop</em>, std::unordered_set&lt;int&gt; &amp;<em>trips_done</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv3NK9fasttrips10PathFinder24updateStopStatesForTripsERK17PathSpecificationRNSt8ofstreamER10StopStatesR14LabelStopQueueiRK9LabelStopRNSt13unordered_setIiEE" title="Permalink to this definition">¶</a><br /></dt>
 <dd><p>Iterate through all the stops that are accessible by transit vehicle trip to(outbound)/from(inbound) the <em>current_label_stop</em> and update the <em>stop_states</em> with information about how accessible those stops are as a transit trip to/from the <em>current_label_stop</em>. </p>
 </dd></dl>
 
@@ -1998,7 +2002,7 @@
 <li>while the label_stop_queue has stops AND we don’t think we’re done*<ul>
 <li>pulling the lowest-labeled stop</li>
 <li>adding the stops accessible by transfer (<a class="reference internal" href="#classfasttrips_1_1_path_finder_1a5f82f7d7d03c56b6dae2a6e4b34e5696"><span class="std std-ref">PathFinder::updateStopStatesForTransfers</span></a>)</li>
-<li>adding the stops accessible by transit trip (<a class="reference internal" href="#classfasttrips_1_1_path_finder_1ac92b62c7420fe5725a30ec36ad996b02"><span class="std std-ref">PathFinder::updateStopStatesForTrips</span></a>)</li>
+<li>adding the stops accessible by transit trip (<a class="reference internal" href="#classfasttrips_1_1_path_finder_1a237545bc440302fb71c5528678ebb0b6"><span class="std std-ref">PathFinder::updateStopStatesForTrips</span></a>)</li>
 </ul>
 </li>
 </ul>
@@ -2492,7 +2496,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -2517,7 +2521,8 @@
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

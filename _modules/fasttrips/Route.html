@@ -82,10 +82,14 @@
             
             
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">Fast-Trips Classes and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -526,34 +530,50 @@
 
         <span class="c1"># join to fare_attributes on fare_period if we have it, or fare_id if we don&#39;t</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fare_rules_df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Fare ID/class (fare period)/attribute mapping.</span>
 
-            <span class="c1">#: Fare ID/class (fare period)/attribute mapping.</span>
-            <span class="c1">#:</span>
-            <span class="c1">#: ===================  =====================================================================================================================================</span>
-            <span class="c1">#:  Column name         Column Description</span>
-            <span class="c1">#: ===================  =====================================================================================================================================</span>
-            <span class="c1">#: `fare_id`            GTFS fare_id (See `fare_rules`_)</span>
-            <span class="c1">#: `fare_id_num`        Numbered fare_id</span>
-            <span class="c1">#: `route_id`           (optional) Route(s) associated with this fare ID. (See `fare_rules`_)</span>
-            <span class="c1">#: `origin_id`          (optional) Origin fare zone ID(s) for fare ID. (See `fare_rules`_)</span>
-            <span class="c1">#: `origin_id_num`      (optional) Origin fare zone number for fare ID.</span>
-            <span class="c1">#: `destination_id`     (optional) Destination fare zone ID(s) for fare ID. (See `fare_rules`_)</span>
-            <span class="c1">#: `destination_id_num` (optional) Destination fare zone number for fare ID.</span>
-            <span class="c1">#: `contains_id`        (optional) Contains fare zone ID(s) for fare ID. (See `fare_rules`_)</span>
-            <span class="c1">#: `fare_period`        GTFS-plus fare_period (See `fare_periods_ft`_)</span>
-            <span class="c1">#: `start_time`         Fare class start time (See `fare_rules_ft`_)</span>
-            <span class="c1">#: `end_time`           Fare class end time (See `fare_rules_ft`_)</span>
-            <span class="c1">#: `currency_type`      Currency of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)</span>
-            <span class="c1">#: `price`              Price of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)</span>
-            <span class="c1">#: `payment_method`     When the fare must be paid (See `fare_attributes`_ or `fare_attributes_ft`_)</span>
-            <span class="c1">#: `transfers`          Number of transfers permiited on this fare (See `fare_attributes`_ or `fare_attributes_ft`_)</span>
-            <span class="c1">#: `transfer_duration`  (optional) Integer length of time in seconds before transfer expires (See `fare_attributes`_ or `fare_attributes_ft`_)</span>
-            <span class="c1">#: ===================  =====================================================================================================================================</span>
-            <span class="c1">#:</span>
-            <span class="c1">#: .. _fare_rules: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md</span>
-            <span class="c1">#: .. _fare_rules_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md</span>
-            <span class="c1">#: .. _fare_attributes: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes.md</span>
-            <span class="c1">#: .. _fare_attributes_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            | *Column name*         | Column Description                                                                                                                   |</span>
+<span class="sd">            +=======================+======================================================================================================================================+</span>
+<span class="sd">            |``fare_id``            |GTFS fare_id (See `fare_rules`_)                                                                                                      |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``fare_id_num``        |Numbered fare_id                                                                                                                      |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``route_id``           |(optional) Route(s) associated with this fare ID. (See `fare_rules`_)                                                                 |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``origin_id``          |(optional) Origin fare zone ID(s) for fare ID. (See `fare_rules`_)                                                                    |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``origin_id_num``      |(optional) Origin fare zone number for fare ID.                                                                                       |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``destination_id``     |(optional) Destination fare zone ID(s) for fare ID. (See `fare_rules`_)                                                               |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``destination_id_num`` |(optional) Destination fare zone number for fare ID.                                                                                  |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``contains_id``        |(optional) Contains fare zone ID(s) for fare ID. (See `fare_rules`_)                                                                  |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``fare_period``        |GTFS-plus fare_period (See `fare_periods_ft`_)                                                                                        |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``start_time``         |Fare class start time (See `fare_rules_ft`_)                                                                                          |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``end_time``           |Fare class end time (See `fare_rules_ft`_)                                                                                            |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``currency_type``      |Currency of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)                                                        |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``price``              |Price of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)                                                           |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``payment_method``     |When the fare must be paid (See `fare_attributes`_ or `fare_attributes_ft`_)                                                          |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``transfers``          |Number of transfers permiited on this fare (See `fare_attributes`_ or `fare_attributes_ft`_)                                          |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+<span class="sd">            |``transfer_duration``  |(optional) Integer length of time in seconds before transfer expires (See `fare_attributes`_ or `fare_attributes_ft`_)                |</span>
+<span class="sd">            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+</span>
+
+<span class="sd">            .. _fare_rules: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md</span>
+<span class="sd">            .. _fare_rules_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md</span>
+<span class="sd">            .. _fare_attributes: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes.md</span>
+<span class="sd">            .. _fare_attributes_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md</span>
+<span class="sd">            &quot;&quot;&quot;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fare_rules_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fare_rules_df</span><span class="p">,</span>
                                               <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fare_attrs_df</span><span class="p">,</span>
                                               <span class="n">how</span>  <span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
@@ -1248,7 +1268,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -1273,7 +1293,8 @@
         <script type="text/javascript" src="../../_static/jquery.js"></script>
         <script type="text/javascript" src="../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

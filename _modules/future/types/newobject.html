@@ -82,10 +82,14 @@
             
             
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">Fast-Trips Classes and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -166,10 +170,10 @@
 
 <span class="sd">    a = A()</span>
 <span class="sd">    print(str(a))</span>
-<span class="sd">    </span>
+
 <span class="sd">    # On Python 2, these relations hold:</span>
 <span class="sd">    assert unicode(a) == my_unicode_string</span>
-<span class="sd">    assert str(a) == my_unicode_string.encode(&#39;utf-8&#39;) </span>
+<span class="sd">    assert str(a) == my_unicode_string.encode(&#39;utf-8&#39;)</span>
 
 
 <span class="sd">Another example::</span>
@@ -183,28 +187,10 @@
 <span class="sd">            return next(self._iter).upper()</span>
 <span class="sd">        def __iter__(self):</span>
 <span class="sd">            return self</span>
-<span class="sd">    </span>
+
 <span class="sd">    assert list(Upper(&#39;hello&#39;)) == list(&#39;HELLO&#39;)</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span> <span class="nn">sys</span>
-
-<span class="kn">from</span> <span class="nn">future.utils</span> <span class="k">import</span> <span class="n">with_metaclass</span>
-
-
-<span class="n">_builtin_object</span> <span class="o">=</span> <span class="nb">object</span>
-<span class="n">ver</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-
-
-<span class="c1"># We no longer define a metaclass for newobject because this breaks multiple</span>
-<span class="c1"># inheritance and custom metaclass use with this exception:</span>
-
-<span class="c1"># TypeError: Error when calling the metaclass bases</span>
-<span class="c1">#     metaclass conflict: the metaclass of a derived class must be a</span>
-<span class="c1">#     (non-strict) subclass of the metaclasses of all its bases</span>
-
-<span class="c1"># See issues #91 and #96.</span>
 
 
 <span class="k">class</span> <span class="nc">newobject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -213,7 +199,7 @@
 <span class="sd">        next</span>
 <span class="sd">        __unicode__</span>
 <span class="sd">        __nonzero__</span>
-<span class="sd">    </span>
+
 <span class="sd">    Subclasses of this class can merely define the Python 3 methods (__next__,</span>
 <span class="sd">    __str__, and __bool__).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -221,7 +207,7 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__next__&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;newobject is not an iterator&#39;</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># All subclasses of the builtin object should have __str__ defined.</span>
         <span class="c1"># Note that old-style classes do not have __str__ defined.</span>
@@ -274,7 +260,7 @@
     <span class="c1">#     else:</span>
     <span class="c1">#         value = args[0]</span>
     <span class="c1">#     return super(newdict, cls).__new__(cls, value)</span>
-        
+
     <span class="k">def</span> <span class="nf">__native__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Hook for the future.utils.native() function</span>
@@ -295,7 +281,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -320,7 +306,8 @@
         <script type="text/javascript" src="../../../_static/jquery.js"></script>
         <script type="text/javascript" src="../../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

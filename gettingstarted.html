@@ -30,7 +30,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="How Fast-Trips Works" href="howitworks.html" />
-    <link rel="prev" title="Welcome to the Fast-Trips developers documentation!" href="index.html" /> 
+    <link rel="prev" title="Use Cases" href="usecases.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -84,14 +84,24 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#get-fast-trips-running">Get Fast-Trips Running</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-fast-trips">Install Fast-Trips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installing-stable-release-from-pypi">Installing stable release from PyPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-from-source-code-recommended-for-developers">Installing from source code (recommended for developers)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#test-the-install">Test the Install</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#i-o">I/O</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#go-through-tutorials">Go through Tutorials</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
             
@@ -156,41 +166,138 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="getting-started">
+  <p><a href="#id1"><span class="problematic" id="id2">``</span></a>[conda-url]
+[git-url]: &lt;<a class="reference external" href="https://git-scm.com/">https://git-scm.com/</a>&gt;
+[git-clone-url]: &lt;<a class="reference external" href="https://help.github.com/articles/cloning-a-repository/">https://help.github.com/articles/cloning-a-repository/</a>&gt;
+[GitHub Desktop](<a class="reference external" href="https://desktop.github.com/">https://desktop.github.com/</a>)
+[git-fork-url]: &lt;<a class="reference external" href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</a>&gt;
+[python-vcpp-url]: &lt;<a class="reference external" href="http://www.microsoft.com/en-us/download/details.aspx?id=44266">http://www.microsoft.com/en-us/download/details.aspx?id=44266</a>&gt;
+[numpy-url]:  &lt;<a class="reference external" href="http://www.numpy.org/">http://www.numpy.org/</a>&gt;
+[pandas-url]: &lt;<a class="reference external" href="http://pandas.pydata.org/">http://pandas.pydata.org/</a>&gt;
+[anaconda-url]: &lt;<a class="reference external" href="https://www.continuum.io/downloads">https://www.continuum.io/downloads</a>&gt;
+[python-packages-windows-url]: &lt;<a class="reference external" href="http://www.lfd.uci.edu/~gohlke/pythonlibs/">http://www.lfd.uci.edu/~gohlke/pythonlibs/</a>&gt;
+[partridge-url]: &lt;<a class="reference external" href="https://github.com/remix/partridge">https://github.com/remix/partridge</a>&gt;
+[git-repo-url]: &lt;<a class="reference external" href="https://github.com/MetropolitanTransportationCommission/fast-trips.git">https://github.com/MetropolitanTransportationCommission/fast-trips.git</a>&gt;
+[network-standard-url]: &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">https://github.com/osplanning-data-standards/GTFS-PLUS</a>&gt;
+[demand-standard-url]: &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/dyno-demand">https://github.com/osplanning-data-standards/dyno-demand</a>&gt;
+[stop-order-details-url]: &lt;<a class="reference external" href="https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22">https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22</a>&gt;
+[fast-trips-validation-url]: &lt;<a class="reference external" href="https://github.com/psrc/fast-trips-validation">https://github.com/psrc/fast-trips-validation</a>&gt;
+[pip-url]: &lt;<a class="reference external" href="https://pip.pypa.io/en/stable/">https://pip.pypa.io/en/stable/</a>&gt;
+[virtenv-url]: &lt;<a class="reference external" href="https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/">https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/</a>&gt;</p>
+<div class="section" id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="get-fast-trips-running">
-<h2>Get Fast-Trips Running<a class="headerlink" href="#get-fast-trips-running" title="Permalink to this headline">¶</a></h2>
-<p>1. <strong>Setup a Python 2.7 virtual environment</strong>
-This makes sure you don’t interfere with other python installations. You can do this using the base virtenv package, conda, or using the Anaconda Navigator GUI.
-i.e. using conda::</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">fasttrips</span> <span class="n">python</span><span class="o">=</span><span class="mf">2.7</span> <span class="n">anaconda</span>  <span class="n">source</span> <span class="n">activate</span> <span class="n">fasttrips</span>
+<div class="section" id="install-fast-trips">
+<h2>Install Fast-Trips<a class="headerlink" href="#install-fast-trips" title="Permalink to this headline">¶</a></h2>
+<p>System Requirements:</p>
+<ul class="simple">
+<li>Fast-Trips has been tested on Windows, Ubuntu, and Mac OS</li>
+<li>Fast-Trips has been tested on Python 2.7.13 and 3.6</li>
+</ul>
+<p>Recommended:</p>
+<ul class="simple">
+<li>Conda package manager to manage virtual environments</li>
+</ul>
+<p>To compile from source:</p>
+<ul class="simple">
+<li><strong>Windows</strong>, [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url]</li>
+<li><strong>Linux</strong>, the python-dev package</li>
+</ul>
+<p>Recommended:</p>
+<ul class="simple">
+<li>GitHub Desktop</li>
+<li>IDE like Atom, Sublime Text, etc.</li>
+</ul>
+<p>Fast-Trips can either be installed from source or from compilled binaries.  Compilled binaries are made from commits to the “master” branch and are more stable, but less up-to-date than the source.</p>
+<div class="section" id="installing-stable-release-from-pypi">
+<h3>Installing stable release from PyPI<a class="headerlink" href="#installing-stable-release-from-pypi" title="Permalink to this headline">¶</a></h3>
+<p>Creating a virtual environment using conda (recommended):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="n">fast</span><span class="o">-</span><span class="n">trips</span><span class="o">-</span><span class="n">env</span> <span class="n">ft</span><span class="o">-</span><span class="n">py3</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.6</span>
+<span class="n">source</span> <span class="n">activate</span> <span class="n">fast</span><span class="o">-</span><span class="n">trips</span><span class="o">-</span><span class="n">env</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">fasttrips</span>
 </pre></div>
 </div>
-<p>NOTE that Python 3.X will not work due to dependencies on the transitfeed package.  We are <a class="reference external" href="https://github.com/BayAreaMetro/fast-trips/issues/85">working on removing this dependency</a>.</p>
-<p>2. <strong>Add the required packages to your Virtual Environment</strong>
-Required packages include: numpy,  Pandas, and transitfeed. Many data analytics Python distributions like Anaconda bundle numpy and pandas, but they can also be installed using the command <code class="code docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">&lt;packagename&gt;</span></code> within the virtual environment. As a last resort, Windows users can also use <a class="reference external" href="https://www.lfd.uci.edu/~gohlke/pythonlibs/">these binary package installers</a>.</p>
-<p>3. <strong>Install Git and/or GitHub Desktop</strong>
-Fork and clone the main fast-trips repository to a local directory &lt;fast-trips-dir&gt;</p>
-<p>4. <strong>Build Fast-Trips c++ Module</strong>
-Switch to the develop branch of the repository (or whichever branch you want to build)</p>
-<div class="line-block">
-<div class="line"><em>Windows</em>: install Microsoft Visual C++ Compiler for Python 2.7.</div>
-<div class="line"><em>Linux</em>: install the python-dev package.</div>
-<div class="line"><em>Mac</em>: using standard xcode command line tools / g++ works fine.</div>
-<div class="line"><br /></div>
-</div>
-<p>To build in &lt;fast-trips-dir&gt;, run the following in a command prompt:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">develop</span> <span class="n">build_ext</span> <span class="o">--</span><span class="n">inplace</span><span class="o">.</span>
+<p>Installing into an existing python installation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">fast</span><span class="o">-</span><span class="n">trips</span>
 </pre></div>
 </div>
-<p>Using the develop command prompt makes sure that changes in the package are propagated to the shell without having to re-install the package.</p>
-<ol class="arabic simple" start="5">
-<li><strong>Test Installation</strong></li>
+</div>
+<div class="section" id="installing-from-source-code-recommended-for-developers">
+<h3>Installing from source code (recommended for developers)<a class="headerlink" href="#installing-from-source-code-recommended-for-developers" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p class="first">Install [Git][git-url] and if desired, a GUI for git like [GitHub Desktop](<a class="reference external" href="https://desktop.github.com/">https://desktop.github.com/</a>)</p>
+</li>
+<li><p class="first">[Clone](git-clone-url) or [fork-and-clone][git-fork-url] the fast-trips repository (<a class="reference external" href="https://github.com/BayAreaMetro/fast-trips.git">https://github.com/BayAreaMetro/fast-trips.git</a>) to a local directory: <cite>&lt;fast-trips-dir&gt;</cite>. If the user plans on making changes to the code, it is recommended that the repository be [forked][git-fork-url] before cloning.</p>
+</li>
+<li><p class="first">Switch to the branch of the repository that you want to use by either using GitHub Desktop or from the command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="n">master</span>
+</pre></div>
+</div>
+</li>
 </ol>
-<p>Run the following command from a terminal that is open in the virtual environment from the fast-trips directory:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">scripts</span><span class="o">/</span><span class="n">run_example</span><span class="o">.</span><span class="n">py</span>
+<blockquote>
+<div>The <code class="docutils literal notranslate"><span class="pre">master</span></code> branch should be the latest stable branch and the <code class="docutils literal notranslate"><span class="pre">develop</span></code> branch has the latest.  Features are developed on feature-branches.</div></blockquote>
+<ol class="arabic" start="4">
+<li><p class="first">Install dependencies:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
 </div>
+</li>
+<li><p class="first"><em>Optional</em> Install packages for creating documentation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">dev</span><span class="o">-</span><span class="n">dependencies</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">To build, in the fast-trips directory <code class="docutils literal notranslate"><span class="pre">&lt;fast-trips-dir&gt;</span></code>, run the following in a command prompt:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build_ext</span> <span class="o">--</span><span class="n">inplace</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<dl class="docutils">
+<dt>Troubleshooting:</dt>
+<dd><ul class="first last simple">
+<li><em>Optional</em> Set the <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> environment variable to the location of your fast-trips repo, which we’re calling <code class="docutils literal notranslate"><span class="pre">&lt;fast-trips-dir&gt;</span></code>.</li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.</li>
+<li>Fast-trips currently uses a development version of the <a class="reference external" href="partridge-url">Partridge</a> that is required in order to read unzipped GTFS files.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="test-the-install">
+<h3>Test the Install<a class="headerlink" href="#test-the-install" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ul>
+<li><p class="first">To run an example to make sure it is installed correctly, run from the <cite>&lt;fast-trips-dir&gt;</cite>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">fasttrips</span>\<span class="n">Examples</span>\<span class="n">Bunny_Hop</span>\<span class="n">run_bunny_hop</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>(remember to use file separators appropriate for your operating system).</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="i-o">
+<h2>I/O<a class="headerlink" href="#i-o" title="Permalink to this headline">¶</a></h2>
+<p>Fast-trips uses three sets of :ref:input files:</p>
+<ol class="arabic simple">
+<li>Passenger demand</li>
+<li>Transit and access network</li>
+<li>Configuration files</li>
+</ol>
+<p>Fast-Trips summarizes the passenger assignment in three ways:</p>
+<ol class="arabic simple">
+<li>Path-based</li>
+<li>Vehicle-based</li>
+<li>Link-based</li>
+</ol>
+<p>Additionally, individual passengers can be “traced” thru the system, which produces a detailed log-style accounting.</p>
+<p>Finally, Fast-Trips produces high-level performance outputs to measure both computing and transportation system performance.</p>
 </div>
 <div class="section" id="go-through-tutorials">
 <h2>Go through Tutorials<a class="headerlink" href="#go-through-tutorials" title="Permalink to this headline">¶</a></h2>
@@ -210,7 +317,7 @@ Don’t forget to open and use the <a class="reference external" href="https://d
         <a href="howitworks.html" class="btn btn-neutral float-right" title="How Fast-Trips Works" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to the Fast-Trips developers documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="usecases.html" class="btn btn-neutral" title="Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -219,7 +326,7 @@ Don’t forget to open and use the <a class="reference external" href="https://d
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -244,7 +351,8 @@ Don’t forget to open and use the <a class="reference external" href="https://d
         <script type="text/javascript" src="_static/jquery.js"></script>
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

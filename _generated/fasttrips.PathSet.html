@@ -84,8 +84,11 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">Fast-Trips Classes and Functions</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#fast-trips-classes">fast-trips Classes</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
@@ -108,6 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -349,19 +353,19 @@ through a set of stops.</p>
 <td></td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_ARRDEP</span></code></td>
-<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance.</td>
+<td><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code> instance.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_COST</span></code></td>
 <td>cost float, for hyperpath/stochastic assignment</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_DEPARR</span></code></td>
-<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance.</td>
+<td><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code> instance.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_DEPARRMODE</span></code></td>
 <td>mode id</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LABEL</span></code></td>
-<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</td>
+<td><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code> instance</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LINKCOST</span></code></td>
 <td>link generalized cost, float for hyperpath/stochastic,</td>
@@ -373,7 +377,7 @@ through a set of stops.</p>
 <td>fare cost, float</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_LINKTIME</span></code></td>
-<td><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</td>
+<td><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code> instance</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">STATE_IDX_SEQ</span></code></td>
 <td>sequence (for trip)</td>
@@ -781,7 +785,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_ARRDEP">
 <code class="descname">STATE_IDX_ARRDEP</code><em class="property"> = 12</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_ARRDEP" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance. Arrival if outbound/backwards, departure if inbound/forwards.</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code> instance. Arrival if outbound/backwards, departure if inbound/forwards.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -793,7 +797,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_DEPARR">
 <code class="descname">STATE_IDX_DEPARR</code><em class="property"> = 1</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_DEPARR" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.datetime" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code></a> instance. Departure if outbound/backwards, arrival if inbound/forwards.</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code> instance. Departure if outbound/backwards, arrival if inbound/forwards.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -805,7 +809,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_LABEL">
 <code class="descname">STATE_IDX_LABEL</code><em class="property"> = 0</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_LABEL" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code> instance</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -829,7 +833,7 @@ into A-B-C-D-E for overlap calculations?</p>
 <dl class="attribute">
 <dt id="fasttrips.PathSet.STATE_IDX_LINKTIME">
 <code class="descname">STATE_IDX_LINKTIME</code><em class="property"> = 7</em><a class="headerlink" href="#fasttrips.PathSet.STATE_IDX_LINKTIME" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/datetime.html#datetime.timedelta" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code></a> instance</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.timedelta</span></code> instance</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -1032,7 +1036,7 @@ into A-B-C-D-E for overlap calculations?</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -1057,7 +1061,8 @@ into A-B-C-D-E for overlap calculations?</p>
         <script type="text/javascript" src="../_static/jquery.js"></script>
         <script type="text/javascript" src="../_static/underscore.js"></script>
         <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

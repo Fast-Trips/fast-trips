@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>How Fast-Trips Works &mdash; fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation</title>
+  <title>FAQ &mdash; fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation</title>
   
 
   
@@ -29,8 +29,7 @@
   <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Input/Output Files" href="io.html" />
-    <link rel="prev" title="Getting Started" href="gettingstarted.html" /> 
+    <link rel="prev" title="Contributing" href="contributing.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -86,16 +85,12 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">How Fast-Trips Works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dynamic-passenger-assignment-dpa-algorithms">Dynamic Passenger Assignment(DPA) Algorithms</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#system-design">System Design</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a></li>
 <li class="toctree-l1"><a class="reference internal" href="io.html">Input/Output Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ</a></li>
 </ul>
 
             
@@ -141,13 +136,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>How Fast-Trips Works</li>
+      <li>FAQ</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/howitworks.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/faq.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -160,30 +155,36 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="how-fast-trips-works">
-<h1>How Fast-Trips Works<a class="headerlink" href="#how-fast-trips-works" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="dynamic-passenger-assignment-dpa-algorithms">
-<h2>Dynamic Passenger Assignment(DPA) Algorithms<a class="headerlink" href="#dynamic-passenger-assignment-dpa-algorithms" title="Permalink to this headline">¶</a></h2>
-<p>Fast-Trips is based on the work of Alireza Khani, Mark Hickman, and others while at University of Arizona.  Associated academic papers include:</p>
+  <div class="section" id="faq">
+<h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>How do I restart a run after pathfinding?</dt>
+<dd><p class="first">Use the option <code class="docutils literal notranslate"><span class="pre">pathfinding_type=file</span></code>, via ` <code class="docutils literal notranslate"><span class="pre">runTest.py</span></code> &lt;scripts/runTest.py&gt;`_ or in the configuration.  Then, drop the <code class="docutils literal notranslate"><span class="pre">pathsfound_paths.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">pathsfound_links.csv</span></code> files in the output directory for your run, and they’ll be read in instead of generated.</p>
+<p>## References</p>
 <blockquote>
 <div><ul class="simple">
-<li><a class="reference external" href="http://arizona.openrepository.com/arizona/handle/10150/306074">Models and solution algorithms for transit and intermodal passenger assignment (development of FAST-TrIPs model)</a></li>
-<li><a class="reference external" href="http://trrjournalonline.trb.org/doi/10.3141/2284-04">Hyperpaths in networks based on transit schedules</a></li>
+<li>Ramming, M. S. <em>Network Knowledge and Route Choice.</em> Ph.D. Thesis. Massachusetts Institute of Technology, Cambridge, Mass., 2002.</li>
+<li>Hoogendoorn-Lanser, S., R. Nes, and P. Bovy. Path Size Modeling in Multinomial Route Choice Analysis. 27 In <em>Transportation Research Record: Journal of the transportation Research Board, No 1921</em>, 28 Transportation Research Board of the National Academies, Washington, D.C., 2005, pp. 27-34.</li>
 </ul>
 </div></blockquote>
-<p>Some other useful resources include:</p>
-<blockquote>
-<div><ul class="simple">
-<li><a class="reference external" href="https://drive.google.com/open?id=0Bz-oz0TqHWtNQVdFNXV5eGwtbms">Teaching Materials</a> (currently in draft form) for the Fast-Trips algorithm.</li>
-<li><a class="reference external" href="https://drive.google.com/open?id=1usCw5FAjAXL44UavBKmCmdr7jFbAnQ-2meMlJwnEl5Y">Term Glossary</a> (currently being developed collaboratively)</li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="system-design">
-<h2>System Design<a class="headerlink" href="#system-design" title="Permalink to this headline">¶</a></h2>
-<p>One of the best ways to understand what is happening internally in Fast-Trips is to trace a single passenger through a simulation.  This can be done by using the <code class="code docutils literal notranslate"><span class="pre">run_trace.py</span></code> script found in the <code class="code docutils literal notranslate"><span class="pre">/scripts</span></code> directory.</p>
-<p>You can also review the following <a class="reference external" href="https://docs.google.com/presentation/d/1ReNqDJP4O_2m882G3NI-4xjnsd6ORjOcDCxOQNGZN4c/edit#slide=id.p">code flow chart</a> (which is a work in progress)</p>
-</div>
+<p class="last">[git-url]: &lt;<a class="reference external" href="https://git-scm.com/">https://git-scm.com/</a>&gt;
+[git-clone-url]: &lt;<a class="reference external" href="https://help.github.com/articles/cloning-a-repository/">https://help.github.com/articles/cloning-a-repository/</a>&gt;
+[git-fork-url]: &lt;<a class="reference external" href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</a>&gt;
+[python-vcpp-url]: &lt;<a class="reference external" href="http://www.microsoft.com/en-us/download/details.aspx?id=44266">http://www.microsoft.com/en-us/download/details.aspx?id=44266</a>&gt;
+[numpy-url]:  &lt;<a class="reference external" href="http://www.numpy.org/">http://www.numpy.org/</a>&gt;
+[pandas-url]: &lt;<a class="reference external" href="http://pandas.pydata.org/">http://pandas.pydata.org/</a>&gt;
+[anaconda-url]: &lt;<a class="reference external" href="https://www.continuum.io/downloads">https://www.continuum.io/downloads</a>&gt;
+[python-packages-windows-url]: &lt;<a class="reference external" href="http://www.lfd.uci.edu/~gohlke/pythonlibs/">http://www.lfd.uci.edu/~gohlke/pythonlibs/</a>&gt;
+[partridge-url]: &lt;<a class="reference external" href="https://github.com/remix/partridge">https://github.com/remix/partridge</a>&gt;
+[git-repo-url]: &lt;<a class="reference external" href="https://github.com/MetropolitanTransportationCommission/fast-trips.git">https://github.com/MetropolitanTransportationCommission/fast-trips.git</a>&gt;
+[network-standard-url]: &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">https://github.com/osplanning-data-standards/GTFS-PLUS</a>&gt;
+[demand-standard-url]: &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/dyno-demand">https://github.com/osplanning-data-standards/dyno-demand</a>&gt;
+[stop-order-details-url]: &lt;<a class="reference external" href="https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22">https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22</a>&gt;
+[fast-trips-validation-url]: &lt;<a class="reference external" href="https://github.com/psrc/fast-trips-validation">https://github.com/psrc/fast-trips-validation</a>&gt;
+[pip-url]: &lt;<a class="reference external" href="https://pip.pypa.io/en/stable/">https://pip.pypa.io/en/stable/</a>&gt;
+[virtenv-url]: &lt;<a class="reference external" href="https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/">https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/</a>&gt;</p>
+</dd>
+</dl>
 </div>
 
 
@@ -194,10 +195,8 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="io.html" class="btn btn-neutral float-right" title="Input/Output Files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-      
-        <a href="gettingstarted.html" class="btn btn-neutral" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="contributing.html" class="btn btn-neutral" title="Contributing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -1,0 +1,1610 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Input/Output Files &mdash; fasttrips Development Branch Commit 5e504cb3319b58faac3aca1310cb4ad08dc44ed8 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using Fast-Trips" href="usage.html" />
+    <link rel="prev" title="How Fast-Trips Works" href="howitworks.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> fasttrips
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usecases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gettingstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Input/Output Files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">Passenger Demand</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">Transport Network</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fares">Fares</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-files">Configuration Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pathweights-specification">Pathweights Specification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#determining-supply-modes-and-weight-values">Determining supply modes and weight values</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#weight-names">Weight Names</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#weight-qualifiers">Weight Qualifiers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#config-ft-file">Config_ft File</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#configuration-options-fasttrips">Configuration Options: fasttrips</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#configuration-options-pathfinding">Configuration Options: pathfinding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#more-on-overlap-path-size-penalties">More on Overlap Path Size Penalties</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#user-class-configuration-config-ft-py">User Class Configuration: config_ft.py</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#passenger-path-output">Passenger Path Output</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#path-files">Path files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#link-files">Link files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#vehicle-based-output">Vehicle Based Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trace-output">Trace  Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computing-performance-output">Computing Performance Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#settings-output">Settings Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Fast-Trips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Fast-Trips Classes and Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fasttrips</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Input/Output Files</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/io.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="input-output-files">
+<h1>Input/Output Files<a class="headerlink" href="#input-output-files" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils" id="input-files">
+<dt>The input to fast-trips consists of:</dt>
+<dd><ul class="first last simple">
+<li>A Transit Network directory, including schedules, access, egress and transfer information, specified by the <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">gtfs_plus</a></li>
+<li>A Transit Demand directory, including persons, households and trips, specified by the <a class="reference external" href="https://github.com/osplanning-data-standards/dyno-demand">dyno_demand</a></li>
+<li>fast-trips Configuration, specified below</li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="id1">
+<h2>Passenger Demand<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Passenger demand is specified in the the <a class="reference external" href="https://github.com/osplanning-data-standards/dyno-demand">dyno_demand</a> format of one to three csv files.</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">trip_list.txt</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">person.txt</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">household.txt</span></code></li>
+</ul>
+</dd>
+</dl>
+<p><code class="docutils literal notranslate"><span class="pre">trip_list.txt</span></code></p>
+<blockquote>
+<div><ul class="simple">
+<li>File MUST contain a record for each trip to be assigned.</li>
+<li>File MUST be a valid CSV file.</li>
+<li>The first line of each file MUST contain case-sensitive field names.</li>
+<li>Field names MUST NOT contain tabs, carriage returns or new lines.</li>
+</ul>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="15%" />
+<col width="58%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Field</th>
+<th class="head">DType</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">person_id</span></code></td>
+<td>int or str</td>
+<td>ID that uniquely identifies the traveller.
+Use 0 (zero) to identify trips that do not
+have a disaggregate person-record
+associated with them.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">person_trip_id</span></code></td>
+<td>int or str</td>
+<td>ID that uniquely identifies the trip within
+a given household/person.
+ID MAY be sequential.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">o_taz</span></code></td>
+<td>int or str</td>
+<td>Trip origin zone</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">d_taz</span></code></td>
+<td>int or str</td>
+<td>Trip destination zone</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">mode</span></code></td>
+<td>str</td>
+<td><p class="first">Trip mode, which must match a valid
+specification for route choice
+and the modal hierarchy.
+For transit, the mode should encapsulate
+access + egress modes separated by hyphens.
+Example:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">walk-local_bus-walk</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">PNR-commuter_rail-walk</span></code></li>
+</ul>
+</div></blockquote>
+<dl class="last docutils">
+<dt>Example main modes:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">local_bus</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">premium_bus</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">light_rail</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">commuter_rail</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">street_car</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">ferry</span></code></li>
+</ul>
+</dd>
+<dt>Example access or egress modes:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">walk</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">bike_own</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">bike_share</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">PNR</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">KNR</span></code></li>
+</ul>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">purpose</span></code></td>
+<td>str</td>
+<td><p class="first">Trip purpose, which can include any
+segmentation of purpose that is deemed
+appropriate for segmenting the route choice
+model so long as there are corresponding
+parameters specified in the route choice
+controls file.
+Examples include:</p>
+<blockquote class="last">
+<div><ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">work</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">school</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">personal_business</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">shopping</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">meal</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">social</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">work_based</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">other</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">visitor</span></code></li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">departure_time</span></code></td>
+<td>HH:MM:SS</td>
+<td>Desired departure time.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">arrival_time</span></code></td>
+<td>HH:MM:SS</td>
+<td>Desired arrival time.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">time_target</span></code></td>
+<td>str</td>
+<td><p class="first">Arrival/Departure rigidity indicator.
+Options include:</p>
+<blockquote class="last">
+<div><code class="docutils literal notranslate"><span class="pre">arrival</span></code>: arrival time is more important
+<code class="docutils literal notranslate"><span class="pre">departure</span></code>: dept time is more important</div></blockquote>
+</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">vot</span></code></td>
+<td>float</td>
+<td>Value of time for trip in dollars / hour</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pnr_ids</span></code></td>
+<td>list of int</td>
+<td>Available park and rides.  A comma-delimited
+list of stations within brackets.
+Example: <code class="docutils literal notranslate"><span class="pre">[1219,</span> <span class="pre">3354,</span> <span class="pre">9485]</span></code>
+An empty list implies any accessible park
+and ride can be used.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">person_tour_id</span></code></td>
+<td>int or str</td>
+<td>ID that uniquely identifies the tour within
+a given household/person.
+ID MAY be sequential.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id2">
+<h2>Transport Network<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>The transport network is specified in the the <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">gtfs_plus</a> format of text files.
+It can be generated by augmenting existing GTFS files, or by converting travel model files to <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">gtfs_plus</a> using a tool like <a href="#id10"><span class="problematic" id="id11">`network_wrangler`_</span></a></p>
+<div class="section" id="fares">
+<h3>Fares<a class="headerlink" href="#fares" title="Permalink to this headline">¶</a></h3>
+<p><a href="#id12"><span class="problematic" id="id13">`GTFS-plus`_</span></a> fare inputs are similar to GTFS fare inputs but with additional fare periods for time period-based fares.</p>
+<p>However, since the columns <cite>route_id</cite>, <cite>origin_id</cite>, <cite>destination_id</cite> and <cite>contains_id</cite> are all optional in <cite>fare_rules.txt &lt;https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md&gt;`_</cite> and therefore may be specified in different combinations, fast-trips implements fares with the following rules:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">contains_id</span></code> is not implemented in Fast-Trips, and its inclusion will result in an error</li>
+<li>Specifying <code class="docutils literal notranslate"><span class="pre">origin_id</span></code> and not <code class="docutils literal notranslate"><span class="pre">destination_id</span></code> or vice versa will result in an error.  Each fare rule must specify both or neither.</li>
+<li>These combinations of <code class="docutils literal notranslate"><span class="pre">route_id</span></code>, <code class="docutils literal notranslate"><span class="pre">origin_id</span></code>, and <cite>d`estination_id`</cite> will be used to match a <code class="docutils literal notranslate"><span class="pre">fare_id</span></code> to a transit trip, in this order. The first match will win.
+- Matching <code class="docutils literal notranslate"><span class="pre">route_id</span></code>, <code class="docutils literal notranslate"><span class="pre">origin_id</span></code> and <code class="docutils literal notranslate"><span class="pre">destination_id</span></code>
+- Matching <code class="docutils literal notranslate"><span class="pre">route_id</span></code> only (no <cite>origin_id</cite> or <code class="docutils literal notranslate"><span class="pre">destination_id</span></code> specified)
+- Matching <code class="docutils literal notranslate"><span class="pre">origin_id</span></code> and <cite>destination_id</cite> only (no <code class="docutils literal notranslate"><span class="pre">route_id</span></code> specified)
+- No match (e.g. <code class="docutils literal notranslate"><span class="pre">fare_id</span></code> specified with no other columns)</li>
+</ul>
+<p>Discount and free transfers specified in <cite>fare_transfer_rules_ft.txt</cite> &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md">https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md</a>&gt;`_ are applied to transfers from one fare period to another fare period, and these links need to be <em>back-to-back</em>.  So if a passenger transfers from A to B to C and the discount is specified for fare period A to fare period C, they will not receive the discount.</p>
+<p>Free transfers are also specified <em>within</em> fare periods (possibly time-bounded) in <cite>fare_attributes_ft.txt</cite> &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md">https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md</a>&gt;`_`. These free transfers are applied <em>after</em> the discounts from <cite>fare_transfer_rules_ft.txt</cite> &lt;<a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md">https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md</a>&gt;`_` and they do not need to be back-to-back.  So if a passenger transfers from A to B to A and fare period A has 1 free transfer specified, but a transfer from B to A has a transfer fare of $.50, the passenger will receive the free transfer since these rules are applied last (and override).</p>
+<p>There are four places where fares factor into fast-trips.</p>
+<ol class="arabic">
+<li><p class="first">During path-finding (C++ extension), fares get assessed as a cost onto links, which translate to generalized cost (minutes) via the traveler’s value of time.  <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md">Fare transfer rules</a> here are complicated, because we don’t know which is the next/previous fare, and we can only guess based on probabilities.  The fare is estimated using [<cite>Hyperlink::getFareWithTransfer()</cite>](src/hyperlink.cpp).</p>
+<p>Free transfers as configured in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md">fare attributes</a> are implemented here in a simplistic way; that is, a free transfer is assumed if the fare attributes have granted any free transfers without looking at <cite>transfer_duration</cite> or the number of transfers. Also, this transfer is required to be <em>back-to-back</em> also.  A future enhancement could include keeping a transfer count for each fare period so that the back-to-back requirement is not imposed, and also so that a certain number of free fares could be tallied, but at this time, a simpler approach is used because it’s not clear if this kind of detail is helpful.</p>
+<p>Turn this off using configuration option <cite>transfer_fare_ignore_pathfinding</cite>.</p>
+</li>
+<li><p class="first">During path-enumeration (C++ extension), when the paths are being constructed by choosing links from the hyperpath graph, at the point where each link is added to the path, the <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_transfer_rules_ft.md">fare transfer rules</a> are applied to adjust fares with more certainty of the the path so far.  This is done in [<cite>Hyperlink::setupProbabilities()</cite>](src/hyperlink.cpp) which calls <cite>Hyperlink::updateFare()</cite> and updates the link cost as well if the fare is affected.  Free transfers as configured in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md">fare attributes</a> are looked at here as well, but without the transfer duration component.</p>
+</li>
+<li><p class="first">During path-enumeration (C++ extension), after the path is constructed, the trip cost is re-calculated at the end using [<cite>Path::calculateCost()</cite>](src/path.cpp).  At this moment in the process, the path is complete and final, so the fare transfer rules are relatively easy to apply given that links are certain.  The initial fare and cost are saved and passed back to python to show the effect of step 1.</p>
+<p>Free transfers as configured in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md">fare attributes</a> are also addressed here.</p>
+<p>Turn this off using configuration option <cite>transfer_fare_ignore_pathenum</cite>.</p>
+</li>
+<li><p class="first">During simulation (python), while the path is being adjusted due to vehicle times, the fares are calculated via [<cite>Route.add_fares()</cite>](fasttrips/Route.py).  This is unlikely to change anything unless the fare periods changed due to the slow-down of vehicles – so consider deprecating this in favor of using the pathfinding results?  For now, it’s a good test that the C++ code is working as expected; running with simulation off should result in identical fare and cost results from pathfinding and the (non-vehicle-updating) python simulation.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="configuration-files">
+<h2>Configuration Files<a class="headerlink" href="#configuration-files" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>There are two required configuration files:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">pathweights_ft.txt</span></code>  : weights assigned to each component of a transit path</li>
+<li><code class="docutils literal notranslate"><span class="pre">config_ft.txt</span></code> : system, run setup and pathfinding configurations</li>
+</ul>
+</dd>
+<dt>An optional third configuration file:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">config_ft.py</span></code> : defines user classes in python.</li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="pathweights-specification">
+<h3>Pathweights Specification<a class="headerlink" href="#pathweights-specification" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">pathweight_ft.txt</span></code> file is a <em>required</em> file that tells Fast-Trips how much to value each attribute of a path. This will be used for the stop-labeling stage but also the path selection, which is done in a logit model.  Therefore, the weights should be consistent with with utility.</p>
+<p>A good rule of thumb to consider is that typical in-vehicle-time coefficients for mode choice logit models range from 0.01 to 0.08.  If you consider route choice to be a nest of mode choice, you would divide whatever the in-vehicle-time coefficient is for mode choice by whatever that nesting coefficient is.  One assumption is that the nesting coefficient for route choice should have a smaller value than a typical mode choice model, meaning that people are more likely to switch routes than modes. So, if a mode-choice utility coefficient for in-vehicle time is 0.02 and an assumed nesting coefficient is 0.2, the value for route choice would be 0.10 (0.02 / 0.2).</p>
+<p>The file can be a csv or fixed-format.  If you use a fixed-format, make sure
+<cite>pathweights_fixed_width = True</cite> in the run configuration file (e.g., <cite>config_ft.txt</cite>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">pathweights_ft.txt</span></code> <strong>must</strong> have the following columns:</p>
+<p>The following is an example of a minimally specified <code class="docutils literal notranslate"><span class="pre">pathweight_ft.txt</span></code> :</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="19%" />
+<col width="17%" />
+<col width="24%" />
+<col width="18%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>demand_mode_type</em></th>
+<th class="head"><em>demand_mode</em></th>
+<th class="head"><em>supply_mode</em></th>
+<th class="head"><em>weight_name</em></th>
+<th class="head"><em>weight_value</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">access</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk_access</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">time_min</span></code></td>
+<td>.02</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">egress</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk_egress</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">time_min</span></code></td>
+<td>.02</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">transit</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transit</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">local_bus</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">wait_time_min</span></code></td>
+<td>.02</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">transit</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transit</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">local_bus</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">in_vehicle_time_min</span></code></td>
+<td>.01</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer_penalty</span></code></td>
+<td>.05</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">time_min</span></code></td>
+<td>.02</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="determining-supply-modes-and-weight-values">
+<h4>Determining supply modes and weight values<a class="headerlink" href="#determining-supply-modes-and-weight-values" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>If a supply mode exists in <code class="docutils literal notranslate"><span class="pre">pathweight_ft.txt</span></code>, it is assumed to be a valid mode to use for the associated demand mode.</dt>
+<dd><ul class="first last simple">
+<li>Demand modes for each person are determined from each component of <code class="docutils literal notranslate"><span class="pre">mode</span></code> in <code class="docutils literal notranslate"><span class="pre">trip_list.txt</span></code> plus an implied <em>transfer</em>.</li>
+<li>If the trip list were to specify that someone takes <cite>commuter_rail</cite>, then they can still take a local bus or any supporting mode on their trip in addition to commuter rail so long as it is specified in <code class="docutils literal notranslate"><span class="pre">pathweight_ft.txt</span></code>.</li>
+<li>If for some reason a supply mode  (i.e. <code class="docutils literal notranslate"><span class="pre">rocket_ship</span></code>) <em>shouldn’t</em> be used for a particular demand mode (i.e. <code class="docutils literal notranslate"><span class="pre">land_based_transit</span></code>), then don’t put a row with both of them there.</li>
+</ul>
+</dd>
+<dt>Weight values should make sense relative to each other</dt>
+<dd><ul class="first last simple">
+<li>Weights are often assumed to be higher for “supportive” modes and lower for “main” modes to induce them to select a path with the selected demand mode, as in the example below.</li>
+</ul>
+</dd>
+</dl>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="22%" />
+<col width="32%" />
+<col width="23%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>demand_mode</em></th>
+<th class="head"><em>supply_mode</em></th>
+<th class="head"><em>weight_name</em></th>
+<th class="head"><em>weight_value</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">commuter_rail</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">local_bus</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">in_vehicle_time_min</span></code></td>
+<td>0.015</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">commuter_rail</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">heavy_rail</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">in_vehicle_time_min</span></code></td>
+<td>0.01</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">local_bus</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">local_bus</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">in_vehicle_time_min</span></code></td>
+<td>0.01</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Weight values should have appropriate meaning w.r.t. path choice context.</dt>
+<dd><ul class="first last simple">
+<li>If a logit model is being used to select which path a traveler selects, the weights need to be scaled to be appropriate to that context.</li>
+<li>Based on work summarized in NCHRP Report 716 (<a class="reference external" href="http://www.trb.org/Publications/Blurbs/167055.aspx">http://www.trb.org/Publications/Blurbs/167055.aspx</a>), values for in-vehicle-travel-time for <strong>mode choice</strong> range from 0.01 to 0.05 per minute of travel</li>
+<li>By assuming that path choice is a nested logit of a mode choice model, one can divide these values by a reasonable nesting parameter (ranging from ~0.2-0.8) to get a rough reasonable range of 0.01 to 0.20.</li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="weight-names">
+<h4>Weight Names<a class="headerlink" href="#weight-names" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>The column <code class="docutils literal notranslate"><span class="pre">weight_name</span></code> must conform to a set of constraints as discussed below.</dt>
+<dd><ul class="first last simple">
+<li>For most of the weights prefix mode is not needed. E.g. there is no need to label <code class="docutils literal notranslate"><span class="pre">weight_name</span></code> <code class="docutils literal notranslate"><span class="pre">time_min</span></code> for <code class="docutils literal notranslate"><span class="pre">supply_mode</span></code> <code class="docutils literal notranslate"><span class="pre">walk_access</span></code> as <code class="docutils literal notranslate"><span class="pre">walk_time_min</span></code>, because the fact that the <code class="docutils literal notranslate"><span class="pre">supply_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">walk_access</span></code> means it is only assessed on walk links.</li>
+<li>The drive option (PNR/KNR access/egress), however, should have <cite>walk_</cite> and <cite>drive_</cite> prefixes, because the access can have both components: driving to the station from the origin and walking from the lot to the station. So for example, for <code class="docutils literal notranslate"><span class="pre">supply_mode</span></code> <code class="docutils literal notranslate"><span class="pre">pnr_access</span></code> there will be two weights associated with travel time: <code class="docutils literal notranslate"><span class="pre">walk_time_min</span></code> and <code class="docutils literal notranslate"><span class="pre">drive_time_min</span></code>.</li>
+</ul>
+</dd>
+</dl>
+<p>The following is a partial list of possible weight names based on the demand mode / supply mode combinations.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="20%" />
+<col width="29%" />
+<col width="28%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>demand_mode_type</em></th>
+<th class="head"><em>demand_mode</em></th>
+<th class="head"><em>supply_mode</em></th>
+<th class="head"><em>weight names</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">access</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk_access</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">time_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">depart_early_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">depart_late_min</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">egress</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk_egress</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">time_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">arrive_early_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">arrive_late_min</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">access</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">PNR</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">pnr_access</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">walk_time_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">drive_time_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">arrive_early_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">arrive_late_min</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transfer_penalty</span></code>
+<code class="docutils literal notranslate"><span class="pre">time_min</span></code>
+<a href="#id6"><span class="problematic" id="id7">``</span></a>wait_time_min</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">transit</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">transit</span></code></td>
+<td>&#160;</td>
+<td><code class="docutils literal notranslate"><span class="pre">in_vehicle_time_min</span></code>
+<code class="docutils literal notranslate"><span class="pre">wait_time_min</span></code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that the cost component is handled at the path level using the value of time column in <code class="docutils literal notranslate"><span class="pre">trip_list.txt</span></code>.</p>
+</div>
+</div>
+<div class="section" id="weight-qualifiers">
+<span id="weightqualifiers"></span><h4>Weight Qualifiers<a class="headerlink" href="#weight-qualifiers" title="Permalink to this headline">¶</a></h4>
+<p>By default, Fast-Trips will apply all weights as a constant on the appropriate variable. Fast-Trips also supports weight qualifiers which allow for the weights to be applied using more complex models. The supported qualifiers are listed below. Certain qualifiers also require modifiers to shape the cost function.</p>
+<p>If no qualifier is specified, <code class="docutils literal notranslate"><span class="pre">constant</span></code> will be assumed.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="61%" />
+<col width="17%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Qualifier</th>
+<th class="head">Formulation</th>
+<th class="head">Required Modifiers</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">constant</span></code> (default)</td>
+<td><span class="math notranslate nohighlight">\(f(x) = weight * x\)</span></td>
+<td>N/A</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">exponential</span></code></td>
+<td><span class="math notranslate nohighlight">\(f(x) = { (1 + weight) }^{x}\)</span></td>
+<td>N/A</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">logarithmic</span></code></td>
+<td><span class="math notranslate nohighlight">\(f(x) = weight*{log_{base}}*x\)</span></td>
+<td><code class="docutils literal notranslate"><span class="pre">log_base</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">logistic</span></code></td>
+<td><span class="math notranslate nohighlight">\(f(x) = \frac{logistic\_max}{1+e^{-weight*(x-sigmoid)}}\)</span></td>
+<td><code class="docutils literal notranslate"><span class="pre">logistic_max</span></code>
+<code class="docutils literal notranslate"><span class="pre">logistic_mid</span></code></td>
+</tr>
+</tbody>
+</table>
+<p><em>Example</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Pathweights_ft.txt snippet</span>
+<span class="n">user_class</span> <span class="n">purpose</span> <span class="n">demand_mode_type</span> <span class="n">demand_mode</span>    <span class="n">supply_mode</span>  <span class="n">weight_name</span>                                   <span class="n">weight_value</span>
+<span class="c1"># default constant</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">transit</span>          <span class="n">transit</span>        <span class="n">rapid_bus</span>    <span class="n">wait_time_min</span>                                 <span class="mf">1.77</span>
+
+<span class="c1"># Explicitly constant</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">transit</span>          <span class="n">transit</span>        <span class="n">rapid_bus</span>    <span class="n">wait_time_min</span><span class="o">.</span><span class="n">constant</span>                        <span class="mf">1.77</span>
+
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">access</span>           <span class="n">walk</span>           <span class="n">walk_access</span>  <span class="n">depart_early_min</span><span class="o">.</span><span class="n">logistic</span>                     <span class="mf">0.2</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">access</span>           <span class="n">walk</span>           <span class="n">walk_access</span>  <span class="n">depart_early_min</span><span class="o">.</span><span class="n">logistic</span><span class="o">.</span><span class="n">logistic_max</span>        <span class="mi">10</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">access</span>           <span class="n">walk</span>           <span class="n">walk_access</span>  <span class="n">depart_early_min</span><span class="o">.</span><span class="n">logistic</span><span class="o">.</span><span class="n">logistic_mid</span>        <span class="mi">9</span>
+
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">egress</span>           <span class="n">walk</span>           <span class="n">walk_egress</span>  <span class="n">arrive_late_min</span><span class="o">.</span><span class="n">logarithmic</span>                   <span class="mf">0.3</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">egress</span>           <span class="n">walk</span>           <span class="n">walk_egress</span>  <span class="n">arrive_late_min</span><span class="o">.</span><span class="n">logarithmic</span><span class="o">.</span><span class="n">log_base</span>          <span class="mf">2.71828</span>
+
+<span class="c1"># Exponential</span>
+<span class="nb">all</span>        <span class="n">work</span>    <span class="n">access</span>           <span class="n">walk</span>           <span class="n">walk_access</span>  <span class="n">depart_early_min</span><span class="o">.</span><span class="n">exponential</span>                  <span class="mf">0.02</span>
+
+<span class="c1"># Logarithmic</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">egress</span>           <span class="n">walk</span>           <span class="n">walk_egress</span>  <span class="n">arrive_late_min</span><span class="o">.</span><span class="n">logarithmic</span>                   <span class="mf">0.3</span>
+<span class="nb">all</span>        <span class="n">other</span>   <span class="n">egress</span>           <span class="n">walk</span>           <span class="n">walk_egress</span>  <span class="n">arrive_late_min</span><span class="o">.</span><span class="n">logarithmic</span><span class="o">.</span><span class="n">log_base</span>          <span class="mf">2.71828</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="config-ft-file">
+<span id="configft"></span><h3>Config_ft File<a class="headerlink" href="#config-ft-file" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">config_ft.txt</span></code> is a <em>required</em> file whose location is specified at runtime.
+If the same options are specified in both, then the version specified in the Transit Demand input directory will be used.
+(Two versions may be specified because some configuration options are more relevant to demand and some are more relevant
+to network inputs.)</p>
+<p>The configuration files are parsed by python’s <cite>ConfigParser module</cite> &lt;<a class="reference external" href="https://docs.python.org/2/library/configparser.html#module-ConfigParser">https://docs.python.org/2/library/configparser.html#module-ConfigParser</a>&gt;`_ and therefore
+adhere to that format, with two possible sections: <em>fasttrips</em> and <em>pathfinding</em>.</p>
+<div class="section" id="configuration-options-fasttrips">
+<h4>Configuration Options: fasttrips<a class="headerlink" href="#configuration-options-fasttrips" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="8%" />
+<col width="9%" />
+<col width="45%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option Name</th>
+<th class="head">Type</th>
+<th class="head">Default</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">bump_buffer</span></code></td>
+<td>float</td>
+<td>5</td>
+<td>Not really used yet.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">bump_one_at_a_time</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">capacity_constraint</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>Hard capacity constraint.  When True,
+fasttrips forces everyone off overcapacity
+vehicles and disallows them from finding
+a new path using an overcapacity vehicle.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">create_skims</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>##TODO Not implemented yet.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">debug_num_trips</span></code></td>
+<td>int</td>
+<td>-1</td>
+<td>If positive, will truncate the trip list
+to this length.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">debug_trace_only</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>If True, will only find paths and simulate
+the person ids specified in
+<code class="docutils literal notranslate"><span class="pre">trace_person_ids</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">debug_output_columns</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>If True, will write internal &amp; debug columns
+into output.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">fare_zone_symmetry</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>If True, will assume fare zone symmetry.
+That is, if fare_id X is configured from
+origin zone A to destination zone B and
+there is no fare configured from zone B to
+zone A,  we’ll assume that fare_id X
+also applies.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">max_iterations</span></code></td>
+<td>int</td>
+<td>1</td>
+<td>Maximum number of pathfinding iterations
+to run.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">number_of_processes</span></code></td>
+<td>int</td>
+<td>0</td>
+<td>Number of processes to use for path finding.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">output_passenger_trajectories</span></code></td>
+<td>bool</td>
+<td>True</td>
+<td>Write chosen passenger paths?
+##TODO: deprecate.
+Why would you ever not do this?</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">output_pathset_per_sim_iter</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>Output pathsets for each simulation
+iteration?  If false, just outputs once
+per path-finding iteration.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">prepend_route_id_to_trip_id</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>This is for readability in debugging;
+If True, then route ids will be prepended
+to trip ids.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">simulation</span></code></td>
+<td>bool</td>
+<td>True</td>
+<td>Simulate transit vehicles?
+After path-finding, should fast-trips
+update vehicle times and put passengers
+on vehicles?
+If False, fast-trips:
+- still calculates costs
+and probabilities and chooses paths,
+- doesn’t update vehicle times
+from those read in from the input network,
+- doesn’t load passengers onto vehicles
+This is useful for debugging path-finding
+and verifying that pathfinding calculations
+are consisten twith cost/fare calculations
+done outside of pathfinding.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">skim_start_time</span></code></td>
+<td>string</td>
+<td>5:00</td>
+<td>##TODO Not implemented yet.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">skim_end_time</span></code></td>
+<td>string</td>
+<td>10:00</td>
+<td>##TODO Not implemented yet.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">skip_person_ids</span></code></td>
+<td>string</td>
+<td>‘None’</td>
+<td>A list of person IDs to skip.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">trace_ids</span></code></td>
+<td>string</td>
+<td>‘None’</td>
+<td>A list of tuples, (person ID, person trip ID)
+for whom to output verbose trace information.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="configuration-options-pathfinding">
+<h4>Configuration Options: pathfinding<a class="headerlink" href="#configuration-options-pathfinding" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="8%" />
+<col width="19%" />
+<col width="39%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>Option Name</em></th>
+<th class="head"><em>Type</em></th>
+<th class="head"><em>Default</em></th>
+<th class="head"><em>Description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">max_num_paths</span></code></td>
+<td>int</td>
+<td>-1</td>
+<td>If positive, drops paths after this IF
+probability is less than ``</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">min_path_probability</span></code></td>
+<td>float</td>
+<td>0.005</td>
+<td>Paths with probability less than this get
+dropped IF <cite>max_num_paths</cite> specified AND hit.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">min_transfer_penalty</span></code></td>
+<td>float</td>
+<td>0.1</td>
+<td>Minimum transfer penalty. Safeguard against
+having no transfer penalty which can result in
+terrible paths with excessive transfers.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">overlap_chunk_size</span></code></td>
+<td>int</td>
+<td>500</td>
+<td>How many person’s trips to process at a time
+in overlap calculations in python simulation
+(more means faster but more memory required.)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">overlap_scale_parameter</span></code></td>
+<td>float</td>
+<td>1</td>
+<td>Scale parameter for overlap path size
+variable.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">overlap_split_transit</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>For overlap calcs, split transit leg into
+component legs (A to E becauses A-B-C-D-E)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">overlap_variable</span></code></td>
+<td>string</td>
+<td><code class="docutils literal notranslate"><span class="pre">count</span></code></td>
+<td><p class="first">The variable upon which to base the overlap
+path size variable.  Can be:</p>
+<blockquote class="last">
+<div><ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">None</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">count</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">distance</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">time</span></code></li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pathfinding_type</span></code></td>
+<td>string</td>
+<td><code class="docutils literal notranslate"><span class="pre">stochastic</span></code></td>
+<td><dl class="first last docutils">
+<dt>Pathfinding method.  Can be:</dt>
+<dd><ul class="first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">deterministic</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">file</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">stochastic</span></code></li>
+</ul>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pathweights_fixed_width</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>If true, read the pathweights file as a fixed
+width, left-justified table (as opposed to
+a CSV, which is the default).</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">stochastic_dispersion</span></code></td>
+<td>float</td>
+<td>1.0</td>
+<td>Stochastic dispersion parameter.
+TODO: document this further.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">stochastic_max_stop_process_count</span></code></td>
+<td>int</td>
+<td>-1</td>
+<td>In path-finding, how many times should we
+process a stop during labeling?  Specify -1
+for no max.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">stochastic_pathset_size</span></code></td>
+<td>int</td>
+<td>1000</td>
+<td>In path-finding, how many paths (not
+necessarily unique) determine a pathset?</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">time_window</span></code></td>
+<td>float</td>
+<td>30</td>
+<td>In path-finding, the max time a passenger
+would wait at a stop.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">utils_conversion_factor</span></code></td>
+<td>float</td>
+<td>1.0</td>
+<td>In the path-finding labeling stage, multiplies
+the utility by this factor to prevent negative
+costs.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">transfer_fare_ignore_pathfinding</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>In path-finding, suppress trying to adjust
+fares using transfer rules. For performance.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">transfer_fare_ignore_pathenum</span></code></td>
+<td>bool</td>
+<td>False</td>
+<td>In path-enumeration, suppress trying to adjust
+fares using transfer rules. For performance.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">user_class_function</span></code></td>
+<td>string</td>
+<td><code class="docutils literal notranslate"><span class="pre">generic_user_class</span></code></td>
+<td>A function to generate a user class string
+given a user record.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">depart_early_allowed_min</span></code></td>
+<td>float</td>
+<td>0.0</td>
+<td>Allow passengers to depart before their
+departure time time target by this many
+minutes</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">arrive_late_allowed_min</span></code></td>
+<td>float</td>
+<td>0.0</td>
+<td>Allow passengers to arrive after their arrival
+time target by this many minutes.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="more-on-overlap-path-size-penalties">
+<h4>More on Overlap Path Size Penalties<a class="headerlink" href="#more-on-overlap-path-size-penalties" title="Permalink to this headline">¶</a></h4>
+<p>The path size overlap penalty is formulated by Ramming and discussed in Hoogendoorn-Lanser et al. (see [References](#references) ).</p>
+<p>When the pathsize overlap is penalized (pathfinding <code class="docutils literal notranslate"><span class="pre">overlap_variable</span></code> is not <cite>None</cite>), then the following equation is used to calculate the path size overlap penalty:</p>
+<p><span class="math notranslate nohighlight">\(PS_i = \sum_{a\in\Gamma_i}\frac{l_a}{L_i}*\frac{1}{\sum_{j\in C_{in}} \left(\frac{L_i}{L_j}\right)^\gamma*\delta_{aj}}\)</span></p>
+<dl class="docutils">
+<dt>Where</dt>
+<dd><ul class="first last simple">
+<li><em>i</em> is the path alternative for individual <em>n</em></li>
+<li><span class="math notranslate nohighlight">\(\Gamma_i\)</span> is the set of legs of path alternative <em>i</em></li>
+<li><span class="math notranslate nohighlight">\(l_a\)</span>  is the value of the <code class="docutils literal notranslate"><span class="pre">overlap_variable</span></code> for leg <em>a</em>.  So it is either 1, the distance or the time of leg <em>a</em> depending of if <code class="docutils literal notranslate"><span class="pre">overlap_scale_parameter</span></code> is <code class="docutils literal notranslate"><span class="pre">count</span></code>, <code class="docutils literal notranslate"><span class="pre">distance</span></code> or <code class="docutils literal notranslate"><span class="pre">time</span></code>, respectively.</li>
+<li><span class="math notranslate nohighlight">\(L_i\)</span> is the total sum of the <code class="docutils literal notranslate"><span class="pre">overlap_variable</span></code> over all legs <span class="math notranslate nohighlight">\(l_a\)</span> that make up path alternative <em>i</em></li>
+<li><span class="math notranslate nohighlight">\(C_{in}\)</span>  is the choice set of path alternatives for individual <em>n</em> that overlap with alternative <em>i</em></li>
+<li><span class="math notranslate nohighlight">\(\gamma\)</span> is the <code class="docutils literal notranslate"><span class="pre">overlap_scale_parameter</span></code></li>
+<li><span class="math notranslate nohighlight">\(\delta_{ai} = 1\ and\ \delta_{aj} = 0\ \forall\ j\ \ne i\)</span></li>
+</ul>
+</dd>
+</dl>
+<p>From Hoogendoor-Lanser et al.:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Consequently, if leg <em>a</em> for alternative <em>i</em> is unique, then</dt>
+<dd><ul class="first last simple">
+<li>the denominator is equal to 1 and</li>
+<li>the path size contribution of leg <em>a</em> is equal to its proportional length <span class="math notranslate nohighlight">\(\frac{l_a}{L_i}\)</span></li>
+</ul>
+</dd>
+<dt>If leg <em>l&lt;sub&gt;a&lt;/sub&gt;</em> is also used by alternative <em>j</em>, then:</dt>
+<dd><ul class="first last simple">
+<li>the contribution of leg <span class="math notranslate nohighlight">\(l_a\)</span> to path size <span class="math notranslate nohighlight">\(PS_i\)</span> is smaller than <span class="math notranslate nohighlight">\(\frac{l_a}{L_i}\)</span></li>
+</ul>
+</dd>
+<dt>If <span class="math notranslate nohighlight">\(\gamma = 0\)</span> or if routes <em>i</em> and <em>j</em> have equal length, then</dt>
+<dd><ul class="first last simple">
+<li>the contribution of leg <em>a</em> to <span class="math notranslate nohighlight">\(PS_i\)</span> is equal to <span class="math notranslate nohighlight">\(\frac{l_a}{2L_i}\)</span></li>
+</ul>
+</dd>
+<dt>If <span class="math notranslate nohighlight">\(\gamma &gt; 0\)</span> and routes <em>i</em> and <em>j</em> differ in length, then</dt>
+<dd><ul class="first last simple">
+<li>the contribution of leg <em>a</em> to <span class="math notranslate nohighlight">\(PS_i\)</span> depends on the ratio of <span class="math notranslate nohighlight">\(L_i\)</span> to <span class="math notranslate nohighlight">\(L_j\)</span>.</li>
+</ul>
+</dd>
+<dt>If route <em>i</em> is longer than route <em>j</em></dt>
+<dd><ul class="first simple">
+<li>and <span class="math notranslate nohighlight">\(\gamma &gt; 1\)</span>, then</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>the contribution of leg <em>a</em> to <span class="math notranslate nohighlight">\(PS_i\)</span> is larger than <span class="math notranslate nohighlight">\(\frac{l_a}{2L_i}\)</span></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>otherwise,</li>
+</ul>
+<blockquote class="last">
+<div><ul class="simple">
+<li>the contribution is smaller than <span class="math notranslate nohighlight">\(\frac{l_a}{2L_i}\)</span>.</li>
+</ul>
+</div></blockquote>
+</dd>
+<dt>If <span class="math notranslate nohighlight">\(\gamma &gt; 1\)</span> in the exponential path size formulation, then</dt>
+<dd><ul class="first last simple">
+<li>long routes are penalized in favor of short routes.</li>
+</ul>
+</dd>
+<dt>If overlapping routes have more or less equal length, then</dt>
+<dd><ul class="first last simple">
+<li>The use of parameter <span class="math notranslate nohighlight">\(\gamma\)</span> is questionable and should therefore be set to 0.</li>
+<li>Overlap between those alternatives should not affect their choice probabilities differently.</li>
+<li>The degree to which long routes should be penalized might be determined by estimating <span class="math notranslate nohighlight">\(\gamma\)</span>.</li>
+<li>If <span class="math notranslate nohighlight">\(\gamma\)</span> is not estimated, then an educated guess with respect to <span class="math notranslate nohighlight">\(\gamma\)</span> should be made.</li>
+<li>To this end, differences in route length between alternatives in a choice set should be considered.</li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="user-class-configuration-config-ft-py">
+<h4>User Class Configuration: config_ft.py<a class="headerlink" href="#user-class-configuration-config-ft-py" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">config_ft.py</span></code> is an <em>optional</em> python file containing functions that are evaluated to ascertain items such as user classes.
+This could be used to programmatically define user classes based on person, household and/or trip attributes.</p>
+<p>The function name for user class is specified in the <em>pathfinding</em> input parameter <code class="docutils literal notranslate"><span class="pre">user_class_function</span></code></p>
+<p><em>Example:</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">user_class</span><span class="p">(</span><span class="n">row_series</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Defines the user class for this trip list.</span>
+
+<span class="sd">    This function takes a single argument, the pandas.Series with person, household and</span>
+<span class="sd">    trip_list attributes, and returns a user class string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">row_series</span><span class="p">[</span><span class="s2">&quot;hh_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;simpson&quot;</span><span class="p">,</span><span class="s2">&quot;brady&quot;</span><span class="p">,</span><span class="s2">&quot;addams&quot;</span><span class="p">,</span><span class="s2">&quot;jetsons&quot;</span><span class="p">,</span><span class="s2">&quot;flintstones&quot;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="s2">&quot;fictional&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;real&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="passenger-path-output">
+<h2>Passenger Path Output<a class="headerlink" href="#passenger-path-output" title="Permalink to this headline">¶</a></h2>
+<p>Fast-Trips uses the <a class="reference external" href="https://github.com/osplanning-data-standards/dyno-path">dyno_path</a> data standard to convey sets of paths, or a <cite>pathset</cite>.  Each Path is comprised of a set of links.
+Each dyno-path pathset is comprised of two sets of files, a path-file, and a link file, described in the following sections.</p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">enumerated_links.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">enumerated_paths.csv</span></code></dt>
+<dd>Paths that are enumerated after the path-finding/labeling step.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pathset_links.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">pathset_paths.csv</span></code></dt>
+<dd>Paths that are considered by passengers in the path choice process.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">chosen_links.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">chosen_paths.csv</span></code></dt>
+<dd>Paths that are selected by passengers.</dd>
+</dl>
+<div class="section" id="path-files">
+<h3>Path files<a class="headerlink" href="#path-files" title="Permalink to this headline">¶</a></h3>
+<p>Path-based output files depict the available and enumerated paths in the path choice set in the <a class="reference external" href="https://github.com/osplanning-data-standards/dyno-path">dyno_path</a> format.</p>
+<p>Dyno-path path file <strong>required</strong> attributes:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>variable</em></th>
+<th class="head"><em>Description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">person_id</span></code></td>
+<td>Corresponds to person_id field in dyno-demand-formatted demand</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">trip_list_id_num</span></code></td>
+<td>Corresponds to line number field in dyno-demand-formatted trip_list.txt where
+1 is the first trip. To be replaced when dyno-demand issue#2 is resolved.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pathdir</span></code></td>
+<td>Direction. 1 for outbound, 2 for inbound.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pathmode</span></code></td>
+<td>Demand mode. Corresponds to mode field in dyno-demand-formatted <cite>trip_list.txt</cite></td>
+</tr>
+</tbody>
+</table>
+<p>Dyno-path Path file optional attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>variable</em></th>
+<th class="head"><em>description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pf_iteration</span></code></td>
+<td>Path-finding iteration.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pathnum</span></code></td>
+<td>ID within a pathset.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pf_cost</span></code></td>
+<td>Debug. The generalized cost as calculated by the path finder.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pf_probability</span></code></td>
+<td>Debug. The probability of the path as calculated by the path finder.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">description</span></code></td>
+<td>Text description of the path, including all nodes and links.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">chosen</span></code></td>
+<td>Chosen status for path. -1 if not chosen, -2 if chosen but rejected, otherwise
+iteration + simulation_iteration/100.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">missed_xfer</span></code></td>
+<td>1 if the path has a missed transfer.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">sim_cost</span></code></td>
+<td>Generalized cost calculated in the assignment/simulation.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">logsum_component</span></code></td>
+<td>Debug. Portion of the total logsum from this path.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">logsum</span></code></td>
+<td>Debug. Total logsum for the pathset.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">probability</span></code></td>
+<td>Debug. Probability of this path as calculated by the route choice model.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">iteration</span></code></td>
+<td>Iteration in which this path was found.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="link-files">
+<h3>Link files<a class="headerlink" href="#link-files" title="Permalink to this headline">¶</a></h3>
+<p>Link-based dyno-path output files depict the links within the available and enumerated paths in the path choice set in the <a class="reference external" href="https://github.com/osplanning-data-standards/dyno-path">dyno_path</a> format.</p>
+<p>Dyno-path link file <strong>required</strong> Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>variable</em></th>
+<th class="head"><em>description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">person_id</span></code></td>
+<td>Corresponds to <cite>person_id</cite> field in dyno-demand-formatted demand</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">p-trip_id</span></code></td>
+<td>Corresponds to <cite>p-trip_id `in dyno-demand-formatted `trip_list.txt</cite>.
+Unique within the household/person.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">link_num</span></code></td>
+<td>The integer link/path segment number representing the order that this link
+takes place in the entire path</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">A_id</span></code></td>
+<td>Starting node for link / path segment. Can be a stop_id corresponding to
+<cite>stops.txt</cite> or a taz corresponding to an access link such as
+<cite>walk_access_ft.txt</cite></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">B_id</span></code></td>
+<td>Ending node for link / path segment. Can be a <cite>stop_id</cite> corresponding to
+<cite>stops.txt</cite> or a taz corresponding to an access link such as
+<cite>walk_access_ft.txt</cite></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">mode</span></code></td>
+<td>Supply mode for the link, corresponds to mode in GTFS-PLUS-formatted
+<cite>routes_ft.txt</cite> or an access or egress mode.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">link_mode</span></code></td>
+<td>One of: [ <cite>access</cite> , <cite>egress</cite> , <cite>transfer</cite> , <cite>transit</cite> ]</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">trip_id</span></code></td>
+<td>Transit trip ID for the trip, corresponding to trip_id in GTFS-PLUS-formatted
+trips.txt</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">route_id</span></code></td>
+<td>Transit route short name corresponding to route_id variables in
+GTFS-PLUS-formatted route_ft.txt</td>
+</tr>
+</tbody>
+</table>
+<p>Dyno-path link file <strong>optional</strong> Attributes that aren’t Fast-Trips specific:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="82%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>variable</em></th>
+<th class="head"><em>description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pathnum</span></code></td>
+<td>ID within a pathset.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">A_time</span></code></td>
+<td>Time at start node accounting for dwell delays. In fast-trips, it is based on
+<code class="docutils literal notranslate"><span class="pre">pf_A_time</span></code> but adjusted due to dwell delays.</td>
+</tr>
+<tr class="row-even"><td><a href="#id8"><span class="problematic" id="id9">``</span></a>B_time`</td>
+<td>Time at end node accounting for dwell delays. In fast-trips, it is based on
+<code class="docutils literal notranslate"><span class="pre">pf_B_time</span></code> but adjusted due to dwell delays.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">wait_time</span></code></td>
+<td>Wait time in minutes accounting for dwell time. In fast-trips, it is based on
+<code class="docutils literal notranslate"><span class="pre">pf_wait_time</span></code> at the start node and adjusted based on difference between
+<code class="docutils literal notranslate"><span class="pre">A_time</span></code> and <code class="docutils literal notranslate"><span class="pre">pf_A_time</span></code>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">board_time</span></code></td>
+<td>Time passenger boards a transit vehicle (as opposed to arriving at the
+start node) accounting for dwell time.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">alight_time</span></code></td>
+<td>Time passenger alights from the transit vehicle accounting for dwell time.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">link_time</span></code></td>
+<td>Link time in minutes accounting for dwell times. In fast-trips,it is based on
+<code class="docutils literal notranslate"><span class="pre">pf_link_time</span></code> but adjusted for dwell times.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">A_seq</span></code></td>
+<td>Stop sequence for the starting node of the link, corresponding to
+<code class="docutils literal notranslate"><span class="pre">stop_sequence</span></code> in GTFS-PLUS-formatted <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">B_seq</span></code></td>
+<td>Stop sequence for the ending node of the link, corresponding to
+<code class="docutils literal notranslate"><span class="pre">stop_sequence</span></code> in GTFS-PLUS-formatted <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">sim_cost</span></code></td>
+<td>Generalized cost calculated in the assignment/simulation.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">missed_xfer</span></code></td>
+<td>1 if the transfer is missed. (This happens if <code class="docutils literal notranslate"><span class="pre">new_waittime</span></code> is negative.)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">chosen</span></code></td>
+<td><dl class="first last docutils">
+<dt>Chosen status for path.</dt>
+<dd><ul class="first last simple">
+<li>-1 if not chosen by passenger</li>
+<li>-2 if chosen but passenger rejected because of capacity or timing issues</li>
+<li>otherwise: +_/100.</li>
+</ul>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">overcap</span></code></td>
+<td>Number of passengers overcap for the transit vehicle for this link.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">overcap_frac</span></code></td>
+<td>Fraction of attempted boards that are overcapacity at this stop.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">iteration</span></code></td>
+<td>Iteration corresponding to this pathset.</td>
+</tr>
+</tbody>
+</table>
+<p>Dyno-path link file with <strong>optional, dubug- and internal fast-trips</strong> Attributes:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>variable</em></th>
+<th class="head"><em>description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">A_id_num</span></code></td>
+<td>Numeric version of A_id, which could be a stop_id and taz.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">B_id_num</span></code></td>
+<td>Numeric version of B_id, which could be a stop_id or taz.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">mode_num</span></code></td>
+<td>Numeric version of mode.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">trip_id_num</span></code></td>
+<td>Numeric version of trip_id.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pf_iteration</span></code></td>
+<td>Path-finding iteration.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pf_A_time</span></code></td>
+<td>The time at the start node when used by the path-finding algorithm.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pf_B_time</span></code></td>
+<td>The time at the end node when used by the path-finding algorithm.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pf_link_time</span></code></td>
+<td>The link time in minutes when used by the path-finding algorithm.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">pf_wait_time</span></code></td>
+<td>The wait time in minutes at the start node when used by the path-finding
+algorithm.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">bump_iter</span></code></td>
+<td>Iteration a passenger was bumped.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">bump_stop-boarded</span></code></td>
+<td>1 means this passenger boarded, 0 means got bumped.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">alight_delay_min</span></code></td>
+<td>Delay in alight time from the input path-finding understanding of
+alight time due to changes in dwell time.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="vehicle-based-output">
+<h2>Vehicle Based Output<a class="headerlink" href="#vehicle-based-output" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">veh_trips.csv</span></code></dt>
+<dd><p class="first">Contains a record for each <em>vehicle-trip, stop</em> and <em>iteration, pathfinding_iteration, simulation_iteration</em> combination.</p>
+<p class="last">Vehicle-based output depicts ridership by transit vehicle.  Eventually it will be translated into the <a href="#id14"><span class="problematic" id="id15">`gtfs_ride`_</span></a> data standard.</p>
+</dd>
+</dl>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="76%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>Variable</em></th>
+<th class="head"><em>Description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">iteration</span></code></td>
+<td>global fast-trips iteration</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">pathfinding_iteration</span></code></td>
+<td>pathfinding iteration</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">simulation_iteration</span></code></td>
+<td>simulation iteration</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">direction_id</span></code></td>
+<td>0 or 1, as coded in <code class="docutils literal notranslate"><span class="pre">trips.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">service_id</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">trips.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">route_id</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">trips.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">trip_id</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">trips.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">stop_sequence</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">stop_id</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">arrival_time</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">arrival_time_min</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">departure_time</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">departure_time_min</span></code></td>
+<td>As coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">travel_time_sec</span></code></td>
+<td>Travel time from previous stop, as coded in <code class="docutils literal notranslate"><span class="pre">stop_times.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">dwell_time_sec</span></code></td>
+<td>Dwell time for stop, calculated based on <code class="docutils literal notranslate"><span class="pre">dwell_formula</span></code> equation in
+<code class="docutils literal notranslate"><span class="pre">vehicles_ft.txt</span></code> in <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">capacity</span></code></td>
+<td>Passengers that can be on board the vehicle, per <code class="docutils literal notranslate"><span class="pre">vehicles_ft.txt</span></code> in
+<a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">boards</span></code></td>
+<td>Passengers boarding at stop, per Fast-Trips.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">alights</span></code></td>
+<td>Passengers alighting at stop, per Fast-Trips.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">onboard</span></code></td>
+<td>Passengers on-board vehicle as it approaches the stop.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">standees</span></code></td>
+<td>Standees on vehicle as it approaches the stop.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">friction</span></code></td>
+<td><code class="docutils literal notranslate"><span class="pre">boards``+``alights``+``standees</span></code>.  Can be used in dwell time calculations.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">overcap</span></code></td>
+<td>Initializes at -1, then <code class="docutils literal notranslate"><span class="pre">onboard</span></code>- <code class="docutils literal notranslate"><span class="pre">capacity</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="trace-output">
+<h2>Trace  Output<a class="headerlink" href="#trace-output" title="Permalink to this headline">¶</a></h2>
+<p>Output from person traces is currently contained in a very lengthy .log file as well as specially labeled link- and path- output csvs in the <a class="reference external" href="https://github.com/osplanning-data-standards/dyno-path">dyno_path</a> formats.</p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">output_trace_&lt;trace_label&gt;.log</span></code></dt>
+<dd>A comprehensive debug log of every calculation for the specified rider.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">fasttrips_labels_&lt;trace_label&gt;_&lt;iteration&gt;.csv</span></code></dt>
+<dd><p class="first">Pathfinding for specified rider with link info.  Has a row for the A and B node of each link for each label iteration.</p>
+<table border="1" class="last docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>Variable</em></th>
+<th class="head"><em>Description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">label_iter</span></code></td>
+<td>Stop labeling iteration; each iteration updates
+another set of labels emanating from current node</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">link</span></code></td>
+<td>link #, starting from 1</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">node</span> <span class="pre">ID</span></code></td>
+<td>node id, which is either the start or end of the link</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">time</span></code></td>
+<td>cumulative time passed based on least cost label [?]</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">mode</span></code></td>
+<td>Link supply mode.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">trip_id</span></code></td>
+<td>If a transit link, <code class="docutils literal notranslate"><span class="pre">trip_id</span></code> from <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a>.
+Else, non-motorized mode type.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">link_time</span></code></td>
+<td>Time of the specific link.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">link_cost</span></code></td>
+<td>Cost of the specific link.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">cost</span></code></td>
+<td>Cumulative composit label (logsum) of the node.</td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">fasttrips_labels_ids_&lt;trace_label&gt;_&lt;iteration&gt;.csv</span></code></dt>
+<dd><p class="first">Pathfinding for specified rider, for debugging.</p>
+<table border="1" class="last docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><em>Variable</em></th>
+<th class="head"><em>Description</em></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">stop_id</span></code></td>
+<td>the stop id per <a class="reference external" href="https://github.com/osplanning-data-standards/GTFS-PLUS">GTFS_PLUS</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">stop_id_label_iter</span></code></td>
+<td>Stop labeling iteration; each iteration updates
+another label</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">is_trip</span></code></td>
+<td>boolean; did the labeling algorithm reach this stop
+via a transit trip, or a non-motorized link?
+The algorithm alternates between the two.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">label_stop_cost</span></code></td>
+<td>Cost given to that stop for that iteration based on
+the cost of the previous stop and the link used to get
+here</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+<div class="section" id="computing-performance-output">
+<h2>Computing Performance Output<a class="headerlink" href="#computing-performance-output" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">ft_output_performance.csv</span></code></dt>
+<dd>Outputs start- and end- time and memory for each iteration of each step of fast-trips: read_configuraiton, pathfinding, assignment, simulation iteration, and output.
+Note that mid-process memory is not able to be logged :-(</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ft_output_performance_pathfinding.csv</span></code></dt>
+<dd><dl class="first last docutils">
+<dt>Detailed output for each trip on path finding performance. Includes</dt>
+<dd><ul class="first last simple">
+<li>process number,</li>
+<li>pathfinding ieration,</li>
+<li>number of paths labelled,</li>
+<li>if it was traced,</li>
+<li>the label iterations it took,</li>
+<li>the max times each stop was processed</li>
+<li>the time it took in clock hours and seconds</li>
+<li>time it took enumerating in clock hours and seconds</li>
+<li>memory usage and time of memory timestamp</li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="settings-output">
+<h2>Settings Output<a class="headerlink" href="#settings-output" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">ft_output_config.txt</span></code></dt>
+<dd>Just in case you threw away any record of the settings you used to run Fast-Trips, the input files you used, …or if you wanted to know what settings Fast-Trips actually used when you gave it multiple layers of direction, you can review them here.</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="usage.html" class="btn btn-neutral float-right" title="Using Fast-Trips" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="howitworks.html" class="btn btn-neutral" title="How Fast-Trips Works" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015-2018, Lisa Zorn
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -84,8 +84,11 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">Fast-Trips Classes and Functions</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#fast-trips-classes">fast-trips Classes</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="fasttrips.Assignment.html">fasttrips.Assignment</a></li>
@@ -108,6 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -198,7 +202,7 @@ Writes output files to <em>output_dir</em>, including log files.</p>
 <li><strong>run_config</strong> (<em>string</em>) – Location of run configuraiton file.</li>
 <li><strong>output_dir</strong> (<em>string</em>) – Location to write output and log files.</li>
 <li><strong>logname_append</strong> (<em>string</em>) – Modifier for info and debug log filenames.  So workers can write their own logs.</li>
-<li><strong>appendLog</strong> (<a class="reference external" href="https://docs.python.org/2.7/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – Append to info and debug logs?  When FastTrips assignment iterations (to
+<li><strong>appendLog</strong> (<em>bool</em>) – Append to info and debug logs?  When FastTrips assignment iterations (to
 handle capacity bumps), we’d like to append rather than overwrite.</li>
 </ul>
 </td>
@@ -289,25 +293,25 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.routes">
 <code class="descname">routes</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.routes" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Route.route_id</span></code> key and <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route" title="fasttrips.Route"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Route</span></code></a> value</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Route.route_id</span></code> key and <a class="reference internal" href="fasttrips.Route.html#fasttrips.Route" title="fasttrips.Route"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Route</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.stops">
 <code class="descname">stops</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.stops" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Stop.stop_id</span></code> key and <a class="reference internal" href="fasttrips.Stop.html#fasttrips.Stop" title="fasttrips.Stop"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Stop</span></code></a> value</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Stop.stop_id</span></code> key and <a class="reference internal" href="fasttrips.Stop.html#fasttrips.Stop" title="fasttrips.Stop"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Stop</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.tazs">
 <code class="descname">tazs</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.tazs" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.TAZ.taz_id</span></code> key and <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.TAZ</span></code></a> value</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.TAZ.taz_id</span></code> key and <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.TAZ</span></code></a> value</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="fasttrips.FastTrips.trips">
 <code class="descname">trips</code><em class="property"> = None</em><a class="headerlink" href="#fasttrips.FastTrips.trips" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://docs.python.org/2.7/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Trip.trip_id</span></code> key and <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Trip</span></code></a> value</p>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code> with <code class="xref py py-attr docutils literal notranslate"><span class="pre">fasttrips.Trip.trip_id</span></code> key and <a class="reference internal" href="fasttrips.Trip.html#fasttrips.Trip" title="fasttrips.Trip"><code class="xref py py-class docutils literal notranslate"><span class="pre">fasttrips.Trip</span></code></a> value</p>
 </dd></dl>
 
 </dd></dl>
@@ -334,7 +338,7 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -359,7 +363,8 @@ handle capacity bumps), we’d like to append rather than overwrite.</li>
         <script type="text/javascript" src="../_static/jquery.js"></script>
         <script type="text/javascript" src="../_static/underscore.js"></script>
         <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   

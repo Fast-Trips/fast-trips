@@ -82,10 +82,14 @@
             
             
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usecases.html">Use Cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../gettingstarted.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../howitworks.html">How Fast-Trips Works</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../io.html">Input/Output Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using Fast-Trips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">Fast-Trips Classes and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -583,15 +587,20 @@
 
 <span class="sd">        Sets the result into the column called result_col.</span>
 
-<span class="sd">        ==================  ===============  =====================================================================================================</span>
-<span class="sd">        column name          column type     description</span>
-<span class="sd">        ==================  ===============  =====================================================================================================</span>
-<span class="sd">        `var_value`                 float64  The value to weight</span>
-<span class="sd">        `growth_type`                   str  [&#39;constant&#39;, &#39;exponential&#39;, &#39;logarithmic&#39;, &#39;logistic&#39;]</span>
-<span class="sd">        `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value</span>
-<span class="sd">        `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve</span>
-<span class="sd">        `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve</span>
-<span class="sd">        ==================  ===============  =====================================================================================================</span>
+<span class="sd">        +-----------------------+--------------+---------------------------------------------------------------------------+</span>
+<span class="sd">        | *column name*         | *column type*| *description*                                                             |</span>
+<span class="sd">        +=======================+==============+===========================================================================+</span>
+<span class="sd">        |``var_value``          | float64      | The value to weight                                                       |</span>
+<span class="sd">        +-----------------------+--------------+---------------------------------------------------------------------------+</span>
+<span class="sd">        |``growth_type``        |          str | one of ``constant``, ``exponential``, ``logarithmic``, ``logistic``       |</span>
+<span class="sd">        +-----------------------+--------------+---------------------------------------------------------------------------+</span>
+<span class="sd">        |``growth_log_base``    |      float64 | *logarithmic only* log base for logarithmic base value                    |</span>
+<span class="sd">        +-----------------------+--------------+---------------------------------------------------------------------------+</span>
+<span class="sd">        |``growth_logistic_max``|      float64 | *logistic only* Maximum assymtotic value for logistic curve               |</span>
+<span class="sd">        +-----------------------+--------------+---------------------------------------------------------------------------+</span>
+<span class="sd">        |``growth_logistic_mid``|      float64 | *logistic only* X-Axis location of the midpoint of the curve              |</span>
+<span class="sd">        +-----------------------+--------------+---------------------------------------------------------------------------+</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">fasttrips</span> <span class="k">import</span> <span class="n">PathSet</span>
 
@@ -778,7 +787,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015-2017, Lisa Zorn
+        &copy; Copyright 2015-2018, Lisa Zorn
 
     </p>
   </div>
@@ -803,7 +812,8 @@
         <script type="text/javascript" src="../../_static/jquery.js"></script>
         <script type="text/javascript" src="../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../_static/doctools.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
 
   
