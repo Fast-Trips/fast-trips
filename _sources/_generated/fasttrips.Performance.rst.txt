@@ -15,6 +15,7 @@ fasttrips.Performance
    
       ~Performance.__init__
       ~Performance.add_info
+      ~Performance.next
       ~Performance.record_step_end
       ~Performance.record_step_start
       ~Performance.write
