@@ -26,7 +26,6 @@ fasttrips.Util
       ~Util.logarithmic_integration
       ~Util.logistic_integration
       ~Util.merge_two_dicts
-      ~Util.next
       ~Util.parse_boolean
       ~Util.parse_minutes_to_time
       ~Util.pretty

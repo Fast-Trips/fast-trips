@@ -183,7 +183,7 @@
 <dl class="class">
 <dt id="fasttrips.Performance">
 <em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">Performance</code><a class="reference internal" href="../_modules/fasttrips/Performance.html#Performance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Performance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">future.types.newobject.newobject</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Performance class.  Keeps track of performance information
 (time spent, number of labeling iterations, etc) related to pathfinding
 in Fast-Trips and for the the bigger loops.</p>
@@ -206,19 +206,16 @@ in Fast-Trips and for the the bigger loops.</p>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_info</span></code>(iteration,&nbsp;pathfinding_iteration,&nbsp;…)</td>
 <td>Add this row to the performance dict of arrays.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">next</span></code>()</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_step_end</span></code>(iteration,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_step_end</span></code>(iteration,&nbsp;…)</td>
 <td>Explicitly ends whatever step was happening at this level.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_step_start</span></code>(iteration,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_step_start</span></code>(iteration,&nbsp;…)</td>
 <td>Records the step start.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code>(output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write</span></code>(output_dir)</td>
 <td>Writes the results to OUTPUT_PERFORMANCE_FILE as a csv.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_pathfinding</span></code>(output_dir,&nbsp;append)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_pathfinding</span></code>(output_dir,&nbsp;append)</td>
 <td>Writes the pathfinding results to OUTPUT_PERFORMANCE_PF_FILE as a csv.</td>
 </tr>
 </tbody>
@@ -322,11 +319,6 @@ in Fast-Trips and for the the bigger loops.</p>
 <dd><p>Add this row to the performance dict of arrays.
 Assumes time values are in milliseconds.</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="fasttrips.Performance.next">
-<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fasttrips.Performance.next" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="fasttrips.Performance.record_step_end">
