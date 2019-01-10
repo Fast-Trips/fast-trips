@@ -417,7 +417,7 @@ namespace fasttrips {
 
     void Hyperlink::clear(bool of_trip_links)
     {
-        const StopStateKey zero_ssk = { 0.0, 0, 0, 0, 0.0 };
+        const StopStateKey zero_ssk = { 0, 0, 0, 0, 0 };
 
         LinkSet& linkset = (of_trip_links ? linkset_trip_ : linkset_nontrip_);
 
