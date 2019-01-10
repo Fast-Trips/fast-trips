@@ -6,10 +6,10 @@ import numpy
 
 ### Settings for Extension Building
 #compile_args = sysconfig.get_config_var('CFLAGS').split()
-compile_args=[]#+compile_args
+compile_args=["-std=c++11"]#+compile_args
 
 if sys.platform == 'darwin':
-    compile_args+=["-std=c++11","-mmacosx-version-min=10.9"]
+    compile_args+=["-mmacosx-version-min=10.9"]
 
 extension = Extension('_fasttrips',
                       sources=['src/fasttrips.cpp',
@@ -18,7 +18,6 @@ extension = Extension('_fasttrips',
                                'src/path.cpp',
                                'src/pathfinder.cpp',
                                ],
-                      language='c++11',
                       extra_compile_args = compile_args,
                       include_dirs=[numpy.get_include()],
                       )
@@ -50,7 +49,7 @@ setup(name          = 'fasttrips',
                        'Programming Language :: Python :: 3.6'],
       keywords      = 'transit model dynamic passenger assignment simulation',
       install_requires = ['functools32;python_version<="2.7"',
-                          'numpy',
+                          'numpy>=1.15',
                           'pandas==0.22',
                           'partridge==0.6.0.dev1',
                           'future',
