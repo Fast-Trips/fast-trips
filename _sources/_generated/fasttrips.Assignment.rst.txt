@@ -26,7 +26,6 @@ fasttrips.Assignment
       ~Assignment.load_passengers_on_vehicles_with_cap
       ~Assignment.merge_pathsets
       ~Assignment.merge_prior_choices
-      ~Assignment.next
       ~Assignment.number_of_pathsets
       ~Assignment.process_weight_qualifiers
       ~Assignment.put_passengers_on_vehicles

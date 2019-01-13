@@ -1,21 +1,3 @@
-``[conda-url]
-[git-url]: <https://git-scm.com/>
-[git-clone-url]: <https://help.github.com/articles/cloning-a-repository/>
-[GitHub Desktop](https://desktop.github.com/)
-[git-fork-url]: <https://help.github.com/articles/fork-a-repo/>
-[python-vcpp-url]: <http://www.microsoft.com/en-us/download/details.aspx?id=44266>
-[numpy-url]:  <http://www.numpy.org/>
-[pandas-url]: <http://pandas.pydata.org/>
-[anaconda-url]: <https://www.continuum.io/downloads>
-[python-packages-windows-url]: <http://www.lfd.uci.edu/~gohlke/pythonlibs/>
-[partridge-url]: <https://github.com/remix/partridge>
-[git-repo-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips.git>
-[network-standard-url]: <https://github.com/osplanning-data-standards/GTFS-PLUS>
-[demand-standard-url]: <https://github.com/osplanning-data-standards/dyno-demand>
-[stop-order-details-url]: <https://github.com/MetropolitanTransportationCommission/fast-trips/pull/22>
-[fast-trips-validation-url]: <https://github.com/psrc/fast-trips-validation>
-[pip-url]: <https://pip.pypa.io/en/stable/>
-[virtenv-url]: <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>
 
 ##################
 Getting Started
@@ -36,7 +18,7 @@ Recommended:
 
 To compile from source:
 
-- **Windows**, [Microsoft Visual C++ Compiler for Python 2.7][python-vcpp-url]
+- **Windows**, `Microsoft Visual C++ Compiler for Python 2.7 <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_ (or for whatever Python version you have)
 - **Linux**, the python-dev package
 
 Recommended:
@@ -59,7 +41,14 @@ Installing into an existing python installation::
 
   pip install fast-trips
 
-Installing from source code (recommended for developers)
+Installing from hosted source code
+--------------------------------------------------------------------
+If you want a more up-to-date version or access to the develop branch,
+you can install from the Github repository directly::
+
+  pip install git+https://github.com/bayareametro/fast-trips.git@develop#egg=fasttrips
+
+Installing from cloned source code (recommended for developers)
 --------------------------------------------------------------------
 
 1. Install [Git][git-url] and if desired, a GUI for git like [GitHub Desktop](https://desktop.github.com/)
@@ -69,23 +58,21 @@ Installing from source code (recommended for developers)
     git checkout master
 
  The ``master`` branch should be the latest stable branch and the ``develop`` branch has the latest.  Features are developed on feature-branches.
-4. Install dependencies::
+4. To build, in the fast-trips directory ``<fast-trips-dir>``, run the following in a command prompt::
 
-    pip install -r requirements.txt
+    pip install -e .
+
 5. *Optional* Install packages for creating documentation::
 
     pip install -r dev-dependencies.txt
-6. To build, in the fast-trips directory ``<fast-trips-dir>``, run the following in a command prompt::
 
-    python setup.py build_ext --inplace
 
 Troubleshooting:
  - *Optional* Set the ``PYTHONPATH`` environment variable to the location of your fast-trips repo, which we're calling ``<fast-trips-dir>``.
 
-
 .. note::
  - Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.
- - Fast-trips currently uses a development version of the `Partridge <partridge-url>`_ that is required in order to read unzipped GTFS files.
+ - Fast-trips currently uses a development version of the `Partridge <https://github.com/remix/partridge>`_ that is required in order to read unzipped GTFS files.
 
 Test the Install
 -------------------
