@@ -1,6 +1,7 @@
 **Build status**
 
-Master Branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)
+Master Branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)  
+
 Develop Branch [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
 
 # fast-trips
@@ -15,6 +16,19 @@ Fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
   - An analyst who wants to study the effect of a on service reliability of a schedule change.
   - An analyst who wants to evaluate a service plan for a special event.
   - A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
+
+## installing
+
+**Requirements**
+Fast-Trips should work on OSX, Linux (Ubuntu tested) and Windows with Python 2.7 and Python 3.6+ installed.  We also recommend using a virtual environment manager such as [Conda](www.conda.io)
+
+**Stable Release**
+
+`pip install fasttrips`
+
+**Bleeding Edge**
+
+`pip install git+https://github.com/bayareametro/fast-trips.git@develop#egg=fasttrips`
 
 ## Running Fast-Trips
 
