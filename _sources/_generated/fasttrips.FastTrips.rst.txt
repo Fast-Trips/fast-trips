@@ -14,6 +14,7 @@ fasttrips.FastTrips
    .. autosummary::
    
       ~FastTrips.__init__
+      ~FastTrips.next
       ~FastTrips.read_configuration
       ~FastTrips.read_input_files
       ~FastTrips.run_assignment
