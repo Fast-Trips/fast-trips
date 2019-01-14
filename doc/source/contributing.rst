@@ -50,7 +50,8 @@ Some regression tests have regression output that needs to be refreshed an thus 
 Test Descriptions
 ^^^^^^^^^^^^^^^^^^^
 
-To run:: 
+To run::
+
     python tests/<Test File>
 
 +-------------------------+----------------------------------+------------------+-----------------------------------------------------------------------------------+

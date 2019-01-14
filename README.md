@@ -20,7 +20,7 @@ Fast-trips is a Dynamic Transit Assignment tool written in Python and supplement
 ## installing
 
 **Requirements**
-Fast-Trips should work on OSX, Linux (Ubuntu tested) and Windows with Python 2.7 and Python 3.6+ installed.  We also recommend using a virtual environment manager such as [Conda](www.conda.io)
+Fast-Trips should work on OSX, Linux (Ubuntu tested) and Windows with Python 2.7 and Python 3.6+ installed.  We also recommend using a virtual environment manager such as [Conda](www.conda.io).
 
 **Stable Release**
 

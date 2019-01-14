@@ -58,6 +58,7 @@ Contents
    api
    contributing
    faq
+   references
 
 
 Indices and tables
