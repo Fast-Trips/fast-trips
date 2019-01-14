@@ -112,6 +112,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 </ul>
 
             
@@ -183,7 +184,7 @@
 <dl class="class">
 <dt id="fasttrips.PathSet">
 <em class="property">class </em><code class="descclassname">fasttrips.</code><code class="descname">PathSet</code><span class="sig-paren">(</span><em>trip_list_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">future.types.newobject.newobject</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Represents a path set for a passenger from an origin <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">TAZ</span></code></a> to a destination <a class="reference internal" href="fasttrips.TAZ.html#fasttrips.TAZ" title="fasttrips.TAZ"><code class="xref py py-class docutils literal notranslate"><span class="pre">TAZ</span></code></a>
 through a set of stops.</p>
 <dl class="method">
@@ -211,34 +212,31 @@ through a set of stops.</p>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">goes_somewhere</span></code>()</td>
 <td>Does this path go somewhere?  Does the destination differ from the origin?</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">next</span></code>()</td>
-<td></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_paths</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_paths</span></code>()</td>
 <td>Number of paths in the PathSet</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">path_found</span></code>()</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">path_found</span></code>()</td>
 <td>Was a a transit path found from the origin to the destination with the constraints?</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</td>
 <td>Delete my states, something went wrong and it won’t work out.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_user_class</span></code>(trip_list_df,&nbsp;new_colname)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_user_class</span></code>(trip_list_df,&nbsp;new_colname)</td>
 <td>Adds a column called user_class by applying the configured user class function.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_transit_links</span></code>(pathset_links_df,&nbsp;…)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_transit_links</span></code>(pathset_links_df,&nbsp;…)</td>
 <td>Splits the transit links to their component links and returns.</td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_weight_config</span></code>(modes_df,&nbsp;output_dir,&nbsp;…)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_weight_config</span></code>(modes_df,&nbsp;output_dir,&nbsp;…)</td>
 <td>Verify that we have complete weight configurations for the user classes and modes in the given DataFrame.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_weights</span></code>(weights)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_weights</span></code>(weights)</td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_path_times</span></code>(passengers_df,&nbsp;output_dir)</td>
 <td>Write the assigned path times to the given output file.</td>
 </tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_paths</span></code>(passengers_df,&nbsp;output_dir)</td>
 <td>Write the assigned paths to the given output file.</td>
 </tr>
 </tbody>
@@ -494,11 +492,6 @@ And pathset_links_df with additional columns, Assignment.SIM_COL_PAX_FARE, Assig
 <code class="descname">goes_somewhere</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/PathSet.html#PathSet.goes_somewhere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.PathSet.goes_somewhere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Does this path go somewhere?  Does the destination differ from the origin?</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="fasttrips.PathSet.next">
-<code class="descname">next</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fasttrips.PathSet.next" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="fasttrips.PathSet.num_paths">

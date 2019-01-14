@@ -16,7 +16,6 @@ fasttrips.Transfer
       ~Transfer.__init__
       ~Transfer.add_numeric_stop_id
       ~Transfer.add_transfer_attributes
-      ~Transfer.next
       ~Transfer.write_transfers_for_extension
    
    
