@@ -17,13 +17,21 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
@@ -31,21 +39,16 @@
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="fasttrips.Util" href="fasttrips.Util.html" />
     <link rel="prev" title="fasttrips.Transfer" href="fasttrips.Transfer.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -187,9 +190,9 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">future.types.newobject.newobject</span></code></p>
 <p>Trip class.</p>
 <p>One instance represents all of the transit vehicle trips.</p>
-<p>Stores Trip information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.trips_df</span></code>, an instance of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>
+<p>Stores Trip information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.trips_df</span></code>, an instance of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>
 and stop time information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.stop_times_df</span></code>, another instance of
-<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
+<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
 <p>Also stores Vehicle information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.vehicles_df</span></code> and
 Service Calendar information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.service_df</span></code></p>
 <dl class="method">
@@ -210,7 +213,7 @@ fast-trips stops data from the input files in <em>input_archive</em>.</p>
 <td>Constructor.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_numeric_trip_id</span></code>(input_df,&nbsp;id_colname,&nbsp;…)</td>
-<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a trip ID column called <em>id_colname</em>, adds the numeric trip id as a column named <em>numeric_newcolname</em> and returns it.</td>
+<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a trip ID column called <em>id_colname</em>, adds the numeric trip id as a column named <em>numeric_newcolname</em> and returns it.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_original_travel_time_and_dwell</span></code>()</td>
 <td>Add original travel time to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.stop_times_df</span></code> as the column named <a class="reference internal" href="#fasttrips.Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME" title="fasttrips.Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.STOPTIMES_COLUMN_ORIGINAL_TRAVEL_TIME</span></code></a></td>
@@ -222,7 +225,7 @@ fast-trips stops data from the input files in <em>input_archive</em>.</p>
 <td>Adds the columns <a class="reference internal" href="#fasttrips.Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE" title="fasttrips.Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE</span></code></a> and <a class="reference internal" href="#fasttrips.Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME" title="fasttrips.Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.TRIPS_COLUMN_TRIP_DEPARTURE_TIME</span></code></a> to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">Trip.trips_df</span></code> datatable to facilitate stop time updates in <a class="reference internal" href="#fasttrips.Trip.update_trip_times" title="fasttrips.Trip.update_trip_times"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Trip.update_trip_times()</span></code></a></td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_headways</span></code>(trips_df)</td>
-<td>Calculates headways and sets them into the given trips_df <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</td>
+<td>Calculates headways and sets them into the given trips_df <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_full_trips</span></code>()</td>
 <td>Returns the fullest dataframe of trip + stop information.</td>
@@ -231,7 +234,7 @@ fast-trips stops data from the input files in <em>input_archive</em>.</p>
 <td>Return the scheduled departure time for the given stop as a datetime.datetime</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_stop_times</span></code>(trip_id)</td>
-<td>Returns <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with stop times for the given trip id.</td>
+<td>Returns <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with stop times for the given trip id.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_capacity_configured</span></code>()</td>
 <td>Returns true if seated capacity and standing capacity are columns included in the vehicles input.</td>
@@ -475,7 +478,7 @@ fast-trips stops data from the input files in <em>input_archive</em>.</p>
 <dl class="method">
 <dt id="fasttrips.Trip.add_numeric_trip_id">
 <code class="descname">add_numeric_trip_id</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>numeric_newcolname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Trip.html#Trip.add_numeric_trip_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Trip.add_numeric_trip_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a trip ID column called <em>id_colname</em>,
+<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a trip ID column called <em>id_colname</em>,
 adds the numeric trip id as a column named <em>numeric_newcolname</em> and returns it.</p>
 </dd></dl>
 
@@ -512,8 +515,8 @@ to the <code class="xref py py-attr docutils literal notranslate"><span class="p
 <dt id="fasttrips.Trip.calculate_headways">
 <em class="property">static </em><code class="descname">calculate_headways</code><span class="sig-paren">(</span><em>trips_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Trip.html#Trip.calculate_headways"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Trip.calculate_headways" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates headways and sets them into the given
-trips_df <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
-<p>Returns <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with <cite>headway</cite> column added.</p>
+trips_df <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
+<p>Returns <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with <cite>headway</cite> column added.</p>
 </dd></dl>
 
 <dl class="method">
@@ -532,7 +535,7 @@ trips_df <a class="reference external" href="http://pandas.pydata.org/pandas-doc
 <dl class="method">
 <dt id="fasttrips.Trip.get_stop_times">
 <code class="descname">get_stop_times</code><span class="sig-paren">(</span><em>trip_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Trip.html#Trip.get_stop_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Trip.get_stop_times" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with stop times for the given trip id.</p>
+<dd><p>Returns <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with stop times for the given trip id.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1031,7 +1034,7 @@ Starts at 1 and is sequential</p>
         <a href="fasttrips.Util.html" class="btn btn-neutral float-right" title="fasttrips.Util" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="fasttrips.Transfer.html" class="btn btn-neutral" title="fasttrips.Transfer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="fasttrips.Transfer.html" class="btn btn-neutral float-left" title="fasttrips.Transfer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -1057,27 +1060,16 @@ Starts at 1 and is sequential</p>
   
 
 
-  
-
-    
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

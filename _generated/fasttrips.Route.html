@@ -17,13 +17,21 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
@@ -31,21 +39,16 @@
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="fasttrips.Run" href="fasttrips.Run.html" />
     <link rel="prev" title="fasttrips.Performance" href="fasttrips.Performance.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -188,7 +191,7 @@
 <p>Route class.</p>
 <p>One instance represents all of the Routes.</p>
 <p>Stores route information in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.routes_df</span></code> and agency information in
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.agencies_df</span></code>. Each are instances of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.agencies_df</span></code>. Each are instances of <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
 <p>Fare information is in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_attrs_df</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_rules_df</span></code> and
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">Route.fare_transfer_rules_df</span></code>.</p>
 <dl class="method">
@@ -212,13 +215,13 @@ fast-trips routes data from the input file in <em>input_archive</em>.</p>
 <td>Adds access and egress modes to the mode list Writes out mapping to disk</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_fares</span></code>(trip_links_df)</td>
-<td>Adds (or replaces) fare columns to the given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</td>
+<td>Adds (or replaces) fare columns to the given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_numeric_mode_id</span></code>(input_df,&nbsp;id_colname,&nbsp;…)</td>
-<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a mode ID column called <em>id_colname</em>, adds the numeric mode id as a column named <em>numeric_newcolname</em> and returns it.</td>
+<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a mode ID column called <em>id_colname</em>, adds the numeric mode id as a column named <em>numeric_newcolname</em> and returns it.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_numeric_route_id</span></code>(input_df,&nbsp;id_colname,&nbsp;…)</td>
-<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a route ID column called <em>id_colname</em>, adds the numeric route id as a column named <em>numeric_newcolname</em> and returns it.</td>
+<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a route ID column called <em>id_colname</em>, adds the numeric route id as a column named <em>numeric_newcolname</em> and returns it.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_fare_transfer_rules</span></code>(trip_links_df)</td>
 <td>Applies fare transfers by attaching previous fare period.</td>
@@ -409,7 +412,7 @@ Writes out mapping to disk</p>
 <dl class="method">
 <dt id="fasttrips.Route.add_fares">
 <code class="descname">add_fares</code><span class="sig-paren">(</span><em>trip_links_df</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route.add_fares"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route.add_fares" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds (or replaces) fare columns to the given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
+<dd><p>Adds (or replaces) fare columns to the given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>.</p>
 <p>New columns are</p>
 <ul class="simple">
 <li><a class="reference internal" href="fasttrips.Assignment.html#fasttrips.Assignment.SIM_COL_PAX_FARE" title="fasttrips.Assignment.SIM_COL_PAX_FARE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Assignment.SIM_COL_PAX_FARE</span></code></a></li>
@@ -424,14 +427,14 @@ Writes out mapping to disk</p>
 <dl class="method">
 <dt id="fasttrips.Route.add_numeric_mode_id">
 <code class="descname">add_numeric_mode_id</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>numeric_newcolname</em>, <em>warn=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route.add_numeric_mode_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route.add_numeric_mode_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a mode ID column called <em>id_colname</em>,
+<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a mode ID column called <em>id_colname</em>,
 adds the numeric mode id as a column named <em>numeric_newcolname</em> and returns it.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="fasttrips.Route.add_numeric_route_id">
 <code class="descname">add_numeric_route_id</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>numeric_newcolname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Route.html#Route.add_numeric_route_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Route.add_numeric_route_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a route ID column called <em>id_colname</em>,
+<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> with a route ID column called <em>id_colname</em>,
 adds the numeric route id as a column named <em>numeric_newcolname</em> and returns it.</p>
 </dd></dl>
 
@@ -796,7 +799,7 @@ See <a class="reference external" href="https://github.com/osplanning-data-stand
         <a href="fasttrips.Run.html" class="btn btn-neutral float-right" title="fasttrips.Run" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="fasttrips.Performance.html" class="btn btn-neutral" title="fasttrips.Performance" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="fasttrips.Performance.html" class="btn btn-neutral float-left" title="fasttrips.Performance" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -822,27 +825,16 @@ See <a class="reference external" href="https://github.com/osplanning-data-stand
   
 
 
-  
-
-    
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

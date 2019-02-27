@@ -17,13 +17,21 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
@@ -31,21 +39,16 @@
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="fasttrips C++ Extension" href="../fasttrips_c_extension.html" />
     <link rel="prev" title="fasttrips.Trip" href="fasttrips.Trip.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -201,7 +204,7 @@
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_new_id</span></code>(input_df,&nbsp;id_colname,&nbsp;…[,&nbsp;…])</td>
-<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>, adds the numeric id as a column named <em>newid_colname</em> and returns it.</td>
+<td>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>, adds the numeric id as a column named <em>newid_colname</em> and returns it.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_numeric_column</span></code>(input_df,&nbsp;id_colname,&nbsp;…)</td>
 <td>Method to create numerical ID to map to an existing ID.</td>
@@ -210,7 +213,7 @@
 <td>Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance in miles between origin and destination based on Haversine.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_pathweight_costs</span></code>(df,&nbsp;result_col)</td>
-<td>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and value.</td>
+<td>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and value.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">datetime64_formatter</span></code>(x)</td>
 <td>Formatter to convert <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.datetime64</span></code> to string that looks like <cite>HH:MM:SS</cite></td>
@@ -289,7 +292,7 @@
 <dl class="staticmethod">
 <dt id="fasttrips.Util.add_new_id">
 <em class="property">static </em><code class="descname">add_new_id</code><span class="sig-paren">(</span><em>input_df</em>, <em>id_colname</em>, <em>newid_colname</em>, <em>mapping_df</em>, <em>mapping_id_colname</em>, <em>mapping_newid_colname</em>, <em>warn=False</em>, <em>warn_msg=None</em>, <em>drop_failures=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.add_new_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.add_new_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>,
+<dd><p>Passing a <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> <em>input_df</em> with an ID column called <em>id_colname</em>,
 adds the numeric id as a column named <em>newid_colname</em> and returns it.</p>
 <p><em>mapping_df</em> is defines the mapping from an ID (<em>mapping_id_colname</em>)
 to a numeric ID (<em>mapping_newid_colname</em>).</p>
@@ -314,7 +317,7 @@ in miles between origin and destination based on Haversine.  Results are added t
 <dl class="staticmethod">
 <dt id="fasttrips.Util.calculate_pathweight_costs">
 <em class="property">static </em><code class="descname">calculate_pathweight_costs</code><span class="sig-paren">(</span><em>df</em>, <em>result_col</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/fasttrips/Util.html#Util.calculate_pathweight_costs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fasttrips.Util.calculate_pathweight_costs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and
+<dd><p>Calculates the weighted cost for a given <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a> given a impedance function and
 value.</p>
 <p>Sets the result into the column called result_col.</p>
 <table border="1" class="docutils">
@@ -373,9 +376,9 @@ value.</p>
 <dd><p>Returns the integrated value of an exponential function.
 Growth Function: (1 + Growth Rate) ** Penalty Minutes
 Integrated Growth Function: ((1 + Growth Rate) ** Penalty Minutes - 1) / LN(1 + Growth Rate), dx=Penalty Minutes
-:param penalty_min: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats
+:param penalty_min: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats
 :param growth_rate: float: Exponetial growth factor
-:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
+:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -413,10 +416,10 @@ Use SI prefixes (not binary prefixes).  1KB = 1000 bytes</p>
 <dd><p>Returns the integrated value of an logarithmic function.
 # Growth Function: Growth Rate * LOG((Penalty Minutes + 1), Log Base)
 # Integrated Growth Function: Growth Rate * ((Penalty Minutes + 1) * LN(Penalty Minutes + 1) - Penalty Minutes) / LN(Penalty Log Base), dx=Penalty Minutes
-:param penalty_min: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats
+:param penalty_min: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats
 :param growth_rate: log growth factor
 :param log_base: log base to impact shape of curve
-:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
+:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -427,11 +430,11 @@ Growth Function: Max Value / (1 + e^(-Growth Rate*(Penalty Min - Sigmoid Mid)))
 Integrated Growth Function: Upper Bound Integral - Lower Bound Integral (lower=0)
 Upper Bound Integral: (Max Logit / Growth Rate) * ln(e^(Growth Rate * Penalty Min) + e^(Growth Rate * Sigmoid Mid))
 Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoid Mid))
-:param penalty_minute: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats
+:param penalty_minute: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats
 :param growth_rate: log growth factor
 :param max_logit: assymtotic max value of curve
 :param sigmoid_mid: x-midpoint of curve
-:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html#pandas.Series" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
+:return: float or <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.Series</span></code></a> of floats depending on inputs</p>
 </dd></dl>
 
 <dl class="staticmethod">
@@ -507,7 +510,7 @@ Lower Bound Integral: (Max Value / Growth Rate) * ln(1 + e^(Growth Rate * Sigmoi
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.23.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – The dataframe to write</li>
+<li><strong>df</strong> (<a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.24.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – The dataframe to write</li>
 <li><strong>name</strong> (<em>str</em>) – Name of the dataframe. Just used for logging.</li>
 <li><strong>output_file</strong> (<em>str</em>) – The name of the file to which the dataframe will be written</li>
 <li><strong>append</strong> (<em>bool</em>) – Pass true to append to the existing output file, false otherwise</li>
@@ -556,7 +559,7 @@ duration columns will be kept if <em>keep_duration_columns</em> is True.</p>
         <a href="../fasttrips_c_extension.html" class="btn btn-neutral float-right" title="fasttrips C++ Extension" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="fasttrips.Trip.html" class="btn btn-neutral" title="fasttrips.Trip" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="fasttrips.Trip.html" class="btn btn-neutral float-left" title="fasttrips.Trip" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -582,27 +585,16 @@ duration columns will be kept if <em>keep_duration_columns</em> is True.</p>
   
 
 
-  
-
-    
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
