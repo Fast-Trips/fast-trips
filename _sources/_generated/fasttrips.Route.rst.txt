@@ -20,7 +20,6 @@ fasttrips.Route
       ~Route.add_numeric_route_id
       ~Route.apply_fare_transfer_rules
       ~Route.apply_free_transfers
-      ~Route.next
       ~Route.remove_fare_period_overlap
       ~Route.write_routes_for_extension
    

@@ -24,7 +24,6 @@ fasttrips.Trip
       ~Trip.get_stop_times
       ~Trip.has_capacity_configured
       ~Trip.linkify_vehicle_trips
-      ~Trip.next
       ~Trip.number_of_stops
       ~Trip.reset_onboard
       ~Trip.update_trip_times

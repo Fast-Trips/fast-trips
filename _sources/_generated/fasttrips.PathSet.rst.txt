@@ -17,7 +17,6 @@ fasttrips.PathSet
       ~PathSet.calculate_cost
       ~PathSet.calculate_overlap
       ~PathSet.goes_somewhere
-      ~PathSet.next
       ~PathSet.num_paths
       ~PathSet.path_found
       ~PathSet.reset

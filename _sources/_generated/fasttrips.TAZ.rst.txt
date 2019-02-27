@@ -15,7 +15,6 @@ fasttrips.TAZ
    
       ~TAZ.__init__
       ~TAZ.add_distance
-      ~TAZ.next
       ~TAZ.warn_on_stops_without_walk_access
       ~TAZ.write_access_egress_for_extension
    

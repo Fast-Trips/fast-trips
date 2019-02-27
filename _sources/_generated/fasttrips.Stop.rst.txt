@@ -25,7 +25,6 @@ fasttrips.Stop
       ~Stop.get_trips_arriving_within_time
       ~Stop.get_trips_departing_within_time
       ~Stop.is_transfer
-      ~Stop.next
       ~Stop.stop_min_max_lat_lon
    
    
