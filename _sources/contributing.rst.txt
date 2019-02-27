@@ -116,7 +116,7 @@ The resulting HTML is then manually pushed to the gh-pages branch.
 Install documentation packages
 """""""""""""""""""""""""""""""
 
-Do rebuild the documentation, you must have sphinx, numpydoc, and the read-the-docs sphinx theme installed: ::
+To rebuild the documentation, you must have sphinx, numpydoc, and the read-the-docs sphinx theme installed: ::
 
   pip install sphinx numpydoc sphinx_rtd_theme breathe
 

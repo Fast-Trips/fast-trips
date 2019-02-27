@@ -8,7 +8,7 @@ Welcome to the Fast-Trips developers documentation!
 
 This page organizes documentation that is useful for both software and model developers.  It is designed to be browsed through from top-to-bottom starting with the objectives, then going through theory and software design, and finishing with how to contribute.
 
-.. note::  This documentation is based on the develop branch, and is current thru `commit #  5e504cb3319b58faac3aca1310cb4ad08dc44ed8 <https://github.com/BayAreaMetro/fast-trips/tree/5e504cb3319b58faac3aca1310cb4ad08dc44ed8>`_
+.. note::  This documentation is based on the master branch, and is current thru `commit #  d3e82c26bdb167c22150fc57ffdb65f38440334e <https://github.com/BayAreaMetro/fast-trips/commit/d3e82c26bdb167c22150fc57ffdb65f38440334e>`_
 
 Software Objectives
 ------------------------
@@ -26,7 +26,7 @@ Use Cases
 ----------
 Fast-trips can be used for analyzing short-term effects as well as long range planning when linked up with a `travel demand modeling  <https://zephyrtransport.github.io/zephyr-directory/project-groups/abm-platforms/>`_ tool such as `ActivitySim <https://github.com/UDST/activitysim>`_:
 
-* An analyst who wants to study the effect of a on service reliability of a schedule change.
+* An analyst who wants to study the effect of a schedule change on service reliability.
 * An analyst who wants to evaluate a service plan for a special event.
 * A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
 
