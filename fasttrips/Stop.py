@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import str
+from builtins import object
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +25,12 @@ from .Trip import Trip
 from .Util import Util
 
 
-class Stop:
+class Stop(object):
     """
     Stop class.
-    
+
     One instance represents all of the Stops as well as their transfer links.
-    
+
     Stores stop information in :py:attr:`Stop.stops_df`, an instance of :py:class:`pandas.DataFrame`,
     """
 
@@ -303,7 +307,7 @@ class Stop:
         :param stop_times_df: The :py:attr:`Trip.stop_times_df` table
         :type stop_times_df: a :py:class:`pandas.DataFrame` instance
 
-        """ 
+        """
         self.trip_times_df = stop_times_df.copy()
         self.trip_times_df.reset_index(inplace=True)
         self.trip_times_df.set_index([Trip.STOPTIMES_COLUMN_STOP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_SEQUENCE], inplace=True, verify_integrity=True)
@@ -326,12 +330,12 @@ class Stop:
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
-        latest_arrival_min = 60.0*latest_arrival.hour + latest_arrival.minute + latest_arrival.second/60.0
+        latest_arrival_min = 60.0*latest_arrival.hour + latest_arrival.minute + (latest_arrival.second/60.0)
         # filter to stop
         df = self.trip_times_df.loc[stop_id]
         # arrive before latest arrival and arrive within time window
         df = df.loc[(df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] < latest_arrival_min)&
-                    (df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] > (latest_arrival_min - time_window.total_seconds()/60.0))]
+                    (df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN] > (latest_arrival_min - (time_window.total_seconds()/60.0)))]
 
         to_return = []
         df = df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME]]
@@ -352,12 +356,12 @@ class Stop:
         :type time_window: a :py:class:`datetime.timedelta` instance
 
         """
-        earliest_departure_min = 60.0*earliest_departure.hour + earliest_departure.minute + earliest_departure.second/60.0
+        earliest_departure_min = 60.0*earliest_departure.hour + earliest_departure.minute + (earliest_departure.second/60.0)
         # filter to stop
         df = self.trip_times_df.loc[stop_id]
         # depart after the earliest departure
         df = df.loc[(df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] > earliest_departure_min)&
-                    (df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] < (earliest_departure_min + time_window.total_seconds()/60.0))]
+                    (df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN] < (earliest_departure_min + (time_window.total_seconds()/60.0)))]
 
         to_return = []
         df = df[[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME]]

@@ -1,3 +1,7 @@
+from __future__ import division
+from builtins import str
+from builtins import object
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -371,34 +375,50 @@ class Route(object):
 
         # join to fare_attributes on fare_period if we have it, or fare_id if we don't
         if len(self.fare_rules_df) > 0:
+            """
+            Fare ID/class (fare period)/attribute mapping.
 
-            #: Fare ID/class (fare period)/attribute mapping.
-            #:
-            #: ===================  =====================================================================================================================================
-            #:  Column name         Column Description
-            #: ===================  =====================================================================================================================================
-            #: `fare_id`            GTFS fare_id (See `fare_rules`_)
-            #: `fare_id_num`        Numbered fare_id
-            #: `route_id`           (optional) Route(s) associated with this fare ID. (See `fare_rules`_)
-            #: `origin_id`          (optional) Origin fare zone ID(s) for fare ID. (See `fare_rules`_)
-            #: `origin_id_num`      (optional) Origin fare zone number for fare ID.
-            #: `destination_id`     (optional) Destination fare zone ID(s) for fare ID. (See `fare_rules`_)
-            #: `destination_id_num` (optional) Destination fare zone number for fare ID.
-            #: `contains_id`        (optional) Contains fare zone ID(s) for fare ID. (See `fare_rules`_)
-            #: `fare_period`        GTFS-plus fare_period (See `fare_periods_ft`_)
-            #: `start_time`         Fare class start time (See `fare_rules_ft`_)
-            #: `end_time`           Fare class end time (See `fare_rules_ft`_)
-            #: `currency_type`      Currency of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)
-            #: `price`              Price of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)
-            #: `payment_method`     When the fare must be paid (See `fare_attributes`_ or `fare_attributes_ft`_)
-            #: `transfers`          Number of transfers permiited on this fare (See `fare_attributes`_ or `fare_attributes_ft`_)
-            #: `transfer_duration`  (optional) Integer length of time in seconds before transfer expires (See `fare_attributes`_ or `fare_attributes_ft`_)
-            #: ===================  =====================================================================================================================================
-            #:
-            #: .. _fare_rules: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md
-            #: .. _fare_rules_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md
-            #: .. _fare_attributes: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes.md
-            #: .. _fare_attributes_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            | *Column name*         | Column Description                                                                                                                   |
+            +=======================+======================================================================================================================================+
+            |``fare_id``            |GTFS fare_id (See `fare_rules`_)                                                                                                      |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``fare_id_num``        |Numbered fare_id                                                                                                                      |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``route_id``           |(optional) Route(s) associated with this fare ID. (See `fare_rules`_)                                                                 |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``origin_id``          |(optional) Origin fare zone ID(s) for fare ID. (See `fare_rules`_)                                                                    |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``origin_id_num``      |(optional) Origin fare zone number for fare ID.                                                                                       |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``destination_id``     |(optional) Destination fare zone ID(s) for fare ID. (See `fare_rules`_)                                                               |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``destination_id_num`` |(optional) Destination fare zone number for fare ID.                                                                                  |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``contains_id``        |(optional) Contains fare zone ID(s) for fare ID. (See `fare_rules`_)                                                                  |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``fare_period``        |GTFS-plus fare_period (See `fare_periods_ft`_)                                                                                        |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``start_time``         |Fare class start time (See `fare_rules_ft`_)                                                                                          |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``end_time``           |Fare class end time (See `fare_rules_ft`_)                                                                                            |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``currency_type``      |Currency of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)                                                        |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``price``              |Price of fare class or id (See `fare_attributes`_ or `fare_attributes_ft`_)                                                           |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``payment_method``     |When the fare must be paid (See `fare_attributes`_ or `fare_attributes_ft`_)                                                          |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``transfers``          |Number of transfers permiited on this fare (See `fare_attributes`_ or `fare_attributes_ft`_)                                          |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+            |``transfer_duration``  |(optional) Integer length of time in seconds before transfer expires (See `fare_attributes`_ or `fare_attributes_ft`_)                |
+            +-----------------------+--------------------------------------------------------------------------------------------------------------------------------------+
+
+            .. _fare_rules: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules.md
+            .. _fare_rules_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_rules_ft.md
+            .. _fare_attributes: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes.md
+            .. _fare_attributes_ft: https://github.com/osplanning-data-standards/GTFS-PLUS/blob/master/files/fare_attributes_ft.md
+            """
             self.fare_rules_df = pd.merge(left =self.fare_rules_df,
                                               right=self.fare_attrs_df,
                                               how  ='left',

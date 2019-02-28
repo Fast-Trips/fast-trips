@@ -22,10 +22,12 @@ import shlex
 #sys.path.insert(0, os.path.abspath('.'))
 
 sys.path.insert(0, os.path.abspath(".."))
-
+sys.path.insert(0,r"/Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips")
+print sys.path
+import fasttrips
 # Breathe path
-sys.path.append( r"C:\Python27\Lib\site-packages\breathe" )
-sys.path.append( os.path.join("anaconda","envs","fast-trips-develop","lib","python2.7","site-packages","breathe"))
+#sys.path.append( r"C:\Python27\Lib\site-packages\breathe" )
+#sys.path.append( os.path.join("anaconda","envs","fast-trips-develop","lib","python2.7","site-packages","breathe"))
 
 # -- General configuration ------------------------------------------------
 
@@ -67,7 +69,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'fasttrips'
-copyright = u'2015-2017, Lisa Zorn'
+copyright = u'2015-2018, Lisa Zorn'
 author = u'Lisa Zorn'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -305,7 +307,7 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python':('http://docs.python.org/2.7/', None),
+intersphinx_mapping = {#'python':('http://docs.python.org/2.7/', None),
                        'pandas':('http://pandas.pydata.org/pandas-docs/stable/',None),
                        'numpy':('http://docs.scipy.org/doc/numpy/objects.inv',None)}
 

@@ -1,48 +1,51 @@
+import datetime
 import os
 import pytest
 
 import numpy as np
 import pandas as pd
+import partridge as ptg
 
 from fasttrips import Route
 from fasttrips import Stop
 from fasttrips import Transfer
 from fasttrips import Trip
 
-# DIRECTORY SETUP
-EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
+EXAMPLE_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
 
-# TEST PARAMETERS
-TEST_NETWORKS = [("Seattle_Region","psrc_1_1"),
-                 ("Springfield"  ,"vermont")]
+CONFIGS = [
+    [os.path.join(EXAMPLE_DIR, 'Springfield', 'networks', 'vermont'), datetime.date(2015, 2, 3)],
+]
 
+def get_gtfs_feed(network, network_date):
+    from fasttrips.Assignment import Assignment
+    from fasttrips.Util import Util
 
-@pytest.fixture(scope='module', params=TEST_NETWORKS)
-def network(request):
-    return request.param
+    Assignment.NETWORK_BUILD_DATE = network_date
 
+    service_ids_by_date = ptg.read_service_ids_by_date(network)
+    service_ids = service_ids_by_date[network_date]
+    feed = ptg.feed(network, config=Util.get_fast_trips_config(), view={
+        'trips.txt': {
+            'service_id': service_ids
+        },
+    })
+    return feed
 
-@pytest.fixture(scope="module")
-def network_dir(network):
-    yield os.path.join(EXAMPLES_DIR, network[0],"networks", network[1])
-
-@pytest.fixture(scope="module")
-def test_dir(network):
-    yield os.path.join(EXAMPLES_DIR, network[0],"output", 'test_gtfs_objects')
-
-@pytest.mark.skip(reason="Not updated for partridge")
-def test_stops_load(network_dir, gtfs_feed, test_dir, network_date):
+@pytest.mark.parametrize('network_dir, network_date', CONFIGS)
+def test_stops_load(network_dir, network_date):
     '''
     Test to ensure that the Stops are loaded and processed
     '''
-
+    gtfs_feed = get_gtfs_feed(network_dir, network_date)
+    out_dir = os.path.join(EXAMPLE_DIR, 'output', 'test_gtfs_stops_load')
     try:
-        os.makedirs(test_dir)
+        os.makedirs(out_dir)
     except OSError:
-        if not os.path.isdir(test_dir):
+        if not os.path.isdir(out_dir):
             raise
 
-    stops = Stop(network_dir, test_dir, gtfs_feed, network_date)
+    stops = Stop(network_dir, out_dir, gtfs_feed, network_date)
 
     #Test existence, length, and required columns
     assert not stops.stop_id_df.empty
@@ -80,38 +83,39 @@ def test_stops_load(network_dir, gtfs_feed, test_dir, network_date):
 
     assert not stops.trip_times_df
 
-@pytest.mark.skip(reason="Not updated for partridge")
-def test_routes_load(network_dir, gtfs_feed, test_dir, network_date):
+@pytest.mark.parametrize('network_dir, network_date', CONFIGS)
+def test_routes_load(network_dir, network_date):
     """
         Test to ensure that the Routes are loaded and processed
         properly by the FastTrips initialization
     """
-
+    gtfs_feed = get_gtfs_feed(network_dir, network_date)
+    out_dir = os.path.join(EXAMPLE_DIR, 'output', 'test_gtfs_routes_load')
     try:
-        os.makedirs(test_dir)
+        os.makedirs(out_dir)
     except OSError:
-        if not os.path.isdir(test_dir):
+        if not os.path.isdir(out_dir):
             raise
 
-    stops  = Stop(network_dir, test_dir,
+    stops = Stop(network_dir, out_dir,
                       gtfs_feed, network_date)
 
-    routes = Route(network_dir, test_dir,
+    routes = Route(network_dir, out_dir,
                       gtfs_feed, network_date, stops)
 
     #routes.routes_df
     assert not routes.routes_df.empty
     assert len(routes.routes_df) == 4
     routes_df_dtypes = {
-        'route_id':        object,
-        'route_long_name': object,
-        'route_short_name':object,
-        'route_type':      np.int64,
-        'mode':            object,
-        'proof_of_payment':bool,
-        'mode_num':        np.int64,
-        'mode_type':       object,
-        'route_id_num':    np.int64,
+        'route_id':    object,
+        'route_long_name':    object,
+        'route_short_name':    object,
+        'route_type':     np.int64,
+        'mode':     object,
+        'proof_of_payment':     bool,
+        'mode_num':     np.int64,
+        'mode_type':     object,
+        'route_id_num':     np.int64,
     }
     assert (set(routes_df_dtypes.keys()).issubset(routes.routes_df))
     assert routes.routes_df.dtypes.to_dict() == routes_df_dtypes
@@ -137,14 +141,15 @@ def test_routes_load(network_dir, gtfs_feed, test_dir, network_date):
     #routes.fare_rules_df
     assert not routes.fare_rules_df.empty
 
+
     #routes.fare_attrs_df
     assert not routes.fare_attrs_df.empty
     fare_attrs_df_dtype = {
-        'fare_period':       object,
-        'price':             np.float64,
-        'currency_type':     object,
-        'payment_method':    np.int64,
-        'transfers':         np.int64,
+        'fare_period': object,
+        'price': np.float64,
+        'currency_type': object,
+        'payment_method': np.int64,
+        'transfers': np.int64,
         'transfer_duration': np.float64,
     }
     assert (set(fare_attrs_df_dtype.keys()).issubset(routes.fare_attrs_df))
@@ -172,36 +177,38 @@ def test_routes_load(network_dir, gtfs_feed, test_dir, network_date):
         routes.fare_transfer_rules_df[routes.fare_transfer_rules_df[Route.FARE_TRANSFER_RULES_COLUMN_TO_FARE_PERIOD]
         .isin(routes.fare_attrs_df[Route.FARE_ATTR_COLUMN_FARE_PERIOD])]) == len(routes.fare_transfer_rules_df)
 
-@pytest.mark.skip(reason="Not updated for partridge")
-def test_transfers_load(network_dir, test_dir, gtfs_feed):
+
+@pytest.mark.parametrize('network_dir, network_date', CONFIGS)
+def test_transfers_load(network_dir, network_date):
     """
         Test to ensure that the Transfers are loaded and processed
         properly by the FastTrips initialization
     """
-
+    gtfs_feed = get_gtfs_feed(network_dir, network_date)
+    out_dir = os.path.join(EXAMPLE_DIR, 'output', 'test_gtfs_transfer_load')
     try:
-        os.makedirs(test_dir)
+        os.makedirs(out_dir)
     except OSError:
-        if not os.path.isdir(test_dir):
+        if not os.path.isdir(out_dir):
             raise
-    transfers = Transfer(network_dir, test_dir, gtfs_feed)
+    transfers = Transfer(network_dir, out_dir, gtfs_feed)
 
     assert not transfers.transfers_df.empty
     transfers_df_dtypes = {
-        'min_transfer_time':    np.float64,
-        'from_stop_id':         object,
-        'to_stop_id':           object,
-        'transfer_type':        np.float64,
-        'stop2stop':            bool,
-        'dist':                 np.float64,
-        'from_route_id':        object,
-        'to_route_id':          object,
-        'elevation_gain':       np.int64,
-        'schedule_precedence':  object,
-        'transfer_penalty':     np.float64,
-        'min_transfer_time_min':np.float64,
-        'time_min':             np.float64,
-        'time':                 np.dtype('timedelta64[ns]'),
+        'min_transfer_time': np.float64,
+        'from_stop_id': object,
+        'to_stop_id': object,
+        'transfer_type': np.float64,
+        'stop2stop': bool,
+        'dist': np.float64,
+        'from_route_id': object,
+        'to_route_id': object,
+        'elevation_gain': np.int64,
+        'schedule_precedence': object,
+        'transfer_penalty': np.float64,
+        'min_transfer_time_min': np.float64,
+        'time_min': np.float64,
+        'time': np.dtype('timedelta64[ns]'),
     }
     assert (set(transfers_df_dtypes.keys()).issubset(transfers.transfers_df))
     assert transfers.transfers_df.dtypes.to_dict() == transfers_df_dtypes
@@ -209,54 +216,40 @@ def test_transfers_load(network_dir, test_dir, gtfs_feed):
 
     assert len(transfers.transfers_df[transfers.transfers_df['min_transfer_time'] > 0]) == 1
 
-@pytest.mark.skip(reason="Not updated for partridge")
-def test_trips_load(network_dir, gtfs_feed, test_dir, network_date):
+
+@pytest.mark.parametrize('network_dir, network_date', CONFIGS)
+def test_trips_load(network_dir, network_date):
     """
         Test to ensure that the Trips are loaded and processed
         properly by the FastTrips initialization
     """
     from fasttrips import Assignment
     Assignment.NETWORK_BUILD_DATE = network_date
-
+    gtfs_feed = get_gtfs_feed(network_dir, network_date)
+    out_dir = os.path.join(EXAMPLE_DIR, 'output', 'test_gtfs_trips_load')
     try:
-        os.makedirs(test_dir)
+        os.makedirs(out_dir)
     except OSError:
-        if not os.path.isdir(test_dir):
+        if not os.path.isdir(out_dir):
             raise
 
-    stops  = Stop(network_dir, test_dir, gtfs_feed, network_date)
+    stops = Stop(network_dir, out_dir, gtfs_feed, network_date)
 
-    routes = Route(network_dir, test_dir, gtfs_feed, network_date, stops)
+    routes = Route(network_dir, out_dir, gtfs_feed, network_date, stops)
 
-    trips  = Trip(network_dir, test_dir, gtfs_feed, network_date, stops, routes, True)
+    trips = Trip(network_dir, out_dir, gtfs_feed, network_date, stops, routes, True)
 
     assert not trips.trips_df.empty
     assert len(trips.trips_df) == 153
     trips_df_dtypes = {
-        'route_id': object,
-        'service_id': object,
-        'trip_id': object,
-        'vehicle_name': object,
-        'direction_id': np.int64,
-        'shape_id': object,
-        'trip_id_num': np.int64,
-        'seated_capacity': np.int64,
-        'standing_capacity': np.int64,
-        'max_speed': np.float64,
-        'acceleration': np.float64,
-        'deceleration': np.float64,
-        'dwell_formula': object,
-        'capacity': np.int64,
-        'max_speed_fps': np.float64,
-        'route_long_name': object,
-        'route_short_name': object,
-        'route_type': np.int64,
-        'mode': object,
-        'proof_of_payment': bool,
-        'mode_num': np.int64,
-        'mode_type': object,
-        'route_id_num': np.int64,
-        'max_stop_seq': np.int64,
+        'route_id': object, 'service_id': object, 'trip_id': object, 'vehicle_name': object,
+        'direction_id': np.int64, 'shape_id': object, 'trip_id_num': np.int64,
+        'seated_capacity': np.int64, 'standing_capacity': np.int64, 'max_speed': np.float64,
+        'acceleration': np.float64, 'deceleration': np.float64, 'dwell_formula': object,
+        'capacity': np.int64, 'max_speed_fps': np.float64, 'route_long_name': object,
+        'route_short_name': object, 'route_type': np.int64, 'mode': object,
+        'proof_of_payment': bool, 'mode_num': np.int64, 'mode_type': object,
+        'route_id_num': np.int64, 'max_stop_seq': np.int64,
         'trip_departure_time': np.dtype('datetime64[ns]'),
     }
     assert (set(trips_df_dtypes.keys()).issubset(trips.trips_df))
@@ -291,7 +284,7 @@ def test_trips_load(network_dir, gtfs_feed, test_dir, network_date):
     assert not trips.stop_times_df.empty
     assert len(
         trips.stop_times_df[(trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.month == network_date.month) &
-                            (trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.day == network_date.day) &
+                             (trips.stop_times_df[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.day == network_date.day) &
                             (trips.stop_times_df[
                                  Trip.STOPTIMES_COLUMN_ARRIVAL_TIME].dt.year == network_date.year)]) == len(
         trips.stop_times_df)

@@ -1,3 +1,5 @@
+from __future__ import division
+
 import datetime
 import os
 
@@ -14,7 +16,7 @@ EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield
 # DIRECTORY LOCATIONS
 INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
 INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
-INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A.pat')
 OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
 
 # INPUT FILE LOCATIONS
@@ -23,7 +25,7 @@ INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 
 @pytest.mark.travis
 @pytest.mark.pat
-@pytest.mark.skip(reason="Not working - need to fix")
+#@pytest.mark.skip(reason="Not working - need to fix")
 def test_pat_before_and_after():
     """
     Test to ensure that some of the pathfinder trips are returned before preferred departure
@@ -81,13 +83,13 @@ def test_pat_before_and_after():
     early_departure = departures[departures['new_A_time'] < departures['departure_time']]
     size = early_departure.shape[0]
     assert size > 0
-    confirm_size = early_departure[(early_departure['departure_time'] - early_departure['new_A_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = early_departure[((early_departure['departure_time'] - early_departure['new_A_time'])/ np.timedelta64(1, 'm')) <= 10].shape[0]
     assert size == confirm_size
 
     late_arrivals = arrivals[arrivals['new_B_time'] > arrivals['arrival_time']]
     size = late_arrivals.shape[0]
     assert size > 0
-    confirm_size = late_arrivals[(late_arrivals['new_B_time'] - late_arrivals['arrival_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = late_arrivals[((late_arrivals['new_B_time'] - late_arrivals['arrival_time'])/ np.timedelta64(1, 'm')) <= 10].shape[0]
     assert size == confirm_size
 
 
@@ -99,11 +101,15 @@ def test_pat_off():
 
     OUTPUT_FOLDER  = 'pat_scenario_reg'
 
+    in_cfg = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+    cfg_file = os.path.join(in_cfg, 'config_ft.txt')
+    in_weights = os.path.join(in_cfg, 'pathweight_ft.txt')
+
     r = Run.run_fasttrips(
         input_network_dir    = INPUT_NETWORK,
         input_demand_dir     = INPUT_DEMAND,
-        run_config           = CONFIG_FILE,
-        input_weights        = INPUT_WEIGHTS,
+        run_config           = cfg_file,
+        input_weights        = in_weights,
         output_dir           = OUTPUT_DIR,
         output_folder        = OUTPUT_FOLDER,
         pathfinding_type     = "stochastic",
@@ -149,13 +155,13 @@ def test_pat_off():
     early_departure = departures[departures['new_A_time'] < departures['departure_time']]
     size = early_departure.shape[0]
     assert 0 == size
-    confirm_size = early_departure[(early_departure['departure_time'] - early_departure['new_A_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = early_departure[((early_departure['departure_time'] - early_departure['new_A_time'])/ np.timedelta64(1, 'm')) <= 10].shape[0]
     assert 0 == confirm_size
 
     late_arrivals = arrivals[arrivals['new_B_time'] > arrivals['arrival_time']]
     size = late_arrivals.shape[0]
     assert 0 == size
-    confirm_size = late_arrivals[(late_arrivals['new_B_time'] - late_arrivals['arrival_time']) / np.timedelta64(1, 'm') <= 10].shape[0]
+    confirm_size = late_arrivals[((late_arrivals['new_B_time'] - late_arrivals['arrival_time'])/ np.timedelta64(1, 'm')) <= 10].shape[0]
     assert 0 == confirm_size
 
 

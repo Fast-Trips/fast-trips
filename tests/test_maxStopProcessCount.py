@@ -1,3 +1,4 @@
+from builtins import zip
 import os
 import pytest
 from fasttrips import Run
@@ -25,7 +26,7 @@ def stop_process_count(request):
 
 @pytest.fixture(scope='module')
 def passengers_arrived(stop_process_count):
-    arrived = dict(zip(test_mspc,[test_size]*len(test_mspc)))
+    arrived = dict(list(zip(test_mspc,[test_size]*len(test_mspc))))
 
     return arrived[stop_process_count]
 

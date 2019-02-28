@@ -1,5 +1,9 @@
 #include <Python.h>
 
+#if PY_MAJOR_VERSION >= 3
+#define PY3K
+#endif
+
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
@@ -8,6 +12,8 @@
 #include <queue>
 
 static PyObject *pyError;
+
+
 
 // global variable
 fasttrips::PathFinder pathfinder;
@@ -29,13 +35,13 @@ _fasttrips_initialize_parameters(PyObject *self, PyObject *args)
     double     min_path_probability;
 
     if (!PyArg_ParseTuple(args, "dddddidiiiid", &time_window, &bump_buffer, &utils_conversion, &depart_early_allowed_min,
-                                               &arrive_late_allowed_min, &stoch_pathset_size, &stoch_dispersion, 
-                                               &stoch_max_stop_process_count, &transfer_fare_ignore_pf, 
+                                               &arrive_late_allowed_min, &stoch_pathset_size, &stoch_dispersion,
+                                               &stoch_max_stop_process_count, &transfer_fare_ignore_pf,
                                                &transfer_fare_ignore_pe, &max_num_paths, &min_path_probability)) {
         return NULL;
     }
-    pathfinder.initializeParameters(time_window, bump_buffer, utils_conversion, depart_early_allowed_min, arrive_late_allowed_min, stoch_pathset_size, 
-                                    stoch_dispersion, stoch_max_stop_process_count, 
+    pathfinder.initializeParameters(time_window, bump_buffer, utils_conversion, depart_early_allowed_min, arrive_late_allowed_min, stoch_pathset_size,
+                                    stoch_dispersion, stoch_max_stop_process_count,
                                     (transfer_fare_ignore_pf==1), (transfer_fare_ignore_pe==1),
                                     max_num_paths, min_path_probability);
     Py_RETURN_NONE;
@@ -76,7 +82,7 @@ _fasttrips_initialize_supply(PyObject *self, PyObject *args)
                                 stop_indexes, stop_times, num_stop_ind);
 
     if (proc_num <= 1) {
-        std::cout << "RAND_MAX = " << RAND_MAX << std::endl;
+        //std::cout << "RAND_MAX = " << RAND_MAX << std::endl;
     }
     Py_RETURN_NONE;
 }
@@ -217,15 +223,42 @@ static PyMethodDef fasttripsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC
-init_fasttrips(void)
+#ifdef PY3K //If Python 3
+static struct PyModuleDef _fasttrips =
+{
+    PyModuleDef_HEAD_INIT,
+    "_fasttrips", /* name of module */
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    fasttripsMethods
+};
+
+PyMODINIT_FUNC PyInit__fasttrips(void)
+{
+    // printf("init_fasttrips called\n");
+    std::priority_queue<std::string> myqueue;
+
+    PyObject *m = PyModule_Create(&_fasttrips);
+
+    if (m == NULL)
+      return NULL;
+
+    import_array();
+
+    pyError = PyErr_NewException("_fasttrips.error", NULL, NULL);
+    Py_INCREF(pyError);
+    PyModule_AddObject(m, "error", pyError);
+
+    return m;
+}
+
+#else //For Python 2
+PyMODINIT_FUNC init_fasttrips(void)
 {
     // printf("init_fasttrips called\n");
     std::priority_queue<std::string> myqueue;
 
     PyObject *m = Py_InitModule("_fasttrips", fasttripsMethods);
-    if (m == NULL)
-        return;
 
     import_array();
 
@@ -233,16 +266,30 @@ init_fasttrips(void)
     Py_INCREF(pyError);
     PyModule_AddObject(m, "error", pyError);
 }
-
-int
-main(int argc, char *argv[])
+#endif //end segmentation between Python 2 and Python 3
+int main(int argc, char *argv[])
 {
     /* Pass argv[0] to the Python interpreter */
-    Py_SetProgramName(argv[0]);
+    #ifdef PY3K
+      wchar_t *program = Py_DecodeLocale(argv[0], NULL);
+      if (program == NULL) {
+          fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+          exit(1);
+      }
+
+      Py_SetProgramName(program);
+    #else
+      Py_SetProgramName(argv[0]);
+    #endif
+
 
     /* Initialize the Python interpreter.  Required. */
     Py_Initialize();
 
     /* Add a static module */
-    init_fasttrips();
+    #ifdef PY3K
+      PyInit__fasttrips();
+    #else
+      init_fasttrips();
+    #endif
 }

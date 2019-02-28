@@ -50,10 +50,15 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   usecases
    gettingstarted
    howitworks
+   io
+   usage
    api
    contributing
+   faq
+   references
 
 
 Indices and tables

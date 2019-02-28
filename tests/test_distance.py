@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import numpy as np
@@ -48,28 +49,5 @@ def test_calculate_distance_miles():
     Util.calculate_distance_miles(df, cols[0], cols[1], cols[2], cols[3], cols[4])
     distance = df[cols[4]][0]
 
-    print 'test_calculate_distance_miles: {:.5f} mi'.format(distance)
+    print('test_calculate_distance_miles: {:.5f} mi'.format(distance))
     assert abs(distance - 3.9116) < 0.0001
-
-# Originally written as a test for testing stop to stop vs route along path
-# Changes were made to make Partridge work (higher priority) and this test
-# was no longer supported. Need to rewrite Trip.add_shape_dist_traveled to
-# to support static call.
-@pytest.mark.skip(reason="Underlying method is no longer static.")
-def test_add_shape_dist_traveled(zip_file, scenario_results, scenario_date):
-    service_ids_by_date = ptg.read_service_ids_by_date(zip_file)
-    service_ids = service_ids_by_date[scenario_date]
-
-    feed = ptg.feed(zip_file, view={
-        'trips.txt': {
-            'service_id': service_ids,
-        },
-    })
-
-    stop_times_df = Trip.add_shape_dist_traveled(feed.stop_times, feed.stops)
-    stop_times_df.sort_values([Trip.TRIPS_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_STOP_SEQUENCE], inplace=True)
-
-    for trip_id, expected_array in scenario_results.iteritems():
-        print stop_times_df[stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID] == trip_id][Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED].values.tolist()
-        np.testing.assert_allclose(stop_times_df[stop_times_df[Trip.TRIPS_COLUMN_TRIP_ID] == trip_id][Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED].values,
-                                  expected_array, rtol=0, atol=0.00001)

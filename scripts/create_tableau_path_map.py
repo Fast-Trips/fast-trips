@@ -1,3 +1,4 @@
+from builtins import str
 import argparse, os
 
 import pandas as pd
@@ -113,7 +114,7 @@ def impute_nostop_transit_link_stops(ft, pathset_links_df, veh_trips_df, prev_ne
     fasttrips.FastTripsLogger.debug("find_near_df=\n%s" % find_near_df.head(30))
 
     # do it by service id
-    service_id_list = find_near_df["service_id"].value_counts().keys()
+    service_id_list = list(find_near_df["service_id"].value_counts().keys())
     impute_count = 0
     for service_id in service_id_list:
 

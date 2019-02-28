@@ -1,3 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from builtins import next
+from builtins import str
+from builtins import range
+from builtins import object
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +32,7 @@ from .Error  import UnexpectedError
 from .Logger import FastTripsLogger
 
 
-class Util:
+class Util(object):
     """
     Util class.
 
@@ -91,7 +98,7 @@ class Util:
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
 
-        *mapping_df* is defines the mapping from an ID (*mapping_id_colname*) 
+        *mapping_df* is defines the mapping from an ID (*mapping_id_colname*)
         to a numeric ID (*mapping_newid_colname*).
 
         If *warn* is True, then don't worry if some fail.  Just log and move on.  Otherwise, raise an exception.
@@ -194,14 +201,14 @@ class Util:
         """
         return '%.2f' % (pd.to_datetime(x).hour*60.0 + \
                          pd.to_datetime(x).minute + \
-                         pd.to_datetime(x).second/60.0)
+                         (pd.to_datetime(x).second/60.0))
 
     @staticmethod
     def timedelta_formatter(x):
         """
         Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
         """
-        seconds = x/np.timedelta64(1,'s')
+        seconds = (x/np.timedelta64(1,'s'))
         minutes = int(seconds/60)
         seconds -= minutes*60
         return '%4dm %04.1fs' % (minutes,seconds)
@@ -218,7 +225,7 @@ class Util:
         time_split = x.split(':')
         hour = int(time_split[0])
         day = Assignment.NETWORK_BUILD_DATE
-        if hour >= 24: 
+        if hour >= 24:
             time_split[0] = '%02d' %(hour-24)
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)
@@ -282,9 +289,9 @@ class Util:
         header_row = None
         if append and os.path.exists(output_file):
             # get the columns
-            df_file = open(output_file, 'rb')
+            df_file = open(output_file, 'rt')
             df_reader = csv.reader(df_file, delimiter=",")
-            header_row = df_reader.next()
+            header_row = next(df_reader)
             df_file.close()
 
         for col_idx in range(len(df_cols)):
@@ -310,7 +317,7 @@ class Util:
                 if new_colname in df_cols: continue
 
                 # otherwise make the new one and add or replace it
-                df_toprint[new_colname] = df_toprint[old_colname]/units
+                df_toprint[new_colname] = (df_toprint[old_colname]/units)
                 if keep_duration_columns:           # add
                     df_cols.append(new_colname)
                 else:                               # replace
@@ -425,15 +432,20 @@ class Util:
 
         Sets the result into the column called result_col.
 
-        ==================  ===============  =====================================================================================================
-        column name          column type     description
-        ==================  ===============  =====================================================================================================
-        `var_value`                 float64  The value to weight
-        `growth_type`                   str  ['constant', 'exponential', 'logarithmic', 'logistic']
-        `growth_log_base`           float64  [logarithmic only] log base for logarithmic base value
-        `growth_logistic_max`       float64  [logistic only] Maximum assymtotic value for logistic curve
-        `growth_logistic_mid`       float64  [logistic only] X-Axis location of the midpoint of the curve
-        ==================  ===============  =====================================================================================================
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        | *column name*         | *column type*| *description*                                                             |
+        +=======================+==============+===========================================================================+
+        |``var_value``          | float64      | The value to weight                                                       |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_type``        |          str | one of ``constant``, ``exponential``, ``logarithmic``, ``logistic``       |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_log_base``    |      float64 | *logarithmic only* log base for logarithmic base value                    |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_logistic_max``|      float64 | *logistic only* Maximum assymtotic value for logistic curve               |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+        |``growth_logistic_mid``|      float64 | *logistic only* X-Axis location of the midpoint of the curve              |
+        +-----------------------+--------------+---------------------------------------------------------------------------+
+
         """
         from fasttrips import PathSet
 
@@ -481,7 +493,7 @@ class Util:
         :param growth_rate: float: Exponetial growth factor
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
-        return (np.power(1.0 + growth_rate, penalty_min) - 1) / np.log(1.0 + growth_rate)
+        return (np.power(1.0 + growth_rate, penalty_min) - 1)/ np.log(1.0 + growth_rate)
 
 
     @staticmethod
@@ -513,8 +525,8 @@ class Util:
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
 
-        max_integral = (max_logit / growth_rate) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
-        min_integral = (max_logit / growth_rate) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
+        max_integral = ((max_logit/ growth_rate)) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
+        min_integral = ((max_logit/ growth_rate)) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
 
         return max_integral - min_integral
 
