@@ -1,5 +1,25 @@
 ## Changelog
 
+# 1.0b2
+
+ * Reduce copies of data to downsize memory needs  
+ * Updates tests  
+ * Adds a learning variable for iterations to remove jumpiness  
+ * Exit labeling loop if find a negative cost  
+ * Re-implements Utility scaling for labeling to avoid negative costs  
+ * Python 3 compliant and backward compatible to 2.6 using future  
+ * Add compiler flags and adjust some code so that it works with modern CPP  
+ * Update TRAVIS and add auto creation and deployment of documentation at end of successful tests  
+ * Move majority of documentation to sphinx-based github site  
+
+# 1.0b1
+
+ * Test scenarios: new scenarios, re-organization, and notebooks to view  
+ * Flexible preferred departure and arrival times with
+ * Ability to add functional forms to variables  
+ * Add updateStopStatesForTrips
+
+# Alpha
 Major changes to fast-trips since the original FAST-TrIPs (https://github.com/MetropolitanTransportationCommission/FAST-TrIPs-1)
 
 To be filled in further but including:
