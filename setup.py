@@ -4,7 +4,7 @@ import sysconfig
 import numpy
 
 # read the contents of your README file
-this_directory = os.path.abspath(path.dirname(__file__))
+this_directory = os.path.abspath(os.path.dirname(__file__))
 if sys.version_info[0] > 3:
     with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
         long_description = f.read()
