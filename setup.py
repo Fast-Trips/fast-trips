@@ -4,14 +4,12 @@ import sysconfig
 import numpy
 
 # read the contents of your README file
-
 this_directory = os.path.abspath(path.dirname(__file__))
 if sys.version_info[0] > 3:
     with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
         long_description = f.read()
 else:
-    long_description =
-        "Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++."
+    long_description = "Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++."
 
 ### Settings for Extension Building
 #compile_args = sysconfig.get_config_var('CFLAGS').split()
