@@ -461,11 +461,13 @@ Configuration Options: pathfinding
 +-----------------------------------------+----------+-----------------------+-----------------------------------------------+
 | *Option Name*                           | *Type*   | *Default*             | *Description*                                 |
 +=========================================+==========+=======================+===============================================+
-| ``max_num_paths``                       | int      | -1                    | If positive, drops paths after this IF        |
-|                                         |          |                       | probability is less than ``                   |
+| ``max_num_paths``                       | int      | -1                    | If positive, drops paths after this number of |
+|                                         |          |                       | paths is reached IF probability               |
+|                                         |          |                       | is less than ``min_path_probability``         |
 +-----------------------------------------+----------+-----------------------+-----------------------------------------------+
 | ``min_path_probability``                | float    | 0.005                 | Paths with probability less than this get     |
-|                                         |          |                       | dropped IF `max_num_paths` specified AND hit. |
+|                                         |          |                       | dropped IF ``max_num_paths`` specified AND    |
+|                                         |          |                       | exceeded.                                     |
 +-----------------------------------------+----------+-----------------------+-----------------------------------------------+
 | ``min_transfer_penalty``                | float    | 0.1                   | Minimum transfer penalty. Safeguard against   |
 |                                         |          |                       | having no transfer penalty which can result in|
