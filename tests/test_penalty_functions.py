@@ -1,3 +1,5 @@
+from __future__ import division
+
 import pandas as pd
 
 import pytest
@@ -25,7 +27,7 @@ def test_exponential_integral():
 @pytest.mark.travis
 def test_logarithmic_integral():
     test_series = pd.Series(
-        data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],
+        data=[6., 5./3, 111./11, 45./7, 524./13],
         index=[1, 4, 7, 25, 627],
         name='cost_series'
     )
@@ -43,7 +45,7 @@ def test_logarithmic_integral():
 @pytest.mark.travis
 def test_logistic_integral():
     test_series = pd.Series(
-        data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],
+        data=[6., 5./3, 111./11, 45./7, 524./13],
         index=[1, 4, 7, 25, 627],
         name='cost_series'
     )

@@ -1,3 +1,4 @@
+from builtins import zip
 import os
 import pytest
 
@@ -68,7 +69,7 @@ def pathfinder_paths(ft_instance, config_scenario):
     """
 
     ft = ft_instance
-    OUTPUT_FOLDER = os.path.join(EXAMPLES_DIR, 'output', 'test_cost_symmetry', config_scenario)
+    OUTPUT_FOLDER = os.path.join(EXAMPLE_DIR, 'output', 'test_cost_symmetry', config_scenario)
 
     # for debugging insight
     Assignment.write_configuration(OUTPUT_FOLDER)
@@ -84,7 +85,7 @@ def pathfinder_paths(ft_instance, config_scenario):
 
     path_cols = list(ft.passengers.pathfind_trip_list_df.columns.values)
     for path_tuple in ft.passengers.pathfind_trip_list_df.itertuples(index=False):
-        path_dict = dict(zip(path_cols, path_tuple))
+        path_dict = dict(list(zip(path_cols, path_tuple)))
         trip_list_id = path_dict[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
 
         trip_pathset = PathSet(path_dict)
@@ -162,6 +163,6 @@ def test_cost_symmetry(pathfinder_paths, simulation_paths):
 
     # Assert that all of the pathfinding costs equal the sim costs
     pd.testing.assert_series_equal(paths['pf_cost'], paths['sim_cost'],
-                                   check_names=False, check_less_precise=5)
+                                   check_names=False, check_less_precise=5, check_dtype=False)
     pd.testing.assert_series_equal(links['pf_linkcost'], links['sim_cost'],
-                                   check_names=False, check_less_precise=5)
+                                   check_names=False, check_less_precise=5, check_dtype=False)

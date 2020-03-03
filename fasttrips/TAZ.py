@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import object
+
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +30,7 @@ from .Stop       import Stop
 from .Transfer   import Transfer
 
 
-class TAZ:
+class TAZ(object):
     """
     TAZ class.
 
@@ -479,7 +484,7 @@ class TAZ:
                                                          numeric_newcolname=TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM)
 
         if self.has_drive_access:
-            print self.drive_access_df.loc[ self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP] == "9065"]
+            print(self.drive_access_df.loc[ self.drive_access_df[TAZ.DRIVE_ACCESS_COLUMN_STOP] == "9065"])
 
             self.drive_access_df = stops.add_numeric_stop_id(self.drive_access_df,
                                                              id_colname=TAZ.DRIVE_ACCESS_COLUMN_STOP,

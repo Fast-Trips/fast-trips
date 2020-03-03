@@ -4,7 +4,7 @@ from fasttrips import Run
 network = "cub"
 demand  = "earlier"
 config  = "A"
-out_folder = "bear_cub_earlier_A"
+out_folder = "bear_cub_earlier_B"
 
 ex_dir   = os.path.abspath(os.path.dirname(__file__))
 print "Running Fast-Trips in %s" % (ex_dir.split(os.sep)[-1:])

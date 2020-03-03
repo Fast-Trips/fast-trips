@@ -21,6 +21,7 @@ fasttrips.egg-info/
 sfcta/
 psrc/
 run*/
+.pytest_cache/
 
 #PyCharm IDE
 .idea/

@@ -17,13 +17,7 @@
 #include "hyperlink.h"
 #include "path.h"
 
-#if __APPLE__
-#include <tr1/unordered_set>
-#elif __linux__
-#include <tr1/unordered_set>
-#else
 #include <unordered_set>
-#endif
 
 namespace fasttrips {
 
@@ -332,7 +326,7 @@ namespace fasttrips {
                                   LabelStopQueue& label_stop_queue,
                                   int label_iteration,
                                   const LabelStop& current_label_stop,
-                                  std::tr1::unordered_set<int>& trips_done) const;
+                                  std::unordered_set<int>& trips_done) const;
 
         /**
          * Label stops by:

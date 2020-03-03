@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import pytest
 from fasttrips import Run
@@ -35,6 +36,7 @@ def test_feedback(feedback_iters,capacity_const):
         max_stop_process_count = 2,
         pf_iters         = 2,
         overlap_variable = "None",
+        utils_conversion_factor = 10,
         pathfinding_type = "stochastic",
         capacity         = capacity_const,
         iters            = feedback_iters,
