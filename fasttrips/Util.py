@@ -4,7 +4,7 @@ from builtins import next
 from builtins import str
 from builtins import range
 from builtins import object
-
+from .utils.numeric_parser import vparse_numeric
 __copyright__ = "Copyright 2015 Contributing Entities"
 __license__   = """
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -550,26 +550,26 @@ class Util(object):
         config.add_nodes_from([
             (TAZ.INPUT_DRIVE_ACCESS_FILE, {
                 'converters': {
-                    TAZ.DRIVE_ACCESS_COLUMN_COST: ptg.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: ptg.parsers.vparse_numeric,
-                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: ptg.parsers.vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_COST: vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_TRAVEL_TIME: vparse_numeric,
+                    TAZ.DRIVE_ACCESS_COLUMN_DISTANCE: vparse_numeric,
                     TAZ.DRIVE_ACCESS_COLUMN_START_TIME: np.vectorize(Util.read_time),
                     TAZ.DRIVE_ACCESS_COLUMN_END_TIME: np.vectorize(Util.read_end_time)
                 }
             }),
             (TAZ.INPUT_DAP_FILE, {
                 'converters': {
-                    TAZ.DAP_COLUMN_LOT_LATITUDE: ptg.parsers.vparse_numeric,
-                    TAZ.DAP_COLUMN_LOT_LONGITUDE: ptg.parsers.vparse_numeric,
-                    TAZ.DAP_COLUMN_CAPACITY: ptg.parsers.vparse_numeric
+                    TAZ.DAP_COLUMN_LOT_LATITUDE: vparse_numeric,
+                    TAZ.DAP_COLUMN_LOT_LONGITUDE: vparse_numeric,
+                    TAZ.DAP_COLUMN_CAPACITY: vparse_numeric
                 }
             }),
             (Route.INPUT_FARE_ATTRIBUTES_FILE, {
                 'converters': {
-                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: ptg.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_PRICE: ptg.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_TRANSFERS: ptg.parsers.vparse_numeric,
-                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: ptg.parsers.vparse_numeric
+                    Route.FARE_ATTR_COLUMN_PAYMENT_METHOD: vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_PRICE: vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFERS: vparse_numeric,
+                    Route.FARE_ATTR_COLUMN_TRANSFER_DURATION: vparse_numeric
                 }
             }),
             (Route.INPUT_FARE_PERIODS_FILE, {
@@ -580,7 +580,7 @@ class Util(object):
             }),
             (Route.INPUT_FARE_TRANSFER_RULES_FILE, {
                 'converters': {
-                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: ptg.parsers.vparse_numeric
+                    Route.FARE_TRANSFER_RULES_COLUMN_AMOUNT: vparse_numeric
                 }
             }),
             (Route.INPUT_ROUTES_FILE, {
@@ -591,8 +591,8 @@ class Util(object):
             (Stop.INPUT_STOPS_FILE, {}),
             (Transfer.INPUT_TRANSFERS_FILE, {
                 'converters': {
-                    Transfer.TRANSFERS_COLUMN_DISTANCE: ptg.parsers.vparse_numeric,
-                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: ptg.parsers.vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_DISTANCE: vparse_numeric,
+                    Transfer.TRANSFERS_COLUMN_ELEVATION_GAIN: vparse_numeric,
                 }
             }),
             (Trip.INPUT_TRIPS_FILE, {
@@ -600,21 +600,21 @@ class Util(object):
             }),
             (Trip.INPUT_VEHICLES_FILE, {
                 'converters': {
-                    Trip.VEHICLES_COLUMN_ACCELERATION: ptg.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_DECELERATION: ptg.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: ptg.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: ptg.parsers.vparse_numeric,
-                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: ptg.parsers.vparse_numeric,
+                    Trip.VEHICLES_COLUMN_ACCELERATION: vparse_numeric,
+                    Trip.VEHICLES_COLUMN_DECELERATION: vparse_numeric,
+                    Trip.VEHICLES_COLUMN_MAXIMUM_SPEED: vparse_numeric,
+                    Trip.VEHICLES_COLUMN_SEATED_CAPACITY: vparse_numeric,
+                    Trip.VEHICLES_COLUMN_STANDING_CAPACITY: vparse_numeric,
                 }
             }),
             (TAZ.INPUT_WALK_ACCESS_FILE, {
                 'converters': {
-                    TAZ.WALK_ACCESS_COLUMN_DIST: ptg.parsers.vparse_numeric,
-                    TAZ.WALK_ACCESS_COLUMN_ELEVATION_GAIN: ptg.parsers.vparse_numeric,
-                    TAZ.WALK_ACCESS_COLUMN_POPULATION_DENSITY: ptg.parsers.vparse_numeric,
-                    TAZ.WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY: ptg.parsers.vparse_numeric,
-                    TAZ.WALK_ACCESS_COLUMN_AUTO_CAPACITY: ptg.parsers.vparse_numeric,
-                    TAZ.WALK_ACCESS_COLUMN_INDIRECTNESS: ptg.parsers.vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_DIST: vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_ELEVATION_GAIN: vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_POPULATION_DENSITY: vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_EMPLOYMENT_DENSITY: vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_AUTO_CAPACITY: vparse_numeric,
+                    TAZ.WALK_ACCESS_COLUMN_INDIRECTNESS: vparse_numeric,
                 }
             })
         ])

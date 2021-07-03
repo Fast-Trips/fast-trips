@@ -608,11 +608,11 @@ class Assignment(object):
         _fasttrips.initialize_supply(output_dir, process_number,
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                     Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].to_numpy().astype('int32'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
                                                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
                                                     Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
-                                                    overcap_col]].as_matrix().astype('float64'))
+                                                    overcap_col]].to_numpy().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/ 60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/ 60.0,
@@ -639,8 +639,8 @@ class Assignment(object):
 
         _fasttrips.set_bump_wait(bump_wait_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                 bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype('float64'))
+                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].astype(np.int32).to_numpy(),
+                                 bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype(np.float64))
     @staticmethod
     def write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df):
         """
