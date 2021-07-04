@@ -23,9 +23,6 @@ OVERLAP_VARIABLES = ["None", "count", "distance", "time"]
 @pytest.mark.travis
 def test_overlap(overlap_var, split_links ):
 
-    if overlap_var == "time" and sys.version_info > (3,0):
-        pytest.xfail("python and pandas updates make time division fail for now Issue #172")
-
     r = Run.run_fasttrips(
         input_network_dir= INPUT_NETWORK,
         input_demand_dir = INPUT_DEMAND,

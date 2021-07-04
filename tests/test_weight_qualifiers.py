@@ -87,7 +87,8 @@ def test_parse_weight_qualifiers_bad_key(sample_dataframe):
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('logistic') , 'weight_name'] = \
         sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.replace('logistic', 'logging')
 
-    with raises(KeyError, message="Expecting KeyError"):
+
+    with raises(KeyError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 @pytest.mark.travis
@@ -98,7 +99,7 @@ def test_parse_weight_qualifiers_bad_logrithmic_qualifier(sample_dataframe):
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == 'arrive_late_cost_min.logarithmic.log_base' , 'weight_name'] = \
         'arrive_late_cost_min.logarithmic.log_base_bad'
 
-    with raises(AssertionError, message="Expecting AssertionError"):
+    with raises(AssertionError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 @pytest.mark.travis
@@ -108,7 +109,7 @@ def test_parse_weight_qualifiers_bad_logrithmic_qualifier_value(sample_dataframe
     """
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] ==
                          'arrive_late_cost_min.logarithmic.log_base', 'weight_value'] = -1
-    with raises(AssertionError, message="Expecting AssertionError"):
+    with raises(AssertionError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 @pytest.mark.travis
@@ -119,7 +120,7 @@ def test_parse_weight_qualifiers_bad_logistic_qualifier(sample_dataframe):
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == 'depart_early_cost_min.logistic.logistic_max' , 'weight_name'] = \
         'depart_early_cost_min.logistic.logistic_max_bad'
 
-    with raises(AssertionError, message="Expecting AssertionError"):
+    with raises(AssertionError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 @pytest.mark.travis
@@ -129,7 +130,7 @@ def test_parse_weight_qualifiers_bad_logistic_max_qualifier_value(sample_datafra
     """
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] ==
                          'depart_early_cost_min.logistic.logistic_max', 'weight_value'] = -1
-    with raises(AssertionError, message="Expecting AssertionError"):
+    with raises(AssertionError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 @pytest.mark.travis
@@ -139,7 +140,7 @@ def test_parse_weight_qualifiers_bad_logistic_mid_qualifier_value(sample_datafra
     """
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] ==
                          'depart_early_cost_min.logistic.logistic_mid', 'weight_value'] = -1
-    with raises(AssertionError, message="Expecting AssertionError"):
+    with raises(AssertionError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
 @pytest.mark.travis

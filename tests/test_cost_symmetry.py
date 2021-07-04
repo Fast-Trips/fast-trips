@@ -161,6 +161,7 @@ def test_cost_symmetry(pathfinder_paths, simulation_paths):
     assert pf_pathset_paths.shape[0] == paths.shape[0]
     assert pf_pathset_links.shape[0] == links.shape[0]
 
+
     # Assert that all of the pathfinding costs equal the sim costs
     pd.testing.assert_series_equal(paths['pf_cost'], paths['sim_cost'],
                                    check_names=False, check_less_precise=5, check_dtype=False)

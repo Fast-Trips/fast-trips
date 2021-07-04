@@ -1546,12 +1546,22 @@ class Assignment(object):
                                     right_index  = True,
                                     how          ='left')
         veh_loaded_df.rename(columns={Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM:Trip.SIM_COL_VEH_ALIGHTS}, inplace=True)
-        veh_loaded_df.fillna(value=0, inplace=True)
+
+        # replace has weird behaviour as of now, so we need a hack to take care of the new behaviour of fill in
+        # TimeDelta columns --> https://github.com/pandas-dev/pandas/issues/29024
+        tdelta_cols = list(veh_loaded_df.select_dtypes(include=['timedelta']).columns)
+        for col in tdelta_cols:
+            veh_loaded_df[col].fillna(pd.Timedelta(seconds=0), inplace=True)
+        for col in veh_loaded_df.columns:
+            if col in tdelta_cols:
+                continue
+            veh_loaded_df[col].fillna(0, inplace=True)
+
         assert(len(veh_loaded_df)==veh_trips_df_len)
 
         # these are ints, not floats
-        veh_loaded_df[[Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]] = \
-            veh_loaded_df[[Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]].astype(int)
+        for col in [Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]:
+            veh_loaded_df.loc[:, col] = veh_loaded_df[col].astype(int)
 
         veh_loaded_df.set_index([Trip.TRIPS_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],inplace=True)
         veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD    ] = veh_loaded_df[Trip.SIM_COL_VEH_BOARDS    ] - veh_loaded_df[Trip.SIM_COL_VEH_ALIGHTS    ]
