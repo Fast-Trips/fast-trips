@@ -87,7 +87,6 @@ def test_parse_weight_qualifiers_bad_key(sample_dataframe):
     sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('logistic') , 'weight_name'] = \
         sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.replace('logistic', 'logging')
 
-
     with raises(KeyError):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
