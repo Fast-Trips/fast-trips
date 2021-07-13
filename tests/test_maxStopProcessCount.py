@@ -3,12 +3,12 @@ import os
 import pytest
 from fasttrips import Run
 
-EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
+EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Bunny_Hop')
 
 # DIRECTORY LOCATIONS
-INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
-INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
-INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'A')
+INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'bunny_hop')
+INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'backward_bunnies')
+INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'base')
 OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
 
 # INPUT FILE LOCATIONS
@@ -17,7 +17,7 @@ INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 
 # TEST PARAMETERS
 test_mspc = [10, 50, 100]
-test_size   = 5
+test_size   = 2
 
 @pytest.fixture(scope='module', params=test_mspc)
 def stop_process_count(request):
