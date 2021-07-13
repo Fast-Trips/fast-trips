@@ -8,4 +8,4 @@ debug_output_columns          = True
 user_class_function           = generic_user_class
 pathweights_fixed_width       = True
 overlap_chunk_size            = 50
-utils_conversion_factor       = 10
+utils_conversion_factor       = 20
