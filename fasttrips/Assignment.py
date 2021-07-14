@@ -2286,6 +2286,9 @@ class Assignment(object):
         FastTripsLogger.info("Skimming")
         start_time          = datetime.datetime.now()
 
+        from .Skimming import Skimming
+        skims = Skimming()
+
         veh_trips_df = FT.trips.get_full_trips()
         # write 0-iter vehicle trips
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
@@ -2297,6 +2300,7 @@ class Assignment(object):
 
         # this should be configurable, if a list do for each, if not provided use mean
         mean_vot = FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT].mean()
+
 
         # TEST ONE ORIGIN - prototyping is based on Springfield example
         origin = 12  # use internal labelling, might need some work because only origins with trips might have these set
@@ -2332,10 +2336,15 @@ class Assignment(object):
 
 
 
-        # now set up paths
-        from .Skimming import Skimming
-        skims = Skimming()
+        ### Try to re-use existing data structures
+        d_t = int(dep_time)
+        path_dict = {Passenger.TRIP_LIST_COLUMN_TIME_TARGET: "departure",
+                     Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: datetime.time(d_t // 60, (d_t % 60)),
+                     Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
 
+        pathset_this_o = PathSet(path_dict)
+        pathset_this_o.path_dict = pathdict
+        skims.add_pathset(origin, pathset_this_o)
         pathset_paths_df, pathset_links_df = skims.setup_pathsets(pathdict, FT.stops, FT.routes.modes_df)
 
         #
@@ -2357,8 +2366,8 @@ class Assignment(object):
                                  int( (time_elapsed.total_seconds() % 3600)/ 60),
                                  time_elapsed.total_seconds() % 60))
 
-        return pathset_paths_df, pathset_links_df, pathdict, perf_dict
-
+        return skims, pathset_paths_df, pathset_links_df
+        
 ################ END SKIMMING
 
 

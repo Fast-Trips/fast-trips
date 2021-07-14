@@ -114,11 +114,18 @@ class Skimming(object):
     PATHSET_PATHS_CSV               = r"pathset_paths.csv"
     PATHSET_LINKS_CSV               = r"pathset_links.csv"
 
-    # def __init__(self, output_dir):
-    #     """
-    #     """
+    def __init__(self): #, output_dir):
+        """
+        """
+        self.origin_pathsets = {}
 
-    def setup_pathsets(self, id_to_pathset, stops, modes_df):
+    def add_pathset(self, origin, pathset):
+        """
+        Stores path set for the given origin.
+        """
+        self.origin_pathsets[origin] = pathset
+
+    def setup_pathsets(self, stops, modes_df):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -191,10 +198,7 @@ class Skimming(object):
         pathlist = []
         linklist = []
 
-
-        # id_to_pathset: THIS IS pathset!
-
-        for trip_list_id, pathset in id_to_pathset.items():
+        for trip_list_id, pathset in self.origin_pathsets.items():
 
             # TODO Jan: check:
             # if not pathset.goes_somewhere():   continue
@@ -274,7 +278,7 @@ class Skimming(object):
 
                     # two trips in a row -- this shouldn't happen
                     if linkmode == PathSet.STATE_MODE_TRIP and prev_linkmode == PathSet.STATE_MODE_TRIP:
-                        FastTripsLogger.warn("Two trip links in a row... this shouldn't happen. person_id is %s trip is %s\npathnum is %d\nstatelist (%d): %s\n" % (person_id, person_trip_id, pathnum, len(state_list), str(state_list)))
+                        FastTripsLogger.warn("Two trip links in a row... this shouldn't happen.")
                         sys.exit()
 
                     linklist.append([
