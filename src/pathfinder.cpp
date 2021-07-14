@@ -706,10 +706,12 @@ namespace fasttrips {
         gettimeofday(&labeling_end_time, NULL);
 #endif
 
-        if (pathset.skimming_):
+        if (path_spec.skimming_){
             pf_returnstatus = getPathSetAllDestinations(path_spec, trace_file, stop_states, pathset);
-        else:
+        }
+        else{
             pf_returnstatus = getPathSet(path_spec, trace_file, stop_states, pathset);
+        }
 
 #ifdef _WIN32
         QueryPerformanceCounter(&pathfind_end_time);
@@ -1241,7 +1243,7 @@ namespace fasttrips {
                 // this shouldn't happen because of the shortcut
                 // return;
                 //throw std::invalid_argument("Empty access links mean we can't do anything");
-                continue
+                continue;
             }
 
             // Are there any supply modes for this demand mode?
