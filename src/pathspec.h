@@ -29,6 +29,7 @@ namespace fasttrips {
         std::string access_mode_;       ///< Access demand mode
         std::string transit_mode_;      ///< Transit demand mode
         std::string egress_mode_;       ///< Egress demand mode
+        bool skimming_;                 ///< If true, build one-to-all for skimming
     } PathSpecification;
 
     /**

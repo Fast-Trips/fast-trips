@@ -706,7 +706,10 @@ namespace fasttrips {
         gettimeofday(&labeling_end_time, NULL);
 #endif
 
-        pf_returnstatus = getPathSet(path_spec, trace_file, stop_states, pathset);
+        if (pathset.skimming):
+            pf_returnstatus = getPathSetAllDestinations(path_spec, trace_file, stop_states, pathset);
+        else:
+            pf_returnstatus = getPathSet(path_spec, trace_file, stop_states, pathset);
 
 #ifdef _WIN32
         QueryPerformanceCounter(&pathfind_end_time);
@@ -1190,6 +1193,161 @@ namespace fasttrips {
             addStopState(path_spec, trace_file, xfer_stop_id, ss, &current_stop_state, stop_states, label_stop_queue);
         }
     }
+
+
+
+
+/////////////////
+    void PathFinder::updateStopStatesForFinalLinksAllDestinations(
+        const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        const std::map<int, int>& reachable_final_stops,
+        StopStates& stop_states,
+        LabelStopQueue& label_stop_queue,
+        int label_iteration,
+        const LabelStop& current_label_stop,
+        double& est_max_path_cost) const
+    {
+        // shortcut -- nothing to do if this isn't reachable to end taz
+        if (reachable_final_stops.count(current_label_stop.stop_id_) == 0) {
+            return;
+        }
+
+        // current_stop_state is a hyperlink
+        // It should have trip-states in it, because otherwise it wouldn't have come up in the label stop queue to process
+        Hyperlink& current_stop_state  = stop_states[current_label_stop.stop_id_];
+        double current_deparr_time     = current_stop_state.latestDepartureEarliestArrival(true);
+        double nonwalk_label           = current_stop_state.hyperpathCost(true);
+
+        double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+
+        double earliest_dep_latest_arr = PathFinder::MAX_DATETIME;
+        if (path_spec.hyperpath_) {
+            earliest_dep_latest_arr = current_stop_state.earliestDepartureLatestArrival(path_spec.outbound_, true);
+        } else {
+            earliest_dep_latest_arr = current_stop_state.lowestCostStopState(true).deparr_time_;
+        }
+        double earliest_dep_latest_arr_024 = fix_time_range(earliest_dep_latest_arr);
+
+
+        //int    end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+        std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        for(auto & end_taz_id: all_destinations)
+        {
+
+
+            // are there any egress/access links?
+            if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
+                // this shouldn't happen because of the shortcut
+                // return;
+                //throw std::invalid_argument("Empty access links mean we can't do anything");
+                continue
+            }
+
+            // Are there any supply modes for this demand mode?
+            UserClassPurposeMode ucpm = {
+                path_spec.user_class_,
+                path_spec.purpose_,
+                path_spec.outbound_ ? MODE_ACCESS: MODE_EGRESS,
+                path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_
+            };
+            WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
+            if (iter_weights == weight_lookup_.end()) {
+                // this shouldn't happen because of the shortcut
+                std::cerr << "Couldn't find any weights configured for user class/purpose (2) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+                std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+                std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "] for person " << path_spec.person_id_ << " trip " << path_spec.person_trip_id_ << std::endl;
+                return;
+            }
+
+            // Iterate through valid supply modes
+            SupplyModeToNamedWeights::const_iterator iter_s2w;
+            for (iter_s2w  = iter_weights->second.begin();
+                 iter_s2w != iter_weights->second.end(); ++iter_s2w) {
+                int supply_mode_num = iter_s2w->first;
+
+                for (AccessEgressLinkAttr::const_iterator iter_aelk  = access_egress_links_.lower_bound(end_taz_id, supply_mode_num, current_label_stop.stop_id_);
+                                                          iter_aelk != access_egress_links_.upper_bound(end_taz_id, supply_mode_num, current_label_stop.stop_id_); ++iter_aelk)
+                {
+
+                    const AccessEgressLinkKey& aelk = iter_aelk->first;
+
+                    // require earliest_dep_latest_arr in [start_time_, end_time)
+                    if (aelk.start_time_ >  earliest_dep_latest_arr_024) continue;
+                    if (aelk.end_time_   <= earliest_dep_latest_arr_024) continue;
+
+                    Attributes link_attr            = iter_aelk->second;
+                    link_attr["depart_late_min"]    = 0;
+                    link_attr["arrive_early_min"]   = 0;
+                    link_attr["depart_early_min"]   = 0.0;
+                    link_attr["arrive_late_min"]    = 0.0;
+
+                    double  access_time             = link_attr.find("time_min")->second;
+                    double  access_dist             = link_attr.find("dist")->second;
+                    double  deparr_time, link_cost, cost;
+
+                    deparr_time = earliest_dep_latest_arr - (access_time*dir_factor);
+                    link_cost   = access_time;
+                    cost        = current_stop_state.lowestCostStopState(true).cost_ + link_cost;
+
+                    // capacity check
+                    if (path_spec.outbound_)
+                    {
+                        TripStop ts = { current_stop_state.lowestCostStopState(true).deparr_mode_, current_stop_state.lowestCostStopState(true).seq_, current_label_stop.stop_id_ };
+                        std::map<TripStop, double, struct TripStopCompare>::const_iterator bwi = bump_wait_.find(ts);
+                        if (bwi != bump_wait_.end()) {
+                            // time a bumped passenger started waiting
+                            double latest_time = bwi->second;
+                            // we can't come in time
+                            if (deparr_time - Hyperlink::TIME_WINDOW_ > latest_time) { continue; }
+                            // leave earlier -- to get in line 5 minutes before bump wait time
+                            cost   = cost + (current_stop_state.lowestCostStopState(true).deparr_time_ - latest_time) + BUMP_BUFFER_;
+                            deparr_time = latest_time - access_time - BUMP_BUFFER_;
+                        }
+                    }
+
+                    StopState ts(
+                        deparr_time,                                                                // departure/arrival time
+                        path_spec.outbound_ ? MODE_ACCESS : MODE_EGRESS,                            // departure/arrival mode
+                        supply_mode_num,                                                            // trip id
+                        current_label_stop.stop_id_,                                                // successor/predecessor
+                        -1,                                                                         // sequence
+                        -1,                                                                         // sequence succ/pred
+                        access_time,                                                                // link time
+                        0.0,                                                                        // link fare
+                        link_cost,                                                                  // link cost
+                        access_dist,                                                                // link distance
+                        cost,                                                                       // cost
+                        label_iteration,                                                            // label iteration
+                        earliest_dep_latest_arr,                                                    // arrival/departure time
+              0.0                                                                         // link ivt weight
+                    );
+                    addStopState(path_spec, trace_file, end_taz_id, ts, &current_stop_state, stop_states, label_stop_queue);
+
+                    // set label_cutoff
+                    double low_cost = stop_states[end_taz_id].hyperpathCost(false);
+                    // estimate of the max path cost that would have probability > MIN_PATH_PROBABILITY
+
+                    double max_cost = low_cost - (log(MIN_PATH_PROBABILITY_) - log(1.0-MIN_PATH_PROBABILITY_))*Hyperlink::STOCH_DISPERSION_;
+                    est_max_path_cost = std::min(est_max_path_cost, max_cost);
+
+                } // end iteration through links for the given supply mode
+            } // end iteration through valid supply modes
+        } // end iteration over destinations
+     }
+
+
+
+
+//////////////////
+
+
+
+
+
+
+
+
 
     /**
      * Part of the labeling loop. Assuming the *current_label_stop* was just pulled off the
@@ -1701,7 +1859,10 @@ namespace fasttrips {
                                              label_iterations,
                                              current_label_stop);
 
-                updateStopStatesForFinalLinks(path_spec,
+
+                if (path_spec.skimming)
+                {
+                    updateStopStatesForFinalLinksAllDestinations(path_spec,
                                               trace_file,
                                               reachable_final_stops,
                                               stop_states,
@@ -1709,6 +1870,17 @@ namespace fasttrips {
                                               label_iterations,
                                               current_label_stop,
                                               est_max_path_cost);
+                }
+                else{
+                    updateStopStatesForFinalLinks(path_spec,
+                                              trace_file,
+                                              reachable_final_stops,
+                                              stop_states,
+                                              label_stop_queue,
+                                              label_iterations,
+                                              current_label_stop,
+                                              est_max_path_cost);
+                }
             }
             // else the low cost is walk links, so process trips
             else
@@ -1803,6 +1975,79 @@ namespace fasttrips {
 
                 if (path_spec.trace_) {
                     trace_file << "Stop " << stop_id << " reachable by supply mode " << supply_mode_num << std::endl;
+                }
+            }
+        }
+
+        return (reachable_final_stops.size() > 0);
+    }
+
+
+    /*
+    TODO:
+        - make sure each stop appears only once?
+        - loop over supply modes or dest loop first?
+    */
+    bool PathFinder::setReachableFinalStopsAllDestinations(
+        const PathSpecification& path_spec,
+        std::ofstream& trace_file,
+        std::map<int, int>& reachable_final_stops) const
+    {
+        //int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+        double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
+
+
+        std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        for(auto & end_taz_id: all_destinations)
+        {
+            // are there any egress/access links?
+            if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
+                if (path_spec.trace_) { trace_file << "No links for end_taz_id" << end_taz_id << std::endl; }
+                    continue;
+                //return false;
+            }
+
+            // Are there any supply modes for this demand mode?
+            UserClassPurposeMode ucpm = {
+                path_spec.user_class_,
+                path_spec.purpose_,
+                path_spec.outbound_ ? MODE_ACCESS: MODE_EGRESS,
+                path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_
+            };
+            WeightLookup::const_iterator iter_weights = weight_lookup_.find(ucpm);
+            if (iter_weights == weight_lookup_.end()) {
+                std::cerr << "Couldn't find any weights configured for user class/purpose (3) [" << path_spec.user_class_ << "/" << path_spec.purpose_ << "], ";
+                std::cerr << (path_spec.outbound_ ? "access mode [" : "egress mode [");
+                std::cerr << (path_spec.outbound_ ? path_spec.access_mode_ : path_spec.egress_mode_) << "]" << std::endl;
+                return false;
+            }
+
+            // Iterate through valid supply modes
+            SupplyModeToNamedWeights::const_iterator iter_s2w;
+            for (iter_s2w  = iter_weights->second.begin();
+                 iter_s2w != iter_weights->second.end(); ++iter_s2w) {
+                int supply_mode_num = iter_s2w->first;
+
+                if (path_spec.trace_) {
+                    trace_file << "Weights exist for supply mode " << supply_mode_num << " => ";
+                    trace_file << mode_num_to_str_.find(supply_mode_num)->second << std::endl;
+                }
+
+                for (AccessEgressLinkAttr::const_iterator iter_aelk  = access_egress_links_.lower_bound(end_taz_id, supply_mode_num);
+                                                          iter_aelk != access_egress_links_.upper_bound(end_taz_id, supply_mode_num); ++iter_aelk)
+                {
+
+                    // Iterate through the links for the given supply mode
+                    int stop_id = iter_aelk->first.stop_id_;
+                    if (reachable_final_stops.count(stop_id) == 0) {
+                        reachable_final_stops[stop_id] = 0;
+                    } else {
+                        reachable_final_stops[stop_id] += 1;
+                    }
+
+                    if (path_spec.trace_) {
+                        trace_file << "Stop " << stop_id << " reachable by supply mode " << supply_mode_num << std::endl;
+                    }
                 }
             }
         }
@@ -2046,6 +2291,83 @@ namespace fasttrips {
         // shouldn't get here
         printf("PathFinder::choosePath() This should never happen!\n");
     }
+
+
+
+
+
+////////////////////////
+    int PathFinder::getPathSetAllDestinations(
+        const PathSpecification&    path_spec,
+        std::ofstream&              trace_file,
+        StopStates&                 stop_states,
+        PathSet&                    pathset) const
+    {
+
+        //int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
+        std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        for(auto & end_taz_id: all_destinations)
+        {
+
+
+            // no taz states -> no path found
+            StopStates::const_iterator ssi_iter = stop_states.find(end_taz_id);
+            if (ssi_iter == stop_states.end()) { return RET_FAIL_END_NOT_FOUND; }
+
+            const Hyperlink& taz_state = ssi_iter->second;
+            if (taz_state.size() == 0) { return RET_FAIL_END_NOT_FOUND; }
+
+            // experimental-- look at the low cost path?
+            if (false && path_spec.trace_)
+            {
+                const Path* low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
+                if (low_cost_path) {
+                    trace_file << "Low cost path: " << low_cost_path->cost() << std::endl;
+                    low_cost_path->print(trace_file, path_spec, *this);
+                    trace_file << std::endl;
+                } else { trace_file <<  "Low cost path: " << "None" << std::endl; }
+            }
+
+
+            // outbound: origin to destination
+            // inbound:  destination to origin
+            int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
+
+            Path path(path_spec.outbound_, true);
+            path.addLink(end_taz_id, taz_state.lowestCostStopState(false), trace_file, path_spec, *this);
+
+            while (path.back().second.deparr_mode_ != final_state_type)
+            {
+                const StopState& last_link = path.back().second;
+                int stop_id = last_link.stop_succpred_;
+                StopStates::const_iterator ssi = stop_states.find(stop_id);
+                path.addLink(stop_id,
+                             ssi->second.lowestCostStopState(!isTrip(last_link.deparr_mode_)),
+                             trace_file,
+                             path_spec, *this);
+
+            }
+            PathInfo pi = { 1, 1, 0 };  // count is 1
+            path.calculateCost(trace_file, path_spec, *this);
+            pathset[path] = pi;
+            if (path_spec.trace_)
+            {
+                trace_file << "Final path" << std::endl;
+                path.print(trace_file, path_spec, *this);
+            }
+
+        }
+        return RET_SUCCESS;
+    }
+
+
+
+
+
+////////////////////////
+
+
+
 
     // Returns PathFinder::RET_SUCCESS, etc.
     int PathFinder::getPathSet(

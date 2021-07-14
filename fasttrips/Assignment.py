@@ -2197,6 +2197,152 @@ class Assignment(object):
         return (num_passengers_arrived, pathset_paths_df, pathset_links_df, veh_trips_df)
 
 
+
+
+
+######################################## SKIMMING
+
+    @staticmethod
+    def find_trip_based_pathset_skimming(origin, num_zones, mean_vot, start_time, user_class, purpose,
+                                         access_mode, transit_mode, egress_mode, trace):
+        """
+        """
+        # send it to the C++ extension
+        (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
+         label_iterations, num_labeled_stops, max_label_process_count,
+         ms_labeling, ms_enumerating,
+         bytes_workingset, bytes_privateusage, mem_timestamp) = \
+            _fasttrips.find_pathset_skimming(user_class, purpose, access_mode, transit_mode, egress_mode, origin,
+                                             num_zones, start_time, mean_vot, 1 if trace else 0)
+        FastTripsLogger.debug("Finished finding path for origin %s" % (origin))
+        pathdict = {}
+        row_num  = 0
+
+        for path_num in range(path_costs.shape[0]):
+
+            pathdict[path_num] = {}
+            pathdict[path_num][PathSet.PATH_KEY_COST       ] = path_costs[path_num, 0]
+            pathdict[path_num][PathSet.PATH_KEY_FARE       ] = path_costs[path_num, 1]
+            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 2]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_COST  ] = path_costs[path_num, 3]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_FARE  ] = path_costs[path_num, 4]
+            # List of (stop_id, stop_state)
+            pathdict[path_num][PathSet.PATH_KEY_STATES     ] = []
+
+            # print "path_num %d" % path_num
+
+            # while we have unprocessed rows and the row is still relevant for this path_num
+            while (row_num < ret_ints.shape[0]) and (ret_ints[row_num, 0] == path_num):
+                # print row_num
+
+                mode = ret_ints[row_num, 2]
+                # todo
+                if mode == -100:
+                    mode = PathSet.STATE_MODE_ACCESS
+                elif mode == -101:
+                    mode = PathSet.STATE_MODE_EGRESS
+                elif mode == -102:
+                    mode = PathSet.STATE_MODE_TRANSFER
+                elif mode == -103:
+                    mode = Passenger.MODE_GENERIC_TRANSIT_NUM
+
+                pathdict[path_num][PathSet.PATH_KEY_STATES].append((ret_ints[row_num, 1], [
+                    datetime.timedelta(minutes=ret_doubles[row_num, 0]),                              # label,
+                    Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num,1]),  # departure/arrival time
+                    mode,                                                                            # departure/arrival mode
+                    ret_ints[row_num,3],                                                             # trip id
+                    ret_ints[row_num,4],                                                             # successor/predecessor
+                    ret_ints[row_num,5],                                                             # sequence
+                    ret_ints[row_num,6],                                                             # sequence succ/pred
+                    datetime.timedelta(minutes=ret_doubles[row_num,2]),                              # link time
+                    ret_doubles[row_num,3],                                                          # link fare
+                    datetime.timedelta(minutes=ret_doubles[row_num,4]),                              # link cost
+                    ret_doubles[row_num,5],                                                          # link dist
+                    datetime.timedelta(minutes=ret_doubles[row_num,6]),                              # cost
+                    Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num,7])   # arrival/departure time
+                ]))
+                row_num += 1
+
+        perf_dict = {
+            Performance.PERFORMANCE_PF_COL_PROCESS_NUM           : process_num,
+            Performance.PERFORMANCE_PF_COL_PATHFINDING_STATUS    : pf_returnstatus,
+            Performance.PERFORMANCE_PF_COL_LABEL_ITERATIONS      : label_iterations,
+            Performance.PERFORMANCE_PF_COL_NUM_LABELED_STOPS     : num_labeled_stops,
+            Performance.PERFORMANCE_PF_COL_MAX_STOP_PROCESS_COUNT: max_label_process_count,
+            Performance.PERFORMANCE_PF_COL_TIME_LABELING_MS      : ms_labeling,
+            Performance.PERFORMANCE_PF_COL_TIME_ENUMERATING_MS   : ms_enumerating,
+            Performance.PERFORMANCE_PF_COL_TRACED                : trace,
+            Performance.PERFORMANCE_PF_COL_WORKING_SET_BYTES     : bytes_workingset,
+            Performance.PERFORMANCE_PF_COL_PRIVATE_USAGE_BYTES   : bytes_privateusage,
+            Performance.PERFORMANCE_PF_COL_MEM_TIMESTAMP         : datetime.datetime.fromtimestamp(mem_timestamp)
+        }
+        return (pathdict, perf_dict)
+
+    @staticmethod
+    def generate_pathsets_skimming(output_dir, FT):
+        """
+        Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
+        """
+        FastTripsLogger.info("Skimming")
+        start_time          = datetime.datetime.now()
+
+        veh_trips_df = FT.trips.get_full_trips()
+
+        # FOR NOW: we're starting over with empty vehicles
+        Trip.reset_onboard(veh_trips_df)
+
+        Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
+
+        # this should be configurable, if a list do for each, if not provided use mean
+        mean_vot = FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT].mean()
+
+        # TEST ONE ORIGIN - prototyping is based on Springfield example
+        origin = 12  # use internal labelling, might need some work because only origins with trips might have these set
+        do_trace = True
+        num_zones = 5  # Need to provide externally, current spec does not necessarily list all of them
+        all_zones = [11, 12, 13, 14, 15]
+
+        # TEST: one departure time - this will need to be done every X mins, user specified or default 5 maybe
+        dep_time = 960.0  # make it 4pm for now
+
+        # TODO: either from file or from provided data
+        user_class = 'all'
+        purpose = 'work'
+        access_mode = 'walk'
+        transit_mode = 'transit'
+        egress_mode = 'walk'
+
+        (pathdict, perf_dict) = \
+            Assignment.find_trip_based_pathset_skimming(
+                origin,
+                num_zones,
+                mean_vot,
+                dep_time,
+                user_class,
+                purpose,
+                access_mode,
+                transit_mode,
+                egress_mode,
+                trace=do_trace
+            )
+
+        FT.performance.add_info(-1, -1, -1, origin, perf_dict)
+
+        time_elapsed = datetime.datetime.now() - start_time
+        FastTripsLogger.info("Finished skimming.  Time elapsed: %2dh:%2dm:%2ds" % (
+                                 int( time_elapsed.total_seconds()/ 3600),
+                                 int( (time_elapsed.total_seconds() % 3600)/ 60),
+                                 time_elapsed.total_seconds() % 60))
+
+        return None
+
+################ END SKIMMING
+
+
+
+
+
+
 def find_trip_based_paths_process_worker(iteration, pathfinding_iteration, worker_num, input_network_dir, input_demand_dir, run_config, func_file,
                                          output_dir, todo_pathset_queue, done_queue, hyperpath, bump_wait_df, stop_times_df):
     """
