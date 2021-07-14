@@ -18,6 +18,7 @@ __license__   = """
 """
 import os
 
+import numpy as np
 import pandas as pd
 
 from .Logger import FastTripsLogger
@@ -174,7 +175,10 @@ class Stop(object):
         # assert(pd.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
 
         # number them starting at self.max_stop_id_num
-        daps_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = daps_unique_df.index + self.max_stop_id_num + 1
+        idx = np.arange(daps_unique_df.shape[0], dtype=np.int64) + int(self.max_stop_id_num + 1)
+        daps_unique_df = daps_unique_df.assign(**{Stop.STOPS_COLUMN_STOP_ID_NUM: idx})
+
+
 
         # rename DAP lot id to stop id
         daps_unique_df.rename(columns={dap_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
