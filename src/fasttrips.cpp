@@ -214,14 +214,14 @@ _fasttrips_find_pathset_skimming(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
-    int   hyperpath_i, outbound_i, trace_i, num_zones, origin_taz_id_;
+    int   hyperpath_i, outbound_i, trace_i, num_zones;
     char *person_id, *person_trip_id, *user_class, *purpose, *access_mode, *transit_mode, *egress_mode;
 
-    //user_class, purpose, access_mode, transit_mode, egress_mode, origin,
-    //                                         num_zones, start_time, mean_vot, 1 if trace else 0
+    //user_class, purpose, access_mode, transit_mode, egress_mode,
+    // origin, num_zones, start_time, mean_vot, 1 if trace else 0
     if (!PyArg_ParseTuple(args, "sssssiiddi",
                           &user_class, &purpose, &access_mode, &transit_mode, &egress_mode,
-                          &origin_taz_id_, &num_zones, &path_spec.preferred_time_, &path_spec.value_of_time_,
+                          &path_spec.origin_taz_id_, &num_zones, &path_spec.preferred_time_, &path_spec.value_of_time_,
                           &trace_i)) {
         return NULL;
     }

@@ -2287,6 +2287,8 @@ class Assignment(object):
         start_time          = datetime.datetime.now()
 
         veh_trips_df = FT.trips.get_full_trips()
+        # write 0-iter vehicle trips
+        Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
         # FOR NOW: we're starting over with empty vehicles
         Trip.reset_onboard(veh_trips_df)
@@ -2300,7 +2302,7 @@ class Assignment(object):
         origin = 12  # use internal labelling, might need some work because only origins with trips might have these set
         do_trace = True
         num_zones = 5  # Need to provide externally, current spec does not necessarily list all of them
-        all_zones = [11, 12, 13, 14, 15]
+        # all_zones = [11, 12, 13, 14, 15]
 
         # TEST: one departure time - this will need to be done every X mins, user specified or default 5 maybe
         dep_time = 960.0  # make it 4pm for now
@@ -2328,13 +2330,39 @@ class Assignment(object):
 
         FT.performance.add_info(-1, -1, -1, origin, perf_dict)
 
+
+
+        # now set up paths
+        #
+        # (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, pathfinding_iteration, FT.stops,
+        #                                                                                                           FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
+        #                                                                                                           FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
+        #                     # write pathfinding results to special PF results file
+        #                     Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_paths_df, False,
+        #                                           Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
+        #                     Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_links_df, True,
+        #                                           Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
+        #
+        #                     # write performance info right away in case we crash, quit, etc
+        #                     FT.performance.write_pathfinding(output_dir, append=((iteration>1) or (pathfinding_iteration>1)))
+        #
+        #                 # If we found paths for everyone, excellent
+        #                 if Assignment.PATHFINDING_EVERYONE:
+        #                     pathset_paths_df = new_pathset_paths_df
+        #                     pathset_links_df = new_pathset_links_df
+
+
+
+
+
+
         time_elapsed = datetime.datetime.now() - start_time
         FastTripsLogger.info("Finished skimming.  Time elapsed: %2dh:%2dm:%2ds" % (
                                  int( time_elapsed.total_seconds()/ 3600),
                                  int( (time_elapsed.total_seconds() % 3600)/ 60),
                                  time_elapsed.total_seconds() % 60))
 
-        return None
+        return pathdict, perf_dict
 
 ################ END SKIMMING
 

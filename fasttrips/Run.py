@@ -221,6 +221,24 @@ def run_fasttrips(**kwargs):
     r = ft.run_assignment(fasttrips.Assignment.OUTPUT_DIR)
     return r
 
+def run_fasttrips_skimming(**kwargs):
+    """
+    Wrapper function to set up and run fast-trips.
+    The fast trips parameters as a combination of parameters
+    read from the control file, but overwritten with parameters passed into this function.
+    """
+    args_dict = kwargs
+    # for key in args_dict.keys():
+    #     print "%40s => %s" % (key, args_dict[key])
+
+    # instantiate and read configuration
+    ft = run_setup(**kwargs)
+    # Read the networks and demand
+    ft.read_input_files()
+    # Run Fast-Trips
+    r = ft.run_skimming(fasttrips.Assignment.OUTPUT_DIR)
+    return r
+
 
 USAGE = r"""
 
