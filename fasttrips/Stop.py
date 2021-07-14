@@ -18,6 +18,7 @@ __license__   = """
 """
 import os
 
+import numpy as np
 import pandas as pd
 
 from .Logger import FastTripsLogger
@@ -209,7 +210,7 @@ class Stop(object):
         stop_id_df = self.stop_id_df  # local copy with filled NA
         for col in [Stop.STOPS_COLUMN_ZONE_ID_NUM, Stop.STOPS_COLUMN_ZONE_ID]:
             if col not in stop_id_df.columns:
-                stop_id_df[col] = -1
+                stop_id_df[col] = np.nan
         stop_id_df.fillna(value={Stop.STOPS_COLUMN_ZONE_ID_NUM:-1,
                                  Stop.STOPS_COLUMN_ZONE_ID:"None"}, inplace=True)
         stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM].astype(int)
