@@ -1,10 +1,9 @@
 ###### Requirements without Version Specifiers ######
 configparser
-functools32;python_version<="2.7"
 future
-numpy>=1.15
-pandas==0.22
-partridge==0.6.0.dev1
+numpy
+pandas
+partridge
 psutil
 pytest
 notebook

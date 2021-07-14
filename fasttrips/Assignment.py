@@ -608,11 +608,11 @@ class Assignment(object):
         _fasttrips.initialize_supply(output_dir, process_number,
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                     Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
+                                                    Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].to_numpy().astype('int32'),
                                      stop_times_df[[Trip.STOPTIMES_COLUMN_ARRIVAL_TIME_MIN,
                                                     Trip.STOPTIMES_COLUMN_DEPARTURE_TIME_MIN,
                                                     Trip.STOPTIMES_COLUMN_SHAPE_DIST_TRAVELED,
-                                                    overcap_col]].as_matrix().astype('float64'))
+                                                    overcap_col]].to_numpy().astype('float64'))
 
         _fasttrips.initialize_parameters(Assignment.TIME_WINDOW.total_seconds()/ 60.0,
                                          Assignment.BUMP_BUFFER.total_seconds()/ 60.0,
@@ -639,8 +639,8 @@ class Assignment(object):
 
         _fasttrips.set_bump_wait(bump_wait_df[[Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
                                                Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].as_matrix().astype('int32'),
-                                 bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype('float64'))
+                                               Trip.STOPTIMES_COLUMN_STOP_ID_NUM]].astype(np.int32).to_numpy(),
+                                 bump_wait_df[Passenger.PF_COL_PAX_A_TIME_MIN].values.astype(np.float64))
     @staticmethod
     def write_vehicle_trips(output_dir, iteration, pathfinding_iteration, simulation_iteration, veh_trips_df):
         """
@@ -1546,12 +1546,22 @@ class Assignment(object):
                                     right_index  = True,
                                     how          ='left')
         veh_loaded_df.rename(columns={Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM:Trip.SIM_COL_VEH_ALIGHTS}, inplace=True)
-        veh_loaded_df.fillna(value=0, inplace=True)
+
+        # replace has weird behaviour as of now, so we need a hack to take care of the new behaviour of fill in
+        # TimeDelta columns --> https://github.com/pandas-dev/pandas/issues/29024
+        tdelta_cols = list(veh_loaded_df.select_dtypes(include=['timedelta']).columns)
+        for col in tdelta_cols:
+            veh_loaded_df[col].fillna(pd.Timedelta(seconds=0), inplace=True)
+        for col in veh_loaded_df.columns:
+            if col in tdelta_cols:
+                continue
+            veh_loaded_df[col].fillna(0, inplace=True)
+
         assert(len(veh_loaded_df)==veh_trips_df_len)
 
         # these are ints, not floats
-        veh_loaded_df[[Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]] = \
-            veh_loaded_df[[Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]].astype(int)
+        for col in [Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS]:
+            veh_loaded_df.loc[:, col] = veh_loaded_df[col].astype(int)
 
         veh_loaded_df.set_index([Trip.TRIPS_COLUMN_TRIP_ID_NUM,Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],inplace=True)
         veh_loaded_df[Trip.SIM_COL_VEH_ONBOARD    ] = veh_loaded_df[Trip.SIM_COL_VEH_BOARDS    ] - veh_loaded_df[Trip.SIM_COL_VEH_ALIGHTS    ]

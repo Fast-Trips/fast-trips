@@ -1,15 +1,11 @@
 import os,sys
 from setuptools import setup, Extension
-import sysconfig
 import numpy
 
 # read the contents of your README file
 this_directory = os.path.abspath(os.path.dirname(__file__))
-if sys.version_info[0] > 3:
-    with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
-        long_description = f.read()
-else:
-    long_description = "Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++."
+with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 ### Settings for Extension Building
 #compile_args = sysconfig.get_config_var('CFLAGS').split()
@@ -51,15 +47,15 @@ setup(name          = 'fasttrips',
 
                        # Specify the Python versions you support here. In particular, ensure
                        # that you indicate whether you support Python 2, Python 3 or both.
-                       'Programming Language :: Python :: 2',
-                       'Programming Language :: Python :: 2.7',
                        'Programming Language :: Python :: 3',
-                       'Programming Language :: Python :: 3.6'],
+                       'Programming Language :: Python :: 3.6',
+                       'Programming Language :: Python :: 3.7',
+                       'Programming Language :: Python :: 3.8',
+                       'Programming Language :: Python :: 3.9'],
       keywords      = 'transit model dynamic passenger assignment simulation',
-      install_requires = ['functools32;python_version<="2.7"',
-                          'numpy>=1.15',
-                          'pandas==0.22',
-                          'partridge==0.6.0.dev1',
+      install_requires = ['numpy>=1.15',
+                          'pandas',
+                          'partridge',
                           'future',
                           'configparser',
                           'psutil',

@@ -134,7 +134,7 @@ class FastTrips(object):
 
         service_ids_by_date =ptg.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = ptg.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
+        gtfs_feed = ptg.load_feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
                                    config=Util.get_fast_trips_config(), view={
             'trips.txt': {
               'service_id': service_ids
