@@ -706,7 +706,7 @@ namespace fasttrips {
         gettimeofday(&labeling_end_time, NULL);
 #endif
 
-        if (pathset.skimming):
+        if (pathset.skimming_):
             pf_returnstatus = getPathSetAllDestinations(path_spec, trace_file, stop_states, pathset);
         else:
             pf_returnstatus = getPathSet(path_spec, trace_file, stop_states, pathset);
@@ -1860,7 +1860,7 @@ namespace fasttrips {
                                              current_label_stop);
 
 
-                if (path_spec.skimming)
+                if (path_spec.skimming_)
                 {
                     updateStopStatesForFinalLinksAllDestinations(path_spec,
                                               trace_file,
