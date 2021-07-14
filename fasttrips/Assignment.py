@@ -2333,6 +2333,11 @@ class Assignment(object):
 
 
         # now set up paths
+        from .Skimming import Skimming
+        skims = Skimming()
+
+        pathset_paths_df, pathset_links_df = skims.setup_pathsets(pathdict, FT.stops, FT.routes.modes_df)
+
         #
         # (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, pathfinding_iteration, FT.stops,
         #                                                                                                           FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
@@ -2345,16 +2350,6 @@ class Assignment(object):
         #
         #                     # write performance info right away in case we crash, quit, etc
         #                     FT.performance.write_pathfinding(output_dir, append=((iteration>1) or (pathfinding_iteration>1)))
-        #
-        #                 # If we found paths for everyone, excellent
-        #                 if Assignment.PATHFINDING_EVERYONE:
-        #                     pathset_paths_df = new_pathset_paths_df
-        #                     pathset_links_df = new_pathset_links_df
-
-
-
-
-
 
         time_elapsed = datetime.datetime.now() - start_time
         FastTripsLogger.info("Finished skimming.  Time elapsed: %2dh:%2dm:%2ds" % (
@@ -2362,7 +2357,7 @@ class Assignment(object):
                                  int( (time_elapsed.total_seconds() % 3600)/ 60),
                                  time_elapsed.total_seconds() % 60))
 
-        return pathdict, perf_dict
+        return pathset_paths_df, pathset_links_df, pathdict, perf_dict
 
 ################ END SKIMMING
 
