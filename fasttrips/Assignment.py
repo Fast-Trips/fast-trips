@@ -2204,7 +2204,7 @@ class Assignment(object):
 ######################################## SKIMMING
 
     @staticmethod
-    def find_trip_based_pathset_skimming(origin, num_zones, mean_vot, start_time, user_class, purpose,
+    def find_trip_based_pathset_skimming(origin, mean_vot, start_time, user_class, purpose,
                                          access_mode, transit_mode, egress_mode, trace):
         """
         """
@@ -2214,7 +2214,7 @@ class Assignment(object):
          ms_labeling, ms_enumerating,
          bytes_workingset, bytes_privateusage, mem_timestamp) = \
             _fasttrips.find_pathset_skimming(user_class, purpose, access_mode, transit_mode, egress_mode, origin,
-                                             num_zones, start_time, mean_vot, 1 if trace else 0)
+                                             start_time, mean_vot, 1 if trace else 0)
         FastTripsLogger.debug("Finished finding path for origin %s" % (origin))
         pathdict = {}
         row_num  = 0
