@@ -308,10 +308,10 @@ class Skimming(object):
         FastTripsLogger.debug("setup_passenger_pathsets(): pathlist and linklist constructed")
 
         pathset_paths_df = pd.DataFrame(pathlist, columns=[
-            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+            Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
             'pathdir',  # for debugging
-            'pathmode', # for output
-            Passenger.PF_COL_PF_ITERATION,
+            # ''pathmode', # for output
+            # Passenger.PF_COL_PF_ITERATION,
             Passenger.PF_COL_PATH_NUM,
             PathSet.PATH_KEY_COST,
             PathSet.PATH_KEY_FARE,
@@ -320,8 +320,7 @@ class Skimming(object):
             PathSet.PATH_KEY_INIT_FARE])
 
         pathset_links_df = pd.DataFrame(linklist, columns=[
-            Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-            Passenger.PF_COL_PF_ITERATION,
+            Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
             Passenger.PF_COL_PATH_NUM,
             Passenger.PF_COL_LINK_MODE,
             Route.ROUTES_COLUMN_MODE_NUM,
