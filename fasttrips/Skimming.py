@@ -126,13 +126,11 @@ class Skimming(object):
         self.origin_pathsets[origin] = pathset
 
     def setup_pathsets(self, stops):  #, modes_df):
-        """
+        """ docstring from corresponding passenger method
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
 
         Returns two :py:class:`pandas.DataFrame` instances: pathset_paths_df and pathset_links_df.
-        These only include pathsets for person trips which have just been sought (e.g. those in
-        :py:attr:`Passenger.pathfind_trip_list_df`)
 
         pathset_paths_df has path set information, where each row represents a passenger's path:
 
@@ -401,44 +399,3 @@ class Skimming(object):
                                                                                downcast='integer')
 
         return pathset_paths_df, pathset_links_df
-
-
-    # @staticmethod
-    # def write_paths(output_dir, pathset_df, links, output_pathset_per_sim_iter, drop_debug_columns, drop_pathfinding_columns):
-    #     """
-    #     Write either pathset paths (if links=False) or pathset links (if links=True) as the case may be
-    #     """
-    #     # if simulation_iteration < 0, then this is the pathfinding result
-    #     if simulation_iteration < 0:
-    #         pathset_df[            "iteration"] = iteration
-    #         pathset_df["pathfinding_iteration"] = pathfinding_iteration
-    #         Util.write_dataframe(df=pathset_df,
-    #                              name="pathset_links_df" if links else "pathset_paths_df",
-    #                              output_file=os.path.join(output_dir, Passenger.PF_LINKS_CSV if links else Passenger.PF_PATHS_CSV),
-    #                              append=True if ((iteration > 1) or (pathfinding_iteration > 1)) else False,
-    #                              keep_duration_columns=True,
-    #                              drop_debug_columns=drop_debug_columns,
-    #                              drop_pathfinding_columns=drop_pathfinding_columns)
-    #         pathset_df.drop(["iteration","pathfinding_iteration"], axis=1, inplace=True)
-    #         return
-    #
-    #     # otherwise, add columns and write it
-    #     pathset_df[            "iteration"] = iteration
-    #     pathset_df["pathfinding_iteration"] = pathfinding_iteration
-    #     pathset_df[ "simulation_iteration"] = simulation_iteration
-    #
-    #     # mostly we append
-    #     do_append = True
-    #     # but sometimes we ovewrite
-    #     if output_pathset_per_sim_iter:
-    #         if (iteration == 1) and (pathfinding_iteration == 1) and (simulation_iteration == 0): do_append = False
-    #     else:
-    #         if (iteration == 1) and (pathfinding_iteration == 1): do_append = False
-    #
-    #     Util.write_dataframe(df=pathset_df,
-    #                          name="pathset_links_df" if links else "pathset_paths_df",
-    #                          output_file=os.path.join(output_dir, Passenger.PATHSET_LINKS_CSV if links else Passenger.PATHSET_PATHS_CSV),
-    #                          append=do_append,
-    #                          drop_debug_columns=drop_debug_columns,
-    #                          drop_pathfinding_columns=drop_pathfinding_columns)
-    #     pathset_df.drop(["iteration","pathfinding_iteration","simulation_iteration"], axis=1, inplace=True)
