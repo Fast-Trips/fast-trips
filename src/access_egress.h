@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <ostream>
+#include <vector>
 
 namespace fasttrips {
     /// Generic attributes
@@ -74,6 +75,9 @@ namespace fasttrips {
         // The primary data store
         AccessEgressLinkAttr map_;
 
+        // all tazs that have at least one access or egress link
+        std::vector<int> allConnectedTaz_;
+
     public:
         /// Constructor
         AccessEgressLinks();
@@ -86,6 +90,9 @@ namespace fasttrips {
 
         /// Are there access or egress links for the given taz?
         bool hasLinksForTaz(int taz_id) const;
+
+        /// Return all tazs that have at least one access or egress link
+        std::vector<int> tazWithNetworkConnection(void) { return allConnectedTaz_; };
 
         /// Iterate through the links for the taz id and supply mode
         AccessEgressLinkAttr::const_iterator lower_bound(int taz_id, int supply_mode_num) const;

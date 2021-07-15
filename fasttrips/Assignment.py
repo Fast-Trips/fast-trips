@@ -41,6 +41,7 @@ from .Passenger import Passenger
 from .PathSet import PathSet
 from .Performance import Performance
 from .Trip import Trip
+from .TAZ import TAZ
 from .Util import Util
 
 
@@ -2303,16 +2304,15 @@ class Assignment(object):
         # this should be configurable, if a list do for each, if not provided use mean
         mean_vot = FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT].mean()
 
+        # TODO: taking these for now, but if there are TAZs that don't have acc/eggr link this will have missing values
+        # However, don't we want disconnections for the other ones? So maybe this is correct for the C++ extension and
+        # then adding in skim values will happen outside of that?
+        acc_eggr_links = FT.tazs.merge_access_egress()
+        all_taz = acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique()
 
-        # TEST ONE ORIGIN - prototyping is based on Springfield example
-        origin = 12  # use internal labelling, might need some work because only origins with trips might have these set
         do_trace = True
-        num_zones = 5  # Need to provide externally, current spec does not necessarily list all of them
-        # all_zones = [11, 12, 13, 14, 15]
-
         # TEST: one departure time - this will need to be done every X mins, user specified or default 5 maybe
         dep_time = 960.0  # make it 4pm for now
-
         # TODO: either from file or from provided data
         user_class = 'all'
         purpose = 'work'
@@ -2320,47 +2320,34 @@ class Assignment(object):
         transit_mode = 'transit'
         egress_mode = 'walk'
 
-        (pathdict, perf_dict) = \
-            Assignment.find_trip_based_pathset_skimming(
-                origin,
-                num_zones,
-                mean_vot,
-                dep_time,
-                user_class,
-                purpose,
-                access_mode,
-                transit_mode,
-                egress_mode,
-                trace=do_trace
-            )
-
-        FT.performance.add_info(-1, -1, -1, origin, perf_dict)
-
-
-
         ### Try to re-use existing data structures
         d_t = int(dep_time)
         path_dict = {Passenger.TRIP_LIST_COLUMN_TIME_TARGET: "departure",
                      Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: datetime.time(d_t // 60, (d_t % 60)),
                      Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
 
-        pathset_this_o = PathSet(path_dict)
-        pathset_this_o.pathdict = pathdict
-        skims.add_pathset(origin, pathset_this_o)
-        #pathset_paths_df, pathset_links_df = skims.setup_pathsets(FT.stops)  #, FT.routes.modes_df)
+        for origin in all_taz:
+            # # TEST ONE ORIGIN - prototyping is based on Springfield example
+            # origin = 12  # use internal labelling, might need some work because only origins with trips might have these set
+            # all_zones = [11, 12, 13, 14, 15]
+            (pathdict, perf_dict) = \
+                Assignment.find_trip_based_pathset_skimming(
+                    origin,
+                    mean_vot,
+                    dep_time,
+                    user_class,
+                    purpose,
+                    access_mode,
+                    transit_mode,
+                    egress_mode,
+                    trace=do_trace
+                )
 
-        #
-        # (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, pathfinding_iteration, FT.stops,
-        #                                                                                                           FT.trips.trip_id_df, FT.trips.trips_df, FT.routes.modes_df,
-        #                                                                                                           FT.transfers, FT.tazs, Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
-        #                     # write pathfinding results to special PF results file
-        #                     Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_paths_df, False,
-        #                                           Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
-        #                     Passenger.write_paths(output_dir, iteration, pathfinding_iteration, -1, new_pathset_links_df, True,
-        #                                           Assignment.OUTPUT_PATHSET_PER_SIM_ITER, not Assignment.DEBUG_OUTPUT_COLUMNS, False)
-        #
-        #                     # write performance info right away in case we crash, quit, etc
-        #                     FT.performance.write_pathfinding(output_dir, append=((iteration>1) or (pathfinding_iteration>1)))
+            FT.performance.add_info(-1, -1, -1, origin, perf_dict)
+
+            pathset_this_o = PathSet(path_dict)
+            pathset_this_o.pathdict = pathdict
+            skims.add_pathset(origin, pathset_this_o)
 
         time_elapsed = datetime.datetime.now() - start_time
         FastTripsLogger.info("Finished skimming.  Time elapsed: %2dh:%2dm:%2ds" % (

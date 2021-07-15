@@ -220,6 +220,10 @@ namespace fasttrips {
         /// Access/Egress information: taz id -> supply_mode -> stop id -> (start time, end time) -> attribute map
         AccessEgressLinks access_egress_links_;
 
+        // All zones that have at least one access or egress link, used as destinations in skimming. From access_egress
+        // intermediate file.
+        std::vector<int> all_destinations_;
+
         /// Transfer information: stop id -> stop id -> attributes
         StopStopToAttr transfer_links_o_d_;
         StopStopToAttr transfer_links_d_o_;

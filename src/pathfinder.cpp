@@ -1230,7 +1230,8 @@ namespace fasttrips {
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
 
-        std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        //std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
         {
             if (path_spec.trace_) { trace_file << "Adding stops for destination" << end_taz_id << std::endl; }
@@ -1300,7 +1301,8 @@ namespace fasttrips {
 
         //int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         int origin_taz_id = path_spec.origin_taz_id_;
-        std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        //std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
         {
             if (end_taz_id == origin_taz_id) { continue; }
@@ -1395,7 +1397,8 @@ namespace fasttrips {
 
 
         //int    end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
-        std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        // std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
+        std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
         {
 

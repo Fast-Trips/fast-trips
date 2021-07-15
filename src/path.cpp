@@ -384,13 +384,12 @@ namespace fasttrips {
             int orig_stop           = (path_spec.outbound_? stop_id : stop_state.stop_succpred_);
             int dest_stop           = (path_spec.outbound_? stop_state.stop_succpred_ : stop_id);
 
-            trace_file << "Path::calculateCost() - stop id " << stop_id << ", from " << orig_stop << " to " << dest_stop << std::endl;
+            //trace_file << "Path::calculateCost() - stop id " << stop_id << ", from " << orig_stop << " to " << dest_stop << std::endl;
 
             // ============= access =============
             if (stop_state.deparr_mode_ == MODE_ACCESS)
             {
-
-                trace_file << "Path::calculateCost - access mode cost:";
+                //trace_file << "Path::calculateCost - access mode cost:";
                 // inbound: preferred time is origin departure time
                 double orig_departure_time        = (path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.deparr_time_ - stop_state.link_time_);
 
@@ -413,22 +412,24 @@ namespace fasttrips {
                   }
                 }
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
-                trace_file << stop_state.link_cost_ << std::endl;
+                //trace_file << stop_state.link_cost_ << std::endl;
             }
             // ============= egress =============
             else if (stop_state.deparr_mode_ == MODE_EGRESS)
             {
-                trace_file << "Path::calculateCost - egress mode cost:" << std::flush;
+                //trace_file << "Path::calculateCost - egress mode cost:" << std::flush;
 
                 // outbound: preferred time is destination arrival time
                 double dest_arrival_time          = (path_spec.outbound_ ? stop_state.deparr_time_ + stop_state.link_time_ : stop_state.deparr_time_);
                 int transit_stop                  = (path_spec.outbound_ ? stop_id : stop_state.stop_succpred_);
                 const NamedWeights* named_weights = pf.getNamedWeights(  path_spec.user_class_, path_spec.purpose_, MODE_EGRESS, path_spec.egress_mode_, stop_state.trip_id_);
 
-
-                // TODO Jan: is this right? if so, make this conditional on skimming
                 //Attributes          attributes    = *(pf.getAccessAttributes( path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
-                Attributes          attributes    = *(pf.getAccessAttributes(dest_stop, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
+                Attributes attributes;
+                if (path_spec.skimming_)
+                    attributes = *(pf.getAccessAttributes(dest_stop, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
+                else
+                    attributes = *(pf.getAccessAttributes(path_spec.destination_taz_id_, stop_state.trip_id_, transit_stop, fmod(dest_arrival_time,24.0*60.0)));
 
 
                 attributes["arrive_early_min"]    = 0;
@@ -448,12 +449,12 @@ namespace fasttrips {
 
                 stop_state.link_cost_             = pf.tallyLinkCost(stop_state.trip_id_, path_spec, trace_file, *named_weights, attributes, hush);
 
-                trace_file << stop_state.link_cost_ << std::endl;
+                //trace_file << stop_state.link_cost_ << std::endl;
             }
             // ============= transfer =============
             else if (stop_state.deparr_mode_ == MODE_TRANSFER)
             {
-                trace_file << "Path::calculateCost - transfer cost:";
+               // trace_file << "Path::calculateCost - transfer cost:";
 
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
@@ -463,7 +464,7 @@ namespace fasttrips {
             // ============= trip =============
             else
             {
-                trace_file << "Path::calculateCost - trip cost:";
+                //trace_file << "Path::calculateCost - trip cost:";
 
                 double trip_ivt_min               = (stop_state.arrdep_time_ - stop_state.deparr_time_)*dir_factor;
                 double trip_depart_time           = path_spec.outbound_ ? stop_state.deparr_time_ : stop_state.arrdep_time_;
@@ -522,7 +523,7 @@ namespace fasttrips {
             cost_                            += stop_state.link_cost_;
             fare_                            += stop_state.link_fare_;
             stop_state.cost_                  = cost_;
-            trace_file << "Cost to here: " << cost_ << std::endl;
+            //trace_file << "Cost to here: " << cost_ << std::endl;
         }
 
         if (path_spec.trace_ && !hush) {
