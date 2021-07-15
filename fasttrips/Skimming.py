@@ -125,7 +125,7 @@ class Skimming(object):
         """
         self.origin_pathsets[origin] = pathset
 
-    def setup_pathsets(self, stops, modes_df):
+    def setup_pathsets(self, stops):  #, modes_df):
         """
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -198,7 +198,7 @@ class Skimming(object):
         pathlist = []
         linklist = []
 
-        for trip_list_id, pathset in self.origin_pathsets.items():
+        for origin, pathset in self.origin_pathsets.items():
 
             # TODO Jan: check:
             # if not pathset.goes_somewhere():   continue
@@ -226,12 +226,14 @@ class Skimming(object):
                 prev_linkmode = None
 
                 state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
-                if not pathset.outbound: state_list = list(reversed(state_list))
+                # skimming is always inbound
+                # if not pathset.outbound: state_list = list(reversed(state_list))
+                state_list = list(reversed(state_list))
 
                 pathlist.append([
-                    trip_list_id,
+                    origin,
                     pathset.direction,
-                    pathset.mode,
+                    # pathset.mode,  # where does this come from?
                     pathnum,
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
@@ -255,22 +257,22 @@ class Skimming(object):
                         trip_id     = state[PathSet.STATE_IDX_TRIP]
                         linkmode    = PathSet.STATE_MODE_TRIP
 
-                    if pathset.outbound:
-                        a_id_num    = state_id
-                        b_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
-                        a_seq       = state[PathSet.STATE_IDX_SEQ]
-                        b_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                        b_time      = state[PathSet.STATE_IDX_ARRDEP]
-                        a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                        trip_time   = state[PathSet.STATE_IDX_ARRDEP] - state[PathSet.STATE_IDX_DEPARR]
-                    else:
-                        a_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
-                        b_id_num    = state_id
-                        a_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                        b_seq       = state[PathSet.STATE_IDX_SEQ]
-                        b_time      = state[PathSet.STATE_IDX_DEPARR]
-                        a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                        trip_time   = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
+                    # if pathset.outbound:
+                    #     a_id_num    = state_id
+                    #     b_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
+                    #     a_seq       = state[PathSet.STATE_IDX_SEQ]
+                    #     b_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
+                    #     b_time      = state[PathSet.STATE_IDX_ARRDEP]
+                    #     a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
+                    #     trip_time   = state[PathSet.STATE_IDX_ARRDEP] - state[PathSet.STATE_IDX_DEPARR]
+                    # else:
+                    a_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
+                    b_id_num    = state_id
+                    a_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
+                    b_seq       = state[PathSet.STATE_IDX_SEQ]
+                    b_time      = state[PathSet.STATE_IDX_DEPARR]
+                    a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
+                    trip_time   = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
 
                     # trips: linktime includes wait
                     if linkmode == PathSet.STATE_MODE_TRIP:
@@ -282,7 +284,7 @@ class Skimming(object):
                         sys.exit()
 
                     linklist.append([
-                        trip_list_id,
+                        origin,
                         pathnum,
                         linkmode,
                         mode_num,

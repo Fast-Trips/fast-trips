@@ -237,7 +237,7 @@ def run_fasttrips_skimming(**kwargs):
     ft.read_input_files()
     # Run Fast-Trips
     r = ft.run_skimming(fasttrips.Assignment.OUTPUT_DIR)
-    return r
+    return ft, r
 
 
 USAGE = r"""

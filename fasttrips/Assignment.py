@@ -2286,6 +2286,8 @@ class Assignment(object):
         FastTripsLogger.info("Skimming")
         start_time          = datetime.datetime.now()
 
+
+        # this needs to happen outside the loop over origins. and user classes. and time.
         from .Skimming import Skimming
         skims = Skimming()
 
@@ -2343,9 +2345,9 @@ class Assignment(object):
                      Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
 
         pathset_this_o = PathSet(path_dict)
-        pathset_this_o.path_dict = pathdict
+        pathset_this_o.pathdict = pathdict
         skims.add_pathset(origin, pathset_this_o)
-        pathset_paths_df, pathset_links_df = skims.setup_pathsets(pathdict, FT.stops, FT.routes.modes_df)
+        #pathset_paths_df, pathset_links_df = skims.setup_pathsets(FT.stops)  #, FT.routes.modes_df)
 
         #
         # (new_pathset_paths_df, new_pathset_links_df) = FT.passengers.setup_passenger_pathsets(iteration, pathfinding_iteration, FT.stops,
@@ -2366,8 +2368,8 @@ class Assignment(object):
                                  int( (time_elapsed.total_seconds() % 3600)/ 60),
                                  time_elapsed.total_seconds() % 60))
 
-        return skims, pathset_paths_df, pathset_links_df
-        
+        return skims  #, pathset_paths_df, pathset_links_df
+
 ################ END SKIMMING
 
 
