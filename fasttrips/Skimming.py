@@ -45,6 +45,14 @@ class Skimming(object):
     :py:attr:`Passenger.persons_df`, which are both :py:class:`pandas.DataFrame` instances.
     """
 
+    # TODO Jan: add
+    # time_period_start = 960
+    # time_period_end = 1020
+    # time_sampling_size = 5 minutes
+    # which components
+    # vot - use mean for now, but add option to pass in list with values, each of which will lead to calc
+    #
+
     @staticmethod
     def generate_skims(output_dir, FT):
 
@@ -532,3 +540,58 @@ class Skimming(object):
             pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64].apply(pd.to_numeric,
                                                                                downcast='integer')
         return pathset_paths_df, pathset_links_df
+
+
+
+class Skim(object):
+    """
+    A single skim matrix, wraps a numpy array and has a write to omx method
+    """
+    skim_component_types = {
+        "num_transfers": np.int32,
+        "ivt": np.float32,
+        "fare": np.float32
+    }
+    skim_component_default_vals = {
+        "num_transfers": -1,
+        "ivt": np.inf,
+        "fare": np.inf
+    }
+
+    def __init__(self, name, num_zones, zone_index_mapping=None):
+        assert name in Skim.skim_component_types.keys(), \
+            f"Skim component {name} not implemented yet, choose from {Skim.skim_component_types.keys()}"
+        self.name = name
+        self.num_zones = num_zones
+        self.matrix = np.full((num_zones, num_zones), Skim.skim_component_default_vals[name],
+                              dtype=Skim.skim_component_types[name])
+        self.zone_index_mapping = zone_index_mapping
+
+    def set_value(self, origin, destination, value):
+        # TODO: do we coerce here?
+        self.matrix[origin, destination] = value
+
+    def set_row(self, origin, values):
+        """
+        Sets skim row, i.e. value for a given origin to all destinations. Expects numpy array for now, maybe
+        change that
+        """
+        assert values.shape[0] == self.num_zones
+        self.matrix[origin] = values
+
+    def set_column(self, destination, values):
+        """
+        Sets skim column, i.e. value for a given destination to all origins. Expects numpy array for now, maybe
+        change that
+        """
+        assert values.shape[0] == self.num_zones
+        self.matrix[:,destination] = values
+
+    def write_to_file(self, file_root, name=None):
+        """
+        write skim matrix to omx file. if no name provided use default.
+        """
+        # if name is None:
+        #     name = f"{self.name}_skim.omx"
+        pass
+
