@@ -885,11 +885,12 @@ class Route(object):
 
         # put them together
         trip_links_df = pd.concat([trip_links_matched, trip_links_unmatched], axis=0, copy=False)
-        trip_links_df.sort_values(by=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] +
-                                      Passenger.get_id_columns(is_skimming) +
-                                      [Passenger.PF_COL_PATH_NUM,
-                                      Passenger.PF_COL_LINK_NUM],
-                                      inplace=True)
+
+        cols_to_use = Passenger.get_id_columns(is_skimming) + [Passenger.PF_COL_PATH_NUM, Passenger.PF_COL_LINK_NUM]
+        if not is_skimming:
+            cols_to_use += [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]
+
+        trip_links_df.sort_values(by=cols_to_use, inplace=True)
         del trip_links_matched
         del trip_links_unmatched
 

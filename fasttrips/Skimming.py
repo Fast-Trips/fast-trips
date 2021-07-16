@@ -418,4 +418,3 @@ class Skimming(object):
             pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64].apply(pd.to_numeric,
                                                                                downcast='integer')
         return pathset_paths_df, pathset_links_df
-    
