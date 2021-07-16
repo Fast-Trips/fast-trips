@@ -4,7 +4,7 @@ from builtins import range
 from builtins import object
 
 __copyright__ = "Copyright 2015 Contributing Entities"
-__license__   = """
+__license__ = """
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -43,78 +43,78 @@ class Skimming(object):
     """
 
     #: Trip list column: Origin TAZ ID
-    TRIP_LIST_COLUMN_ORIGIN_TAZ_ID              = "o_taz"
+    TRIP_LIST_COLUMN_ORIGIN_TAZ_ID = "o_taz"
     #: Trip list column: Destination TAZ ID
-    TRIP_LIST_COLUMN_DESTINATION_TAZ_ID         = "d_taz"
+    TRIP_LIST_COLUMN_DESTINATION_TAZ_ID = "d_taz"
     #: Trip list column: Mode
-    TRIP_LIST_COLUMN_MODE                       = "mode"
+    TRIP_LIST_COLUMN_MODE = "mode"
     #: Trip list column: Departure Time. DateTime.
-    TRIP_LIST_COLUMN_DEPARTURE_TIME             = 'departure_time'
+    TRIP_LIST_COLUMN_DEPARTURE_TIME = 'departure_time'
     #: Trip list column: Arrival Time. DateTime.
-    TRIP_LIST_COLUMN_ARRIVAL_TIME               = 'arrival_time'
+    TRIP_LIST_COLUMN_ARRIVAL_TIME = 'arrival_time'
     #: Trip list column: Time Target (either 'arrival' or 'departure')
-    TRIP_LIST_COLUMN_TIME_TARGET                = 'time_target'
+    TRIP_LIST_COLUMN_TIME_TARGET = 'time_target'
     # ========== Added by fasttrips =======================================================
     #: Trip list column: Unique numeric ID for this passenger/trip
-    TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM          = "o_taz_num"
+    TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM = "o_taz_num"
     #: Trip list column: Destination Numeric TAZ ID
-    TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM     = "d_taz_num"
+    TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM = "d_taz_num"
     #: Trip list column: Departure Time. Float, minutes after midnight.
-    TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN         = 'departure_time_min'
+    TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN = 'departure_time_min'
     #: Trip list column: Departure Time. Float, minutes after midnight.
-    TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN           = 'arrival_time_min'
+    TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN = 'arrival_time_min'
     #: Trip list column: Transit Mode
-    TRIP_LIST_COLUMN_TRANSIT_MODE               = "transit_mode"
+    TRIP_LIST_COLUMN_TRANSIT_MODE = "transit_mode"
     #: Trip list column: Access Mode
-    TRIP_LIST_COLUMN_ACCESS_MODE                = "access_mode"
+    TRIP_LIST_COLUMN_ACCESS_MODE = "access_mode"
     #: Trip list column: Egress Mode
-    TRIP_LIST_COLUMN_EGRESS_MODE                = "egress_mode"
+    TRIP_LIST_COLUMN_EGRESS_MODE = "egress_mode"
 
     #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
     #: TODO: get rid of this?  Maybe user should always specify.
-    MODE_GENERIC_TRANSIT                        = "transit"
+    MODE_GENERIC_TRANSIT = "transit"
     #: Generic transit - Numeric mode number
-    MODE_GENERIC_TRANSIT_NUM                    = 1000
+    MODE_GENERIC_TRANSIT_NUM = 1000
 
     #: Trip list column: User class. String.
-    TRIP_LIST_COLUMN_USER_CLASS                 = "user_class"
+    TRIP_LIST_COLUMN_USER_CLASS = "user_class"
     #: Trip list column: Purpose. String.
-    TRIP_LIST_COLUMN_PURPOSE                    = "purpose"
+    TRIP_LIST_COLUMN_PURPOSE = "purpose"
     #: Trip list column: Value of time. Float.
-    TRIP_LIST_COLUMN_VOT                        = "vot"
+    TRIP_LIST_COLUMN_VOT = "vot"
     #: Trip list column: Trace. Boolean.
-    TRIP_LIST_COLUMN_TRACE                      = "trace"
+    TRIP_LIST_COLUMN_TRACE = "trace"
 
     #: Column names from pathfinding -> see Passenger.py. Keep for now to minimise code duplication.
-    PF_COL_PF_ITERATION             = 'pf_iteration' #: 0.01*pathfinding_iteration + iteration during which this path was found
-    PF_COL_PAX_A_TIME               = 'pf_A_time'    #: time path-finder thinks passenger arrived at A
-    PF_COL_PAX_B_TIME               = 'pf_B_time'    #: time path-finder thinks passenger arrived at B
-    PF_COL_LINK_TIME                = 'pf_linktime'  #: time path-finder thinks passenger spent on link
-    PF_COL_LINK_FARE                = 'pf_linkfare'  #: fare path-finder thinks passenger spent on link
-    PF_COL_LINK_COST                = 'pf_linkcost'  #: cost (generalized) path-finder thinks passenger spent on link
-    PF_COL_LINK_DIST                = 'pf_linkdist'  #: dist path-finder thinks passenger spent on link
-    PF_COL_WAIT_TIME                = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
+    PF_COL_PF_ITERATION = 'pf_iteration'  #: 0.01*pathfinding_iteration + iteration during which this path was found
+    PF_COL_PAX_A_TIME = 'pf_A_time'  #: time path-finder thinks passenger arrived at A
+    PF_COL_PAX_B_TIME = 'pf_B_time'  #: time path-finder thinks passenger arrived at B
+    PF_COL_LINK_TIME = 'pf_linktime'  #: time path-finder thinks passenger spent on link
+    PF_COL_LINK_FARE = 'pf_linkfare'  #: fare path-finder thinks passenger spent on link
+    PF_COL_LINK_COST = 'pf_linkcost'  #: cost (generalized) path-finder thinks passenger spent on link
+    PF_COL_LINK_DIST = 'pf_linkdist'  #: dist path-finder thinks passenger spent on link
+    PF_COL_WAIT_TIME = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
 
-    PF_COL_PATH_NUM                 = 'pathnum'      #: path number, starting from 0
-    PF_COL_LINK_NUM                 = 'linknum'      #: link number, starting from access
-    PF_COL_LINK_MODE                = 'linkmode'     #: link mode (Access, Trip, Egress, etc)
+    PF_COL_PATH_NUM = 'pathnum'  #: path number, starting from 0
+    PF_COL_LINK_NUM = 'linknum'  #: link number, starting from access
+    PF_COL_LINK_MODE = 'linkmode'  #: link mode (Access, Trip, Egress, etc)
 
-    PF_COL_MODE                     = TRIP_LIST_COLUMN_MODE        #: supply mode
-    PF_COL_ROUTE_ID                 = Trip.TRIPS_COLUMN_ROUTE_ID   #: link route ID
-    PF_COL_TRIP_ID                  = Trip.TRIPS_COLUMN_TRIP_ID    #: link trip ID
-    PF_COL_DESCRIPTION              = 'description'                #: path text description
+    PF_COL_MODE = TRIP_LIST_COLUMN_MODE  #: supply mode
+    PF_COL_ROUTE_ID = Trip.TRIPS_COLUMN_ROUTE_ID  #: link route ID
+    PF_COL_TRIP_ID = Trip.TRIPS_COLUMN_TRIP_ID  #: link trip ID
+    PF_COL_DESCRIPTION = 'description'  #: path text description
     #: todo replace/rename ??
-    PF_COL_PAX_A_TIME_MIN           = 'pf_A_time_min'
+    PF_COL_PAX_A_TIME_MIN = 'pf_A_time_min'
 
     #: pathfinding results
-    PF_PATHS_CSV                    = r"enumerated_paths.csv"
-    PF_LINKS_CSV                    = r"enumerated_links.csv"
+    PF_PATHS_CSV = r"enumerated_paths.csv"
+    PF_LINKS_CSV = r"enumerated_links.csv"
 
     #: results - PathSets
-    PATHSET_PATHS_CSV               = r"pathset_paths.csv"
-    PATHSET_LINKS_CSV               = r"pathset_links.csv"
+    PATHSET_PATHS_CSV = r"pathset_paths.csv"
+    PATHSET_LINKS_CSV = r"pathset_links.csv"
 
-    def __init__(self): #, output_dir):
+    def __init__(self):  # , output_dir):
         """
         """
         self.origin_pathsets = {}
@@ -125,7 +125,11 @@ class Skimming(object):
         """
         self.origin_pathsets[origin] = pathset
 
-    def setup_pathsets(self, stops):  #, modes_df):
+
+    # TODO Jan: replace with passenger method, need to add
+    # pathmode (use None? just a string), and pathset.outbound = False
+    # I think. Note they are not in init.
+    def setup_pathsets(self, stops, trip_id_df, trips_df, modes_df):
         """ docstring from corresponding passenger method
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -240,20 +244,20 @@ class Skimming(object):
                     pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_FARE]
                 ])
 
-                link_num   = 0
+                link_num = 0
                 for (state_id, state) in state_list:
 
-                    linkmode        = state[PathSet.STATE_IDX_DEPARRMODE]
-                    mode_num        = None
-                    trip_id         = None
-                    waittime        = None
+                    linkmode = state[PathSet.STATE_IDX_DEPARRMODE]
+                    mode_num = None
+                    trip_id = None
+                    waittime = None
 
                     if linkmode in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
-                        mode_num    = state[PathSet.STATE_IDX_TRIP]
+                        mode_num = state[PathSet.STATE_IDX_TRIP]
                     else:
                         # trip mode_num will need to be joined
-                        trip_id     = state[PathSet.STATE_IDX_TRIP]
-                        linkmode    = PathSet.STATE_MODE_TRIP
+                        trip_id = state[PathSet.STATE_IDX_TRIP]
+                        linkmode = PathSet.STATE_MODE_TRIP
 
                     # if pathset.outbound:
                     #     a_id_num    = state_id
@@ -264,17 +268,17 @@ class Skimming(object):
                     #     a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
                     #     trip_time   = state[PathSet.STATE_IDX_ARRDEP] - state[PathSet.STATE_IDX_DEPARR]
                     # else:
-                    a_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
-                    b_id_num    = state_id
-                    a_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                    b_seq       = state[PathSet.STATE_IDX_SEQ]
-                    b_time      = state[PathSet.STATE_IDX_DEPARR]
-                    a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                    trip_time   = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
+                    a_id_num = state[PathSet.STATE_IDX_SUCCPRED]
+                    b_id_num = state_id
+                    a_seq = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
+                    b_seq = state[PathSet.STATE_IDX_SEQ]
+                    b_time = state[PathSet.STATE_IDX_DEPARR]
+                    a_time = b_time - state[PathSet.STATE_IDX_LINKTIME]
+                    trip_time = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
 
                     # trips: linktime includes wait
                     if linkmode == PathSet.STATE_MODE_TRIP:
-                        waittime    = state[PathSet.STATE_IDX_LINKTIME] - trip_time
+                        waittime = state[PathSet.STATE_IDX_LINKTIME] - trip_time
 
                     # two trips in a row -- this shouldn't happen
                     if linkmode == PathSet.STATE_MODE_TRIP and prev_linkmode == PathSet.STATE_MODE_TRIP:
@@ -301,7 +305,7 @@ class Skimming(object):
                         link_num])
 
                     prev_linkmode = linkmode
-                    link_num     += 1
+                    link_num += 1
 
         FastTripsLogger.debug("setup_passenger_pathsets(): pathlist and linklist constructed")
 
@@ -323,8 +327,8 @@ class Skimming(object):
             Passenger.PF_COL_LINK_MODE,
             Route.ROUTES_COLUMN_MODE_NUM,
             Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-            'A_id_num','B_id_num',
-            'A_seq','B_seq',
+            'A_id_num', 'B_id_num',
+            'A_seq', 'B_seq',
             Passenger.PF_COL_PAX_A_TIME,
             Passenger.PF_COL_PAX_B_TIME,
             Passenger.PF_COL_LINK_TIME,
@@ -334,51 +338,68 @@ class Skimming(object):
             Passenger.PF_COL_WAIT_TIME,
             Passenger.PF_COL_LINK_NUM])
 
-        FastTripsLogger.debug("setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (len(pathset_paths_df), len(pathset_links_df)))
+        FastTripsLogger.debug(
+            "setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
+            len(pathset_paths_df), len(pathset_links_df)))
 
         # get A_id and B_id and trip_id
-        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df,'A_id_num','A_id')
-        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df,'B_id_num','B_id')
+        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df, 'A_id_num', 'A_id')
+        pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df, 'B_id_num', 'B_id')
 
         # get A_lat, A_lon, B_lat, B_lon
-        pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="A_id", new_lat_colname="A_lat", new_lon_colname="A_lon")
-        pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="B_id", new_lat_colname="B_lat", new_lon_colname="B_lon")
+        pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="A_id", new_lat_colname="A_lat",
+                                                  new_lon_colname="A_lon")
+        pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="B_id", new_lat_colname="B_lat",
+                                                  new_lon_colname="B_lon")
 
         ## get trip_id
-        #pathset_links_df = Util.add_new_id(  input_df=pathset_links_df,          id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,         newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
-        #                                   mapping_df=trip_id_df,        mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM, mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
+        pathset_links_df = Util.add_new_id(input_df=pathset_links_df, id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,
+                                           newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
+                                           mapping_df=trip_id_df, mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,
+                                           mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
 
         # get route id
-        # mode_num will appear in left (for non-transit links) and right (for transit link) both, so we need to consolidate
-        #pathset_links_df = pd.merge(left=pathset_links_df, right=trips_df[[Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID, Route.ROUTES_COLUMN_MODE_NUM]],
-        #                                how="left", on=Trip.TRIPS_COLUMN_TRIP_ID)
+        # mode_num will appear in left (for non-transit links) and right (for transit link) both, so we need to
+        # consolidate
+        pathset_links_df = pd.merge(left=pathset_links_df, right=trips_df[
+            [Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID, Route.ROUTES_COLUMN_MODE_NUM]],
+                                    how="left", on=Trip.TRIPS_COLUMN_TRIP_ID)
+        pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_x" % Route.ROUTES_COLUMN_MODE_NUM]
+        pathset_links_df.loc[
+            pd.notnull(pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]), Route.ROUTES_COLUMN_MODE_NUM] = \
+        pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
+        pathset_links_df.drop(["%s_x" % Route.ROUTES_COLUMN_MODE_NUM,
+                               "%s_y" % Route.ROUTES_COLUMN_MODE_NUM], axis=1, inplace=True)
 
-        # pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_x" % Route.ROUTES_COLUMN_MODE_NUM]
-        # pathset_links_df.loc[pd.notnull(pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]), Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
-        # pathset_links_df.drop(["%s_x" % Route.ROUTES_COLUMN_MODE_NUM,
-        #                        "%s_y" % Route.ROUTES_COLUMN_MODE_NUM], axis=1, inplace=True)
-        # # verify it's always set
-        # FastTripsLogger.debug("Have %d links with no mode number set" % len(pathset_links_df.loc[ pd.isnull(pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM]) ]))
-        #
-        # # get supply mode
-        # pathset_links_df = pd.merge(left=pathset_links_df, right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]], how="left")
-        #
-        # FastTripsLogger.debug("setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
-        # # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())
+        # get supply mode
+        pathset_links_df = pd.merge(left=pathset_links_df,
+                                    right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]],
+                                    how="left")
+
+        FastTripsLogger.debug(
+            "setup_skimming_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
 
         # if len(pathset_paths_df) > 0:
         #     # create path description
-        #     pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[Route.ROUTES_COLUMN_MODE]
-        #     pathset_links_df.loc[ pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
-        #     pathset_links_df.loc[ pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]),     Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
-        #     pathset_links_df.loc[ pathset_links_df[Passenger.PF_COL_LINK_MODE]==PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION ] = pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
+        #     pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[
+        #         Route.ROUTES_COLUMN_MODE]
+        #     pathset_links_df.loc[
+        #         pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
+        #         pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
+        #     pathset_links_df.loc[
+        #         pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
+        #         pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
+        #     pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE] ==
+        #                          PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION] = \
+        #         pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
         #
         #     descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
         #                                  Passenger.PF_COL_PF_ITERATION,
         #                                  Passenger.PF_COL_PATH_NUM,
-        #                                  Passenger.PF_COL_DESCRIPTION]].groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-        #                                                                          Passenger.PF_COL_PF_ITERATION,
-        #                                                                          Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x:" ".join(x))
+        #                                  Passenger.PF_COL_DESCRIPTION]].groupby(
+        #         [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+        #          Passenger.PF_COL_PF_ITERATION,
+        #          Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x: " ".join(x))
         #     descr_df = descr_df.to_frame().reset_index()
         #     # join it to pathset_paths and drop from pathset_links
         #     pathset_paths_df = pd.merge(left=pathset_paths_df, right=descr_df, how="left")
@@ -391,11 +412,10 @@ class Skimming(object):
         pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64] = \
             pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64].apply(pd.to_numeric,
                                                                                downcast='integer')
-
         pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64] = \
             pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64].astype(np.float32)
         pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64] = \
             pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64].apply(pd.to_numeric,
                                                                                downcast='integer')
-
         return pathset_paths_df, pathset_links_df
+    

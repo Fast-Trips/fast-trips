@@ -1398,7 +1398,7 @@ class Assignment(object):
 
 
     @staticmethod
-    def find_passenger_vehicle_times(pathset_links_df, veh_trips_df):
+    def find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=False):
         """
         Given a dataframe of passenger links and a dataframe of vehicle trip links, adds two new columns to the passenger links for board and alight time.
 
@@ -1437,19 +1437,19 @@ class Assignment(object):
         if Trip.SIM_COL_VEH_OVERCAP_FRAC not in list(veh_trips_df.columns.values):
             veh_trip_cols.remove(Trip.SIM_COL_VEH_OVERCAP_FRAC)
 
-        #This is a little long winded, but it cuts down on memory dramatically, but only copying
-        #what is actually needed during the merges.
-        intermediate = pd.merge(left=pathset_links_df[[Passenger.PERSONS_COLUMN_PERSON_ID, Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq',
-                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                        Passenger.PF_COL_PATH_NUM,
-                                        Passenger.PF_COL_LINK_NUM,
-                                        'B_id', 'B_seq']],
-                 right=veh_trips_df[veh_trip_cols],
-                 left_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq'],
-                 right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                          Trip.STOPTIMES_COLUMN_STOP_ID,
-                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                 how     ='inner')
+        # This is a little long winded, but it cuts down on memory dramatically, but only copying
+        # what is actually needed during the merges.
+        intermediate = pd.merge(left=pathset_links_df[Passenger.get_id_columns(is_skimming) +
+                                                      [Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq',
+                                                       Passenger.PF_COL_PATH_NUM,
+                                                       Passenger.PF_COL_LINK_NUM,
+                                                       'B_id', 'B_seq']],
+                                right=veh_trips_df[veh_trip_cols],
+                                left_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq'],
+                                right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                          Trip.STOPTIMES_COLUMN_STOP_ID,
+                                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                how='inner')
 
         intermediate = intermediate.drop(columns=[Trip.STOPTIMES_COLUMN_STOP_ID,
                                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
@@ -1480,9 +1480,8 @@ class Assignment(object):
             FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df len=%d\n%s" % \
                                   (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
 
-        return pd.merge(pathset_links_df, intermediate, on=[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                                            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                            Passenger.PF_COL_PATH_NUM,
+        return pd.merge(pathset_links_df, intermediate, on=Passenger.get_id_columns(is_skimming) +
+                                                           [Passenger.PF_COL_PATH_NUM,
                                                             Passenger.PF_COL_LINK_NUM,], how='left')
 
 

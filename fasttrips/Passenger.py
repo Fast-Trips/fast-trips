@@ -1076,3 +1076,11 @@ class Passenger(object):
             return pathset_links_df.loc[slicer,].copy()
 
         return pathset_links_df.loc[slicer,]
+
+    @staticmethod
+    def get_id_columns(is_skimming):
+        if is_skimming:
+            return [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM]
+        else:
+            return [Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]
+

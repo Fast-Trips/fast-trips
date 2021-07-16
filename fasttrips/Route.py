@@ -665,7 +665,7 @@ class Route(object):
         else:
             FastTripsLogger.debug("No fare rules so no file %s" % os.path.join(self.output_dir, Route.OUTPUT_FARE_ID_FILE))
 
-    def add_fares(self, trip_links_df):
+    def add_fares(self, trip_links_df, is_skimming=False):
         """
         Adds (or replaces) fare columns to the given :py:class:`pandas.DataFrame`.
 
@@ -742,17 +742,14 @@ class Route(object):
             FastTripsLogger.debug("add_fares level 0 (%d):\n%s" % (len(trip_links_match0), str(trip_links_match0.head(20))))
 
             if len(trip_links_match0) > 0:
-
                 # update matched and unmatched == they should be disjoint with union = whole
                 trip_links_unmatched = pd.merge(left =trip_links_unmatched,
-                                                    right=trip_links_match0[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                             Passenger.PF_COL_PATH_NUM,
+                                                    right=trip_links_match0[Passenger.get_id_columns(is_skimming) +
+                                                                            [Passenger.PF_COL_PATH_NUM,
                                                                              Passenger.PF_COL_LINK_NUM]],
                                                     how  ="left",
-                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                           Passenger.PF_COL_PATH_NUM,
+                                                    on   =Passenger.get_id_columns(is_skimming) +
+                                                           [Passenger.PF_COL_PATH_NUM,
                                                            Passenger.PF_COL_LINK_NUM],
                                                     indicator=True)
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
@@ -790,14 +787,12 @@ class Route(object):
             if len(trip_links_match1) > 0:
                 # update matched and unmatched == they should be disjoint with union = whole
                 trip_links_unmatched = pd.merge(left =trip_links_unmatched,
-                                                    right=trip_links_match1[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                             Passenger.PF_COL_PATH_NUM,
+                                                    right=trip_links_match1[Passenger.get_id_columns(is_skimming) +
+                                                                            [Passenger.PF_COL_PATH_NUM,
                                                                              Passenger.PF_COL_LINK_NUM]],
                                                     how  ="left",
-                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                           Passenger.PF_COL_PATH_NUM,
+                                                    on   =Passenger.get_id_columns(is_skimming) +
+                                                          [Passenger.PF_COL_PATH_NUM,
                                                            Passenger.PF_COL_LINK_NUM],
                                                     indicator=True)
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
@@ -828,14 +823,12 @@ class Route(object):
             if len(trip_links_match2) > 0:
                 # update matched and unmatched == they should be disjoint with union = whole
                 trip_links_unmatched = pd.merge(left =trip_links_unmatched,
-                                                    right=trip_links_match2[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                             Passenger.PF_COL_PATH_NUM,
+                                                    right=trip_links_match2[Passenger.get_id_columns(is_skimming) +
+                                                                            [Passenger.PF_COL_PATH_NUM,
                                                                              Passenger.PF_COL_LINK_NUM]],
                                                     how  ="left",
-                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                           Passenger.PF_COL_PATH_NUM,
+                                                    on   =Passenger.get_id_columns(is_skimming) +
+                                                          [Passenger.PF_COL_PATH_NUM,
                                                            Passenger.PF_COL_LINK_NUM],
                                                     indicator=True)
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
@@ -875,14 +868,12 @@ class Route(object):
             if len(trip_links_match3) > 0:
                 # update matched and unmatched == they should be disjoint with union = whole
                 trip_links_unmatched = pd.merge(left =trip_links_unmatched,
-                                                    right=trip_links_match3[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                             Passenger.PF_COL_PATH_NUM,
+                                                    right=trip_links_match3[Passenger.get_id_columns(is_skimming) +
+                                                                            [Passenger.PF_COL_PATH_NUM,
                                                                              Passenger.PF_COL_LINK_NUM]],
                                                     how  ="left",
-                                                    on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                           Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                           Passenger.PF_COL_PATH_NUM,
+                                                    on   =Passenger.get_id_columns(is_skimming) +
+                                                          [Passenger.PF_COL_PATH_NUM,
                                                            Passenger.PF_COL_LINK_NUM],
                                                     indicator=True)
                 trip_links_unmatched = trip_links_unmatched.loc[ trip_links_unmatched["_merge"] == "left_only" ]
@@ -894,10 +885,9 @@ class Route(object):
 
         # put them together
         trip_links_df = pd.concat([trip_links_matched, trip_links_unmatched], axis=0, copy=False)
-        trip_links_df.sort_values(by=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                      Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                      Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                      Passenger.PF_COL_PATH_NUM,
+        trip_links_df.sort_values(by=[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] +
+                                      Passenger.get_id_columns(is_skimming) +
+                                      [Passenger.PF_COL_PATH_NUM,
                                       Passenger.PF_COL_LINK_NUM],
                                       inplace=True)
         del trip_links_matched
@@ -918,16 +908,16 @@ class Route(object):
         assert len(trip_links_df) == num_trip_links
 
         # apply fare transfers
-        trip_links_df = self.apply_fare_transfer_rules(trip_links_df)
+        trip_links_df = self.apply_fare_transfer_rules(trip_links_df, is_skimming)
 
-        trip_links_df = self.apply_free_transfers(trip_links_df)
+        trip_links_df = self.apply_free_transfers(trip_links_df, is_skimming)
 
         # drop other columns
         trip_links_df = trip_links_df[orig_columns + fare_columns + transfer_columns]
 
         return trip_links_df
 
-    def apply_fare_transfer_rules(self, trip_links_df):
+    def apply_fare_transfer_rules(self, trip_links_df, is_skimming):
         """
         Applies fare transfers by attaching previous fare period.
 
@@ -956,18 +946,15 @@ class Route(object):
         # previous trip link
         trip_links_df["%s prev" % Passenger.PF_COL_LINK_NUM] = trip_links_df[Passenger.PF_COL_LINK_NUM] - 2
         trip_links_df = pd.merge(left    =trip_links_df,
-                                     right   =trip_links_df[[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                             Passenger.PF_COL_PATH_NUM,
+                                     right   =trip_links_df[Passenger.get_id_columns(is_skimming) +
+                                                            [Passenger.PF_COL_PATH_NUM,
                                                              Passenger.PF_COL_LINK_NUM,
                                                              Assignment.SIM_COL_PAX_FARE_PERIOD]],
-                                     left_on =[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                               Passenger.PF_COL_PATH_NUM,
+                                     left_on =Passenger.get_id_columns(is_skimming) +
+                                              [Passenger.PF_COL_PATH_NUM,
                                                "%s prev" % Passenger.PF_COL_LINK_NUM],
-                                     right_on=[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                               Passenger.PF_COL_PATH_NUM,
+                                     right_on=Passenger.get_id_columns(is_skimming) +
+                                              [Passenger.PF_COL_PATH_NUM,
                                                Passenger.PF_COL_LINK_NUM],
                                      suffixes=["","_prev"],
                                      how     ="left")
@@ -1012,7 +999,7 @@ class Route(object):
         return trip_links_df
 
 
-    def apply_free_transfers(self, trip_links_df):
+    def apply_free_transfers(self, trip_links_df, is_skimming):
         """
         Apply the free transfers allowed in  to trip_links_df fare_attributes_ft.txt (configured by columns transfers, transfer_duration).
         Sets columns Assignment.SIM_COL_PAX_FREE_TRANSFER to None, 0.0 or 1.0
@@ -1023,17 +1010,15 @@ class Route(object):
         from .PathSet    import PathSet
 
         # create a fare_index that counts up for a unique person-trip id, pathnum, and fare_period
-        trip_links_df["fare_index"] = trip_links_df.groupby([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                             Passenger.PF_COL_PATH_NUM,
+        trip_links_df["fare_index"] = trip_links_df.groupby(Passenger.get_id_columns(is_skimming) +
+                                                            [Passenger.PF_COL_PATH_NUM,
                                                              Assignment.SIM_COL_PAX_FARE_PERIOD]).cumcount()
         trip_links_df.loc[ trip_links_df[Passenger.PF_COL_LINK_MODE]!=PathSet.STATE_MODE_TRIP, "fare_index"] = -1
 
 
         # transfer_time in seconds (to compare with transfer_duration) get the first fare board
-        first_fare_board = trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                          Passenger.PF_COL_PATH_NUM,
+        first_fare_board = trip_links_df[Passenger.get_id_columns(is_skimming) +
+                                         [Passenger.PF_COL_PATH_NUM,
                                           Passenger.PF_COL_LINK_NUM,
                                           Assignment.SIM_COL_PAX_FARE_PERIOD,
                                           "fare_index",
@@ -1042,9 +1027,8 @@ class Route(object):
 
         trip_links_df = pd.merge(left    =trip_links_df,
                                      right   =first_fare_board,
-                                     on      =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                               Passenger.PF_COL_PATH_NUM,
+                                     on      =Passenger.get_id_columns(is_skimming) +
+                                              [Passenger.PF_COL_PATH_NUM,
                                                Assignment.SIM_COL_PAX_FARE_PERIOD],
                                      how     ="left",
                                      suffixes=["","_ffb"])
@@ -1072,27 +1056,35 @@ class Route(object):
         trip_links_df.loc[ trip_links_df[Assignment.SIM_COL_PAX_FREE_TRANSFER]==1.0, Assignment.SIM_COL_PAX_FARE] = 0.0
 
         # debug: show transfers within fare period
-        FastTripsLogger.debug("apply_free_transfers: fare_index>0\n%s" % str(trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                                              Passenger.PF_COL_PATH_NUM,
-                                                                                              Passenger.PF_COL_LINK_NUM,
-                                                                                              Passenger.PF_COL_LINK_MODE,
-                                                                                              Assignment.SIM_COL_PAX_BOARD_TIME,
-                                                                                              Assignment.SIM_COL_PAX_FARE_PERIOD,
-                                                                                              Route.FARE_ATTR_COLUMN_TRANSFERS,
-                                                                                              Route.FARE_ATTR_COLUMN_TRANSFER_DURATION,"transfer_time_sec",
-                                                                                              "fare_index",Assignment.SIM_COL_PAX_FREE_TRANSFER]].loc[trip_links_df["fare_index"] > 0].head(10)))
+        FastTripsLogger.debug(
+            "apply_free_transfers: fare_index>0\n%s" % str(trip_links_df[Passenger.get_id_columns(is_skimming) +
+                                                                         [Passenger.PF_COL_PATH_NUM,
+                                                                          Passenger.PF_COL_LINK_NUM,
+                                                                          Passenger.PF_COL_LINK_MODE,
+                                                                          Assignment.SIM_COL_PAX_BOARD_TIME,
+                                                                          Assignment.SIM_COL_PAX_FARE_PERIOD,
+                                                                          Route.FARE_ATTR_COLUMN_TRANSFERS,
+                                                                          Route.FARE_ATTR_COLUMN_TRANSFER_DURATION,
+                                                                          "transfer_time_sec",
+                                                                          "fare_index",
+                                                                          Assignment.SIM_COL_PAX_FREE_TRANSFER]].loc[
+                                                               trip_links_df["fare_index"] > 0].head(10)))
         # debug: show transfers within fare period
-        FastTripsLogger.debug("apply_free_transfers: free_transfer=1.0\n%s" % str(trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                                                              Passenger.PF_COL_PATH_NUM,
-                                                                                              Passenger.PF_COL_LINK_NUM,
-                                                                                              Passenger.PF_COL_LINK_MODE,
-                                                                                              Assignment.SIM_COL_PAX_BOARD_TIME,
-                                                                                              Assignment.SIM_COL_PAX_FARE_PERIOD,
-                                                                                              Route.FARE_ATTR_COLUMN_TRANSFERS,
-                                                                                              Route.FARE_ATTR_COLUMN_TRANSFER_DURATION,"transfer_time_sec",
-                                                                                              "fare_index",Assignment.SIM_COL_PAX_FREE_TRANSFER]].loc[trip_links_df[Assignment.SIM_COL_PAX_FREE_TRANSFER] > 0].head(10)))
+        FastTripsLogger.debug(
+            "apply_free_transfers: free_transfer=1.0\n%s" % str(trip_links_df[Passenger.get_id_columns(is_skimming) +
+                                                                              [Passenger.PF_COL_PATH_NUM,
+                                                                               Passenger.PF_COL_LINK_NUM,
+                                                                               Passenger.PF_COL_LINK_MODE,
+                                                                               Assignment.SIM_COL_PAX_BOARD_TIME,
+                                                                               Assignment.SIM_COL_PAX_FARE_PERIOD,
+                                                                               Route.FARE_ATTR_COLUMN_TRANSFERS,
+                                                                               Route.FARE_ATTR_COLUMN_TRANSFER_DURATION,
+                                                                               "transfer_time_sec",
+                                                                               "fare_index",
+                                                                               Assignment.SIM_COL_PAX_FREE_TRANSFER]].loc[
+                                                                    trip_links_df[
+                                                                        Assignment.SIM_COL_PAX_FREE_TRANSFER] > 0].head(
+                10)))
 
 
 
