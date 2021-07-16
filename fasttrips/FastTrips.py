@@ -25,6 +25,7 @@ from .Logger      import FastTripsLogger, setupLogging
 from .Passenger   import Passenger
 from .Performance import Performance
 from .Route       import Route
+from .Skimming import Skimming
 from .Stop        import Stop
 from .TAZ         import TAZ
 from .Transfer    import Transfer
@@ -191,11 +192,10 @@ class FastTrips(object):
 
         self.performance.record_step_start(-1,-1,-1,"run_skimming")
 
-        r = None
         try:
-            # do this last before assigning paths so vlaues reflect pathfinding
+            # do this last before assigning paths so values reflect pathfinding
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
-            r = Assignment.generate_pathsets_skimming(output_dir, self)
+            r = Skimming.generate_skims(output_dir, self)
         except:
             print(("Unexpected error:", sys.exc_info()[0]))
             FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))

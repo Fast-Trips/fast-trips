@@ -17,119 +17,233 @@ __license__ = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
-import os
 import sys
+import datetime
 
 import numpy as np
 import pandas as pd
 
+import _fasttrips
+from .Assignment import Assignment
 from .Logger import FastTripsLogger
 from .Route import Route
 from .Passenger import Passenger
+from .PathSet import PathSet
+from .Performance import Performance
+from .TAZ import TAZ
 from .Trip import Trip
 from .Util import Util
 
 
-# TODO Jan: WIP
-# Copy of passengers for now because I want to use this to create paths, etc.
 class Skimming(object):
     """
     Skimming class.
 
-    One instance represents all the skims we could ever want.
+    One instance represents all the skims we could ever want, in accordance with design of the rest of the software.
 
     OLD: Stores household information in :py:attr:`Passenger.households_df` and person information in
     :py:attr:`Passenger.persons_df`, which are both :py:class:`pandas.DataFrame` instances.
     """
 
-    #: Trip list column: Origin TAZ ID
-    TRIP_LIST_COLUMN_ORIGIN_TAZ_ID = "o_taz"
-    #: Trip list column: Destination TAZ ID
-    TRIP_LIST_COLUMN_DESTINATION_TAZ_ID = "d_taz"
-    #: Trip list column: Mode
-    TRIP_LIST_COLUMN_MODE = "mode"
-    #: Trip list column: Departure Time. DateTime.
-    TRIP_LIST_COLUMN_DEPARTURE_TIME = 'departure_time'
-    #: Trip list column: Arrival Time. DateTime.
-    TRIP_LIST_COLUMN_ARRIVAL_TIME = 'arrival_time'
-    #: Trip list column: Time Target (either 'arrival' or 'departure')
-    TRIP_LIST_COLUMN_TIME_TARGET = 'time_target'
-    # ========== Added by fasttrips =======================================================
-    #: Trip list column: Unique numeric ID for this passenger/trip
-    TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM = "o_taz_num"
-    #: Trip list column: Destination Numeric TAZ ID
-    TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM = "d_taz_num"
-    #: Trip list column: Departure Time. Float, minutes after midnight.
-    TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN = 'departure_time_min'
-    #: Trip list column: Departure Time. Float, minutes after midnight.
-    TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN = 'arrival_time_min'
-    #: Trip list column: Transit Mode
-    TRIP_LIST_COLUMN_TRANSIT_MODE = "transit_mode"
-    #: Trip list column: Access Mode
-    TRIP_LIST_COLUMN_ACCESS_MODE = "access_mode"
-    #: Trip list column: Egress Mode
-    TRIP_LIST_COLUMN_EGRESS_MODE = "egress_mode"
+    @staticmethod
+    def generate_skims(output_dir, FT):
 
-    #: Generic transit.  Specify this for mode when you mean walk, any transit modes, walk
-    #: TODO: get rid of this?  Maybe user should always specify.
-    MODE_GENERIC_TRANSIT = "transit"
-    #: Generic transit - Numeric mode number
-    MODE_GENERIC_TRANSIT_NUM = 1000
+        veh_trips_df = FT.trips.get_full_trips()
+        # write 0-iter vehicle trips
+        Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
-    #: Trip list column: User class. String.
-    TRIP_LIST_COLUMN_USER_CLASS = "user_class"
-    #: Trip list column: Purpose. String.
-    TRIP_LIST_COLUMN_PURPOSE = "purpose"
-    #: Trip list column: Value of time. Float.
-    TRIP_LIST_COLUMN_VOT = "vot"
-    #: Trip list column: Trace. Boolean.
-    TRIP_LIST_COLUMN_TRACE = "trace"
+        # FOR NOW: we're starting over with empty vehicles
+        Trip.reset_onboard(veh_trips_df)
 
-    #: Column names from pathfinding -> see Passenger.py. Keep for now to minimise code duplication.
-    PF_COL_PF_ITERATION = 'pf_iteration'  #: 0.01*pathfinding_iteration + iteration during which this path was found
-    PF_COL_PAX_A_TIME = 'pf_A_time'  #: time path-finder thinks passenger arrived at A
-    PF_COL_PAX_B_TIME = 'pf_B_time'  #: time path-finder thinks passenger arrived at B
-    PF_COL_LINK_TIME = 'pf_linktime'  #: time path-finder thinks passenger spent on link
-    PF_COL_LINK_FARE = 'pf_linkfare'  #: fare path-finder thinks passenger spent on link
-    PF_COL_LINK_COST = 'pf_linkcost'  #: cost (generalized) path-finder thinks passenger spent on link
-    PF_COL_LINK_DIST = 'pf_linkdist'  #: dist path-finder thinks passenger spent on link
-    PF_COL_WAIT_TIME = 'pf_waittime'  #: time path-finder thinks passenger waited for vehicle on trip links
+        # run c++ extension
+        skim_path_set = Skimming.generate_pathsets_skimming(output_dir, FT, veh_trips_df)
 
-    PF_COL_PATH_NUM = 'pathnum'  #: path number, starting from 0
-    PF_COL_LINK_NUM = 'linknum'  #: link number, starting from access
-    PF_COL_LINK_MODE = 'linkmode'  #: link mode (Access, Trip, Egress, etc)
+        pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skim_path_set, FT.stops, FT.trips.trip_id_df,
+                                                                     FT.trips.trips_df,
+                                                                     FT.routes.modes_df)
 
-    PF_COL_MODE = TRIP_LIST_COLUMN_MODE  #: supply mode
-    PF_COL_ROUTE_ID = Trip.TRIPS_COLUMN_ROUTE_ID  #: link route ID
-    PF_COL_TRIP_ID = Trip.TRIPS_COLUMN_TRIP_ID  #: link trip ID
-    PF_COL_DESCRIPTION = 'description'  #: path text description
-    #: todo replace/rename ??
-    PF_COL_PAX_A_TIME_MIN = 'pf_A_time_min'
+        pathset_links_df = Skimming.attach_fare_component(pathset_links_df, veh_trips_df, FT)
 
-    #: pathfinding results
-    PF_PATHS_CSV = r"enumerated_paths.csv"
-    PF_LINKS_CSV = r"enumerated_links.csv"
+        return pathset_paths_df, pathset_links_df
 
-    #: results - PathSets
-    PATHSET_PATHS_CSV = r"pathset_paths.csv"
-    PATHSET_LINKS_CSV = r"pathset_links.csv"
+    @staticmethod
+    def attach_fare_component(pathset_links_df, veh_trips_df, FT):
+        ## cost calc stuff, see Ass .2027: choose_paths_without_simulation
 
-    def __init__(self):  # , output_dir):
+        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
+
+        # instead of flag_missed_transfers(), set these to pathfinding results
+        pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
+        pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Passenger.PF_COL_LINK_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
+
+        # Add fares -- need stop zones first if they're not there.
+        # We only need to do this once per pathset.
+        # todo -- could remove non-transit links for this?
+        stops = FT.stops
+        if "A_zone_id" not in list(pathset_links_df.columns.values):
+            assert (stops is not None)
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+
+        # This needs to be done fresh each time since simulation might change the board times and therefore the fare
+        # periods
+        pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
+        return pathset_links_df
+
+    @staticmethod
+    def find_trip_based_pathset_skimming(origin, mean_vot, start_time, user_class, purpose,
+                                         access_mode, transit_mode, egress_mode, trace):
         """
+        Stuff/
         """
-        self.origin_pathsets = {}
+        (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
+         label_iterations, num_labeled_stops, max_label_process_count,
+         ms_labeling, ms_enumerating,
+         bytes_workingset, bytes_privateusage, mem_timestamp) = \
+            _fasttrips.find_pathset_skimming(user_class, purpose, access_mode, transit_mode, egress_mode, origin,
+                                             start_time, mean_vot, 1 if trace else 0)
+        FastTripsLogger.debug("Finished finding path for origin %s" % (origin))
+        pathdict = {}
+        row_num = 0
 
-    def add_pathset(self, origin, pathset):
+        for path_num in range(path_costs.shape[0]):
+
+            pathdict[path_num] = {}
+            pathdict[path_num][PathSet.PATH_KEY_COST] = path_costs[path_num, 0]
+            pathdict[path_num][PathSet.PATH_KEY_FARE] = path_costs[path_num, 1]
+            pathdict[path_num][PathSet.PATH_KEY_PROBABILITY] = path_costs[path_num, 2]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_COST] = path_costs[path_num, 3]
+            pathdict[path_num][PathSet.PATH_KEY_INIT_FARE] = path_costs[path_num, 4]
+            # List of (stop_id, stop_state)
+            pathdict[path_num][PathSet.PATH_KEY_STATES] = []
+
+            # print "path_num %d" % path_num
+
+            # while we have unprocessed rows and the row is still relevant for this path_num
+            while (row_num < ret_ints.shape[0]) and (ret_ints[row_num, 0] == path_num):
+                # print row_num
+
+                mode = ret_ints[row_num, 2]
+                # todo
+                if mode == -100:
+                    mode = PathSet.STATE_MODE_ACCESS
+                elif mode == -101:
+                    mode = PathSet.STATE_MODE_EGRESS
+                elif mode == -102:
+                    mode = PathSet.STATE_MODE_TRANSFER
+                elif mode == -103:
+                    mode = Passenger.MODE_GENERIC_TRANSIT_NUM
+
+                pathdict[path_num][PathSet.PATH_KEY_STATES].append((ret_ints[row_num, 1], [
+                    datetime.timedelta(minutes=ret_doubles[row_num, 0]),  # label,
+                    Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num, 1]),
+                    # departure/arrival time
+                    mode,  # departure/arrival mode
+                    ret_ints[row_num, 3],  # trip id
+                    ret_ints[row_num, 4],  # successor/predecessor
+                    ret_ints[row_num, 5],  # sequence
+                    ret_ints[row_num, 6],  # sequence succ/pred
+                    datetime.timedelta(minutes=ret_doubles[row_num, 2]),  # link time
+                    ret_doubles[row_num, 3],  # link fare
+                    datetime.timedelta(minutes=ret_doubles[row_num, 4]),  # link cost
+                    ret_doubles[row_num, 5],  # link dist
+                    datetime.timedelta(minutes=ret_doubles[row_num, 6]),  # cost
+                    Assignment.NETWORK_BUILD_DATE_START_TIME + datetime.timedelta(minutes=ret_doubles[row_num, 7])
+                    # arrival/departure time
+                ]))
+                row_num += 1
+
+        perf_dict = {
+            Performance.PERFORMANCE_PF_COL_PROCESS_NUM: process_num,
+            Performance.PERFORMANCE_PF_COL_PATHFINDING_STATUS: pf_returnstatus,
+            Performance.PERFORMANCE_PF_COL_LABEL_ITERATIONS: label_iterations,
+            Performance.PERFORMANCE_PF_COL_NUM_LABELED_STOPS: num_labeled_stops,
+            Performance.PERFORMANCE_PF_COL_MAX_STOP_PROCESS_COUNT: max_label_process_count,
+            Performance.PERFORMANCE_PF_COL_TIME_LABELING_MS: ms_labeling,
+            Performance.PERFORMANCE_PF_COL_TIME_ENUMERATING_MS: ms_enumerating,
+            Performance.PERFORMANCE_PF_COL_TRACED: trace,
+            Performance.PERFORMANCE_PF_COL_WORKING_SET_BYTES: bytes_workingset,
+            Performance.PERFORMANCE_PF_COL_PRIVATE_USAGE_BYTES: bytes_privateusage,
+            Performance.PERFORMANCE_PF_COL_MEM_TIMESTAMP: datetime.datetime.fromtimestamp(mem_timestamp)
+        }
+        return pathdict, perf_dict
+
+    @staticmethod
+    def generate_pathsets_skimming(output_dir, FT, veh_trips_df):
         """
-        Stores path set for the given origin.
+        Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
         """
-        self.origin_pathsets[origin] = pathset
+        FastTripsLogger.info("Skimming")
+        start_time = datetime.datetime.now()
 
+        Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
 
-    # TODO Jan: replace with passenger method, need to add
-    # pathmode (use None? just a string), and pathset.outbound = False
+        # c++ results; origin_taz_num: result_dict
+        skims_path_set = {}
+
+        # this should be configurable, if a list do for each, if not provided use mean
+        mean_vot = FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT].mean()
+
+        # TODO: taking these for now, but if there are TAZs that don't have acc/eggr link this will have missing values
+        # However, don't we want disconnections for the other ones? So maybe this is correct for the C++ extension and
+        # then adding in skim values will happen outside of that?
+        acc_eggr_links = FT.tazs.merge_access_egress()
+        all_taz = acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique()
+
+        do_trace = True
+        # TEST: one departure time - this will need to be done every X mins, user specified or default 5 maybe
+        dep_time = 960.0  # make it 4pm for now
+        # TODO: either from file or from provided data
+        user_class = 'all'
+        purpose = 'work'
+        access_mode = 'walk'
+        transit_mode = 'transit'
+        egress_mode = 'walk'
+
+        # Try to re-use existing data structures as much as possible
+        d_t = int(dep_time)
+        path_dict = {Passenger.TRIP_LIST_COLUMN_TIME_TARGET: "departure",
+                     Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: datetime.time(d_t // 60, (d_t % 60)),
+                     Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
+
+        for origin in all_taz:
+            (pathdict, perf_dict) = \
+                Skimming.find_trip_based_pathset_skimming(
+                    origin,
+                    mean_vot,
+                    dep_time,
+                    user_class,
+                    purpose,
+                    access_mode,
+                    transit_mode,
+                    egress_mode,
+                    trace=do_trace
+                )
+
+            FT.performance.add_info(-1, -1, -1, origin, perf_dict)
+
+            pathset_this_o = PathSet(path_dict)
+            pathset_this_o.pathdict = pathdict
+            skims_path_set[origin] = pathset_this_o
+
+        time_elapsed = datetime.datetime.now() - start_time
+        FastTripsLogger.info("Finished skimming.  Time elapsed: %2dh:%2dm:%2ds" % (
+            int(time_elapsed.total_seconds() / 3600),
+            int((time_elapsed.total_seconds() % 3600) / 60),
+            time_elapsed.total_seconds() % 60))
+
+        return skims_path_set
+
+    # TODO Jan: replace with passenger method.
+    # would need to add pathmode (use None? just a string), and pathset.outbound = False
     # I think. Note they are not in init.
-    def setup_pathsets(self, stops, trip_id_df, trips_df, modes_df):
+    # and also use is_skimming specific columns obviously
+    @staticmethod
+    def setup_pathsets(skim_path_set, stops, trip_id_df, trips_df, modes_df):
         """ docstring from corresponding passenger method
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -200,7 +314,7 @@ class Skimming(object):
         pathlist = []
         linklist = []
 
-        for origin, pathset in self.origin_pathsets.items():
+        for origin, pathset in skim_path_set.items():
 
             # TODO Jan: check:
             # if not pathset.goes_somewhere():   continue
@@ -340,7 +454,7 @@ class Skimming(object):
 
         FastTripsLogger.debug(
             "setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
-            len(pathset_paths_df), len(pathset_links_df)))
+                len(pathset_paths_df), len(pathset_links_df)))
 
         # get A_id and B_id and trip_id
         pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df, 'A_id_num', 'A_id')
@@ -367,7 +481,7 @@ class Skimming(object):
         pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_x" % Route.ROUTES_COLUMN_MODE_NUM]
         pathset_links_df.loc[
             pd.notnull(pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]), Route.ROUTES_COLUMN_MODE_NUM] = \
-        pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
+            pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
         pathset_links_df.drop(["%s_x" % Route.ROUTES_COLUMN_MODE_NUM,
                                "%s_y" % Route.ROUTES_COLUMN_MODE_NUM], axis=1, inplace=True)
 
