@@ -247,9 +247,9 @@ class Skimming(object):
         return skims_path_set
 
     # TODO Jan: replace with passenger method.
-    # would need to add pathmode (use None? just a string), and pathset.outbound = False
-    # I think. Note they are not in init.
-    # and also use is_skimming specific columns obviously
+    # would need to add pathmode (use None? just a string. No there's a generic transit mode called "transit
+    # somewhere, use that); and pathset.outbound = False. Note neither is in constructor.
+    # Also use is_skimming specific columns obviously
     @staticmethod
     def setup_pathsets(skim_path_set, stops, trip_id_df, trips_df, modes_df):
         """ docstring from corresponding passenger method
