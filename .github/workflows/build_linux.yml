@@ -31,7 +31,7 @@ jobs:
         cp -v ./*-manylinux*.whl dist/
 
     - name: Keep wheels on GitHub
-      if: ${{ github.event_name == 'push'}}
+#      if: ${{ github.event_name == 'push'}}
       uses: actions/upload-artifact@v2
       with:
         name: library
