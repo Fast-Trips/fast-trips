@@ -114,7 +114,8 @@ class Skimming(object):
         # calculate fare skim:
 
         # calculate transfer skim
-        skim_matrices.append[Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)]
+        transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
+        skim_matrices.append(transfer_skim)
 
         # skim_matrices.append()
 
