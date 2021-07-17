@@ -112,7 +112,8 @@ class Skimming(object):
         skim_matrices = []
 
         # calculate fare skim:
-
+        fare_skim = Skimming.calculate_fare_skim(pathset_links_df, num_zones, index_mapping)
+        skim_matrices.append(fare_skim)
         # calculate transfer skim
         transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
         skim_matrices.append(transfer_skim)
@@ -120,6 +121,27 @@ class Skimming(object):
         # calculate ivt skim
 
         return skim_matrices
+
+    @staticmethod
+    def calculate_fare_skim(pathset_links_df, num_zones, index_mapping):
+        # TODO Jan: this depends on there being values for each o and d
+        # (technically for the cross product because if one is missing unstack will nan fill)
+        # -> add missing values!
+        component_name = "fare"
+
+        fares = pathset_links_df.groupby(
+            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM])[
+            Assignment.SIM_COL_PAX_FARE].sum().to_frame('skim_value').reset_index()
+
+        fares = fares.sort_values(
+            by=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
+            axis=0).set_index([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, 'd_taz_num']).unstack(
+            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
+
+        transfer_values = fares.values.astype(Skim.skim_component_types[component_name])
+        transfer_skim = Skim(component_name, num_zones, transfer_values, index_mapping)
+
+        return transfer_skim
 
     @staticmethod
     def calculate_transfer_skim(pathset_links_df, num_zones, index_mapping):
