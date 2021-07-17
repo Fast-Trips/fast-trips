@@ -117,8 +117,6 @@ class Skimming(object):
         transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
         skim_matrices.append(transfer_skim)
 
-        # skim_matrices.append()
-
         # calculate ivt skim
 
         return skim_matrices

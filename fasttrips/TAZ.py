@@ -598,6 +598,22 @@ class TAZ(object):
         if len(no_access_stops) > 0:
             FastTripsLogger.warn("The following %d stop ids have no walk access: \n%s" % (len(no_access_stops), no_access_stops.to_string()))
 
+    def write_access_egress_for_extension(self, output_dir):
+        """
+        Write the access and egress links to a single output file for the C++ extension to read.
+        It's in this form because I'm not sure how to pass the strings to C++ in
+        Assignment.initialize_fasttrips_extension so I know that's inconsistent, but it's a
+        time sink to investigate, so I'll leave this for now
+
+        .. todo:: clean this up?  Rename intermediate files (they're not really output)
+
+        """
+        access_df = self.merge_access_egress()
+
+        access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
+                         sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE))
+
     def merge_access_egress(self):
         """ Merges walk and drive access and egress dataframes for C++ extension
         :return:
@@ -695,19 +711,3 @@ class TAZ(object):
 
         access_df["stop_id_num"] = access_df["stop_id_num"].astype(int)
         return access_df
-
-    def write_access_egress_for_extension(self, output_dir):
-        """
-        Write the access and egress links to a single output file for the C++ extension to read.
-        It's in this form because I'm not sure how to pass the strings to C++ in
-        Assignment.initialize_fasttrips_extension so I know that's inconsistent, but it's a
-        time sink to investigate, so I'll leave this for now
-
-        .. todo:: clean this up?  Rename intermediate files (they're not really output)
-
-        """
-        access_df = self.merge_access_egress()
-
-        access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
-                         sep=" ", index=False)
-        FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE))
