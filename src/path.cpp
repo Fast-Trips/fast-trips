@@ -459,7 +459,7 @@ namespace fasttrips {
                 const Attributes* link_attr       = pf.getTransferAttributes(orig_stop, dest_stop);
                 const NamedWeights* named_weights = pf.getNamedWeights( path_spec.user_class_, path_spec.purpose_, MODE_TRANSFER, "transfer", pf.transferSupplyMode());
                 stop_state.link_cost_             = pf.tallyLinkCost(pf.transferSupplyMode(), path_spec, trace_file, *named_weights, *link_attr, hush);
-                trace_file << stop_state.link_cost_ << std::endl;
+                //trace_file << stop_state.link_cost_ << std::endl;
             }
             // ============= trip =============
             else
@@ -516,7 +516,7 @@ namespace fasttrips {
                 }
 
                 stop_state.link_cost_             = pf.tallyLinkCost(supply_mode_num, path_spec, trace_file, *named_weights, link_attr, hush);
-                trace_file << stop_state.link_cost_ << std::endl;
+                //trace_file << stop_state.link_cost_ << std::endl;
 
                 first_trip = false;
             }

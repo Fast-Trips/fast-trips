@@ -30,7 +30,7 @@ const char kPathSeparator =
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( std::ostringstream() << std::dec << x ).str()
 
 // Uncomment for debug detail for link cost.
-//#define DEBUG_LINKCOST
+// #define DEBUG_LINKCOST
 
 // Debug macros. If debug is not on, the if (trace) isn't even executed.
 #ifdef DEBUG_LINKCOST
@@ -672,14 +672,9 @@ namespace fasttrips {
             }
         }
 
-
-
-
         // These are the stops that are reachable from the final TAZ
         std::map<int, int> reachable_final_stops;
         if (success) {
-
-
             if (path_spec.skimming_)
                 success = setReachableFinalStopsAllDestinations(path_spec, trace_file, reachable_final_stops);
             else
@@ -982,7 +977,6 @@ namespace fasttrips {
 
         // are there any egress/access links for this TAZ?
         if (access_egress_links_.hasLinksForTaz(start_taz_id) == false) {
-            std::cout << "Cannot find any links for " << start_taz_id;
             return false;
         }
 
@@ -1210,17 +1204,6 @@ namespace fasttrips {
         }
     }
 
-
-
-
-////////////////////////////////////////
-
-
-   /*
-    TODO:
-        - make sure each stop appears only once?
-        - loop over supply modes or dest loop first?
-    */
     bool PathFinder::setReachableFinalStopsAllDestinations(
         const PathSpecification& path_spec,
         std::ofstream& trace_file,
@@ -1229,8 +1212,6 @@ namespace fasttrips {
         //int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         double dir_factor = path_spec.outbound_ ? 1.0 : -1.0;
 
-
-        //std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
         std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
         {
@@ -1290,8 +1271,6 @@ namespace fasttrips {
         return (reachable_final_stops.size() > 0);
     }
 
-
-
     int PathFinder::getPathSetAllDestinations(
         const PathSpecification&    path_spec,
         std::ofstream&              trace_file,
@@ -1301,7 +1280,6 @@ namespace fasttrips {
 
         //int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         int origin_taz_id = path_spec.origin_taz_id_;
-        //std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
         std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
         {
@@ -1314,19 +1292,6 @@ namespace fasttrips {
             const Hyperlink& taz_state = ssi_iter->second;
             if (taz_state.size() == 0) { return RET_FAIL_END_NOT_FOUND; }
 
-            // experimental-- look at the low cost path?
-            if (false && path_spec.trace_)
-            {
-                const Path* low_cost_path = taz_state.getLowCostPath(false); // ends in non-trip
-                if (low_cost_path) {
-                    trace_file << "Low cost path: " << low_cost_path->cost() << std::endl;
-                    low_cost_path->print(trace_file, path_spec, *this);
-                    trace_file << std::endl;
-                } else { trace_file <<  "Low cost path: " << "None" << std::endl; }
-            }
-
-
-            // outbound: origin to destination
             // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
 
@@ -1346,9 +1311,7 @@ namespace fasttrips {
             }
             PathInfo pi = { 1, 1, 0 };  // count is 1
 
-            trace_file << "About to calculate costs" << std::endl;
             path.calculateCost(trace_file, path_spec, *this);
-            trace_file << "Calculated costs" << std::endl;
 
             pathset[path] = pi;
             if (path_spec.trace_)
@@ -1360,9 +1323,6 @@ namespace fasttrips {
         }
         return RET_SUCCESS;
     }
-
-
-
 
     void PathFinder::updateStopStatesForFinalLinksAllDestinations(
         const PathSpecification& path_spec,
@@ -1395,14 +1355,10 @@ namespace fasttrips {
         }
         double earliest_dep_latest_arr_024 = fix_time_range(earliest_dep_latest_arr);
 
-
         //int    end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
-        // std::vector<int> all_destinations {11, 12, 13, 14, 15};  // TODO Jan: pass these through
         std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
         {
-
-
             // are there any egress/access links?
             if (access_egress_links_.hasLinksForTaz(end_taz_id) == false) {
                 // this shouldn't happen because of the shortcut
@@ -1502,19 +1458,6 @@ namespace fasttrips {
             } // end iteration through valid supply modes
         } // end iteration over destinations
      }
-
-
-
-
-//////////////////
-
-
-
-
-
-
-
-
 
     /**
      * Part of the labeling loop. Assuming the *current_label_stop* was just pulled off the
