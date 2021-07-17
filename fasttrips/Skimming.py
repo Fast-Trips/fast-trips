@@ -1,5 +1,4 @@
 from __future__ import division
-from builtins import str
 from builtins import range
 from builtins import object
 
@@ -66,12 +65,72 @@ class Skimming(object):
         # run c++ extension
         skim_path_set = Skimming.generate_pathsets_skimming(output_dir, FT, veh_trips_df)
 
+        # extract path and path link dataframes
         pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skim_path_set, FT.stops, FT.trips.trip_id_df,
                                                                      FT.trips.trips_df,
                                                                      FT.routes.modes_df)
 
         pathset_links_df = Skimming.attach_fare_component(pathset_links_df, veh_trips_df, FT)
 
+        skim_matrices = Skimming.extract_matrices(pathset_paths_df, pathset_links_df, FT)
+
+        return pathset_paths_df, pathset_links_df, skim_matrices
+
+    @staticmethod
+    def create_index_mapping(FT):
+        # TODO Jan: mapping here is from 0-based index to integer taz_num, which in turn are a mapping from whatever the
+        #  original input is. Need to include that second mapping here.
+        #  This is also where disconnected zones come in, so need the user to specify all TAZs. This is done for tableau
+        #  outputs in some of the tests, but not required as of yet.
+
+        # uniq_ids = np.union1d(pathset_paths_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM].values,
+        #                       pathset_paths_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM].values)
+        # index_dict = dict(zip(np.arange(len(uniq_ids)), uniq_ids))
+
+        acc_eggr_links = FT.tazs.merge_access_egress()
+        all_taz = np.sort(acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique())
+        index_dict = dict(zip(np.arange(len(all_taz)), all_taz))
+        return index_dict
+
+    @staticmethod
+    def extract_matrices(pathset_paths_df, pathset_links_df, FT):
+
+        index_mapping = Skimming.create_index_mapping(FT)
+        num_zones = len(index_mapping)
+
+        # skim_components = ['transfers', 'ivt', 'fare']
+        # for component in skim_components:
+        skim_matrices = []
+
+        # calculate fare skim:
+
+        # calculate transfer skim
+        num_transfers = pathset_links_df.groupby(
+            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]).apply(
+            lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value').reset_index()
+        transfer_skim = Skim('transfers', num_zones, num_transfers, index_mapping)
+
+        # skim_matrices.append()
+
+        # calculate ivt skim
+
+        return skim_matrices
+
+
+
+    @staticmethod
+    def attach_destination_number(pathset_paths_df, pathset_links_df):
+        # attach destination zone. 'egress' seems to be hard-coded in TAZ
+        temp = pathset_links_df.groupby([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                         Passenger.PF_COL_PATH_NUM]).apply(
+            lambda group: group.loc[group.linkmode == 'egress'].B_id_num).to_frame(
+            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).reset_index()[
+            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.PF_COL_PATH_NUM,
+             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]]
+        pathset_paths_df = pathset_paths_df.merge(temp, on=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                                            Passenger.PF_COL_PATH_NUM])
+        pathset_links_df = pathset_links_df.merge(temp, on=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                                            Passenger.PF_COL_PATH_NUM])
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
@@ -317,7 +376,6 @@ class Skimming(object):
         ==================  ===============  =====================================================================================================
 
         """
-        from .Assignment import Assignment
         from .PathSet import PathSet
         pathlist = []
         linklist = []
@@ -381,15 +439,6 @@ class Skimming(object):
                         trip_id = state[PathSet.STATE_IDX_TRIP]
                         linkmode = PathSet.STATE_MODE_TRIP
 
-                    # if pathset.outbound:
-                    #     a_id_num    = state_id
-                    #     b_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
-                    #     a_seq       = state[PathSet.STATE_IDX_SEQ]
-                    #     b_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                    #     b_time      = state[PathSet.STATE_IDX_ARRDEP]
-                    #     a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                    #     trip_time   = state[PathSet.STATE_IDX_ARRDEP] - state[PathSet.STATE_IDX_DEPARR]
-                    # else:
                     a_id_num = state[PathSet.STATE_IDX_SUCCPRED]
                     b_id_num = state_id
                     a_seq = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
@@ -480,9 +529,8 @@ class Skimming(object):
                                            mapping_df=trip_id_df, mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,
                                            mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
 
-        # get route id
-        # mode_num will appear in left (for non-transit links) and right (for transit link) both, so we need to
-        # consolidate
+        # get route id. mode_num will appear in left (for non-transit links) and right (for transit link) both,
+        # so we need to consolidate
         pathset_links_df = pd.merge(left=pathset_links_df, right=trips_df[
             [Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID, Route.ROUTES_COLUMN_MODE_NUM]],
                                     how="left", on=Trip.TRIPS_COLUMN_TRIP_ID)
@@ -498,36 +546,11 @@ class Skimming(object):
                                     right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]],
                                     how="left")
 
+        # attach destination zone numbers
+        pathset_paths_df, pathset_links_df = Skimming.attach_destination_number(pathset_paths_df, pathset_links_df)
+
         FastTripsLogger.debug(
             "setup_skimming_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
-
-        # if len(pathset_paths_df) > 0:
-        #     # create path description
-        #     pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[
-        #         Route.ROUTES_COLUMN_MODE]
-        #     pathset_links_df.loc[
-        #         pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
-        #         pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
-        #     pathset_links_df.loc[
-        #         pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
-        #         pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
-        #     pathset_links_df.loc[pathset_links_df[Passenger.PF_COL_LINK_MODE] ==
-        #                          PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION] = \
-        #         pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
-        #
-        #     descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-        #                                  Passenger.PF_COL_PF_ITERATION,
-        #                                  Passenger.PF_COL_PATH_NUM,
-        #                                  Passenger.PF_COL_DESCRIPTION]].groupby(
-        #         [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-        #          Passenger.PF_COL_PF_ITERATION,
-        #          Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x: " ".join(x))
-        #     descr_df = descr_df.to_frame().reset_index()
-        #     # join it to pathset_paths and drop from pathset_links
-        #     pathset_paths_df = pd.merge(left=pathset_paths_df, right=descr_df, how="left")
-        #     pathset_links_df.drop([Passenger.PF_COL_DESCRIPTION], axis=1, inplace=True)
-        # else:
-        #     pathset_paths_df[Passenger.PF_COL_DESCRIPTION] = ""
 
         pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64] = \
             pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64].astype(np.float32)
@@ -548,24 +571,44 @@ class Skim(object):
     A single skim matrix, wraps a numpy array and has a write to omx method
     """
     skim_component_types = {
-        "num_transfers": np.int32,
+        "transfers": np.int32,
         "ivt": np.float32,
         "fare": np.float32
     }
     skim_component_default_vals = {
-        "num_transfers": -1,
+        "transfers": -1,  # TODO: is this a good idea?
         "ivt": np.inf,
         "fare": np.inf
     }
 
-    def __init__(self, name, num_zones, zone_index_mapping=None):
+    def __init__(self, name, num_zones, values=None, zone_index_mapping=None):
         assert name in Skim.skim_component_types.keys(), \
             f"Skim component {name} not implemented yet, choose from {Skim.skim_component_types.keys()}"
         self.name = name
         self.num_zones = num_zones
-        self.matrix = np.full((num_zones, num_zones), Skim.skim_component_default_vals[name],
-                              dtype=Skim.skim_component_types[name])
         self.zone_index_mapping = zone_index_mapping
+
+        self.matrix = None
+        self.initialise_and_set_values(values)
+
+    def initialise_and_set_values(self, values=None):
+        # TODO: assert values is instance of df, or implement generalisation?
+        # TODO: make sure user handles skim mapping correctly?
+
+        # TODO once missing zone handling is implemented:
+        # add missing values, then get np array with
+        # values.sort_values(by=[origin, destination]).set_index([
+        # origin, destination]).unstack(destination).values
+        self.matrix = np.full((self.num_zones, self.num_zones), Skim.skim_component_default_vals[self.name],
+                              dtype=Skim.skim_component_types[self.name])
+
+        if values:
+            if self.zone_index_mapping:
+                pass
+            pass
+
+
+
 
     def set_value(self, origin, destination, value):
         # TODO: do we coerce here?
