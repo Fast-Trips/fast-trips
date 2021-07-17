@@ -392,16 +392,19 @@ class Passenger(object):
         from .Assignment import Assignment
         if len(Assignment.TRACE_IDS) > 0:
             trace_df = pd.DataFrame.from_records(data=Assignment.TRACE_IDS,
-                                                     columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+                                                 columns=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                          Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]).astype(object)
             trace_df[Passenger.TRIP_LIST_COLUMN_TRACE] = True
 
             # combine
-            self.trip_list_df = pd.merge(left  =self.trip_list_df,
-                                             right =trace_df,
-                                             how   ="left",
-                                             on    =[Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+            self.trip_list_df = pd.merge(left=self.trip_list_df,
+                                         right=trace_df,
+                                         how="left",
+                                         on=[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
             # make nulls into False
-            self.trip_list_df.loc[pd.isnull(self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]), Passenger.TRIP_LIST_COLUMN_TRACE] = False
+            self.trip_list_df.loc[pd.isnull(
+                self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE]), Passenger.TRIP_LIST_COLUMN_TRACE] = False
         else:
             self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
 

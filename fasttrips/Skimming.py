@@ -34,6 +34,15 @@ from .Trip import Trip
 from .Util import Util
 
 
+# TODO
+#  - sort out cases for when the access and egress links do not represent all skims (i.e. there are disconnected zones),
+#     this needs external input
+#  - add missing o,d,val during Skim creation. If there are no paths, they will be empty and we need to fill these in
+#     for pandas unstack to work. I think this is faster than working with a dictionary and processing each o,d
+#     individually
+#  - time, sample interval, user class specific values
+#  - add tests
+
 class Skimming(object):
     """
     Skimming class.
@@ -72,9 +81,9 @@ class Skimming(object):
 
         pathset_links_df = Skimming.attach_fare_component(pathset_links_df, veh_trips_df, FT)
 
-        skim_matrices = Skimming.extract_matrices(pathset_paths_df, pathset_links_df, FT)
+        skim_matrices = Skimming.extract_matrices(pathset_links_df, FT)
 
-        return pathset_paths_df, pathset_links_df, skim_matrices
+        return pathset_paths_df, pathset_links_df , skim_matrices
 
     @staticmethod
     def create_index_mapping(FT):
@@ -93,7 +102,7 @@ class Skimming(object):
         return index_dict
 
     @staticmethod
-    def extract_matrices(pathset_paths_df, pathset_links_df, FT):
+    def extract_matrices(pathset_links_df, FT):
 
         index_mapping = Skimming.create_index_mapping(FT)
         num_zones = len(index_mapping)
@@ -105,10 +114,7 @@ class Skimming(object):
         # calculate fare skim:
 
         # calculate transfer skim
-        num_transfers = pathset_links_df.groupby(
-            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]).apply(
-            lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value').reset_index()
-        transfer_skim = Skim('transfers', num_zones, num_transfers, index_mapping)
+        skim_matrices.append[Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)]
 
         # skim_matrices.append()
 
@@ -116,7 +122,24 @@ class Skimming(object):
 
         return skim_matrices
 
+    @staticmethod
+    def calculate_transfer_skim(pathset_links_df, num_zones, index_mapping):
+        # TODO Jan: this depends on there being values for each o and d
+        # (technically for the cross product because if one is missing unstack will nan fill)
+        # -> add missing values!
+        num_transfers = pathset_links_df.groupby(
+            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]).apply(
+            lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value').reset_index()
 
+        transfer_values = num_transfers.sort_values(
+            by=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
+            axis=0).set_index([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, 'd_taz_num']).unstack(
+            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals['transfer'])
+
+        transfer_values = transfer_values.values.astype(Skim.skim_component_types['transfer'])
+        transfer_skim = Skim('transfers', num_zones, transfer_values, index_mapping)
+
+        return transfer_skim
 
     @staticmethod
     def attach_destination_number(pathset_paths_df, pathset_links_df):
@@ -588,27 +611,15 @@ class Skim(object):
         self.num_zones = num_zones
         self.zone_index_mapping = zone_index_mapping
 
-        self.matrix = None
-        self.initialise_and_set_values(values)
-
-    def initialise_and_set_values(self, values=None):
-        # TODO: assert values is instance of df, or implement generalisation?
-        # TODO: make sure user handles skim mapping correctly?
-
-        # TODO once missing zone handling is implemented:
-        # add missing values, then get np array with
-        # values.sort_values(by=[origin, destination]).set_index([
-        # origin, destination]).unstack(destination).values
-        self.matrix = np.full((self.num_zones, self.num_zones), Skim.skim_component_default_vals[self.name],
-                              dtype=Skim.skim_component_types[self.name])
-
         if values:
-            if self.zone_index_mapping:
-                pass
-            pass
+            self.set_matrix(values)
+        else:
+            self.matrix = np.full((self.num_zones, self.num_zones), Skim.skim_component_default_vals[self.name],
+                                  dtype=Skim.skim_component_types[self.name])
 
-
-
+    def set_matrix(self, values):
+        # TODO: check for right type, etc.
+        self.matrix = values
 
     def set_value(self, origin, destination, value):
         # TODO: do we coerce here?
