@@ -1,0 +1,37 @@
+name: Test Linux
+
+on: [pull_request]
+#  pull_request:
+#    types: [ready_for_review, merge]
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.6', '3.7', '3.8', '3.9']
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        pip3 install setuptools --upgrade
+        pip3 install pytest wheel
+        pip3 install -r requirements_test.txt
+    - name: Compile library
+      run: |
+        pip install -e .
+    - name: Runs tests
+      run: |
+        py.test
+#    - name: Generate coverage report
+#      run: |
+#        python3 -m pytest --cov=./ --cov-report=xml
+#    - name: Upload coverage to Codecov
+#      uses: codecov/codecov-action@v1
+#      with:
+#        token: ${{ secrets.CODECOV_TOKEN }}
+#        file: ./coverage.xml
+#        flags: unittests
+#        name: codecov-umbrella
+#        yml: ./codecov.yml
+#        fail_ci_if_error: true
