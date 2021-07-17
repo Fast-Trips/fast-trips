@@ -83,7 +83,7 @@ class Skimming(object):
 
         skim_matrices = Skimming.extract_matrices(pathset_links_df, FT)
 
-        return pathset_paths_df, pathset_links_df , skim_matrices
+        return pathset_paths_df, pathset_links_df, skim_matrices
 
     @staticmethod
     def create_index_mapping(FT):
@@ -127,6 +127,8 @@ class Skimming(object):
         # TODO Jan: this depends on there being values for each o and d
         # (technically for the cross product because if one is missing unstack will nan fill)
         # -> add missing values!
+        component_name = "transfer"
+
         num_transfers = pathset_links_df.groupby(
             [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]).apply(
             lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value').reset_index()
@@ -134,10 +136,10 @@ class Skimming(object):
         transfer_values = num_transfers.sort_values(
             by=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
             axis=0).set_index([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, 'd_taz_num']).unstack(
-            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals['transfer'])
+            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
 
-        transfer_values = transfer_values.values.astype(Skim.skim_component_types['transfer'])
-        transfer_skim = Skim('transfers', num_zones, transfer_values, index_mapping)
+        transfer_values = transfer_values.values.astype(Skim.skim_component_types[component_name])
+        transfer_skim = Skim(component_name, num_zones, transfer_values, index_mapping)
 
         return transfer_skim
 
@@ -594,12 +596,12 @@ class Skim(object):
     A single skim matrix, wraps a numpy array and has a write to omx method
     """
     skim_component_types = {
-        "transfers": np.int32,
+        "transfer": np.int32,
         "ivt": np.float32,
         "fare": np.float32
     }
     skim_component_default_vals = {
-        "transfers": -1,  # TODO: is this a good idea?
+        "transfer": -1,  # TODO: is this a good idea?
         "ivt": np.inf,
         "fare": np.inf
     }
@@ -611,11 +613,11 @@ class Skim(object):
         self.num_zones = num_zones
         self.zone_index_mapping = zone_index_mapping
 
-        if values:
-            self.set_matrix(values)
-        else:
+        if values is None:
             self.matrix = np.full((self.num_zones, self.num_zones), Skim.skim_component_default_vals[self.name],
                                   dtype=Skim.skim_component_types[self.name])
+        else:
+            self.set_matrix(values)
 
     def set_matrix(self, values):
         # TODO: check for right type, etc.
