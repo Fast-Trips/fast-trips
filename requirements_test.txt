@@ -1,0 +1,8 @@
+###### Requirements without Version Specifiers ######
+configparser
+future
+numpy
+pandas
+partridge
+psutil
+pytest

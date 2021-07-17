@@ -87,7 +87,7 @@ class Util(object):
             return_df[numeric_newcolname] = return_df[id_colname].astype(int)
         except:
             # if it doesn't, use index but start at 1
-            return_df[numeric_newcolname] = return_df.index + 1
+            return_df = return_df.assign(**{numeric_newcolname: np.arange(return_df.shape[0], dtype=np.int64) + 1})
         return return_df
 
     @staticmethod
