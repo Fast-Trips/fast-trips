@@ -8,7 +8,14 @@ Welcome to the Fast-Trips developers documentation!
 
 This page organizes documentation that is useful for both software and model developers.  It is designed to be browsed through from top-to-bottom starting with the objectives, then going through theory and software design, and finishing with how to contribute.
 
-.. note::  This documentation is based on the master branch, and is current thru `commit #  d3e82c26bdb167c22150fc57ffdb65f38440334e <https://github.com/BayAreaMetro/fast-trips/commit/d3e82c26bdb167c22150fc57ffdb65f38440334e>`_
+This documentation correspond to software version:
+
+.. git_commit_detail::
+    :branch:
+    :commit:
+    :sha_length: 10
+    :uncommitted:
+    :untracked:
 
 Software Objectives
 ------------------------

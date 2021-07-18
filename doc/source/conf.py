@@ -22,7 +22,6 @@ import shlex
 #sys.path.insert(0, os.path.abspath('.'))
 
 sys.path.insert(0, os.path.abspath(".."))
-print (sys.path)
 import fasttrips
 # Breathe path
 #sys.path.append( r"C:\Python27\Lib\site-packages\breathe" )
@@ -46,6 +45,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
+    'sphinx_git',
     'breathe',
 ]
 
