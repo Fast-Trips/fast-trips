@@ -3,18 +3,25 @@ Contributing
 
 Style
 --------------
-We attempt as much as possible to adhere to `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_. Adherence to PEP8 standards can be checked using the `pycodestyle <https://pypi.python.org/pypi/pycodestyle>`_ package from your fast-trips directory::
+We attempt as much as possible to adhere to `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_. Adherence to PEP8
+standards can be checked using the `pycodestyle <https://pypi.python.org/pypi/pycodestyle>`_ package from your
+fast-trips directory::
 
   pycodestyle fasttrips
 
 
 Development Workflow
 ----------------------------
-Aside from the core developer team, we use a `fork-and-pull workflow <https://gist.github.com/Chaser324/ce0505fbed06b947d962>`_.
+Aside from the core developer team, we use a
+`fork-and-pull workflow <https://gist.github.com/Chaser324/ce0505fbed06b947d962>`_.
 
-We use the `Git Flow <http://nvie.com/posts/a-successful-git-branching-model/>`_ branching model whereby there is always a master and develop branch.  New features should always be developed in a branch from the develop branch.
+We use the `Git Flow <http://nvie.com/posts/a-successful-git-branching-model/>`_ branching model whereby there is always
+a master and develop branch.  New features should always be developed in a branch from the develop branch.
 
-In general, development should respond to `identified issues <https://github.com/BayAreaMetro/fast-trips/issues>`_ that proceed along a general roadmap for Fast-Trips.  If no issue exists then please consider making one before proceeding so that your approach can be discussed with the team.   When possible, issues should be written as `user stories <https://en.wikipedia.org/wiki/User_story>`_.
+In general, development should respond to `identified issues <https://github.com/BayAreaMetro/fast-trips/issues>`_ that
+proceed along a general roadmap for Fast-Trips.  If no issue exists then please consider making one before proceeding so
+that your approach can be discussed with the team.   When possible, issues should be written as
+.`user stories <https://en.wikipedia.org/wiki/User_story>`_.
 
 When possible, the team strives to adhere to `agile software development principles <https://en.wikipedia.org/wiki/Agile_software_development#Agile_software_development_principles>`_.
 
@@ -23,7 +30,9 @@ Roadmap
 
 Testing
 --------
-There are a couple dozen tests that are stored in ``\tests``.  They can be run by installing the `PyTest <https://docs.pytest.org/en/latest/>`_ library ( ``pip install pytest`` and executing the command ``pytest`` from the command line within your ``<fast-trips-dir>``.
+There are a couple dozen tests that are stored in ``\tests``.  They can be run by installing the
+`PyTest <https://docs.pytest.org/en/latest/>`_ library ( ``pip install pytest`` and executing the command ``pytest``
+from the command line within your ``<fast-trips-dir>``.
 
 Most of the tests use test scenarios that can be found in the ``fasttrips/Examples`` directory.
 
@@ -36,16 +45,21 @@ Continuous Integration
 
 We use the `Travis-CI <travis-ci.org>`_ continuous integration service as follows:
 
-  - Every push to GitHub will run tests denoted by the ``@pytest.mark.test.basic`` function decorator, which is a small subset of system level tests.
-  - Every push to `master` or `develop` branches will run tests denoted by the ``@pytest.mark.test.travis`` function decorator.
+  - Every push to GitHub will run tests denoted by the ``@pytest.mark.test.basic`` function decorator, which is a small
+    subset of system level tests.
+  - Every push to `master` or `develop` branches will run tests denoted by the ``@pytest.mark.test.travis`` function
+    decorator.
 
-These subsets were created to limit the time it takes for Travis to run all the tests.  **When doing invasive development, they are not a substitute for running the entire test suite locally using the ``py.test`` command.**
+These subsets were created to limit the time it takes for Travis to run all the tests.  **When doing invasive**
+**development, they are not a substitute for running the entire test suite locally using the ``py.test`` command.**
 
-Additionally, it is important to understand that most of the tests are system-level tests that do not guarantee correct results so much as they make sure the system runs without an error.
+Additionally, it is important to understand that most of the tests are system-level tests that do not guarantee correct
+results so much as they make sure the system runs without an error.
 
 For documentation-only commits, put "skip ci" somewhere in your commit message to not trigger the Travis testing.
 
-Some regression tests have regression output that needs to be refreshed an thus have a function decorator ``@pytest.mark.skip`` so that they are skipped.
+Some regression tests have regression output that needs to be refreshed an thus have a function decorator
+``@pytest.mark.skip`` so that they are skipped.
 
 Test Descriptions
 ^^^^^^^^^^^^^^^^^^^
@@ -109,7 +123,8 @@ To run::
 Documentation
 ---------------
 
-Functions, classes and methods should be documented using `restructured text docstrings <https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html>`_ to be compiled in SPHINX using autodoc functionality, doxygen for c++, and breathe to link them.
+Functions, classes and methods should be documented using `restructured text docstrings <https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html>`_
+to be compiled in SPHINX using autodoc functionality, doxygen for c++, and breathe to link them.
 
 The resulting HTML is then manually pushed to the gh-pages branch.
 
@@ -124,7 +139,8 @@ To update the c++ documentation (if needed), you will also need to install doxyg
 
   pip install breathe
 
-Follow directions on `doxygen page <https://www.stack.nl/~dimitri/doxygen/manual/install.html>`_ to install, or if you have brew installed on a mac, use the command: ::
+Follow directions on `doxygen page <https://www.stack.nl/~dimitri/doxygen/manual/install.html>`_ to install, or if you
+have brew installed on a mac, use the command: ::
 
   brew install doxygen
 
@@ -133,7 +149,8 @@ Make sure the file ``doc\doxygen.conf`` adds the breathe package location to you
 Building documentation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have updated the c++ module, you should first update its documentation by running the following command from the ``\doc`` directory: ::
+If you have updated the c++ module, you should first update its documentation by running the following command from the
+``\doc`` directory: ::
 
   doxygen doxygen.conf
 
@@ -146,7 +163,9 @@ Then run sphinx running the following command from the :code: ``\doc`` directory
 Push documentation to gh-pages branch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The resulting files in the ``doc/html`` directory should be published to the gh-pages branch in the .git repository, making sure it is clean ahead of time.  This can be done via a GUI or by using the following commands from the root fast-trips directory: ::
+The resulting files in the ``doc/html`` directory should be published to the gh-pages branch in the .git repository,
+making sure it is clean ahead of time.  This can be done via a GUI or by using the following commands from the root
+fast-trips directory: ::
 
   tar czf /tmp/html.tgz doc/build/** ## zips and copies files to temp directory
   git checkout gh-pages              ## checks out github pages directory
@@ -162,7 +181,8 @@ The resulting files in the ``doc/html`` directory should be published to the gh-
 Todo List
 -----------------
 
-Please see the `Issues list on Github <https://github.com/BayAreaMetro/fast-trips/issues>`_ as well as the in-code todo list below.
+Please see the `Issues list on Github <https://github.com/BayAreaMetro/fast-trips/issues>`_ as well as the in-code todo
+list below.
 
 .. todolist::
 

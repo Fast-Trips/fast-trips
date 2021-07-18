@@ -6,8 +6,8 @@ dependencies:
 - configparser
 - future
 - numpy
-- pandas==0.22
-- partridge==0.6.0.dev1
+- pandas
+- partridge
 - psutil
 - pytest
 - notebook
