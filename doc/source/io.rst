@@ -1,8 +1,8 @@
 .. _dyno_demand: https://github.com/osplanning-data-standards/dyno-demand
 .. _gtfs_plus:   https://github.com/osplanning-data-standards/GTFS-PLUS
 .. _dyno_path:   https://github.com/osplanning-data-standards/dyno-path
-.. _network_wrangler https://github.com/sfcta/networkwrangler
-.. _gtfs_ride https://github.com/ODOT-PTS/GTFS-ride
+.. _network_wrangler: https://github.com/sfcta/networkwrangler
+.. _gtfs_ride: https://github.com/ODOT-PTS/GTFS-ride
 
 .. _io:
 Input/Output Files
@@ -18,6 +18,7 @@ The input to fast-trips consists of:
  - fast-trips Configuration, specified below
 
 .. _passenger_demand:
+
 Passenger Demand
 ------------------
 
@@ -110,7 +111,9 @@ Passenger demand is specified in the the `dyno_demand`_ format of one to three c
 |                     |            | ID MAY be sequential.                        |
 +---------------------+------------+----------------------------------------------+
 
+
 .. _transport_network:
+
 Transport Network
 -------------------
 

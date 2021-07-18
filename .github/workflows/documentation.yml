@@ -36,6 +36,6 @@ jobs:
     - name: Keeps documentation on GitHub
       uses: actions/upload-artifact@v2
       with:
-        name: library
-        path: ./*.*
+        name: documentation
+        path: build/*.*
         if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
