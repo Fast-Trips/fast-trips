@@ -22,8 +22,7 @@ import shlex
 #sys.path.insert(0, os.path.abspath('.'))
 
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0,r"/Users/elizabeth/Documents/urbanlabs/MTC/SHRP2/working/fast-trips")
-print sys.path
+print (sys.path)
 import fasttrips
 # Breathe path
 #sys.path.append( r"C:\Python27\Lib\site-packages\breathe" )
