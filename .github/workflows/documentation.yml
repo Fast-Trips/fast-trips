@@ -26,11 +26,9 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
 
-    - name: Rebuild C documentation
+    - name: Builds documentation
       run: |
         cd doc
         doxygen doxygen.conf
-
-    - name: Build documentation
-      run: |
+        ls
         sphinx-build -b html source build
