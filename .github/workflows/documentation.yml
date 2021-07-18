@@ -24,7 +24,7 @@ jobs:
 
     - name: Compile library
       run: |
-        python setup.py sdist bdist_wheel
+        pip install -e .
 
     - name: Builds documentation
       run: |
@@ -32,3 +32,10 @@ jobs:
         doxygen doxygen.conf
         ls
         sphinx-build -b html source build
+
+    - name: Keeps documentation on GitHub
+      uses: actions/upload-artifact@v2
+      with:
+        name: library
+        path: ./*.*
+        if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
