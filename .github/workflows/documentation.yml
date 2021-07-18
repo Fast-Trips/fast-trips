@@ -1,0 +1,37 @@
+name: Documentation
+
+on:  [pull_request, release]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        apt-get install doxygen
+        python -m pip install setuptools --upgrade
+        python -m pip install pytest wheel
+        python -m pip install -r requirements_test.txt
+        python -m pip install -r dev-dependencies.txt
+        python -m pip install --upgrade cffi twine
+
+    - name: Compile library
+      run: |
+        python setup.py sdist bdist_wheel
+
+    - name: Rebuild C documentation
+      run: |
+        cd doc
+        doxygen doxygen.conf
+        cd ..
+
+    - name: Build documentation
+      run: |
+        sphinx-build -b html source build
