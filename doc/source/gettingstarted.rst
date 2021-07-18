@@ -64,7 +64,7 @@ Installing from cloned source code (recommended for developers)
 
 5. *Optional* Install packages for creating documentation::
 
-    pip install -r dev-dependencies.txt
+    pip install -r dependencies_dev.txt
 
 
 Troubleshooting:
