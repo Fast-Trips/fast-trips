@@ -15,7 +15,7 @@ jobs:
         python-version: 3.9
     - name: Install dependencies
       run: |
-        apt-get install doxygen
+        sudo apt-get install doxygen
         python -m pip install setuptools --upgrade
         python -m pip install pytest wheel
         python -m pip install -r requirements_test.txt
