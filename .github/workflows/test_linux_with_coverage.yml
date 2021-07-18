@@ -20,7 +20,8 @@ jobs:
       run: |
         pip3 install setuptools --upgrade
         pip3 install pytest wheel
-        pip3 install -r requirements_test.txt
+        pip3 install -r requirements.txt
+        pip3 install -r requirements_dev.txt
     - name: Compile library
       run: |
         pip install -e .
