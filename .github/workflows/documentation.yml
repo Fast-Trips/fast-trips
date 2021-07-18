@@ -18,8 +18,8 @@ jobs:
         sudo apt-get install doxygen
         python -m pip install setuptools --upgrade
         python -m pip install pytest wheel
-        python -m pip install -r requirements_test.txt
-        python -m pip install -r dev-dependencies.txt
+        python -m pip install -r requirements.txt
+        python -m pip install -r requirements_dev.txt
         python -m pip install --upgrade cffi twine
 
     - name: Compile library
