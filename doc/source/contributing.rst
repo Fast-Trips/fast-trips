@@ -106,8 +106,6 @@ To run::
 +-------------------------+----------------------------------+------------------+-----------------------------------------------------------------------------------+
 | Flexible Departure/     | ``test_pat_variation.py``        | TRAVIS           | Tests that flexible departure and arrival window penalties are working.           |
 +-------------------------+----------------------------------+------------------+-----------------------------------------------------------------------------------+
-| Arrival Windows         |                                  |                  |                                                                                   |
-+-------------------------+----------------------------------+------------------+-----------------------------------------------------------------------------------+
 | Penalty Functions       | ``test_penalty_functions.py``    | TRAVIS           | Tests that penalty functions for flexible departure and arrival windows work.     |
 +-------------------------+----------------------------------+------------------+-----------------------------------------------------------------------------------+
 | Regional Network        | ``test_psrc.py``                 | TRAVIS           | Tests that things work on a large, regional network                               |
@@ -129,21 +127,25 @@ Functions, classes and methods should be documented using
 to be compiled in SPHINX using autodoc functionality, doxygen for c++, and breathe to link them.
 
 An automatic CI workflow running on GitHub Actions compiles a new version of the documentation at each pull request an
-stores it on GitHub for up to 30 days. The resulting HTML is then manually pushed to the gh-pages branch.
+stores it on GitHub for up to 30 days.
+
+This CI workflow will fail if the documentation cannot be built. In that case, the documentation needs to be fixed
+before the new branch is merged.
+
+On merge to master, the GitHub Actions CI workflow also uploads the resulting documentation to the gh-pages branch,
+keeping the online documentation in perfect synchrony with the code.
 
 Install documentation packages
 """""""""""""""""""""""""""""""
 
-To rebuild the documentation, you must have sphinx, numpydoc, and the read-the-docs sphinx theme installed: ::
+To rebuild the documentation, you must have sphinx, numpydoc, and the read-the-docs sphinx theme installed, as well as
+doxygen and the breathe to update the c++ documentation: ::
 
-  pip install sphinx numpydoc sphinx_rtd_theme breathe
+  pip install -r requirements_dev.txt
 
-To update the c++ documentation (if needed), you will also need to install doxygen and the breathe python library: ::
-
-  pip install breathe
-
-Follow directions on `doxygen page <https://www.stack.nl/~dimitri/doxygen/manual/install.html>`_ to install, or if you
-have brew installed on a mac, use the command: ::
+Building the C++ documentation also requires other software installation, and you can follow the directions provided on
+the `doxygen page <https://www.doxygen.nl/manual/install.html>`_ to install, or if you have brew
+installed on a mac, use the command: ::
 
   brew install doxygen
 
@@ -166,9 +168,8 @@ Then run sphinx running the following command from the :code: ``\doc`` directory
 Push documentation to gh-pages branch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The resulting files in the ``doc/html`` directory should be published to the gh-pages branch in the .git repository,
-making sure it is clean ahead of time.  This can be done via a GUI or by using the following commands from the root
-fast-trips directory: ::
+In case there is a need to manually upload the compiled documentation to GitHub, it can be done via a GUI or by using
+the following commands from the root fast-trips directory: ::
 
   tar czf /tmp/html.tgz doc/build/** ## zips and copies files to temp directory
   git checkout gh-pages              ## checks out github pages directory
