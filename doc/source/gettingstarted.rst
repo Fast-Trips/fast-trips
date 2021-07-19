@@ -16,6 +16,10 @@ Recommended:
 
 - Conda package manager to manage virtual environments
 
+or
+
+- pyenv or virtualenv to manage virtual environment using vanilla Python versions
+
 To compile from source:
 
 - **Windows**, `Microsoft Visual C++ Compiler for Python 3.8 <https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019>`_
@@ -25,9 +29,9 @@ To compile from source:
 Recommended:
 
 - GitHub Desktop
-- IDE like Atom, Sublime Text, etc.
+- IDE like PyCharm, Atom, Sublime Text, etc.
 
-Fast-Trips can either be installed from source or from compilled binaries.  Compilled binaries are made from commits to
+Fast-Trips can either be installed from source or from compiled binaries.  Compiled binaries are made from commits to
 the "master" branch and are more stable, but less up-to-date than the source.
 
 Installing stable release from PyPI
@@ -35,7 +39,7 @@ Installing stable release from PyPI
 
 Creating a virtual environment using conda (recommended)::
 
-  conda create fast-trips-env ft-py3 python=3.6
+  conda create fast-trips-env ft-py3 python=3.8
   source activate fast-trips-env
   pip install fasttrips
 

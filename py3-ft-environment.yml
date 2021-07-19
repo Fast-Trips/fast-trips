@@ -1,6 +1,6 @@
 name: py3-ft
 dependencies:
-- python=3.6
+- python=3.8
 - pip
 - git
 - configparser

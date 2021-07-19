@@ -23,14 +23,15 @@ proceed along a general roadmap for Fast-Trips.  If no issue exists then please 
 that your approach can be discussed with the team.   When possible, issues should be written as
 .`user stories <https://en.wikipedia.org/wiki/User_story>`_.
 
-When possible, the team strives to adhere to `agile software development principles <https://en.wikipedia.org/wiki/Agile_software_development#Agile_software_development_principles>`_.
+When possible, the team strives to adhere to
+`agile software development principles <https://en.wikipedia.org/wiki/Agile_software_development#Agile_software_development_principles>`_.
 
 Roadmap
 -------
 
 Testing
 --------
-There are a couple dozen tests that are stored in ``\tests``.  They can be run by installing the
+There are a few dozen tests that are stored in ``\tests``.  They can be run by installing the
 `PyTest <https://docs.pytest.org/en/latest/>`_ library ( ``pip install pytest`` and executing the command ``pytest``
 from the command line within your ``<fast-trips-dir>``.
 
@@ -123,10 +124,12 @@ To run::
 Documentation
 ---------------
 
-Functions, classes and methods should be documented using `restructured text docstrings <https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html>`_
+Functions, classes and methods should be documented using
+`restructured text docstrings <https://thomas-cokelaer.info/tutorials/sphinx/docstring_python.html>`_
 to be compiled in SPHINX using autodoc functionality, doxygen for c++, and breathe to link them.
 
-The resulting HTML is then manually pushed to the gh-pages branch.
+An automatic CI workflow running on GitHub Actions compiles a new version of the documentation at each pull request an
+stores it on GitHub for up to 30 days. The resulting HTML is then manually pushed to the gh-pages branch.
 
 Install documentation packages
 """""""""""""""""""""""""""""""
