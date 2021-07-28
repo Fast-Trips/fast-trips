@@ -1,5 +1,5 @@
 __copyright__ = "Copyright 2015 Contributing Entities"
-__license__   = """
+__license__ = """
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -12,14 +12,15 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+
 import logging
 import multiprocessing
-
 
 __all__ = ['FastTripsLogger', 'setupLogging']
 
 #: This is the instance of :py:class:`Logger` that gets used for all dta logging needs!
 FastTripsLogger = multiprocessing.get_logger()
+
 
 def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True, append=False):
     """
@@ -49,14 +50,15 @@ def setupLogging(infoLogFilename, debugLogFilename, logToConsole=True, append=Fa
     if debugLogFilename:
         debugloghandler = logging.StreamHandler(open(debugLogFilename, 'a' if append else 'w'))
         debugloghandler.setLevel(logging.DEBUG)
-        debugloghandler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
+        debugloghandler.setFormatter(
+            logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(debugloghandler)
         FastTripsDebugLogFilename = debugLogFilename
 
     if logToConsole:
         consolehandler = logging.StreamHandler()
         consolehandler.setLevel(logging.INFO)
-        consolehandler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
+        consolehandler.setFormatter(
+            logging.Formatter('%(asctime)s [%(levelname)s/%(processName)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
         FastTripsLogger.addHandler(consolehandler)
     FastTripsLogToConsole = logToConsole
-

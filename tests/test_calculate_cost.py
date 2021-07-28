@@ -6,27 +6,28 @@ import pandas as pd
 
 from fasttrips import PathSet, Run, Util
 
-EXAMPLE_DIR    = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
+EXAMPLE_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples', 'Springfield')
 
 # DIRECTORY LOCATIONS
-INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
-INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'simpson_zorn')
-INPUT_CONFIG        = os.path.join(EXAMPLE_DIR, 'configs', 'B')
-OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
-TEST_FOLDER         = os.path.join(EXAMPLE_DIR, 'output','calculate_cost')
-DF_DIR              = os.path.join(EXAMPLE_DIR, 'misc', 'test_controls', 'calculate_cost')
+INPUT_NETWORK = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND = os.path.join(EXAMPLE_DIR, 'demand', 'simpson_zorn')
+INPUT_CONFIG = os.path.join(EXAMPLE_DIR, 'configs', 'B')
+OUTPUT_DIR = os.path.join(EXAMPLE_DIR, 'output')
+TEST_FOLDER = os.path.join(EXAMPLE_DIR, 'output', 'calculate_cost')
+DF_DIR = os.path.join(EXAMPLE_DIR, 'misc', 'test_controls', 'calculate_cost')
 
 # INPUT FILE LOCATIONS
-CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
-INPUT_FUNCTIONS     = os.path.join(INPUT_CONFIG, 'config_ft.py')
-INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
-PATHSET_PATHS_OUT   = os.path.join(DF_DIR, 'output_pathset_paths_calculate_cost.csv')
-PATHSET_LINKS_OUT   = os.path.join(DF_DIR, 'output_pathset_links_calculate_cost.csv')
+CONFIG_FILE = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+INPUT_FUNCTIONS = os.path.join(INPUT_CONFIG, 'config_ft.py')
+INPUT_WEIGHTS = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+PATHSET_PATHS_OUT = os.path.join(DF_DIR, 'output_pathset_paths_calculate_cost.csv')
+PATHSET_LINKS_OUT = os.path.join(DF_DIR, 'output_pathset_links_calculate_cost.csv')
 
 STOCHASTIC_DISPERSION = 0.5
 
-PATHSET_PATHS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_paths.csv')
-PATHSET_LINKS_CTL   = os.path.join(DF_DIR, 'control_result_pathset_links.csv')
+PATHSET_PATHS_CTL = os.path.join(DF_DIR, 'control_result_pathset_paths.csv')
+PATHSET_LINKS_CTL = os.path.join(DF_DIR, 'control_result_pathset_links.csv')
+
 
 @pytest.mark.travis
 def test_growth_type_cost_calculation():
@@ -40,7 +41,7 @@ def test_growth_type_cost_calculation():
     }
 
     compare_dtypes = {
-            'sim_cost': np.float64,
+        'sim_cost': np.float64,
     }
 
     result_set = [94.32, 3.13704, 0.51001, 127.04425]
@@ -53,6 +54,7 @@ def test_growth_type_cost_calculation():
 
 if __name__ == '__main__':
     import traceback
+
     try:
         test_growth_type_cost_calculation()
     except Exception as err:

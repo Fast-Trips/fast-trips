@@ -1,5 +1,5 @@
 __copyright__ = "Copyright 2015 Contributing Entities"
-__license__   = """
+__license__ = """
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -17,4 +17,4 @@ __all__ = [
     'maps',
     'plots',
     'widgets',
-    ]
+]

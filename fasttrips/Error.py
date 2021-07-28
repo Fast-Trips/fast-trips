@@ -3,7 +3,7 @@ This file will define the various exceptions that can be raised in the course of
 """
 
 __copyright__ = "Copyright 2016 Contributing Entities"
-__license__   = """
+__license__ = """
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -17,11 +17,13 @@ __license__   = """
     limitations under the License.
 """
 
+
 class Error(Exception):
     """
     Base class for exceptions in fast-trips.
     """
     pass
+
 
 class NetworkInputError(Error):
     """
@@ -33,8 +35,9 @@ class NetworkInputError(Error):
     """
 
     def __init__(self, filename, msg):
-        self.expr     = filename
-        self.msg      = msg
+        self.expr = filename
+        self.msg = msg
+
 
 class DemandInputError(Error):
     """
@@ -46,8 +49,9 @@ class DemandInputError(Error):
     """
 
     def __init__(self, filename, msg):
-        self.expr     = filename
-        self.msg      = msg
+        self.expr = filename
+        self.msg = msg
+
 
 class ConfigurationError(Error):
     """
@@ -59,8 +63,9 @@ class ConfigurationError(Error):
     """
 
     def __init__(self, filename, msg):
-        self.expr     = filename
-        self.msg      = msg
+        self.expr = filename
+        self.msg = msg
+
 
 class NotImplementedError(Error):
     """
@@ -69,8 +74,10 @@ class NotImplementedError(Error):
     Attributes:
        msg   -- explanation of the error
     """
+
     def __init__(self, msg):
-        self.msg      = msg
+        self.msg = msg
+
 
 class UnexpectedError(Error):
     """
@@ -79,5 +86,6 @@ class UnexpectedError(Error):
     Attributes:
        msg   -- explanation of the error
     """
+
     def __init__(self, msg):
-        self.msg      = msg
+        self.msg = msg

@@ -6,10 +6,11 @@ import pytest
 
 from fasttrips import Util
 
+
 @pytest.mark.travis
 def test_exponential_integral():
     test_series = pd.Series(
-        data=[6., 5./3, 111./11, 45./7, 524./13],
+        data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],
         index=[1, 4, 7, 25, 627],
         name='cost_series'
     )
@@ -24,10 +25,11 @@ def test_exponential_integral():
 
     pd.testing.assert_series_equal(validation_series, output, check_less_precise=6)
 
+
 @pytest.mark.travis
 def test_logarithmic_integral():
     test_series = pd.Series(
-        data=[6., 5./3, 111./11, 45./7, 524./13],
+        data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],
         index=[1, 4, 7, 25, 627],
         name='cost_series'
     )
@@ -42,10 +44,11 @@ def test_logarithmic_integral():
 
     pd.testing.assert_series_equal(validation_series, output, check_less_precise=6)
 
+
 @pytest.mark.travis
 def test_logistic_integral():
     test_series = pd.Series(
-        data=[6., 5./3, 111./11, 45./7, 524./13],
+        data=[6., 5. / 3, 111. / 11, 45. / 7, 524. / 13],
         index=[1, 4, 7, 25, 627],
         name='cost_series'
     )

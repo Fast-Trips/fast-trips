@@ -6,7 +6,7 @@ from builtins import range
 from builtins import object
 
 __copyright__ = "Copyright 2015 Contributing Entities"
-__license__   = """
+__license__ = """
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -19,6 +19,7 @@ __license__   = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+
 import csv
 import datetime
 import logging
@@ -28,7 +29,7 @@ import numpy as np
 import pandas as pd
 import partridge as ptg
 
-from .Error  import UnexpectedError
+from .Error import UnexpectedError
 from .Logger import FastTripsLogger
 
 
@@ -39,34 +40,35 @@ class Util(object):
     Collect useful stuff here that doesn't belong in any particular existing class.
     """
     #: Use this as the date
-    #SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)
+    # SIMULATION_DAY                  = datetime.datetime(year=2016,day=1,month=1, hour=0, minute=0, second=0)
     #: Use this for the start time - the start of :py:attr:`Util.SIMULATION_DAY`
-    #SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
+    # SIMULATION_DAY_START            = datetime.datetime.combine(SIMULATION_DAY, datetime.time())
 
     #: Maps timedelta columns to units for :py:meth:`Util.write_dataframe`
-    TIMEDELTA_COLUMNS_TO_UNITS      = {
-        'time enumerating'  : 'milliseconds',  # performance
-        'time labeling'     : 'milliseconds',  # performance
-        'step_duration'     : 'seconds',       # performance
-        'pf_linktime'       : 'min',
-        'pf_linkcost'       : 'min',
-        'pf_waittime'       : 'min',
-        'new_linktime'      : 'min',
-        'new_waittime'      : 'min'
+    TIMEDELTA_COLUMNS_TO_UNITS = {
+        'time enumerating': 'milliseconds',  # performance
+        'time labeling': 'milliseconds',  # performance
+        'step_duration': 'seconds',  # performance
+        'pf_linktime': 'min',
+        'pf_linkcost': 'min',
+        'pf_waittime': 'min',
+        'new_linktime': 'min',
+        'new_waittime': 'min'
     }
 
     #: Debug columns to drop
     DROP_DEBUG_COLUMNS = [
         # drop these?
-        "A_lat","A_lon","B_lat","B_lon",# "distance",
+        "A_lat", "A_lon", "B_lat", "B_lon",  # "distance",
         # numeric versions of other columns
-        "trip_list_id_num","trip_id_num","A_id_num","B_id_num","mode_num",
+        "trip_list_id_num", "trip_id_num", "A_id_num", "B_id_num", "mode_num",
         # simulation debugging
-        "bump_iter","bumpstop_boarded","alight_delay_min"
+        "bump_iter", "bumpstop_boarded", "alight_delay_min"
     ]
     DROP_PATHFINDING_COLUMNS = [
         # pathfinding debugging
-        "pf_iteration","pf_A_time","pf_B_time","pf_linktime","pf_linkcost","pf_linkdist","pf_waittime","pf_linkfare","pf_cost","pf_fare","pf_initcost","pf_initfare"
+        "pf_iteration", "pf_A_time", "pf_B_time", "pf_linktime", "pf_linkcost", "pf_linkdist", "pf_waittime",
+        "pf_linkfare", "pf_cost", "pf_fare", "pf_initcost", "pf_initfare"
     ]
 
     @staticmethod
@@ -77,7 +79,7 @@ class Util(object):
 
         Returns the dataframe with the new column.
         """
-        assert(len(input_df.columns) == 1)
+        assert (len(input_df.columns) == 1)
 
         # drop duplicates - this is an ID and drop the index since it's not useful
         return_df = input_df.drop_duplicates().reset_index(drop=True)
@@ -91,9 +93,9 @@ class Util(object):
         return return_df
 
     @staticmethod
-    def add_new_id(input_df,   id_colname,         newid_colname,
+    def add_new_id(input_df, id_colname, newid_colname,
                    mapping_df, mapping_id_colname, mapping_newid_colname,
-                   warn=False, warn_msg=None,      drop_failures=True):
+                   warn=False, warn_msg=None, drop_failures=True):
         """
         Passing a :py:class:`pandas.DataFrame` *input_df* with an ID column called *id_colname*,
         adds the numeric id as a column named *newid_colname* and returns it.
@@ -106,10 +108,10 @@ class Util(object):
         input_cols = list(input_df.columns.values)
         # add the new id column
         return_df = pd.merge(left=input_df, right=mapping_df,
-                                 how='left',
-                                 left_on=id_colname,
-                                 right_on=mapping_id_colname,
-                                 suffixes=("","_mapping"))
+                             how='left',
+                             left_on=id_colname,
+                             right_on=mapping_id_colname,
+                             suffixes=("", "_mapping"))
 
         # print "RETURN_DF=================="
         # print return_df.head()
@@ -124,11 +126,13 @@ class Util(object):
             if warn: msg_level = logging.WARN
 
             if warn_msg: FastTripsLogger.log(msg_level, warn_msg)
-            FastTripsLogger.log(msg_level,"Util.add_new_id failed to map all ids to numbers")
+            FastTripsLogger.log(msg_level, "Util.add_new_id failed to map all ids to numbers")
             # FastTripsLogger.log(msg_level,"pd.isnull(return_df[%s]).sum() = %d" % (mapping_newid_colname_chk, pd.isnull(return_df[mapping_newid_colname_chk]).sum()))
-            FastTripsLogger.log(msg_level,"\n%s\n" % str(return_df.loc[pd.isnull(return_df[mapping_newid_colname_chk]),[id_colname,mapping_newid_colname_chk]].drop_duplicates()))
+            FastTripsLogger.log(msg_level, "\n%s\n" % str(return_df.loc[
+                                                              pd.isnull(return_df[mapping_newid_colname_chk]), [
+                                                                  id_colname,
+                                                                  mapping_newid_colname_chk]].drop_duplicates()))
             # FastTripsLogger.log(msg_level,"pd.isnull(input_df[%s]).sum() = %d" % (id_colname, pd.isnull(input_df[id_colname]).sum()))
-
 
             if drop_failures:
                 # remove them
@@ -149,9 +153,9 @@ class Util(object):
         # rename it as requested (if necessary)
         if newid_colname != mapping_newid_colname:
             if mapping_newid_colname in input_cols:
-                return_df.rename(columns={"%s_mapping" % mapping_newid_colname:newid_colname}, inplace=True)
+                return_df.rename(columns={"%s_mapping" % mapping_newid_colname: newid_colname}, inplace=True)
             else:
-                return_df.rename(columns={mapping_newid_colname:newid_colname}, inplace=True)
+                return_df.rename(columns={mapping_newid_colname: newid_colname}, inplace=True)
 
         # print "FINAL RETURN_DF=================="
         # print return_df.head()
@@ -189,7 +193,7 @@ class Util(object):
         df_cp = df.copy()
         df_cols = list(df.columns.values)
         for col_idx in range(len(df_cols)):
-            if str(df.dtypes[col_idx]) == "datetime64[ns]": # print as HH:MM:SS
+            if str(df.dtypes[col_idx]) == "datetime64[ns]":  # print as HH:MM:SS
                 df_cp[df_cols[col_idx]] = df[df_cols[col_idx]].apply(Util.datetime64_formatter)
         return df_cp
 
@@ -199,25 +203,25 @@ class Util(object):
         Formatter to convert :py:class:`numpy.datetime64` to minutes after midnight
         (with two decimal places)
         """
-        return '%.2f' % (pd.to_datetime(x).hour*60.0 + \
+        return '%.2f' % (pd.to_datetime(x).hour * 60.0 + \
                          pd.to_datetime(x).minute + \
-                         (pd.to_datetime(x).second/60.0))
+                         (pd.to_datetime(x).second / 60.0))
 
     @staticmethod
     def timedelta_formatter(x):
         """
         Formatter to convert :py:class:`numpy.timedelta64` to string that looks like `4m 35.6s`
         """
-        seconds = (x/np.timedelta64(1,'s'))
-        minutes = int(seconds/60)
-        seconds -= minutes*60
-        return '%4dm %04.1fs' % (minutes,seconds)
+        seconds = (x / np.timedelta64(1, 's'))
+        minutes = int(seconds / 60)
+        seconds -= minutes * 60
+        return '%4dm %04.1fs' % (minutes, seconds)
 
     @staticmethod
     def read_time(x, end_of_day=False):
         from .Assignment import Assignment
         try:
-            if x=='' or x.lower()=='default' or pd.isnull(x):
+            if x == '' or x.lower() == 'default' or pd.isnull(x):
                 x = '24:00:00' if end_of_day else '00:00:00'
         except:
             if pd.isnull(x):
@@ -226,7 +230,7 @@ class Util(object):
         hour = int(time_split[0])
         day = Assignment.NETWORK_BUILD_DATE
         if hour >= 24:
-            time_split[0] = '%02d' %(hour-24)
+            time_split[0] = '%02d' % (hour - 24)
             day += datetime.timedelta(days=1)
         x = ':'.join(time_split)
         return datetime.datetime.combine(day, datetime.datetime.strptime(x, '%H:%M:%S').time())
@@ -241,9 +245,9 @@ class Util(object):
         elapsed_time = datetime.timedelta(minutes=minutes)
         return datetime.datetime.combine(Assignment.NETWORK_BUILD_DATE, datetime.time()) + elapsed_time
 
-
     @staticmethod
-    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True, drop_pathfinding_columns=True):
+    def write_dataframe(df, name, output_file, append=False, keep_duration_columns=False, drop_debug_columns=True,
+                        drop_pathfinding_columns=True):
         """
         Convenience method to write a dataframe but make some of the fields more usable.
 
@@ -302,14 +306,14 @@ class Util(object):
             if str(df_toprint.dtypes[col_idx]) == "timedelta64[ns]":
 
                 # lookup timedelta units
-                units_str   = Util.TIMEDELTA_COLUMNS_TO_UNITS[old_colname]
+                units_str = Util.TIMEDELTA_COLUMNS_TO_UNITS[old_colname]
                 new_colname = "%s %s" % (old_colname, units_str)
                 if units_str == "milliseconds":
-                    units = np.timedelta64(1,'ms')
+                    units = np.timedelta64(1, 'ms')
                 elif units_str == "min":
-                    units = np.timedelta64(1,'m')
+                    units = np.timedelta64(1, 'm')
                 elif units_str == "seconds":
-                    units = np.timedelta64(1,'s')
+                    units = np.timedelta64(1, 's')
                 else:
                     raise Exception
 
@@ -317,10 +321,10 @@ class Util(object):
                 if new_colname in df_cols: continue
 
                 # otherwise make the new one and add or replace it
-                df_toprint[new_colname] = (df_toprint[old_colname]/units)
-                if keep_duration_columns:           # add
+                df_toprint[new_colname] = (df_toprint[old_colname] / units)
+                if keep_duration_columns:  # add
                     df_cols.append(new_colname)
-                else:                               # replace
+                else:  # replace
                     df_cols[col_idx] = new_colname
 
             elif str(df_toprint.dtypes[col_idx]) == "datetime64[ns]":
@@ -350,14 +354,17 @@ class Util(object):
         Given a dataframe with columns origin_lat, origin_lon, destination_lat, destination_lon, calculates the distance
         in miles between origin and destination based on Haversine.  Results are added to the dataframe in a column called *distance_colname*.
         """
-        radius = 3963.190592 # mi
+        radius = 3963.190592  # mi
 
         # assume these aren't in here
-        dataframe["dist_lat" ] = np.radians(dataframe[destination_lat]-dataframe[origin_lat])
-        dataframe["dist_lon" ] = np.radians(dataframe[destination_lon]-dataframe[origin_lon])
-        dataframe["dist_hava"] = (np.sin(dataframe["dist_lat"]/2) * np.sin(dataframe["dist_lat"]/2)) + \
-                                 (np.cos(np.radians(dataframe[origin_lat])) * np.cos(np.radians(dataframe[destination_lat])) * np.sin(dataframe["dist_lon"]/2.0) * np.sin(dataframe["dist_lon"]/2.0))
-        dataframe["dist_havc"] = 2.0*np.arctan2(np.sqrt(dataframe["dist_hava"]), np.sqrt(1.0-dataframe["dist_hava"]))
+        dataframe["dist_lat"] = np.radians(dataframe[destination_lat] - dataframe[origin_lat])
+        dataframe["dist_lon"] = np.radians(dataframe[destination_lon] - dataframe[origin_lon])
+        dataframe["dist_hava"] = (np.sin(dataframe["dist_lat"] / 2) * np.sin(dataframe["dist_lat"] / 2)) + \
+                                 (np.cos(np.radians(dataframe[origin_lat])) * np.cos(
+                                     np.radians(dataframe[destination_lat])) * np.sin(
+                                     dataframe["dist_lon"] / 2.0) * np.sin(dataframe["dist_lon"] / 2.0))
+        dataframe["dist_havc"] = 2.0 * np.arctan2(np.sqrt(dataframe["dist_hava"]),
+                                                  np.sqrt(1.0 - dataframe["dist_hava"]))
         dataframe[distance_colname] = radius * dataframe["dist_havc"]
 
         # FastTripsLogger.debug("calculate_distance_miles\n%s", dataframe.to_string())
@@ -366,12 +373,13 @@ class Util(object):
         min_dist = dataframe[distance_colname].min()
         max_dist = dataframe[distance_colname].max()
         if min_dist < 0:
-            FastTripsLogger.warn("calculate_distance_miles: min is negative\n%s" % dataframe.loc[dataframe[distance_colname]<0].to_string())
+            FastTripsLogger.warn("calculate_distance_miles: min is negative\n%s" % dataframe.loc[
+                dataframe[distance_colname] < 0].to_string())
         if max_dist > 1000:
-            FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[dataframe[distance_colname]>1000].to_string())
+            FastTripsLogger.warn("calculate_distance_miles: max is greater than 1k\n%s" % dataframe.loc[
+                dataframe[distance_colname] > 1000].to_string())
 
-        dataframe.drop(["dist_lat","dist_lon","dist_hava","dist_havc"], axis=1, inplace=True)
-
+        dataframe.drop(["dist_lat", "dist_lon", "dist_hava", "dist_havc"], axis=1, inplace=True)
 
     @staticmethod
     def get_process_mem_use_bytes():
@@ -399,11 +407,11 @@ class Util(object):
 
         if bytes < 1000:
             return "%d bytes" % bytes
-        if bytes < 1000*1000:
-            return "%.1f KB" % (bytes/1000.0)
-        if bytes < 1000*1000*1000:
-            return "%.1f MB" % (bytes/(1000.0*1000.0))
-        return "%.1f GB" % (bytes/(1000.0*1000.0*1000.0))
+        if bytes < 1000 * 1000:
+            return "%.1f KB" % (bytes / 1000.0)
+        if bytes < 1000 * 1000 * 1000:
+            return "%.1f MB" % (bytes / (1000.0 * 1000.0))
+        return "%.1f GB" % (bytes / (1000.0 * 1000.0 * 1000.0))
 
     @staticmethod
     def merge_two_dicts(x, y):
@@ -450,38 +458,42 @@ class Util(object):
         from fasttrips import PathSet
 
         # default is constant (constant weight)
-        df[result_col] = df['var_value']*df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
+        df[result_col] = df['var_value'] * df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE]
 
         if PathSet.EXP_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL,  result_col] = \
+            df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.EXP_GROWTH_MODEL, result_col] = \
                 Util.exponential_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE])
 
         if PathSet.LOGARITHMIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(df), "Logarithmic pathweight growth_type formula specified. Missing var_value, or growth_log_base."
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOG_BASE}.issubset(
+                df), "Logarithmic pathweight growth_type formula specified. Missing var_value, or growth_log_base."
             df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGARITHMIC_GROWTH_MODEL, result_col] = \
-                Util.logarithmic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOG_BASE])
+                Util.logarithmic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
+                                             df[PathSet.WEIGHTS_GROWTH_LOG_BASE])
 
         if PathSet.LOGISTIC_GROWTH_MODEL in df[PathSet.WEIGHTS_GROWTH_TYPE].values:
-            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_logistic_max, or growth_logistic_mid."
+            assert {'var_value', PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX, PathSet.WEIGHTS_GROWTH_LOGISTIC_MID}.issubset(
+                df), "Logistic pathweight growth_type formula specified. Missing var_value, growth_logistic_max, or growth_logistic_mid."
             df.loc[df[PathSet.WEIGHTS_GROWTH_TYPE] == PathSet.LOGISTIC_GROWTH_MODEL, result_col] = \
-                Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX], df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
+                Util.logistic_integration(df['var_value'], df[PathSet.WEIGHTS_COLUMN_WEIGHT_VALUE],
+                                          df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MAX],
+                                          df[PathSet.WEIGHTS_GROWTH_LOGISTIC_MID])
 
         # TODO: option: make these more subtle?
         # missed_xfer has huge cost
         if 'missed_xfer' in df:
-            df.loc[df['missed_xfer']==1, result_col] = PathSet.HUGE_COST
+            df.loc[df['missed_xfer'] == 1, result_col] = PathSet.HUGE_COST
 
         # bump iter means over capacity
         if 'bump_iter' in df:
-            df.loc[df['bump_iter']>=0, result_col] = PathSet.HUGE_COST
+            df.loc[df['bump_iter'] >= 0, result_col] = PathSet.HUGE_COST
 
         # negative cost is invalid
         if (df[result_col] < 0).any():
             FastTripsLogger.warn("---Pathweight costs has negative values. Setting to zero.---\n{}".format(
                 df[df[result_col] < 0].to_string())
             )
-            df.loc[ df[result_col] < 0, result_col ] = 0.0
-
+            df.loc[df[result_col] < 0, result_col] = 0.0
 
     @staticmethod
     def exponential_integration(penalty_min, growth_rate):
@@ -493,8 +505,7 @@ class Util(object):
         :param growth_rate: float: Exponetial growth factor
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
-        return (np.power(1.0 + growth_rate, penalty_min) - 1)/ np.log(1.0 + growth_rate)
-
+        return (np.power(1.0 + growth_rate, penalty_min) - 1) / np.log(1.0 + growth_rate)
 
     @staticmethod
     def logarithmic_integration(penalty_min, growth_rate, log_base=np.exp(1)):
@@ -508,7 +519,6 @@ class Util(object):
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
         return growth_rate * ((penalty_min + 1) * np.log(penalty_min + 1) - penalty_min) / np.log(log_base)
-
 
     @staticmethod
     def logistic_integration(penalty_minute, growth_rate, max_logit, sigmoid_mid):
@@ -525,11 +535,11 @@ class Util(object):
         :return: float or :py:class:`pandas.Series` of floats depending on inputs
         """
 
-        max_integral = ((max_logit/ growth_rate)) * np.log(np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
-        min_integral = ((max_logit/ growth_rate)) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
+        max_integral = ((max_logit / growth_rate)) * np.log(
+            np.exp(growth_rate * penalty_minute) + np.exp(growth_rate * sigmoid_mid))
+        min_integral = ((max_logit / growth_rate)) * np.log(1 + np.exp(growth_rate * sigmoid_mid))
 
         return max_integral - min_integral
-
 
     @staticmethod
     def get_fast_trips_config():

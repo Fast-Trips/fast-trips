@@ -11,15 +11,15 @@ from fasttrips import Passenger
 from fasttrips import PathSet
 from fasttrips import Trip
 
-
 EXAMPLE_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples', "Springfield")
 
-INPUT_NETWORK       = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
-INPUT_DEMAND        = os.path.join(EXAMPLE_DIR, 'demand', 'general')
+INPUT_NETWORK = os.path.join(EXAMPLE_DIR, 'networks', 'vermont')
+INPUT_DEMAND = os.path.join(EXAMPLE_DIR, 'demand', 'general')
 
-CONFIGS        = ['A', 'A.alt', 'A.pat']
+CONFIGS = ['A', 'A.alt', 'A.pat']
 
-OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
+OUTPUT_DIR = os.path.join(EXAMPLE_DIR, 'output')
+
 
 @pytest.fixture(scope='module', params=CONFIGS)
 def config_scenario(request):
@@ -27,6 +27,7 @@ def config_scenario(request):
     Grab the right input folders for the test.
     """
     return request.param
+
 
 @pytest.fixture(scope='module')
 def ft_instance(config_scenario):
@@ -44,8 +45,8 @@ def ft_instance(config_scenario):
     ft = FastTrips(
         INPUT_NETWORK,
         INPUT_DEMAND,
-        os.path.join(EXAMPLE_DIR,'configs', config_scenario, 'pathweight_ft.txt'),
-        os.path.join(EXAMPLE_DIR,'configs', config_scenario, 'config_ft.txt'),
+        os.path.join(EXAMPLE_DIR, 'configs', config_scenario, 'pathweight_ft.txt'),
+        os.path.join(EXAMPLE_DIR, 'configs', config_scenario, 'config_ft.txt'),
         OUTPUT_FOLDER
     )
 
@@ -100,9 +101,9 @@ def pathfinder_paths(ft_instance, config_scenario):
         trip_pathset.pathdict = pathdict
 
     yield ft.passengers.setup_passenger_pathsets(1, 1, ft.stops, ft.trips.trip_id_df,
-                                                  ft.trips.trips_df, ft.routes.modes_df,
-                                                  ft.transfers, ft.tazs,
-                                                  Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
+                                                 ft.trips.trips_df, ft.routes.modes_df,
+                                                 ft.transfers, ft.tazs,
+                                                 Assignment.PREPEND_ROUTE_ID_TO_TRIP_ID)
 
 
 @pytest.fixture(scope='module')
@@ -133,6 +134,7 @@ def simulation_paths(ft_instance, pathfinder_paths):
         reset_bump_iter=False
     )
 
+
 @pytest.mark.cost
 def test_cost_symmetry(pathfinder_paths, simulation_paths):
     paths_join_col = ['trip_list_id_num', 'pathnum']
@@ -151,11 +153,11 @@ def test_cost_symmetry(pathfinder_paths, simulation_paths):
     paths = pd.merge(pf_pathset_paths[paths_join_col + ['pf_cost']],
                      sim_pathset_paths[paths_join_col + ['sim_cost']],
                      on=paths_join_col,
-                     suffixes=['pf','sim'])
+                     suffixes=['pf', 'sim'])
     links = pd.merge(pf_pathset_links[links_join_col + ['pf_linkcost']],
                      sim_pathset_links[links_join_col + ['sim_cost']],
                      on=links_join_col,
-                     suffixes=['pf','sim'])
+                     suffixes=['pf', 'sim'])
 
     # Assert that the join resulted in the same number of records
     assert pf_pathset_paths.shape[0] == paths.shape[0]

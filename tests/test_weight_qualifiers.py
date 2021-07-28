@@ -9,6 +9,7 @@ from fasttrips import PathSet
 
 sort_cols = ['user_class', 'purpose', 'demand_mode_type', 'demand_mode', 'supply_mode', 'weight_name']
 
+
 @pytest.fixture
 def sample_dataframe():
     sample_dict = {
@@ -68,6 +69,7 @@ def expected_dataframe():
 
     yield pd.DataFrame(data=expected_dict)
 
+
 @pytest.mark.travis
 def test_parse_weight_qualifiers(sample_dataframe, expected_dataframe):
     """
@@ -79,27 +81,31 @@ def test_parse_weight_qualifiers(sample_dataframe, expected_dataframe):
                                   expected_dataframe.sort_values(sort_cols).reset_index(drop=True),
                                   check_like=True)
 
+
 @pytest.mark.travis
 def test_parse_weight_qualifiers_bad_key(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
     """
-    sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('logistic') , 'weight_name'] = \
+    sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.contains('logistic'), 'weight_name'] = \
         sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME].str.replace('logistic', 'logging')
 
     with raises(KeyError, message="Expecting KeyError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
+
 
 @pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logrithmic_qualifier(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
     """
-    sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == 'arrive_late_cost_min.logarithmic.log_base' , 'weight_name'] = \
+    sample_dataframe.loc[sample_dataframe[
+                             PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == 'arrive_late_cost_min.logarithmic.log_base', 'weight_name'] = \
         'arrive_late_cost_min.logarithmic.log_base_bad'
 
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
+
 
 @pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logrithmic_qualifier_value(sample_dataframe):
@@ -111,16 +117,19 @@ def test_parse_weight_qualifiers_bad_logrithmic_qualifier_value(sample_dataframe
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
+
 @pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logistic_qualifier(sample_dataframe):
     """
     Test to ensure the validation on qualifier types is working.
     """
-    sample_dataframe.loc[sample_dataframe[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == 'depart_early_cost_min.logistic.logistic_max' , 'weight_name'] = \
+    sample_dataframe.loc[sample_dataframe[
+                             PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == 'depart_early_cost_min.logistic.logistic_max', 'weight_name'] = \
         'depart_early_cost_min.logistic.logistic_max_bad'
 
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
+
 
 @pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logistic_max_qualifier_value(sample_dataframe):
@@ -132,6 +141,7 @@ def test_parse_weight_qualifiers_bad_logistic_max_qualifier_value(sample_datafra
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
 
+
 @pytest.mark.travis
 def test_parse_weight_qualifiers_bad_logistic_mid_qualifier_value(sample_dataframe):
     """
@@ -141,6 +151,7 @@ def test_parse_weight_qualifiers_bad_logistic_mid_qualifier_value(sample_datafra
                          'depart_early_cost_min.logistic.logistic_mid', 'weight_value'] = -1
     with raises(AssertionError, message="Expecting AssertionError"):
         Assignment.process_weight_qualifiers(sample_dataframe)
+
 
 @pytest.mark.travis
 def test_no_qualifiers(sample_dataframe):
