@@ -83,9 +83,7 @@ Troubleshooting:
    ``<fast-trips-dir>``.
 
 .. note::
- - Pandas 0.21.x has known issues, and it is not compatible with Fast-Trips.
- - Fast-trips currently uses a development version of the `Partridge <https://github.com/remix/partridge>`_ that is
-   required in order to read unzipped GTFS files.
+ - Pandas was thoroughly tested with Pandas 1.3.0. Reverting to that version if errors occur might be necessary
 
 Test the Install
 -------------------
