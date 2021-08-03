@@ -1,0 +1,48 @@
+name: Documentation
+
+on:  [pull_request, release]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        sudo apt-get install doxygen
+        python -m pip install setuptools --upgrade
+        python -m pip install pytest wheel
+        python -m pip install -r requirements.txt
+        python -m pip install -r requirements_dev.txt
+        python -m pip install --upgrade cffi twine
+
+    - name: Compile library
+      run: |
+        pip install -e .
+
+    - name: Builds documentation
+      run: |
+        cd doc
+        doxygen doxygen.conf
+        ls
+        sphinx-build -b html source build
+
+    - name: Keeps documentation on GitHub
+      uses: actions/upload-artifact@v2
+      with:
+        name: documentation
+        path: doc/build/
+        if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+
+    - name: Deploy 🚀
+#      if: ${{ github.event_name == 'release'}}
+      uses: JamesIves/github-pages-deploy-action@4.1.4
+      with:
+        branch: gh-pages # The branch the action should deploy to.
+        folder: doc/build # The folder the action should deploy.
