@@ -680,6 +680,8 @@ class Skim(np.ndarray):
         obj.num_zones = num_zones
         obj.zone_index_mapping = zone_index_mapping
 
+        return obj
+
     def __array_finalize__(self, obj):
         if obj is None: return
         self.name = getattr(obj, 'name', None)
