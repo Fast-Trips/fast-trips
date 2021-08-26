@@ -695,3 +695,28 @@ class Skim(np.ndarray):
         # if name is None:
         #     name = f"{self.name}_skim.omx"
         pass
+
+
+class SkimAverager(object):
+    def __init__(self, data={}):
+        self.time_sample_points = []
+        self.skim_components = []
+        self.data = {}
+        self.averaged_data = []
+        if data is not None:
+            self.add_data(data)  # data: dict from time sample point to skim matrix
+
+    def add_data(self, data):
+        self.data = data
+        self.time_sample_points = list(data.keys())
+        # all time periods have the same components by construction so use first element for name extraction
+        for skim in data[self.time_sample_points[0]]:
+            self.skim_components.append(skim.name)
+
+    def average_all(self):
+        self.averaged_data = [self.average_component(component) for component in self.skim_components]
+
+    def average_component(self, component):
+        assert component in self.skim_components
+        skim_vals = [list(filter(lambda x: x.name == component, skim))[0] for skim in self.data.values()]
+        return np.mean(skim_vals, axis=0)
