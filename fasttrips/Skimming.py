@@ -344,7 +344,7 @@ class Skimming(object):
             d_t = int(d_t)  # TODO: this should happen during creation and validation of time sampler
 
             time_elapsed = datetime.datetime.now() - start_time
-            FastTripsLogger.info("Skiming for time period %  Time elapsed: %2dh:%2dm:%2ds" % (
+            FastTripsLogger.info("Skiming for time sampling point %2d. Time elapsed: %2dh:%2dm:%2ds" % (
                 d_t,
                 int(time_elapsed.total_seconds() / 3600),
                 int((time_elapsed.total_seconds() % 3600) / 60),
@@ -455,8 +455,8 @@ class Skimming(object):
         from .PathSet import PathSet
 
         skim_sample_times = skim_path_set.keys()
-        path_dfs = []
-        link_dfs = []
+        path_dfs = {}
+        link_dfs = {}
 
         for sample_time in skim_sample_times:
             pathlist = []
