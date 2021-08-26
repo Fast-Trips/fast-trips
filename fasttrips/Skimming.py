@@ -444,14 +444,14 @@ class Skimming(object):
 
         """
         from .PathSet import PathSet
-        pathlist = []
-        linklist = []
 
         skim_sample_times = skim_path_set.keys()
         path_dfs = []
         link_dfs = []
 
         for sample_time in skim_sample_times:
+            pathlist = []
+            linklist = []
             for origin, pathset in skim_path_set[sample_time].items():
 
                 # TODO Jan: check:
