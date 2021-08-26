@@ -75,15 +75,19 @@ class Skimming(object):
         skim_path_set = Skimming.generate_pathsets_skimming(output_dir, FT, veh_trips_df)
 
         # extract path and path link dataframes
-        pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skim_path_set, FT.stops, FT.trips.trip_id_df,
-                                                                     FT.trips.trips_df,
-                                                                     FT.routes.modes_df)
+        pathset_paths_per_sample_time, pathset_links_per_sample_time = Skimming.setup_pathsets(skim_path_set,
+                                                                                               FT.stops,
+                                                                                               FT.trips.trip_id_df,
+                                                                                               FT.trips.trips_df,
+                                                                                               FT.routes.modes_df)
 
-        pathset_links_df = Skimming.attach_fare_component(pathset_links_df, veh_trips_df, FT)
+        pathset_links_per_sample_time = Skimming.attach_fare_component(pathset_links_per_sample_time, veh_trips_df, FT)
 
-        skim_matrices = Skimming.extract_matrices(pathset_links_df, FT)
+        skim_matrices = Skimming.extract_matrices(pathset_links_per_sample_time, FT)
 
-        return pathset_paths_df, pathset_links_df, skim_matrices
+        # TODO: average skims over time sample points
+
+        return pathset_paths_per_sample_time, pathset_links_per_sample_time, skim_matrices
 
     @staticmethod
     def create_index_mapping(FT):
@@ -102,21 +106,22 @@ class Skimming(object):
         return index_dict
 
     @staticmethod
-    def extract_matrices(pathset_links_df, FT):
+    def extract_matrices(pathset_links_per_sample_time, FT):
 
         index_mapping = Skimming.create_index_mapping(FT)
         num_zones = len(index_mapping)
 
         # skim_components = ['transfers', 'ivt', 'fare']
         # for component in skim_components:
-        skim_matrices = []
+        skim_matrices = {t: [] for t in pathset_links_per_sample_time.keys()}
 
-        # calculate fare skim:
-        fare_skim = Skimming.calculate_fare_skim(pathset_links_df, num_zones, index_mapping)
-        skim_matrices.append(fare_skim)
-        # calculate transfer skim
-        transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
-        skim_matrices.append(transfer_skim)
+        for sample_time, pathset_links_df in pathset_links_per_sample_time.items():
+            # calculate fare skim:
+            fare_skim = Skimming.calculate_fare_skim(pathset_links_df, num_zones, index_mapping)
+            skim_matrices[sample_time].append(fare_skim)
+            # calculate transfer skim
+            transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
+            skim_matrices[sample_time].append(transfer_skim)
 
         # calculate ivt skim
 
@@ -180,32 +185,36 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def attach_fare_component(pathset_links_df, veh_trips_df, FT):
-        ## cost calc stuff, see Ass .2027: choose_paths_without_simulation
+    def attach_fare_component(pathset_links_per_sample_time, veh_trips_df, FT):
+        # cost calc stuff, see Ass .2027: choose_paths_without_simulation
 
-        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
+        for sample_time, pathset_links_df in pathset_links_per_sample_time.items():
 
-        # instead of flag_missed_transfers(), set these to pathfinding results
-        pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
-        pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
-        pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
-        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Passenger.PF_COL_LINK_TIME]
-        pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
-        pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
+            pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
 
-        # Add fares -- need stop zones first if they're not there.
-        # We only need to do this once per pathset.
-        # todo -- could remove non-transit links for this?
-        stops = FT.stops
-        if "A_zone_id" not in list(pathset_links_df.columns.values):
-            assert (stops is not None)
-            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
-            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+            # instead of flag_missed_transfers(), set these to pathfinding results
+            pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
+            pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
+            pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
+            pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Passenger.PF_COL_LINK_TIME]
+            pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
+            pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
-        # This needs to be done fresh each time since simulation might change the board times and therefore the fare
-        # periods
-        pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
-        return pathset_links_df
+            # Add fares -- need stop zones first if they're not there.
+            # We only need to do this once per pathset.
+            # todo -- could remove non-transit links for this?
+            stops = FT.stops
+            if "A_zone_id" not in list(pathset_links_df.columns.values):
+                assert (stops is not None)
+                pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+                pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+
+            # This needs to be done fresh each time since simulation might change the board times and therefore the fare
+            # periods
+            pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
+            pathset_links_per_sample_time[sample_time] = pathset_links_df
+
+        return pathset_links_per_sample_time
 
     @staticmethod
     def find_trip_based_pathset_skimming(origin, mean_vot, start_time, user_class, purpose,
