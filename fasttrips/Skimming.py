@@ -649,11 +649,13 @@ class Skimming(object):
         return path_dfs, link_dfs
 
 
+class Skim(np.ndarray):
+    """
+    A single skim matrix, subclasses numpy array and has a write to omx method.
+    See https://numpy.org/doc/stable/user/basics.subclassing.html for details on numpy array subclassing.
+    """
 
-class Skim(object):
-    """
-    A single skim matrix, wraps a numpy array and has a write to omx method
-    """
+    # TODO Jan: where do we define these?
     skim_component_types = {
         "transfer": np.int32,
         "ivt": np.float32,
@@ -665,42 +667,24 @@ class Skim(object):
         "fare": np.inf
     }
 
-    def __init__(self, name, num_zones, values=None, zone_index_mapping=None):
+    def __new__(cls, name, num_zones, values=None, zone_index_mapping=None):
         assert name in Skim.skim_component_types.keys(), \
             f"Skim component {name} not implemented yet, choose from {Skim.skim_component_types.keys()}"
-        self.name = name
-        self.num_zones = num_zones
-        self.zone_index_mapping = zone_index_mapping
 
         if values is None:
-            self.matrix = np.full((self.num_zones, self.num_zones), Skim.skim_component_default_vals[self.name],
-                                  dtype=Skim.skim_component_types[self.name])
-        else:
-            self.set_matrix(values)
+            values = np.full((num_zones, num_zones), Skim.skim_component_default_vals[name],
+                             dtype=Skim.skim_component_types[name])
+        obj = np.asarray(values).view(cls)
 
-    def set_matrix(self, values):
-        # TODO: check for right type, etc.
-        self.matrix = values
+        obj.name = name
+        obj.num_zones = num_zones
+        obj.zone_index_mapping = zone_index_mapping
 
-    def set_value(self, origin, destination, value):
-        # TODO: do we coerce here?
-        self.matrix[origin, destination] = value
-
-    def set_row(self, origin, values):
-        """
-        Sets skim row, i.e. value for a given origin to all destinations. Expects numpy array for now, maybe
-        change that
-        """
-        assert values.shape[0] == self.num_zones
-        self.matrix[origin] = values
-
-    def set_column(self, destination, values):
-        """
-        Sets skim column, i.e. value for a given destination to all origins. Expects numpy array for now, maybe
-        change that
-        """
-        assert values.shape[0] == self.num_zones
-        self.matrix[:,destination] = values
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.name = getattr(obj, 'name', None)
+        self.num_zones = getattr(obj, 'num_zones', None)
+        self.zone_index_mapping = getattr(obj, 'zone_index_mapping', None)
 
     def write_to_file(self, file_root, name=None):
         """
@@ -709,4 +693,3 @@ class Skim(object):
         # if name is None:
         #     name = f"{self.name}_skim.omx"
         pass
-
