@@ -927,7 +927,9 @@ class Passenger(object):
 
         for pathset_id, pathset in pathset_dict.items():
 
-            if not pathset.goes_somewhere():   continue
+            # TODO jan, what do we do in the skimming case?, subclass PathSet to avoid this mess?
+            if not is_skimming and not pathset.goes_somewhere():
+                continue
             if not pathset.path_found():
                 if is_skimming:
                     raise NotImplementedError("TODO Jan")
@@ -935,11 +937,11 @@ class Passenger(object):
                     continue
 
             for pathnum in range(pathset.num_paths()):
-                pathlist.append(cls.process_path(pathnum, pathset, pathset_id, pf_iteration, is_skimming=False))
+                pathlist.append(cls.process_path(pathnum, pathset, pathset_id, pf_iteration, is_skimming=is_skimming))
 
                 state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
                 # skimming is always inbound
-                if not pathset.outbound:
+                if not is_skimming and pathset.outbound:
                     state_list = list(reversed(state_list))
 
                 link_num   = 0
@@ -954,7 +956,7 @@ class Passenger(object):
                             state_id, state, pf_iteration,
                             linkmode, link_num,
                             prev_linkmode, prev_state_id,
-                            state_list, is_skimming=False)
+                            state_list, is_skimming=is_skimming)
                     )
 
                     prev_linkmode = linkmode

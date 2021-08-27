@@ -317,7 +317,6 @@ class Skimming(object):
         all_taz = acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique()
 
         do_trace = True
-        # TEST: one departure time - this will need to be done every X mins, user specified or default 5 maybe
 
         ########### TIMES - skim time period and sampling frequency
         # TODO: parse somewhere else, ensure consistency. Create SkimSampler?
@@ -333,6 +332,7 @@ class Skimming(object):
 
         ####### USER CLASS AND MODES
         # TODO: either from file or from provided data
+        # TODO this is me, skimming, look through pathweight_ft.txt
         user_class = 'all'
         purpose = 'work'
         access_mode = 'walk'
@@ -353,7 +353,8 @@ class Skimming(object):
             path_dict = {Passenger.TRIP_LIST_COLUMN_TIME_TARGET: "departure",
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: datetime.time(d_t // 60, (d_t % 60)),
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
-
+            # TODO this needs to be multiprocessor
+            # Reuse the Assignment.py stuff for this
             for origin in all_taz:
                 (pathdict, perf_dict) = \
                     Skimming.find_trip_based_pathset_skimming(
@@ -373,6 +374,8 @@ class Skimming(object):
                 pathset_this_o = PathSet(path_dict)
                 pathset_this_o.pathdict = pathdict
                 skims_path_set[d_t][origin] = pathset_this_o
+
+        time_elapsed = datetime.datetime.now() - start_time
 
         FastTripsLogger.info("Finished skimming.  Time elapsed: %2dh:%2dm:%2ds" % (
             int(time_elapsed.total_seconds() / 3600),
@@ -459,107 +462,14 @@ class Skimming(object):
         link_dfs = {}
 
         for sample_time in skim_sample_times:
-            pathlist = []
-            linklist = []
-            for origin, pathset in skim_path_set[sample_time].items():
 
-                # TODO Jan: check:
-                # if not pathset.goes_somewhere():   continue
+            pathlist, linklist = Passenger.setup_pathsets_generic(
+                pathset_dict=skim_path_set[sample_time],
+                pf_iteration=None,
+                is_skimming=True
+            )
 
-                if not pathset.path_found():
-                    # Does this happen for disconnected zones? Or do we only use those that
-                    # have associated stops by definition?
-                    raise NotImplementedError("TODO Jan")
-
-                for pathnum in range(pathset.num_paths()):
-                    # INBOUND passengers have states like this
-                    #   stop:          label      arrival   arr_mode predecessor linktime
-                    # dest_taz                                 Egress    a stop4
-                    #  a stop4                                  trip2    b stop3
-                    #  b stop3                               Transfer    a stop2
-                    #  a stop2                                  trip1    b stop1
-                    #  b stop1                                 Access   orig_taz
-                    #
-                    #  stop:         label  arr_time    arr_mode predecessor  seq pred       linktime             cost  dep_time
-                    #    15:  0:36:38.4000  17:30:38      Egress        3772   -1   -1   0:02:38.4000     0:02:38.4000  17:28:00
-                    #  3772:  0:34:00.0000  17:28:00     5123368        6516   22   14   0:24:17.2000     0:24:17.2000  17:05:50
-                    #  6516:  0:09:42.8000  17:03:42    Transfer        4766   -1   -1   0:00:16.8000     0:00:16.8000  17:03:25
-                    #  4766:  0:09:26.0000  17:03:25     5138749        5671    7    3   0:05:30.0000     0:05:33.2000  16:57:55
-                    #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
-                    prev_linkmode = None
-
-                    state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
-                    # skimming is always inbound
-                    # if not pathset.outbound: state_list = list(reversed(state_list))
-                    state_list = list(reversed(state_list))
-
-                    pathlist.append([
-                        origin,
-                        pathset.direction,
-                        # pathset.mode,  # where does this come from?
-                        pathnum,
-                        pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
-                        pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
-                        pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY],
-                        pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_COST],
-                        pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_FARE]
-                    ])
-
-                    link_num = 0
-                    for (state_id, state) in state_list:
-
-                        linkmode = state[PathSet.STATE_IDX_DEPARRMODE]
-                        mode_num = None
-                        trip_id = None
-                        waittime = None
-
-                        if linkmode in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
-                            mode_num = state[PathSet.STATE_IDX_TRIP]
-                        else:
-                            # trip mode_num will need to be joined
-                            trip_id = state[PathSet.STATE_IDX_TRIP]
-                            linkmode = PathSet.STATE_MODE_TRIP
-
-                        a_id_num = state[PathSet.STATE_IDX_SUCCPRED]
-                        b_id_num = state_id
-                        a_seq = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                        b_seq = state[PathSet.STATE_IDX_SEQ]
-                        b_time = state[PathSet.STATE_IDX_DEPARR]
-                        a_time = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                        trip_time = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
-
-                        # trips: linktime includes wait
-                        if linkmode == PathSet.STATE_MODE_TRIP:
-                            waittime = state[PathSet.STATE_IDX_LINKTIME] - trip_time
-
-                        # two trips in a row -- this shouldn't happen
-                        if linkmode == PathSet.STATE_MODE_TRIP and prev_linkmode == PathSet.STATE_MODE_TRIP:
-                            FastTripsLogger.warn("Two trip links in a row... this shouldn't happen.")
-                            sys.exit()
-
-                        linklist.append([
-                            origin,
-                            pathnum,
-                            linkmode,
-                            mode_num,
-                            trip_id,
-                            a_id_num,
-                            b_id_num,
-                            a_seq,
-                            b_seq,
-                            a_time,
-                            b_time,
-                            state[PathSet.STATE_IDX_LINKTIME],
-                            state[PathSet.STATE_IDX_LINKFARE],
-                            state[PathSet.STATE_IDX_LINKCOST],
-                            state[PathSet.STATE_IDX_LINKDIST],
-                            waittime,
-                            link_num])
-
-                        prev_linkmode = linkmode
-                        link_num += 1
-
-            FastTripsLogger.debug("setup_passenger_pathsets(): pathlist and linklist constructed")
+            FastTripsLogger.debug("Skimming_setup__pathsets(): pathlist and linklist constructed")
 
             pathset_paths_df = pd.DataFrame(pathlist, columns=[
                 Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
