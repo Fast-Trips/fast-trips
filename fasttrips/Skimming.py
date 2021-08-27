@@ -504,7 +504,7 @@ class Skimming(object):
                 "setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
                     len(pathset_paths_df), len(pathset_links_df)))
 
-            pathset_paths_df, linkset_links_df = Passenger.clean_pathset_dfs(
+            pathset_paths_df, pathset_links_df = Passenger.clean_pathset_dfs(
                 pathset_paths_df,
                 pathset_links_df,
                 stops,

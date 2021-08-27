@@ -829,8 +829,8 @@ class Passenger(object):
             "setup_passenger_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
                 len(pathset_paths_df), len(pathset_links_df)))
 
-        self.clean_pathset_dfs(
-            pathset_paths_df, pathset_links_df, stops, trip_id_df, trips_df,
+        return self.clean_pathset_dfs(
+            pathset_paths_df, pathset_links_df, stops, trip_id_df, trips_df, modes_df,
             prepend_route_id_to_trip_id=prepend_route_id_to_trip_id, is_skimming=False
         )
 
@@ -838,6 +838,7 @@ class Passenger(object):
     def clean_pathset_dfs(pathset_paths_df, pathset_links_df, stops, trip_id_df, trips_df, modes_df, *,
                           prepend_route_id_to_trip_id, is_skimming):
         from .Skimming import Skimming
+        from .PathSet import PathSet
         if prepend_route_id_to_trip_id and is_skimming:
             raise NotImplementedError("prepend_route_id_to_trip_id not implemented for skimming")
 
@@ -945,7 +946,7 @@ class Passenger(object):
 
         for pathset_id, pathset in pathset_dict.items():
 
-            # TODO jan, what do we do in the skimming case?, subclass PathSet to avoid this mess?
+            # no intrazonal skims, don't need to check for skimming
             if not is_skimming and not pathset.goes_somewhere():
                 continue
             if not pathset.path_found():
@@ -959,7 +960,7 @@ class Passenger(object):
 
                 state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
                 # skimming is always inbound
-                if not is_skimming and pathset.outbound:
+                if not is_skimming and not pathset.outbound:
                     state_list = list(reversed(state_list))
 
                 link_num   = 0
