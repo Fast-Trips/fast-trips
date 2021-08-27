@@ -825,10 +825,22 @@ class Passenger(object):
             Passenger.PF_COL_LINK_DIST,
             Passenger.PF_COL_WAIT_TIME,
             Passenger.PF_COL_LINK_NUM])
-
         FastTripsLogger.debug(
             "setup_passenger_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
-            len(pathset_paths_df), len(pathset_links_df)))
+                len(pathset_paths_df), len(pathset_links_df)))
+
+        self.clean_pathset_dfs(
+            pathset_paths_df, pathset_links_df, stops, trip_id_df, trips_df,
+            prepend_route_id_to_trip_id=prepend_route_id_to_trip_id, is_skimming=False
+        )
+
+    @staticmethod
+    def clean_pathset_dfs(pathset_paths_df, pathset_links_df, stops, trip_id_df, trips_df, modes_df, *,
+                          prepend_route_id_to_trip_id, is_skimming):
+        from .Skimming import Skimming
+        if prepend_route_id_to_trip_id and is_skimming:
+            raise NotImplementedError("prepend_route_id_to_trip_id not implemented for skimming")
+
 
         # get A_id and B_id and trip_id
         pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df, 'A_id_num', 'A_id')
@@ -858,52 +870,58 @@ class Passenger(object):
         pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
         pathset_links_df.drop(["%s_x" % Route.ROUTES_COLUMN_MODE_NUM,
                                "%s_y" % Route.ROUTES_COLUMN_MODE_NUM], axis=1, inplace=True)
-        # verify it's always set
-        FastTripsLogger.debug("Have %d links with no mode number set" % len(
-            pathset_links_df.loc[pd.isnull(pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM])]))
+        if not is_skimming:
+            # TODO should this apply in both cases>?
+            # verify it's always set
+            FastTripsLogger.debug("Have %d links with no mode number set" % len(
+                pathset_links_df.loc[pd.isnull(pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM])]))
 
         # get supply mode
         pathset_links_df = pd.merge(left=pathset_links_df,
                                     right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]],
                                     how="left")
 
+        if is_skimming:
+            # attach destination zone numbers
+            pathset_paths_df, pathset_links_df = Skimming.attach_destination_number(pathset_paths_df, pathset_links_df)
+        else:
+            if len(pathset_paths_df) > 0:
+                # create path description
+                pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[
+                    Route.ROUTES_COLUMN_MODE]
+                if prepend_route_id_to_trip_id:
+                    pathset_links_df.loc[
+                        pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
+                        pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df[
+                            Trip.TRIPS_COLUMN_ROUTE_ID] + "_"
+                else:
+                    pathset_links_df.loc[
+                        pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
+                        pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
+                pathset_links_df.loc[
+                    pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
+                    pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
+                pathset_links_df.loc[pathset_links_df[
+                                         Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION] = \
+                    pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
+
+                descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                                             Passenger.PF_COL_PF_ITERATION,
+                                             Passenger.PF_COL_PATH_NUM,
+                                             Passenger.PF_COL_DESCRIPTION]].groupby(
+                    [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
+                     Passenger.PF_COL_PF_ITERATION,
+                     Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x: " ".join(x))
+                descr_df = descr_df.to_frame().reset_index()
+                # join it to pathset_paths and drop from pathset_links
+                pathset_paths_df = pd.merge(left=pathset_paths_df, right=descr_df, how="left")
+                pathset_links_df.drop([Passenger.PF_COL_DESCRIPTION], axis=1, inplace=True)
+            else:
+                pathset_paths_df[Passenger.PF_COL_DESCRIPTION] = ""
+
         FastTripsLogger.debug(
             "setup_passenger_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
         # FastTripsLogger.debug("\n%s" % pathset_links_df.head().to_string())
-
-        if len(pathset_paths_df) > 0:
-            # create path description
-            pathset_links_df[Passenger.PF_COL_DESCRIPTION] = pathset_links_df["A_id"] + " " + pathset_links_df[
-                Route.ROUTES_COLUMN_MODE]
-            if prepend_route_id_to_trip_id:
-                pathset_links_df.loc[
-                    pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
-                pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df[
-                    Trip.TRIPS_COLUMN_ROUTE_ID] + "_"
-            else:
-                pathset_links_df.loc[
-                    pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
-                pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " "
-            pathset_links_df.loc[
-                pd.notnull(pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]), Passenger.PF_COL_DESCRIPTION] = \
-            pathset_links_df[Passenger.PF_COL_DESCRIPTION] + pathset_links_df[Trip.TRIPS_COLUMN_TRIP_ID]
-            pathset_links_df.loc[pathset_links_df[
-                                     Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_EGRESS, Passenger.PF_COL_DESCRIPTION] = \
-            pathset_links_df[Passenger.PF_COL_DESCRIPTION] + " " + pathset_links_df["B_id"]
-
-            descr_df = pathset_links_df[[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                                         Passenger.PF_COL_PF_ITERATION,
-                                         Passenger.PF_COL_PATH_NUM,
-                                         Passenger.PF_COL_DESCRIPTION]].groupby(
-                [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
-                 Passenger.PF_COL_PF_ITERATION,
-                 Passenger.PF_COL_PATH_NUM])[Passenger.PF_COL_DESCRIPTION].apply(lambda x: " ".join(x))
-            descr_df = descr_df.to_frame().reset_index()
-            # join it to pathset_paths and drop from pathset_links
-            pathset_paths_df = pd.merge(left=pathset_paths_df, right=descr_df, how="left")
-            pathset_links_df.drop([Passenger.PF_COL_DESCRIPTION], axis=1, inplace=True)
-        else:
-            pathset_paths_df[Passenger.PF_COL_DESCRIPTION] = ""
 
         pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64] = \
             pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64].astype(np.float32)

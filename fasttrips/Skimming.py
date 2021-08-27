@@ -504,55 +504,16 @@ class Skimming(object):
                 "setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
                     len(pathset_paths_df), len(pathset_links_df)))
 
-            # get A_id and B_id and trip_id
-            pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df, 'A_id_num', 'A_id')
-            pathset_links_df = stops.add_stop_id_for_numeric_id(pathset_links_df, 'B_id_num', 'B_id')
-
-            # get A_lat, A_lon, B_lat, B_lon
-            pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="A_id", new_lat_colname="A_lat",
-                                                      new_lon_colname="A_lon")
-            pathset_links_df = stops.add_stop_lat_lon(pathset_links_df, id_colname="B_id", new_lat_colname="B_lat",
-                                                      new_lon_colname="B_lon")
-
-            ## get trip_id
-            pathset_links_df = Util.add_new_id(input_df=pathset_links_df, id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-                                               newid_colname=Trip.TRIPS_COLUMN_TRIP_ID,
-                                               mapping_df=trip_id_df, mapping_id_colname=Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-                                               mapping_newid_colname=Trip.TRIPS_COLUMN_TRIP_ID)
-
-            # get route id. mode_num will appear in left (for non-transit links) and right (for transit link) both,
-            # so we need to consolidate
-            pathset_links_df = pd.merge(left=pathset_links_df, right=trips_df[
-                [Trip.TRIPS_COLUMN_TRIP_ID, Trip.TRIPS_COLUMN_ROUTE_ID, Route.ROUTES_COLUMN_MODE_NUM]],
-                                        how="left", on=Trip.TRIPS_COLUMN_TRIP_ID)
-            pathset_links_df[Route.ROUTES_COLUMN_MODE_NUM] = pathset_links_df["%s_x" % Route.ROUTES_COLUMN_MODE_NUM]
-            pathset_links_df.loc[
-                pd.notnull(pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]), Route.ROUTES_COLUMN_MODE_NUM] = \
-                pathset_links_df["%s_y" % Route.ROUTES_COLUMN_MODE_NUM]
-            pathset_links_df.drop(["%s_x" % Route.ROUTES_COLUMN_MODE_NUM,
-                                   "%s_y" % Route.ROUTES_COLUMN_MODE_NUM], axis=1, inplace=True)
-
-            # get supply mode
-            pathset_links_df = pd.merge(left=pathset_links_df,
-                                        right=modes_df[[Route.ROUTES_COLUMN_MODE_NUM, Route.ROUTES_COLUMN_MODE]],
-                                        how="left")
-
-            # attach destination zone numbers
-            pathset_paths_df, pathset_links_df = Skimming.attach_destination_number(pathset_paths_df, pathset_links_df)
-
-            FastTripsLogger.debug(
-                "setup_skimming_pathsets(): pathset_paths_df and pathset_links_df dataframes constructed")
-
-            pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64] = \
-                pathset_links_df.loc[:, pathset_links_df.dtypes == np.float64].astype(np.float32)
-            pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64] = \
-                pathset_links_df.loc[:, pathset_links_df.dtypes == np.int64].apply(pd.to_numeric,
-                                                                                   downcast='integer')
-            pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64] = \
-                pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.float64].astype(np.float32)
-            pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64] = \
-                pathset_paths_df.loc[:, pathset_paths_df.dtypes == np.int64].apply(pd.to_numeric,
-                                                                                   downcast='integer')
+            pathset_paths_df, linkset_links_df = Passenger.clean_pathset_dfs(
+                pathset_paths_df,
+                pathset_links_df,
+                stops,
+                trip_id_df,
+                trips_df,
+                modes_df,
+                prepend_route_id_to_trip_id=False,
+                is_skimming=True
+            )
             path_dfs[sample_time] = pathset_paths_df
             link_dfs[sample_time] = pathset_links_df
 
@@ -608,7 +569,7 @@ class Skim(np.ndarray):
 
 
 class SkimAverager(object):
-    def __init__(self, data={}):
+    def __init__(self, data=None):
         self.time_sample_points = []
         self.skim_components = []
         self.data = {}
