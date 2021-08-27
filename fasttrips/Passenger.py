@@ -548,6 +548,167 @@ class Passenger(object):
         return (pathset_paths_df, pathset_links_df)
 
 
+    @staticmethod
+    def process_path(pathnum, pathset, pathset_id, pf_iteration, is_skimming=False):
+        from .PathSet import PathSet
+        from .Assignment import Assignment
+
+        if is_skimming:
+            origin = pathset_id
+
+            pathlist_entry = [
+                origin,
+                pathset.direction,
+                # pathset.mode,  # where does this come from?
+                pathnum,
+            ]
+
+        else:
+            trip_list_id = pathset_id
+            pathlist_entry = [
+                pathset.person_id,
+                pathset.person_trip_id,
+                trip_list_id,
+                (pathset.person_id, pathset.person_trip_id) in Assignment.TRACE_IDS,
+                pathset.direction,
+                pathset.mode,
+                pf_iteration,
+                pathnum,
+
+            ]
+
+        pathlist_entry.extend([
+            pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
+            pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
+            pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY],
+            pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_COST],
+            pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_FARE]
+        ])
+
+        return pathlist_entry
+
+
+
+    @staticmethod
+    def process_path_state(
+            pathnum, pathset, pathset_id, state_id, state, pf_iteration,
+            linkmode, link_num, prev_linkmode, prev_state_id, state_list_for_logging, is_skimming=False,
+
+    ):
+        # OUTBOUND passengers have states like this:
+        #    stop:          label    departure   dep_mode  successor linktime
+        # orig_taz                                 Access    b stop1
+        #  b stop1                                  trip1    a stop2
+        #  a stop2                               Transfer    b stop3
+        #  b stop3                                  trip2    a stop4
+        #  a stop4                                 Egress   dest_taz
+        #
+        #  stop:         label  dep_time    dep_mode   successor  seq  suc       linktime             cost  arr_time
+        #   460:  0:20:49.4000  17:41:10      Access        3514   -1   -1   0:03:08.4000     0:03:08.4000  17:44:18
+        #  3514:  0:17:41.0000  17:44:18     5131292        4313   30   40   0:06:40.0000     0:12:21.8000  17:50:59
+        #  4313:  0:05:19.2000  17:50:59    Transfer        5728   -1   -1   0:00:19.2000     0:00:19.2000  17:51:18
+        #  5728:  0:04:60.0000  17:57:00     5154302        5726   16   17   0:07:33.8000     0:03:02.4000  17:58:51
+        #  5726:  0:01:57.6000  17:58:51      Egress         231   -1   -1   0:01:57.6000     0:01:57.6000  18:00:49
+
+        # INBOUND passengers have states like this
+        #   stop:          label      arrival   arr_mode predecessor linktime
+        # dest_taz                                 Egress    a stop4
+        #  a stop4                                  trip2    b stop3
+        #  b stop3                               Transfer    a stop2
+        #  a stop2                                  trip1    b stop1
+        #  b stop1                                 Access   orig_taz
+        #
+        #  stop:         label  arr_time    arr_mode predecessor  seq pred       linktime             cost  dep_time
+        #    15:  0:36:38.4000  17:30:38      Egress        3772   -1   -1   0:02:38.4000     0:02:38.4000  17:28:00
+        #  3772:  0:34:00.0000  17:28:00     5123368        6516   22   14   0:24:17.2000     0:24:17.2000  17:05:50
+        #  6516:  0:09:42.8000  17:03:42    Transfer        4766   -1   -1   0:00:16.8000     0:00:16.8000  17:03:25
+        #  4766:  0:09:26.0000  17:03:25     5138749        5671    7    3   0:05:30.0000     0:05:33.2000  16:57:55
+        #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
+        from .PathSet import PathSet
+        from .Assignment import Assignment
+
+        prev_linkmode = None
+        prev_state_id = None
+
+        mode_num = None
+        trip_id = None
+        waittime = None
+
+        if linkmode in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
+            mode_num = state[PathSet.STATE_IDX_TRIP]
+        else:
+            # trip mode_num will need to be joined
+            trip_id = state[PathSet.STATE_IDX_TRIP]
+            linkmode = PathSet.STATE_MODE_TRIP
+
+        if not is_skimming and pathset.outbound:
+            a_id_num = state_id
+            b_id_num = state[PathSet.STATE_IDX_SUCCPRED]
+            a_seq = state[PathSet.STATE_IDX_SEQ]
+            b_seq = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
+            b_time = state[PathSet.STATE_IDX_ARRDEP]
+            a_time = b_time - state[PathSet.STATE_IDX_LINKTIME]
+            trip_time = state[PathSet.STATE_IDX_ARRDEP] - state[PathSet.STATE_IDX_DEPARR]
+        else:  # skimming always inbound
+            a_id_num = state[PathSet.STATE_IDX_SUCCPRED]
+            b_id_num = state_id
+            a_seq = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
+            b_seq = state[PathSet.STATE_IDX_SEQ]
+            b_time = state[PathSet.STATE_IDX_DEPARR]
+            a_time = b_time - state[PathSet.STATE_IDX_LINKTIME]
+            trip_time = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
+
+        # trips: linktime includes wait
+        if linkmode == PathSet.STATE_MODE_TRIP:
+            waittime = state[PathSet.STATE_IDX_LINKTIME] - trip_time
+
+        # two trips in a row -- this shouldn't happen
+        if linkmode == PathSet.STATE_MODE_TRIP and prev_linkmode == PathSet.STATE_MODE_TRIP:
+            if not is_skimming:
+                warn_msg =("Two trip links in a row... this shouldn't happen. person_id is %s trip is %s\npathnum is %d\nstatelist (%d): %s\n" % (
+                pathset.person_id, pathset.person_trip_id, pathnum, len(state_list_for_logging), str(state_list_for_logging)))
+            else:
+                warn_msg = "Two trip links in a row... this shouldn't happen."
+            FastTripsLogger.warn(warn_msg)
+
+            sys.exit()
+
+        if is_skimming:
+            linklist_entry = [pathset_id] # origin
+        else:
+            linklist_entry = [
+                pathset.person_id,
+                pathset.person_trip_id,
+                pathset_id,  # trip list id
+                (pathset.person_id, pathset.person_trip_id) in Assignment.TRACE_IDS,
+                pf_iteration,
+                # 0.01 * pathfinding_iteration + iteration,
+            ]
+        linklist_entry.extend(
+            [
+                pathnum,
+                linkmode,
+                mode_num,
+                trip_id,
+                a_id_num,
+                b_id_num,
+                a_seq,
+                b_seq,
+                a_time,
+                b_time,
+                state[PathSet.STATE_IDX_LINKTIME],
+                state[PathSet.STATE_IDX_LINKFARE],
+                state[PathSet.STATE_IDX_LINKCOST],
+                state[PathSet.STATE_IDX_LINKDIST],
+                waittime,
+                link_num
+            ]
+        )
+        return linklist_entry
+
+
+
+
     def setup_passenger_pathsets(self, iteration, pathfinding_iteration, stops, trip_id_df, trips_df, modes_df,
                                  transfers, tazs, prepend_route_id_to_trip_id):
         """
@@ -617,7 +778,6 @@ class Passenger(object):
         ==================  ===============  =====================================================================================================
 
         """
-        from .Assignment import Assignment
         from .PathSet import PathSet
         pathlist = []
         linklist = []
@@ -632,120 +792,28 @@ class Passenger(object):
             if not pathset.path_found():       continue
 
             for pathnum in range(pathset.num_paths()):
-                # OUTBOUND passengers have states like this:
-                #    stop:          label    departure   dep_mode  successor linktime
-                # orig_taz                                 Access    b stop1
-                #  b stop1                                  trip1    a stop2
-                #  a stop2                               Transfer    b stop3
-                #  b stop3                                  trip2    a stop4
-                #  a stop4                                 Egress   dest_taz
-                #
-                #  stop:         label  dep_time    dep_mode   successor  seq  suc       linktime             cost  arr_time
-                #   460:  0:20:49.4000  17:41:10      Access        3514   -1   -1   0:03:08.4000     0:03:08.4000  17:44:18
-                #  3514:  0:17:41.0000  17:44:18     5131292        4313   30   40   0:06:40.0000     0:12:21.8000  17:50:59
-                #  4313:  0:05:19.2000  17:50:59    Transfer        5728   -1   -1   0:00:19.2000     0:00:19.2000  17:51:18
-                #  5728:  0:04:60.0000  17:57:00     5154302        5726   16   17   0:07:33.8000     0:03:02.4000  17:58:51
-                #  5726:  0:01:57.6000  17:58:51      Egress         231   -1   -1   0:01:57.6000     0:01:57.6000  18:00:49
+                pf_iteration = 0.01*pathfinding_iteration+iteration
+                pathlist.append(self.process_path(pathnum, pathset, trip_list_id, pf_iteration, is_skimming=False))
 
-                # INBOUND passengers have states like this
-                #   stop:          label      arrival   arr_mode predecessor linktime
-                # dest_taz                                 Egress    a stop4
-                #  a stop4                                  trip2    b stop3
-                #  b stop3                               Transfer    a stop2
-                #  a stop2                                  trip1    b stop1
-                #  b stop1                                 Access   orig_taz
-                #
-                #  stop:         label  arr_time    arr_mode predecessor  seq pred       linktime             cost  dep_time
-                #    15:  0:36:38.4000  17:30:38      Egress        3772   -1   -1   0:02:38.4000     0:02:38.4000  17:28:00
-                #  3772:  0:34:00.0000  17:28:00     5123368        6516   22   14   0:24:17.2000     0:24:17.2000  17:05:50
-                #  6516:  0:09:42.8000  17:03:42    Transfer        4766   -1   -1   0:00:16.8000     0:00:16.8000  17:03:25
-                #  4766:  0:09:26.0000  17:03:25     5138749        5671    7    3   0:05:30.0000     0:05:33.2000  16:57:55
-                #  5671:  0:03:52.8000  16:57:55      Access         943   -1   -1   0:03:52.8000     0:03:52.8000  16:54:03
+                state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
+                # skimming is always inbound
+                if not pathset.outbound:
+                    state_list = list(reversed(state_list))
+
+                link_num   = 0
                 prev_linkmode = None
                 prev_state_id = None
 
-                state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
-                if not pathset.outbound: state_list = list(reversed(state_list))
-
-                pathlist.append([\
-                    pathset.person_id,
-                    pathset.person_trip_id,
-                    trip_list_id,
-                    (pathset.person_id,pathset.person_trip_id) in Assignment.TRACE_IDS,
-                    pathset.direction,
-                    pathset.mode,
-                    0.01*pathfinding_iteration+iteration,
-                    pathnum,
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_COST],
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_FARE],
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_PROBABILITY],
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_COST],
-                    pathset.pathdict[pathnum][PathSet.PATH_KEY_INIT_FARE]
-                ])
-
-                link_num   = 0
                 for (state_id, state) in state_list:
-
-                    linkmode        = state[PathSet.STATE_IDX_DEPARRMODE]
-                    mode_num        = None
-                    trip_id         = None
-                    waittime        = None
-
-                    if linkmode in [PathSet.STATE_MODE_ACCESS, PathSet.STATE_MODE_TRANSFER, PathSet.STATE_MODE_EGRESS]:
-                        mode_num    = state[PathSet.STATE_IDX_TRIP]
-                    else:
-                        # trip mode_num will need to be joined
-                        trip_id     = state[PathSet.STATE_IDX_TRIP]
-                        linkmode    = PathSet.STATE_MODE_TRIP
-
-                    if pathset.outbound:
-                        a_id_num    = state_id
-                        b_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
-                        a_seq       = state[PathSet.STATE_IDX_SEQ]
-                        b_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                        b_time      = state[PathSet.STATE_IDX_ARRDEP]
-                        a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                        trip_time   = state[PathSet.STATE_IDX_ARRDEP] - state[PathSet.STATE_IDX_DEPARR]
-                    else:
-                        a_id_num    = state[PathSet.STATE_IDX_SUCCPRED]
-                        b_id_num    = state_id
-                        a_seq       = state[PathSet.STATE_IDX_SEQ_SUCCPRED]
-                        b_seq       = state[PathSet.STATE_IDX_SEQ]
-                        b_time      = state[PathSet.STATE_IDX_DEPARR]
-                        a_time      = b_time - state[PathSet.STATE_IDX_LINKTIME]
-                        trip_time   = state[PathSet.STATE_IDX_DEPARR] - state[PathSet.STATE_IDX_ARRDEP]
-
-                    # trips: linktime includes wait
-                    if linkmode == PathSet.STATE_MODE_TRIP:
-                        waittime    = state[PathSet.STATE_IDX_LINKTIME] - trip_time
-
-                    # two trips in a row -- this shouldn't happen
-                    if linkmode == PathSet.STATE_MODE_TRIP and prev_linkmode == PathSet.STATE_MODE_TRIP:
-                        FastTripsLogger.warn("Two trip links in a row... this shouldn't happen. person_id is %s trip is %s\npathnum is %d\nstatelist (%d): %s\n" % (person_id, person_trip_id, pathnum, len(state_list), str(state_list)))
-                        sys.exit()
-
-                    linklist.append([\
-                        pathset.person_id,
-                        pathset.person_trip_id,
-                        trip_list_id,
-                        (pathset.person_id,pathset.person_trip_id) in Assignment.TRACE_IDS,
-                        0.01*pathfinding_iteration + iteration,
-                        pathnum,
-                        linkmode,
-                        mode_num,
-                        trip_id,
-                        a_id_num,
-                        b_id_num,
-                        a_seq,
-                        b_seq,
-                        a_time,
-                        b_time,
-                        state[PathSet.STATE_IDX_LINKTIME],
-                        state[PathSet.STATE_IDX_LINKFARE],
-                        state[PathSet.STATE_IDX_LINKCOST],
-                        state[PathSet.STATE_IDX_LINKDIST],
-                        waittime,
-                        link_num ])
+                    linkmode = state[PathSet.STATE_IDX_DEPARRMODE]
+                    linklist.append(
+                        self.process_path_state(
+                            pathnum, pathset, trip_list_id,
+                            state_id, state, pf_iteration,
+                            linkmode, link_num,
+                            prev_linkmode, prev_state_id,
+                            state_list, is_skimming=False)
+                    )
 
                     prev_linkmode = linkmode
                     prev_state_id = state_id
