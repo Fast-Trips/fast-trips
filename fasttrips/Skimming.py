@@ -1,6 +1,6 @@
 from __future__ import division
 
-import multiprocessing
+import multiprocessing as mp
 import os
 from builtins import range
 from builtins import object
@@ -368,29 +368,40 @@ class Skimming(object):
                                              process_worker_task=SkimmingWorkerTask(),
                                              process_worker_task_args=(output_dir, )
                                              )
+            try:
+                for origin in all_taz:
+                    # populate tasks to process
+                    orig_data = SkimmingQueueInputData(
+                                "TO_PROCESS",
+                                origin,
+                                mean_vot,
+                                d_t,
+                                user_class,
+                                purpose,
+                                access_mode,
+                                transit_mode,
+                                egress_mode,
+                                trace=do_trace
+                    )
+                    process_manager.todo_queue.put(orig_data)
 
-            # TODO start the processes
-            for origin in all_taz:
-                orig_data = SkimmingQueueInputData(
-                            "TO_PROCESS",
-                            origin,
-                            mean_vot,
-                            d_t,
-                            user_class,
-                            purpose,
-                            access_mode,
-                            transit_mode,
-                            egress_mode,
-                            trace=do_trace
-                )
-                process_manager.todo_queue.put(orig_data)
+                # start the processes
+                process_manager.start_processes()
 
-            for origin in all_taz:
-                FT.performance.add_info(-1, -1, -1, origin, perf_dict)
+                def origin_finalizer(queue_data: SkimmingQueueOutputData):
+                    FT.performance.add_info(-1, -1, -1, queue_data.origin, queue_data.perf_dict)
+                    # TODO jan can you explain this better
+                    # we are reusing PathSet with skimming specific args above
+                    # PathSet is generic across origins
+                    pathset_this_o = PathSet(path_dict)
+                    # path dict data specific to origin
+                    pathset_this_o.pathdict = queue_data.pathdict
+                    skims_path_set[d_t][origin] = pathset_this_o
 
-                pathset_this_o = PathSet(path_dict)
-                pathset_this_o.pathdict = pathdict
-                skims_path_set[d_t][origin] = pathset_this_o
+
+                process_manager.wait_and_finalize(task_finalizer=origin_finalizer)
+            except Exception as e:
+                process_manager.exception_handler(e)
 
         time_elapsed = datetime.datetime.now() - start_time
 
@@ -551,16 +562,19 @@ class SkimmingQueueInputData(QueueData):
         self.trace = trace
 
 class SkimmingQueueOutputData(QueueData):
-    def __init__(self, state, pathdict, perf_dict):
+    def __init__(self, state, worker_num, pathdict, perf_dict, origin):
         super().__init__(state)
+        self.worker_num = worker_num
         self.pathdict = pathdict
         self.perf_dict = perf_dict
+        self.origin = origin
+        self.identifier = f"Origin {origin}"
 
 
 
 class SkimmingWorkerTask(ProcessWorkerTask):
 
-    def __call__(self, in_queue: multiprocessing.Queue, out_queue: multiprocessing.Queue, output_dir, veh_trips_df, *args, worker_num: int, **kwargs):
+    def __call__(self, in_queue: mp.Queue[SkimmingQueueInputData], out_queue: mp.Queue[SkimmingQueueOutputData], output_dir, veh_trips_df, *args, worker_num: int, **kwargs):
         worker_str = "_worker%02d" % worker_num
 
         from .FastTrips import FastTrips
@@ -586,7 +600,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
                 return
 
     @staticmethod
-    def poll_queue(in_queue: multiprocessing.Queue, out_queue: multiprocessing.Queue, worker_num: int) -> bool:
+    def poll_queue(in_queue: mp.Queue[SkimmingQueueInputData], out_queue: mp.Queue[QueueData], worker_num: int) -> bool:
         try:
             state_obj = in_queue.get()
         except queue.Empty:
@@ -606,16 +620,16 @@ class SkimmingWorkerTask(ProcessWorkerTask):
                 state_obj.access_mode,
                 state_obj.transit_mode,
                 state_obj.egress_mode,
-                trace=state_obj.do_trace
+                state_obj.trace
             )
             out_queue.put(
-                (worker_num, SkimmingQueueOutputData("COMPLETED", pathdict, perf_dict))
+                SkimmingQueueOutputData("COMPLETED", worker_num, pathdict, perf_dict)
             )
             return False
         except:
             FastTripsLogger.exception("Exception")
             # call it a day
-            out_queue.put((worker_num, ExceptionQueueData("EXCEPTION", message=str(sys.exc_info()))))
+            out_queue.put(ExceptionQueueData("EXCEPTION", worker_num, message=str(sys.exc_info())))
             return True
 
 
