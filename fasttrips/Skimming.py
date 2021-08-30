@@ -30,7 +30,6 @@ import queue
 
 from .Assignment import Assignment
 from .Logger import FastTripsLogger, setupLogging
-from .Queue import ProcessWorkerTask, ProcessManager, QueueData, ExceptionQueueData
 from .Route import Route
 from .Passenger import Passenger
 from .PathSet import PathSet
@@ -305,6 +304,7 @@ class Skimming(object):
         """
         Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
         """
+        from .Queue import ProcessManager
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
 
@@ -366,7 +366,7 @@ class Skimming(object):
             num_processes =3 # TODO propagate this down
             process_manager = ProcessManager(num_processes,
                                              process_worker_task=SkimmingWorkerTask(),
-                                             process_worker_task_args=(output_dir, )
+                                             process_worker_task_args=(output_dir, veh_trips_df)
                                              )
             try:
                 for origin in all_taz:
@@ -386,6 +386,7 @@ class Skimming(object):
                     process_manager.todo_queue.put(orig_data)
 
                 # start the processes
+                process_manager.add_work_done_sentinels()
                 process_manager.start_processes()
 
                 def origin_finalizer(queue_data: SkimmingQueueOutputData):
@@ -396,10 +397,13 @@ class Skimming(object):
                     pathset_this_o = PathSet(path_dict)
                     # path dict data specific to origin
                     pathset_this_o.pathdict = queue_data.pathdict
-                    skims_path_set[d_t][origin] = pathset_this_o
+                    skims_path_set[d_t][queue_data.origin] = pathset_this_o
 
 
+                FastTripsLogger.debug("pre wait and finalize")
                 process_manager.wait_and_finalize(task_finalizer=origin_finalizer)
+                FastTripsLogger.debug("post wait and finalize")
+                print("post finalize and wait")
             except Exception as e:
                 process_manager.exception_handler(e)
 
@@ -547,6 +551,8 @@ class Skimming(object):
 
         return path_dfs, link_dfs
 
+from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
+
 
 class SkimmingQueueInputData(QueueData):
     def __init__(self, state, origin, mean_vot, d_t, user_class, purpose, access_mode, transit_mode, egress_mode, trace):
@@ -574,7 +580,15 @@ class SkimmingQueueOutputData(QueueData):
 
 class SkimmingWorkerTask(ProcessWorkerTask):
 
-    def __call__(self, in_queue: mp.Queue[SkimmingQueueInputData], out_queue: mp.Queue[SkimmingQueueOutputData], output_dir, veh_trips_df, *args, worker_num: int, **kwargs):
+    def __call__(self,
+                 output_dir,
+                 veh_trips_df,
+                 *args,
+                 worker_num: int,
+                 in_queue: "mp.Queue[SkimmingQueueInputData]",
+                 out_queue: "mp.Queue[SkimmingQueueOutputData]",
+                 **kwargs
+                 ):
         worker_str = "_worker%02d" % worker_num
 
         from .FastTrips import FastTrips
@@ -600,14 +614,23 @@ class SkimmingWorkerTask(ProcessWorkerTask):
                 return
 
     @staticmethod
-    def poll_queue(in_queue: mp.Queue[SkimmingQueueInputData], out_queue: mp.Queue[QueueData], worker_num: int) -> bool:
-        try:
-            state_obj = in_queue.get()
-        except queue.Empty:
-            FastTripsLogger.debug(f"Queue is empty, killing worker {worker_num}")
+    def poll_queue(
+            in_queue: "mp.Queue[SkimmingQueueInputData]",
+            out_queue: "mp.Queue[QueueData]",
+            worker_num: int
+    ) -> bool:
+        state_obj: SkimmingQueueInputData = in_queue.get()
+        if state_obj.state == "WORK_DONE":
+            FastTripsLogger.debug(f"Worker {worker_num} received sentinel that work is done. Terminating process.")
+            out_queue.put(
+                QueueData("WORK_DONE", worker_num)
+            )
             return True
 
         FastTripsLogger.info("Processing origin %20s" % (state_obj.origin))
+        out_queue.put(
+            SkimmingQueueOutputData("STARTING", worker_num, pathdict=None, perf_dict=None, origin=state_obj.origin)
+        )
 
         try:
             # (pathdict, perf_dict) = Assignment.find_trip_based_pathset(iteration, pathfinding_iteration, pathset, hyperpath, trace=trace_person)
@@ -623,7 +646,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
                 state_obj.trace
             )
             out_queue.put(
-                SkimmingQueueOutputData("COMPLETED", worker_num, pathdict, perf_dict)
+                SkimmingQueueOutputData("COMPLETED", worker_num, pathdict, perf_dict, origin=state_obj.origin)
             )
             return False
         except:

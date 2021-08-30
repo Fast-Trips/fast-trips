@@ -12,7 +12,7 @@ import traceback
 from abc import ABC
 from typing import Callable, Any, Iterable, Tuple, Dict
 
-from fasttrips import FastTripsLogger
+from .Logger import FastTripsLogger, setupLogging
 
 
 class QueueData(object):
@@ -27,6 +27,7 @@ class QueueData(object):
     DONE = "DONE"
     STARTING = "STARTING"
     COMPLETED="COMPLETED"
+    EXCEPTION = "EXCEPTION"
 
     def __init__(self, state: str, worker_num=None, *args, **kwargs):
         """
@@ -54,20 +55,26 @@ class ProcessWorkerTask(ABC):
     """
 
     @abc.abstractmethod
-    def __call__(self, in_queue: multiprocessing.Queue, out_queue: multiprocessing.Queue, *args, worker_num: int, **kwargs):
+    def __call__(self,
+                 *args,
+                 worker_num: int,
+                 in_queue: multiprocessing.Queue,
+                 out_queue: multiprocessing.Queue,
+                 **kwargs
+                 ):
         """Function/ code to be run on each process with supplied arguments.
-        Note worker num is supplied as keyword only argument as this will be populated by
-        process manager.
+        Note worker num and queues are supplied as keyword only argument as this will be populated by
+        ProcessManager.
 
         Should contain initial setup, followed by while True loop to handle in_queue events
 
         Currently does not support kwargs when used with ProcessManager
 
         Args:
-            in_queue: events to be processed by worker (worker_num, msg_code, QueueData)
-            out_queue: results to be collected from worker (worker_num, msg_code, QueueData)
             *args:
             worker_num:
+            in_queue (Queue[QueueData]): events to be processed by worker
+            out_queue (Queue[QueueData]): results to be collected from worker
             **kwargs:
         """
         pass
@@ -85,7 +92,7 @@ class ProcessWorkerTask(ABC):
 
 class ProcessManager(object):
     def __init__(self, num_processes: int, process_worker_task: ProcessWorkerTask,
-                 process_worker_task_args: Tuple[Any]):
+                 process_worker_task_args: Tuple[Any, ...]):
         """
 
         Args:
@@ -102,23 +109,35 @@ class ProcessManager(object):
         self.todo_queue = multiprocessing.Queue()
         # results to retrieve from workers
         self.done_queue = multiprocessing.Queue()
+
+        # stable kwargs
+        kwargs = {"in_queue": self.todo_queue, "out_queue": self.done_queue}
+
         for process_idx in range(1, 1 + num_processes):
-            FastTripsLogger.info("Starting worker process %2d" % process_idx)
+            FastTripsLogger.info("Creating worker process %2d" % process_idx)
+            # kwarg per process
+            kwargs["worker_num"] = process_idx
+
             self.process_dict[process_idx] = {
                 "process": multiprocessing.Process(target=process_worker_task,
                                                    args=process_worker_task_args,
-                                                   kwargs={"worker_num":process_idx}),
+                                                   kwargs=kwargs),
                 "alive": True,
                 "done": False
             }
 
 
     def start_processes(self):
-        for process_dict in self.process_dict.values():
+
+        for process_idx, process_dict in self.process_dict.items():
+            FastTripsLogger.info("Starting worker process %2d" % process_idx)
             process_dict["process"].start()
 
-    def handle_entry(self):
-        pass
+    def add_work_done_sentinels(self):
+        """Add sentinel entries to the end of the input queue, so there is a
+        definitive, thread safe way to know when the work is finished."""
+        for _ in range(len(self.process_dict)):
+            self.todo_queue.put(QueueData("WORK_DONE"))
 
     def wait_and_finalize(self, task_finalizer: Callable[[QueueData], None]):
         """Track state of processes and wait until they're done"""
@@ -132,11 +151,13 @@ class ProcessManager(object):
                 pass
             else:
                 worker_num = result.worker_num
-                if result.state ==QueueData.DONE:
+                if result.state == QueueData.DONE:
                     FastTripsLogger.debug("Received done from process %d" % worker_num)
                     self.process_dict[worker_num]["done"] = True
                 elif result.state == QueueData.STARTING:
                     self.process_dict[worker_num]["working_on"] = result.identifier
+                elif result.state == QueueData.EXCEPTION:
+                    raise ValueError(f"Worker num {worker_num} produced an exception:\n {result.message}")
 
                 elif result.state == QueueData.COMPLETED:
                     task_finalizer(result)
