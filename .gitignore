@@ -25,3 +25,6 @@ run*/
 
 #PyCharm IDE
 .idea/
+
+fasttrips/Examples
+.virtual_documents/
