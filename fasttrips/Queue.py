@@ -24,9 +24,10 @@ class QueueData(object):
 
     # Defined data states
     WORK_DONE = "WORK_DONE"  # all tasks completed (input queue empty)
-    STARTING = "STARTING"  # specific task started
-    COMPLETED = "COMPLETED"  # specific task completed
-    EXCEPTION = "EXCEPTION"  # specific task crashed
+    TO_PROCESS = "TO_PROCESS"  # specified input task to process (input queue)
+    STARTING = "STARTING"  # specific task started (state change on output queue)
+    COMPLETED = "COMPLETED"  # specific task completed (output queue)
+    EXCEPTION = "EXCEPTION"  # specific task crashed (output queue)
 
     def __init__(self, state: str, worker_num=None, *args, **kwargs):
         """
@@ -51,6 +52,8 @@ class ProcessWorkerTask(ABC):
     """
     Interface for process worker tasks. Not a fully fledged class, using
     to provide a consistent signature to callables.
+
+    See test_multiprocess.py for the minimal requirements
     """
 
     @abc.abstractmethod
@@ -80,26 +83,36 @@ class ProcessWorkerTask(ABC):
         """Process first entry at front of supplied queue.
         Returns True if threads work is done (either finished or exception)
         False if not.
+
+        Must handle 4 states: QueueData.STARTING, QueueData.COMPLETED, QueueData.EXCEPTION, QueueData.WORK_DONE
+
         """
         pass
 
 
 class ProcessManager(object):
     def __init__(
-        self, num_processes: int, process_worker_task: ProcessWorkerTask, process_worker_task_args: Tuple[Any, ...]
+        self,
+        num_processes: int,
+        process_worker_task: ProcessWorkerTask,
+        process_worker_task_args: Tuple[Any, ...],
+        wait_time: int = 15,
     ):
         """
 
         Args:
             num_processes (int): number of processes to launch (if negative or zero, use cpu count)
             process_worker_task (ProcessWorkerTask): subclass of ProcessWorkerTask
-            process_worker_task_args (Tuple[Any]): arguments to process_worker_task,
+            process_worker_task_args (Tuple[Any, ...]): arguments to process_worker_task,
                 except worker_num which is passed internally as a kwargs
+            wait_time (int): seconds main process should wait in-between polling the status of child processes.
         """
         if num_processes < 1:
             num_processes = multiprocessing.cpu_count()
 
-        self.is_multiprocessed = num_processes >1
+        self.num_processes = num_processes
+        self.is_multiprocessed = num_processes > 1
+        self.wait_time = wait_time
 
         self.process_dict = {}
         # data to pass to workers
@@ -137,17 +150,25 @@ class ProcessManager(object):
             self.todo_queue.put(QueueData(QueueData.WORK_DONE))
 
     def wait_and_finalize(self, task_finalizer: Callable[[QueueData], None]):
-        """Track state of processes and wait until they're done"""
+        """Track state of processes and wait until they're done.
+
+        Args:
+            task_finalizer (Callable[[QueueData], None): callback triggered to process results received from processes.
+                Likely a function to pass results back into main program scope and out of queue, by
+                dumping results into another data structure.
+
+
+        """
         done_procs = 0  # where done means not alive
         while done_procs < len(self.process_dict):
 
             try:
                 # poll results every 30 seconds
                 if self.is_multiprocessed:
-                    wait_time = 15
+                    wait_time = self.wait_time
                 else:
                     # if we're testing a simple serial case, we don't want waiting to be most of the runtime
-                    wait_time = 2
+                    wait_time = min(self.wait_time, 2)
                 result = self.done_queue.get(True, wait_time)
             except queue.Empty:
                 pass

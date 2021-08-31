@@ -372,7 +372,7 @@ class Skimming(object):
                 for origin in all_taz:
                     # populate tasks to process
                     orig_data = SkimmingQueueInputData(
-                                "TO_PROCESS",
+                                QueueData.TO_PROCESS,
                                 origin,
                                 mean_vot,
                                 d_t,
@@ -620,6 +620,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
             worker_num: int
     ) -> bool:
         state_obj: SkimmingQueueInputData = in_queue.get()
+
         if state_obj.state == QueueData.WORK_DONE:
             FastTripsLogger.debug(f"Worker {worker_num} received sentinel that work is done. Terminating process.")
             out_queue.put(
