@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import sys
 import time
@@ -97,8 +98,12 @@ class TestProcessManager:
 
         for n, (process_idx, process_dict) in enumerate(pm.process_dict.items()):
             process_dict["process"].start()
-            if n ==0:
-                process_dict["process"].kill()
+            if n == 0:
+                if sys.version_info < (3, 7):
+                    # ask nicely for python 3.6
+                    process_dict["process"].terminate()
+                else:  # be forceful for python 3.7+
+                    process_dict["process"].kill()
 
 
         results = []
