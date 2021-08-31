@@ -1,5 +1,6 @@
 import multiprocessing
 import sys
+import time
 
 import pytest
 
@@ -92,14 +93,13 @@ class TestProcessManager:
         for i in [1, 4, 9]:
             pm.todo_queue.put(ExceptionQueueData(QueueData.TO_PROCESS, message=i))
 
-        # could do this with a context manager and be neater
         pm.add_work_done_sentinels()
-        pm.start_processes()
-        # simulate a process dying unexpectedly
-        list(pm.process_dict.values())[0]["process"].kill()
-        # this happens instantly, before processes grab anything from queue
-        # so as long as there is more than once process all data is processed.
-        # A better test would be to delay this until the process had data, but this is hard to mock
+
+        for n, (process_idx, process_dict) in enumerate(pm.process_dict.items()):
+            process_dict["process"].start()
+            if n ==0:
+                process_dict["process"].kill()
+
 
         results = []
 
@@ -107,17 +107,10 @@ class TestProcessManager:
             results.append(queue_data.message)
 
         pm.wait_and_finalize(finalizer)
-        print(results)
-        print(pm.process_dict)
-        if pm.is_multiprocessed:  # code can continue aside from dead process
-            # since nothing was on the killed process when it died, can continue as normal
-            assert sum(results) == 28
 
-            num_done = sum(1 for i in pm.process_dict.values() if i["done"])
-            num_not_done = pm.num_processes - num_done
-            assert num_not_done == 1
-            assert num_done == pm.num_processes - 1
-
-        else:  # only sub-process is dead
-            assert len(results) == 0
-            assert list(pm.process_dict.values())[0]["done"] is False
+        num_done = sum(1 for i in pm.process_dict.values() if i["done"])
+        num_not_done = pm.num_processes - num_done
+        assert num_not_done == 1
+        assert num_done == pm.num_processes - 1
+        # note don't check the value of results, because this depends on whether
+        # killed thread popped from the queue before it died
