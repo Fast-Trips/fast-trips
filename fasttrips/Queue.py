@@ -7,6 +7,8 @@ These utilities are structured to be compatible with the multiprocessing impleme
 but have been abstracted away to support reuse in other contexts (namely skimming).
 
 To reduce code duplication, Assignment.py should be updated to make use of these utilities directly.
+If a true single process implementation is required, ProcessManager should be subclassed as
+SingleProcessManager so that a consistent api of method calls can be used in both cases.
 """
 import abc
 import multiprocessing
