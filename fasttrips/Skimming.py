@@ -307,9 +307,9 @@ class Skimming(object):
         from .Queue import ProcessManager
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
+        num_processes = Assignment.NUMBER_OF_PROCESSES
+        print("temp num processes in skimming from config", num_processes)
 
-        # TODO matt/ jan is this still needed here if it's done as part of multiprocess?
-        Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
 
         ####### VOT
         # this should be configurable, if a list do for each, if not provided use mean
@@ -363,7 +363,6 @@ class Skimming(object):
             # TODO this needs to be multiprocessor
             # Reuse the Assignment.py stuff for this
 
-            num_processes =1 # TODO propagate this down
             process_manager = ProcessManager(num_processes,
                                              process_worker_task=SkimmingWorkerTask(),
                                              process_worker_task_args=(output_dir, veh_trips_df)
