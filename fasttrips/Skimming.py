@@ -1,4 +1,7 @@
 from __future__ import division
+
+import multiprocessing as mp
+import os
 from builtins import range
 from builtins import object
 
@@ -23,8 +26,10 @@ import numpy as np
 import pandas as pd
 
 import _fasttrips
+import queue
+
 from .Assignment import Assignment
-from .Logger import FastTripsLogger
+from .Logger import FastTripsLogger, setupLogging
 from .Route import Route
 from .Passenger import Passenger
 from .PathSet import PathSet
@@ -299,10 +304,12 @@ class Skimming(object):
         """
         Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
         """
+        from .Queue import ProcessManager
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
+        num_processes = Assignment.NUMBER_OF_PROCESSES
+        print("temp num processes in skimming from config", num_processes)
 
-        Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
 
         ####### VOT
         # this should be configurable, if a list do for each, if not provided use mean
@@ -344,7 +351,7 @@ class Skimming(object):
             d_t = int(d_t)  # TODO: this should happen during creation and validation of time sampler
 
             time_elapsed = datetime.datetime.now() - start_time
-            FastTripsLogger.info("Skiming for time sampling point %2d. Time elapsed: %2dh:%2dm:%2ds" % (
+            FastTripsLogger.info("Skimming for time sampling point %2d. Time elapsed: %2dh:%2dm:%2ds" % (
                 d_t,
                 int(time_elapsed.total_seconds() / 3600),
                 int((time_elapsed.total_seconds() % 3600) / 60),
@@ -355,25 +362,47 @@ class Skimming(object):
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
             # TODO this needs to be multiprocessor
             # Reuse the Assignment.py stuff for this
-            for origin in all_taz:
-                (pathdict, perf_dict) = \
-                    Skimming.find_trip_based_pathset_skimming(
-                        origin,
-                        mean_vot,
-                        d_t,
-                        user_class,
-                        purpose,
-                        access_mode,
-                        transit_mode,
-                        egress_mode,
-                        trace=do_trace
+
+            process_manager = ProcessManager(num_processes,
+                                             process_worker_task=SkimmingWorkerTask(),
+                                             process_worker_task_args=(output_dir, veh_trips_df)
+                                             )
+            try:
+                for origin in all_taz:
+                    # populate tasks to process
+                    orig_data = SkimmingQueueInputData(
+                                QueueData.TO_PROCESS,
+                                origin,
+                                mean_vot,
+                                d_t,
+                                user_class,
+                                purpose,
+                                access_mode,
+                                transit_mode,
+                                egress_mode,
+                                trace=do_trace
                     )
+                    process_manager.todo_queue.put(orig_data)
 
-                FT.performance.add_info(-1, -1, -1, origin, perf_dict)
+                # start the processes
+                process_manager.add_work_done_sentinels()
+                process_manager.start_processes()
 
-                pathset_this_o = PathSet(path_dict)
-                pathset_this_o.pathdict = pathdict
-                skims_path_set[d_t][origin] = pathset_this_o
+
+                def origin_finalizer(queue_data: SkimmingQueueOutputData):
+                    FT.performance.add_info(-1, -1, -1, queue_data.origin, queue_data.perf_dict)
+                    # TODO jan can you explain this better
+                    # we are reusing PathSet with skimming specific args above
+                    # PathSet is generic across origins
+                    pathset_this_o = PathSet(path_dict)
+                    # path dict data specific to origin
+                    pathset_this_o.pathdict = queue_data.pathdict
+                    skims_path_set[d_t][queue_data.origin] = pathset_this_o
+
+
+                process_manager.wait_and_finalize(task_finalizer=origin_finalizer)
+            except Exception as e:
+                process_manager.exception_handler(e)
 
         time_elapsed = datetime.datetime.now() - start_time
 
@@ -518,6 +547,118 @@ class Skimming(object):
             link_dfs[sample_time] = pathset_links_df
 
         return path_dfs, link_dfs
+
+
+from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
+
+
+class SkimmingQueueInputData(QueueData):
+    def __init__(self, state, origin, mean_vot, d_t, user_class, purpose, access_mode, transit_mode, egress_mode,
+                 trace):
+        super().__init__(state)
+        self.origin = origin
+        self.mean_vot = mean_vot
+        self.d_t = d_t
+        self.user_class = user_class
+        self.purpose = purpose
+        self.access_mode = access_mode
+        self.transit_mode = transit_mode
+        self.egress_mode = egress_mode
+        self.trace = trace
+
+
+class SkimmingQueueOutputData(QueueData):
+    def __init__(self, state, worker_num, pathdict, perf_dict, origin):
+        super().__init__(state)
+        self.worker_num = worker_num
+        self.pathdict = pathdict
+        self.perf_dict = perf_dict
+        self.origin = origin
+        self.identifier = f"Origin {origin}"
+
+
+class SkimmingWorkerTask(ProcessWorkerTask):
+
+    def __call__(self,
+                 output_dir,
+                 veh_trips_df,
+                 *args,
+                 worker_num: int,
+                 in_queue: "mp.Queue[SkimmingQueueInputData]",
+                 out_queue: "mp.Queue[SkimmingQueueOutputData]",
+                 **kwargs
+                 ):
+        worker_str = "_worker%02d" % worker_num
+
+        from .FastTrips import FastTrips
+        setupLogging(infoLogFilename=None,
+                     debugLogFilename=os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str),
+                     logToConsole=False,
+                     append=False  #TODO check this, assuming false since log will be generated by assignment?
+                     )
+        FastTripsLogger.info("Skimming worker %2d starting" % (worker_num))
+
+        # TODO are these used in the skimming context?
+        # the child process doesn't have these set so read them
+        # Assignment.CONFIGURATION_FILE = run_config
+        # Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
+        # Assignment.read_functions(func_file)
+        # Assignment.read_configuration(run_config)
+
+        Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
+
+        while True:
+            res_flag = self.poll_queue(in_queue, out_queue, worker_num)
+            if res_flag:  # exception or finished
+                return
+
+    @staticmethod
+    def poll_queue(
+            in_queue: "mp.Queue[SkimmingQueueInputData]",
+            out_queue: "mp.Queue[QueueData]",
+            worker_num: int
+    ) -> bool:
+        state_obj: SkimmingQueueInputData = in_queue.get()
+
+        if state_obj.state == QueueData.WORK_DONE:
+            FastTripsLogger.debug(f"Worker {worker_num} received sentinel that work is done. Terminating process.")
+            out_queue.put(
+                QueueData(QueueData.WORK_DONE, worker_num)
+            )
+            return True
+
+        FastTripsLogger.info("Processing origin %20s" % (state_obj.origin))
+        out_queue.put(
+            SkimmingQueueOutputData(
+                QueueData.STARTING, worker_num, pathdict=None, perf_dict=None, origin=state_obj.origin
+            )
+        )
+
+        try:
+            (pathdict, perf_dict) = Skimming.find_trip_based_pathset_skimming(
+                state_obj.origin,
+                state_obj.mean_vot,
+                state_obj.d_t,
+                state_obj.user_class,
+                state_obj.purpose,
+                state_obj.access_mode,
+                state_obj.transit_mode,
+                state_obj.egress_mode,
+                state_obj.trace
+            )
+            out_queue.put(
+                SkimmingQueueOutputData(QueueData.COMPLETED, worker_num, pathdict, perf_dict, origin=state_obj.origin)
+            )
+            return False
+        except:
+            FastTripsLogger.exception("Exception")
+            # call it a day
+            out_queue.put(ExceptionQueueData(QueueData.EXCEPTION, worker_num, message=str(sys.exc_info())))
+            return True
+
+
+
+
 
 
 class Skim(np.ndarray):
