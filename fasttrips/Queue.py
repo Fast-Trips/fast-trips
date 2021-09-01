@@ -2,6 +2,11 @@
 
 Note this could potentially be simplified by using a multiprocess.Pool,
 but the ability to debug specific cases and error messages is less straightforward.
+
+These utilities are structured to be compatible with the multiprocessing implementation in Assignment.py,
+but have been abstracted away to support reuse in other contexts (namely skimming).
+
+To reduce code duplication, Assignment.py should be updated to make use of these utilities directly.
 """
 import abc
 import multiprocessing
