@@ -22,6 +22,7 @@ __license__ = """
 import sys
 import datetime
 
+import configparser
 import numpy as np
 import pandas as pd
 
@@ -65,6 +66,44 @@ class Skimming(object):
     # which components
     # vot - use mean for now, but add option to pass in list with values, each of which will lead to calc
     #
+    @staticmethod
+    def read_skimming_configuration(config_fullpath):
+        """
+        Read the skimming related configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
+        """
+        pd.set_option('display.width', 1000)
+        # pd.set_option('display.height',   1000)
+        pd.set_option('display.max_rows', 1000)
+        pd.set_option('display.max_columns', 100)
+        parser = configparser.RawConfigParser(
+            defaults={'time_period_start': 900,
+                      'time_period_end': 960,
+                      'time_period_sampling_interval': 30
+                      })
+        # Read configuration from specified configuration directory
+        FastTripsLogger.info("Reading configuration file %s for skimming" % config_fullpath)
+        parser.read(config_fullpath)
+        try:
+            start_time = parser.getint("skimming", "time_period_start")
+            end_time = parser.getint("skimming", "time_period_end")
+            sample_interval = parser.getint("skimming", "time_period_sampling_interval")
+        except configparser.NoSectionError:
+            # TODO point user to documentation?
+            e = "Skimming requires additional config file section '[skimming]'"
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
+        if sample_interval <1:
+            e = "Skimming requires sampling interval of at least 1 minute."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+        if sample_interval >(end_time - start_time):
+            e = "Skimming sampling interval is longer than total specified duration."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
+        return np.arange(start_time, end_time, sample_interval)
+
 
     @staticmethod
     def generate_skims(output_dir, FT):
@@ -308,7 +347,6 @@ class Skimming(object):
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
         num_processes = Assignment.NUMBER_OF_PROCESSES
-        print("temp num processes in skimming from config", num_processes)
 
 
         ####### VOT
@@ -332,7 +370,7 @@ class Skimming(object):
         # time_sample_step = 30 # let's do 30mins for now. should we do sampling frequency instead?
         # # dep_time = 960  # make it 4pm for now
 
-        time_sampling_points = [900, 930, 960, 990, 1020]
+        time_sampling_points =Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE)
         ############
         # c++ results; departure_time: origin_taz_num: result_dict
         skims_path_set = {t: {} for t in time_sampling_points}
