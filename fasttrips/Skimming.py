@@ -86,18 +86,35 @@ class Skimming(object):
         try:
             start_time = parser.getint("skimming", "time_period_start")
             end_time = parser.getint("skimming", "time_period_end")
-            sample_interval = parser.getint("skimming", "time_period_sampling_interval")
+            sample_interval = parser.getfloat("skimming", "time_period_sampling_interval")
+            if sample_interval.is_integer():
+                sample_interval = int(sample_interval)
+            else:
+                if sample_interval < 1:
+                    e = "Skimming requires sampling interval of at least 1 minute."
+                    FastTripsLogger.error(e)
+                    raise ValueError(e)
+                else:
+                    e = "Skimming requires sampling interval to be an integer."
+                    FastTripsLogger.error(e)
+                    raise ValueError(e)
+
         except configparser.NoSectionError:
             # TODO point user to documentation?
             e = "Skimming requires additional config file section '[skimming]'"
             FastTripsLogger.error(e)
             raise ValueError(e)
 
-        if sample_interval <1:
-            e = "Skimming requires sampling interval of at least 1 minute."
+        if start_time <0:
+            e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
             FastTripsLogger.error(e)
             raise ValueError(e)
-        if sample_interval >(end_time - start_time):
+
+        if end_time < start_time:
+            e = "Skimming sampling end time is before start time."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+        elif sample_interval > (end_time - start_time):
             e = "Skimming sampling interval is longer than total specified duration."
             FastTripsLogger.error(e)
             raise ValueError(e)
