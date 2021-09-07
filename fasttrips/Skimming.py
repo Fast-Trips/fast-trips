@@ -59,6 +59,10 @@ class Skimming(object):
     :py:attr:`Passenger.persons_df`, which are both :py:class:`pandas.DataFrame` instances.
     """
 
+    start_time: int  # Skimming start time in minutes past midnight
+    end_time: int  # Skimming end time in minutes past midnight
+    sample_interval: int  # Sampling interval length in minutes
+
     # TODO Jan: add
     # time_period_start = 960
     # time_period_end = 1020
@@ -71,10 +75,6 @@ class Skimming(object):
         """
         Read the skimming related configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
         """
-        pd.set_option('display.width', 1000)
-        # pd.set_option('display.height',   1000)
-        pd.set_option('display.max_rows', 1000)
-        pd.set_option('display.max_columns', 100)
         parser = configparser.RawConfigParser(
             defaults={'time_period_start': 900,
                       'time_period_end': 960,
@@ -105,7 +105,7 @@ class Skimming(object):
             FastTripsLogger.error(e)
             raise ValueError(e)
 
-        if start_time <0:
+        if start_time < 0:
             e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
             FastTripsLogger.error(e)
             raise ValueError(e)
@@ -119,8 +119,14 @@ class Skimming(object):
             FastTripsLogger.error(e)
             raise ValueError(e)
 
-        return np.arange(start_time, end_time, sample_interval)
+        if not (end_time - start_time / sample_interval).is_integer():
+            FastTripsLogger.warning(f"Total duration from {start_time} to {end_time} is not a multiple of \n"
+                                    f"sample interval {sample_interval}. Final Skimming interval will be shorter than"
+                                    "all others.")
 
+        Skimming.start_time = start_time
+        Skimming.end_time = end_time
+        Skimming.sample_interval = sample_interval
 
     @staticmethod
     def generate_skims(output_dir, FT):
@@ -365,6 +371,8 @@ class Skimming(object):
         start_time = datetime.datetime.now()
         num_processes = Assignment.NUMBER_OF_PROCESSES
 
+        Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE)
+
 
         ####### VOT
         # this should be configurable, if a list do for each, if not provided use mean
@@ -386,8 +394,7 @@ class Skimming(object):
         # skim_period_end = 1020
         # time_sample_step = 30 # let's do 30mins for now. should we do sampling frequency instead?
         # # dep_time = 960  # make it 4pm for now
-
-        time_sampling_points =Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE)
+        time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
         ############
         # c++ results; departure_time: origin_taz_num: result_dict
         skims_path_set = {t: {} for t in time_sampling_points}

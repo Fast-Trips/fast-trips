@@ -165,5 +165,7 @@ def test_skimming_config_parsing_values(caplog, config_file):
         with pytest.raises(ValueError, match=error_matches[test_id]):
             Skimming.read_skimming_configuration(config_file)
     else:
-        time_points = Skimming.read_skimming_configuration(config_file)
-        np.testing.assert_array_equal(time_points, np.arange(900, 960, 30))
+        Skimming.read_skimming_configuration(config_file)
+        assert Skimming.start_time == 900
+        assert Skimming.end_time == 960
+        assert Skimming.sample_interval == 30
