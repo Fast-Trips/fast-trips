@@ -16,7 +16,7 @@ import queue
 import sys
 import traceback
 from abc import ABC
-from typing import Callable, Any, Tuple
+from typing import Callable, Any, Tuple, Dict, Union, Optional
 
 from .Logger import FastTripsLogger
 
@@ -97,7 +97,66 @@ class ProcessWorkerTask(ABC):
         pass
 
 
+class MockProcess(object):
+    """Mock object around a callable to mimic being a separate multiprocessing.Process process"""
+
+    def __init__(self, target, args, kwargs):
+        """
+
+        Args:
+            target (ProcessWorkerTask): subclass of ProcessWorkerTask
+            args (Tuple[Any, ...]): arguments to process_worker_task,
+            process_worker_task_kwargs (Dict[str, Any]): keyword arguments to process_worker_task
+        """
+        self.task = lambda: target(args, **kwargs)
+        self.result = None
+
+    def start(self):
+        self.result = self.task()
+        return self.result
+
+    # mocked attributes
+
+    def join(self):
+        pass  # wait for the process to finish, in serial case this is as soon as start() is run
+
+    def is_alive(self):
+        # process is always dead (technically instantly alive during self.task(), but it's serial so
+        # we can't query it during that point)
+        return False
+
+
+class ProcessWrapper(object):
+    """
+    Wrapper object around Process (or MockProcess) with some state flags attached. More explicit to work
+    with an reason about than a dictionary with multiple keys for state.
+    """
+
+    def __init__(
+        self,
+        process: Union[multiprocessing.Process, MockProcess],
+        alive=True,
+        done=False,
+        working_on: Optional[str] = None,
+    ):
+        """
+        Args:
+            process Process object / interface
+
+        """
+        self.process = process
+        self.alive = alive
+        self.done = done
+        self.working_on = working_on
+
+
 class ProcessManager(object):
+    """User facing interface for (potentially) spawning multiple processes to speed up a discrete task.
+
+    Internally delegates handles the special case where no additional processes are spawned by
+    mocking the interface of multiprocess.Process.
+    """
+
     def __init__(
         self,
         num_processes: int,
@@ -121,8 +180,21 @@ class ProcessManager(object):
         self.is_multiprocessed = num_processes > 1
         self.wait_time = wait_time
 
-        self.process_dict = {}
-        # data to pass to workers
+        self.process_dict: Dict[int, ProcessWrapper] = {}
+
+        if self.is_multiprocessed:
+            process_constructor = multiprocessing.Process
+        else:
+            process_constructor = MockProcess
+
+        if num_processes == 2:
+            FastTripsLogger.warning(
+                "num_processes is the total number of processes including the parent process. "
+                "Using num_processes=2 will offer no benefit over num_processes=1, as only "
+                "one sub-process is created."
+            )
+
+        # data to pass to workers (semi reduntant for single process, essentially a list)
         self.todo_queue = multiprocessing.Queue()
         # results to retrieve from workers
         self.done_queue = multiprocessing.Queue()
@@ -130,25 +202,19 @@ class ProcessManager(object):
         # stable kwargs
         kwargs = {"in_queue": self.todo_queue, "out_queue": self.done_queue}
 
-        for process_idx in range(1, 1 + num_processes):
-            FastTripsLogger.info("Creating worker process %2d" % process_idx)
+        for process_idx in range(1, 1 + num_processes):  # plus 1 to have 1 based indexing and consistency
+            FastTripsLogger.info("Creating worker sub-process %2d" % process_idx)
             # kwarg per process
             kwargs["worker_num"] = process_idx
 
-            self.process_dict[process_idx] = {
-                "process": multiprocessing.Process(
-                    target=process_worker_task, args=process_worker_task_args, kwargs=kwargs
-                ),
-                "alive": True,
-                "done": False,
-            }
+            process = process_constructor(target=process_worker_task, args=process_worker_task_args, kwargs=kwargs)
+            self.process_dict[process_idx] = ProcessWrapper(process)
 
     def start_processes(self):
 
-        for process_idx, process_dict in self.process_dict.items():
+        for process_idx, process_wrapper in self.process_dict.items():
             FastTripsLogger.info("Starting worker process %2d" % process_idx)
-            print("started process ", process_idx)
-            process_dict["process"].start()
+            process_wrapper.process.start()
 
     def add_work_done_sentinels(self):
         """Add sentinel entries to the end of the input queue, so there is a
@@ -174,43 +240,53 @@ class ProcessManager(object):
                 if self.is_multiprocessed:
                     wait_time = self.wait_time
                 else:
-                    # if we're testing a simple serial case, we don't want waiting to be most of the runtime
-                    wait_time = min(self.wait_time, 2)
+                    # if we're testing a simple serial case, we don't need to wait
+                    wait_time = 0.0
+
                 result = self.done_queue.get(True, wait_time)
+
             except queue.Empty:
-                pass
+                # serial, empty queue means we are done, multiprocess, dead process means we are done
+                if self.is_multiprocessed is False:
+                    # single entry in dict
+                    for process_idx, process_wrapper in self.process_dict.items():
+                        process_wrapper.alive = False
+                    break
+
             else:
                 worker_num = result.worker_num
                 if result.state == QueueData.WORK_DONE:
                     FastTripsLogger.debug("Received done from process %d" % worker_num)
-                    self.process_dict[worker_num]["done"] = True
+                    self.process_dict[worker_num].done = True
                 elif result.state == QueueData.STARTING:
-                    self.process_dict[worker_num]["working_on"] = result.identifier
+                    self.process_dict[worker_num].working_on = result.identifier
                 elif result.state == QueueData.EXCEPTION:
                     raise ValueError(f"Worker num {worker_num} produced an exception:\n {result.message}")
 
                 elif result.state == QueueData.COMPLETED:
                     task_finalizer(result)
-                    del self.process_dict[worker_num]["working_on"]
+                    self.process_dict[worker_num].working_on = None
 
             # check if any processes are not alive
-            for process_idx, indiv_process_dict in self.process_dict.items():
-                if indiv_process_dict["alive"] and not indiv_process_dict["process"].is_alive():
-                    FastTripsLogger.debug("Process %d is not alive" % process_idx)
-                    indiv_process_dict["alive"] = False
-                    done_procs += 1
+            if self.is_multiprocessed:
+                for process_idx, process_wrapper in self.process_dict.items():
+                    if process_wrapper.alive and not process_wrapper.process.is_alive():
+                        FastTripsLogger.debug("Process %d is not alive" % process_idx)
+                        process_wrapper.alive = False
+                        # serial, empty queue means we are done, multiprocess, dead process means we are done
+                        done_procs += 1
 
         # join up my processes
-        for indiv_process_dict in self.process_dict.values():
-            indiv_process_dict["process"].join()
+        for process_wrapper in self.process_dict.values():
+            process_wrapper.process.join()
 
         # check if any processes crashed
-        for process_idx, indiv_process_dict in self.process_dict.items():
-            if not indiv_process_dict["done"]:
-                if "working_on" in indiv_process_dict:
+        for process_idx, process_wrapper in self.process_dict.items():
+            if not process_wrapper.done:
+                if process_wrapper.working_on is not None:
                     FastTripsLogger.info(
                         "Process %d appears to have crashed; it was working on %s"
-                        % (process_idx, str(indiv_process_dict["working_on"]))
+                        % (process_idx, str(process_wrapper.working_on))
                     )
                 else:
                     FastTripsLogger.info(
@@ -229,7 +305,7 @@ class ProcessManager(object):
             FastTripsLogger.error("Terminating processes")
             # terminating my processes
             for proc in self.process_dict.values():
-                proc["process"].terminate()
+                proc.process.terminate()
             raise
         except:
             # some other error
