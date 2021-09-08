@@ -50,6 +50,11 @@ full_skimming_config = no_skimming_config + (
 time_period_start             =900
 time_period_end               =960
 time_period_sampling_interval =30
+
+[skimming.mode_combinations]
+work = [ "PNR-transit-walk", "walk-transit-PNR" ]
+other = [ "PNR-transit-walk", "walk-transit-PNR" ]
+
 """
 )
 

@@ -1,5 +1,6 @@
 from __future__ import division
 
+import json
 import multiprocessing as mp
 import os
 from builtins import range
@@ -23,6 +24,8 @@ import sys
 import datetime
 
 import configparser
+from typing import Dict, Union
+
 import numpy as np
 import pandas as pd
 
@@ -83,27 +86,34 @@ class Skimming(object):
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s for skimming" % config_fullpath)
         parser.read(config_fullpath)
-        try:
-            start_time = parser.getint("skimming", "time_period_start")
-            end_time = parser.getint("skimming", "time_period_end")
-            sample_interval = parser.getfloat("skimming", "time_period_sampling_interval")
-            if sample_interval.is_integer():
-                sample_interval = int(sample_interval)
-            else:
-                if sample_interval < 1:
-                    e = "Skimming requires sampling interval of at least 1 minute."
-                    FastTripsLogger.error(e)
-                    raise ValueError(e)
-                else:
-                    e = "Skimming requires sampling interval to be an integer."
-                    FastTripsLogger.error(e)
-                    raise ValueError(e)
 
-        except configparser.NoSectionError:
+        if "skimming" not in parser.sections():
             # TODO point user to documentation?
             e = "Skimming requires additional config file section '[skimming]'"
             FastTripsLogger.error(e)
             raise ValueError(e)
+        elif "skimming.mode_combinations" not in parser.sections():
+            # TODO point user to documentation?
+            e = "Skimming requires additional config file section '[skimming.mode_combinations]'"
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
+        start_time = parser.getint("skimming", "time_period_start")
+        end_time = parser.getint("skimming", "time_period_end")
+        sample_interval = parser.getfloat("skimming", "time_period_sampling_interval")
+
+        if sample_interval.is_integer():
+            sample_interval = int(sample_interval)
+        else:
+            if sample_interval < 1:
+                e = "Skimming requires sampling interval of at least 1 minute."
+                FastTripsLogger.error(e)
+                raise ValueError(e)
+            else:
+                e = "Skimming requires sampling interval to be an integer."
+                FastTripsLogger.error(e)
+                raise ValueError(e)
+
 
         if start_time < 0:
             e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
@@ -127,6 +137,31 @@ class Skimming(object):
         Skimming.start_time = start_time
         Skimming.end_time = end_time
         Skimming.sample_interval = sample_interval
+
+        Skimming._parse_skimming_mode_combinations(parser['skimming.mode_combinations'])
+
+    @staticmethod
+    def _parse_skimming_mode_combinations(scm_section: Union[Dict, configparser.SectionProxy]):
+        for purpose, mode_list in scm_section.items():
+            # TODO check purpose exists in pathweight file
+            # Input validation
+            try:
+                mode_list = json.loads(mode_list)
+            except:
+                raise ValueError(f"Mode-list for purpose {purpose} could not be parsed. "
+                                 "Should be a (valid JSON) list.")
+            if not isinstance(mode_list, list):
+                raise ValueError(f"Mode-list for purpose {purpose} could not be parsed. "
+                                 "Should be a (valid JSON) list.")
+            if len(mode_list) == 0:
+                raise ValueError(f"Mode-list for purpose {purpose} is empty")
+            else:
+                for i in mode_list:
+                    if isinstance(i, str) is False:
+                        raise ValueError(f"Mode-list {i} should be a hypen delimited string, got {type(i)}")
+                    #TODO check mode combo makes sense
+
+
 
     @staticmethod
     def generate_skims(output_dir, FT):
