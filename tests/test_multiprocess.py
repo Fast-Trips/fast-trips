@@ -40,7 +40,7 @@ class DummyWorkerTask(ProcessWorkerTask):
 
 
 skip_mark = pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTIONS"),
+    bool(os.environ.get("GITHUB_ACTIONS", False)),
     reason="MultiProcessed code seems to fail stochastically on GHA, but is fine locally",
 )
 
