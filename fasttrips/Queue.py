@@ -186,6 +186,8 @@ class ProcessManager(object):
             process_constructor = multiprocessing.Process
         else:
             process_constructor = MockProcess
+        print(f"STDOUT Running in multiprocessed mode {self.is_multiprocessed}")
+        FastTripsLogger.info(f"Running in multiprocessed mode {self.is_multiprocessed}")
 
         if num_processes == 2:
             FastTripsLogger.warning(
@@ -213,7 +215,9 @@ class ProcessManager(object):
     def start_processes(self):
 
         for process_idx, process_wrapper in self.process_dict.items():
-            FastTripsLogger.info("Starting worker process %2d" % process_idx)
+            FastTripsLogger.info(
+                f"Starting worker process {process_idx} " + "" if self.is_multiprocessed else "(mock process)"
+            )
             process_wrapper.process.start()
 
     def add_work_done_sentinels(self):
