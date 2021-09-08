@@ -1,5 +1,6 @@
 import multiprocessing
 import sys
+import os
 
 import pytest
 
@@ -38,10 +39,13 @@ class DummyWorkerTask(ProcessWorkerTask):
             return True
 
 
-# @pytest.fixture(params=[1, 3], ids=["Single process", "2 additional sub-processes"])
-# TODO work out if we can enable locally and mark to fail on GHA
-# pytest.param("6*9", 42, marks=pytest.mark.xfail)],
-@pytest.fixture(params=[3], ids=["2 additional sub-processes"])
+skip_mark = pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTIONS"),
+    reason="MultiProcessed code seems to fail stochastically on GHA, but is fine locally",
+)
+
+
+@pytest.fixture(params=[1, pytest.param(3, marks=skip_mark)], ids=["Single process", "2 additional sub-processes"])
 def pm(request):
     num_processes = request.param
     return ProcessManager(
