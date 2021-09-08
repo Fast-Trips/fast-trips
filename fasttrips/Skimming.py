@@ -26,7 +26,6 @@ import numpy as np
 import pandas as pd
 
 import _fasttrips
-import queue
 
 from .Assignment import Assignment
 from .Logger import FastTripsLogger, setupLogging
@@ -36,7 +35,6 @@ from .PathSet import PathSet
 from .Performance import Performance
 from .TAZ import TAZ
 from .Trip import Trip
-from .Util import Util
 
 
 # TODO
