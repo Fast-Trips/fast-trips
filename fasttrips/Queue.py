@@ -112,9 +112,7 @@ class MockProcess(object):
         self.result = None
 
     def start(self):
-        print("mock process started")
         self.result = self.task()
-        print("mock process task finished")
         return self.result
 
     # mocked attributes
@@ -179,7 +177,7 @@ class ProcessManager(object):
             num_processes = multiprocessing.cpu_count()
 
         self.num_processes = num_processes
-        FastTripsLogger.info(f"num processes set to {num_processes} (have {multiprocessing.cpu_count()} cpus")
+        FastTripsLogger.debug(f"num processes set to {num_processes} (have {multiprocessing.cpu_count()} cpus)")
         self.is_multiprocessed = num_processes > 1
         self.wait_time = wait_time
 
@@ -187,10 +185,11 @@ class ProcessManager(object):
 
         if self.is_multiprocessed:
             process_constructor = multiprocessing.Process
+            queue_constructor = multiprocessing.Queue
         else:
+            queue_constructor = queue.Queue
             process_constructor = MockProcess
-        print(f"STDOUT Running in multiprocessed mode {self.is_multiprocessed}")
-        FastTripsLogger.info(f"Running in multiprocessed mode {self.is_multiprocessed}")
+        FastTripsLogger.debug(f"Running in multiprocessor mode: {self.is_multiprocessed}")
 
         if num_processes == 2:
             FastTripsLogger.warning(
@@ -200,9 +199,9 @@ class ProcessManager(object):
             )
 
         # data to pass to workers (semi reduntant for single process, essentially a list)
-        self.todo_queue = multiprocessing.Queue()
+        self.todo_queue = queue_constructor()
         # results to retrieve from workers
-        self.done_queue = multiprocessing.Queue()
+        self.done_queue = queue_constructor()
 
         # stable kwargs
         kwargs = {"in_queue": self.todo_queue, "out_queue": self.done_queue}
