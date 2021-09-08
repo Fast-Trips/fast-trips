@@ -112,7 +112,9 @@ class MockProcess(object):
         self.result = None
 
     def start(self):
+        print("mock process started")
         self.result = self.task()
+        print("mock process task finished")
         return self.result
 
     # mocked attributes
@@ -177,6 +179,7 @@ class ProcessManager(object):
             num_processes = multiprocessing.cpu_count()
 
         self.num_processes = num_processes
+        FastTripsLogger.info(f"num processes set to {num_processes} (have {multiprocessing.cpu_count()} cpus")
         self.is_multiprocessed = num_processes > 1
         self.wait_time = wait_time
 
@@ -260,7 +263,7 @@ class ProcessManager(object):
             else:
                 worker_num = result.worker_num
                 if result.state == QueueData.WORK_DONE:
-                    FastTripsLogger.debug("Received done from process %d" % worker_num)
+                    FastTripsLogger.info("Received done from process %d" % worker_num)
                     self.process_dict[worker_num].done = True
                 elif result.state == QueueData.STARTING:
                     self.process_dict[worker_num].working_on = result.identifier
@@ -284,7 +287,8 @@ class ProcessManager(object):
         for process_wrapper in self.process_dict.values():
             process_wrapper.process.join()
 
-        # check if any processes crashed
+        # check if any processes crashed (should have received and processed QueueData.WORK_DONE on all live
+        # processes)
         for process_idx, process_wrapper in self.process_dict.items():
             if not process_wrapper.done:
                 if process_wrapper.working_on is not None:
