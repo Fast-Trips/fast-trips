@@ -29,7 +29,7 @@ import sys
 import datetime
 
 import configparser
-from typing import Dict, Union, Callable, Optional
+from typing import Dict, Union, Callable, Optional, List
 
 import numpy as np
 import pandas as pd
@@ -145,7 +145,7 @@ class Skimming(object):
 
         user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
 
-        Skimming._parse_skimming_user_class_options(user_class_section)
+        Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
 
     @staticmethod
     def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
@@ -169,7 +169,7 @@ class Skimming(object):
         return value
 
     @staticmethod
-    def _parse_skimming_user_class_options(user_class_section: Dict):
+    def _parse_skimming_user_class_options(user_class_section: Dict) -> List[SkimConfig]:
         """
         Parse sections like
                 [[user_classes]]
@@ -186,8 +186,7 @@ class Skimming(object):
 
         pathweight_user_classes = weights_df['user_class'].unique()
 
-
-        user_class_output = defaultdict(list)
+        skims_to_produce: List[SkimConfig] = []
 
         if len(user_class_section) == 0:
             raise ValueError(f"Skimming config user class list is empty")
@@ -197,15 +196,18 @@ class Skimming(object):
             if user_class_name not in pathweight_user_classes:
                 raise ValueError(f"User class {user_class_name} not supplied in path weights file")
 
-            Skimming._parse_skimming_user_class_modes(user_class_name, section_dict, weights_df)
+            user_class_skims = Skimming._parse_skimming_user_class_modes(user_class_name, section_dict, weights_df)
+            skims_to_produce.extend(user_class_skims)
+        return skims_to_produce
 
     @staticmethod
-    def _parse_skimming_user_class_modes(
-            user_class_name: str, user_class_dict: Dict, weights_df):
+    def _parse_skimming_user_class_modes(user_class_name: str, user_class_dict: Dict, weights_df) -> List[SkimConfig]:
         """Parse lines like
             meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
         in the skimming config.
         """
+        user_class_skims = []
+
         legal_purposes = weights_df.loc[weights_df['user_class'] == user_class_name, 'purpose'].unique()
         if len(user_class_dict) == 0:
             raise ValueError(f"User Class {user_class_name} contains no purposes")
@@ -235,15 +237,15 @@ class Skimming(object):
                         raise ValueError(
                             mode_list_err
                         )
-                    modes = i.split("-")
-                    if len(modes) != 3:
+                    sub_mode_list = i.split("-")
+                    if len(sub_mode_list) != 3:
                         raise ValueError(mode_list_err)
-                    for value, sub_mode, legal_list in zip(modes, ("access", "transit", "egress"),
+                    for value, sub_mode, legal_list in zip(sub_mode_list, ("access", "transit", "egress"),
                                                            (legal_access, legal_transit, legal_egress)):
                         if value not in legal_list:
                             raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
-
-        # TODO return values
+                    user_class_skims.append(SkimConfig(user_class_name, purpose, *sub_mode_list))
+        return user_class_skims
 
 
 

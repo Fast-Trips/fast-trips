@@ -140,15 +140,15 @@ bad_skimming_config2 = full_skimming_config.replace(
     "time_period_start             =900", "time_period_start             =-42"
 )
 skimming_cases.append((bad_skimming_config2, "start < 0"))
-skimming_fail_reasons.append((ValueError, "Start time must be specified as non-negative minutes after midnight, got -42"))
+skimming_fail_reasons.append(
+    (ValueError, "Start time must be specified as non-negative minutes after midnight, got -42")
+)
 
 bad_skimming_config2a = full_skimming_config.replace(
     "time_period_sampling_interval =30", "time_period_sampling_interval =-1"
 )
 skimming_cases.append((bad_skimming_config2a, "sample <0"))
 skimming_fail_reasons.append((ValueError, "Skimming sampling interval must be a positive integer"))
-
-
 
 
 bad_skimming_config3 = full_skimming_config.replace(
@@ -174,6 +174,12 @@ skimming_fail_reasons.append((ValueError, "Purpose foo not supplied in path weig
 bad_skimming_config7 = full_skimming_config.replace("PNR", "foo")
 skimming_cases.append((bad_skimming_config7, "bad mode"))
 skimming_fail_reasons.append((ValueError, "Value foo not in path weights file for mode sub-leg 'access'"))
+
+bad_skimming_config7 = full_skimming_config.replace("-", "<>")
+skimming_cases.append((bad_skimming_config7, "bad delimiter"))
+skimming_fail_reasons.append(
+    (ValueError, "Mode-list walk<>local_bus<>walk should be a access-transit-egress hypen delimited string")
+)
 
 test_ids = [i[1] for i in skimming_cases]
 
@@ -216,6 +222,7 @@ def test_skimming_config_parsing_catches_errors(config_file_bundle):
         assert Skimming.end_time == 960
         assert Skimming.sample_interval == 30
 
+
 @pytest.fixture(params=full_skimming_config, ids=test_ids)
 def legal_config(request):
     config_str = request.param
@@ -228,10 +235,11 @@ def legal_config(request):
     yield fp.name, config_str
     os.remove(fp.name)
 
+
 def check_legal_config_values(legal_config):
     Skimming.read_skimming_configuration(legal_config)
 
-    assert Skimming.start_time ==900
+    assert Skimming.start_time == 900
     assert Skimming.end_time == 960
     assert Skimming.sample_interval == 30
     expected_skim_set = [
@@ -243,6 +251,4 @@ def check_legal_config_values(legal_config):
         SkimConfig("not_real", "meal", "walk", "commuter_rail", "PNR"),
         SkimConfig("not_real", "personal_business", "PNR", "local_bus", "walk"),
     ]
-    assert Skimming.skim_set ==expected_skim_set
-
-
+    assert Skimming.skim_set == expected_skim_set
