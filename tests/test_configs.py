@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from fasttrips import Run
-from fasttrips.Skimming import Skimming
+from fasttrips.Skimming import Skimming, SkimConfig
 from fasttrips.Assignment import Assignment
 
 # need a path-weights file to validate skimming options against
@@ -82,12 +82,12 @@ time_period_sampling_interval =30
 
     [[user_classes]]
         [[[real]]]
-        meal = [ "walk-local_bus-walk", "walk-local_bus-walk" ]
-        personal_business = [ "walk-commuter_rail-walk", "walk-commuter_rail-walk" ]
+        meal = [ "walk-local_bus-walk", "PNR-local_bus-walk" ]
+        personal_business = [ "walk-commuter_rail-walk", "PNR-commuter_rail-walk" ]
 
         [[[not_real]]]
-        meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
-        personal_business = [ "PNR-commuter_rail-walk"]
+        meal = [ "PNR-commuter_rail-walk", "walk-commuter_rail-PNR" ]
+        personal_business = [ "PNR-local_bus-walk"]
 
 """
 )
@@ -215,3 +215,34 @@ def test_skimming_config_parsing_catches_errors(config_file_bundle):
         assert Skimming.start_time == 900
         assert Skimming.end_time == 960
         assert Skimming.sample_interval == 30
+
+@pytest.fixture(params=full_skimming_config, ids=test_ids)
+def legal_config(request):
+    config_str = request.param
+    # note can't use StringIO with current Assignment parser, file is hard coded as expected.
+
+    fp = tempfile.NamedTemporaryFile(mode="w", delete=False)
+    print(config_str, file=fp)
+    fp.close()
+    # pass config_str through to help with debugging
+    yield fp.name, config_str
+    os.remove(fp.name)
+
+def check_legal_config_values(legal_config):
+    Skimming.read_skimming_configuration(legal_config)
+
+    assert Skimming.start_time ==900
+    assert Skimming.end_time == 960
+    assert Skimming.sample_interval == 30
+    expected_skim_set = [
+        SkimConfig("real", "meal", "walk", "local_bus", "walk"),
+        SkimConfig("real", "meal", "PNR", "local_bus", "walk"),
+        SkimConfig("real", "personal_business", "walk", "commuter_rail", "walk"),
+        SkimConfig("real", "personal_business", "PNR", "commuter_rail", "walk"),
+        SkimConfig("not_real", "meal", "PNR", "commuter_rail", "walk"),
+        SkimConfig("not_real", "meal", "walk", "commuter_rail", "PNR"),
+        SkimConfig("not_real", "personal_business", "PNR", "local_bus", "walk"),
+    ]
+    assert Skimming.skim_set ==expected_skim_set
+
+

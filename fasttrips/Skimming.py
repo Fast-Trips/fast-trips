@@ -47,6 +47,12 @@ from .TAZ import TAZ
 from .Trip import Trip
 from .Util import Util
 
+from collections import namedtuple
+
+#TODO better name
+SkimConfig = namedtuple(
+    "SkimConfig", field_names=["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]
+)
 
 # TODO
 #  - sort out cases for when the access and egress links do not represent all skims (i.e. there are disconnected zones),
