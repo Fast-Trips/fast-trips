@@ -20,11 +20,16 @@ __license__ = """
     See the License for the specific language governing permissions and
     limitations under the License.
 """
+
+from collections import defaultdict
+
+MANDATORY_NO_DEFAULT = object()  # default in case None is a legal default in config parsing
+
 import sys
 import datetime
 
 import configparser
-from typing import Dict, Union
+from typing import Dict, Union, Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -78,42 +83,31 @@ class Skimming(object):
         """
         Read the skimming related configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
         """
-        parser = configparser.RawConfigParser(
-            defaults={'time_period_start': 900,
-                      'time_period_end': 960,
-                      'time_period_sampling_interval': 30
-                      })
+
+        # Note we use configobj to support nested ini structure used for skimming, not supported by
+        # configparser stdlib used in Assignment.py
+        from configobj import ConfigObj
+
+        # _inspec=False is to allow stuff like "[(0, "pnr_7")]" from assignment to parse without error
+        # means we lose fancy parsing and validation though
+        parser = ConfigObj(config_fullpath, list_values=False, _inspec=True)
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s for skimming" % config_fullpath)
-        parser.read(config_fullpath)
 
-        if "skimming" not in parser.sections():
+        if "skimming" not in parser.keys():
             # TODO point user to documentation?
             e = "Skimming requires additional config file section '[skimming]'"
             FastTripsLogger.error(e)
             raise ValueError(e)
-        elif "skimming.mode_combinations" not in parser.sections():
+        elif "user_classes" not in parser["skimming"]:
             # TODO point user to documentation?
-            e = "Skimming requires additional config file section '[skimming.mode_combinations]'"
+            e = "[skimming] config section requires subsection '[[user_classes]]'"
             FastTripsLogger.error(e)
             raise ValueError(e)
 
-        start_time = parser.getint("skimming", "time_period_start")
-        end_time = parser.getint("skimming", "time_period_end")
-        sample_interval = parser.getfloat("skimming", "time_period_sampling_interval")
-
-        if sample_interval.is_integer():
-            sample_interval = int(sample_interval)
-        else:
-            if sample_interval < 1:
-                e = "Skimming requires sampling interval of at least 1 minute."
-                FastTripsLogger.error(e)
-                raise ValueError(e)
-            else:
-                e = "Skimming requires sampling interval to be an integer."
-                FastTripsLogger.error(e)
-                raise ValueError(e)
-
+        start_time = Skimming._read_config_value(parser['skimming'], "time_period_start", int)
+        end_time = Skimming._read_config_value(parser['skimming'], "time_period_end", int)
+        sample_interval = Skimming._read_config_value(parser['skimming'], "time_period_sampling_interval", int, default=10)
 
         if start_time < 0:
             e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
@@ -128,6 +122,11 @@ class Skimming(object):
             e = "Skimming sampling interval is longer than total specified duration."
             FastTripsLogger.error(e)
             raise ValueError(e)
+        elif sample_interval <= 0:
+            e = f"Skimming sampling interval must be a positive integer, got {sample_interval}."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
 
         if not (end_time - start_time / sample_interval).is_integer():
             FastTripsLogger.warning(f"Total duration from {start_time} to {end_time} is not a multiple of \n"
@@ -138,28 +137,94 @@ class Skimming(object):
         Skimming.end_time = end_time
         Skimming.sample_interval = sample_interval
 
-        Skimming._parse_skimming_mode_combinations(parser['skimming.mode_combinations'])
+        user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
+
+        Skimming._parse_skimming_user_class_options(user_class_section)
 
     @staticmethod
-    def _parse_skimming_mode_combinations(scm_section: Union[Dict, configparser.SectionProxy]):
-        for purpose, mode_list in scm_section.items():
-            # TODO check purpose exists in pathweight file
+    def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
+                           default=MANDATORY_NO_DEFAULT):
+        if default == MANDATORY_NO_DEFAULT:
+            if key not in config_dict:
+                raise KeyError(f"Required key {key} missing from Skimming config")
+            value = config_dict[key]
+        else:
+            value = config_dict.get(key, default)
+        if typecast_func is not None:
+            try:
+                value = typecast_func(value)
+            except (TypeError, ValueError):
+                msg = f"Value {value} for key {key} in has non-permitted type {type(value)}"
+                expected_type = getattr(typecast_func, "__name__", None)
+                if expected_type is not None:
+                    msg += f" (expected {expected_type})"
+                FastTripsLogger.error(msg)
+                raise TypeError(msg)
+        return value
+
+    @staticmethod
+    def _parse_skimming_user_class_options(user_class_section: Dict):
+        # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup()
+        # so we can use it here
+        weights_df = PathSet.WEIGHTS_DF
+
+        pathweight_user_classes = weights_df['user_class'].unique()
+
+
+        user_class_output = defaultdict(list)
+
+        if len(user_class_section) == 0:
+            raise ValueError(f"Skimming config user class list is empty")
+
+        for user_class_name, section_dict in user_class_section.items():
+
+            if user_class_name not in pathweight_user_classes:
+                raise ValueError(f"User class {user_class_name} not supplied in path weights file")
+
+            Skimming._parse_skimming_user_class_modes(user_class_name, section_dict, weights_df)
+
+    @staticmethod
+    def _parse_skimming_user_class_modes(
+            user_class_name: str, user_class_dict: Dict, weights_df):
+        legal_purposes = weights_df.loc[ weights_df['user_class'] == user_class_name, 'purpose'].unique()
+        if len(user_class_dict) == 0:
+            raise ValueError(f"User Class {user_class_name} contains no purposes")
+        for purpose, mode_list in user_class_dict.items():
+            purpose_subset = weights_df[weights_df['purpose'] == purpose]
+            legal_access = purpose_subset.loc[purpose_subset['demand_mode_type'] == "access", 'demand_mode'].unique()
+            legal_transit = purpose_subset.loc[purpose_subset['demand_mode_type'] == "transit", 'demand_mode'].unique()
+            legal_egress = purpose_subset.loc[purpose_subset['demand_mode_type'] == "egress", 'demand_mode'].unique()
+
             # Input validation
+            if purpose not in legal_purposes:
+                raise ValueError(f"Purpose {purpose} not supplied in path weights file")
             try:
                 mode_list = json.loads(mode_list)
             except:
-                raise ValueError(f"Mode-list for purpose {purpose} could not be parsed. "
+                raise ValueError(f"Mode-list for {user_class_name}:{purpose} could not be parsed. "
                                  "Should be a (valid JSON) list.")
             if not isinstance(mode_list, list):
-                raise ValueError(f"Mode-list for purpose {purpose} could not be parsed. "
+                raise ValueError(f"Mode-list for {user_class_name}:{purpose}  could not be parsed. "
                                  "Should be a (valid JSON) list.")
             if len(mode_list) == 0:
-                raise ValueError(f"Mode-list for purpose {purpose} is empty")
+                raise ValueError(f"Mode-list for  {user_class_name}:{purpose}  is empty")
             else:
                 for i in mode_list:
+                    mode_list_err = f"Mode-list {i} should be a access-transit-egress hypen delimited string, got {i}"
                     if isinstance(i, str) is False:
-                        raise ValueError(f"Mode-list {i} should be a hypen delimited string, got {type(i)}")
-                    #TODO check mode combo makes sense
+                        raise ValueError(
+                            mode_list_err
+                        )
+                    modes = i.split("-")
+                    if len(modes) != 3:
+                        raise ValueError(mode_list_err)
+                    for value, sub_mode, legal_list in zip(modes, ("access", "transit", "egress"),
+                                                           (legal_access, legal_transit, legal_egress)):
+                        if value not in legal_list:
+                            raise ValueError(f"Value {value} not in path weights file for mode {sub_mode}-leg")
+
+        # TODO return values
+
 
 
 
@@ -400,13 +465,17 @@ class Skimming(object):
     def generate_pathsets_skimming(output_dir, FT, veh_trips_df):
         """
         Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
+
+        Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE) is a pre-requisite function call
+         as it will set Attributes for sampling, and user_class/ mode configurations to run
+
         """
         from .Queue import ProcessManager
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
         num_processes = Assignment.NUMBER_OF_PROCESSES
 
-        Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE)
+
 
 
         ####### VOT
@@ -437,6 +506,8 @@ class Skimming(object):
         ####### USER CLASS AND MODES
         # TODO: either from file or from provided data
         # TODO this is me, skimming, look through pathweight_ft.txt
+
+        # Being consistent with other Modules, these are retrieved off global class attributes
         user_class = 'all'
         purpose = 'work'
         access_mode = 'walk'
