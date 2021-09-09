@@ -164,6 +164,16 @@ class Skimming(object):
 
     @staticmethod
     def _parse_skimming_user_class_options(user_class_section: Dict):
+        """
+        Parse sections like
+                [[user_classes]]
+                    [[[real]]]
+                    personal_business = [ "walk-commuter_rail-walk", "walk-commuter_rail-walk" ]
+
+                    [[[not_real]]]
+                    meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
+        in the skimming config
+        """
         # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup()
         # so we can use it here
         weights_df = PathSet.WEIGHTS_DF
@@ -186,7 +196,11 @@ class Skimming(object):
     @staticmethod
     def _parse_skimming_user_class_modes(
             user_class_name: str, user_class_dict: Dict, weights_df):
-        legal_purposes = weights_df.loc[ weights_df['user_class'] == user_class_name, 'purpose'].unique()
+        """Parse lines like
+            meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
+        in the skimming config.
+        """
+        legal_purposes = weights_df.loc[weights_df['user_class'] == user_class_name, 'purpose'].unique()
         if len(user_class_dict) == 0:
             raise ValueError(f"User Class {user_class_name} contains no purposes")
         for purpose, mode_list in user_class_dict.items():
@@ -221,7 +235,7 @@ class Skimming(object):
                     for value, sub_mode, legal_list in zip(modes, ("access", "transit", "egress"),
                                                            (legal_access, legal_transit, legal_egress)):
                         if value not in legal_list:
-                            raise ValueError(f"Value {value} not in path weights file for mode {sub_mode}-leg")
+                            raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
 
         # TODO return values
 

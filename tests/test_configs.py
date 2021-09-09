@@ -163,6 +163,18 @@ bad_skimming_config4 = full_skimming_config.replace(
 skimming_cases.append((bad_skimming_config4, "sample_too_large"))
 skimming_fail_reasons.append((ValueError, "Skimming sampling interval is longer than total specified duration"))
 
+bad_skimming_config5 = full_skimming_config.replace("real", "foo")
+skimming_cases.append((bad_skimming_config5, "bad user class"))
+skimming_fail_reasons.append((ValueError, "User class foo not supplied in path weights file"))
+
+bad_skimming_config6 = full_skimming_config.replace("meal", "foo")
+skimming_cases.append((bad_skimming_config6, "bad purpose"))
+skimming_fail_reasons.append((ValueError, "Purpose foo not supplied in path weights file"))
+
+bad_skimming_config7 = full_skimming_config.replace("PNR", "foo")
+skimming_cases.append((bad_skimming_config7, "bad mode"))
+skimming_fail_reasons.append((ValueError, "Value foo not in path weights file for mode sub-leg 'access'"))
+
 test_ids = [i[1] for i in skimming_cases]
 
 
