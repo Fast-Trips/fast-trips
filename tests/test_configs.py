@@ -21,7 +21,7 @@ from fasttrips.Assignment import Assignment
 # need a path-weights file to validate skimming options against
 # This is coupled to the setup process so we need to run that to get this setup
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ""))
-EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
+EXAMPLE_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", "Springfield")
 
 # DIRECTORY LOCATIONS
 INPUT_NETWORK = os.path.join(EXAMPLE_DIR, "networks", "vermont")
@@ -217,7 +217,10 @@ def test_assignment_config_parsing_works(config_file_bundle):
 
 def test_skimming_config_parsing_catches_errors(config_file_bundle):
     config_file_name, config_str, test_id, expected_err, expected_err_msg = config_file_bundle
+    print(ROOT_DIR)
+    print(EXAMPLE_DIR)
     print(config_str)
+
 
     if expected_err is not None:
         with pytest.raises(expected_err, match=expected_err_msg):
@@ -228,6 +231,7 @@ def test_skimming_config_parsing_catches_errors(config_file_bundle):
         assert Skimming.start_time == 900
         assert Skimming.end_time == 960
         assert Skimming.sample_interval == 30
+
 
 
 @pytest.fixture(params=full_skimming_config, ids=test_ids)
