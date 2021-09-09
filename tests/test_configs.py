@@ -220,6 +220,8 @@ def test_skimming_config_parsing_catches_errors(config_file_bundle):
     print(ROOT_DIR)
     print(EXAMPLE_DIR)
     print(config_str)
+    print(INPUT_WEIGHTS, os.path.exists(INPUT_WEIGHTS), os.path.isfile(INPUT_WEIGHTS))
+    print(os.listdir(os.path.dirname(INPUT_WEIGHTS)))
 
 
     if expected_err is not None:
