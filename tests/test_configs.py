@@ -34,6 +34,13 @@ CONFIG_FILE = os.path.join(INPUT_CONFIG, "config_ft.txt")
 INPUT_FUNCTIONS = os.path.join(INPUT_CONFIG, "config_ft.py")
 INPUT_WEIGHTS = os.path.join(INPUT_CONFIG, "pathweight_ft.txt")
 
+print(120 * "=")
+print("config paths:")
+print(os.path.abspath(CONFIG_FILE))
+print(os.path.abspath(INPUT_FUNCTIONS))
+print(os.path.abspath(INPUT_WEIGHTS))
+print(120 * "=")
+
 Run.run_setup(
     input_network_dir=INPUT_NETWORK,
     input_demand_dir=INPUT_DEMAND,
