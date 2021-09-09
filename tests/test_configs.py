@@ -1,9 +1,10 @@
 """Test config changes introduced by skimming. Test options work as intended and configs
 are backwards compatible with the non-skimming use case.
 
-Ideally the non-skimming options would be explicitly validated as well
+Ideally the non-skimming options would be explicitly validated as well.
 
-
+Note that temp files are required because the standard library configparser (used in assignment) doesn't support
+io.StringIO properly.
 
 """
 import os
@@ -43,6 +44,7 @@ time_period_end               =960
 """
 )
 
+# TODO need a user class layer
 
 full_skimming_config = no_skimming_config + (
     """
@@ -51,9 +53,14 @@ time_period_start             =900
 time_period_end               =960
 time_period_sampling_interval =30
 
-[skimming.mode_combinations]
-work = [ "PNR-transit-walk", "walk-transit-PNR" ]
-other = [ "PNR-transit-walk", "walk-transit-PNR" ]
+    [[user_classes]]
+        [[[real]]]
+        work = [ "PNR-transit-walk", "walk-transit-PNR" ]
+        other = [ "PNR-transit-walk", "walk-transit-PNR" ]
+
+        [[[not_real]]]
+        work = [ "PNR-transit-walk", "walk-transit-PNR" ]
+        other = [ "PNR-transit-walk", "walk-transit-PNR" ]
 
 """
 )

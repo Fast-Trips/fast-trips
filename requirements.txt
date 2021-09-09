@@ -8,3 +8,4 @@ psutil
 pytest
 notebook
 jupyter
+configobj

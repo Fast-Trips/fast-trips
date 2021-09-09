@@ -6,3 +6,4 @@ pandas
 partridge
 psutil
 pytest
+configobj
