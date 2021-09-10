@@ -263,19 +263,6 @@ class Skimming(object):
             skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
             skim_results[tuple(skim_config)] = skim_matrices
 
-        # # extract path and path link dataframes
-        # pathset_paths_per_sample_time, pathset_links_per_sample_time = Skimming.setup_pathsets(skim_path_set,
-        #                                                                                        FT.stops,
-        #                                                                                        FT.trips.trip_id_df,
-        #                                                                                        FT.trips.trips_df,
-        #                                                                                        FT.routes.modes_df)
-
-        # pathset_links_per_sample_time = Skimming.attach_fare_component(pathset_links_per_sample_time, veh_trips_df, FT)
-        #
-        # skim_matrices = Skimming.extract_matrices(pathset_links_per_sample_time, FT)
-
-        # TODO: average skims over time sample points
-
         return "pathset_paths_per_sample_time", "pathset_links_per_sample_time", skim_results
 
     @staticmethod

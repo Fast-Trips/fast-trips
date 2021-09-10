@@ -950,10 +950,7 @@ class Passenger(object):
             if not is_skimming and not pathset.goes_somewhere():
                 continue
             if not pathset.path_found():
-                if is_skimming:
-                    raise NotImplementedError("TODO Jan")
-                else:
-                    continue
+                continue
 
             for pathnum in range(pathset.num_paths()):
                 pathlist.append(cls.process_path(pathnum, pathset, pathset_id, pf_iteration, is_skimming=is_skimming))
