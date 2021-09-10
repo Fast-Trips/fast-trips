@@ -77,6 +77,7 @@ class Skimming(object):
     start_time: int  # Skimming start time in minutes past midnight
     end_time: int  # Skimming end time in minutes past midnight
     sample_interval: int  # Sampling interval length in minutes
+    skim_set : List[SkimConfig]
 
     # TODO Jan: add
     # time_period_start = 960
@@ -146,7 +147,7 @@ class Skimming(object):
 
         user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
 
-        # Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
+        Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
 
     @staticmethod
     def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
@@ -256,7 +257,11 @@ class Skimming(object):
         # FOR NOW: we're starting over with empty vehicles
         Trip.reset_onboard(veh_trips_df)
         # run c++ extension
-        skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df)
+        skim_config: SkimConfig
+        skim_results = {}
+        for skim_config in Skimming.skim_set:
+            skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
+            skim_results[tuple(skim_config)] = skim_matrices
 
         # # extract path and path link dataframes
         # pathset_paths_per_sample_time, pathset_links_per_sample_time = Skimming.setup_pathsets(skim_path_set,
@@ -271,7 +276,7 @@ class Skimming(object):
 
         # TODO: average skims over time sample points
 
-        return "pathset_paths_per_sample_time", "pathset_links_per_sample_time", skim_matrices
+        return "pathset_paths_per_sample_time", "pathset_links_per_sample_time", skim_results
 
     @staticmethod
     def create_index_mapping(FT):
@@ -477,7 +482,7 @@ class Skimming(object):
         return pathdict, perf_dict
 
     @staticmethod
-    def generate_aggregated_skims(output_dir, FT, veh_trips_df)->Dict[str, "Skim"]:
+    def generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config: SkimConfig) -> Dict[str, "Skim"]:
         """
         Aggregate skims for all time periods together to produce a single average skim per skim type.
 
@@ -518,19 +523,12 @@ class Skimming(object):
         time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
         ############
         # c++ results; departure_time: origin_taz_num: result_dict
+
+        # This is semi-redundant, we just need a mutable variable to have broad enough scope to get values from
+        # finalizer.
         skims_path_set = {t: {} for t in time_sampling_points}
 
-        ####### USER CLASS AND MODES
-        # TODO: either from file or from provided data
-        # TODO this is me, skimming, look through pathweight_ft.txt
 
-        # Being consistent with other Modules, these are retrieved off global class attributes
-        user_class = 'all'
-        purpose = 'work'
-        access_mode = 'walk'
-        transit_mode = 'transit'
-        egress_mode = 'walk'
-        #######
 
         time_indexed_skims = []
 
@@ -556,8 +554,8 @@ class Skimming(object):
                 # Note that cost of setting up cpp extension multiple times is relatively small
                 for origin in all_taz:
                     # populate tasks to process
-                    orig_data = SkimmingQueueInputData(QueueData.TO_PROCESS, origin, mean_vot, d_t, user_class,
-                                                       purpose, access_mode, transit_mode, egress_mode, trace=do_trace)
+                    orig_data = SkimmingQueueInputData(QueueData.TO_PROCESS, origin, mean_vot, d_t, skim_config,
+                                                       trace=do_trace)
                     process_manager.todo_queue.put(orig_data)
 
                 # start the processes
@@ -756,17 +754,16 @@ from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
 
 
 class SkimmingQueueInputData(QueueData):
-    def __init__(self, state, origin, mean_vot, d_t, user_class, purpose, access_mode, transit_mode, egress_mode,
-                 trace):
+    def __init__(self, state, origin, mean_vot, d_t, skim_config:SkimConfig, trace):
         super().__init__(state)
         self.origin = origin
         self.mean_vot = mean_vot
         self.d_t = d_t
-        self.user_class = user_class
-        self.purpose = purpose
-        self.access_mode = access_mode
-        self.transit_mode = transit_mode
-        self.egress_mode = egress_mode
+        self.user_class = skim_config.user_class
+        self.purpose = skim_config.purpose
+        self.access_mode = skim_config.access_mode
+        self.transit_mode = skim_config.transit_mode
+        self.egress_mode = skim_config.egress_mode
         self.trace = trace
 
 
