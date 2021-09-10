@@ -292,10 +292,10 @@ class Skimming(object):
         skim_matrices = {}
 
         # calculate fare skim:
-        fare_skim = Skimming.calculate_fare_skim(pathset_links_df, num_zones, index_mapping)
+        fare_skim = Skimming.calculate_skim(pathset_links_df, num_zones, index_mapping, component_name="fare")
         skim_matrices['fare'] = fare_skim
         # calculate transfer skim
-        transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
+        transfer_skim = Skimming.calculate_skim(pathset_links_df, num_zones, index_mapping, component_name="transfer")
         skim_matrices['transfer'] = transfer_skim
 
         # calculate ivt skim
@@ -303,53 +303,35 @@ class Skimming(object):
         return skim_matrices
 
     @staticmethod
-    def calculate_fare_skim(pathset_links_df, num_zones, index_mapping):
-        # TODO : still the TAZ file stuff (if a TAZ doesn't appear in the walk file)
-        component_name = "fare"
-
+    def calculate_skim(pathset_links_df, num_zones, index_mapping, *, component_name) -> "Skim":
         od_colnames = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]
-        # Generate all the (o, d)s we need in our skim matrix (some could be missing if there is disconnected stuff
-        # as they just get skipped if there are no paths)
+
         zone_list = pd.Series(index_mapping.values()).to_frame()
         zone_ods = zone_list.merge(zone_list, how='cross')
         zone_ods.columns = od_colnames
         zone_ods = zone_ods.set_index(od_colnames)
         zone_ods['skim_value'] = Skim.skim_component_default_vals[component_name]
-
-        fares = pathset_links_df.groupby(od_colnames)[Assignment.SIM_COL_PAX_FARE].sum().to_frame('skim_value')
+        if component_name == "fare":
+            skim_vals_coo = pathset_links_df.groupby(od_colnames)[Assignment.SIM_COL_PAX_FARE].sum().to_frame('skim_value')
+        elif component_name == "transfer":
+            skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
+                lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value')#.reset_index()
+        else:
+            raise NotImplementedError(f"missing skim type {component_name}")
 
         # zone_ods has all the entries we would expect, but none of the values, so we fill them in
-        zone_ods.loc[fares.index, 'skim_value'] = fares['skim_value']
-        fares = zone_ods.reset_index()
+        zone_ods.loc[skim_vals_coo.index, 'skim_value'] = skim_vals_coo['skim_value']
+        skim_vals_coo = zone_ods.reset_index()
         # TODO sort by the multindex so we don't need to reset and unset
         #   Jan I think they are already going to be in stable order because of construction of zone_ods?
-        fares = fares.sort_values(
+
+        skim_values_dense = skim_vals_coo.sort_values(
             by=od_colnames,
             axis=0).set_index(od_colnames).unstack(
             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
 
-        transfer_values = fares.values.astype(Skim.skim_component_types[component_name])
-        transfer_skim = Skim(component_name, num_zones, transfer_values, index_mapping)
-        return transfer_skim
-
-    @staticmethod
-    def calculate_transfer_skim(pathset_links_df, num_zones, index_mapping):
-        # TODO Jan: this depends on there being values for each o and d
-        # (technically for the cross product because if one is missing unstack will nan fill)
-        # -> add missing values!
-        component_name = "transfer"
-
-        num_transfers = pathset_links_df.groupby(
-            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]).apply(
-            lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value').reset_index()
-
-        transfer_values = num_transfers.sort_values(
-            by=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
-            axis=0).set_index([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, 'd_taz_num']).unstack(
-            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
-
-        transfer_values = transfer_values.values.astype(Skim.skim_component_types[component_name])
-        transfer_skim = Skim(component_name, num_zones, transfer_values, index_mapping)
+        skim_values_dense = skim_values_dense.values.astype(Skim.skim_component_types[component_name])
+        transfer_skim = Skim(component_name, num_zones, skim_values_dense, index_mapping)
 
         return transfer_skim
 
