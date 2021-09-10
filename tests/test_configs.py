@@ -14,14 +14,14 @@ import tempfile
 import numpy as np
 import pytest
 
-from fasttrips import Run
+from fasttrips import Run, PathSet
 from fasttrips.Skimming import Skimming, SkimConfig
 from fasttrips.Assignment import Assignment
 
 # need a path-weights file to validate skimming options against
 # This is coupled to the setup process so we need to run that to get this setup
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ""))
-EXAMPLE_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", "Springfield")
+EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
 
 # DIRECTORY LOCATIONS
 INPUT_NETWORK = os.path.join(EXAMPLE_DIR, "networks", "vermont")
@@ -41,22 +41,22 @@ print(os.path.abspath(INPUT_FUNCTIONS))
 print(os.path.abspath(INPUT_WEIGHTS))
 print(120 * "=")
 
-Run.run_setup(
-    input_network_dir=INPUT_NETWORK,
-    input_demand_dir=INPUT_DEMAND,
-    run_config=CONFIG_FILE,
-    input_weights=INPUT_WEIGHTS,
-    output_dir=OUTPUT_DIR,
-    output_folder="example",
-    pathfinding_type="stochastic",
-    overlap_variable="count",
-    overlap_split_transit=True,
-    iters=1,
-    dispersion=0.50,
-    trace_ids=[("0", "trip_4")],
-    debug_trace_only=True,
-    input_functions=INPUT_FUNCTIONS,
-)
+# Run.run_setup(
+#     input_network_dir=INPUT_NETWORK,
+#     input_demand_dir=INPUT_DEMAND,
+#     run_config=CONFIG_FILE,
+#     input_weights=INPUT_WEIGHTS,
+#     output_dir=OUTPUT_DIR,
+#     output_folder="example",
+#     pathfinding_type="stochastic",
+#     overlap_variable="count",
+#     overlap_split_transit=True,
+#     iters=1,
+#     dispersion=0.50,
+#     trace_ids=[("0", "trip_4")],
+#     debug_trace_only=True,
+#     input_functions=INPUT_FUNCTIONS,
+# )
 
 
 # TODO stuff less than 0?
@@ -197,6 +197,12 @@ def config_file_bundle(request):
     config_str, test_id = cases
     err, err_msg = reasons
     # note can't use StringIO with current Assignment parser, file is hard coded as expected.
+
+    # ON CI, PathSet.WEIGHTS_DF seems to get interfered with by other tests because it's not a local variable...
+    # make sure we have the right set of global variables loaded ... need weights_df
+    # We need this other global variable for that to work
+    PathSet.WEIGHTS_FIXED_WIDTH = False
+    Assignment.read_weights(weights_file=INPUT_WEIGHTS)
 
     fp = tempfile.NamedTemporaryFile(mode="w", delete=False)
     print(config_str, file=fp)
