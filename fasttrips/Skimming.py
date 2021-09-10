@@ -183,6 +183,8 @@ class Skimming(object):
         # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup()
         # so we can use it here
         weights_df = PathSet.WEIGHTS_DF
+        print("weights df is&$#")
+        print(weights_df)
 
         pathweight_user_classes = weights_df['user_class'].unique()
 

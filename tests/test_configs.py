@@ -222,6 +222,9 @@ def test_skimming_config_parsing_catches_errors(config_file_bundle):
     print(config_str)
     print(INPUT_WEIGHTS, os.path.exists(INPUT_WEIGHTS), os.path.isfile(INPUT_WEIGHTS))
     print(os.listdir(os.path.dirname(INPUT_WEIGHTS)))
+    print("path weights")
+    with open(INPUT_WEIGHTS, 'r') as f:
+        print(f.read())
 
 
     if expected_err is not None:
