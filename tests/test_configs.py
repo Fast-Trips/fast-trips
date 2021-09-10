@@ -34,30 +34,6 @@ CONFIG_FILE = os.path.join(INPUT_CONFIG, "config_ft.txt")
 INPUT_FUNCTIONS = os.path.join(INPUT_CONFIG, "config_ft.py")
 INPUT_WEIGHTS = os.path.join(INPUT_CONFIG, "pathweight_ft.txt")
 
-print(120 * "=")
-print("config paths:")
-print(os.path.abspath(CONFIG_FILE))
-print(os.path.abspath(INPUT_FUNCTIONS))
-print(os.path.abspath(INPUT_WEIGHTS))
-print(120 * "=")
-
-# Run.run_setup(
-#     input_network_dir=INPUT_NETWORK,
-#     input_demand_dir=INPUT_DEMAND,
-#     run_config=CONFIG_FILE,
-#     input_weights=INPUT_WEIGHTS,
-#     output_dir=OUTPUT_DIR,
-#     output_folder="example",
-#     pathfinding_type="stochastic",
-#     overlap_variable="count",
-#     overlap_split_transit=True,
-#     iters=1,
-#     dispersion=0.50,
-#     trace_ids=[("0", "trip_4")],
-#     debug_trace_only=True,
-#     input_functions=INPUT_FUNCTIONS,
-# )
-
 
 # TODO stuff less than 0?
 # Test a series of input configs, validate that they don't crash the assignment parsing
@@ -223,15 +199,6 @@ def test_assignment_config_parsing_works(config_file_bundle):
 
 def test_skimming_config_parsing_catches_errors(config_file_bundle):
     config_file_name, config_str, test_id, expected_err, expected_err_msg = config_file_bundle
-    print(ROOT_DIR)
-    print(EXAMPLE_DIR)
-    print(config_str)
-    print(INPUT_WEIGHTS, os.path.exists(INPUT_WEIGHTS), os.path.isfile(INPUT_WEIGHTS))
-    print(os.listdir(os.path.dirname(INPUT_WEIGHTS)))
-    print("path weights")
-    with open(INPUT_WEIGHTS, 'r') as f:
-        print(f.read())
-
 
     if expected_err is not None:
         with pytest.raises(expected_err, match=expected_err_msg):
