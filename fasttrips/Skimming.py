@@ -29,7 +29,7 @@ import sys
 import datetime
 
 import configparser
-from typing import Dict, Union, Callable, Optional, List
+from typing import Dict, Union, Callable, Optional, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -61,6 +61,7 @@ SkimConfig = namedtuple(
 #  - time, sample interval, user class specific values
 #  - add tests
 
+
 class Skimming(object):
     """
     Skimming class.
@@ -74,6 +75,7 @@ class Skimming(object):
     start_time: int  # Skimming start time in minutes past midnight
     end_time: int  # Skimming end time in minutes past midnight
     sample_interval: int  # Sampling interval length in minutes
+    skim_set : List[SkimConfig]
 
     # TODO Jan: add
     # time_period_start = 960
@@ -243,9 +245,6 @@ class Skimming(object):
                     user_class_skims.append(SkimConfig(user_class_name, purpose, *sub_mode_list))
         return user_class_skims
 
-
-
-
     @staticmethod
     def generate_skims(output_dir, FT):
 
@@ -255,24 +254,14 @@ class Skimming(object):
 
         # FOR NOW: we're starting over with empty vehicles
         Trip.reset_onboard(veh_trips_df)
-
         # run c++ extension
-        skim_path_set = Skimming.generate_pathsets_skimming(output_dir, FT, veh_trips_df)
+        skim_config: SkimConfig
+        skim_results = {}
+        for skim_config in Skimming.skim_set:
+            skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
+            skim_results[tuple(skim_config)] = skim_matrices
 
-        # extract path and path link dataframes
-        pathset_paths_per_sample_time, pathset_links_per_sample_time = Skimming.setup_pathsets(skim_path_set,
-                                                                                               FT.stops,
-                                                                                               FT.trips.trip_id_df,
-                                                                                               FT.trips.trips_df,
-                                                                                               FT.routes.modes_df)
-
-        pathset_links_per_sample_time = Skimming.attach_fare_component(pathset_links_per_sample_time, veh_trips_df, FT)
-
-        skim_matrices = Skimming.extract_matrices(pathset_links_per_sample_time, FT)
-
-        # TODO: average skims over time sample points
-
-        return pathset_paths_per_sample_time, pathset_links_per_sample_time, skim_matrices
+        return "pathset_paths_per_sample_time", "pathset_links_per_sample_time", skim_results
 
     @staticmethod
     def create_index_mapping(FT):
@@ -291,66 +280,56 @@ class Skimming(object):
         return index_dict
 
     @staticmethod
-    def extract_matrices(pathset_links_per_sample_time, FT):
+    def extract_matrices(pathset_links_df: pd.DataFrame, FT) -> Dict[str, "Skim"]:
 
         index_mapping = Skimming.create_index_mapping(FT)
         num_zones = len(index_mapping)
 
         # skim_components = ['transfers', 'ivt', 'fare']
         # for component in skim_components:
-        skim_matrices = {t: [] for t in pathset_links_per_sample_time.keys()}
+        skim_matrices = {}
 
-        for sample_time, pathset_links_df in pathset_links_per_sample_time.items():
-            # calculate fare skim:
-            fare_skim = Skimming.calculate_fare_skim(pathset_links_df, num_zones, index_mapping)
-            skim_matrices[sample_time].append(fare_skim)
-            # calculate transfer skim
-            transfer_skim = Skimming.calculate_transfer_skim(pathset_links_df, num_zones, index_mapping)
-            skim_matrices[sample_time].append(transfer_skim)
+        # calculate fare skim:
+        fare_skim = Skimming.calculate_skim(pathset_links_df, num_zones, index_mapping, component_name="fare")
+        skim_matrices['fare'] = fare_skim
+        # calculate transfer skim
+        transfer_skim = Skimming.calculate_skim(pathset_links_df, num_zones, index_mapping, component_name="transfer")
+        skim_matrices['transfer'] = transfer_skim
 
         # calculate ivt skim
 
         return skim_matrices
 
     @staticmethod
-    def calculate_fare_skim(pathset_links_df, num_zones, index_mapping):
-        # TODO Jan: this depends on there being values for each o and d
-        # (technically for the cross product because if one is missing unstack will nan fill)
-        # -> add missing values!
-        component_name = "fare"
+    def calculate_skim(pathset_links_df, num_zones, index_mapping, *, component_name) -> "Skim":
+        od_colnames = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]
 
-        fares = pathset_links_df.groupby(
-            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM])[
-            Assignment.SIM_COL_PAX_FARE].sum().to_frame('skim_value').reset_index()
+        zone_list = pd.Series(index_mapping.values()).to_frame()
+        zone_ods = zone_list.merge(zone_list, how='cross')
+        zone_ods.columns = od_colnames
+        zone_ods = zone_ods.set_index(od_colnames)
+        zone_ods['skim_value'] = Skim.skim_component_default_vals[component_name]
+        if component_name == "fare":
+            skim_vals_coo = pathset_links_df.groupby(od_colnames)[Assignment.SIM_COL_PAX_FARE].sum().to_frame('skim_value')
+        elif component_name == "transfer":
+            skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
+                lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value')#.reset_index()
+        else:
+            raise NotImplementedError(f"missing skim type {component_name}")
 
-        fares = fares.sort_values(
-            by=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
-            axis=0).set_index([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, 'd_taz_num']).unstack(
+        # zone_ods has all the entries we would expect, but none of the values, so we fill them in
+        zone_ods.loc[skim_vals_coo.index, 'skim_value'] = skim_vals_coo['skim_value']
+        skim_vals_coo = zone_ods.reset_index()
+        # TODO sort by the multindex so we don't need to reset and unset
+        #   Jan I think they are already going to be in stable order because of construction of zone_ods?
+
+        skim_values_dense = skim_vals_coo.sort_values(
+            by=od_colnames,
+            axis=0).set_index(od_colnames).unstack(
             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
 
-        transfer_values = fares.values.astype(Skim.skim_component_types[component_name])
-        transfer_skim = Skim(component_name, num_zones, transfer_values, index_mapping)
-
-        return transfer_skim
-
-    @staticmethod
-    def calculate_transfer_skim(pathset_links_df, num_zones, index_mapping):
-        # TODO Jan: this depends on there being values for each o and d
-        # (technically for the cross product because if one is missing unstack will nan fill)
-        # -> add missing values!
-        component_name = "transfer"
-
-        num_transfers = pathset_links_df.groupby(
-            [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]).apply(
-            lambda group: group.loc[group['linkmode'] == 'transfer'].shape[0]).to_frame('skim_value').reset_index()
-
-        transfer_values = num_transfers.sort_values(
-            by=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
-            axis=0).set_index([Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, 'd_taz_num']).unstack(
-            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
-
-        transfer_values = transfer_values.values.astype(Skim.skim_component_types[component_name])
-        transfer_skim = Skim(component_name, num_zones, transfer_values, index_mapping)
+        skim_values_dense = skim_values_dense.values.astype(Skim.skim_component_types[component_name])
+        transfer_skim = Skim(component_name, num_zones, skim_values_dense, index_mapping)
 
         return transfer_skim
 
@@ -370,36 +349,35 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def attach_fare_component(pathset_links_per_sample_time, veh_trips_df, FT):
+    def attach_fare_component(pathset_links_df: pd.DataFrame, veh_trips_df, FT) -> pd.DataFrame:
         # cost calc stuff, see Ass .2027: choose_paths_without_simulation
 
-        for sample_time, pathset_links_df in pathset_links_per_sample_time.items():
+        # for sample_time, pathset_links_df in pathset_links_per_sample_time.items():
 
-            pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
+        pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
 
-            # instead of flag_missed_transfers(), set these to pathfinding results
-            pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
-            pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
-            pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
-            pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Passenger.PF_COL_LINK_TIME]
-            pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
-            pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
+        # instead of flag_missed_transfers(), set these to pathfinding results
+        pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
+        pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_LINK_TIME] = pathset_links_df[Passenger.PF_COL_LINK_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
+        pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
-            # Add fares -- need stop zones first if they're not there.
-            # We only need to do this once per pathset.
-            # todo -- could remove non-transit links for this?
-            stops = FT.stops
-            if "A_zone_id" not in list(pathset_links_df.columns.values):
-                assert (stops is not None)
-                pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
-                pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+        # Add fares -- need stop zones first if they're not there.
+        # We only need to do this once per pathset.
+        # todo -- could remove non-transit links for this?
+        stops = FT.stops
+        if "A_zone_id" not in list(pathset_links_df.columns.values):
+            assert (stops is not None)
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
 
-            # This needs to be done fresh each time since simulation might change the board times and therefore the fare
-            # periods
-            pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
-            pathset_links_per_sample_time[sample_time] = pathset_links_df
+        # This needs to be done fresh each time since simulation might change the board times and therefore the fare
+        # periods
+        pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
 
-        return pathset_links_per_sample_time
+        return pathset_links_df
 
     @staticmethod
     def find_trip_based_pathset_skimming(origin, mean_vot, start_time, user_class, purpose,
@@ -480,9 +458,14 @@ class Skimming(object):
         return pathdict, perf_dict
 
     @staticmethod
-    def generate_pathsets_skimming(output_dir, FT, veh_trips_df):
+    def generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config: SkimConfig) -> Dict[str, "Skim"]:
         """
+        Aggregate skims for all time periods together to produce a single average skim per skim type.
+
+        Creates pathsets and extracts output (which are used internally and discarded)
+
         Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
+
 
         Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE) is a pre-requisite function call
          as it will set Attributes for sampling, and user_class/ mode configurations to run
@@ -492,9 +475,6 @@ class Skimming(object):
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
         num_processes = Assignment.NUMBER_OF_PROCESSES
-
-
-
 
         ####### VOT
         # this should be configurable, if a list do for each, if not provided use mean
@@ -519,23 +499,16 @@ class Skimming(object):
         time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
         ############
         # c++ results; departure_time: origin_taz_num: result_dict
+
+        # This is semi-redundant, we just need a mutable variable to have broad enough scope to get values from
+        # finalizer.
         skims_path_set = {t: {} for t in time_sampling_points}
 
-        ####### USER CLASS AND MODES
-        # TODO: either from file or from provided data
-        # TODO this is me, skimming, look through pathweight_ft.txt
 
-        # Being consistent with other Modules, these are retrieved off global class attributes
-        user_class = 'all'
-        purpose = 'work'
-        access_mode = 'walk'
-        transit_mode = 'transit'
-        egress_mode = 'walk'
-        #######
+
+        time_indexed_skims = []
 
         for d_t in time_sampling_points:
-            d_t = int(d_t)  # TODO: this should happen during creation and validation of time sampler
-
             time_elapsed = datetime.datetime.now() - start_time
             FastTripsLogger.info("Skimming for time sampling point %2d. Time elapsed: %2dh:%2dm:%2ds" % (
                 d_t,
@@ -546,49 +519,55 @@ class Skimming(object):
             path_dict = {Passenger.TRIP_LIST_COLUMN_TIME_TARGET: "departure",
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: datetime.time(d_t // 60, (d_t % 60)),
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
-            # TODO this needs to be multiprocessor
-            # Reuse the Assignment.py stuff for this
-
             process_manager = ProcessManager(num_processes,
                                              process_worker_task=SkimmingWorkerTask(),
                                              process_worker_task_args=(output_dir, veh_trips_df)
                                              )
             try:
+                # Note we thread at the origin level, rather than (origin, time), as
+                # fine grained time sampling would become a memory issue - this way we can
+                # store a a few skims per timestep, rather than a collection of orig- all dests pathsets per timestep.
+                # Note that cost of setting up cpp extension multiple times is relatively small
                 for origin in all_taz:
                     # populate tasks to process
-                    orig_data = SkimmingQueueInputData(
-                                QueueData.TO_PROCESS,
-                                origin,
-                                mean_vot,
-                                d_t,
-                                user_class,
-                                purpose,
-                                access_mode,
-                                transit_mode,
-                                egress_mode,
-                                trace=do_trace
-                    )
+                    orig_data = SkimmingQueueInputData(QueueData.TO_PROCESS, origin, mean_vot, d_t, skim_config,
+                                                       trace=do_trace)
                     process_manager.todo_queue.put(orig_data)
 
                 # start the processes
                 process_manager.add_work_done_sentinels()
                 process_manager.start_processes()
 
-
+                # This function is the pass-through mechanism to get results from processes.
                 def origin_finalizer(queue_data: SkimmingQueueOutputData):
                     FT.performance.add_info(-1, -1, -1, queue_data.origin, queue_data.perf_dict)
-                    # TODO jan can you explain this better
                     # we are reusing PathSet with skimming specific args above
-                    # PathSet is generic across origins
+                    # PathSet(path_dict) is generic across origins
                     pathset_this_o = PathSet(path_dict)
-                    # path dict data specific to origin
+                    # queue_data.pathdict specific to origin
                     pathset_this_o.pathdict = queue_data.pathdict
                     skims_path_set[d_t][queue_data.origin] = pathset_this_o
-
 
                 process_manager.wait_and_finalize(task_finalizer=origin_finalizer)
             except Exception as e:
                 process_manager.exception_handler(e)
+
+            # end of the time step collate paths into skims
+
+            # extract path and path link dataframes
+            # TODO pathset_paths not used for now
+            _pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skims_path_set[d_t],
+                                                                          FT.stops,
+                                                                          FT.trips.trip_id_df,
+                                                                          FT.trips.trips_df,
+                                                                          FT.routes.modes_df)
+            pathset_links_df = Skimming.attach_fare_component(pathset_links_df, veh_trips_df, FT)
+            skim_matrices = Skimming.extract_matrices(pathset_links_df, FT)
+            # now that we have skim matrix for d_t, we can drop the pathsets for this time_sample
+            skims_path_set.pop(d_t)
+            time_indexed_skims.append(skim_matrices)
+
+        agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
 
         time_elapsed = datetime.datetime.now() - start_time
 
@@ -597,14 +576,29 @@ class Skimming(object):
             int((time_elapsed.total_seconds() % 3600) / 60),
             time_elapsed.total_seconds() % 60))
 
-        return skims_path_set
+        return agg_skims
+
+    @staticmethod
+    def _aggregate_skims(time_indexed_skims: List[Dict[str, "Skim"]], op=np.mean) -> Dict[str, "Skim"]:
+        """Combine skims over time periods down to an aggregated skim."""
+        # TODO will op also become a dict, with different op per skim type?
+
+        # assume the keys are all the same, if they're not something bad has happened
+        skim_types = list(time_indexed_skims[0].keys())
+        skim_averages_by_type = {t: [] for t in skim_types}
+        # group skims by type instead of time
+        for t in time_indexed_skims:
+            for skim_type, skim in t.items():
+                skim_averages_by_type[skim_type].append(skim)
+        # aggregate the skims to one per type
+        return {skim_type: op(skim_list, axis=0) for skim_type, skim_list in skim_averages_by_type.items()}
 
     # TODO Jan: replace with passenger method.
     # would need to add pathmode (use None? just a string. No there's a generic transit mode called "transit
     # somewhere, use that); and pathset.outbound = False. Note neither is in constructor.
     # Also use is_skimming specific columns obviously
     @staticmethod
-    def setup_pathsets(skim_path_set, stops, trip_id_df, trips_df, modes_df):
+    def setup_pathsets(skim_path_set, stops, trip_id_df, trips_df, modes_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """ docstring from corresponding passenger method
         Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
         :py:class:`pandas.DataFrame` instances.
@@ -672,84 +666,80 @@ class Skimming(object):
         """
         from .PathSet import PathSet
 
-        skim_sample_times = skim_path_set.keys()
-        path_dfs = {}
-        link_dfs = {}
+        # skim_sample_times = skim_path_set.keys()
+        # path_dfs = {}
+        # link_dfs = {}
 
-        for sample_time in skim_sample_times:
 
-            pathlist, linklist = Passenger.setup_pathsets_generic(
-                pathset_dict=skim_path_set[sample_time],
-                pf_iteration=None,
-                is_skimming=True
-            )
+        pathlist, linklist = Passenger.setup_pathsets_generic(
+            pathset_dict=skim_path_set,
+            pf_iteration=None,
+            is_skimming=True
+        )
 
-            FastTripsLogger.debug("Skimming_setup__pathsets(): pathlist and linklist constructed")
+        FastTripsLogger.debug("Skimming_setup__pathsets(): pathlist and linklist constructed")
 
-            pathset_paths_df = pd.DataFrame(pathlist, columns=[
-                Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
-                'pathdir',  # for debugging
-                # ''pathmode', # for output
-                # Passenger.PF_COL_PF_ITERATION,
-                Passenger.PF_COL_PATH_NUM,
-                PathSet.PATH_KEY_COST,
-                PathSet.PATH_KEY_FARE,
-                PathSet.PATH_KEY_PROBABILITY,
-                PathSet.PATH_KEY_INIT_COST,
-                PathSet.PATH_KEY_INIT_FARE])
+        pathset_paths_df = pd.DataFrame(pathlist, columns=[
+            Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+            'pathdir',  # for debugging
+            # ''pathmode', # for output
+            # Passenger.PF_COL_PF_ITERATION,
+            Passenger.PF_COL_PATH_NUM,
+            PathSet.PATH_KEY_COST,
+            PathSet.PATH_KEY_FARE,
+            PathSet.PATH_KEY_PROBABILITY,
+            PathSet.PATH_KEY_INIT_COST,
+            PathSet.PATH_KEY_INIT_FARE])
 
-            pathset_links_df = pd.DataFrame(linklist, columns=[
-                Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
-                Passenger.PF_COL_PATH_NUM,
-                Passenger.PF_COL_LINK_MODE,
-                Route.ROUTES_COLUMN_MODE_NUM,
-                Trip.TRIPS_COLUMN_TRIP_ID_NUM,
-                'A_id_num', 'B_id_num',
-                'A_seq', 'B_seq',
-                Passenger.PF_COL_PAX_A_TIME,
-                Passenger.PF_COL_PAX_B_TIME,
-                Passenger.PF_COL_LINK_TIME,
-                Passenger.PF_COL_LINK_FARE,
-                Passenger.PF_COL_LINK_COST,
-                Passenger.PF_COL_LINK_DIST,
-                Passenger.PF_COL_WAIT_TIME,
-                Passenger.PF_COL_LINK_NUM])
+        pathset_links_df = pd.DataFrame(linklist, columns=[
+            Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+            Passenger.PF_COL_PATH_NUM,
+            Passenger.PF_COL_LINK_MODE,
+            Route.ROUTES_COLUMN_MODE_NUM,
+            Trip.TRIPS_COLUMN_TRIP_ID_NUM,
+            'A_id_num', 'B_id_num',
+            'A_seq', 'B_seq',
+            Passenger.PF_COL_PAX_A_TIME,
+            Passenger.PF_COL_PAX_B_TIME,
+            Passenger.PF_COL_LINK_TIME,
+            Passenger.PF_COL_LINK_FARE,
+            Passenger.PF_COL_LINK_COST,
+            Passenger.PF_COL_LINK_DIST,
+            Passenger.PF_COL_WAIT_TIME,
+            Passenger.PF_COL_LINK_NUM])
 
-            FastTripsLogger.debug(
-                "setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
-                    len(pathset_paths_df), len(pathset_links_df)))
+        FastTripsLogger.debug(
+            "setup_skimming_pathsets(): pathset_paths_df(%d) and pathset_links_df(%d) dataframes constructed" % (
+                len(pathset_paths_df), len(pathset_links_df)))
 
-            pathset_paths_df, pathset_links_df = Passenger.clean_pathset_dfs(
-                pathset_paths_df,
-                pathset_links_df,
-                stops,
-                trip_id_df,
-                trips_df,
-                modes_df,
-                prepend_route_id_to_trip_id=False,
-                is_skimming=True
-            )
-            path_dfs[sample_time] = pathset_paths_df
-            link_dfs[sample_time] = pathset_links_df
+        pathset_paths_df, pathset_links_df = Passenger.clean_pathset_dfs(
+            pathset_paths_df,
+            pathset_links_df,
+            stops,
+            trip_id_df,
+            trips_df,
+            modes_df,
+            prepend_route_id_to_trip_id=False,
+            is_skimming=True
+        )
 
-        return path_dfs, link_dfs
+        return pathset_paths_df, pathset_links_df
 
 
 from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
 
 
 class SkimmingQueueInputData(QueueData):
-    def __init__(self, state, origin, mean_vot, d_t, user_class, purpose, access_mode, transit_mode, egress_mode,
-                 trace):
+    def __init__(self, state, origin, mean_vot, d_t, skim_config:SkimConfig, trace):
         super().__init__(state)
         self.origin = origin
         self.mean_vot = mean_vot
         self.d_t = d_t
-        self.user_class = user_class
-        self.purpose = purpose
-        self.access_mode = access_mode
-        self.transit_mode = transit_mode
-        self.egress_mode = egress_mode
+        self.user_class = skim_config.user_class
+        self.purpose = skim_config.purpose
+        self.access_mode = skim_config.access_mode
+        self.transit_mode = skim_config.transit_mode
+        self.egress_mode = skim_config.egress_mode
         self.trace = trace
 
 
@@ -893,28 +883,3 @@ class Skim(np.ndarray):
         # if name is None:
         #     name = f"{self.name}_skim.omx"
         pass
-
-
-class SkimAverager(object):
-    def __init__(self, data=None):
-        self.time_sample_points = []
-        self.skim_components = []
-        self.data = {}
-        self.averaged_data = []
-        if data is not None:
-            self.add_data(data)  # data: dict from time sample point to skim matrix
-
-    def add_data(self, data):
-        self.data = data
-        self.time_sample_points = list(data.keys())
-        # all time periods have the same components by construction so use first element for name extraction
-        for skim in data[self.time_sample_points[0]]:
-            self.skim_components.append(skim.name)
-
-    def average_all(self):
-        self.averaged_data = [self.average_component(component) for component in self.skim_components]
-
-    def average_component(self, component):
-        assert component in self.skim_components
-        skim_vals = [list(filter(lambda x: x.name == component, skim))[0] for skim in self.data.values()]
-        return np.mean(skim_vals, axis=0)
