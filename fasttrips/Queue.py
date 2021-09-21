@@ -108,7 +108,7 @@ class MockProcess(object):
             args (Tuple[Any, ...]): arguments to process_worker_task,
             process_worker_task_kwargs (Dict[str, Any]): keyword arguments to process_worker_task
         """
-        self.task = lambda: target(args, **kwargs)
+        self.task = lambda: target(*args, **kwargs)
         self.result = None
 
     def start(self):
