@@ -76,16 +76,12 @@ class Skimming(object):
     end_time: int  # Skimming end time in minutes past midnight
     sample_interval: int  # Sampling interval length in minutes
     skim_set : List[SkimConfig]
+    index_mapping: Dict
+    num_zones: int
 
-    # TODO Jan: add
-    # time_period_start = 960
-    # time_period_end = 1020
-    # time_sampling_size = 5 minutes
-    # which components
-    # vot - use mean for now, but add option to pass in list with values, each of which will lead to calc
-    #
+
     @staticmethod
-    def read_skimming_configuration(config_fullpath):
+    def read_skimming_configuration(config_fullpath, FT):
         """
         Read the skimming related configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
         """
@@ -146,6 +142,10 @@ class Skimming(object):
         user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
 
         Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
+
+        # create mapping from fasttrips zone index to 0-based skim array index
+        Skimming.index_mapping = Skimming.create_index_mapping(FT)
+        Skimming.num_zones = len(Skimming.index_mapping)
 
     @staticmethod
     def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
@@ -254,6 +254,7 @@ class Skimming(object):
 
         # FOR NOW: we're starting over with empty vehicles
         Trip.reset_onboard(veh_trips_df)
+
         # run c++ extension
         skim_config: SkimConfig
         skim_results = {}
@@ -261,7 +262,7 @@ class Skimming(object):
             skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
             skim_results[tuple(skim_config)] = skim_matrices
 
-        return "pathset_paths_per_sample_time", "pathset_links_per_sample_time", skim_results
+        return skim_results
 
     @staticmethod
     def create_index_mapping(FT):
@@ -282,18 +283,15 @@ class Skimming(object):
     @staticmethod
     def extract_matrices(pathset_links_df: pd.DataFrame, FT) -> Dict[str, "Skim"]:
 
-        index_mapping = Skimming.create_index_mapping(FT)
-        num_zones = len(index_mapping)
-
         # skim_components = ['transfers', 'ivt', 'fare']
         # for component in skim_components:
         skim_matrices = {}
 
         # calculate fare skim:
-        fare_skim = Skimming.calculate_skim(pathset_links_df, num_zones, index_mapping, component_name="fare")
+        fare_skim = Skimming.calculate_skim(pathset_links_df, component_name="fare")
         skim_matrices['fare'] = fare_skim
         # calculate transfer skim
-        transfer_skim = Skimming.calculate_skim(pathset_links_df, num_zones, index_mapping, component_name="transfer")
+        transfer_skim = Skimming.calculate_skim(pathset_links_df, component_name="transfer")
         skim_matrices['transfer'] = transfer_skim
 
         # calculate ivt skim
@@ -301,10 +299,10 @@ class Skimming(object):
         return skim_matrices
 
     @staticmethod
-    def calculate_skim(pathset_links_df, num_zones, index_mapping, *, component_name) -> "Skim":
+    def calculate_skim(pathset_links_df, *, component_name) -> "Skim":
         od_colnames = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]
 
-        zone_list = pd.Series(index_mapping.values()).to_frame()
+        zone_list = pd.Series(Skimming.index_mapping.values()).to_frame()
         zone_ods = zone_list.merge(zone_list, how='cross')
         zone_ods.columns = od_colnames
         zone_ods = zone_ods.set_index(od_colnames)
@@ -329,7 +327,7 @@ class Skimming(object):
             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
 
         skim_values_dense = skim_values_dense.values.astype(Skim.skim_component_types[component_name])
-        transfer_skim = Skim(component_name, num_zones, skim_values_dense, index_mapping)
+        transfer_skim = Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_mapping)
 
         return transfer_skim
 
@@ -467,7 +465,7 @@ class Skimming(object):
         Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
 
 
-        Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE) is a pre-requisite function call
+        Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT) is a pre-requisite function call
          as it will set Attributes for sampling, and user_class/ mode configurations to run
 
         """
@@ -485,18 +483,20 @@ class Skimming(object):
         # TODO: taking these for now, but if there are TAZs that don't have acc/eggr link this will have missing values
         # However, don't we want disconnections for the other ones? So maybe this is correct for the C++ extension and
         # then adding in skim values will happen outside of that?
-        acc_eggr_links = FT.tazs.merge_access_egress()
-        all_taz = acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique()
+        #acc_eggr_links = FT.tazs.merge_access_egress()
+        all_taz = list(Skimming.index_mapping.values())
+        print(f"running origins {all_taz}")
 
-        do_trace = True
+        # TODO: bring this through
+        do_trace = False
 
         ########### TIMES - skim time period and sampling frequency
-        # TODO: parse somewhere else, ensure consistency. Create SkimSampler?
         # skim_period_start = 900 # 3 to 5pm
         # skim_period_end = 1020
         # time_sample_step = 30 # let's do 30mins for now. should we do sampling frequency instead?
         # # dep_time = 960  # make it 4pm for now
         time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
+        print(f"doing time points {time_sampling_points}")
         ############
         # c++ results; departure_time: origin_taz_num: result_dict
 
@@ -505,8 +505,8 @@ class Skimming(object):
         skims_path_set = {t: {} for t in time_sampling_points}
 
 
-
-        time_indexed_skims = []
+        time_indexed_skims = {t: [] for t in time_sampling_points}
+        stuff = {t: [] for t in time_sampling_points}
 
         for d_t in time_sampling_points:
             time_elapsed = datetime.datetime.now() - start_time
@@ -525,8 +525,8 @@ class Skimming(object):
                                              )
             try:
                 # Note we thread at the origin level, rather than (origin, time), as
-                # fine grained time sampling would become a memory issue - this way we can
-                # store a a few skims per timestep, rather than a collection of orig- all dests pathsets per timestep.
+                # fine grained time sampling could become a memory issue - this way we can
+                # store a few skims per timestep, rather than a collection of orig- all dests pathsets per timestep.
                 # Note that cost of setting up cpp extension multiple times is relatively small
                 for origin in all_taz:
                     # populate tasks to process
@@ -565,9 +565,12 @@ class Skimming(object):
             skim_matrices = Skimming.extract_matrices(pathset_links_df, FT)
             # now that we have skim matrix for d_t, we can drop the pathsets for this time_sample
             skims_path_set.pop(d_t)
-            time_indexed_skims.append(skim_matrices)
+            time_indexed_skims[d_t].append(skim_matrices)
 
-        agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
+            stuff[d_t].append(_pathset_paths_df)
+            stuff[d_t].append(pathset_links_df)
+
+        #agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
 
         time_elapsed = datetime.datetime.now() - start_time
 
@@ -576,93 +579,29 @@ class Skimming(object):
             int((time_elapsed.total_seconds() % 3600) / 60),
             time_elapsed.total_seconds() % 60))
 
-        return agg_skims
+        # FIXME TESTING
+        #return agg_skims
+        return time_indexed_skims, stuff #, agg_skims
 
     @staticmethod
-    def _aggregate_skims(time_indexed_skims: List[Dict[str, "Skim"]], op=np.mean) -> Dict[str, "Skim"]:
+    def _aggregate_skims(time_indexed_skims: Dict[int, List[Dict[str, "Skim"]]], op=np.mean) -> Dict[str, "Skim"]:
         """Combine skims over time periods down to an aggregated skim."""
         # TODO will op also become a dict, with different op per skim type?
 
         # assume the keys are all the same, if they're not something bad has happened
-        skim_types = list(time_indexed_skims[0].keys())
+        skim_types = list(time_indexed_skims[time_indexed_skims.keys()[0]][0].keys())
         skim_averages_by_type = {t: [] for t in skim_types}
         # group skims by type instead of time
-        for t in time_indexed_skims:
+        for time, t in time_indexed_skims.items():
             for skim_type, skim in t.items():
                 skim_averages_by_type[skim_type].append(skim)
         # aggregate the skims to one per type
         return {skim_type: op(skim_list, axis=0) for skim_type, skim_list in skim_averages_by_type.items()}
 
-    # TODO Jan: replace with passenger method.
-    # would need to add pathmode (use None? just a string. No there's a generic transit mode called "transit
-    # somewhere, use that); and pathset.outbound = False. Note neither is in constructor.
-    # Also use is_skimming specific columns obviously
     @staticmethod
     def setup_pathsets(skim_path_set, stops, trip_id_df, trips_df, modes_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """ docstring from corresponding passenger method
-        Converts pathfinding results (which is stored in each Passenger :py:class:`PathSet`) into two
-        :py:class:`pandas.DataFrame` instances.
-
-        Returns two :py:class:`pandas.DataFrame` instances: pathset_paths_df and pathset_links_df.
-
-        pathset_paths_df has path set information, where each row represents a passenger's path:
-
-        ==================  ===============  =====================================================================================================
-        column name          column type     description
-        ==================  ===============  =====================================================================================================
-        `person_id`                  object  person ID
-        `person_trip_id`             object  person trip ID
-        `trip_list_id_num`            int64  trip list numerical ID
-        `trace`                        bool  Are we tracing this person trip?
-        `pathdir`                     int64  the :py:attr:`PathSet.direction`
-        `pathmode`                   object  the :py:attr:`PathSet.mode`
-        `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
-        `pathnum`                     int64  the path number for the path within the pathset
-        `pf_cost`                   float64  the cost of the entire path
-        `pf_fare`                   float64  the fare of the entire path
-        `pf_probability`            float64  the probability of the path
-        `pf_initcost`               float64  the initial cost of the entire path
-        `pf_initfare`               float64  the initial fare of the entire path
-        `description`                object  string representation of the path
-        ==================  ===============  =====================================================================================================
-
-        pathset_links_df has path link information, where each row represents a link in a passenger's path:
-
-        ==================  ===============  =====================================================================================================
-        column name          column type     description
-        ==================  ===============  =====================================================================================================
-        `person_id`                  object  person ID
-        `person_trip_id`             object  person trip ID
-        `trip_list_id_num`            int64  trip list numerical ID
-        `trace`                        bool  Are we tracing this person trip?
-        `pf_iteration`              float64  iteration + 0.01*pathfinding_iteration in which these paths were found
-        `pathnum`                     int64  the path number for the path within the pathset
-        `linkmode`                   object  the mode of the link, one of :py:attr:`PathSet.STATE_MODE_ACCESS`, :py:attr:`PathSet.STATE_MODE_EGRESS`,
-                                             :py:attr:`PathSet.STATE_MODE_TRANSFER` or :py:attr:`PathSet.STATE_MODE_TRIP`.  PathSets will always start with
-                                             access, followed by trips with transfers in between, and ending in an egress following the last trip.
-        `mode_num`                    int64  the mode number for the link
-        `mode`                       object  the supply mode for the link
-        `route_id`                   object  the route ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `trip_id`                    object  the trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `trip_id_num`               float64  the numerical trip ID for trip links.  Set to :py:attr:`numpy.nan` for non-trip links.
-        `A_id`                       object  the stop ID at the start of the link, or TAZ ID for access links
-        `A_id_num`                    int64  the numerical stop ID at the start of the link, or a numerical TAZ ID for access links
-        `B_id`                       object  the stop ID at the end of the link, or a TAZ ID for access links
-        `B_id_num`                    int64  the numerical stop ID at the end of the link, or a numerical TAZ ID for access links
-        `A_seq`                       int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `B_seq`                       int64  the sequence number for the stop at the start of the link, or -1 for access links
-        `pf_A_time`          datetime64[ns]  the time the passenger arrives at `A_id`
-        `pf_B_time`          datetime64[ns]  the time the passenger arrives at `B_id`
-        `pf_linktime`       timedelta64[ns]  the time spent on the link
-        `pf_linkfare`               float64  the fare of the link
-        `pf_linkcost`               float64  the generalized cost of the link
-        `pf_linkdist`               float64  the distance for the link
-        `A_lat`                     float64  the latitude of A (if it's a stop)
-        `A_lon`                     float64  the longitude of A (if it's a stop)
-        `B_lat`                     float64  the latitude of B (if it's a stop)
-        `B_lon`                     float64  the longitude of B (if it's a stop)
-        ==================  ===============  =====================================================================================================
-
+        """ Generalizes Passengers' path extraction method to convert c++ pathfinding result datastructure into
+        dataframes for all origin-destination pairs.
         """
         from .PathSet import PathSet
 

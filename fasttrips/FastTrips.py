@@ -195,7 +195,7 @@ class FastTrips(object):
         try:
             # do this last before assigning paths so values reflect pathfinding
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
-            Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE)
+            Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, self)
             r = Skimming.generate_skims(output_dir, self)
         except:
             print(("Unexpected error:", sys.exc_info()[0]))
