@@ -908,6 +908,17 @@ class Assignment(object):
 
             # end for loop
 
+
+        # TODO JAN: ADD SKIMMING OPTION HERE
+        do_skimming = True
+        if do_skimming:
+            from .Skimming import Skimming
+            FastTripsLogger.info("STARTING SKIMMING")
+            Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT)
+            Skimming.generate_and_save_skims(veh_trips_df, output_dir, FT)
+
+
+
         return {"capacity_gap": capacity_gap,
                 "paths_found": num_paths_found,
                 "passengers_arrived": num_passengers_arrived,

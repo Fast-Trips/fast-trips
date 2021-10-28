@@ -189,11 +189,10 @@ class FastTrips(object):
         return r
 
     def run_skimming(self, output_dir):
-
-        self.performance.record_step_start(-1,-1,-1,"run_skimming")
+        """ entry point to run skimming without assignment, i.e. for unloaded network """
+        self.performance.record_step_start(-1, -1, -1, "run_skimming")
 
         try:
-            # do this last before assigning paths so values reflect pathfinding
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
             Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, self)
             r = Skimming.generate_skims(output_dir, self)

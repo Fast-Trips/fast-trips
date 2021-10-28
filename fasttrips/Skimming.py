@@ -246,6 +246,31 @@ class Skimming(object):
         return user_class_skims
 
     @staticmethod
+    def generate_and_save_skims(veh_trips_df, output_dir, FT):
+        """ post-assignment method """
+
+        # TODO JAN: is this correct? What does skimming use, iter0? if so, we need to overwrite. would it be better
+        #  to have a separate file/iteration number to distinguish skimming so that iter0 can be used for analysis?
+        # write 0-iter vehicle trips
+        Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
+
+        # TODO JAN: is this correct? What about bumping passengers, which we do not want? What about future crowding
+        #  implementations?
+        Trip.reset_onboard(veh_trips_df)
+
+        # run c++ extension
+        skim_config: SkimConfig
+        for skim_config in Skimming.skim_set:
+            # TODO: returning extra stuff during development, remove second return value when done
+            skim_matrices, _ = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
+            # at the moment skims are still per time slice, once aggregation is implemented this will be a list of skims
+            # maybe define helper method save_skims_for_user and pass in user-purpose etc string, then save skims
+            # for k,v in skim_matrices.items():
+            #     v.write_to_file("name_of_skim", output_dir)
+
+
+
+    @staticmethod
     def generate_skims(output_dir, FT):
 
         veh_trips_df = FT.trips.get_full_trips()
