@@ -230,7 +230,7 @@ class Skimming(object):
                 raise ValueError(f"Mode-list for  {user_class_name}:{purpose}  is empty")
             else:
                 for i in mode_list:
-                    mode_list_err = f"Mode-list {i} should be a access-transit-egress hypen delimited string, got {i}"
+                    mode_list_err = f"Mode-list {i} should be a access-transit-egress hyphen delimited string, got {i}"
                     if isinstance(i, str) is False:
                         raise ValueError(
                             mode_list_err
@@ -251,11 +251,12 @@ class Skimming(object):
 
         # TODO JAN: is this correct? What does skimming use, iter0? if so, we need to overwrite. would it be better
         #  to have a separate file/iteration number to distinguish skimming so that iter0 can be used for analysis?
-        # write 0-iter vehicle trips
+        # write 0-iter vehicle trips -> overwrites file with previous iter trips. Needs to change for skimming.
+        # what do we choose as skimming iter? prev + 1? Or does assignment write out trips after assigning and therefore
+        # we only need to pass appropriate iteration number to skimming c++ extension?
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
-        # TODO JAN: is this correct? What about bumping passengers, which we do not want? What about future crowding
-        #  implementations?
+        # For skimming we do not want denied boardings due to capacity constraints.
         Trip.reset_onboard(veh_trips_df)
 
         # run c++ extension
@@ -295,6 +296,8 @@ class Skimming(object):
         #  original input is. Need to include that second mapping here.
         #  This is also where disconnected zones come in, so need the user to specify all TAZs. This is done for tableau
         #  outputs in some of the tests, but not required as of yet.
+        #  ACTUALLY: omx files will include the index mapping, so we can leave it out, it's just a user-convenience
+        #  thing
 
         # uniq_ids = np.union1d(pathset_paths_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM].values,
         #                       pathset_paths_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM].values)
@@ -515,20 +518,12 @@ class Skimming(object):
         # TODO: bring this through
         do_trace = False
 
-        ########### TIMES - skim time period and sampling frequency
-        # skim_period_start = 900 # 3 to 5pm
-        # skim_period_end = 1020
-        # time_sample_step = 30 # let's do 30mins for now. should we do sampling frequency instead?
-        # # dep_time = 960  # make it 4pm for now
         time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
         print(f"doing time points {time_sampling_points}")
-        ############
-        # c++ results; departure_time: origin_taz_num: result_dict
 
         # This is semi-redundant, we just need a mutable variable to have broad enough scope to get values from
         # finalizer.
         skims_path_set = {t: {} for t in time_sampling_points}
-
 
         time_indexed_skims = {t: [] for t in time_sampling_points}
         stuff = {t: [] for t in time_sampling_points}
@@ -738,12 +733,16 @@ class SkimmingWorkerTask(ProcessWorkerTask):
                      )
         FastTripsLogger.info("Skimming worker %2d starting" % (worker_num))
 
-        # TODO are these used in the skimming context?
+        # TODO Jan: are some of these used in the skimming context?
         # the child process doesn't have these set so read them
-        # Assignment.CONFIGURATION_FILE = run_config
-        # Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
-        # Assignment.read_functions(func_file)
-        # Assignment.read_configuration(run_config)
+        Assignment.CONFIGURATION_FILE = run_config
+        Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
+        Assignment.read_functions(func_file)
+        Assignment.read_configuration(run_config)
+
+        # TODO Jan: Think about a better way here? Don't hard-code anything in the C++ part.
+        # we set the earliest departure time to the start of the time slice, do not allow any earlier departures.
+        PathSet.DEPART_EARLY_ALLOWED_MIN = datetime.timedelta(minutes=0)
 
         Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
 
