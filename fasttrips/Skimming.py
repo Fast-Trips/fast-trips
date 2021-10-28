@@ -735,6 +735,8 @@ class SkimmingWorkerTask(ProcessWorkerTask):
 
         # TODO Jan: are some of these used in the skimming context?
         # the child process doesn't have these set so read them
+        run_config = Assignment.CONFIGURATION_FILE
+        func_file = Assignment.CONFIGURATION_FUNCTIONS_FILE
         Assignment.CONFIGURATION_FILE = run_config
         Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
         Assignment.read_functions(func_file)
