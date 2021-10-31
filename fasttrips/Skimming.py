@@ -375,10 +375,8 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def attach_fare_component(pathset_links_df: pd.DataFrame, veh_trips_df, FT) -> pd.DataFrame:
+    def attach_costs(pathset_paths_df, pathset_links_df: pd.DataFrame, veh_trips_df, FT) -> pd.DataFrame:
         # cost calc stuff, see Ass .2027: choose_paths_without_simulation
-
-        # for sample_time, pathset_links_df in pathset_links_per_sample_time.items():
 
         pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
 
@@ -390,20 +388,59 @@ class Skimming(object):
         pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
         pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
-        # Add fares -- need stop zones first if they're not there.
-        # We only need to do this once per pathset.
-        # todo -- could remove non-transit links for this?
-        stops = FT.stops
-        if "A_zone_id" not in list(pathset_links_df.columns.values):
-            assert (stops is not None)
-            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
-            pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+        # Passenger.get_id_columns(is_skimming)
+        # FIXME: this needs to change, see PathSet l.844 and l.966 for
+        #  required quantities
 
-        # This needs to be done fresh each time since simulation might change the board times and therefore the fare
-        # periods
-        pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
+################
+        pd.merge(left=pathset_links_to_use,
+                 right=trip_list_df[
+                     # Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                     # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                     Passenger.get_id_columns(is_skimming) +
+                     [
+                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
+                         Passenger.TRIP_LIST_COLUMN_VOT,
+                         Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+                         Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+                         Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
+                     ]],
+                 how="left",
+                 on=Passenger.get_id_columns(is_skimming))
+        # [Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
 
-        return pathset_links_df
+
+        Passenger.get_id_columns(is_skimming) + [
+            Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
+            Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
+            Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
+
+
+        trip_list = FT.passengers.trip_list_df
+################
+
+
+        pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
+            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
+            trip_list, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
+            reset_bump_iter=True, is_skimming=True)
+
+        # previously only fares for some reason
+        # # Add fares -- need stop zones first if they're not there.
+        # # We only need to do this once per pathset.
+        # # todo -- could remove non-transit links for this?
+        # stops = FT.stops
+        # if "A_zone_id" not in list(pathset_links_df.columns.values):
+        #     assert (stops is not None)
+        #     pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
+        #     pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
+        #
+        # # This needs to be done fresh each time since simulation might change the board times and therefore the fare
+        # # periods
+        # pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
+
+        return pathset_paths_df, pathset_links_df
 
     @staticmethod
     def find_trip_based_pathset_skimming(origin, mean_vot, start_time, user_class, purpose,
@@ -574,22 +611,29 @@ class Skimming(object):
 
             # end of the time step collate paths into skims
 
-            # extract path and path link dataframes
-            # TODO pathset_paths not used for now
-            _pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skims_path_set[d_t],
+            # extract path and path link dataframes. pathset_paths not used for now. Will probably use it for gen cost
+            # though.
+            pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skims_path_set[d_t],
                                                                           FT.stops,
                                                                           FT.trips.trip_id_df,
                                                                           FT.trips.trips_df,
                                                                           FT.routes.modes_df)
-            pathset_links_df = Skimming.attach_fare_component(pathset_links_df, veh_trips_df, FT)
+
+            pathset_paths_df, pathset_links_df = Skimming.attach_costs(pathset_paths_df, pathset_links_df,
+                                                                      veh_trips_df, FT)
+
+            # TODO Jan: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
+            #  inbound (dir==2) and have probability one (only deterministic skimming for now)
+
             skim_matrices = Skimming.extract_matrices(pathset_links_df, FT)
             # now that we have skim matrix for d_t, we can drop the pathsets for this time_sample
             skims_path_set.pop(d_t)
             time_indexed_skims[d_t].append(skim_matrices)
 
-            stuff[d_t].append(_pathset_paths_df)
+            stuff[d_t].append(pathset_paths_df)
             stuff[d_t].append(pathset_links_df)
 
+        # average skims over time periods.
         #agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
 
         time_elapsed = datetime.datetime.now() - start_time
@@ -628,7 +672,6 @@ class Skimming(object):
         # skim_sample_times = skim_path_set.keys()
         # path_dfs = {}
         # link_dfs = {}
-
 
         pathlist, linklist = Passenger.setup_pathsets_generic(
             pathset_dict=skim_path_set,
@@ -689,7 +732,7 @@ from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
 
 
 class SkimmingQueueInputData(QueueData):
-    def __init__(self, state, origin, mean_vot, d_t, skim_config:SkimConfig, trace):
+    def __init__(self, state, origin, mean_vot, d_t, skim_config: SkimConfig, trace):
         super().__init__(state)
         self.origin = origin
         self.mean_vot = mean_vot

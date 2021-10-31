@@ -1277,8 +1277,6 @@ namespace fasttrips {
         StopStates&                 stop_states,
         PathSet&                    pathset) const
     {
-
-        //int end_taz_id = path_spec.outbound_ ? path_spec.origin_taz_id_ : path_spec.destination_taz_id_;
         int origin_taz_id = path_spec.origin_taz_id_;
         std::vector<int> all_destinations = access_egress_links_.tazWithNetworkConnection();
         for(auto & end_taz_id: all_destinations)
