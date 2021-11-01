@@ -389,12 +389,14 @@ class Skimming(object):
         trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = skim_config.transit_mode
         trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = d_t
         trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = 0  # should not be used because of time target
-        trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = Util.parse_minutes_to_time(d_t)
+        trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = Util.parse_minutes_to_time(int(d_t)) # need
+        # typecasting for np.int64, see e.g. discussion in https://github.com/pandas-dev/pandas/issues/8757
         trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = Util.parse_minutes_to_time(0)  # should not be used
         # because of time target
         trip_list[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] = Passenger.TIME_TARGET_DEPARTURE  # always for skimming
 
         trip_list[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = np.arange(1, trip_list.shape[0] + 1)
+        trip_list[Passenger.TRIP_LIST_COLUMN_TRACE] = False
 
         return trip_list
 
@@ -412,12 +414,9 @@ class Skimming(object):
         pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
         pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
-        ################
-        # FIXME: this needs to change, see PathSet l.844 and l.966 for
-        #  required quantities
-        #trip_list = FT.passengers.trip_list_df  # from assignment
+        pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
+
         trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config)
-        ################
 
         pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
             Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
