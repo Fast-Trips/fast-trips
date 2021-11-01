@@ -381,12 +381,12 @@ class Skimming(object):
         """
         trip_list = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
                                       Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]].drop_duplicates()
-        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] = skim_config["user_class"]
-        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] = skim_config["purpose"]
+        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] = skim_config.user_class
+        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] = skim_config.purpose
         trip_list[Passenger.TRIP_LIST_COLUMN_VOT] = mean_vot
-        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = skim_config["access_mode"]
-        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = skim_config["egress_mode"]
-        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = skim_config["transit_mode"]
+        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = skim_config.access_mode
+        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = skim_config.egress_mode
+        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = skim_config.transit_mode
         trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = d_t
         trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = 0  # should not be used because of time target
         trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = Util.parse_minutes_to_time(d_t)
