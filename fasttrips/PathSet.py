@@ -898,7 +898,7 @@ class PathSet(object):
         # since generalized cost is in utils, (ivt utils/min)x(60 min/1 hour)x(hour/vot currency) is the weight (utils/currency)
         cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] *= (60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT])
 
-        if len(Assignment.TRACE_IDS) > 0:
+        if (len(Assignment.TRACE_IDS) > 0) and not is_skimming:
             FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].sort_values([
                                   Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                   Passenger.PF_COL_PATH_NUM,Passenger.PF_COL_LINK_NUM]).head(20)))
@@ -1140,7 +1140,7 @@ class PathSet(object):
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
-        cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
+        cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df, is_skimming)
         cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/np.timedelta64(1,'m')
 
         # any numeric column can be used
@@ -1278,7 +1278,7 @@ class PathSet(object):
                                                Passenger.TRIP_LIST_COLUMN_TRACE,
                                                Passenger.PF_COL_PATH_NUM])
 
-        if PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_NONE:
+        if (PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_NONE) or is_skimming:
             pathset_paths_df[Assignment.SIM_COL_PAX_LNPS] = 0
         else:
             pathset_paths_df = pd.merge(left =pathset_paths_df,

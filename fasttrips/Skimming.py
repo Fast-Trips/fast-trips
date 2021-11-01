@@ -415,8 +415,24 @@ class Skimming(object):
         pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
         pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
+        pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
 
         trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config)
+
+        # need to attach TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM for cost calculations
+        pathset_links_df = pathset_links_df.merge(trip_list[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                                             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM,
+                                                             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]],
+                                                  on=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                                      Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
+                                                  how='left')
+        pathset_paths_df = pathset_paths_df.merge(trip_list[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                                             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM,
+                                                             Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM]],
+                                                  on=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                                      Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
+                                                  how='left')
+
 
         pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
             Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
