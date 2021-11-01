@@ -401,12 +401,10 @@ class Skimming(object):
         return trip_list
 
     @staticmethod
-    def attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, mean_vot, d_t, skim_config, FT):
-        # cost calc stuff, see Ass .2027: choose_paths_without_simulation
+    def attach_path_information_for_cost_calc(pathset_paths_df, pathset_links_df, veh_trips_df, trip_list):
 
         pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
 
-        # instead of flag_missed_transfers(), set these to pathfinding results
         pathset_links_df[Assignment.SIM_COL_PAX_ALIGHT_DELAY_MIN] = 0
         pathset_links_df[Assignment.SIM_COL_PAX_A_TIME] = pathset_links_df[Passenger.PF_COL_PAX_A_TIME]
         pathset_links_df[Assignment.SIM_COL_PAX_B_TIME] = pathset_links_df[Passenger.PF_COL_PAX_B_TIME]
@@ -416,8 +414,6 @@ class Skimming(object):
 
         pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
         pathset_paths_df[Passenger.TRIP_LIST_COLUMN_TRACE] = False
-
-        trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config)
 
         # need to attach TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM for cost calculations
         pathset_links_df = pathset_links_df.merge(trip_list[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
@@ -432,26 +428,20 @@ class Skimming(object):
                                                   on=[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
                                                       Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM],
                                                   how='left')
+        return pathset_paths_df, pathset_links_df
 
+    @staticmethod
+    def attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, mean_vot, d_t, skim_config, FT):
+        # cost calc stuff, see Ass .2027: choose_paths_without_simulation
+        trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config)
 
+        pathset_paths_df, pathset_links_df = Skimming.attach_path_information_for_cost_calc(pathset_paths_df,
+                                                                                            pathset_links_df,
+                                                                                            veh_trips_df, trip_list)
         pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
             Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
             trip_list, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
             reset_bump_iter=True, is_skimming=True)
-
-        # previously only fares for some reason:
-        # # Add fares -- need stop zones first if they're not there.
-        # # We only need to do this once per pathset.
-        # # todo -- could remove non-transit links for this?
-        # stops = FT.stops
-        # if "A_zone_id" not in list(pathset_links_df.columns.values):
-        #     assert (stops is not None)
-        #     pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
-        #     pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
-        #
-        # # This needs to be done fresh each time since simulation might change the board times and therefore the fare
-        # # periods
-        # pathset_links_df = FT.routes.add_fares(pathset_links_df, is_skimming=True)
 
         return pathset_paths_df, pathset_links_df
 

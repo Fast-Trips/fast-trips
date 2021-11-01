@@ -1208,7 +1208,7 @@ class Passenger(object):
     @staticmethod
     def get_id_columns(is_skimming):
         if is_skimming:
-            return [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM]
+            return [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]
         else:
             return [Passenger.TRIP_LIST_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]
 
