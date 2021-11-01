@@ -641,7 +641,7 @@ class Passenger(object):
             trip_id = state[PathSet.STATE_IDX_TRIP]
             linkmode = PathSet.STATE_MODE_TRIP
 
-        if not is_skimming and pathset.outbound:
+        if (not is_skimming) and pathset.outbound:
             a_id_num = state_id
             b_id_num = state[PathSet.STATE_IDX_SUCCPRED]
             a_seq = state[PathSet.STATE_IDX_SEQ]
@@ -956,8 +956,7 @@ class Passenger(object):
                 pathlist.append(cls.process_path(pathnum, pathset, pathset_id, pf_iteration, is_skimming=is_skimming))
 
                 state_list = pathset.pathdict[pathnum][PathSet.PATH_KEY_STATES]
-                # skimming is always inbound
-                if not is_skimming and not pathset.outbound:
+                if is_skimming or (not pathset.outbound):
                     state_list = list(reversed(state_list))
 
                 link_num   = 0
