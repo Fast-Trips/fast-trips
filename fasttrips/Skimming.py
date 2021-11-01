@@ -388,45 +388,43 @@ class Skimming(object):
         pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
         pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
-        # Passenger.get_id_columns(is_skimming)
+        #self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = self.trip_list_df.index + 1
+
+        ################
         # FIXME: this needs to change, see PathSet l.844 and l.966 for
         #  required quantities
-
-################
-        pd.merge(left=pathset_links_to_use,
-                 right=trip_list_df[
-                     # Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                     # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                     Passenger.get_id_columns(is_skimming) +
-                     [
-                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
-                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
-                         Passenger.TRIP_LIST_COLUMN_VOT,
-                         Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
-                         Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
-                         Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
-                     ]],
-                 how="left",
-                 on=Passenger.get_id_columns(is_skimming))
-        # [Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
-
-
-        Passenger.get_id_columns(is_skimming) + [
-            Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
-            Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
-            Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
-
-
-        trip_list = FT.passengers.trip_list_df
-################
-
+        trip_list = FT.passengers.trip_list_df  # from assignment
+        #  ########## replace with:
+        # pd.merge(left=pathset_links_to_use,
+        #          right=trip_list_df[
+        #              # Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+        #              # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+        #              Passenger.get_id_columns(is_skimming) +
+        #              [
+        #                  Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+        #                  Passenger.TRIP_LIST_COLUMN_PURPOSE,
+        #                  Passenger.TRIP_LIST_COLUMN_VOT,
+        #                  Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+        #                  Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+        #                  Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
+        #              ]],
+        #          how="left",
+        #          on=Passenger.get_id_columns(is_skimming))
+        # # [Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+        #
+        #
+        # Passenger.get_id_columns(is_skimming) + [
+        #     Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
+        #     Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
+        #     Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
+        ################
 
         pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
             Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
             trip_list, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
             reset_bump_iter=True, is_skimming=True)
 
-        # previously only fares for some reason
+        # previously only fares for some reason:
         # # Add fares -- need stop zones first if they're not there.
         # # We only need to do this once per pathset.
         # # todo -- could remove non-transit links for this?
