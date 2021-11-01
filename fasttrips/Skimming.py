@@ -375,7 +375,59 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def attach_costs(pathset_paths_df, pathset_links_df: pd.DataFrame, veh_trips_df, FT) -> pd.DataFrame:
+    def trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config):
+        #  ########## replace with list of all ods and current user class/vot stuff
+        # person_id, person_trip_id, o_taz, d_taz, mode, purpose, departure_time, arrival_time, time_target, vot
+        # 0, pnr_7, Z2, Z4, PNR - transit - walk, work, 16: 45:00, 16: 30:00, departure, 10.0
+        #
+        # cols_for_trip_list = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+        #                       Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM,
+        #                       Passenger.TRIP_LIST_COLUMN_USER_CLASS,
+        #                       Passenger.TRIP_LIST_COLUMN_PURPOSE,
+        #                       Passenger.TRIP_LIST_COLUMN_VOT,
+        #                       Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
+        #                       Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
+        #                       Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
+        #                       Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
+        #                       Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
+        #                       Passenger.TRIP_LIST_COLUMN_TIME_TARGET]
+
+        # # datetime version
+        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = \
+        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
+        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = \
+        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: Util.read_time(x))
+        #
+        # # float version
+        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = \
+        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: \
+        #                                                                        60 * x.time().hour + x.time().minute + (
+        #                                                                                    x.time().second / 60.0))
+        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = \
+        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: \
+        #                                                                          60 * x.time().hour + x.time().minute + (
+        #                                                                                      x.time().second / 60.0))
+
+        trip_list = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
+                                      Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]].drop_duplicates()
+        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] =
+        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] =
+        trip_list[Passenger.TRIP_LIST_COLUMN_VOT] = mean_vot
+        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] =
+        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] =
+        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] =
+        # TODO: what's these columns' unit, datetime or integer minutes?
+        trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = d_t
+        trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = 0  # should not be used because of time target
+        trip_list[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] = Passenger.TIME_TARGET_DEPARTURE  # always for skimming
+
+        # now add unique id cost calcs are using
+        # trip_list[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = np.arange(1, trip_list.shape[0] + 1)
+
+        return trip_list
+
+    @staticmethod
+    def attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, mean_vot, d_t, skim_config, FT):
         # cost calc stuff, see Ass .2027: choose_paths_without_simulation
 
         pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
@@ -388,35 +440,11 @@ class Skimming(object):
         pathset_links_df[Assignment.SIM_COL_PAX_WAIT_TIME] = pathset_links_df[Passenger.PF_COL_WAIT_TIME]
         pathset_links_df[Assignment.SIM_COL_PAX_MISSED_XFER] = 0
 
-        #self.trip_list_df[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = self.trip_list_df.index + 1
-
         ################
         # FIXME: this needs to change, see PathSet l.844 and l.966 for
         #  required quantities
-        trip_list = FT.passengers.trip_list_df  # from assignment
-        #  ########## replace with:
-        # pd.merge(left=pathset_links_to_use,
-        #          right=trip_list_df[
-        #              # Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-        #              # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-        #              Passenger.get_id_columns(is_skimming) +
-        #              [
-        #                  Passenger.TRIP_LIST_COLUMN_USER_CLASS,
-        #                  Passenger.TRIP_LIST_COLUMN_PURPOSE,
-        #                  Passenger.TRIP_LIST_COLUMN_VOT,
-        #                  Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
-        #                  Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
-        #                  Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
-        #              ]],
-        #          how="left",
-        #          on=Passenger.get_id_columns(is_skimming))
-        # # [Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
-        #
-        #
-        # Passenger.get_id_columns(is_skimming) + [
-        #     Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
-        #     Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
-        #     Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
+        #trip_list = FT.passengers.trip_list_df  # from assignment
+        trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config)
         ################
 
         pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
@@ -618,7 +646,7 @@ class Skimming(object):
                                                                           FT.routes.modes_df)
 
             pathset_paths_df, pathset_links_df = Skimming.attach_costs(pathset_paths_df, pathset_links_df,
-                                                                      veh_trips_df, FT)
+                                                                       veh_trips_df, mean_vot, d_t, skim_config, FT)
 
             # TODO Jan: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
             #  inbound (dir==2) and have probability one (only deterministic skimming for now)
