@@ -1037,7 +1037,9 @@ namespace fasttrips {
                 link_attr["arrive_late_min"]    = 0.0;
 
                 double cost;
-                if (path_spec.hyperpath_) {
+                // TODO Jan: Why is deterministic path finding using raw time as the cost function? It seems on purpose
+                //  but I'm curious as to why.
+                if (path_spec.hyperpath_ || path_spec.skimming_) {
                     cost = tallyLinkCost(supply_mode_num, path_spec, trace_file, iter_s2w->second, link_attr);
                 } else {
                     cost = attr_time;
@@ -1101,7 +1103,7 @@ namespace fasttrips {
         double            transfer_time = zerowalk_xfer->find("walk_time_min")->second;  // todo: make this a different time?
         double            deparr_time   = current_deparr_time - (transfer_time*dir_factor);
         double            link_cost, cost, transfer_dist;
-        if (path_spec.hyperpath_)
+        if (path_spec.hyperpath_ || path_spec.skimming_)
         {
             link_cost = tallyLinkCost(transfer_supply_mode_, path_spec, trace_file, *transfer_weights, *zerowalk_xfer);
             cost      = nonwalk_label + link_cost;
@@ -1148,7 +1150,7 @@ namespace fasttrips {
             deparr_time     = current_deparr_time - (transfer_time*dir_factor);
 
             // stochastic/hyperpath: cost update
-            if (path_spec.hyperpath_)
+            if (path_spec.hyperpath_ || path_spec.skimming_)
             {
                 Attributes link_attr            = transfer_it->second;
                 link_attr["transfer_penalty"]   = 1.0; // TODO: make configurable or base off of IVT coefficient
@@ -1544,7 +1546,7 @@ namespace fasttrips {
                 double  access_dist             = link_attr.find("dist")->second;
                 double  deparr_time, link_cost, cost;
 
-                if (path_spec.hyperpath_)
+                if (path_spec.hyperpath_ || path_spec.skimming_)
                 {
                     deparr_time     = earliest_dep_latest_arr - (access_time*dir_factor);
 
@@ -1742,7 +1744,7 @@ namespace fasttrips {
                 }
 
                 // stochastic/hyperpath: cost update
-                if (path_spec.hyperpath_) {
+                if (path_spec.hyperpath_ || path_spec.skimming_) {
 
                     double overcap     = path_spec.outbound_ ? possible_board_alight.overcap_ : tst.overcap_;
                     double at_capacity = (overcap >= 0 ? 1.0 : 0.0);  // binary, 0 means at capacity
