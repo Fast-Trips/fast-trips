@@ -1283,12 +1283,13 @@ namespace fasttrips {
         {
             if (end_taz_id == origin_taz_id) { continue; }
 
+            // should not return here, we can have certain destinations w/o paths, but others with
             // no taz states -> no path found
             StopStates::const_iterator ssi_iter = stop_states.find(end_taz_id);
-            if (ssi_iter == stop_states.end()) { return RET_FAIL_END_NOT_FOUND; }
+            if (ssi_iter == stop_states.end()) { continue; } // return RET_FAIL_END_NOT_FOUND; }
 
             const Hyperlink& taz_state = ssi_iter->second;
-            if (taz_state.size() == 0) { return RET_FAIL_END_NOT_FOUND; }
+            if (taz_state.size() == 0) { continue; } //return RET_FAIL_END_NOT_FOUND; }
 
             // inbound:  destination to origin
             int final_state_type = path_spec.outbound_ ? MODE_EGRESS : MODE_ACCESS;
