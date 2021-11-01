@@ -44,6 +44,7 @@ from .PathSet import PathSet
 from .Performance import Performance
 from .TAZ import TAZ
 from .Trip import Trip
+from .Util import Util
 
 from collections import namedtuple
 
@@ -376,53 +377,24 @@ class Skimming(object):
 
     @staticmethod
     def trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config):
-        #  ########## replace with list of all ods and current user class/vot stuff
-        # person_id, person_trip_id, o_taz, d_taz, mode, purpose, departure_time, arrival_time, time_target, vot
-        # 0, pnr_7, Z2, Z4, PNR - transit - walk, work, 16: 45:00, 16: 30:00, departure, 10.0
-        #
-        # cols_for_trip_list = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
-        #                       Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM,
-        #                       Passenger.TRIP_LIST_COLUMN_USER_CLASS,
-        #                       Passenger.TRIP_LIST_COLUMN_PURPOSE,
-        #                       Passenger.TRIP_LIST_COLUMN_VOT,
-        #                       Passenger.TRIP_LIST_COLUMN_ACCESS_MODE,
-        #                       Passenger.TRIP_LIST_COLUMN_EGRESS_MODE,
-        #                       Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
-        #                       Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
-        #                       Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
-        #                       Passenger.TRIP_LIST_COLUMN_TIME_TARGET]
-
-        # # datetime version
-        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = \
-        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: Util.read_time(x))
-        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = \
-        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: Util.read_time(x))
-        #
-        # # float version
-        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = \
-        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME].map(lambda x: \
-        #                                                                        60 * x.time().hour + x.time().minute + (
-        #                                                                                    x.time().second / 60.0))
-        # self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = \
-        #     self.trip_list_df[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME].map(lambda x: \
-        #                                                                          60 * x.time().hour + x.time().minute + (
-        #                                                                                      x.time().second / 60.0))
-
+        """ Trip list for skimming path cost calculations with Passenger.calculate_cost.
+        """
         trip_list = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
                                       Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]].drop_duplicates()
-        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] =
-        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] =
+        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] = skim_config["user_class"]
+        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] = skim_config["purpose"]
         trip_list[Passenger.TRIP_LIST_COLUMN_VOT] = mean_vot
-        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] =
-        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] =
-        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] =
-        # TODO: what's these columns' unit, datetime or integer minutes?
-        trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = d_t
-        trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = 0  # should not be used because of time target
+        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = skim_config["access_mode"]
+        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = skim_config["egress_mode"]
+        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = skim_config["transit_mode"]
+        trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = d_t
+        trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = 0  # should not be used because of time target
+        trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = Util.parse_minutes_to_time(d_t)
+        trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME] = Util.parse_minutes_to_time(0)  # should not be used
+        # because of time target
         trip_list[Passenger.TRIP_LIST_COLUMN_TIME_TARGET] = Passenger.TIME_TARGET_DEPARTURE  # always for skimming
 
-        # now add unique id cost calcs are using
-        # trip_list[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = np.arange(1, trip_list.shape[0] + 1)
+        trip_list[Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] = np.arange(1, trip_list.shape[0] + 1)
 
         return trip_list
 
