@@ -310,10 +310,11 @@ class Skimming(object):
         return index_dict
 
     @staticmethod
-    def extract_matrices(pathset_links_df: pd.DataFrame, d_t_datetime, FT) -> Dict[str, "Skim"]:
+    def extract_matrices(pathset_links_df, d_t_datetime):
 
+        # these are all implemented skim components atm, we return all of them every time.
         components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
-                      'wait_time', 'adaption_time']  # gen_cost
+                      'wait_time', 'adaption_time', 'gen_cost']
 
         skim_matrices = {skim_name: Skimming.calculate_skim(pathset_links_df, d_t_datetime, component_name=skim_name)
                          for skim_name in components}
@@ -321,7 +322,7 @@ class Skimming(object):
         return skim_matrices
 
     @staticmethod
-    def calculate_skim(pathset_links_df, d_t_datetime, component_name) -> "Skim":
+    def calculate_skim(pathset_links_df, d_t_datetime, component_name):
         od_colnames = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]
 
         zone_list = pd.Series(Skimming.index_mapping.values()).to_frame()
@@ -363,12 +364,14 @@ class Skimming(object):
                 lambda group: group[Passenger.PF_COL_WAIT_TIME].sum().seconds).to_frame(
                 'skim_value')
         elif component_name == "adaption_time":
-            # TODO Jan: min?
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: (group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_ACCESS][
                                   Passenger.PF_COL_PAX_A_TIME].min() - d_t_datetime).seconds
             ).to_frame(
                 'skim_value')
+        elif component_name == "gen_cost":
+            skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(lambda group: group[
+                Assignment.SIM_COL_PAX_COST].sum()).to_frame('skim_value')
         else:
             raise NotImplementedError(f"missing skim type {component_name}")
 
@@ -652,7 +655,7 @@ class Skimming(object):
             # TODO Jan: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
             #  inbound (dir==2) and have probability one (only deterministic skimming for now)
 
-            skim_matrices = Skimming.extract_matrices(pathset_links_df, d_t_datetime, FT)
+            skim_matrices = Skimming.extract_matrices(pathset_links_df, d_t_datetime)
             # now that we have skim matrix for d_t, we can drop the pathsets for this time_sample
             skims_path_set.pop(d_t)
             time_indexed_skims[d_t].append(skim_matrices)
