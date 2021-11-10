@@ -310,28 +310,18 @@ class Skimming(object):
         return index_dict
 
     @staticmethod
-    def extract_matrices(pathset_links_df: pd.DataFrame, d_t, FT) -> Dict[str, "Skim"]:
+    def extract_matrices(pathset_links_df: pd.DataFrame, d_t_datetime, FT) -> Dict[str, "Skim"]:
 
-        # skim_components = ['transfers', 'ivt', 'fare']
-        # for component in skim_components:
-        skim_matrices = {}
+        components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
+                      'wait_time', 'adaption_time']  # gen_cost
 
-        # calculate fare skim:
-        fare_skim = Skimming.calculate_skim(pathset_links_df, component_name="fare")
-        skim_matrices['fare'] = fare_skim
-        # calculate transfer skim
-        transfer_skim = Skimming.calculate_skim(pathset_links_df, component_name="num_transfers")
-        skim_matrices['num_transfers'] = transfer_skim
+        # fare_skim = Skimming.calculate_skim(pathset_links_df, component_name="fare")
+        # skim_matrices['fare'] = fare_skim
+        # transfer_skim = Skimming.calculate_skim(pathset_links_df, component_name="num_transfers")
+        # skim_matrices['num_transfers'] = transfer_skim
 
-        ## calculate ivt skim
-        # gen_cost: -> from paths? or sum stuff?
-        # # "invehicle_time": np.float32,
-        # # "access_time": np.float32,
-        # # "egress_time": np.float32,
-        # # "transfer_time": np.float32,
-        # "wait_time": np.float32,
-        # "adaption_time": np.float32,
-
+        skim_matrices = {skim_name: Skimming.calculate_skim(pathset_links_df, d_t_datetime, component_name=skim_name)
+                         for skim_name in components}
 
         return skim_matrices
 
@@ -623,7 +613,7 @@ class Skimming(object):
                 time_elapsed.total_seconds() % 60))
 
             path_dict = {Passenger.TRIP_LIST_COLUMN_TIME_TARGET: "departure",
-                         Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: d_t_datetime,  # datetime.time(d_t // 60,(d_t % 60))
+                         Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME: d_t_datetime, # datetime.time(d_t // 60,(d_t % 60))
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
             process_manager = ProcessManager(num_processes,
                                              process_worker_task=SkimmingWorkerTask(),
