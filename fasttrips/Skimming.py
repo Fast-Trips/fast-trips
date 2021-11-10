@@ -42,6 +42,7 @@ from .Route import Route
 from .Passenger import Passenger
 from .PathSet import PathSet
 from .Performance import Performance
+from .Stop import Stop
 from .TAZ import TAZ
 from .Trip import Trip
 from .Util import Util
@@ -147,6 +148,7 @@ class Skimming(object):
         # create mapping from fasttrips zone index to 0-based skim array index
         Skimming.index_mapping = Skimming.create_index_mapping(FT)
         Skimming.num_zones = len(Skimming.index_mapping)
+        Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
 
     @staticmethod
     def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
@@ -293,21 +295,23 @@ class Skimming(object):
 
     @staticmethod
     def create_index_mapping(FT):
-        # TODO Jan: mapping here is from 0-based index to integer taz_num, which in turn are a mapping from whatever the
-        #  original input is. Need to include that second mapping here.
-        #  This is also where disconnected zones come in, so need the user to specify all TAZs. This is done for tableau
-        #  outputs in some of the tests, but not required as of yet.
-        #  ACTUALLY: omx files will include the index mapping, so we can leave it out, it's just a user-convenience
-        #  thing
-
-        # uniq_ids = np.union1d(pathset_paths_df[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM].values,
-        #                       pathset_paths_df[Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM].values)
-        # index_dict = dict(zip(np.arange(len(uniq_ids)), uniq_ids))
-
         acc_eggr_links = FT.tazs.merge_access_egress()
         all_taz = np.sort(acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique())
         index_dict = dict(zip(np.arange(len(all_taz)), all_taz))
         return index_dict
+
+    @staticmethod
+    def create_stop_to_zone_id_mapping(FT, index_dict):
+        """ fasttrips maps all stops to integer indexes internally. We need a mapping from these to the original zone
+        names, and combine this with our 0-based skim mapping. This method returns a list where the entry at position i
+        corresponds to skim index i, i.e. a list of zone ids that are in order of the skim mapping"""
+
+        stops_zones_df = FT.stops.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]]
+        stops_zones_df = stops_zones_df.loc[stops_zones_df[Stop.STOPS_COLUMN_STOP_ID_NUM].isin(index_dict.values())]
+        stops_zones_df['skim_index'] = stops_zones_df[Stop.STOPS_COLUMN_STOP_ID_NUM].map(
+            {v: k for k, v in index_dict.items()})
+        return stops_zones_df.sort_values(by=['skim_index'])[Stop.STOPS_COLUMN_STOP_ID].values
+
 
     @staticmethod
     def extract_matrices(pathset_links_df, d_t_datetime):
@@ -383,7 +387,8 @@ class Skimming(object):
             axis=0).set_index(od_colnames).unstack(
             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_default_value)
         skim_values_dense = skim_values_dense.values.astype(Skim.skim_type)
-        return Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_mapping)
+        return Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_mapping,
+                    Skimming.index_to_zone_ids)
 
     @staticmethod
     def attach_destination_number(pathset_paths_df, pathset_links_df):
@@ -871,13 +876,18 @@ class Skim(np.ndarray):
     """
     A single skim matrix, subclasses numpy array and has a write to omx method.
     See https://numpy.org/doc/stable/user/basics.subclassing.html for details on numpy array subclassing.
+
+    We have two mappings: zone_index_mapping is a dictionary from 0-based array index to fasttrips internal integer
+    index. index_to_zone_ids is a list of zone_ids as per the input files, where the position in the list corresponds to
+    the skim array index.
     """
+    # TODO Jan: can remove zone_index_mapping, it's handled internally in calculations above
 
     # TODO: using inf is convenient, so we are using floats for now. Should we be using masked arrays?
     skim_type = np.float32
     skim_default_value = np.inf
 
-    def __new__(cls, name, num_zones, values=None, zone_index_mapping=None):
+    def __new__(cls, name, num_zones, values=None, zone_index_mapping=None, index_to_zone_ids=None):
         if values is None:
             values = np.full((num_zones, num_zones), Skim.skim_default_value, dtype=Skim.skim_type)
         obj = np.asarray(values).view(cls)
@@ -885,6 +895,7 @@ class Skim(np.ndarray):
         obj.name = name
         obj.num_zones = num_zones
         obj.zone_index_mapping = zone_index_mapping
+        obj.index_to_zone_ids = index_to_zone_ids
 
         return obj
 
@@ -893,12 +904,20 @@ class Skim(np.ndarray):
         self.name = getattr(obj, 'name', None)
         self.num_zones = getattr(obj, 'num_zones', None)
         self.zone_index_mapping = getattr(obj, 'zone_index_mapping', None)
+        self.index_to_zone_ids = getattr(obj, 'index_to_zone_ids', None)
 
     def write_to_file(self, file_root, name=None):
         """
         write skim matrix to omx file. if no name provided use default.
         use mapping for zones to index
         """
-        # if name is None:
-        #     name = f"{self.name}_skim.omx"
-        pass
+        import openmatrix as omx
+
+        if name is None:
+            name = f"{self.name}_skim.omx"
+
+        name = os.path.join(file_root, name)
+
+        with omx.open_file(name, 'w') as skim_file:
+            skim_file[self.name] = self.values
+            skim_file.create_mapping('taz', self.index_to_zone_ids)
