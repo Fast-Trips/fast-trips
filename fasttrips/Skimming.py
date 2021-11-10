@@ -315,11 +315,6 @@ class Skimming(object):
         components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
                       'wait_time', 'adaption_time']  # gen_cost
 
-        # fare_skim = Skimming.calculate_skim(pathset_links_df, component_name="fare")
-        # skim_matrices['fare'] = fare_skim
-        # transfer_skim = Skimming.calculate_skim(pathset_links_df, component_name="num_transfers")
-        # skim_matrices['num_transfers'] = transfer_skim
-
         skim_matrices = {skim_name: Skimming.calculate_skim(pathset_links_df, d_t_datetime, component_name=skim_name)
                          for skim_name in components}
 
@@ -333,7 +328,7 @@ class Skimming(object):
         zone_ods = zone_list.merge(zone_list, how='cross')
         zone_ods.columns = od_colnames
         zone_ods = zone_ods.set_index(od_colnames)
-        zone_ods['skim_value'] = Skim.skim_component_default_vals[component_name]
+        zone_ods['skim_value'] = Skim.skim_default_value
 
         if component_name == "fare":
             skim_vals_coo = pathset_links_df.groupby(od_colnames)[Assignment.SIM_COL_PAX_FARE].sum().to_frame(
@@ -342,56 +337,50 @@ class Skimming(object):
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_TRANSFER].shape[
                     0]).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         elif component_name == "invehicle_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_TRIP][
                     Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         elif component_name == "access_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_ACCESS][
                     Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         elif component_name == "egress_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_EGRESS][
                     Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         elif component_name == "transfer_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_TRANSFER][
                     Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         elif component_name == "wait_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: group[Passenger.PF_COL_WAIT_TIME].sum().seconds).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         elif component_name == "adaption_time":
             # TODO Jan: min?
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
                 lambda group: (group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_ACCESS][
                                   Passenger.PF_COL_PAX_A_TIME].min() - d_t_datetime).seconds
             ).to_frame(
-                'skim_value')  # .reset_index()
+                'skim_value')
         else:
             raise NotImplementedError(f"missing skim type {component_name}")
 
         # zone_ods has all the entries we would expect, but none of the values, so we fill them in
         zone_ods.loc[skim_vals_coo.index, 'skim_value'] = skim_vals_coo['skim_value']
         skim_vals_coo = zone_ods.reset_index()
-        # TODO sort by the multindex so we don't need to reset and unset
-        #   Jan I think they are already going to be in stable order because of construction of zone_ods?
-
         skim_values_dense = skim_vals_coo.sort_values(
             by=od_colnames,
             axis=0).set_index(od_colnames).unstack(
-            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_component_default_vals[component_name])
-
-        skim_values_dense = skim_values_dense.values.astype(Skim.skim_component_types[component_name])
-        transfer_skim = Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_mapping)
-
-        return transfer_skim
+            Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_default_value)
+        skim_values_dense = skim_values_dense.values.astype(Skim.skim_type)
+        return Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_mapping)
 
     @staticmethod
     def attach_destination_number(pathset_paths_df, pathset_links_df):
@@ -875,47 +864,19 @@ class SkimmingWorkerTask(ProcessWorkerTask):
             return True
 
 
-
-
-
-
 class Skim(np.ndarray):
     """
     A single skim matrix, subclasses numpy array and has a write to omx method.
     See https://numpy.org/doc/stable/user/basics.subclassing.html for details on numpy array subclassing.
     """
 
-    # TODO Jan: where do we define these? Will we just have one default type and value, and a set of implemented ops?
-    skim_component_types = {
-        "gen_cost": np.float32,
-        "invehicle_time": np.float32,
-        "access_time": np.float32,
-        "egress_time": np.float32,
-        "transfer_time": np.float32,
-        "wait_time": np.float32,
-        "adaption_time": np.float32,
-        "num_transfers": np.int32,
-        "fare": np.float32,
-    }
-    skim_component_default_vals = {
-        "gen_cost": np.inf,
-        "invehicle_time": np.inf,
-        "access_time": np.inf,
-        "egress_time": np.inf,
-        "transfer_time": np.inf,
-        "wait_time": np.inf,
-        "adaption_time": np.inf,
-        "num_transfers": np.inf,
-        "fare": np.inf
-    }
+    # TODO: using inf is convenient, so we are using floats for now. Should we be using masked arrays?
+    skim_type = np.float32
+    skim_default_value = np.inf
 
     def __new__(cls, name, num_zones, values=None, zone_index_mapping=None):
-        assert name in Skim.skim_component_types.keys(), \
-            f"Skim component {name} not implemented yet, choose from {Skim.skim_component_types.keys()}"
-
         if values is None:
-            values = np.full((num_zones, num_zones), Skim.skim_component_default_vals[name],
-                             dtype=Skim.skim_component_types[name])
+            values = np.full((num_zones, num_zones), Skim.skim_default_value, dtype=Skim.skim_type)
         obj = np.asarray(values).view(cls)
 
         obj.name = name
