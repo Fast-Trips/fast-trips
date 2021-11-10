@@ -3,6 +3,7 @@ from __future__ import division
 import json
 import multiprocessing as mp
 import os
+from pathlib import Path
 from builtins import range
 from builtins import object
 
@@ -54,15 +55,6 @@ SkimConfig = namedtuple(
     "SkimConfig", field_names=["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]
 )
 
-# TODO
-#  - sort out cases for when the access and egress links do not represent all skims (i.e. there are disconnected zones),
-#     this needs external input
-#  - add missing o,d,val during Skim creation. If there are no paths, they will be empty and we need to fill these in
-#     for pandas unstack to work. I think this is faster than working with a dictionary and processing each o,d
-#     individually
-#  - time, sample interval, user class specific values
-#  - add tests
-
 
 class Skimming(object):
     """
@@ -80,6 +72,8 @@ class Skimming(object):
     skim_set : List[SkimConfig]
     index_mapping: Dict
     num_zones: int
+
+    OUTPUT_DIR = "skims"  # name of directory within assignment output directory for skim writing
 
 
     @staticmethod
@@ -257,22 +251,37 @@ class Skimming(object):
         # write 0-iter vehicle trips -> overwrites file with previous iter trips. Needs to change for skimming.
         # what do we choose as skimming iter? prev + 1? Or does assignment write out trips after assigning and therefore
         # we only need to pass appropriate iteration number to skimming c++ extension?
+        #
+        # Do we ever write to file during skimming or is everything in memory? Do we ever use the iteration number in
+        # c++ extension?
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
         # For skimming we do not want denied boardings due to capacity constraints.
         Trip.reset_onboard(veh_trips_df)
+
+        output_dir = os.path.join(Assignment.OUTPUT_DIR, Skimming.OUTPUT_DIR)
 
         # run c++ extension
         skim_config: SkimConfig
         for skim_config in Skimming.skim_set:
             # TODO: returning extra stuff during development, remove second return value when done
             skim_matrices, _ = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
+
+            # TODO: mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
+            #  here, see e.g. the Springfield example. We dump the taz id - index relation to disk.
+
+
             # at the moment skims are still per time slice, once aggregation is implemented this will be a list of skims
             # maybe define helper method save_skims_for_user and pass in user-purpose etc string, then save skims
-            # for k,v in skim_matrices.items():
-            #     v.write_to_file("name_of_skim", output_dir)
+            purp_user_output_dir = os.path.join(output_dir, f"{SkimConfig.user_class}_{SkimConfig.purpose}_" +
+                                        f"{SkimConfig.access_mode}_{SkimConfig.transit_mode}_{SkimConfig.egress_mode}")
+            Path(purp_user_output_dir).mkdir(parents=True, exist_ok=True)
 
-
+            # TODO: create attribs and pass to omx write method, add to skims
+            # skim_attribs = {}
+            for k, v in skim_matrices.items():
+                skim_name = f"{k}_{Skimming.start_time}_{Skimming.end_time}.omx"
+                v.write_to_file(skim_name, purp_user_output_dir)
 
     @staticmethod
     def generate_skims(output_dir, FT):
@@ -578,19 +587,14 @@ class Skimming(object):
         FastTripsLogger.info("Value of time for skimming is {}".format(mean_vot))
         #######
 
-
-        # TODO: taking these for now, but if there are TAZs that don't have acc/eggr link this will have missing values
-        # However, don't we want disconnections for the other ones? So maybe this is correct for the C++ extension and
-        # then adding in skim values will happen outside of that?
-        #acc_eggr_links = FT.tazs.merge_access_egress()
         all_taz = list(Skimming.index_mapping.values())
-        #print(f"running origins {all_taz}")
+        FastTripsLogger.debug(f"running origins {all_taz}")
 
         # TODO: bring this through
         do_trace = True
 
         time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
-        #print(f"doing time points {time_sampling_points}")
+        FastTripsLogger.debug(f"doing time points {time_sampling_points}")
 
         # This is semi-redundant, we just need a mutable variable to have broad enough scope to get values from
         # finalizer.
@@ -619,7 +623,6 @@ class Skimming(object):
                 # Note we thread at the origin level, rather than (origin, time), as
                 # fine grained time sampling could become a memory issue - this way we can
                 # store a few skims per timestep, rather than a collection of orig- all dests pathsets per timestep.
-                # Note that cost of setting up cpp extension multiple times is relatively small
                 for origin in all_taz:
                     # populate tasks to process
                     orig_data = SkimmingQueueInputData(QueueData.TO_PROCESS, origin, mean_vot, d_t, skim_config,
@@ -646,8 +649,7 @@ class Skimming(object):
 
             # end of the time step collate paths into skims
 
-            # extract path and path link dataframes. pathset_paths not used for now. Will probably use it for gen cost
-            # though.
+            # extract path and path link dataframes. pathset_paths not used for now.
             pathset_paths_df, pathset_links_df = Skimming.setup_pathsets(skims_path_set[d_t],
                                                                           FT.stops,
                                                                           FT.trips.trip_id_df,
@@ -669,7 +671,7 @@ class Skimming(object):
             stuff[d_t].append(pathset_links_df)
 
         # average skims over time periods.
-        #agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
+        agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
 
         time_elapsed = datetime.datetime.now() - start_time
 
@@ -678,9 +680,8 @@ class Skimming(object):
             int((time_elapsed.total_seconds() % 3600) / 60),
             time_elapsed.total_seconds() % 60))
 
-        # FIXME TESTING
-        #return agg_skims
-        return time_indexed_skims, stuff #, agg_skims
+        # FIXME TESTING don't return stuff and remove it
+        return agg_skims, stuff
 
     @staticmethod
     def _aggregate_skims(time_indexed_skims: Dict[int, List[Dict[str, "Skim"]]], op=np.mean) -> Dict[str, "Skim"]:
@@ -906,7 +907,7 @@ class Skim(np.ndarray):
         self.zone_index_mapping = getattr(obj, 'zone_index_mapping', None)
         self.index_to_zone_ids = getattr(obj, 'index_to_zone_ids', None)
 
-    def write_to_file(self, file_root, name=None):
+    def write_to_file(self, name=None, file_root=None):
         """
         write skim matrix to omx file. if no name provided use default.
         use mapping for zones to index
@@ -914,10 +915,13 @@ class Skim(np.ndarray):
         import openmatrix as omx
 
         if name is None:
-            name = f"{self.name}_skim.omx"
+            name = f"{self.name}.omx"
 
-        name = os.path.join(file_root, name)
+        if file_root is not None:
+            name = os.path.join(file_root, name)
 
         with omx.open_file(name, 'w') as skim_file:
-            skim_file[self.name] = self.values
-            skim_file.create_mapping('taz', self.index_to_zone_ids)
+            skim_file[self.name] = self
+            # Todo: the following doesn't work, omx enforces tables.UInt32Atom,
+            #  and the Springfield example uses strings like Z1. Sigh. Dump to disk I guess.
+            # skim_file.create_mapping('taz', self.index_to_zone_ids)
