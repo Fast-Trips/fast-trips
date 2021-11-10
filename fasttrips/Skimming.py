@@ -335,44 +335,43 @@ class Skimming(object):
         zone_ods = zone_ods.set_index(od_colnames)
         zone_ods['skim_value'] = Skim.skim_component_default_vals[component_name]
 
-        transfer_mode = "transfer"  # looks like its hard-coded in Passenger.py
-
         if component_name == "fare":
             skim_vals_coo = pathset_links_df.groupby(od_colnames)[Assignment.SIM_COL_PAX_FARE].sum().to_frame(
                 'skim_value')
         elif component_name == "num_transfers":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == transfer_mode].shape[0]).to_frame(
+                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_TRANSFER].shape[
+                    0]).to_frame(
                 'skim_value')  # .reset_index()
         elif component_name == "invehicle_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE][
-                    Passenger.PF_COL_LINK_TIME].sum()).to_frame(
+                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_TRIP][
+                    Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
                 'skim_value')  # .reset_index()
         elif component_name == "access_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == Passenger.TRIP_LIST_COLUMN_ACCESS_MODE][
-                    Passenger.PF_COL_LINK_TIME].sum()).to_frame(
+                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_ACCESS][
+                    Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
                 'skim_value')  # .reset_index()
         elif component_name == "egress_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == Passenger.TRIP_LIST_COLUMN_EGRESS_MODE][
-                    Passenger.PF_COL_LINK_TIME].sum()).to_frame(
+                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_EGRESS][
+                    Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
                 'skim_value')  # .reset_index()
         elif component_name == "transfer_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == transfer_mode][
-                    Passenger.PF_COL_LINK_TIME].sum()).to_frame(
+                lambda group: group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_TRANSFER][
+                    Passenger.PF_COL_LINK_TIME].sum().seconds).to_frame(
                 'skim_value')  # .reset_index()
         elif component_name == "wait_time":
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group[Passenger.PF_COL_WAIT_TIME].sum()).to_frame(
+                lambda group: group[Passenger.PF_COL_WAIT_TIME].sum().seconds).to_frame(
                 'skim_value')  # .reset_index()
         elif component_name == "adaption_time":
             # TODO Jan: min?
             skim_vals_coo = pathset_links_df.groupby(od_colnames).apply(
-                lambda group: group[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE][
-                                  Passenger.PF_COL_PAX_A_TIME].min() - d_t_datetime
+                lambda group: (group.loc[group[Passenger.PF_COL_LINK_MODE] == PathSet.STATE_MODE_ACCESS][
+                                  Passenger.PF_COL_PAX_A_TIME].min() - d_t_datetime).seconds
             ).to_frame(
                 'skim_value')  # .reset_index()
         else:
