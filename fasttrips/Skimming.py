@@ -664,7 +664,7 @@ class Skimming(object):
             stuff[d_t].append(pathset_links_df)
 
         # average skims over time periods.
-        agg_skims = Skimming._aggregate_skims(time_indexed_skims, op=np.mean)
+        agg_skims = Skimming._aggregate_skims(time_indexed_skims, op="mean")
 
         time_elapsed = datetime.datetime.now() - start_time
 
@@ -677,9 +677,8 @@ class Skimming(object):
         return agg_skims, stuff
 
     @staticmethod
-    def _aggregate_skims(time_indexed_skims: Dict[int, List[Dict[str, "Skim"]]], op=np.mean) -> Dict[str, "Skim"]:
+    def _aggregate_skims(time_indexed_skims: Dict[int, List[Dict[str, "Skim"]]], op="mean") -> Dict[str, "Skim"]:
         """Combine skims over time periods down to an aggregated skim."""
-        # TODO will op also become a dict, with different op per skim type?
 
         # grab the keys of the first time sampling point. assume the keys are all the same, if they're not something
         # bad has happened
@@ -690,8 +689,20 @@ class Skimming(object):
         for time, t in time_indexed_skims.items():
             for skim_type, skim in t.items():
                 skim_averages_by_type[skim_type].append(skim)
-        # aggregate the skims to one per type
-        return {skim_type: op(skim_list, axis=0) for skim_type, skim_list in skim_averages_by_type.items()}
+
+        # aggregate the skims to one per type.
+        if op == "mean":
+            # We cannot use np.mean on a list of Skims because numpy will convert the list to a 3D array and
+            # therefore we'll loose Skim __dict__. However, we can use python's sum, which is just as fast or faster
+            # for a few elements.
+            skims = {skim_type: sum(skim_list) / len(skim_list) for skim_type, skim_list in
+                     skim_averages_by_type.items()}
+        else:
+            # If we want to be able to use any numpy function on a list of Skims, we could create a Skim with the
+            # resulting values and update the Skim.__dict__.
+            raise NotImplementedError(f"Skim aggregation method {op} not implemented yet")
+
+        return skims
 
     @staticmethod
     def setup_pathsets(skim_path_set, stops, trip_id_df, trips_df, modes_df) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -887,12 +898,10 @@ class Skim(np.ndarray):
         if values is None:
             values = np.full((num_zones, num_zones), Skim.skim_default_value, dtype=Skim.skim_type)
         obj = np.asarray(values).view(cls)
-
         obj.name = name
         obj.num_zones = num_zones
         obj.zone_index_mapping = zone_index_mapping
         obj.index_to_zone_ids = index_to_zone_ids
-
         return obj
 
     def __array_finalize__(self, obj):
