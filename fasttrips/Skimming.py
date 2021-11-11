@@ -243,80 +243,16 @@ class Skimming(object):
         return user_class_skims
 
     @staticmethod
-    def generate_and_save_skims(output_dir, FT, veh_trips_df=None):
+    def generate_skims(output_dir, FT, veh_trips_df=None):
         """
 
         veh_trips_df: optional, blah. When running w/o assignment, can get from files.
-        """
 
+        """
         if veh_trips_df is None:
             veh_trips_df = FT.trips.get_full_trips()
-
-
-        # TODO JAN: is this correct? What does skimming use, iter0? if so, we need to overwrite. would it be better
-        #  to have a separate file/iteration number to distinguish skimming so that iter0 can be used for analysis?
-        # write 0-iter vehicle trips -> overwrites file with previous iter trips. Needs to change for skimming.
-        # what do we choose as skimming iter? prev + 1? Or does assignment write out trips after assigning and therefore
-        # we only need to pass appropriate iteration number to skimming c++ extension?
-        #
-        # Do we ever write to file during skimming or is everything in memory? Do we ever use the iteration number in
-        # c++ extension?
-        Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
-
-        # TODO: do we need to move this before writing vehicles?
-        # For skimming we do not want denied boardings due to capacity constraints.
-        Trip.reset_onboard(veh_trips_df)
-
-        output_dir = os.path.join(Assignment.OUTPUT_DIR, Skimming.OUTPUT_DIR)
-
-        # TODO: mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
-        #  here, see e.g. the Springfield example. We dump the taz id - index relation to disk.
-        Skimming.write_zone_id_to_index_mapping()
-
-        # TODO: remove when done with dev
-        skim_results = {}
-
-        # run c++ extension
-        skim_config: SkimConfig
-        for skim_config in Skimming.skim_set:
-            # TODO: returning extra stuff during development, remove second return value when done
-            skim_matrices, stuff = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df,
-                                                                   skim_config=skim_config)
-            skim_results[tuple(skim_config)] = (skim_matrices, stuff)
-
-            # at the moment skims are still per time slice, once aggregation is implemented this will be a list of skims
-            # maybe define helper method save_skims_for_user and pass in user-purpose etc string, then save skims
-            purp_user_output_dir = os.path.join(output_dir, f"{SkimConfig.user_class}_{SkimConfig.purpose}_" +
-                                        f"{SkimConfig.access_mode}_{SkimConfig.transit_mode}_{SkimConfig.egress_mode}")
-            Path(purp_user_output_dir).mkdir(parents=True, exist_ok=True)
-
-            FastTripsLogger.info(f"Writing skims")
-            # TODO: create attribs and pass to omx write method, add to skims
-            # skim_attribs = {}
-            for k, v in skim_matrices.items():
-                skim_name = f"{k}_{Skimming.start_time}_{Skimming.end_time}.omx"
-                v.write_to_file(skim_name, purp_user_output_dir)
-
-        return skim_results
-
-    @classmethod
-    def write_zone_id_to_index_mapping(cls):
-        """ Necessary because omx cannot have non-integers in mapping and we might have strings"""
-        out_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out_file = out_dir / "skim_index_to_zone_id_mapping.csv"
-        pd.DataFrame(Skimming.index_to_zone_ids, columns=['zone_id']).to_csv(out_file)
-        FastTripsLogger.info(f"Wrote index to zone id mapping to {out_file}, use this in case of string ids for zones")
-
-    # TODO: dev method, delete when done and use gen_and_save above
-    @staticmethod
-    def generate_skims(output_dir, FT):
-
-        veh_trips_df = FT.trips.get_full_trips()
-        # write 0-iter vehicle trips
-        Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
-
-        # FOR NOW: we're starting over with empty vehicles
+        # For skimming we do not want denied boardings due to capacity constraints. This also resets on board capacities
+        # so if a future implementation of crowding ever uses that in deterministic pathfinding, this has to change.
         Trip.reset_onboard(veh_trips_df)
 
         # run c++ extension
@@ -327,6 +263,36 @@ class Skimming(object):
             skim_results[tuple(skim_config)] = skim_matrices
 
         return skim_results
+
+    @staticmethod
+    def write_skim_matrices(skim_matrices: Dict):
+        # omx mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
+        #  here, see e.g. the Springfield example. We dump the taz id - index relation to disk.
+        Skimming.write_zone_id_to_index_mapping()
+
+        output_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
+        for skim_config_tuple, skims in skim_matrices.items()   :
+            # TODO Jan: Remove once debug output gets removed
+            skims = skims[0]
+
+            purp_user_output_dir = output_dir / "_".join(skim_config_tuple)
+            purp_user_output_dir.mkdir(parents=True, exist_ok=True)
+
+            FastTripsLogger.debug(f"Writing skims")
+            # TODO: create attribs and pass to omx write method, add to skims
+            # skim_attribs = {}
+            for k, v in skims.items():
+                skim_name = f"{k}_{Skimming.start_time}_{Skimming.end_time}_{Skimming.sample_interval}.omx"
+                v.write_to_file(skim_name, purp_user_output_dir)
+
+    @classmethod
+    def write_zone_id_to_index_mapping(cls):
+        """ Necessary because omx cannot have non-integers in mapping and we might have strings"""
+        out_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / "skim_index_to_zone_id_mapping.csv"
+        pd.DataFrame(Skimming.index_to_zone_ids, columns=['zone_id']).to_csv(out_file)
+        FastTripsLogger.info(f"Wrote index to zone id mapping to {out_file}, use this in case of string ids for zones")
 
     @staticmethod
     def create_index_mapping(FT):
@@ -717,9 +683,7 @@ class Skimming(object):
 
         # grab the keys of the first time sampling point. assume the keys are all the same, if they're not something
         # bad has happened
-        #skim_types = list(time_indexed_skims[time_indexed_skims.keys()[0]][0].keys())
         skim_types = list(time_indexed_skims[next(iter(time_indexed_skims))].keys())
-
 
         skim_averages_by_type = {t: [] for t in skim_types}
         # group skims by type instead of time
@@ -839,7 +803,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
                      )
         FastTripsLogger.info("Skimming worker %2d starting" % (worker_num))
 
-        # TODO Jan: are some of these used in the skimming context?
+        # TODO Jan: are some of these unused in the skimming context?
         # the child process doesn't have these set so read them
         run_config = Assignment.CONFIGURATION_FILE
         func_file = Assignment.CONFIGURATION_FUNCTIONS_FILE
@@ -852,7 +816,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
         # we set the earliest departure time to the start of the time slice, do not allow any earlier departures.
         PathSet.DEPART_EARLY_ALLOWED_MIN = datetime.timedelta(minutes=0)
 
-        Assignment.initialize_fasttrips_extension(0, output_dir, veh_trips_df)
+        Assignment.initialize_fasttrips_extension(worker_num, output_dir, veh_trips_df)
 
         while True:
             res_flag = self.poll_queue(in_queue, out_queue, worker_num)

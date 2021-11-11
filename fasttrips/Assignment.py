@@ -914,7 +914,8 @@ class Assignment(object):
             from .Skimming import Skimming
             FastTripsLogger.info("STARTING SKIMMING")
             Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT)
-            Skimming.generate_and_save_skims(output_dir, FT, veh_trips_df)
+            skims = Skimming.generate_skims(output_dir, FT, veh_trips_df)
+            Skimming.write_skim_matrices(skims)
 
         return {"capacity_gap": capacity_gap,
                 "paths_found": num_paths_found,
