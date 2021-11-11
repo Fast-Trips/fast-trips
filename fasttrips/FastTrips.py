@@ -195,7 +195,9 @@ class FastTrips(object):
         try:
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
             Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, self)
+            #r = Skimming.generate_and_save_skims(output_dir, self)
             r = Skimming.generate_skims(output_dir, self)
+
         except:
             print(("Unexpected error:", sys.exc_info()[0]))
             FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))

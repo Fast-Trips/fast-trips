@@ -243,8 +243,15 @@ class Skimming(object):
         return user_class_skims
 
     @staticmethod
-    def generate_and_save_skims(veh_trips_df, output_dir, FT):
-        """ post-assignment method """
+    def generate_and_save_skims(output_dir, FT, veh_trips_df=None):
+        """
+
+        veh_trips_df: optional, blah. When running w/o assignment, can get from files.
+        """
+
+        if veh_trips_df is None:
+            veh_trips_df = FT.trips.get_full_trips()
+
 
         # TODO JAN: is this correct? What does skimming use, iter0? if so, we need to overwrite. would it be better
         #  to have a separate file/iteration number to distinguish skimming so that iter0 can be used for analysis?
@@ -256,20 +263,26 @@ class Skimming(object):
         # c++ extension?
         Assignment.write_vehicle_trips(output_dir, 0, 0, 0, veh_trips_df)
 
+        # TODO: do we need to move this before writing vehicles?
         # For skimming we do not want denied boardings due to capacity constraints.
         Trip.reset_onboard(veh_trips_df)
 
         output_dir = os.path.join(Assignment.OUTPUT_DIR, Skimming.OUTPUT_DIR)
 
+        # TODO: mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
+        #  here, see e.g. the Springfield example. We dump the taz id - index relation to disk.
+        Skimming.write_zone_id_to_index_mapping()
+
+        # TODO: remove when done with dev
+        skim_results = {}
+
         # run c++ extension
         skim_config: SkimConfig
         for skim_config in Skimming.skim_set:
             # TODO: returning extra stuff during development, remove second return value when done
-            skim_matrices, _ = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
-
-            # TODO: mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
-            #  here, see e.g. the Springfield example. We dump the taz id - index relation to disk.
-
+            skim_matrices, stuff = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df,
+                                                                   skim_config=skim_config)
+            skim_results[tuple(skim_config)] = (skim_matrices, stuff)
 
             # at the moment skims are still per time slice, once aggregation is implemented this will be a list of skims
             # maybe define helper method save_skims_for_user and pass in user-purpose etc string, then save skims
@@ -277,12 +290,25 @@ class Skimming(object):
                                         f"{SkimConfig.access_mode}_{SkimConfig.transit_mode}_{SkimConfig.egress_mode}")
             Path(purp_user_output_dir).mkdir(parents=True, exist_ok=True)
 
+            FastTripsLogger.info(f"Writing skims")
             # TODO: create attribs and pass to omx write method, add to skims
             # skim_attribs = {}
             for k, v in skim_matrices.items():
                 skim_name = f"{k}_{Skimming.start_time}_{Skimming.end_time}.omx"
                 v.write_to_file(skim_name, purp_user_output_dir)
 
+        return skim_results
+
+    @classmethod
+    def write_zone_id_to_index_mapping(cls):
+        """ Necessary because omx cannot have non-integers in mapping and we might have strings"""
+        out_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / "skim_index_to_zone_id_mapping.csv"
+        pd.DataFrame(Skimming.index_to_zone_ids, columns=['zone_id']).to_csv(out_file)
+        FastTripsLogger.info(f"Wrote index to zone id mapping to {out_file}, use this in case of string ids for zones")
+
+    # TODO: dev method, delete when done and use gen_and_save above
     @staticmethod
     def generate_skims(output_dir, FT):
 
@@ -600,7 +626,7 @@ class Skimming(object):
         # finalizer.
         skims_path_set = {t: {} for t in time_sampling_points}
 
-        time_indexed_skims = {t: [] for t in time_sampling_points}
+        time_indexed_skims = {}  # {t: [] for t in time_sampling_points}
         stuff = {t: [] for t in time_sampling_points}
 
         for d_t in time_sampling_points:
@@ -665,7 +691,8 @@ class Skimming(object):
             skim_matrices = Skimming.extract_matrices(pathset_links_df, d_t_datetime)
             # now that we have skim matrix for d_t, we can drop the pathsets for this time_sample
             skims_path_set.pop(d_t)
-            time_indexed_skims[d_t].append(skim_matrices)
+            #time_indexed_skims[d_t].append(skim_matrices)
+            time_indexed_skims[d_t] = skim_matrices
 
             stuff[d_t].append(pathset_paths_df)
             stuff[d_t].append(pathset_links_df)
@@ -688,8 +715,12 @@ class Skimming(object):
         """Combine skims over time periods down to an aggregated skim."""
         # TODO will op also become a dict, with different op per skim type?
 
-        # assume the keys are all the same, if they're not something bad has happened
-        skim_types = list(time_indexed_skims[time_indexed_skims.keys()[0]][0].keys())
+        # grab the keys of the first time sampling point. assume the keys are all the same, if they're not something
+        # bad has happened
+        #skim_types = list(time_indexed_skims[time_indexed_skims.keys()[0]][0].keys())
+        skim_types = list(time_indexed_skims[next(iter(time_indexed_skims))].keys())
+
+
         skim_averages_by_type = {t: [] for t in skim_types}
         # group skims by type instead of time
         for time, t in time_indexed_skims.items():
@@ -922,6 +953,10 @@ class Skim(np.ndarray):
 
         with omx.open_file(name, 'w') as skim_file:
             skim_file[self.name] = self
-            # Todo: the following doesn't work, omx enforces tables.UInt32Atom,
-            #  and the Springfield example uses strings like Z1. Sigh. Dump to disk I guess.
-            # skim_file.create_mapping('taz', self.index_to_zone_ids)
+            # omx enforces tables.UInt32Atom for mappings, but the Springfield example uses strings like Z1.
+            try:
+                skim_file.create_mapping('taz', self.index_to_zone_ids)
+            except ValueError as e:
+                FastTripsLogger.debug(f"Caught {e}, which probably means you have string zone ids. Therefore, "
+                                      f"openmatrix cannot create index - zone id mapping. Please use mapping provided "
+                                      f"in output directory.")
