@@ -65,17 +65,25 @@ class Skimming(object):
     See
     """
 
-    # these are all implemented skim components atm, we return all of them every time for now.
+    #: All currently implemented skim components.
     components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
                   'wait_time', 'adaption_time', 'gen_cost']
 
-    start_time: int  # Skimming start time in minutes past midnight
-    end_time: int  # Skimming end time in minutes past midnight
-    sample_interval: int  # Sampling interval length in minutes
+    #: Skimming start time in minutes past midnight
+    start_time: int
+    #: Skimming end time in minutes past midnight
+    end_time: int
+    #: Sampling interval length in minutes
+    sample_interval: int
+    #: List of skim configs (user_class, purpose, acc/transit/egg demand modes) for which to generate skims,
+    #: provided in config_ft
     skim_set : List[SkimConfig]
+    # mapping from 0-based indexes to fasttrips stops_id
     index_mapping: Dict
+    # number of tazs
     num_zones: int
 
+    #: Name of the sub-directory all skimming related data is written to
     OUTPUT_DIR = "skims"  # name of directory within assignment output directory for skim writing
 
 
