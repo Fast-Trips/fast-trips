@@ -38,7 +38,32 @@ therefore left with the following dimensions:
 
 Regarding 1), the user has to specify a skimming start time, a skimming end time, and a sample interval. For each
 sampling interval, we build a shortest path from each origin to all destinations, calculate common skims,
-and then average them by taking the mean.
+and then average over time sampling points by taking the mean.
+
+Regarding 2), ...
+If you only want one user_class - purpose combination per access/egress combination, you can specify these in the
+``pathweight_ft.csv`` file. Note that at the moment you will probably want this due to the caveat mentioned in
+:ref:`Pathfinding details`.
+
+
+
+
+Running skimming
+^^^^^^^^^^^^^^^^
+Either post-assignment via parameter in config_ft.txt in the fasttrips section: "create_skims = True"; or on the
+unassigned network (i.e. on the service schedule as per input files) via running Run.run_fasttrips_skimming().
+
+In both cases, fasttrips needs the the options listed in the following subsection.
+
+
+Skimming parameters
+"""""""""""""""""""
+``time_period_start``: Start of skimming period in minutes after midnight.
+``time_period_end``: End of skimming period in minutes after midnight.
+``time_period_sampling_interval``: Sample frequency for skim path building
+
+user_class, purpose, access, pt, egress mode
+
 
 
 
@@ -58,11 +83,13 @@ Implemented components
 
 Pathfinding details
 ^^^^^^^^^^^^^^^^^^^
+FastTrips runs skimming as a post-processing step to assignment. Skimming uses deterministic pathfinding, with the only
+difference to the point-to-point implementation of the assignment being the built of a shortest path tree per origin
+(i.e. one origin to all destinations). This means the deterministic pathfinder as currently implemented determines
+what constitutes a shortest path and at the moment this is always with respect to time, not generalised cost.
 
-Note that we use deterministic pathfinding, where we changed the implementation where necessary such that we build a
-shortest path tree per origin (i.e. one origin to all destinations). This means the deterministic
-pathfinder determines what constitutes a shortest path and at the moment this is always with respect to time,
-not generalised cost.
+This also means that currently, running skimming with different value of time, user class, and purpose will not generate
+different paths.
 
 
 Output format and location
