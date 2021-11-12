@@ -1025,15 +1025,14 @@ Settings Output
 Skimming Output
 ---------------
 ``skims/skim_index_to_zone_id_mapping.csv``
-Mapping from 0-based skim index (first column) to arbitrary zone identifiers as specified in network files (second
-column). Note that this information is also stored as an attribute in the omx file, however it is not specified as an
-omx mapping because the identifiers can be arbitrary strings (like in the Springfield example) and types that cannot be
-cast to integers `are not supported by
-omx <https://github.com/osPlanning/omx-python/blob/337ea4deff0c0055a6e792a5bf45aabf3fc82075/openmatrix/File.py#L284>`_
-currently.
+  Mapping from 0-based skim index (first column) to arbitrary zone identifiers as specified in network files (second
+  column). Note that this information is also stored as an attribute in the omx file, however it is not specified as an
+  omx mapping because the identifiers can be arbitrary strings (like in the Springfield example) and types that
+  cannot be cast to integers `are not supported by omx <https://github
+  .com/osPlanning/omx-python/blob/337ea4deff0c0055a6e792a5bf45aabf3fc82075/openmatrix/File.py#L284>`_ currently.
 
 
 ``skims/{user_class}_{purpose}_{access}_{transit}_{egress}/{skim_name}.omx``
-For each requested combination of (user_class, purpose, access_mode, transit_mode, egress_mode) there is a directory
-corresponding sub-directory which contains all skims. All components are saved to individual omx files, with the file
-name a combination of component_name, skim start time, skim end time, and skim sampling interval.
+  For each requested combination of (user_class, purpose, access_mode, transit_mode, egress_mode) there is a
+  corresponding sub-directory which contains all skims. All components are saved to individual omx files, with the file
+  name a combination of component_name, skim start time, skim end time, and skim sampling interval.
