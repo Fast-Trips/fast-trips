@@ -1,8 +1,6 @@
 """Test config changes introduced by skimming. Test options work as intended and configs
 are backwards compatible with the non-skimming use case.
 
-Ideally the non-skimming options would be explicitly validated as well.
-
 Note that temp files are required because the standard library configparser (used in assignment) doesn't support
 io.StringIO properly.
 
@@ -11,10 +9,9 @@ import os
 import re
 import tempfile
 
-import numpy as np
 import pytest
 
-from fasttrips import Run, PathSet
+from fasttrips import FastTrips, PathSet
 from fasttrips.Skimming import Skimming, SkimConfig
 from fasttrips.Assignment import Assignment
 
@@ -25,7 +22,7 @@ EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
 
 # DIRECTORY LOCATIONS
 INPUT_NETWORK = os.path.join(EXAMPLE_DIR, "networks", "vermont")
-INPUT_DEMAND = os.path.join(EXAMPLE_DIR, "demand", "general")
+INPUT_DEMAND = os.path.join(EXAMPLE_DIR, "demand", "simpson_zorn")
 INPUT_CONFIG = os.path.join(EXAMPLE_DIR, "configs", "B")
 OUTPUT_DIR = os.path.join(EXAMPLE_DIR, "output")
 
@@ -161,7 +158,8 @@ skimming_fail_reasons.append((ValueError, "Value foo not in path weights file fo
 bad_skimming_config7 = full_skimming_config.replace("-", "<>")
 skimming_cases.append((bad_skimming_config7, "bad delimiter"))
 skimming_fail_reasons.append(
-    (ValueError, "Mode-list walk<>local_bus<>walk should be a access-transit-egress hypen delimited string")
+    (ValueError, "Mode-list walk<>local_bus<>walk should be a access-transit-egress hyphen delimited string, "
+                 "got walk<>local_bus<>walk")
 )
 
 test_ids = [i[1] for i in skimming_cases]
@@ -197,19 +195,27 @@ def test_assignment_config_parsing_works(config_file_bundle):
     Assignment.read_configuration(config_file_name)
 
 
-def test_skimming_config_parsing_catches_errors(config_file_bundle):
+@pytest.fixture()
+def ft():
+    ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
+                    input_functions=INPUT_FUNCTIONS)
+    ft_.read_configuration()
+    ft_.read_input_files()
+    yield ft_
+
+
+def test_skimming_config_parsing_catches_errors(config_file_bundle, ft):
     config_file_name, config_str, test_id, expected_err, expected_err_msg = config_file_bundle
 
     if expected_err is not None:
         with pytest.raises(expected_err, match=expected_err_msg):
-            Skimming.read_skimming_configuration(config_file_name)
+            Skimming.read_skimming_configuration(config_file_name, ft)
     else:
         # Check that it runs without crashing (detailed checking of a legitimate log is below)
-        Skimming.read_skimming_configuration(config_file_name)
+        Skimming.read_skimming_configuration(config_file_name, ft)
         assert Skimming.start_time == 900
         assert Skimming.end_time == 960
         assert Skimming.sample_interval == 30
-
 
 
 @pytest.fixture(params=full_skimming_config, ids=test_ids)

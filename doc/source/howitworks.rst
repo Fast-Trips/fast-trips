@@ -73,7 +73,7 @@ Skimming parameters
 
 ``time_period_sampling_interval``
   Sample frequency for skim path building in minutes. This means the number of skim path building runs is
-  :math:`\frac{time_period_end - time_period_start}{time_period_sampling_interval}`.
+  (time_period_end - time_period_start) / time_period_sampling_interval.
 
 ``find_a_good_name_here``
 [(user_class, purpose, access_mode, transit_mode, demand_mode, vot)]
