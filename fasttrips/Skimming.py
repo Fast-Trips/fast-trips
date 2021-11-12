@@ -62,9 +62,12 @@ class Skimming(object):
 
     One instance represents all the skims we could ever want, in accordance with design of the rest of the software.
 
-    OLD: Stores household information in :py:attr:`Passenger.households_df` and person information in
-    :py:attr:`Passenger.persons_df`, which are both :py:class:`pandas.DataFrame` instances.
+    See
     """
+
+    # these are all implemented skim components atm, we return all of them every time for now.
+    components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
+                  'wait_time', 'adaption_time', 'gen_cost']
 
     start_time: int  # Skimming start time in minutes past midnight
     end_time: int  # Skimming end time in minutes past midnight
@@ -327,14 +330,8 @@ class Skimming(object):
 
     @staticmethod
     def extract_matrices(pathset_links_df, d_t_datetime):
-
-        # these are all implemented skim components atm, we return all of them every time.
-        components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
-                      'wait_time', 'adaption_time', 'gen_cost']
-
         skim_matrices = {skim_name: Skimming.calculate_skim(pathset_links_df, d_t_datetime, component_name=skim_name)
-                         for skim_name in components}
-
+                         for skim_name in Skimming.components}
         return skim_matrices
 
     @staticmethod
@@ -592,8 +589,8 @@ class Skimming(object):
         all_taz = list(Skimming.index_mapping.values())
         FastTripsLogger.debug(f"running origins {all_taz}")
 
-        # TODO: bring this through
-        do_trace = True
+        # Do we want to expose this variable for debugging?
+        do_trace = False
 
         time_sampling_points = np.arange(Skimming.start_time, Skimming.end_time, Skimming.sample_interval)
         FastTripsLogger.debug(f"doing time points {time_sampling_points}")
@@ -891,10 +888,8 @@ class SkimmingWorkerTask(ProcessWorkerTask):
 
 class Skim(np.ndarray):
     """
-    A single skim matrix, subclasses numpy array and has a write to omx method.
-    See https://numpy.org/doc/stable/user/basics.subclassing.html for details on numpy array subclassing.
-
-    index_to_zone_ids is a list of zone_ids as per the input files, where the position in the list corresponds to
+    A single skim matrix, subclasses numpy array to keep track of the number of zones, the name, and a list called
+    index_to_zone_ids, which is a list of zone_ids as per the input files, where the position in the list corresponds to
     the skim array index.
     """
 
