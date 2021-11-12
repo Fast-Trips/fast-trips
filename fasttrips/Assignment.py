@@ -105,17 +105,8 @@ class Assignment(object):
     #: departure time will be checked.  A :py:class:`datetime.timedelta` instance.
     TIME_WINDOW                     = None
 
-    #: Configuration: Create skims flag. This is specific to the travel demand models
-    #: (not working in this version). Boolean.
+    #: Configuration: Create skims flag. Boolean.
     CREATE_SKIMS                    = None
-
-    #: Configuration: Beginning of the time period for which the skim is required.
-    #:  (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
-    SKIM_START_TIME                 = None
-
-    #: Configuration: End of the time period for which the skim is required
-    #: (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
-    SKIM_END_TIME                   = None
 
     #: Route choice configuration: Max number of paths in a pathset.
     #: Used in conjuntion with :py:attr:`Assignment.MIN_PATH_PROBABILITY`
@@ -908,10 +899,9 @@ class Assignment(object):
 
             # end for loop
 
-        # TODO JAN: ADD SKIMMING OPTION HERE
-        do_skimming = False
-        if do_skimming:
+        if Assignment.CREATE_SKIMS:
             from .Skimming import Skimming
+            FastTripsLogger.info("STARTING SKIMMING")
             FastTripsLogger.info("STARTING SKIMMING")
             Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT)
             skims = Skimming.generate_skims(output_dir, FT, veh_trips_df)

@@ -377,7 +377,7 @@ If the same options are specified in both, then the version specified in the Tra
 to network inputs.)
 
 The configuration files are parsed by python's `ConfigParser module` <https://docs.python.org/2/library/configparser.html#module-ConfigParser>`_ and therefore
-adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
+adhere to that format, with three possible sections: *fasttrips*, *pathfinding* and *skimming*.
 
 Configuration Options: fasttrips
 """""""""""""""""""""""""""""""""""""
@@ -394,7 +394,7 @@ Configuration Options: fasttrips
 |                                       |        |         | vehicles and disallows them from finding     |
 |                                       |        |         | a new path using an overcapacity vehicle.    |
 +---------------------------------------+--------+---------+----------------------------------------------+
-| ``create_skims``                      | bool   | False   | ##TODO Not implemented yet.                  |
+| ``create_skims``                      | bool   | False   | Run skimming after assignment.               |
 +---------------------------------------+--------+---------+----------------------------------------------+
 | ``debug_num_trips``                   | int    | -1      | If positive, will truncate the trip list     |
 |                                       |        |         | to this length.                              |
@@ -444,10 +444,6 @@ Configuration Options: fasttrips
 |                                       |        |         | and verifying that pathfinding calculations  |
 |                                       |        |         | are consisten twith cost/fare calculations   |
 |                                       |        |         | done outside of pathfinding.                 |
-+---------------------------------------+--------+---------+----------------------------------------------+
-| ``skim_start_time``                   | string | 5:00    | ##TODO Not implemented yet.                  |
-+---------------------------------------+--------+---------+----------------------------------------------+
-| ``skim_end_time``                     | string | 10:00   | ##TODO Not implemented yet.                  |
 +---------------------------------------+--------+---------+----------------------------------------------+
 | ``skip_person_ids``                   | string | 'None'  | A list of person IDs to skip.                |
 +---------------------------------------+--------+---------+----------------------------------------------+
@@ -532,6 +528,22 @@ Configuration Options: pathfinding
 | ``arrive_late_allowed_min``             | float    | 0.0                   | Allow passengers to arrive after their arrival|
 |                                         |          |                       | time target by this many minutes.             |
 +-----------------------------------------+----------+-----------------------+-----------------------------------------------+
+
+Configuration Options: skimming
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
++---------------------------------------+----------+-----------+----------------------------------------------------+
+| *Option Name*                         | *Type*   | *Default* | *Description*                                      |
++=======================================+==========+===========+====================================================+
+| ``time_period_start``                 | int      | N/A       | Start of skimming period in minutes after midnight |
++---------------------------------------+----------+-----------+----------------------------------------------------+
+| ``time_period_end``                   | int      | N/A       | End of skimming period in minutes after midnight   |
++---------------------------------------+----------+-----------+----------------------------------------------------+
+| ``time_period_sampling_interval``     | int      | N/A       | Sample frequency for skim path building            |
++---------------------------------------+----------+-----------+----------------------------------------------------+
+| ``user_class``                        | string   | N/A       |  ##TODO Not documented yet.                        |
++---------------------------------------+----------+-----------+----------------------------------------------------+
+
 
 More on Overlap Path Size Penalties
 """"""""""""""""""""""""""""""""""""""""""""
