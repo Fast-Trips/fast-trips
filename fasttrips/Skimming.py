@@ -139,7 +139,8 @@ class Skimming(object):
 
         Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
 
-        # create mapping from fasttrips zone index to 0-based skim array index
+        # create mapping from fasttrips zone index to 0-based skim array index, and also from original zone id names to
+        # 0-based skimming indexes
         Skimming.index_mapping = Skimming.create_index_mapping(FT)
         Skimming.num_zones = len(Skimming.index_mapping)
         Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
@@ -264,14 +265,26 @@ class Skimming(object):
 
         return skim_results
 
+    # Would it be better to have one omx file? It's just a convention but might be cleaner on disk. Would need an
+    # append option in Skim.write_to_file, and handling of cases where file already exists.
     @staticmethod
-    def write_skim_matrices(skim_matrices: Dict):
+    def write_skim_matrices(skim_matrices):
+        """
+        writes
+        :param skim_matrices: {tuple(SkimConfig): {skim_type: Skim}}
+        :return: nil
+        """
         # omx mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
         #  here, see e.g. the Springfield example. We dump the taz id - index relation to disk.
         Skimming.write_zone_id_to_index_mapping()
 
         output_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
-        for skim_config_tuple, skims in skim_matrices.items()   :
+
+        skim_attribs = {"start_time": Skimming.start_time,
+                        "end_time": Skimming.end_time,
+                        "sample_interval": Skimming.sample_interval}
+
+        for skim_config_tuple, skims in skim_matrices.items():
             # TODO Jan: Remove once debug output gets removed
             skims = skims[0]
 
@@ -279,11 +292,9 @@ class Skimming(object):
             purp_user_output_dir.mkdir(parents=True, exist_ok=True)
 
             FastTripsLogger.debug(f"Writing skims")
-            # TODO: create attribs and pass to omx write method, add to skims
-            # skim_attribs = {}
             for k, v in skims.items():
                 skim_name = f"{k}_{Skimming.start_time}_{Skimming.end_time}_{Skimming.sample_interval}.omx"
-                v.write_to_file(skim_name, purp_user_output_dir)
+                v.write_to_file(skim_name, purp_user_output_dir, attributes=skim_attribs)
 
     @classmethod
     def write_zone_id_to_index_mapping(cls):
@@ -296,6 +307,7 @@ class Skimming(object):
 
     @staticmethod
     def create_index_mapping(FT):
+        """mapping from internal fasttrips stop_id to 0-based skim index"""
         acc_eggr_links = FT.tazs.merge_access_egress()
         all_taz = np.sort(acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique())
         index_dict = dict(zip(np.arange(len(all_taz)), all_taz))
@@ -306,7 +318,6 @@ class Skimming(object):
         """ fasttrips maps all stops to integer indexes internally. We need a mapping from these to the original zone
         names, and combine this with our 0-based skim mapping. This method returns a list where the entry at position i
         corresponds to skim index i, i.e. a list of zone ids that are in order of the skim mapping"""
-
         stops_zones_df = FT.stops.stop_id_df[[Stop.STOPS_COLUMN_STOP_ID, Stop.STOPS_COLUMN_STOP_ID_NUM]]
         stops_zones_df = stops_zones_df.loc[stops_zones_df[Stop.STOPS_COLUMN_STOP_ID_NUM].isin(index_dict.values())]
         stops_zones_df['skim_index'] = stops_zones_df[Stop.STOPS_COLUMN_STOP_ID_NUM].map(
@@ -388,8 +399,7 @@ class Skimming(object):
             axis=0).set_index(od_colnames).unstack(
             Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM).fillna(Skim.skim_default_value)
         skim_values_dense = skim_values_dense.values.astype(Skim.skim_type)
-        return Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_mapping,
-                    Skimming.index_to_zone_ids)
+        return Skim(component_name, Skimming.num_zones, skim_values_dense, Skimming.index_to_zone_ids)
 
     @staticmethod
     def attach_destination_number(pathset_paths_df, pathset_links_df):
@@ -884,23 +894,20 @@ class Skim(np.ndarray):
     A single skim matrix, subclasses numpy array and has a write to omx method.
     See https://numpy.org/doc/stable/user/basics.subclassing.html for details on numpy array subclassing.
 
-    We have two mappings: zone_index_mapping is a dictionary from 0-based array index to fasttrips internal integer
-    index. index_to_zone_ids is a list of zone_ids as per the input files, where the position in the list corresponds to
+    index_to_zone_ids is a list of zone_ids as per the input files, where the position in the list corresponds to
     the skim array index.
     """
-    # TODO Jan: can remove zone_index_mapping, it's handled internally in calculations above
 
     # TODO: using inf is convenient, so we are using floats for now. Should we be using masked arrays?
     skim_type = np.float32
     skim_default_value = np.inf
 
-    def __new__(cls, name, num_zones, values=None, zone_index_mapping=None, index_to_zone_ids=None):
+    def __new__(cls, name, num_zones, values=None, index_to_zone_ids=None):
         if values is None:
             values = np.full((num_zones, num_zones), Skim.skim_default_value, dtype=Skim.skim_type)
         obj = np.asarray(values).view(cls)
         obj.name = name
         obj.num_zones = num_zones
-        obj.zone_index_mapping = zone_index_mapping
         obj.index_to_zone_ids = index_to_zone_ids
         return obj
 
@@ -908,10 +915,9 @@ class Skim(np.ndarray):
         if obj is None: return
         self.name = getattr(obj, 'name', None)
         self.num_zones = getattr(obj, 'num_zones', None)
-        self.zone_index_mapping = getattr(obj, 'zone_index_mapping', None)
         self.index_to_zone_ids = getattr(obj, 'index_to_zone_ids', None)
 
-    def write_to_file(self, name=None, file_root=None):
+    def write_to_file(self, name=None, file_root=None, attributes={}):
         """
         write skim matrix to omx file. if no name provided use default.
         use mapping for zones to index
@@ -926,10 +932,19 @@ class Skim(np.ndarray):
 
         with omx.open_file(name, 'w') as skim_file:
             skim_file[self.name] = self
-            # omx enforces tables.UInt32Atom for mappings, but the Springfield example uses strings like Z1.
-            try:
-                skim_file.create_mapping('taz', self.index_to_zone_ids)
-            except ValueError as e:
-                FastTripsLogger.debug(f"Caught {e}, which probably means you have string zone ids. Therefore, "
-                                      f"openmatrix cannot create index - zone id mapping. Please use mapping provided "
-                                      f"in output directory.")
+
+            for k, v in self.__dict__.items():
+                skim_file[self.name].attrs[k] = v
+
+            for k, v in attributes.items():
+                skim_file[self.name].attrs[k] = v
+
+            # # omx enforces tables.UInt32Atom for mappings, but the Springfield example uses strings like Z1.
+            # # could do the following, but let's just save a dict in the attributes.
+            # try:
+            #     int_mapping = list(map(lambda x: int(x), self.index_to_zone_ids))
+            #     skim_file.create_mapping('taz', int_mapping)
+            # except ValueError as e:
+            #     FastTripsLogger.debug(f"Caught {e}, which probably means you have string zone ids. Therefore, "
+            #                           f"openmatrix cannot create index - zone id mapping. Please use mapping "
+            #                           f"provided in output directory.")
