@@ -25,8 +25,6 @@ You can also review the following `code flow chart <https://docs.google.com/pres
 
 Skimming
 ------------------
-Skims are average level-of-service indicators.
-
 Skims are average level-of-service indicators. Given that fasttrips is trip-based and dynamic, we need to define an
 averaging scheme. Since fasttrips is zone-based, we do not need to worry about spatial aggregation. We are
 therefore left with the following dimensions:
