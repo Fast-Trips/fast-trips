@@ -33,6 +33,7 @@ Skimming
 Skims are average level-of-service indicators. Given that fasttrips is trip-based and dynamic, we need to define an
 averaging scheme. Since fasttrips is zone-based, we do not need to worry about spatial aggregation. We are
 therefore left with the following dimensions:
+
 1) temporal
 2) personal attributes:
 
@@ -46,6 +47,7 @@ sampling interval, we build a shortest path from each origin to all destinations
 and then average over time sampling points by taking the mean.
 
 Regarding 2), ...
+
 If you only want one user_class - purpose combination per access/egress combination, you can specify these in the
 ``pathweight_ft.csv`` file. Note that at the moment you will probably want this due to the caveat mentioned in
 :ref:`Pathfinding details`.
@@ -63,29 +65,59 @@ In both cases, fasttrips needs the the options listed in the following subsectio
 
 Skimming parameters
 """""""""""""""""""
-``time_period_start``: Start of skimming period in minutes after midnight.
-``time_period_end``: End of skimming period in minutes after midnight.
-``time_period_sampling_interval``: Sample frequency for skim path building
+``time_period_start``
+  Start of skimming period in minutes after midnight.
 
-user_class
-purpose
-access, pt, egress mode
+``time_period_end``
+  End of skimming period in minutes after midnight.
 
-user_class,purpose,demand_mode_type
+``time_period_sampling_interval``
+  Sample frequency for skim path building in minutes. This means the number of skim path building runs is
+  :math:`\frac{time_period_end - time_period_start}{time_period_sampling_interval}`.
+
+``find_a_good_name_here``
+[(user_class, purpose, access_mode, transit_mode, demand_mode, vot)]
+TODO Jan: this is not implemented yet, currently it uses configobj with indented syntax and mean vot (across the
+entire provided demand)
 
 
 Implemented components
 ^^^^^^^^^^^^^^^^^^^^^^
+All times are in seconds, fares are in whatever currency unit is provided.
 
-    'fare',
-    'num_transfers',
-    'invehicle_time',
-    'access_time',
-    'egress_time',
-    'transfer_time',
-    'wait_time',
-    'adaption_time',
-    'gen_cost'
+``invehicle_time``
+  The time in seconds spent inside a PT vehicle.
+
+``access_time``
+  The time in seconds spent accessing the PT service by the specified access mode, i.e. the time to get from the origin
+  to the first PT stop.
+
+``egress_time``
+  The time in seconds spent egressing from the PT service by the specified egress mode, i.e. the time to get from the
+  last PT stop to the destination.
+
+``transfer_time``
+  The time in seconds spent transferring between two stops, necessarily by foot.
+
+``wait_time``
+  The time in seconds spent waiting for the next service at each transfer stop. This is zero for trips without transfer;
+  there is no wait time at the first stop, see the adaption time component.
+
+``adaption_time``
+  FastTrips' deterministic pathfinder uses total travel time as its objective to minimise. It finds the next service
+  that has the earliest arrival time, and then sets the departure time of the trip such that there is no wait time at
+  the first stop. The time (in seconds) between the start of a given skim time sampling period and the actual
+  departure time is recorded as adaption_time.
+
+``fare``
+  The fare in the provided currency unit.
+
+``num_transfers``
+  The number of transfers.
+
+``gen_cost``
+  The generalised cost calculated with the weights provided in ``pathweights_ft`` and for the specified user_class,
+  purpose, access_mode, transit_mode, egress_mode, value_of_time combination as provided in ``config_ft``.
 
 
 Pathfinding details
@@ -95,8 +127,8 @@ difference to the point-to-point implementation of the assignment being the buil
 (i.e. one origin to all destinations). This means the deterministic pathfinder as currently implemented determines
 what constitutes a shortest path and at the moment this is always with respect to time, not generalised cost.
 
-This also means that currently, running skimming with different value of time, user class, and purpose will not generate
-different paths.
+This also means that currently, running skimming with different values of time, user classes, and purposes will not
+generate different paths.
 
 
 Output format and location
