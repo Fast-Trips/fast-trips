@@ -30,11 +30,13 @@ Skims are average level-of-service indicators.
 Skims are average level-of-service indicators. Given that fasttrips is trip-based and dynamic, we need to define an
 averaging scheme. Since fasttrips is zone-based, we do not need to worry about spatial aggregation. We are
 therefore left with the following dimensions:
- 1) temporal
- 2) personal attributes:
-    - value of time
-    - user class (purpose)
-    - access/egress mode
+1) temporal
+2) personal attributes:
+
+    * value of time
+    * user class
+    * purpose
+    * access/egress mode
 
 Regarding 1), the user has to specify a skimming start time, a skimming end time, and a sample interval. For each
 sampling interval, we build a shortest path from each origin to all destinations, calculate common skims,
@@ -62,9 +64,11 @@ Skimming parameters
 ``time_period_end``: End of skimming period in minutes after midnight.
 ``time_period_sampling_interval``: Sample frequency for skim path building
 
-user_class, purpose, access, pt, egress mode
+user_class
+purpose
+access, pt, egress mode
 
-
+user_class,purpose,demand_mode_type
 
 
 Implemented components
