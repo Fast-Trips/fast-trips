@@ -35,7 +35,7 @@ averaging scheme. Since fasttrips is zone-based, we do not need to worry about s
 therefore left with the following dimensions:
 
 1) temporal
-2) personal attributes:
+2) personal and trip attributes:
 
     * value of time
     * user class
@@ -46,13 +46,10 @@ Regarding 1), the user has to specify a skimming start time, a skimming end time
 sampling interval, we build a shortest path from each origin to all destinations, calculate common skims,
 and then average over time sampling points by taking the mean.
 
-Regarding 2), ...
-
-If you only want one user_class - purpose combination per access/egress combination, you can specify these in the
-``pathweight_ft.csv`` file. Note that at the moment you will probably want this due to the caveat mentioned in
-:ref:`Pathfinding details`.
-
-
+Regarding 2), the user can provide a list of combinations for which skims are sought. An example would be [(all,
+work, walk, transit, walk, 10)]. The generic form is [(user_class, purpose, access_mode, transit_mode, egress_mode,
+VoT)] and any number of these can be provided. Note that at the moment you will probably want to provide only one
+combination of (user_class, purpose, VoT) because of the pathfinding details mentioned in :ref:`Pathfinding details`.
 
 
 Running skimming
