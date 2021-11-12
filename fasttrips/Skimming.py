@@ -624,7 +624,9 @@ class Skimming(object):
                          Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN: d_t}
             process_manager = ProcessManager(num_processes,
                                              process_worker_task=SkimmingWorkerTask(),
-                                             process_worker_task_args=(output_dir, veh_trips_df)
+                                             process_worker_task_args=(output_dir, veh_trips_df,
+                                                                       Assignment.CONFIGURATION_FILE,
+                                                                       Assignment.CONFIGURATION_FUNCTIONS_FILE)
                                              )
             try:
                 # Note we thread at the origin level, rather than (origin, time), as
@@ -813,6 +815,8 @@ class SkimmingWorkerTask(ProcessWorkerTask):
     def __call__(self,
                  output_dir,
                  veh_trips_df,
+                 run_config,
+                 func_file,
                  *args,
                  worker_num: int,
                  in_queue: "mp.Queue[SkimmingQueueInputData]",
@@ -831,8 +835,6 @@ class SkimmingWorkerTask(ProcessWorkerTask):
 
         # TODO Jan: are some of these unused in the skimming context?
         # the child process doesn't have these set so read them
-        run_config = Assignment.CONFIGURATION_FILE
-        func_file = Assignment.CONFIGURATION_FUNCTIONS_FILE
         Assignment.CONFIGURATION_FILE = run_config
         Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
         Assignment.read_functions(func_file)
