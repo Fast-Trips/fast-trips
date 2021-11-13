@@ -683,8 +683,9 @@ the combination of parameters for which skims are sought, like time periods, acc
 The file must be in csv format and for each line, a separate skim is generated. Note that there are no default
 values so each parameter must be specified on each line. The following columns are required.
 
+
 +-----------------------+--------+-------------------------------------------------------------------------+
-| *Parameter Name*      | *Type* |  *Description*                                                          |
+| Column name           | Type   | Description                                                             |
 +=======================+========+=========================================================================+
 | ``start_time``        | int    | Start of skimming period in minutes after midnight                      |
 +-----------------------+------- +-------------------------------------------------------------------------+
@@ -1061,8 +1062,9 @@ Skimming Output
   For each requested combination of (user_class, purpose, access_mode, transit_mode, egress_mode, vot) there is a
   corresponding sub-directory which contains all skims. All components are saved to individual omx files, with the file
   name a combination of component_name, skim start time, skim end time, and skim sampling interval.
-  Each omx file contains the data and several attributes: All attributes listed in :ref:`skim_class_file`, the name
-  of the skim (name), the number of zones (num_zones), and lastly an attribute called 'index_to_zone_ids'. This array
-  encodes the mapping from skim index (0-based numpy indexing) to the zone identifier used in the input data. The
-  position in the array corresponds to the index of the zone identifier in the skim matrix.
+  Each omx file contains the data and several attributes: All attributes listed in
+  :ref:`Skim_classes_ft File <skim_class_file>`, the name of the skim (name), the number of zones (num_zones), and
+  lastly an attribute called 'index_to_zone_ids'. This array encodes the mapping from skim index (0-based numpy
+  indexing) to the zone identifier used in the input data. The position in the array corresponds to the index of the
+  zone identifier in the skim matrix.
 
