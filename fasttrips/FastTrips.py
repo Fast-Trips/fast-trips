@@ -45,7 +45,7 @@ class FastTrips(object):
     DEBUG_LOG = "ft_debug%s.log"
 
     def __init__(self, input_network_archive, input_demand_dir, input_weights, run_config,
-        output_dir, input_functions=None, logname_append="", appendLog=False):
+        output_dir, input_functions=None, logname_append="", appendLog=False, skim_config_file=None):
         """
         Constructor.
 
@@ -67,6 +67,8 @@ class FastTrips(object):
         :param appendLog:         Append to info and debug logs?  When FastTrips assignment iterations (to
                                   handle capacity bumps), we'd like to append rather than overwrite.
         :type appendLog:          bool
+        :param skim_config_file: Location of skim config csv files to read
+        :type skim_config_file:  string
         """
 
         #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
@@ -101,6 +103,9 @@ class FastTrips(object):
 
         #: string representing directory in which to write our output
         Assignment.OUTPUT_DIR         = output_dir
+
+        #: string representing skimming config file
+        Skimming.SKIMMING_CONFIG_FILE  = skim_config_file
 
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
         #self.gtfs_schedule      = None

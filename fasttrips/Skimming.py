@@ -22,10 +22,6 @@ __license__ = """
     limitations under the License.
 """
 
-from collections import defaultdict
-
-MANDATORY_NO_DEFAULT = object()  # default in case None is a legal default in config parsing
-
 import sys
 import datetime
 
@@ -50,10 +46,166 @@ from .Util import Util
 
 from collections import namedtuple
 
-#TODO better name
-SkimConfig = namedtuple(
-    "SkimConfig", field_names=["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]
-)
+# SkimClasses = namedtuple(
+#     "SkimClasses", field_names=["start_time", "end_time", "sampling_interval", "user_class", "purpose", "access_mode",
+#                                 "transit_mode", "egress_mode", "vot"]
+# )
+
+class SkimConfig(object):
+    """Skimming config options.
+    """
+    def __init__(self, start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode,
+                 egress_mode):
+        #: Skimming start time in minutes past midnight
+        self.start_time = start_time
+        #: Skimming end time in minutes past midnight
+        self.end_time = end_time
+        #: Sampling interval length in minutes
+        self.sampling_interval = sampling_interval
+        self.vot = vot
+        self.user_class = user_class
+        self.purpose = purpose
+        self.access_mode = access_mode
+        self.transit_mode = transit_mode
+        self.egress_mode = egress_mode
+    #
+    # #def
+    #
+    #     if start_time < 0:
+    #         e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
+    #         FastTripsLogger.error(e)
+    #         raise ValueError(e)
+    #
+    #     if end_time < start_time:
+    #         e = "Skimming sampling end time is before start time."
+    #         FastTripsLogger.error(e)
+    #         raise ValueError(e)
+    #     elif sample_interval > (end_time - start_time):
+    #         e = "Skimming sampling interval is longer than total specified duration."
+    #         FastTripsLogger.error(e)
+    #         raise ValueError(e)
+    #     elif sample_interval <= 0:
+    #         e = f"Skimming sampling interval must be a positive integer, got {sample_interval}."
+    #         FastTripsLogger.error(e)
+    #         raise ValueError(e)
+    #
+    #
+    #     if not (end_time - start_time / sample_interval).is_integer():
+    #         FastTripsLogger.warning(f"Total duration from {start_time} to {end_time} is not a multiple of \n"
+    #                                 f"sample interval {sample_interval}. Final Skimming interval will be shorter than"
+    #                                 "all others.")
+    #
+    #     Skimming.start_time = start_time
+    #     Skimming.end_time = end_time
+    #     Skimming.sample_interval = sample_interval
+    #
+    #     user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
+    #
+    #     Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
+    #
+    #     # create mapping from fasttrips zone index to 0-based skim array index, and also from original zone id names to
+    #     # 0-based skimming indexes
+    #     Skimming.index_mapping = Skimming.create_index_mapping(FT)
+    #     Skimming.num_zones = len(Skimming.index_mapping)
+    #     Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
+    #
+    # @staticmethod
+    # def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
+    #                        default=MANDATORY_NO_DEFAULT):
+    #     if default == MANDATORY_NO_DEFAULT:
+    #         if key not in config_dict:
+    #             raise KeyError(f"Required key {key} missing from Skimming config")
+    #         value = config_dict[key]
+    #     else:
+    #         value = config_dict.get(key, default)
+    #     if typecast_func is not None:
+    #         try:
+    #             value = typecast_func(value)
+    #         except (TypeError, ValueError):
+    #             msg = f"Value {value} for key {key} in has non-permitted type {type(value)}"
+    #             expected_type = getattr(typecast_func, "__name__", None)
+    #             if expected_type is not None:
+    #                 msg += f" (expected {expected_type})"
+    #             FastTripsLogger.error(msg)
+    #             raise TypeError(msg)
+    #     return value
+    #
+    # @staticmethod
+    # def _parse_skimming_user_class_options(user_class_section: Dict) -> List[SkimClasses]:
+    #     """
+    #     Parse sections like
+    #             [[user_classes]]
+    #                 [[[real]]]
+    #                 personal_business = [ "walk-commuter_rail-walk", "walk-commuter_rail-walk" ]
+    #
+    #                 [[[not_real]]]
+    #                 meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
+    #     in the skimming config
+    #     """
+    #     # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup()
+    #     # so we can use it here
+    #     weights_df = PathSet.WEIGHTS_DF
+    #     pathweight_user_classes = weights_df['user_class'].unique()
+    #     skims_to_produce: List[SkimClasses] = []
+    #
+    #     if len(user_class_section) == 0:
+    #         raise ValueError(f"Skimming config user class list is empty")
+    #
+    #     for user_class_name, section_dict in user_class_section.items():
+    #
+    #         if user_class_name not in pathweight_user_classes:
+    #             raise ValueError(f"User class {user_class_name} not supplied in path weights file")
+    #
+    #         user_class_skims = Skimming._parse_skimming_user_class_modes(user_class_name, section_dict, weights_df)
+    #         skims_to_produce.extend(user_class_skims)
+    #     return skims_to_produce
+    #
+    # @staticmethod
+    # def _parse_skimming_user_class_modes(user_class_name: str, user_class_dict: Dict, weights_df) -> List[SkimClasses]:
+    #     """Parse lines like
+    #         meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
+    #     in the skimming config.
+    #     """
+    #     user_class_skims = []
+    #
+    #     legal_purposes = weights_df.loc[weights_df['user_class'] == user_class_name, 'purpose'].unique()
+    #     if len(user_class_dict) == 0:
+    #         raise ValueError(f"User Class {user_class_name} contains no purposes")
+    #     for purpose, mode_list in user_class_dict.items():
+    #         purpose_subset = weights_df[weights_df['purpose'] == purpose]
+    #         legal_access = purpose_subset.loc[purpose_subset['demand_mode_type'] == "access", 'demand_mode'].unique()
+    #         legal_transit = purpose_subset.loc[purpose_subset['demand_mode_type'] == "transit", 'demand_mode'].unique()
+    #         legal_egress = purpose_subset.loc[purpose_subset['demand_mode_type'] == "egress", 'demand_mode'].unique()
+    #
+    #         # Input validation
+    #         if purpose not in legal_purposes:
+    #             raise ValueError(f"Purpose {purpose} not supplied in path weights file")
+    #         try:
+    #             mode_list = json.loads(mode_list)
+    #         except:
+    #             raise ValueError(f"Mode-list for {user_class_name}:{purpose} could not be parsed. "
+    #                              "Should be a (valid JSON) list.")
+    #         if not isinstance(mode_list, list):
+    #             raise ValueError(f"Mode-list for {user_class_name}:{purpose}  could not be parsed. "
+    #                              "Should be a (valid JSON) list.")
+    #         if len(mode_list) == 0:
+    #             raise ValueError(f"Mode-list for  {user_class_name}:{purpose}  is empty")
+    #         else:
+    #             for i in mode_list:
+    #                 mode_list_err = f"Mode-list {i} should be a access-transit-egress hyphen delimited string, got {i}"
+    #                 if isinstance(i, str) is False:
+    #                     raise ValueError(
+    #                         mode_list_err
+    #                     )
+    #                 sub_mode_list = i.split("-")
+    #                 if len(sub_mode_list) != 3:
+    #                     raise ValueError(mode_list_err)
+    #                 for value, sub_mode, legal_list in zip(sub_mode_list, ("access", "transit", "egress"),
+    #                                                        (legal_access, legal_transit, legal_egress)):
+    #                     if value not in legal_list:
+    #                         raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
+    #                 user_class_skims.append(SkimClasses(user_class_name, purpose, *sub_mode_list))
+    #     return user_class_skims
 
 
 class Skimming(object):
@@ -61,198 +213,40 @@ class Skimming(object):
     Skimming class.
 
     One instance represents all the skims we could ever want, in accordance with design of the rest of the software.
-
-    See
     """
 
     #: All currently implemented skim components.
     components = ['fare', 'num_transfers', 'invehicle_time', 'access_time', 'egress_time', 'transfer_time',
                   'wait_time', 'adaption_time', 'gen_cost']
 
-    #: Skimming start time in minutes past midnight
-    start_time: int
-    #: Skimming end time in minutes past midnight
-    end_time: int
-    #: Sampling interval length in minutes
-    sample_interval: int
-    #: List of skim configs (user_class, purpose, acc/transit/egg demand modes) for which to generate skims,
-    #: provided in config_ft
-    skim_set : List[SkimConfig]
+    #: List of skim configs for which separate skims will be produced, provided in skim_config_ft.csv
+    skim_set: List[SkimConfig]
     # mapping from 0-based indexes to fasttrips stops_id
     index_mapping: Dict
     # number of tazs
     num_zones: int
-
-    #: Name of the sub-directory all skimming related data is written to
-    OUTPUT_DIR = "skims"  # name of directory within assignment output directory for skim writing
-
+    #: Name of the output sub-directory all skimming related data is written to
+    OUTPUT_DIR = "skims"
+    # name of skimming config file. TODO: make parameter
+    SKIMMING_CONFIG_FILE = None
 
     @staticmethod
-    def read_skimming_configuration(config_fullpath, FT):
+    def read_skimming_configuration():
         """
-        Read the skimming related configuration parameters from :py:attr:`Assignment.CONFIGURATION_FILE`
+        Read the skimming related configuration parameters from :py:attr:`Skimming.SKIMMING_CONFIG_FILE`
         """
+        assert Skimming.SKIMMING_CONFIG_FILE is not None, f"Missing skimming config, please specify skim_config_file"
 
-        # Note we use configobj to support nested ini structure used for skimming, not supported by
-        # configparser stdlib used in Assignment.py
-        from configobj import ConfigObj
-
-        # _inspec=False is to allow stuff like "[(0, "pnr_7")]" from assignment to parse without error
-        # means we lose fancy parsing and validation though
-        parser = ConfigObj(config_fullpath, list_values=False, _inspec=True)
         # Read configuration from specified configuration directory
-        FastTripsLogger.info("Reading configuration file %s for skimming" % config_fullpath)
+        FastTripsLogger.info("Reading configuration file %s for skimming" % Skimming.SKIMMING_CONFIG_FILE)
 
-        if "skimming" not in parser.keys():
-            # TODO point user to documentation?
-            e = "Skimming requires additional config file section '[skimming]'"
-            FastTripsLogger.error(e)
-            raise ValueError(e)
-        elif "user_classes" not in parser["skimming"]:
-            # TODO point user to documentation?
-            e = "[skimming] config section requires subsection '[[user_classes]]'"
-            FastTripsLogger.error(e)
-            raise ValueError(e)
+        skim_config_df = pd.read_csv(Skimming.SKIMMING_CONFIG_FILE)
 
-        start_time = Skimming._read_config_value(parser['skimming'], "time_period_start", int)
-        end_time = Skimming._read_config_value(parser['skimming'], "time_period_end", int)
-        sample_interval = Skimming._read_config_value(parser['skimming'], "time_period_sampling_interval", int, default=10)
+        # name and order of fields that will be passed to SkimConfig
+        field_order = ["start_time", "end_time", "sampling_interval", "vot", "user_class", "purpose", "access_mode",
+                       "transit_mode", "egress_mode"]
 
-        if start_time < 0:
-            e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
-            FastTripsLogger.error(e)
-            raise ValueError(e)
-
-        if end_time < start_time:
-            e = "Skimming sampling end time is before start time."
-            FastTripsLogger.error(e)
-            raise ValueError(e)
-        elif sample_interval > (end_time - start_time):
-            e = "Skimming sampling interval is longer than total specified duration."
-            FastTripsLogger.error(e)
-            raise ValueError(e)
-        elif sample_interval <= 0:
-            e = f"Skimming sampling interval must be a positive integer, got {sample_interval}."
-            FastTripsLogger.error(e)
-            raise ValueError(e)
-
-
-        if not (end_time - start_time / sample_interval).is_integer():
-            FastTripsLogger.warning(f"Total duration from {start_time} to {end_time} is not a multiple of \n"
-                                    f"sample interval {sample_interval}. Final Skimming interval will be shorter than"
-                                    "all others.")
-
-        Skimming.start_time = start_time
-        Skimming.end_time = end_time
-        Skimming.sample_interval = sample_interval
-
-        user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
-
-        Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
-
-        # create mapping from fasttrips zone index to 0-based skim array index, and also from original zone id names to
-        # 0-based skimming indexes
-        Skimming.index_mapping = Skimming.create_index_mapping(FT)
-        Skimming.num_zones = len(Skimming.index_mapping)
-        Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
-
-    @staticmethod
-    def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
-                           default=MANDATORY_NO_DEFAULT):
-        if default == MANDATORY_NO_DEFAULT:
-            if key not in config_dict:
-                raise KeyError(f"Required key {key} missing from Skimming config")
-            value = config_dict[key]
-        else:
-            value = config_dict.get(key, default)
-        if typecast_func is not None:
-            try:
-                value = typecast_func(value)
-            except (TypeError, ValueError):
-                msg = f"Value {value} for key {key} in has non-permitted type {type(value)}"
-                expected_type = getattr(typecast_func, "__name__", None)
-                if expected_type is not None:
-                    msg += f" (expected {expected_type})"
-                FastTripsLogger.error(msg)
-                raise TypeError(msg)
-        return value
-
-    @staticmethod
-    def _parse_skimming_user_class_options(user_class_section: Dict) -> List[SkimConfig]:
-        """
-        Parse sections like
-                [[user_classes]]
-                    [[[real]]]
-                    personal_business = [ "walk-commuter_rail-walk", "walk-commuter_rail-walk" ]
-
-                    [[[not_real]]]
-                    meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
-        in the skimming config
-        """
-        # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup()
-        # so we can use it here
-        weights_df = PathSet.WEIGHTS_DF
-        pathweight_user_classes = weights_df['user_class'].unique()
-        skims_to_produce: List[SkimConfig] = []
-
-        if len(user_class_section) == 0:
-            raise ValueError(f"Skimming config user class list is empty")
-
-        for user_class_name, section_dict in user_class_section.items():
-
-            if user_class_name not in pathweight_user_classes:
-                raise ValueError(f"User class {user_class_name} not supplied in path weights file")
-
-            user_class_skims = Skimming._parse_skimming_user_class_modes(user_class_name, section_dict, weights_df)
-            skims_to_produce.extend(user_class_skims)
-        return skims_to_produce
-
-    @staticmethod
-    def _parse_skimming_user_class_modes(user_class_name: str, user_class_dict: Dict, weights_df) -> List[SkimConfig]:
-        """Parse lines like
-            meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
-        in the skimming config.
-        """
-        user_class_skims = []
-
-        legal_purposes = weights_df.loc[weights_df['user_class'] == user_class_name, 'purpose'].unique()
-        if len(user_class_dict) == 0:
-            raise ValueError(f"User Class {user_class_name} contains no purposes")
-        for purpose, mode_list in user_class_dict.items():
-            purpose_subset = weights_df[weights_df['purpose'] == purpose]
-            legal_access = purpose_subset.loc[purpose_subset['demand_mode_type'] == "access", 'demand_mode'].unique()
-            legal_transit = purpose_subset.loc[purpose_subset['demand_mode_type'] == "transit", 'demand_mode'].unique()
-            legal_egress = purpose_subset.loc[purpose_subset['demand_mode_type'] == "egress", 'demand_mode'].unique()
-
-            # Input validation
-            if purpose not in legal_purposes:
-                raise ValueError(f"Purpose {purpose} not supplied in path weights file")
-            try:
-                mode_list = json.loads(mode_list)
-            except:
-                raise ValueError(f"Mode-list for {user_class_name}:{purpose} could not be parsed. "
-                                 "Should be a (valid JSON) list.")
-            if not isinstance(mode_list, list):
-                raise ValueError(f"Mode-list for {user_class_name}:{purpose}  could not be parsed. "
-                                 "Should be a (valid JSON) list.")
-            if len(mode_list) == 0:
-                raise ValueError(f"Mode-list for  {user_class_name}:{purpose}  is empty")
-            else:
-                for i in mode_list:
-                    mode_list_err = f"Mode-list {i} should be a access-transit-egress hyphen delimited string, got {i}"
-                    if isinstance(i, str) is False:
-                        raise ValueError(
-                            mode_list_err
-                        )
-                    sub_mode_list = i.split("-")
-                    if len(sub_mode_list) != 3:
-                        raise ValueError(mode_list_err)
-                    for value, sub_mode, legal_list in zip(sub_mode_list, ("access", "transit", "egress"),
-                                                           (legal_access, legal_transit, legal_egress)):
-                        if value not in legal_list:
-                            raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
-                    user_class_skims.append(SkimConfig(user_class_name, purpose, *sub_mode_list))
-        return user_class_skims
+        Skimming.skim_set = skim_config_df.apply(lambda x: SkimConfig(*x[field_order].values), axis=1).to_list()
 
     @staticmethod
     def generate_skims(output_dir, FT, veh_trips_df=None):
@@ -268,7 +262,7 @@ class Skimming(object):
         Trip.reset_onboard(veh_trips_df)
 
         # run c++ extension
-        skim_config: SkimConfig
+        skim_config: SkimClasses
         skim_results = {}
         for skim_config in Skimming.skim_set:
             skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
@@ -282,7 +276,7 @@ class Skimming(object):
     def write_skim_matrices(skim_matrices):
         """
         writes
-        :param skim_matrices: {tuple(SkimConfig): {skim_type: Skim}}
+        :param skim_matrices: {tuple(SkimClasses): {skim_type: Skim}}
         :return: nil
         """
         # omx mapping of taz ids to indexes cannot be anything but integers, however that's not what we have
@@ -422,17 +416,17 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config):
+    def trip_list_for_skimming(pathset_paths_df, d_t, skim_classes):
         """ Trip list for skimming path cost calculations with Passenger.calculate_cost.
         """
         trip_list = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
                                       Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]].drop_duplicates()
-        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] = skim_config.user_class
-        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] = skim_config.purpose
-        trip_list[Passenger.TRIP_LIST_COLUMN_VOT] = mean_vot
-        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = skim_config.access_mode
-        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = skim_config.egress_mode
-        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = skim_config.transit_mode
+        trip_list[Passenger.TRIP_LIST_COLUMN_USER_CLASS] = skim_classes.user_class
+        trip_list[Passenger.TRIP_LIST_COLUMN_PURPOSE] = skim_classes.purpose
+        trip_list[Passenger.TRIP_LIST_COLUMN_VOT] = skim_classes.vot
+        trip_list[Passenger.TRIP_LIST_COLUMN_ACCESS_MODE] = skim_classes.access_mode
+        trip_list[Passenger.TRIP_LIST_COLUMN_EGRESS_MODE] = skim_classes.egress_mode
+        trip_list[Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE] = skim_classes.transit_mode
         trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME_MIN] = d_t
         trip_list[Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME_MIN] = 0  # should not be used because of time target
         trip_list[Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME] = Util.parse_minutes_to_time(int(d_t)) # need
@@ -477,9 +471,9 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, mean_vot, d_t, skim_config, FT):
+    def attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, d_t, skim_config, FT):
         # cost calc stuff, see Ass .2027: choose_paths_without_simulation
-        trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, mean_vot, d_t, skim_config)
+        trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, d_t, skim_config)
 
         pathset_paths_df, pathset_links_df = Skimming.attach_path_information_for_cost_calc(pathset_paths_df,
                                                                                             pathset_links_df,
@@ -570,7 +564,7 @@ class Skimming(object):
         return pathdict, perf_dict
 
     @staticmethod
-    def generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config: SkimConfig) -> Dict[str, "Skim"]:
+    def generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config: SkimClasses) -> Dict[str, "Skim"]:
         """
         Aggregate skims for all time periods together to produce a single average skim per skim type.
 
@@ -587,12 +581,6 @@ class Skimming(object):
         FastTripsLogger.info("Skimming")
         start_time = datetime.datetime.now()
         num_processes = Assignment.NUMBER_OF_PROCESSES
-
-        ####### VOT
-        # this should be configurable, if a list do for each, if not provided use mean
-        mean_vot = FT.passengers.trip_list_df[Passenger.TRIP_LIST_COLUMN_VOT].mean()
-        FastTripsLogger.info("Value of time for skimming is {}".format(mean_vot))
-        #######
 
         all_taz = list(Skimming.index_mapping.values())
         FastTripsLogger.debug(f"running origins {all_taz}")
@@ -634,7 +622,7 @@ class Skimming(object):
                 # store a few skims per timestep, rather than a collection of orig- all dests pathsets per timestep.
                 for origin in all_taz:
                     # populate tasks to process
-                    orig_data = SkimmingQueueInputData(QueueData.TO_PROCESS, origin, mean_vot, d_t, skim_config,
+                    orig_data = SkimmingQueueInputData(QueueData.TO_PROCESS, origin, d_t, skim_config,
                                                        trace=do_trace)
                     process_manager.todo_queue.put(orig_data)
 
@@ -666,7 +654,7 @@ class Skimming(object):
                                                                           FT.routes.modes_df)
 
             pathset_paths_df, pathset_links_df = Skimming.attach_costs(pathset_paths_df, pathset_links_df,
-                                                                       veh_trips_df, mean_vot, d_t, skim_config, FT)
+                                                                       veh_trips_df, d_t, skim_config, FT)
 
             # TODO Jan: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
             #  inbound (dir==2) and have probability one (only deterministic skimming for now)
@@ -787,16 +775,16 @@ from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
 
 
 class SkimmingQueueInputData(QueueData):
-    def __init__(self, state, origin, mean_vot, d_t, skim_config: SkimConfig, trace):
+    def __init__(self, state, origin, mean_vot, d_t, skim_config: SkimClasses, trace):
         super().__init__(state)
         self.origin = origin
-        self.mean_vot = mean_vot
         self.d_t = d_t
         self.user_class = skim_config.user_class
         self.purpose = skim_config.purpose
         self.access_mode = skim_config.access_mode
         self.transit_mode = skim_config.transit_mode
         self.egress_mode = skim_config.egress_mode
+        self.vot = skim_config.vot
         self.trace = trace
 
 
@@ -876,7 +864,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
         try:
             (pathdict, perf_dict) = Skimming.find_trip_based_pathset_skimming(
                 state_obj.origin,
-                state_obj.mean_vot,
+                state_obj.vot,
                 state_obj.d_t,
                 state_obj.user_class,
                 state_obj.purpose,
