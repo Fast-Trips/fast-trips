@@ -34,22 +34,23 @@ Skims are average level-of-service indicators. Given that fasttrips is trip-base
 averaging scheme. Since fasttrips is zone-based, we do not need to worry about spatial aggregation. We are
 therefore left with the following dimensions:
 
-1) temporal
-2) personal and trip attributes:
-
-    * value of time
-    * user class
-    * purpose
-    * access/egress mode
+1) temporal - which time range do we want to represent
+2) trip attributes - which access/egress mode combinations and which trip purposes do we want to represent
+3) personal attributes - user_class and value of time
 
 Regarding 1), the user has to specify a skimming start time, a skimming end time, and a sample interval. For each
 sampling interval, we build a shortest path from each origin to all destinations, calculate common skims,
 and then average over time sampling points by taking the mean.
 
-Regarding 2), the user can provide a list of combinations for which skims are sought. An example would be [(all,
-work, walk, transit, walk, 10)]. The generic form is [(user_class, purpose, access_mode, transit_mode, egress_mode,
-VoT)] and any number of these can be provided. Note that at the moment you will probably want to provide only one
-combination of (user_class, purpose, VoT) because of the pathfinding details mentioned in :ref:`Pathfinding details`.
+Regarding 2), the user has to provide values for which skims are sought. Any number of combinations can be provided
+as long as they are represented in the model (i.e. the access/egress mode need to be defined in the supply and the
+path weight file, and the purpose in the path weight file).
+
+Regarding 3), one could provide the mean value of time of the population, or several values to create several skims.
+
+
+Note that at the moment you will probably want to provide only one combination of (user_class, purpose, VoT) because
+of the pathfinding details mentioned in :ref:`Pathfinding details`.
 
 
 Running skimming
