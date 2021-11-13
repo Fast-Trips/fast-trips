@@ -58,7 +58,7 @@ Running skimming
 Either post-assignment via parameter in config_ft.txt in the fasttrips section: "create_skims = True"; or on the
 unassigned network (i.e. on the service schedule as per input files) via running Run.run_fasttrips_skimming().
 
-In both cases, fasttrips needs the the options listed in the following subsection.
+In both cases, fasttrips needs a csv file specifying the variables listed in the following subsection.
 
 
 Skimming parameters
@@ -133,12 +133,12 @@ Output format and location
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Skims are saved to the specified output directory in a sub-directory called skims. Currently, each combination of
-user class, purpose, access_mode, transit_mode, egress_mode for which skims have been requested will have its own
+user class, purpose, access_mode, transit_mode, egress_mode, VoT for which skims have been requested will have its own
 sub-directory, with each component a separate omx file in that directory. Each omx file contains the data and several
-attributes: Skim start time (start_time), skim end time (end_time), skim sampling period (sample_interval), the name
-of the skim (name), the number of zones ('num_zones'), and lastly an attribute called 'index_to_zone_ids'. This array
-encodes the mapping from skim index (0-based numpy indexing) to the zone identifier used in the input data. The
-position in the array corresponds to the index of the zone identifier in the skim matrix.
+attributes: All attributes listed in :ref:`Skimming parameters`, the name of the skim (name), the number of zones
+(num_zones), and lastly an attribute called 'index_to_zone_ids'. This array encodes the mapping from skim index
+(0-based numpy indexing) to the zone identifier used in the input data. The position in the array corresponds to the
+index of the zone identifier in the skim matrix.
 
 
 
