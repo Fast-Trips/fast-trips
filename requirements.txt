@@ -8,5 +8,4 @@ psutil
 pytest
 notebook
 jupyter
-configobj
 openmatrix

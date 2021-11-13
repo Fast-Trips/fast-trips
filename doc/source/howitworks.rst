@@ -55,28 +55,13 @@ of the pathfinding details mentioned in :ref:`Pathfinding details`.
 
 Running skimming
 ^^^^^^^^^^^^^^^^
-Either post-assignment via parameter in config_ft.txt in the fasttrips section: "create_skims = True"; or on the
-unassigned network (i.e. on the service schedule as per input files) via running Run.run_fasttrips_skimming().
 
-In both cases, fasttrips needs a csv file specifying the variables listed in the following subsection.
+Skimming can be run post-assignment by specifying "create_skims = True" in the fasttrips section of the config file.
+It can also be run on an unassigned network (i.e. on the service schedule as per input files) by running
+Run.run_fasttrips_skimming().
 
-
-Skimming parameters
-"""""""""""""""""""
-``time_period_start``
-  Start of skimming period in minutes after midnight.
-
-``time_period_end``
-  End of skimming period in minutes after midnight.
-
-``time_period_sampling_interval``
-  Sample frequency for skim path building in minutes. This means the number of skim path building runs is
-  (time_period_end - time_period_start) / time_period_sampling_interval.
-
-``find_a_good_name_here``
-[(user_class, purpose, access_mode, transit_mode, demand_mode, vot)]
-TODO Jan: this is not implemented yet, currently it uses configobj with indented syntax and mean vot (across the
-entire provided demand)
+In both cases, fasttrips requires the user to create a csv file specifying the variables listed in
+:ref:`io:Skim_classes_ft File`.
 
 
 Implemented components

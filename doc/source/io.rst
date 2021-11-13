@@ -444,7 +444,7 @@ to network inputs.)
 
 The configuration files are parsed by python's
 `ConfigParser module` <https://docs.python.org/2/library/configparser.html#module-ConfigParser>`_ and therefore
-adhere to that format, with three possible sections: *fasttrips*, *pathfinding* and *skimming*.
+adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
 
 Configuration Options: fasttrips
 """""""""""""""""""""""""""""""""""""
@@ -596,23 +596,6 @@ Configuration Options: pathfinding
 |                                         |          |                       | time target by this many minutes.             |
 +-----------------------------------------+----------+-----------------------+-----------------------------------------------+
 
-Configuration Options: skimming
-"""""""""""""""""""""""""""""""""""""""""""""""""""
-
-+-----------------------------------+----------+-----------+-----------------------------------------------------------+
-| *Option Name*                     | *Type*   | *Default* | *Description*                                             |
-+===================================+==========+===========+===========================================================+
-| ``time_period_start``             | int      | N/A       | Start of skimming period in minutes after midnight        |
-+-----------------------------------+----------+-----------+-----------------------------------------------------------+
-| ``time_period_end``               | int      | N/A       | End of skimming period in minutes after midnight          |
-+-----------------------------------+----------+-----------+-----------------------------------------------------------+
-| ``time_period_sampling_interval`` | int      | N/A       | Sample frequency for skim path building                   |
-+-----------------------------------+----------+-----------+-----------------------------------------------------------+
-| ``skim_classes``                  | string   | N/A       | A list of tuples of (user_class, purpose, access_mode,    |
-|                                   |          |           | transit_mode, egress_mode, value of time) for which       |
-|                                   |          |           | separate skims should be generated. These definition of   |
-|                                   |          |           | these variables can be found in :ref:`Passenger Demand`.  |
-+-----------------------------------+----------+-----------+-----------------------------------------------------------+
 
 
 More on Overlap Path Size Penalties
@@ -687,6 +670,44 @@ The function name for user class is specified in the *pathfinding* input paramet
       if row_series["hh_id"].lower() in ["simpson","brady","addams","jetsons","flintstones"]:
           return "fictional"
       return "real"
+
+
+
+
+Skim_classes_ft File
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If skimming is turned on in :ref:`Configuration Options: fasttrips`, then fasttrips requires a file which specifies
+the combination of parameters for which skims are sought, like time periods, access/egress modes, etc.
+The file must be in csv format and for each line, a separate skim is generated. Note that there are no default
+values so each parameter must be specified on each line. The following columns are required.
+
++-----------------------+--------+-------------------------------------------------------------------------+
+| *Parameter Name*      | *Type* |  *Description*                                                          |
++=======================+========+=========================================================================+
+| ``start_time``        | int    | Start of skimming period in minutes after midnight                      |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``end_time``          | int    | End of skimming period in minutes after midnight                        |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``sampling_interval`` | int    | Sample frequency for skim path building in minutes. This means the      |
+|                       |        | number of skim path building runs is                                    |
+|                       |        | (time_period_end - time_period_start) / time_period_sampling_interval.  |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``vot``               | float  | Value of time for skim calculation.                                     |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``purpose``           | float  | Trip purpose.                                                           |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``access_mode``       | float  | Access mode used to access PT services.                                 |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``transit_mode``      | float  | Transit demand mode (see below table).                                  |
++-----------------------+------- +-------------------------------------------------------------------------+
+| ``egress_mode``       | float  | Egress mode used to reach destination from final PT stop.               |
++-----------------------+------- +-------------------------------------------------------------------------+
+
+
+Note that the modes are demand modes as defined in :ref:`Passenger Demand`; see also
+:ref:`Determining supply modes and weight values`.
+
 
 
 
