@@ -60,8 +60,8 @@ Skimming can be run post-assignment by specifying "create_skims = True" in the f
 It can also be run on an unassigned network (i.e. on the service schedule as per input files) by running
 Run.run_fasttrips_skimming().
 
-In both cases, fasttrips requires the user to create a csv file specifying the variables listed in
-:ref:`skim_class_file`.
+In both cases, fasttrips requires the user to create a csv file specifying the variables listed in the
+:ref:`skim config file <skim_class_file>`.
 
 
 Implemented components
