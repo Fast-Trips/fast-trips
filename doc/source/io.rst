@@ -599,17 +599,20 @@ Configuration Options: pathfinding
 Configuration Options: skimming
 """""""""""""""""""""""""""""""""""""""""""""""""""
 
-+---------------------------------------+----------+-----------+----------------------------------------------------+
-| *Option Name*                         | *Type*   | *Default* | *Description*                                      |
-+=======================================+==========+===========+====================================================+
-| ``time_period_start``                 | int      | N/A       | Start of skimming period in minutes after midnight |
-+---------------------------------------+----------+-----------+----------------------------------------------------+
-| ``time_period_end``                   | int      | N/A       | End of skimming period in minutes after midnight   |
-+---------------------------------------+----------+-----------+----------------------------------------------------+
-| ``time_period_sampling_interval``     | int      | N/A       | Sample frequency for skim path building            |
-+---------------------------------------+----------+-----------+----------------------------------------------------+
-| ``user_class``                        | string   | N/A       |  ##TODO Not documented yet.                        |
-+---------------------------------------+----------+-----------+----------------------------------------------------+
++-----------------------------------+----------+-----------+-----------------------------------------------------------+
+| *Option Name*                     | *Type*   | *Default* | *Description*                                             |
++===================================+==========+===========+===========================================================+
+| ``time_period_start``             | int      | N/A       | Start of skimming period in minutes after midnight        |
++-----------------------------------+----------+-----------+-----------------------------------------------------------+
+| ``time_period_end``               | int      | N/A       | End of skimming period in minutes after midnight          |
++-----------------------------------+----------+-----------+-----------------------------------------------------------+
+| ``time_period_sampling_interval`` | int      | N/A       | Sample frequency for skim path building                   |
++-----------------------------------+----------+-----------+-----------------------------------------------------------+
+| ``skim_classes``                  | string   | N/A       | A list of tuples of (user_class, purpose, access_mode,    |
+|                                   |          |           | transit_mode, egress_mode, value of time) for which       |
+|                                   |          |           | separate skims should be generated. These definition of   |
+|                                   |          |           | these variables can be found in :ref:`Passenger Demand`.  |
++-----------------------------------+----------+-----------+-----------------------------------------------------------+
 
 
 More on Overlap Path Size Penalties
@@ -1032,7 +1035,7 @@ Skimming Output
   .com/osPlanning/omx-python/blob/337ea4deff0c0055a6e792a5bf45aabf3fc82075/openmatrix/File.py#L284>`_ currently.
 
 
-``skims/{user_class}_{purpose}_{access}_{transit}_{egress}/{skim_name}.omx``
-  For each requested combination of (user_class, purpose, access_mode, transit_mode, egress_mode) there is a
+``skims/{user_class}_{purpose}_{access}_{transit}_{egress}_{vot}/{skim_name}.omx``
+  For each requested combination of (user_class, purpose, access_mode, transit_mode, egress_mode, vot) there is a
   corresponding sub-directory which contains all skims. All components are saved to individual omx files, with the file
   name a combination of component_name, skim start time, skim end time, and skim sampling interval.
