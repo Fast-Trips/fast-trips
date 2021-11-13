@@ -837,6 +837,10 @@ class Assignment(object):
                         (num_passengers_arrived, pathset_paths_df, pathset_links_df) = \
                             Assignment.choose_paths_without_simulation(FT, output_dir, iteration, pathfinding_iteration, pathset_paths_df, pathset_links_df, veh_trips_df)
 
+                        # if bump_iter doesn't exist, needed for save_choices below
+                        if Assignment.SIM_COL_PAX_BUMP_ITER not in pathset_paths_df:
+                            pathset_paths_df[Assignment.SIM_COL_PAX_BUMP_ITER] = -1
+
                 FT.performance.record_step_start(iteration, pathfinding_iteration, -1, "output_per_pathfinding_iteration")
 
                 # Set new schedule
@@ -2057,7 +2061,7 @@ class Assignment(object):
         ######################################################################################################
         FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
         (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, FT.veh_trips_df,
+            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
             FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
             reset_bump_iter=simulation_iteration==0)
 
