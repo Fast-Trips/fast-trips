@@ -1,9 +1,4 @@
-"""Test config changes introduced by skimming. Test options work as intended and configs
-are backwards compatible with the non-skimming use case.
-
-Note that temp files are required because the standard library configparser (used in assignment) doesn't support
-io.StringIO properly.
-
+"""Test skimming config parsing.
 """
 import os
 import re
@@ -32,72 +27,14 @@ INPUT_FUNCTIONS = os.path.join(INPUT_CONFIG, "config_ft.py")
 INPUT_WEIGHTS = os.path.join(INPUT_CONFIG, "pathweight_ft.txt")
 
 
-# TODO stuff less than 0?
-# Test a series of input configs, validate that they don't crash the assignment parsing
-# and that they catch errors and produce sensible messages
-
 skimming_cases = []
 skimming_fail_reasons = []
 
-no_skimming_config = """
-[fasttrips]
-network_build_date            = 06/30/2015
-trace_ids                     = [(0, "pnr_7")]
-number_of_processes           = 3
-debug_output_columns          = True
-
-[pathfinding]
-user_class_function           = generic_user_class
-pathweights_fixed_width       = True
-overlap_chunk_size            = 50
-utils_conversion_factor       = 20
-"""
-
-full_skimming_config = no_skimming_config + (
-    """
-[skimming]
-time_period_start             =900
-time_period_end               =960
-time_period_sampling_interval =30
-
-    [[user_classes]]
-        [[[real]]]
-        meal = [ "walk-local_bus-walk", "PNR-local_bus-walk" ]
-        personal_business = [ "walk-commuter_rail-walk", "PNR-commuter_rail-walk" ]
-
-        [[[not_real]]]
-        meal = [ "PNR-commuter_rail-walk", "walk-commuter_rail-PNR" ]
-        personal_business = [ "PNR-local_bus-walk"]
-
-"""
-)
 
 # note this one should not fail, is also checked specially that values are right
-skimming_cases.append((full_skimming_config, "full_skimming_config"))
+skimming_cases.append((no_skimming_config, "no_skimming_config"))
 skimming_fail_reasons.append((None, None))
 
-
-skimming_cases.append((no_skimming_config, "assignment_config_no_skimming"))
-skimming_fail_reasons.append((ValueError, re.escape("Skimming requires additional config file section '[skimming]'")))
-
-
-skimming_header_config = no_skimming_config + (
-    """
-[skimming]
-"""
-)
-skimming_cases.append((skimming_header_config, "header_only"))
-skimming_fail_reasons.append(
-    (ValueError, re.escape("[skimming] config section requires subsection '[[user_classes]]'"))
-)
-
-partial_skimming_config = no_skimming_config + (
-    """
-[skimming]
-time_period_start             =900
-time_period_end               =960
-"""
-)
 skimming_cases.append((partial_skimming_config, "start_end_only"))
 skimming_fail_reasons.append(
     (ValueError, re.escape("[skimming] config section requires subsection '[[user_classes]]'"))
@@ -155,12 +92,6 @@ bad_skimming_config7 = full_skimming_config.replace("PNR", "foo")
 skimming_cases.append((bad_skimming_config7, "bad mode"))
 skimming_fail_reasons.append((ValueError, "Value foo not in path weights file for mode sub-leg 'access'"))
 
-bad_skimming_config7 = full_skimming_config.replace("-", "<>")
-skimming_cases.append((bad_skimming_config7, "bad delimiter"))
-skimming_fail_reasons.append(
-    (ValueError, "Mode-list walk<>local_bus<>walk should be a access-transit-egress hyphen delimited string, "
-                 "got walk<>local_bus<>walk")
-)
 
 test_ids = [i[1] for i in skimming_cases]
 
@@ -221,7 +152,7 @@ def test_skimming_config_parsing_catches_errors(config_file_bundle, ft):
 @pytest.fixture(params=full_skimming_config, ids=test_ids)
 def legal_config(request):
     config_str = request.param
-    # note can't use StringIO with current Assignment parser, file is hard coded as expected.
+    # note can't use StringIO with current Assignment parser, file is hard coded.
 
     fp = tempfile.NamedTemporaryFile(mode="w", delete=False)
     print(config_str, file=fp)
@@ -229,21 +160,3 @@ def legal_config(request):
     # pass config_str through to help with debugging
     yield fp.name, config_str
     os.remove(fp.name)
-
-
-def check_legal_config_values(legal_config):
-    Skimming.read_skimming_configuration(legal_config)
-
-    assert Skimming.start_time == 900
-    assert Skimming.end_time == 960
-    assert Skimming.sample_interval == 30
-    expected_skim_set = [
-        SkimConfig("real", "meal", "walk", "local_bus", "walk"),
-        SkimConfig("real", "meal", "PNR", "local_bus", "walk"),
-        SkimConfig("real", "personal_business", "walk", "commuter_rail", "walk"),
-        SkimConfig("real", "personal_business", "PNR", "commuter_rail", "walk"),
-        SkimConfig("not_real", "meal", "PNR", "commuter_rail", "walk"),
-        SkimConfig("not_real", "meal", "walk", "commuter_rail", "PNR"),
-        SkimConfig("not_real", "personal_business", "PNR", "local_bus", "walk"),
-    ]
-    assert Skimming.skim_set == expected_skim_set
