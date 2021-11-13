@@ -1,9 +1,4 @@
 from __future__ import division
-
-import json
-import multiprocessing as mp
-import os
-from pathlib import Path
 from builtins import range
 from builtins import object
 
@@ -23,9 +18,11 @@ __license__ = """
 """
 
 import sys
+import os
 import datetime
-
-from typing import Dict, Union, Callable, Optional, List, Tuple
+from pathlib import Path
+import multiprocessing as mp
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -43,11 +40,6 @@ from .TAZ import TAZ
 from .Trip import Trip
 from .Util import Util
 
-# from collections import namedtuple
-# SkimClasses = namedtuple(
-#     "SkimClasses", field_names=["start_time", "end_time", "sampling_interval", "user_class", "purpose", "access_mode",
-#                                 "transit_mode", "egress_mode", "vot"]
-# )
 
 class SkimConfig(object):
     """Skimming config options.
@@ -68,8 +60,6 @@ class SkimConfig(object):
         self.egress_mode = egress_mode
 
         self.validate_options()
-
-        # self.derive_properties()
 
     def validate_options(self):
         """ Validates skim config options. Times are sense checked, demand related quantities are checked against
@@ -211,20 +201,19 @@ class Skimming(object):
 
         output_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
 
-        skim_attribs = {"start_time": Skimming.start_time,
-                        "end_time": Skimming.end_time,
-                        "sample_interval": Skimming.sample_interval}
+        for skim_config, skims in skim_matrices.items():
+            # skim_attribs = {"start_time": skim_config.start_time,
+            #                 "end_time": skim_config.end_time,
+            #                 "sample_interval": skim_config.sample_interval,
+            #                 "vot": skim_config.vot}
+            skim_attribs = vars(skim_config)  # just add everything to omx attributes
 
-        for skim_config_tuple, skims in skim_matrices.items():
-            # TODO Jan: Remove once debug output gets removed
-            skims = skims[0]
-
-            purp_user_output_dir = output_dir / "_".join(skim_config_tuple)
+            purp_user_output_dir = output_dir / skim_config.demand_string()
             purp_user_output_dir.mkdir(parents=True, exist_ok=True)
 
             FastTripsLogger.debug(f"Writing skims")
             for k, v in skims.items():
-                skim_name = f"{k}_{Skimming.start_time}_{Skimming.end_time}_{Skimming.sample_interval}.omx"
+                skim_name = f"{k}_{skim_config.start_time}_{skim_config.end_time}_{skim_config.sample_interval}.omx"
                 v.write_to_file(skim_name, purp_user_output_dir, attributes=skim_attribs)
 
     @classmethod
@@ -522,8 +511,7 @@ class Skimming(object):
         # finalizer.
         skims_path_set = {t: {} for t in time_sampling_points}
 
-        time_indexed_skims = {}  # {t: [] for t in time_sampling_points}
-        stuff = {t: [] for t in time_sampling_points}
+        time_indexed_skims = {}
 
         for d_t in time_sampling_points:
             d_t_datetime = Util.parse_minutes_to_time(int(d_t))
@@ -570,7 +558,6 @@ class Skimming(object):
                 process_manager.wait_and_finalize(task_finalizer=origin_finalizer)
             except Exception as e:
                 process_manager.exception_handler(e)
-
             # end of the time step collate paths into skims
 
             # extract path and path link dataframes. pathset_paths not used for now.
@@ -583,17 +570,13 @@ class Skimming(object):
             pathset_paths_df, pathset_links_df = Skimming.attach_costs(pathset_paths_df, pathset_links_df,
                                                                        veh_trips_df, d_t, skim_config, FT)
 
-            # TODO Jan: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
+            # TODO: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
             #  inbound (dir==2) and have probability one (only deterministic skimming for now)
 
             skim_matrices = Skimming.extract_matrices(pathset_links_df, d_t_datetime)
             # now that we have skim matrix for d_t, we can drop the pathsets for this time_sample
             skims_path_set.pop(d_t)
-            #time_indexed_skims[d_t].append(skim_matrices)
             time_indexed_skims[d_t] = skim_matrices
-
-            stuff[d_t].append(pathset_paths_df)
-            stuff[d_t].append(pathset_links_df)
 
         # average skims over time periods.
         agg_skims = Skimming._aggregate_skims(time_indexed_skims, op="mean")
@@ -605,8 +588,7 @@ class Skimming(object):
             int((time_elapsed.total_seconds() % 3600) / 60),
             time_elapsed.total_seconds() % 60))
 
-        # FIXME TESTING don't return stuff and remove it
-        return agg_skims, stuff
+        return agg_skims
 
     @staticmethod
     def _aggregate_skims(time_indexed_skims: Dict[int, List[Dict[str, "Skim"]]], op="mean") -> Dict[str, "Skim"]:
