@@ -309,6 +309,8 @@ The following is an example of a minimally specified ``pathweight_ft.txt`` :
 | ``transfer``         | ``transfer``      | ``transfer``    | ``time_min``           | .02              |
 +----------------------+-------------------+-----------------+------------------------+------------------+
 
+
+.. _supply_modes_and_weights:
 Determining supply modes and weight values
 """"""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -672,8 +674,7 @@ The function name for user class is specified in the *pathfinding* input paramet
       return "real"
 
 
-
-
+.. _skim_class_file:
 Skim_classes_ft File
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -705,8 +706,8 @@ values so each parameter must be specified on each line. The following columns a
 +-----------------------+------- +-------------------------------------------------------------------------+
 
 
-Note that the modes are demand modes as defined in :ref:`Passenger Demand`; see also
-:ref:`Determining supply modes and weight values`.
+Note that the modes are demand modes as defined in :ref:`passenger_demand`; see also
+:ref:`supply_modes_and_weights`.
 
 
 

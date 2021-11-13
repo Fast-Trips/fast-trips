@@ -50,7 +50,7 @@ Regarding 3), one could provide the mean value of time of the population, or sev
 
 
 Note that at the moment you will probably want to provide only one combination of (user_class, purpose, VoT) because
-of the pathfinding details mentioned in :ref:`Pathfinding details`.
+of the pathfinding details mentioned in :ref:`pathfinding_details`.
 
 
 Running skimming
@@ -61,7 +61,7 @@ It can also be run on an unassigned network (i.e. on the service schedule as per
 Run.run_fasttrips_skimming().
 
 In both cases, fasttrips requires the user to create a csv file specifying the variables listed in
-:ref:`io:Skim_classes_ft File`.
+:ref:`skim_class_file`.
 
 
 Implemented components
@@ -103,6 +103,7 @@ All times are in seconds, fares are in whatever currency unit is provided.
   purpose, access_mode, transit_mode, egress_mode, value_of_time combination as provided in ``config_ft``.
 
 
+.. _pathfinding_details:
 Pathfinding details
 ^^^^^^^^^^^^^^^^^^^
 FastTrips runs skimming as a post-processing step to assignment. Skimming uses deterministic pathfinding, with the only
@@ -120,7 +121,7 @@ Output format and location
 Skims are saved to the specified output directory in a sub-directory called skims. Currently, each combination of
 user class, purpose, access_mode, transit_mode, egress_mode, VoT for which skims have been requested will have its own
 sub-directory, with each component a separate omx file in that directory. Each omx file contains the data and several
-attributes: All attributes listed in :ref:`Skimming parameters`, the name of the skim (name), the number of zones
+attributes: All attributes listed in :ref:`skim_class_file`, the name of the skim (name), the number of zones
 (num_zones), and lastly an attribute called 'index_to_zone_ids'. This array encodes the mapping from skim index
 (0-based numpy indexing) to the zone identifier used in the input data. The position in the array corresponds to the
 index of the zone identifier in the skim matrix.
