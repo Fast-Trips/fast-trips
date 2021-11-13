@@ -95,92 +95,25 @@ class SkimConfig(object):
                                     f"sample interval {self.sample_interval}. Final Skimming interval will be shorter "
                                     "than all others.")
 
+        # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup() so we can use it here
+        weights_df = PathSet.WEIGHTS_DF
+        pathweight_user_classes = weights_df['user_class'].unique()
+        if self.user_class not in pathweight_user_classes:
+            raise ValueError(f"User class {self.user_class} not supplied in path weights file")
 
+        legal_purposes = weights_df.loc[weights_df['user_class'] == self.user_class, 'purpose'].unique()
+        if self.purpose not in legal_purposes:
+            raise ValueError(f"Purpose {self.purpose} not supplied in path weights file")
 
-    #     user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
-    #
-    #     Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
-    #
-
-    #
-    #
-    # @staticmethod
-    # def _parse_skimming_user_class_options(user_class_section: Dict) -> List[SkimClasses]:
-    #     """
-    #     Parse sections like
-    #             [[user_classes]]
-    #                 [[[real]]]
-    #                 personal_business = [ "walk-commuter_rail-walk", "walk-commuter_rail-walk" ]
-    #
-    #                 [[[not_real]]]
-    #                 meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
-    #     in the skimming config
-    #     """
-    #     # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup()
-    #     # so we can use it here
-    #     weights_df = PathSet.WEIGHTS_DF
-    #     pathweight_user_classes = weights_df['user_class'].unique()
-    #     skims_to_produce: List[SkimClasses] = []
-    #
-    #     if len(user_class_section) == 0:
-    #         raise ValueError(f"Skimming config user class list is empty")
-    #
-    #     for user_class_name, section_dict in user_class_section.items():
-    #
-    #         if user_class_name not in pathweight_user_classes:
-    #             raise ValueError(f"User class {user_class_name} not supplied in path weights file")
-    #
-    #         user_class_skims = Skimming._parse_skimming_user_class_modes(user_class_name, section_dict, weights_df)
-    #         skims_to_produce.extend(user_class_skims)
-    #     return skims_to_produce
-    #
-    # @staticmethod
-    # def _parse_skimming_user_class_modes(user_class_name: str, user_class_dict: Dict, weights_df) -> List[SkimClasses]:
-    #     """Parse lines like
-    #         meal = [ "PNR-local_bus-walk", "walk-local_bus-PNR" ]
-    #     in the skimming config.
-    #     """
-    #     user_class_skims = []
-    #
-    #     legal_purposes = weights_df.loc[weights_df['user_class'] == user_class_name, 'purpose'].unique()
-    #     if len(user_class_dict) == 0:
-    #         raise ValueError(f"User Class {user_class_name} contains no purposes")
-    #     for purpose, mode_list in user_class_dict.items():
-    #         purpose_subset = weights_df[weights_df['purpose'] == purpose]
-    #         legal_access = purpose_subset.loc[purpose_subset['demand_mode_type'] == "access", 'demand_mode'].unique()
-    #         legal_transit = purpose_subset.loc[purpose_subset['demand_mode_type'] == "transit", 'demand_mode'].unique()
-    #         legal_egress = purpose_subset.loc[purpose_subset['demand_mode_type'] == "egress", 'demand_mode'].unique()
-    #
-    #         # Input validation
-    #         if purpose not in legal_purposes:
-    #             raise ValueError(f"Purpose {purpose} not supplied in path weights file")
-    #         try:
-    #             mode_list = json.loads(mode_list)
-    #         except:
-    #             raise ValueError(f"Mode-list for {user_class_name}:{purpose} could not be parsed. "
-    #                              "Should be a (valid JSON) list.")
-    #         if not isinstance(mode_list, list):
-    #             raise ValueError(f"Mode-list for {user_class_name}:{purpose}  could not be parsed. "
-    #                              "Should be a (valid JSON) list.")
-    #         if len(mode_list) == 0:
-    #             raise ValueError(f"Mode-list for  {user_class_name}:{purpose}  is empty")
-    #         else:
-    #             for i in mode_list:
-    #                 mode_list_err = f"Mode-list {i} should be a access-transit-egress hyphen delimited string, got {i}"
-    #                 if isinstance(i, str) is False:
-    #                     raise ValueError(
-    #                         mode_list_err
-    #                     )
-    #                 sub_mode_list = i.split("-")
-    #                 if len(sub_mode_list) != 3:
-    #                     raise ValueError(mode_list_err)
-    #                 for value, sub_mode, legal_list in zip(sub_mode_list, ("access", "transit", "egress"),
-    #                                                        (legal_access, legal_transit, legal_egress)):
-    #                     if value not in legal_list:
-    #                         raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
-    #                 user_class_skims.append(SkimClasses(user_class_name, purpose, *sub_mode_list))
-    #     return user_class_skims
-
+        purpose_subset = weights_df[weights_df['purpose'] == self.purpose]
+        legal_access = purpose_subset.loc[purpose_subset['demand_mode_type'] == "access", 'demand_mode'].unique()
+        legal_transit = purpose_subset.loc[purpose_subset['demand_mode_type'] == "transit", 'demand_mode'].unique()
+        legal_egress = purpose_subset.loc[purpose_subset['demand_mode_type'] == "egress", 'demand_mode'].unique()
+        for value, sub_mode, legal_list in zip((self.access_mode, self.transit_mode, self.egress_mode),
+                                               ("access", "transit", "egress"),
+                                               (legal_access, legal_transit, legal_egress)):
+            if value not in legal_list:
+                raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
 
 class Skimming(object):
     """
