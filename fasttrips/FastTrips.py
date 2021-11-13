@@ -199,7 +199,7 @@ class FastTrips(object):
 
         try:
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
-            Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, self)
+            Skimming.read_skimming_configuration(self)
             r = Skimming.generate_skims(output_dir, self)
             Skimming.write_skim_matrices(r)
 

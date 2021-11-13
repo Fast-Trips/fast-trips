@@ -902,7 +902,7 @@ class Assignment(object):
         if Assignment.CREATE_SKIMS:
             from .Skimming import Skimming
             FastTripsLogger.info("STARTING SKIMMING")
-            Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT)
+            Skimming.read_skimming_configuration(FT)
             skims = Skimming.generate_skims(output_dir, FT, veh_trips_df)
             Skimming.write_skim_matrices(skims)
 

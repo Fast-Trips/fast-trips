@@ -25,7 +25,6 @@ __license__ = """
 import sys
 import datetime
 
-import configparser
 from typing import Dict, Union, Callable, Optional, List, Tuple
 
 import numpy as np
@@ -44,8 +43,7 @@ from .TAZ import TAZ
 from .Trip import Trip
 from .Util import Util
 
-from collections import namedtuple
-
+# from collections import namedtuple
 # SkimClasses = namedtuple(
 #     "SkimClasses", field_names=["start_time", "end_time", "sampling_interval", "user_class", "purpose", "access_mode",
 #                                 "transit_mode", "egress_mode", "vot"]
@@ -68,67 +66,43 @@ class SkimConfig(object):
         self.access_mode = access_mode
         self.transit_mode = transit_mode
         self.egress_mode = egress_mode
-    #
-    # #def
-    #
-    #     if start_time < 0:
-    #         e = f"Start time must be specified as non-negative minutes after midnight, got {start_time}."
-    #         FastTripsLogger.error(e)
-    #         raise ValueError(e)
-    #
-    #     if end_time < start_time:
-    #         e = "Skimming sampling end time is before start time."
-    #         FastTripsLogger.error(e)
-    #         raise ValueError(e)
-    #     elif sample_interval > (end_time - start_time):
-    #         e = "Skimming sampling interval is longer than total specified duration."
-    #         FastTripsLogger.error(e)
-    #         raise ValueError(e)
-    #     elif sample_interval <= 0:
-    #         e = f"Skimming sampling interval must be a positive integer, got {sample_interval}."
-    #         FastTripsLogger.error(e)
-    #         raise ValueError(e)
-    #
-    #
-    #     if not (end_time - start_time / sample_interval).is_integer():
-    #         FastTripsLogger.warning(f"Total duration from {start_time} to {end_time} is not a multiple of \n"
-    #                                 f"sample interval {sample_interval}. Final Skimming interval will be shorter than"
-    #                                 "all others.")
-    #
-    #     Skimming.start_time = start_time
-    #     Skimming.end_time = end_time
-    #     Skimming.sample_interval = sample_interval
-    #
+
+        self.validate_options()
+
+        # self.derive_properties()
+
+    def validate_options(self):
+        if self.start_time < 0:
+            e = f"Start time must be specified as non-negative minutes after midnight, got {self.start_time}."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
+        if self.end_time < self.start_time:
+            e = "Skimming sampling end time is before start time."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+        elif self.sample_interval > (self.end_time - self.start_time):
+            e = "Skimming sampling interval is longer than total specified duration."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+        elif self.sample_interval <= 0:
+            e = f"Skimming sampling interval must be a positive integer, got {self.sample_interval}."
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
+        if not (self.end_time - self.start_time / self.sample_interval).is_integer():
+            FastTripsLogger.warning(f"Total duration from {self.start_time} to {self.end_time} is not a multiple of "
+                                    f"sample interval {self.sample_interval}. Final Skimming interval will be shorter "
+                                    "than all others.")
+
+
+
     #     user_class_section: dict = Skimming._read_config_value(parser['skimming'], 'user_classes', typecast_func=None)
     #
     #     Skimming.skim_set = Skimming._parse_skimming_user_class_options(user_class_section)
     #
-    #     # create mapping from fasttrips zone index to 0-based skim array index, and also from original zone id names to
-    #     # 0-based skimming indexes
-    #     Skimming.index_mapping = Skimming.create_index_mapping(FT)
-    #     Skimming.num_zones = len(Skimming.index_mapping)
-    #     Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
+
     #
-    # @staticmethod
-    # def _read_config_value(config_dict: dict, key: str, typecast_func: Optional[Callable],
-    #                        default=MANDATORY_NO_DEFAULT):
-    #     if default == MANDATORY_NO_DEFAULT:
-    #         if key not in config_dict:
-    #             raise KeyError(f"Required key {key} missing from Skimming config")
-    #         value = config_dict[key]
-    #     else:
-    #         value = config_dict.get(key, default)
-    #     if typecast_func is not None:
-    #         try:
-    #             value = typecast_func(value)
-    #         except (TypeError, ValueError):
-    #             msg = f"Value {value} for key {key} in has non-permitted type {type(value)}"
-    #             expected_type = getattr(typecast_func, "__name__", None)
-    #             if expected_type is not None:
-    #                 msg += f" (expected {expected_type})"
-    #             FastTripsLogger.error(msg)
-    #             raise TypeError(msg)
-    #     return value
     #
     # @staticmethod
     # def _parse_skimming_user_class_options(user_class_section: Dict) -> List[SkimClasses]:
@@ -231,7 +205,7 @@ class Skimming(object):
     SKIMMING_CONFIG_FILE = None
 
     @staticmethod
-    def read_skimming_configuration():
+    def read_skimming_configuration(FT):
         """
         Read the skimming related configuration parameters from :py:attr:`Skimming.SKIMMING_CONFIG_FILE`
         """
@@ -247,6 +221,12 @@ class Skimming(object):
                        "transit_mode", "egress_mode"]
 
         Skimming.skim_set = skim_config_df.apply(lambda x: SkimConfig(*x[field_order].values), axis=1).to_list()
+
+        # create mapping from fasttrips zone index to 0-based skim array index, and also from original zone id names to
+        # 0-based skimming indexes
+        Skimming.index_mapping = Skimming.create_index_mapping(FT)
+        Skimming.num_zones = len(Skimming.index_mapping)
+        Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
 
     @staticmethod
     def generate_skims(output_dir, FT, veh_trips_df=None):
