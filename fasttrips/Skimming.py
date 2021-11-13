@@ -72,6 +72,9 @@ class SkimConfig(object):
         # self.derive_properties()
 
     def validate_options(self):
+        """ Validates skim config options. Times are sense checked, demand related quantities are checked against
+        values in path weight file"""
+
         if self.start_time < 0:
             e = f"Start time must be specified as non-negative minutes after midnight, got {self.start_time}."
             FastTripsLogger.error(e)
@@ -114,6 +117,17 @@ class SkimConfig(object):
                                                (legal_access, legal_transit, legal_egress)):
             if value not in legal_list:
                 raise ValueError(f"Value {value} not in path weights file for mode sub-leg '{sub_mode}'")
+
+    def time_string(self):
+        return f"start_time_{self.start_time}_end_time_{self.end_time}_sampling_interval_{self.sampling_interval}"
+
+    def demand_string(self):
+        return f"user_class_{self.user_class}_purpose_{self.purpose}_access_{self.access_mode}_" \
+            f"transit_{self.transit_mode}_egress_{self.egress_mode}_vot_{self.vot}"
+
+    def description(self):
+        return f"{self.time_string()}_{self.demand_string()}"
+
 
 class Skimming(object):
     """
@@ -175,11 +189,10 @@ class Skimming(object):
         Trip.reset_onboard(veh_trips_df)
 
         # run c++ extension
-        skim_config: SkimClasses
         skim_results = {}
         for skim_config in Skimming.skim_set:
             skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
-            skim_results[tuple(skim_config)] = skim_matrices
+            skim_results[skim_config] = skim_matrices
 
         return skim_results
 
