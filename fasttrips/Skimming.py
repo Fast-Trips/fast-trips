@@ -74,18 +74,18 @@ class SkimConfig(object):
             e = "Skimming sampling end time is before start time."
             FastTripsLogger.error(e)
             raise ValueError(e)
-        elif self.sample_interval > (self.end_time - self.start_time):
+        elif self.sampling_interval > (self.end_time - self.start_time):
             e = "Skimming sampling interval is longer than total specified duration."
             FastTripsLogger.error(e)
             raise ValueError(e)
-        elif self.sample_interval <= 0:
-            e = f"Skimming sampling interval must be a positive integer, got {self.sample_interval}."
+        elif self.sampling_interval <= 0:
+            e = f"Skimming sampling interval must be a positive integer, got {self.sampling_interval}."
             FastTripsLogger.error(e)
             raise ValueError(e)
 
-        if not (self.end_time - self.start_time / self.sample_interval).is_integer():
+        if not (self.end_time - self.start_time / self.sampling_interval).is_integer():
             FastTripsLogger.warning(f"Total duration from {self.start_time} to {self.end_time} is not a multiple of "
-                                    f"sample interval {self.sample_interval}. Final Skimming interval will be shorter "
+                                    f"sample interval {self.sampling_interval}. Final Skimming interval will be shorter "
                                     "than all others.")
 
         # this variable gets set as part of Run.py::run_fasttrips_skimming::run_setup() so we can use it here
@@ -138,7 +138,7 @@ class Skimming(object):
     num_zones: int
     #: Name of the output sub-directory all skimming related data is written to
     OUTPUT_DIR = "skims"
-    # name of skimming config file. TODO: make parameter
+    #: Name representing the skimming config file
     SKIMMING_CONFIG_FILE = None
 
     @staticmethod
@@ -151,7 +151,15 @@ class Skimming(object):
         # Read configuration from specified configuration directory
         FastTripsLogger.info("Reading configuration file %s for skimming" % Skimming.SKIMMING_CONFIG_FILE)
 
-        skim_config_df = pd.read_csv(Skimming.SKIMMING_CONFIG_FILE)
+        skim_config_df = pd.read_csv(Skimming.SKIMMING_CONFIG_FILE, dtype={"start_time": int, "end_time": int,
+                                                                           "sampling_interval": int, "vot": float,
+                                                                           "user_class": str, "purpose": str,
+                                                                           "access_mode": str, "transit_mode": str,
+                                                                           "egress_mode": str})
+        skim_config_df.columns = skim_config_df.columns.str.strip()
+        skim_config_df[["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]] = skim_config_df[[
+            "user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]].apply(lambda x: x.str.strip(),
+                                                                                          axis=1)
 
         # name and order of fields that will be passed to SkimConfig
         field_order = ["start_time", "end_time", "sampling_interval", "vot", "user_class", "purpose", "access_mode",
@@ -204,7 +212,7 @@ class Skimming(object):
         for skim_config, skims in skim_matrices.items():
             # skim_attribs = {"start_time": skim_config.start_time,
             #                 "end_time": skim_config.end_time,
-            #                 "sample_interval": skim_config.sample_interval,
+            #                 "sampling_interval": skim_config.sampling_interval,
             #                 "vot": skim_config.vot}
             skim_attribs = vars(skim_config)  # just add everything to omx attributes
 
@@ -213,7 +221,7 @@ class Skimming(object):
 
             FastTripsLogger.debug(f"Writing skims")
             for k, v in skims.items():
-                skim_name = f"{k}_{skim_config.start_time}_{skim_config.end_time}_{skim_config.sample_interval}.omx"
+                skim_name = f"{k}_{skim_config.start_time}_{skim_config.end_time}_{skim_config.sampling_interval}.omx"
                 v.write_to_file(skim_name, purp_user_output_dir, attributes=skim_attribs)
 
     @classmethod
@@ -504,7 +512,7 @@ class Skimming(object):
         # Do we want to expose this variable for debugging?
         do_trace = False
 
-        time_sampling_points = np.arange(skim_config.start_time, skim_config.end_time, skim_config.sample_interval)
+        time_sampling_points = np.arange(skim_config.start_time, skim_config.end_time, skim_config.sampling_interval)
         FastTripsLogger.debug(f"doing time points {time_sampling_points}")
 
         # This is semi-redundant, we just need a mutable variable to have broad enough scope to get values from
