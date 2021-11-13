@@ -707,7 +707,7 @@ values so each parameter must be specified on each line. The following columns a
 
 
 Note that the modes are demand modes as defined in :ref:`passenger_demand`; see also
-:ref:`supply_modes_and_weights`.
+:ref:`Determining supply modes and weight values <supply_modes_and_weights>`.
 
 
 
