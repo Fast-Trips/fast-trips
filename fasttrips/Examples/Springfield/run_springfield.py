@@ -11,8 +11,9 @@ OUTPUT_DIR          = os.path.join(EXAMPLE_DIR, 'output')
 OUTPUT_FOLDER       = "general_run"
 
 # INPUT FILE LOCATIONS
-CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_ft.txt')
+CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_skimming_ft.txt')
 INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
+SKIMMING_FILE       = os.path.join(INPUT_CONFIG, 'skim_classes_ft.txt')
 
 print "Running Fast-Trips in %s" % (EXAMPLE_DIR.split(os.sep)[-1:])
 
@@ -23,6 +24,7 @@ Run.run_fasttrips(
     input_weights    = INPUT_WEIGHTS,
     output_dir       = OUTPUT_DIR,
     output_folder    = OUTPUT_FOLDER,
+    skim_config_file = SKIMMING_FILE,
     pathfinding_type = "stochastic",
     overlap_variable = "count",
     overlap_split_transit = True,
