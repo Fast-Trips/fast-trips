@@ -225,8 +225,8 @@ _fasttrips_find_pathset_skimming(PyObject *self, PyObject *args)
                           &trace_i)) {
         return NULL;
     }
-    path_spec.hyperpath_      = false; //(hyperpath_i != 0);
-    path_spec.outbound_       = false; //(outbound_i  != 0);
+    path_spec.hyperpath_      = false; // Skimming uses deterministic path building
+    path_spec.outbound_       = false; // Skimming operates from one origin to all destinations
     path_spec.trace_          = (trace_i     != 0);
     path_spec.person_id_      = "none";
     path_spec.person_trip_id_ = "none";
