@@ -225,18 +225,12 @@ def run_fasttrips(**kwargs):
 
 def run_fasttrips_skimming(**kwargs):
     """
-    Wrapper function to set up and run fast-trips.
-    The fast trips parameters as a combination of parameters
-    read from the control file, but overwritten with parameters passed into this function.
+    Wrapper function to set up and run skimming without assignment.
     """
-    # instantiate and read configuration
     ft = run_setup(**kwargs)
-    # Read the networks and demand
     ft.read_input_files()
-    # Run Fast-Trips
-    # TODO Jan: remove ft return, using it for prototyping
     r = ft.run_skimming(fasttrips.Assignment.OUTPUT_DIR)
-    return ft, r
+    return r
 
 
 USAGE = r"""
