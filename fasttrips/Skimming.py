@@ -85,10 +85,10 @@ class SkimConfig(object):
             FastTripsLogger.error(e)
             raise ValueError(e)
 
-        if self.sampling_interval > Assignment.TIME_WINDOW:
-            FastTripsLogger.warning(f"Skim sampling interval of {self.sampling_interval} is larger than path finding "
-                                    f" time window of {Assignment.TIME_WINDOW}, which means not all possible paths "
-                                    f"will be considered.")
+        if self.sampling_interval > (Assignment.TIME_WINDOW.seconds / 60.0):
+            FastTripsLogger.warning(f"Skim sampling interval of {self.sampling_interval} minutes is larger than path "
+                                    f"finding time window of {Assignment.TIME_WINDOW.seconds / 60.0} minutes, "
+                                    f"which means not all possible paths will be considered.")
 
         if not (self.end_time - self.start_time / self.sampling_interval).is_integer():
             FastTripsLogger.warning(f"Total duration from {self.start_time} to {self.end_time} is not a multiple of "
