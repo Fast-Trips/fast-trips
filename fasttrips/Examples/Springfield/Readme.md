@@ -29,5 +29,8 @@ Config Files
 ------
 This folder contains three `pathweights_ft.txt` and `config_ft.txt` files each. The configs with extensions (`.pat` and `.alt`) are used by the test scripts. These should not be modified as they are targeted to test specific features in the code.
 
-Example `A` contains an additional config file `config_skimming_ft.txt` with skimming enabled, and a skimming config 
-file `skimming_classes_ft.csv`.
+Example config `A` contains an additional config file `config_skimming_ft.txt` with skimming enabled, and a skimming 
+config file `skimming_classes_ft.csv`. Example config `B` contains a skimming config (`skimming_classes_ft.csv`) and 
+an additional pathweight file `pathweight_skimming_ft.txt` where a new transit demand mode `transit` is defined. The
+specification is such that all PT supply modes are captured and used in skimming, in contrast to assignment where 
+local_bus and commuter_rail are separate demand modes.
