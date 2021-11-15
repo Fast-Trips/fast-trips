@@ -65,6 +65,10 @@ class SkimConfig(object):
         """ Validates skim config options. Times are sense checked, demand related quantities are checked against
         values in path weight file"""
 
+        int_vals = [self.start_time, self.end_time, self.sampling_interval, self.vot]
+        assert all(map(lambda x: isinstance(x, int), int_vals)), f"We need integers for times and vot, " \
+            f"but got {int_vals}"
+
         if self.start_time < 0:
             e = f"Start time must be specified as non-negative minutes after midnight, got {self.start_time}."
             FastTripsLogger.error(e)
