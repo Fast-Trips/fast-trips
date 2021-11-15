@@ -75,27 +75,45 @@ skimming_cases.append((skim_config_neg_sampling, "neg_sampling"))
 skimming_fail_reasons.append(
     (ValueError, re.escape("Skimming sampling interval must be a positive integer, got -2.")))
 
+skim_config_missing_userclass = \
+  """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
+900, 910, 5, 10, noone, shopping, walk, transit, walk
+"""
+skimming_cases.append((skim_config_missing_userclass, "missing_userclass"))
+skimming_fail_reasons.append(
+    (ValueError, re.escape("User class noone not supplied in path weights file")))
 
 skim_config_missing_purpose = \
   """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
 900, 910, 5, 10, all, shopping, walk, transit, walk
 """
+skimming_cases.append((skim_config_missing_purpose, "missing_purpose"))
+skimming_fail_reasons.append(
+    (ValueError, re.escape("Purpose shopping not supplied in path weights file")))
 
 skim_config_missing_transit = \
   """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
-920, 910, 5, 10, all, shopping, walk, super_fast_rail, walk
+900, 910, 5, 10, all, other, walk, super_fast_rail, walk
 """
+skimming_cases.append((skim_config_missing_transit, "missing_transit"))
+skimming_fail_reasons.append(
+    (ValueError, re.escape("Value super_fast_rail not in path weights file for mode sub-leg 'transit'")))
 
 skim_config_missing_access = \
   """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
-920, 910, 5, 10, all, shopping, kiss, transit, walk
+900, 910, 5, 10, all, other, kiss, transit, walk
 """
+skimming_cases.append((skim_config_missing_access, "missing_access"))
+skimming_fail_reasons.append(
+    (ValueError, re.escape("Value kiss not in path weights file for mode sub-leg 'access'")))
 
-skim_config_missing_access = \
+skim_config_missing_egress = \
   """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
-920, 910, 5, 10, all, shopping, kiss, transit, walk
+900, 910, 5, 10, all, other, walk, transit, kiss
 """
-
+skimming_cases.append((skim_config_missing_egress, "missing_egress"))
+skimming_fail_reasons.append(
+    (ValueError, re.escape("Value kiss not in path weights file for mode sub-leg 'egress'")))
 
 
 
