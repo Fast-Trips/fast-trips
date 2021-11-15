@@ -50,7 +50,7 @@ skim_config_vot_string = \
 """
 skimming_cases.append((skim_config_vot_string, "vot_string"))
 skimming_fail_reasons.append(
-    (AssertionError, re.escape("We need integers for times and vot, but got [900, 910, 5, ' very large']")))
+    (ValueError, re.escape("VoT needs to be a positive number, got  very large")))
 
 skim_config_end_before_start = \
   """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
