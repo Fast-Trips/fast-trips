@@ -129,7 +129,6 @@ def config_file_bundle(request):
     PathSet.WEIGHTS_FIXED_WIDTH = True #False
     Assignment.read_weights(weights_file=INPUT_WEIGHTS)
     # pass config_str through to help with debugging
-    #Skimming.SKIMMING_CONFIG_FILE = io.StringIO(config_str)
     ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
                     skim_config_file=io.StringIO(config_str))
     ft_.read_configuration()
