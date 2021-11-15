@@ -3,6 +3,7 @@
 import io
 import os
 from pathlib import Path
+import uuid
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ INPUT_NETWORK = os.path.join(EXAMPLE_DIR, "networks", "vermont")
 INPUT_DEMAND = os.path.join(EXAMPLE_DIR, "demand", "general")
 INPUT_CONFIG = os.path.join(EXAMPLE_DIR, "configs", "A")
 OUTPUT_DIR = os.path.join(EXAMPLE_DIR, "output")
-OUTPUT_FOLDER = "skimming_test"
+OUTPUT_FOLDER = str(uuid.uuid4())
 
 # INPUT FILE LOCATIONS
 CONFIG_FILE = os.path.join(INPUT_CONFIG, "config_skimming_ft.txt")

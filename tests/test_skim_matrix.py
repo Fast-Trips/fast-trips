@@ -1,6 +1,7 @@
 """Test skimming config parsing.
 """
 import os
+import uuid
 import numpy as np
 import openmatrix as omx
 
@@ -21,8 +22,11 @@ def skim():
 
 
 def test_skim_writing(skim, tmp_path):
-    skim.write_to_file(file_root=tmp_path, attributes=test_additional_attribs)
-    with omx.open_file(tmp_path / "skimmy.omx", 'r') as f:
+    tmp_dir = tmp_path / str(uuid.uuid4())
+    os.mkdir(tmp_dir)
+
+    skim.write_to_file(file_root=tmp_dir, attributes=test_additional_attribs)
+    with omx.open_file(tmp_dir / "skimmy.omx", 'r') as f:
         assert np.alltrue(np.array(f) == test_matrix)
         assert f[test_name].attrs.num_zones == test_matrix.shape[0]
         assert f[test_name].attrs.name == test_name
