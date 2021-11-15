@@ -115,11 +115,6 @@ skimming_cases.append((skim_config_missing_egress, "missing_egress"))
 skimming_fail_reasons.append(
     (ValueError, re.escape("Value kiss not in path weights file for mode sub-leg 'egress'")))
 
-
-
-
-
-
 test_ids = [i[1] for i in skimming_cases]
 
 
@@ -141,14 +136,6 @@ def config_file_bundle(request):
     ft_.read_input_files()
     yield ft_, config_str, test_id, err, err_msg
 
-#
-# @pytest.fixture()
-# def ft(skim_stuff):
-#     ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
-#                     skim_config_file=skim_stuff)
-#     ft_.read_configuration()
-#     ft_.read_input_files()
-#     yield ft_
 
 def test_skimming_config_parsing_catches_errors(config_file_bundle):
     ft_, config_str, test_id, expected_err, expected_err_msg = config_file_bundle
