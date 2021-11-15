@@ -187,16 +187,24 @@ class Skimming(object):
 
         # create mapping from fasttrips zone index to 0-based skim array index, and also from original zone id names to
         # 0-based skimming indexes
-        Skimming.index_mapping = Skimming.create_index_mapping(FT)
+        Skimming.index_mapping = Skimming._create_index_mapping(FT)
         Skimming.num_zones = len(Skimming.index_mapping)
-        Skimming.index_to_zone_ids = Skimming.create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
+        Skimming.index_to_zone_ids = Skimming._create_stop_to_zone_id_mapping(FT, Skimming.index_mapping)
 
     @staticmethod
     def generate_skims(output_dir, FT, veh_trips_df=None):
         """
+        Generates skims for the specified parameters.
+        Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT) is a pre-requisite function call as
+        it will set Attributes for sampling, and user_class/mode configurations to run.
 
-        veh_trips_df: optional, blah. When running w/o assignment, can get from files.
+        :param: output_dir: directory for writing outputs
+        :param: FT: fasttrips instance
+        :param: veh_trips_df (optional): PT trips (i.e. actual stop and departure times of PT services). When running
+          post-assignment, contains delays due to boarding etc. When running w/o assignment, we get the values directly
+          from the input schedule.
 
+        :return: [SkimConfig: {skim_component: Skim}]. A list of results, one for each line in skim_classes_ft.
         """
         if veh_trips_df is None:
             veh_trips_df = FT.trips.get_full_trips()
@@ -217,7 +225,8 @@ class Skimming(object):
     @staticmethod
     def write_skim_matrices(skim_matrices):
         """
-        writes
+        writes all matrices to omx files on disk
+
         :param skim_matrices: {tuple(SkimClasses): {skim_type: Skim}}
         :return: nil
         """
@@ -228,10 +237,6 @@ class Skimming(object):
         output_dir = Path(Assignment.OUTPUT_DIR) / Skimming.OUTPUT_DIR
 
         for skim_config, skims in skim_matrices.items():
-            # skim_attribs = {"start_time": skim_config.start_time,
-            #                 "end_time": skim_config.end_time,
-            #                 "sampling_interval": skim_config.sampling_interval,
-            #                 "vot": skim_config.vot}
             skim_attribs = vars(skim_config)  # just add everything to omx attributes
 
             purp_user_output_dir = output_dir / skim_config.demand_string()
@@ -252,7 +257,7 @@ class Skimming(object):
         FastTripsLogger.info(f"Wrote index to zone id mapping to {out_file}, use this in case of string ids for zones")
 
     @staticmethod
-    def create_index_mapping(FT):
+    def _create_index_mapping(FT):
         """mapping from internal fasttrips stop_id to 0-based skim index"""
         acc_eggr_links = FT.tazs.merge_access_egress()
         all_taz = np.sort(acc_eggr_links[TAZ.WALK_ACCESS_COLUMN_TAZ_NUM].unique())
@@ -260,7 +265,7 @@ class Skimming(object):
         return index_dict
 
     @staticmethod
-    def create_stop_to_zone_id_mapping(FT, index_dict):
+    def _create_stop_to_zone_id_mapping(FT, index_dict):
         """ fasttrips maps all stops to integer indexes internally. We need a mapping from these to the original zone
         names, and combine this with our 0-based skim mapping. This method returns a list where the entry at position i
         corresponds to skim index i, i.e. a list of zone ids that are in order of the skim mapping"""
@@ -273,12 +278,23 @@ class Skimming(object):
 
     @staticmethod
     def extract_matrices(pathset_links_df, d_t_datetime):
+        """For each implemented component, extract skim"""
         skim_matrices = {skim_name: Skimming.calculate_skim(pathset_links_df, d_t_datetime, component_name=skim_name)
                          for skim_name in Skimming.components}
         return skim_matrices
 
     @staticmethod
     def calculate_skim(pathset_links_df, d_t_datetime, component_name):
+        """"
+        Extracts skim matrices from pathset links.
+
+        :param: pathset_links_df: dataframe containing all links for each shortest path (all origins to all
+        destinations) and corresponding properties
+        :param: d_t_datetime: the skim sampling interval start time
+        :param: component_name: The name of the skims component to extract
+
+        :return: Skim
+        """
         od_colnames = [Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM, Passenger.TRIP_LIST_COLUMN_DESTINATION_TAZ_ID_NUM]
 
         zone_list = pd.Series(Skimming.index_mapping.values()).to_frame()
@@ -357,7 +373,7 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def trip_list_for_skimming(pathset_paths_df, d_t, skim_config):
+    def _trip_list_for_skimming(pathset_paths_df, d_t, skim_config):
         """ Trip list for skimming path cost calculations with Passenger.calculate_cost.
         """
         trip_list = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_ORIGIN_TAZ_ID_NUM,
@@ -382,7 +398,7 @@ class Skimming(object):
         return trip_list
 
     @staticmethod
-    def attach_path_information_for_cost_calc(pathset_paths_df, pathset_links_df, veh_trips_df, trip_list):
+    def _attach_path_information_for_cost_calc(pathset_paths_df, pathset_links_df, veh_trips_df, trip_list):
 
         pathset_links_df = Assignment.find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=True)
 
@@ -412,13 +428,13 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
     @staticmethod
-    def attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, d_t, skim_config, FT):
+    def _attach_costs(pathset_paths_df, pathset_links_df, veh_trips_df, d_t, skim_config, FT):
         # cost calc stuff, see Ass .2027: choose_paths_without_simulation
-        trip_list = Skimming.trip_list_for_skimming(pathset_paths_df, d_t, skim_config)
+        trip_list = Skimming._trip_list_for_skimming(pathset_paths_df, d_t, skim_config)
 
-        pathset_paths_df, pathset_links_df = Skimming.attach_path_information_for_cost_calc(pathset_paths_df,
-                                                                                            pathset_links_df,
-                                                                                            veh_trips_df, trip_list)
+        pathset_paths_df, pathset_links_df = Skimming._attach_path_information_for_cost_calc(pathset_paths_df,
+                                                                                             pathset_links_df,
+                                                                                             veh_trips_df, trip_list)
         pathset_paths_df, pathset_links_df = PathSet.calculate_cost(
             Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
             trip_list, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
@@ -430,7 +446,21 @@ class Skimming(object):
     def find_trip_based_pathset_skimming(origin, vot, start_time, user_class, purpose,
                                          access_mode, transit_mode, egress_mode, trace):
         """
-        Stuff/
+        Runs C++ extension to find shortest path tree for given origin and extract outputs.
+
+        :param: origin: the origin for which to build a one-to-all shortest path
+        :param: vot: value of time for this skim
+        :param: start_time: Start time of this time slice
+        :param: user_class: user_class for pathweight lookup
+        :param: purpose: purpose for pathweight lookup
+        :param: access_mode: access mode to PT
+        :param: transit_mode: demand transit mode
+        :param: egress_mode: egress mode from PT
+        :param: trace: trace output in C++ code
+
+        :return:
+            pathdict: A path dictionary for further processing
+            perf_dict: Performance statistics from path building
         """
         (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
          label_iterations, num_labeled_stops, max_label_process_count,
@@ -452,8 +482,6 @@ class Skimming(object):
             pathdict[path_num][PathSet.PATH_KEY_INIT_FARE] = path_costs[path_num, 4]
             # List of (stop_id, stop_state)
             pathdict[path_num][PathSet.PATH_KEY_STATES] = []
-
-            # print "path_num %d" % path_num
 
             # while we have unprocessed rows and the row is still relevant for this path_num
             while (row_num < ret_ints.shape[0]) and (ret_ints[row_num, 0] == path_num):
@@ -505,18 +533,22 @@ class Skimming(object):
         return pathdict, perf_dict
 
     @staticmethod
-    def generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config: SkimConfig) -> Dict[str, "Skim"]:
+    def generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config):
         """
-        Aggregate skims for all time periods together to produce a single average skim per skim type.
-
-        Creates pathsets and extracts output (which are used internally and discarded)
-
-        Protoyping skimming. Mean vot, walk access and egress, one origin to all destinations at first.
-
+        Aggregate skims for all time periods together to produce a single average skim per skim type. Creates
+        pathsets and extracts output, which are used internally and discarded after each time slice to save memory.
 
         Skimming.read_skimming_configuration(Assignment.CONFIGURATION_FILE, FT) is a pre-requisite function call
-         as it will set Attributes for sampling, and user_class/ mode configurations to run
+         as it will set Attributes for sampling, and user_class/mode configurations to run
 
+
+         :param: output_dir: output directory to which results will be written
+         :param: FT: fasttrips instance
+         :param: veh_trips_df: PT trips (i.e. actual stop and departure times of PT services)
+         :param: skim_config: SkimConfig carrying all the parameters for this skim type, a single line in
+         skim_classes_ft
+
+         :return: a dictionary with skim_names and corresponding time-averaged skims of type Skim
         """
         from .Queue import ProcessManager
         FastTripsLogger.info(f"Skimming for time config {skim_config.time_string()} and demand config "
@@ -593,8 +625,8 @@ class Skimming(object):
                                                                           FT.trips.trips_df,
                                                                           FT.routes.modes_df)
 
-            pathset_paths_df, pathset_links_df = Skimming.attach_costs(pathset_paths_df, pathset_links_df,
-                                                                       veh_trips_df, d_t, skim_config, FT)
+            pathset_paths_df, pathset_links_df = Skimming._attach_costs(pathset_paths_df, pathset_links_df,
+                                                                        veh_trips_df, d_t, skim_config, FT)
 
             # TODO: do we want to do some health checks here? links shouldn't have missed xfers, paths should be
             #  inbound (dir==2) and have probability one (only deterministic skimming for now)
@@ -706,6 +738,68 @@ class Skimming(object):
         return pathset_paths_df, pathset_links_df
 
 
+class Skim(np.ndarray):
+    """
+    A single skim matrix, subclasses numpy array to keep track of the number of zones, the name, and a list called
+    index_to_zone_ids, which is a list of zone_ids as per the input files, where the position in the list corresponds to
+    the skim array index.
+    """
+
+    # using inf is convenient, so we are using floats for now. Should we be using masked arrays?
+    skim_type = np.float32
+    skim_default_value = np.inf
+
+    def __new__(cls, name, num_zones, values=None, index_to_zone_ids=None):
+        if values is None:
+            values = np.full((num_zones, num_zones), Skim.skim_default_value, dtype=Skim.skim_type)
+        obj = np.asarray(values).view(cls)
+        obj.name = name
+        obj.num_zones = num_zones
+        obj.index_to_zone_ids = index_to_zone_ids
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.name = getattr(obj, 'name', None)
+        self.num_zones = getattr(obj, 'num_zones', None)
+        self.index_to_zone_ids = getattr(obj, 'index_to_zone_ids', None)
+
+    def write_to_file(self, name=None, file_root=None, attributes={}):
+        """
+        write skim matrix to omx file. if no name provided use default.
+        use mapping for zones to index
+        """
+        import openmatrix as omx
+
+        if name is None:
+            name = f"{self.name}.omx"
+
+        if file_root is not None:
+            name = os.path.join(file_root, name)
+
+        with omx.open_file(name, 'w') as skim_file:
+            skim_file[self.name] = self
+
+            for k, v in self.__dict__.items():
+                skim_file[self.name].attrs[k] = v
+
+            for k, v in attributes.items():
+                skim_file[self.name].attrs[k] = v
+
+            # # omx enforces tables.UInt32Atom for mappings, but the Springfield example uses strings like Z1.
+            # # could do the following, but let's just save a dict in the attributes.
+            # try:
+            #     int_mapping = list(map(lambda x: int(x), self.index_to_zone_ids))
+            #     skim_file.create_mapping('taz', int_mapping)
+            # except ValueError as e:
+            #     FastTripsLogger.debug(f"Caught {e}, which probably means you have string zone ids. Therefore, "
+            #                           f"openmatrix cannot create index - zone id mapping. Please use mapping "
+            #                           f"provided in output directory.")
+
+
+####
+# Multiprocessing code
+###
 from .Queue import QueueData, ProcessWorkerTask, ExceptionQueueData
 
 
@@ -816,62 +910,3 @@ class SkimmingWorkerTask(ProcessWorkerTask):
             # call it a day
             out_queue.put(ExceptionQueueData(QueueData.EXCEPTION, worker_num, message=str(sys.exc_info())))
             return True
-
-
-class Skim(np.ndarray):
-    """
-    A single skim matrix, subclasses numpy array to keep track of the number of zones, the name, and a list called
-    index_to_zone_ids, which is a list of zone_ids as per the input files, where the position in the list corresponds to
-    the skim array index.
-    """
-
-    # using inf is convenient, so we are using floats for now. Should we be using masked arrays?
-    skim_type = np.float32
-    skim_default_value = np.inf
-
-    def __new__(cls, name, num_zones, values=None, index_to_zone_ids=None):
-        if values is None:
-            values = np.full((num_zones, num_zones), Skim.skim_default_value, dtype=Skim.skim_type)
-        obj = np.asarray(values).view(cls)
-        obj.name = name
-        obj.num_zones = num_zones
-        obj.index_to_zone_ids = index_to_zone_ids
-        return obj
-
-    def __array_finalize__(self, obj):
-        if obj is None: return
-        self.name = getattr(obj, 'name', None)
-        self.num_zones = getattr(obj, 'num_zones', None)
-        self.index_to_zone_ids = getattr(obj, 'index_to_zone_ids', None)
-
-    def write_to_file(self, name=None, file_root=None, attributes={}):
-        """
-        write skim matrix to omx file. if no name provided use default.
-        use mapping for zones to index
-        """
-        import openmatrix as omx
-
-        if name is None:
-            name = f"{self.name}.omx"
-
-        if file_root is not None:
-            name = os.path.join(file_root, name)
-
-        with omx.open_file(name, 'w') as skim_file:
-            skim_file[self.name] = self
-
-            for k, v in self.__dict__.items():
-                skim_file[self.name].attrs[k] = v
-
-            for k, v in attributes.items():
-                skim_file[self.name].attrs[k] = v
-
-            # # omx enforces tables.UInt32Atom for mappings, but the Springfield example uses strings like Z1.
-            # # could do the following, but let's just save a dict in the attributes.
-            # try:
-            #     int_mapping = list(map(lambda x: int(x), self.index_to_zone_ids))
-            #     skim_file.create_mapping('taz', int_mapping)
-            # except ValueError as e:
-            #     FastTripsLogger.debug(f"Caught {e}, which probably means you have string zone ids. Therefore, "
-            #                           f"openmatrix cannot create index - zone id mapping. Please use mapping "
-            #                           f"provided in output directory.")
