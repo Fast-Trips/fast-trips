@@ -3,13 +3,11 @@
 import os
 import io
 import re
-import tempfile
 
 import pytest
 
 from fasttrips import FastTrips, PathSet
 from fasttrips.Skimming import Skimming, SkimConfig
-from fasttrips.Assignment import Assignment
 
 # need a path-weights file to validate skimming options against
 # This is coupled to the setup process so we need to run that to get this setup
@@ -124,16 +122,11 @@ def config_file_bundle(request):
     cases, reasons = request.param
     config_str, test_id = cases
     err, err_msg = reasons
-    # ON CI, PathSet.WEIGHTS_DF seems to get interfered with by other tests because it's not a local variable...
-    # make sure we have the right set of global variables loaded ... need weights_df
-    # We need this other global variable for that to work
-    PathSet.WEIGHTS_FIXED_WIDTH = True #False
-    Assignment.read_weights(weights_file=INPUT_WEIGHTS)
-    # pass config_str through to help with debugging
     ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
                     skim_config_file=io.StringIO(config_str))
     ft_.read_configuration()
     ft_.read_input_files()
+    # pass config_str through to help with debugging
     yield ft_, config_str, test_id, err, err_msg
 
 

@@ -11,6 +11,8 @@ import pytest
 
 from fasttrips import FastTrips, Run
 from fasttrips.Skimming import Skimming
+from fasttrips.PathSet import PathSet
+from fasttrips.Assignment import Assignment
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ""))
 EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
@@ -19,8 +21,7 @@ EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
 INPUT_NETWORK = os.path.join(EXAMPLE_DIR, "networks", "vermont")
 INPUT_DEMAND = os.path.join(EXAMPLE_DIR, "demand", "general")
 INPUT_CONFIG = os.path.join(EXAMPLE_DIR, "configs", "A")
-OUTPUT_DIR = os.path.join(EXAMPLE_DIR, "output")
-OUTPUT_FOLDER = str(uuid.uuid4())
+OUTPUT_DIR = os.path.join(EXAMPLE_DIR, "output", str(uuid.uuid4()))
 
 # INPUT FILE LOCATIONS
 CONFIG_FILE = os.path.join(INPUT_CONFIG, "config_skimming_ft.txt")
@@ -29,32 +30,17 @@ SKIMMING_CONFIG = os.path.join(INPUT_CONFIG, "skim_classes_ft.csv")
 
 
 @pytest.fixture()
-def ft():
-    ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR, OUTPUT_FOLDER,
-                   skim_config_file=SKIMMING_CONFIG)
+def ft_inst():
+    Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
+                    skim_config_file=SKIMMING_CONFIG)
     ft_.read_configuration()
     ft_.read_input_files()
     yield ft_
 
 
-# simple test to see if skimming runs post assignment and produces expected files (w/o content check)
-@pytest.mark.skip(reason="segfaults on CI")
-def test_runs_post_assignment():
-    Run.run_fasttrips(
-        input_network_dir=INPUT_NETWORK,
-        input_demand_dir=INPUT_DEMAND,
-        run_config=CONFIG_FILE,
-        input_weights=INPUT_WEIGHTS,
-        output_dir=OUTPUT_DIR,
-        output_folder=OUTPUT_FOLDER,
-        skim_config_file=SKIMMING_CONFIG,
-        iters=1)
-
-    files_exist()
-
-
 def files_exist():
-    skim_dir = Path(OUTPUT_DIR) / OUTPUT_FOLDER / "skims"
+    skim_dir = Path(OUTPUT_DIR) / "skims"
     skim_params_1 = skim_dir / "user_class_all_purpose_other_access_walk_transit_transit_egress_walk_vot_10"
     skim_params_2 = skim_dir / "user_class_all_purpose_other_access_walk_transit_transit_egress_walk_vot_20"
     assert skim_dir.is_dir()
@@ -128,74 +114,22 @@ skim_index_array = np.array(["Z1", "Z2", "Z3", "Z4", "Z5"])
 num_zones = 5
 
 
-# test w/o assignment, including value checks
-@pytest.mark.skip(reason="segfaults on CI")
-def test_skimming_no_assignment():
-    # make this a session level fixture and then write individual test functions for better logging and
-    # possible failure comparison?
-
-    skims = Run.run_fasttrips_skimming(
-        input_network_dir=INPUT_NETWORK,
-        input_demand_dir=INPUT_DEMAND,
-        run_config=CONFIG_FILE,
-        input_weights=INPUT_WEIGHTS,
-        output_dir=OUTPUT_DIR,
-        output_folder=OUTPUT_FOLDER,
-        skim_config_file=SKIMMING_CONFIG,
-        iters=1
-    )
-
-    files_exist()
-
-    assert len(skims) == 2  # we have two skims
-
-    # let's compare to golden values
-    # first make sure index mappings are identical
-    map_test = pd.read_csv(Path(OUTPUT_DIR) / OUTPUT_FOLDER / "skims" / "skim_index_to_zone_id_mapping.csv")
-    map_golden = pd.read_csv(io.StringIO(skim_index_mapping_golden))
-    pd.testing.assert_frame_equal(map_test, map_golden)
-    # second compare skim values of first skim time period
-    skims_1 = skims[list(skims.keys())[0]]
-    for k, v in skims_1.items():
-        assert np.array_equal(v, golden_vals[k]), f"{k} is not equal"
-        check_attributes(v, k)
-
-
 def check_attributes(skim, name):
     assert skim.name == name
     assert skim.num_zones == 5
     assert np.array_equal(skim.index_to_zone_ids, skim_index_array)
 
 
-@pytest.fixture()
-def ft_inst():
-    from fasttrips.PathSet import PathSet
-    from fasttrips.Assignment import Assignment
-
-    # ON CI, PathSet.WEIGHTS_DF seems to get interfered with by other tests because it's not a local variable...
-    # make sure we have the right set of global variables loaded ... need weights_df
-    # We need this other global variable for that to work
-    PathSet.WEIGHTS_FIXED_WIDTH = True #False
-    Assignment.read_weights(weights_file=INPUT_WEIGHTS)
-    # pass config_str through to help with debugging
-    ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
-                    SKIMMING_CONFIG)
-    ft_.read_configuration()
-    ft_.read_input_files()
-    yield ft_
-
-
 def test_skimming(ft_inst):
 
-    skims = ft_inst.run_skimming(ft_inst.Assignment.OUTPUT_DIR)
+    skims = ft_inst.run_skimming(   OUTPUT_DIR)
 
     files_exist()
-
     assert len(skims) == 2  # we have two skims
 
     # let's compare to golden values
     # first make sure index mappings are identical
-    map_test = pd.read_csv(Path(OUTPUT_DIR) / OUTPUT_FOLDER / "skims" / "skim_index_to_zone_id_mapping.csv")
+    map_test = pd.read_csv(Path(OUTPUT_DIR) / "skims" / "skim_index_to_zone_id_mapping.csv")
     map_golden = pd.read_csv(io.StringIO(skim_index_mapping_golden))
     pd.testing.assert_frame_equal(map_test, map_golden)
     # second compare skim values of first skim time period
