@@ -129,7 +129,7 @@ num_zones = 5
 
 
 # test w/o assignment, including value checks
-# @pytest.mark.skip(reason="segfaults on CI")
+@pytest.mark.skip(reason="segfaults on CI")
 def test_skimming_no_assignment():
     # make this a session level fixture and then write individual test functions for better logging and
     # possible failure comparison?
@@ -165,3 +165,41 @@ def check_attributes(skim, name):
     assert skim.name == name
     assert skim.num_zones == 5
     assert np.array_equal(skim.index_to_zone_ids, skim_index_array)
+
+
+@pytest.fixture()
+def ft_inst():
+    from fasttrips.PathSet import PathSet
+    from fasttrips.Assignment import Assignment
+
+    # ON CI, PathSet.WEIGHTS_DF seems to get interfered with by other tests because it's not a local variable...
+    # make sure we have the right set of global variables loaded ... need weights_df
+    # We need this other global variable for that to work
+    PathSet.WEIGHTS_FIXED_WIDTH = True #False
+    Assignment.read_weights(weights_file=INPUT_WEIGHTS)
+    # pass config_str through to help with debugging
+    ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
+                    SKIMMING_CONFIG)
+    ft_.read_configuration()
+    ft_.read_input_files()
+    yield ft_
+
+
+def test_skimming(ft_inst):
+
+    skims = ft_inst.run_skimming(ft_inst.Assignment.OUTPUT_DIR)
+
+    files_exist()
+
+    assert len(skims) == 2  # we have two skims
+
+    # let's compare to golden values
+    # first make sure index mappings are identical
+    map_test = pd.read_csv(Path(OUTPUT_DIR) / OUTPUT_FOLDER / "skims" / "skim_index_to_zone_id_mapping.csv")
+    map_golden = pd.read_csv(io.StringIO(skim_index_mapping_golden))
+    pd.testing.assert_frame_equal(map_test, map_golden)
+    # second compare skim values of first skim time period
+    skims_1 = skims[list(skims.keys())[0]]
+    for k, v in skims_1.items():
+        assert np.array_equal(v, golden_vals[k]), f"{k} is not equal"
+        check_attributes(v, k)
