@@ -183,13 +183,13 @@ class Skimming(object):
         # assert all columns are present - pandas 1.3 raises different warning than previous versions,
         # make it explicit for testing and consistency
         for field in field_order:
-            if field not in skim_config_df.columns:
-                e = f"Could not find {field} in {Skimming.SKIMMING_CONFIG_FILE}, but it is a required column."
+            if field not in skim_config_df.columns.values:
+                e = f"Could not find {field} in provided skim classes config, but it is a required column."
                 FastTripsLogger.error(e)
                 raise ValueError(e)
 
         all_str_cols = ["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]
-        skim_config_df[all_str_cols] = skim_config_df[[all_str_cols]].apply(lambda x: x.str.strip(), axis=1)
+        skim_config_df[all_str_cols] = skim_config_df[all_str_cols].apply(lambda x: x.str.strip(), axis=1)
 
         Skimming.skim_set = skim_config_df.apply(lambda x: SkimConfig(*x[field_order].values), axis=1).to_list()
 

@@ -42,7 +42,8 @@ skim_config_no_vot = \
 900, 910, 5, all, other, walk, transit, walk
 """
 skimming_cases.append((skim_config_no_vot, "no_vot"))
-skimming_fail_reasons.append((KeyError, re.escape("['vot'] not in index")))
+skimming_fail_reasons.append((ValueError, "Could not find vot in provided skim classes config, but it is a required "
+                                          "column."))
 
 skim_config_vot_string = \
   """start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
