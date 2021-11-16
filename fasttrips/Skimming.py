@@ -283,7 +283,6 @@ class Skimming(object):
             {v: k for k, v in index_dict.items()})
         return stops_zones_df.sort_values(by=['skim_index'])[Stop.STOPS_COLUMN_STOP_ID].values
 
-
     @staticmethod
     def extract_matrices(pathset_links_df, d_t_datetime):
         """For each implemented component, extract skim"""
