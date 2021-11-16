@@ -128,21 +128,8 @@ skim_index_array = np.array(["Z1", "Z2", "Z3", "Z4", "Z5"])
 num_zones = 5
 
 
-def test_no_mp():
-    # exclude MP as reason - if this passes we have a problem
-    Run.run_fasttrips(
-        input_network_dir=INPUT_NETWORK,
-        input_demand_dir=INPUT_DEMAND,
-        run_config=os.path.join(INPUT_CONFIG, "config_ft.txt"),
-        input_weights=INPUT_WEIGHTS,
-        output_dir=OUTPUT_DIR,
-        output_folder=OUTPUT_FOLDER,
-        iters=1
-    )
-
-
 # test w/o assignment, including value checks
-@pytest.mark.skip(reason="segfaults on CI")
+# @pytest.mark.skip(reason="segfaults on CI")
 def test_skimming_no_assignment():
     # make this a session level fixture and then write individual test functions for better logging and
     # possible failure comparison?
