@@ -31,6 +31,12 @@ SKIMMING_CONFIG = os.path.join(INPUT_CONFIG, "skim_classes_ft.csv")
 
 @pytest.fixture()
 def ft_inst():
+    # ON CI, PathSet.WEIGHTS_DF seems to get interfered with by other tests because it's not a local variable...
+    # make sure we have the right set of global variables loaded ... need weights_df
+    # We need this other global variable for that to work
+    PathSet.WEIGHTS_FIXED_WIDTH = True
+    Assignment.read_weights(weights_file=INPUT_WEIGHTS)
+
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
                     skim_config_file=SKIMMING_CONFIG)
