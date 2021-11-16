@@ -175,13 +175,21 @@ class Skimming(object):
                                                                            "access_mode": str, "transit_mode": str,
                                                                            "egress_mode": str})
         skim_config_df.columns = skim_config_df.columns.str.strip()
-        skim_config_df[["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]] = skim_config_df[[
-            "user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]].apply(lambda x: x.str.strip(),
-                                                                                          axis=1)
 
         # name and order of fields that will be passed to SkimConfig
         field_order = ["start_time", "end_time", "sampling_interval", "vot", "user_class", "purpose", "access_mode",
                        "transit_mode", "egress_mode"]
+
+        # assert all columns are present - pandas 1.3 raises different warning than previous versions,
+        # make it explicit for testing and consistency
+        for field in field_order:
+            if field not in skim_config_df.columns:
+                e = f"Could not find {field} in {Skimming.SKIMMING_CONFIG_FILE}, but it is a required column."
+                FastTripsLogger.error(e)
+                raise ValueError(e)
+
+        all_str_cols = ["user_class", "purpose", "access_mode", "transit_mode", "egress_mode"]
+        skim_config_df[all_str_cols] = skim_config_df[[all_str_cols]].apply(lambda x: x.str.strip(), axis=1)
 
         Skimming.skim_set = skim_config_df.apply(lambda x: SkimConfig(*x[field_order].values), axis=1).to_list()
 
