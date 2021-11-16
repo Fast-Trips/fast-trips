@@ -13,7 +13,7 @@ OUTPUT_FOLDER       = "general_run_with_skimming"
 # INPUT FILE LOCATIONS
 CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_skimming_ft.txt')
 INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
-SKIMMING_FILE       = os.path.join(INPUT_CONFIG, 'skim_classes_ft.txt')
+SKIMMING_FILE       = os.path.join(INPUT_CONFIG, 'skim_classes_ft.csv')
 
 print("Running Fast-Trips in %s" % (EXAMPLE_DIR.split(os.sep)[-1:]))
 
