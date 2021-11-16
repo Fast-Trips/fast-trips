@@ -15,7 +15,7 @@ CONFIG_FILE         = os.path.join(INPUT_CONFIG, 'config_skimming_ft.txt')
 INPUT_WEIGHTS       = os.path.join(INPUT_CONFIG, 'pathweight_ft.txt')
 SKIMMING_FILE       = os.path.join(INPUT_CONFIG, 'skim_classes_ft.txt')
 
-print "Running Fast-Trips in %s" % (EXAMPLE_DIR.split(os.sep)[-1:])
+print("Running Fast-Trips in %s" % (EXAMPLE_DIR.split(os.sep)[-1:]))
 
 Run.run_fasttrips(
     input_network_dir= INPUT_NETWORK,
@@ -25,7 +25,7 @@ Run.run_fasttrips(
     output_dir       = OUTPUT_DIR,
     output_folder    = OUTPUT_FOLDER,
     skim_config_file = SKIMMING_FILE,
-    pathfinding_type = "stochastic",
+    pathfinding_type = "deterministic",
     overlap_variable = "count",
     overlap_split_transit = True,
     iters            = 3,
