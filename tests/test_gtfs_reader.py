@@ -25,10 +25,8 @@ def get_gtfs_feed(network, network_date):
 
     service_ids_by_date = ptg.read_service_ids_by_date(network)
     service_ids = service_ids_by_date[network_date]
-    feed = ptg.feed(network, config=Util.get_fast_trips_config(), view={
-        'trips.txt': {
-            'service_id': service_ids
-        },
+    feed = ptg.load_feed(network, config=Util.get_fast_trips_config(), view={
+        'trips.txt': {'service_id': service_ids},
     })
     return feed
 

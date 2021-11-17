@@ -18,6 +18,7 @@ __license__   = """
 """
 import os
 
+import numpy as np
 import pandas as pd
 
 from .Logger import FastTripsLogger
@@ -162,9 +163,9 @@ class Stop(object):
 
         # make sure the DAP IDs are unique from Stop IDs
         daps_unique_df  = dap_df.drop_duplicates().reset_index(drop=True)
-        join_daps_stops = pd.merge(left=daps_unique_df, right=self.stop_id_df,
-                                       how="left",
-                                       left_on=dap_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
+        # join_daps_stops = pd.merge(left=daps_unique_df, right=self.stop_id_df,
+        #                                how="left",
+        #                                left_on=dap_id_colname,  right_on=Stop.STOPS_COLUMN_STOP_ID)
         # there should be only NaNs since DAP lot IDs need to be unique from Stop IDs
         # non_unique_lots = join_daps_stops.loc[ pd.notnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]) ]
         # if len(non_unique_lots) > 0:
@@ -174,7 +175,10 @@ class Stop(object):
         # assert(pd.isnull(join_daps_stops[Stop.STOPS_COLUMN_STOP_ID]).sum() == len(join_daps_stops))
 
         # number them starting at self.max_stop_id_num
-        daps_unique_df[Stop.STOPS_COLUMN_STOP_ID_NUM] = daps_unique_df.index + self.max_stop_id_num + 1
+        idx = np.arange(daps_unique_df.shape[0], dtype=np.int64) + int(self.max_stop_id_num + 1)
+        daps_unique_df = daps_unique_df.assign(**{Stop.STOPS_COLUMN_STOP_ID_NUM: idx})
+
+
 
         # rename DAP lot id to stop id
         daps_unique_df.rename(columns={dap_id_colname:Stop.STOPS_COLUMN_STOP_ID}, inplace=True)
@@ -207,8 +211,9 @@ class Stop(object):
 
         # write the stop ids and zone ids to numbering file
         stop_id_df = self.stop_id_df  # local copy with filled NA
-        if Stop.STOPS_COLUMN_ZONE_ID_NUM not in stop_id_df.columns.values:
-            stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = -1
+        for col in [Stop.STOPS_COLUMN_ZONE_ID_NUM, Stop.STOPS_COLUMN_ZONE_ID]:
+            if col not in stop_id_df.columns:
+                stop_id_df[col] = np.nan
         stop_id_df.fillna(value={Stop.STOPS_COLUMN_ZONE_ID_NUM:-1,
                                  Stop.STOPS_COLUMN_ZONE_ID:"None"}, inplace=True)
         stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM] = stop_id_df[Stop.STOPS_COLUMN_ZONE_ID_NUM].astype(int)

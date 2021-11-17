@@ -1,25 +1,47 @@
-**Build status**
+<!--
+**Test status**
 
-Master Branch: [![Master branch build status](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=master)](https://travis-ci.org/BayAreaMetro/fast-trips)  
+Master Branch:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/test_linux_with_coverage.yml/badge.svg?branch=master)
 
-Develop Branch [![Develop branch build status: ](https://travis-ci.org/BayAreaMetro/fast-trips.svg?branch=develop)](https://travis-ci.org/BayAreaMetro/fast-trips)
+Master Branch:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/test_windows.yml/badge.svg?branch=master)
+
+Develop Branch:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/test_linux_with_coverage.yml/badge.svg?branch=develop)
+
+Develop Branch:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/test_windows.yml/badge.svg?branch=develop)
+
+**Package build status (Master branch)**
+
+Windows:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/build_windows.yml/badge.svg)
+
+macOS:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/build_mac.yml/badge.svg)
+
+Linux:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/build_linux.yml/badge.svg)
+
+**Documentation build status (Master branch)**
+
+Windows:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/documentation.yml/badge.svg)
+-->
 
 # fast-trips
-Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:  
+Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++. For more 
+information about this visit the following links:  
 
  * Documentation  : http://bayareametro.github.io/fast-trips/
  * Implementaiton Project Website: http://fast-trips.mtc.ca.gov/
 
  **Use Cases**  
- Fast-trips can be used for analyzing short-term effects as a stand-along tool as well as long range planning when linked up with a travel demand modeling tool:
+ Fast-trips can be used for analyzing short-term effects as a stand-along tool as well as long range planning when linked 
+ up with a travel demand modeling tool:
   - An analyst who wants to study the effect of a on service reliability of a schedule change.
   - An analyst who wants to evaluate a service plan for a special event.
-  - A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning investments as evaluated in a long range transportation plan.
+  - A modeler who wants to include capacity constraints and reliability as a performance metric for long-range planning 
+  - investments as evaluated in a long range transportation plan.
 
 ## installing
 
 **Requirements**
-Fast-Trips should work on OSX, Linux (Ubuntu tested) and Windows with Python 2.7 and Python 3.6+ installed.  We also recommend using a virtual environment manager such as [Conda](www.conda.io).
+Fast-Trips is tested on OSX, Linux and Windows with Python 3.7 and 3.8, and additionally with 3.9 on Linux.
+We also recommend using a virtual environment manager such as [Conda](www.conda.io).
 
 **Stable Release**
 
@@ -31,7 +53,8 @@ Fast-Trips should work on OSX, Linux (Ubuntu tested) and Windows with Python 2.7
 
 ## Running Fast-Trips
 
-Fast-Trips can be run from the command line or by calling it from within a Python script or an iPython notebook using the `Run.run_fasttrips()` function.
+Fast-Trips can be run from the command line or by calling it from within a Python script or an iPython notebook using 
+the `Run.run_fasttrips()` function.
 
 There are six required parameters that need to either be passed from the command line or the function call:  
 
@@ -43,13 +66,17 @@ There are six required parameters that need to either be passed from the command
   * `output_dir` = directory where output folder is created  
   * `pathfinding_type` = either `deterministic` or `stochastic`
 
-All the other parameters described in the [configuration options](#configuration-options-fasttrips) can also be passed as keywords.  
+All the other parameters described in the [configuration options](#configuration-options-fasttrips) can also be passed 
+as keywords.  
 
-**NOTE: Any parameters passed in at run-time from the command line or via the script will overwrite any parameters read in from the `run_config` file.**
+**NOTE: Any parameters passed in at run-time from the command line or via the script will overwrite any parameters read 
+in from the `run_config` file.**
 
 ### Running the Springfield Example
 
-Sample input files have been provided in `<fast-trips-dir>\Examples\Springfield` to test the setup and also assist with the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and also example transit demand data.
+Sample input files have been provided in `<fast-trips-dir>\Examples\Springfield` to test the setup and also assist with 
+the creation of new fast-trips runs. The input files include network files created from a small hypothetical network and 
+also example transit demand data.
 
 #### From a Script
 ```python
@@ -91,10 +118,13 @@ Run.run_fasttrips(
 
 To run the example:
 
-*  Make sure your `<fast-trips-dir>` is in your `PYTHONPATH` environment variable in *Advanced system settings* [Win] or terminal [OSX].
-*  Run `python Examples/Springfield/run_springfield.py` from within `<fast-trips-dir>\scripts` in a command prompt [ Win ] or terminal [ OSX ].
+* Make sure your `<fast-trips-dir>` is in your `PYTHONPATH` environment variable in *Advanced system settings* [Win] or 
+  terminal [OSX].
+* Run `python Examples/Springfield/run_springfield.py` from within `<fast-trips-dir>\scripts` in a command prompt 
+  [ Win ] or terminal [ OSX ].
 
-Output files from running fast-trips with the sample input data provided can be found in the `Springfield/output` directory.
+Output files from running fast-trips with the sample input data provided can be found in the `Springfield/output` 
+directory.
 
 #### From Command Line  
 
@@ -153,23 +183,33 @@ C:\Users\lzorn\Documents\fast-trips>python fasttrips\Run.py stochastic 1 fasttri
 
 ## Example Scenarios
 
-Fast-Trips comes with a handful of scenarios in the `fasttrips/Examples` directory to use as examples or get you started. They can be viewed at a high-level using the [jupyter notebooks](http://jupyter.org/) contained in that directory.  Note that these notebooks may require you to install additional Python packages such as [jupyter](http://jupyter.org/), [ipywidgets](https://ipywidgets.readthedocs.io/en/latest/), and [bokeh](https://bokeh.pydata.org/en/latest/).
+Fast-Trips comes with a handful of scenarios in the `fasttrips/Examples` directory to use as examples or get you started. 
+They can be viewed at a high-level using the [jupyter notebooks](http://jupyter.org/) contained in that directory.  Note 
+that these notebooks may require you to install additional Python packages such as [jupyter](http://jupyter.org/), 
+[ipywidgets](https://ipywidgets.readthedocs.io/en/latest/), and [bokeh](https://bokeh.pydata.org/en/latest/).
 
 ### Springfield
-The Springfield scenario is what many of our tests use and is meant to be a generic example with enough complexity and modes to flex Fast-Trips muscles, but not too complex to understand what is going on.
+The Springfield scenario is what many of our tests use and is meant to be a generic example with enough complexity and 
+modes to flex Fast-Trips muscles, but not too complex to understand what is going on.
 
 #### Springfield Network
 
-The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes (one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
+The hypothetical 5-zone example network was developed to help code development. It has a total of three transit routes 
+(one rail and two bus) with two or three stops each. There are also two park-and-ride (PnR) locations.
 
 ![alt text](/fasttrips/Examples/Springfield/networks/vermont/test_network.png "Transit Example Network")
 
-Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 station stops. The `input` folder contains all the supply-side/network input files prepared from the test network. More information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
+Transit vehicles commence at 3:00 PM and continue until 6:00 PM. There are 152 transit trips that make a total of 384 
+station stops. The `input` folder contains all the supply-side/network input files prepared from the test network. More 
+information about network input file standards can be found in the [GTFS-Plus Data Standards Repository][network-standard-url].
 
 #### Springfield Demand
 Two versions of sample demand have been prepared:
-*  `general` contains regular demand that consists only of a transit trip list. Demand starts at 3:15 PM and ends at 5:15 PM.One trip occurs every 10 seconds. More information is available in [documentation](https://github.com/BayAreaMetro/fast-trips/blob/master/fasttrips/Examples/Springfield/Readme.md).
-*  `simpson_zorn` represents demand for two user classes that can use different sets of path weights. Household and person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
+* `general` contains regular demand that consists only of a transit trip list. Demand starts at 3:15 PM and ends at 
+  5:15 PM.One trip occurs every 10 seconds. More information is available in 
+  [documentation](https://github.com/BayAreaMetro/fast-trips/blob/master/fasttrips/Examples/Springfield/Readme.md).
+* `simpson_zorn` represents demand for two user classes that can use different sets of path weights. Household and 
+  person attribute files are present in addition to the trip list to model user heterogeneity and multiple user classes.
 
 Similar to network data standards, there also exists a [Demand Data Standards Repository][demand-standard-url].
 
@@ -179,7 +219,9 @@ There are several configurations for the Springfield setup, which are generally 
 * `B` which uses user classes and thus needs to use the `simpson_zorn` demand
 
 ## Tests
-There are a couple dozen tests that are stored in `\tests`.  They can be run by installing the [PyTest](https://docs.pytest.org/en/latest/) library (`pip install pytest`and executing the command `pytest` from the command line within your `<fast-trips-dir>`.  
+There are a couple dozen tests that are stored in `\tests`.  They can be run by installing the 
+[PyTest](https://docs.pytest.org/en/latest/) library (`pip install pytest`and executing the command `pytest` from the 
+command line within your `<fast-trips-dir>`.  
 
 Most of the tests use test scenarios that can be found in the `fasttrips/Examples` directory.
 

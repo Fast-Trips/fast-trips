@@ -1,0 +1,48 @@
+name: Build and upload Linux Python Package
+
+on:  [pull_request, release]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install packages
+      run: |
+        python -m pip install setuptools --upgrade
+        python -m pip install pytest wheel
+        python -m pip install -r requirements.txt
+        python -m pip install -r requirements_dev.txt
+        python -m pip install --upgrade cffi twine
+
+    - name: Build manylinux Python wheels
+      uses: RalfG/python-wheels-manylinux-build@v0.3.3-manylinux2014_x86_64
+      with:
+        python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39'
+        build-requirements: 'setuptools numpy pandas partridge psutil future configparser openmatrix'
+        pip-wheel-args: '--no-deps'
+
+    - name: Moves wheels
+      run: |
+        mkdir -p dist
+        cp -v ./*-manylinux*.whl dist/
+
+    - name: Keep wheels on GitHub
+#      if: ${{ github.event_name == 'push'}}
+      uses: actions/upload-artifact@v2
+      with:
+        name: library
+        path: dist/*.whl
+        if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+#
+#    - name: Publish wheels to PyPI
+#      if: ${{ github.event_name == 'release'}}
+#      env:
+#        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+#        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+#      run: |
+#        twine upload dist/*-manylinux*.whl

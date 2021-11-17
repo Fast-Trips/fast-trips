@@ -25,6 +25,7 @@ from .Logger      import FastTripsLogger, setupLogging
 from .Passenger   import Passenger
 from .Performance import Performance
 from .Route       import Route
+from .Skimming import Skimming
 from .Stop        import Stop
 from .TAZ         import TAZ
 from .Transfer    import Transfer
@@ -44,7 +45,7 @@ class FastTrips(object):
     DEBUG_LOG = "ft_debug%s.log"
 
     def __init__(self, input_network_archive, input_demand_dir, input_weights, run_config,
-        output_dir, input_functions=None, logname_append="", appendLog=False):
+        output_dir, input_functions=None, logname_append="", appendLog=False, skim_config_file=None):
         """
         Constructor.
 
@@ -66,6 +67,8 @@ class FastTrips(object):
         :param appendLog:         Append to info and debug logs?  When FastTrips assignment iterations (to
                                   handle capacity bumps), we'd like to append rather than overwrite.
         :type appendLog:          bool
+        :param skim_config_file: Location of skim config csv files to read
+        :type skim_config_file:  string
         """
 
         #: :py:class:`collections.OrdederedDict` of :py:class:`fasttrips.Passenger` instances indexed by passenger's path ID
@@ -101,6 +104,9 @@ class FastTrips(object):
         #: string representing directory in which to write our output
         Assignment.OUTPUT_DIR         = output_dir
 
+        #: string representing skimming config file
+        Skimming.SKIMMING_CONFIG_FILE  = skim_config_file
+
         #: transitfeed schedule instance.  See https://github.com/google/transitfeed
         #self.gtfs_schedule      = None
 
@@ -134,7 +140,7 @@ class FastTrips(object):
 
         service_ids_by_date =ptg.read_service_ids_by_date(Assignment.INPUT_NETWORK_ARCHIVE)
         service_ids = service_ids_by_date[Assignment.NETWORK_BUILD_DATE]
-        gtfs_feed = ptg.feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
+        gtfs_feed = ptg.load_feed(os.path.join(Assignment.INPUT_NETWORK_ARCHIVE),
                                    config=Util.get_fast_trips_config(), view={
             'trips.txt': {
               'service_id': service_ids
@@ -175,6 +181,27 @@ class FastTrips(object):
             Assignment.write_configuration(Assignment.OUTPUT_DIR)
 
             r = Assignment.assign_paths(output_dir, self)
+
+        except:
+            print(("Unexpected error:", sys.exc_info()[0]))
+            FastTripsLogger.fatal("Unexpected error: %s" % str(sys.exc_info()[0]))
+            raise
+
+        self.performance.record_step_end(-1,-1,-1)
+        self.performance.write(output_dir)
+
+        FastTripsLogger.info("Successfully completed!")
+        return r
+
+    def run_skimming(self, output_dir):
+        """ entry point to run skimming without assignment, i.e. for unloaded network """
+        self.performance.record_step_start(-1, -1, -1, "run_skimming")
+
+        try:
+            Assignment.write_configuration(Assignment.OUTPUT_DIR)
+            Skimming.read_skimming_configuration(self)
+            r = Skimming.generate_skims(output_dir, self)
+            Skimming.write_skim_matrices(r)
 
         except:
             print(("Unexpected error:", sys.exc_info()[0]))

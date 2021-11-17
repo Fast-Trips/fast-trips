@@ -608,6 +608,16 @@ class TAZ(object):
         .. todo:: clean this up?  Rename intermediate files (they're not really output)
 
         """
+        access_df = self.merge_access_egress()
+
+        access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
+                         sep=" ", index=False)
+        FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE))
+
+    def merge_access_egress(self):
+        """ Merges walk and drive access and egress dataframes for C++ extension
+        :return:
+        """
         # ========== Walk access/egres =================================================
         # print "walk_access columns"
         # for col in list(self.walk_access_df.columns): print "  %s" % col
@@ -615,12 +625,12 @@ class TAZ(object):
         # start with all walk columns
         self.walk_df = self.walk_access_df.copy()
         # drop the redundant columns
-        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,        # use numerical version
-                      TAZ.WALK_ACCESS_COLUMN_STOP,        # use numerical version
-                      TAZ.WALK_ACCESS_COLUMN_DIRECTION,   # it's in the supply mode num
-                      TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE, # use numerical version
-                      TAZ.WALK_ACCESS_COLUMN_TIME,        # use numerical version
-                     ]
+        drop_fields = [TAZ.WALK_ACCESS_COLUMN_TAZ,  # use numerical version
+                       TAZ.WALK_ACCESS_COLUMN_STOP,  # use numerical version
+                       TAZ.WALK_ACCESS_COLUMN_DIRECTION,  # it's in the supply mode num
+                       TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE,  # use numerical version
+                       TAZ.WALK_ACCESS_COLUMN_TIME,  # use numerical version
+                       ]
         # we can only drop fields that are in the dataframe
         walk_fields = list(self.walk_df.columns.values)
         valid_drop_fields = []
@@ -630,14 +640,14 @@ class TAZ(object):
         self.walk_df.drop(valid_drop_fields, axis=1, inplace=True)
         # make walk access valid all times -- need this for consistency
         self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN] = 0.0
-        self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN  ] = 60.0*24.0
+        self.walk_df[TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN] = 60.0 * 24.0
 
         # the index is TAZ num, supply mode num, and stop num
         self.walk_df.set_index([TAZ.WALK_ACCESS_COLUMN_TAZ_NUM,
-                           TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
-                           TAZ.WALK_ACCESS_COLUMN_STOP_NUM,
-                           TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN,
-                           TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN], inplace=True)
+                                TAZ.WALK_ACCESS_COLUMN_SUPPLY_MODE_NUM,
+                                TAZ.WALK_ACCESS_COLUMN_STOP_NUM,
+                                TAZ.DRIVE_ACCESS_COLUMN_START_TIME_MIN,
+                                TAZ.DRIVE_ACCESS_COLUMN_END_TIME_MIN], inplace=True)
 
         # ========== Drive access/egres =================================================
         self.drive_df = self.drive_access_df.copy()
@@ -648,19 +658,19 @@ class TAZ(object):
         drive_fields = list(self.drive_df.columns.values)
 
         # drop some of the attributes
-        drop_fields = [TAZ.DRIVE_ACCESS_COLUMN_TAZ,               # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_STOP,              # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,       # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME, # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_START_TIME,        # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_END_TIME,          # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME,         # use numerical version
-                       TAZ.DRIVE_ACCESS_COLUMN_DIRECTION,         # redundant with supply mode
-                       TAZ.DAP_COLUMN_DROP_OFF,                   # redundant with supply mode
-                       TAZ.DAP_COLUMN_LOT_LATITUDE,               # probably not useful
-                       TAZ.DAP_COLUMN_LOT_LONGITUDE,              # probably not useful
-                       TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,            # probably not useful
-                      ]
+        drop_fields = [TAZ.DRIVE_ACCESS_COLUMN_TAZ,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_STOP,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_SUPPLY_MODE,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_DRIVE_TRAVEL_TIME,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_START_TIME,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_END_TIME,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_WALK_TIME,  # use numerical version
+                       TAZ.DRIVE_ACCESS_COLUMN_DIRECTION,  # redundant with supply mode
+                       TAZ.DAP_COLUMN_DROP_OFF,  # redundant with supply mode
+                       TAZ.DAP_COLUMN_LOT_LATITUDE,  # probably not useful
+                       TAZ.DAP_COLUMN_LOT_LONGITUDE,  # probably not useful
+                       TAZ.DRIVE_ACCESS_COLUMN_LOT_ID,  # probably not useful
+                       ]
         valid_drop_fields = []
         for field in drop_fields:
             if field in drive_fields: valid_drop_fields.append(field)
@@ -684,7 +694,7 @@ class TAZ(object):
 
         access_df.reset_index(inplace=True)
         # rename from these default column names
-        access_df.rename(columns={"level_3":"attr_name", 0:"attr_value"}, inplace=True)
+        access_df.rename(columns={"level_3": "attr_name", 0: "attr_value"}, inplace=True)
         # make attr_value a float instead of an object
         access_df["attr_value"] = access_df["attr_value"].astype(float)
 
@@ -694,13 +704,10 @@ class TAZ(object):
         # Check for null stop ids
         null_stop_ids = access_df.loc[pd.isnull(access_df["stop_id_num"])]
         if len(null_stop_ids) > 0:
-            FastTripsLogger.warn("write_access_egress_for_extension null_stop_ids:\n%s" % str(null_stop_ids))
+            FastTripsLogger.warn("merge_access_egress null_stop_ids:\n%s" % str(null_stop_ids))
 
             # for now, drop rows with null stop id nums
-            access_df = access_df.loc[ pd.notnull(access_df["stop_id_num"]) ]
+            access_df = access_df.loc[pd.notnull(access_df["stop_id_num"])]
 
         access_df["stop_id_num"] = access_df["stop_id_num"].astype(int)
-
-        access_df.to_csv(os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE),
-                         sep=" ", index=False)
-        FastTripsLogger.debug("Wrote %s" % os.path.join(output_dir, TAZ.OUTPUT_ACCESS_EGRESS_FILE))
+        return access_df

@@ -220,7 +220,7 @@ class Transfer(object):
             # We're ready to write it
             self.write_transfers_for_extension()
 
-    def add_transfer_attributes(self, transfer_links_df, all_links_df):
+    def add_transfer_attributes(self, transfer_links_df, all_links_df, is_skimming=False):
         """
         Adds transfer attributes for transfer links and returns those transfer links with the additional columns.
 
@@ -256,8 +256,9 @@ class Transfer(object):
         if len(transfers_with_routes_df) > 0:
             # this is what we need of the trips
             trip_links_df = all_links_df.loc[ all_links_df[Passenger.PF_COL_ROUTE_ID].notnull(),
-                                               [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                               Passenger.get_id_columns(is_skimming) + [
+                                               #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                               # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                 Passenger.PF_COL_PATH_NUM,
                                                 Passenger.PF_COL_LINK_NUM,
                                                 Passenger.PF_COL_ROUTE_ID]
@@ -267,17 +268,20 @@ class Transfer(object):
             # match transfer with trip's next link to get from route_id
             trip_links_df["next_link_num"] = trip_links_df[Passenger.PF_COL_LINK_NUM] + 1
             transfer_links_df = pd.merge(left      =transfer_links_df,
-                                             left_on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             left_on   =Passenger.get_id_columns(is_skimming) + [
+                                                        #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                        # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                          Passenger.PF_COL_PATH_NUM,
                                                          Passenger.PF_COL_LINK_NUM],
-                                             right     =trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                       Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             right     =trip_links_df[Passenger.get_id_columns(is_skimming) + [
+                                                                      #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                      # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                        Passenger.PF_COL_PATH_NUM,
                                                                        "next_link_num",
                                                                        Passenger.PF_COL_ROUTE_ID]],
-                                             right_on  =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             right_on  =Passenger.get_id_columns(is_skimming) + [
+                                                         #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                         #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                          Passenger.PF_COL_PATH_NUM,
                                                          "next_link_num"],
                                              suffixes=[""," from"],
@@ -287,17 +291,20 @@ class Transfer(object):
             # match transfer with trip's prev link to get to route_id
             trip_links_df["prev_link_num"] = trip_links_df[Passenger.PF_COL_LINK_NUM] - 1
             transfer_links_df = pd.merge(left      =transfer_links_df,
-                                             left_on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             left_on   =Passenger.get_id_columns(is_skimming) + [
+                                                        #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                        # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                          Passenger.PF_COL_PATH_NUM,
                                                          Passenger.PF_COL_LINK_NUM],
-                                             right     =trip_links_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                                       Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             right     =trip_links_df[Passenger.get_id_columns(is_skimming) + [
+                                                                       #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                                       #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                                        Passenger.PF_COL_PATH_NUM,
                                                                        "prev_link_num",
                                                                        Passenger.PF_COL_ROUTE_ID]],
-                                             right_on  =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                         Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             right_on  =Passenger.get_id_columns(is_skimming) + [
+                                                        #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                        # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                          Passenger.PF_COL_PATH_NUM,
                                                          "prev_link_num"],
                                              suffixes=[""," to"],

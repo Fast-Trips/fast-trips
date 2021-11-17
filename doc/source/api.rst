@@ -25,6 +25,7 @@ fast-trips Classes
    Performance
    Route
    Run
+   Skimming
    Stop
    TAZ
    Transfer

@@ -817,18 +817,18 @@ class Trip(object):
             trips_df[Trip.STOPTIMES_COLUMN_DEPARTURE_TIME].map(lambda x: \
                 60*x.time().hour + x.time().minute + (x.time().second / 60.0) )
 
-        FastTripsLogger.debug("Trips:update_trip_times() trips_df:\n%s\n" % \
-            trips_df.loc[trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]>1,[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
-                      Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
-                      Trip.STOPTIMES_COLUMN_ARRIVAL_TIME, Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
-                      Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS, Trip.VEHICLES_COLUMN_ACCELERATION, Trip.VEHICLES_COLUMN_DECELERATION,
-                      Trip. VEHICLES_COLUMN_SEATED_CAPACITY,
-                      Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS, Trip.SIM_COL_VEH_ONBOARD, Trip.SIM_COL_VEH_STANDEES, Trip.SIM_COL_VEH_FRICTION,
-                      "does_stop","next_does_stop","next_is_last_stop",
-                      "accel_secs","decel_secs",
-                      Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
-                      "travel_dwell_sec","travel_dwell_sec_cum","new_arrival_time"
-                      ]].head(15).to_string())
+        # FastTripsLogger.debug("Trips:update_trip_times() trips_df:\n%s\n" % \
+        #     trips_df.loc[trips_df[Trip.TRIPS_COLUMN_MAX_STOP_SEQUENCE]>1,[Trip.STOPTIMES_COLUMN_TRIP_ID, Trip.STOPTIMES_COLUMN_TRIP_ID_NUM,
+        #               Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
+        #               Trip.STOPTIMES_COLUMN_ARRIVAL_TIME, Trip.STOPTIMES_COLUMN_DEPARTURE_TIME,
+        #               Trip.VEHICLES_COLUMN_MAXIMUM_SPEED_FPS, Trip.VEHICLES_COLUMN_ACCELERATION, Trip.VEHICLES_COLUMN_DECELERATION,
+        #               Trip. VEHICLES_COLUMN_SEATED_CAPACITY,
+        #               Trip.SIM_COL_VEH_BOARDS, Trip.SIM_COL_VEH_ALIGHTS, Trip.SIM_COL_VEH_ONBOARD, Trip.SIM_COL_VEH_STANDEES, Trip.SIM_COL_VEH_FRICTION,
+        #               "does_stop","next_does_stop","next_is_last_stop",
+        #               "accel_secs","decel_secs",
+        #               Trip.STOPTIMES_COLUMN_DWELL_TIME_SEC,
+        #               "travel_dwell_sec","travel_dwell_sec_cum","new_arrival_time"
+        #               ]].head(15).to_string())
 
 
         assert(trips_df_len==len(trips_df))

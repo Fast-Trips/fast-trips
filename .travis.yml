@@ -8,8 +8,12 @@ install:
   - sudo apt-get update
   - pip install -r requirements.txt
   - pip install .
-  - pip install sphinx numpydoc sphinx_rtd_theme breathe;
-  - sudo apt-get install doxygen
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ $TRAVIS_PYTHON_VERSION == 2.6 ];
+    then pip install sphinx numpydoc sphinx_rtd_theme breathe;
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ $TRAVIS_PYTHON_VERSION == 2.6 ];
+    then sudo apt-get install doxygen;
+    fi
 
 script:
   - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
@@ -18,7 +22,7 @@ script:
     fi
 
 after_success:
-  - if [ "$TRAVIS_BRANCH" == "master" ] | [ "$TRAVIS_BRANCH" == "develop" ];
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ $TRAVIS_PYTHON_VERSION == 2.6 ];
     then sh bin/travis-update-documentation.sh;
     fi
 
