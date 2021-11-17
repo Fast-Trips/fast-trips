@@ -27,7 +27,7 @@ jobs:
         pip install -e .
     - name: Runs tests
       run: |
-        py.test -m "no skim_test"
+        py.test -m "not skim_test"
         py.test -m skim_test
 #    - name: Generate coverage report
 #      run: |

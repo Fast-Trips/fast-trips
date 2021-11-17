@@ -52,5 +52,5 @@ jobs:
     - name: Compile library and run tests
       run: |
         pip install -e .
-        py.test -m "no skim_test"
+        py.test -m "not skim_test"
         py.test -m skim_test
