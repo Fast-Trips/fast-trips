@@ -1,0 +1,3 @@
+start_time, end_time, sampling_interval, vot, user_class, purpose, access_mode, transit_mode, egress_mode
+900, 930, 5, 10, all, other, walk, transit, walk
+930, 960, 5, 10, all, other, walk, transit, walk

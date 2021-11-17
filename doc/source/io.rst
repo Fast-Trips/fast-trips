@@ -14,6 +14,7 @@ Input/Output Files
 
 The input to fast-trips consists of:
  - A Transit Network directory, including schedules, access, egress and transfer information, specified by the `gtfs_plus`_
+ - A Transit Network directory, including schedules, access, egress and transfer information, specified by the `gtfs_plus`_
  - A Transit Demand directory, including persons, households and trips, specified by the `dyno_demand`_
  - fast-trips Configuration, specified below
 
@@ -308,6 +309,8 @@ The following is an example of a minimally specified ``pathweight_ft.txt`` :
 | ``transfer``         | ``transfer``      | ``transfer``    | ``time_min``           | .02              |
 +----------------------+-------------------+-----------------+------------------------+------------------+
 
+
+.. _supply_modes_and_weights:
 Determining supply modes and weight values
 """"""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -442,8 +445,8 @@ If the same options are specified in both, then the version specified in the Tra
 to network inputs.)
 
 The configuration files are parsed by python's
-`ConfigParser module <https://docs.python.org/2/library/configparser.html#module-ConfigParser>`_ and therefore adhere to
-that format, with two possible sections: *fasttrips* and *pathfinding*.
+`ConfigParser module` <https://docs.python.org/2/library/configparser.html#module-ConfigParser>`_ and therefore
+adhere to that format, with two possible sections: *fasttrips* and *pathfinding*.
 
 Configuration Options: fasttrips
 """""""""""""""""""""""""""""""""""""
@@ -460,7 +463,7 @@ Configuration Options: fasttrips
 |                                       |        |         | vehicles and disallows them from finding     |
 |                                       |        |         | a new path using an overcapacity vehicle.    |
 +---------------------------------------+--------+---------+----------------------------------------------+
-| ``create_skims``                      | bool   | False   | ##TODO Not implemented yet.                  |
+| ``create_skims``                      | bool   | False   | Run skimming after assignment.               |
 +---------------------------------------+--------+---------+----------------------------------------------+
 | ``debug_num_trips``                   | int    | -1      | If positive, will truncate the trip list     |
 |                                       |        |         | to this length.                              |
@@ -510,10 +513,6 @@ Configuration Options: fasttrips
 |                                       |        |         | and verifying that pathfinding calculations  |
 |                                       |        |         | are consisten twith cost/fare calculations   |
 |                                       |        |         | done outside of pathfinding.                 |
-+---------------------------------------+--------+---------+----------------------------------------------+
-| ``skim_start_time``                   | string | 5:00    | ##TODO Not implemented yet.                  |
-+---------------------------------------+--------+---------+----------------------------------------------+
-| ``skim_end_time``                     | string | 10:00   | ##TODO Not implemented yet.                  |
 +---------------------------------------+--------+---------+----------------------------------------------+
 | ``skip_person_ids``                   | string | 'None'  | A list of person IDs to skip.                |
 +---------------------------------------+--------+---------+----------------------------------------------+
@@ -599,6 +598,8 @@ Configuration Options: pathfinding
 |                                         |          |                       | time target by this many minutes.             |
 +-----------------------------------------+----------+-----------------------+-----------------------------------------------+
 
+
+
 More on Overlap Path Size Penalties
 """"""""""""""""""""""""""""""""""""""""""""
 
@@ -671,6 +672,44 @@ The function name for user class is specified in the *pathfinding* input paramet
       if row_series["hh_id"].lower() in ["simpson","brady","addams","jetsons","flintstones"]:
           return "fictional"
       return "real"
+
+
+.. _skim_class_file:
+Skim_classes_ft File
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If skimming is turned on in :ref:`configft`, then fasttrips requires a file which specifies
+the combination of parameters for which skims are sought, like time periods, access/egress modes, etc.
+The file must be in csv format and for each line, a separate skim is generated. Note that there are no default
+values so each parameter must be specified on each line. The following columns are required.
+
+
++-----------------------+--------+-------------------------------------------------------------------------+
+| Column name           | Type   | Description                                                             |
++=======================+========+=========================================================================+
+| ``start_time``        | int    | Start of skimming period in minutes after midnight                      |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``end_time``          | int    | End of skimming period in minutes after midnight                        |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``sampling_interval`` | int    | Sample frequency for skim path building in minutes. This means the      |
+|                       |        | number of skim path building runs is                                    |
+|                       |        | (time_period_end - time_period_start) / time_period_sampling_interval.  |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``vot``               | float  | Value of time for skim calculation.                                     |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``purpose``           | float  | Trip purpose.                                                           |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``access_mode``       | float  | Access mode used to access PT services.                                 |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``transit_mode``      | float  | Transit demand mode (see below table).                                  |
++-----------------------+--------+-------------------------------------------------------------------------+
+| ``egress_mode``       | float  | Egress mode used to reach destination from final PT stop.               |
++-----------------------+--------+-------------------------------------------------------------------------+
+
+
+Note that the modes are demand modes as defined in :ref:`passenger_demand`; see also
+:ref:`Determining supply modes and weight values <supply_modes_and_weights>`.
+
 
 
 
@@ -1006,6 +1045,26 @@ Settings Output
 -----------------------------
 
 ``ft_output_config.txt``
-  Just in case you threw away any record of the settings you used to run Fast-Trips, the input files you used, ...or if
-  you wanted to know what settings Fast-Trips actually used when you gave it multiple layers of direction, you can
-  review them here.
+  Just in case you threw away any record of the settings you used to run Fast-Trips, the input files you used, ...or if you wanted to know what settings Fast-Trips actually used when you gave it multiple layers of direction, you can review them here.
+
+
+Skimming Output
+---------------
+``skims/skim_index_to_zone_id_mapping.csv``
+  Mapping from 0-based skim index (first column) to arbitrary zone identifiers as specified in network files (second
+  column). Note that this information is also stored as an attribute in the omx file, however it is not specified as an
+  omx mapping because the identifiers can be arbitrary strings (like in the Springfield example) and types that
+  cannot be cast to integers `are not supported by omx <https://github
+  .com/osPlanning/omx-python/blob/337ea4deff0c0055a6e792a5bf45aabf3fc82075/openmatrix/File.py#L284>`_ currently.
+
+
+``skims/{user_class}_{purpose}_{access}_{transit}_{egress}_{vot}/{skim_name}.omx``
+  For each requested combination of (user_class, purpose, access_mode, transit_mode, egress_mode, vot) there is a
+  corresponding sub-directory which contains all skims. All components are saved to individual omx files, with the file
+  name a combination of component_name, skim start time, skim end time, and skim sampling interval.
+  Each omx file contains the data and several attributes: All attributes listed in
+  :ref:`Skim_classes_ft File <skim_class_file>`, the name of the skim (name), the number of zones (num_zones), and
+  lastly an attribute called 'index_to_zone_ids'. This array encodes the mapping from skim index (0-based numpy
+  indexing) to the zone identifier used in the input data. The position in the array corresponds to the index of the
+  zone identifier in the skim matrix.
+

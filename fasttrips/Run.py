@@ -37,6 +37,7 @@ def run_setup(input_network_dir,
               input_functions   = None,
               output_folder     = None,
               trace_only        = False,
+              skim_config_file  = None,
 
               **kwargs):
 
@@ -126,7 +127,8 @@ def run_setup(input_network_dir,
         os.mkdir(full_output_dir)
 
     # Create fast-trips instance
-    ft = fasttrips.FastTrips(input_network_dir, input_demand_dir, input_weights, run_config, full_output_dir, input_functions=input_functions)
+    ft = fasttrips.FastTrips(input_network_dir, input_demand_dir, input_weights, run_config, full_output_dir,
+                             input_functions=input_functions, skim_config_file=skim_config_file)
 
     # Read the configuration file and overwrite with any options called with the function call
     ft.read_configuration()
@@ -219,6 +221,15 @@ def run_fasttrips(**kwargs):
     ft.read_input_files()
     # Run Fast-Trips
     r = ft.run_assignment(fasttrips.Assignment.OUTPUT_DIR)
+    return r
+
+def run_fasttrips_skimming(**kwargs):
+    """
+    Wrapper function to set up and run skimming without assignment.
+    """
+    ft = run_setup(**kwargs)
+    ft.read_input_files()
+    r = ft.run_skimming(fasttrips.Assignment.OUTPUT_DIR)
     return r
 
 

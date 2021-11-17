@@ -50,6 +50,8 @@ namespace fasttrips {
             supply_mode_num_max_ = std::max(supply_mode_num_max_, aelk.supply_mode_num_);
             stop_id_min_         = std::min(stop_id_min_,         aelk.stop_id_        );
             stop_id_max_         = std::max(stop_id_max_,         aelk.stop_id_        );
+
+            allConnectedTaz_.push_back(aelk.taz_id_);
         }
         if (debug_out) {
             std::cout << " => Read " << attrs_read << " attributes for " << map_.size() << " links" << std::endl;

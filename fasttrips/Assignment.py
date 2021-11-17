@@ -41,6 +41,7 @@ from .Passenger import Passenger
 from .PathSet import PathSet
 from .Performance import Performance
 from .Trip import Trip
+from .TAZ import TAZ
 from .Util import Util
 
 
@@ -104,17 +105,8 @@ class Assignment(object):
     #: departure time will be checked.  A :py:class:`datetime.timedelta` instance.
     TIME_WINDOW                     = None
 
-    #: Configuration: Create skims flag. This is specific to the travel demand models
-    #: (not working in this version). Boolean.
+    #: Configuration: Create skims flag. Boolean.
     CREATE_SKIMS                    = None
-
-    #: Configuration: Beginning of the time period for which the skim is required.
-    #:  (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
-    SKIM_START_TIME                 = None
-
-    #: Configuration: End of the time period for which the skim is required
-    #: (specify as 'HH:MM'). A :py:class:`datetime.datetime` instance.
-    SKIM_END_TIME                   = None
 
     #: Route choice configuration: Max number of paths in a pathset.
     #: Used in conjuntion with :py:attr:`Assignment.MIN_PATH_PROBABILITY`
@@ -845,6 +837,10 @@ class Assignment(object):
                         (num_passengers_arrived, pathset_paths_df, pathset_links_df) = \
                             Assignment.choose_paths_without_simulation(FT, output_dir, iteration, pathfinding_iteration, pathset_paths_df, pathset_links_df, veh_trips_df)
 
+                        # if bump_iter doesn't exist, needed for save_choices below
+                        if Assignment.SIM_COL_PAX_BUMP_ITER not in pathset_paths_df:
+                            pathset_paths_df[Assignment.SIM_COL_PAX_BUMP_ITER] = -1
+
                 FT.performance.record_step_start(iteration, pathfinding_iteration, -1, "output_per_pathfinding_iteration")
 
                 # Set new schedule
@@ -906,6 +902,13 @@ class Assignment(object):
                 break
 
             # end for loop
+
+        if Assignment.CREATE_SKIMS:
+            from .Skimming import Skimming
+            FastTripsLogger.info("STARTING SKIMMING")
+            Skimming.read_skimming_configuration(FT)
+            skims = Skimming.generate_skims(output_dir, FT, veh_trips_df)
+            Skimming.write_skim_matrices(skims)
 
         return {"capacity_gap": capacity_gap,
                 "paths_found": num_paths_found,
@@ -1312,7 +1315,7 @@ class Assignment(object):
                                  pathset.user_class, pathset.purpose, pathset.access_mode, pathset.transit_mode, pathset.egress_mode,
                                  pathset.o_taz_num, pathset.d_taz_num,
                                  1 if pathset.outbound else 0, float(pathset.pref_time_min), pathset.vot,
-                                 1 if trace else 0)
+                                 1 if trace else 0, 0)  # last variable is skimming indicator
         # FastTripsLogger.debug("C++ extension complete")
         FastTripsLogger.debug("Finished finding path for person %s trip %s" % (pathset.person_id, pathset.person_trip_id))
         pathdict = {}
@@ -1397,7 +1400,7 @@ class Assignment(object):
 
 
     @staticmethod
-    def find_passenger_vehicle_times(pathset_links_df, veh_trips_df):
+    def find_passenger_vehicle_times(pathset_links_df, veh_trips_df, is_skimming=False):
         """
         Given a dataframe of passenger links and a dataframe of vehicle trip links, adds two new columns to the passenger links for board and alight time.
 
@@ -1436,19 +1439,19 @@ class Assignment(object):
         if Trip.SIM_COL_VEH_OVERCAP_FRAC not in list(veh_trips_df.columns.values):
             veh_trip_cols.remove(Trip.SIM_COL_VEH_OVERCAP_FRAC)
 
-        #This is a little long winded, but it cuts down on memory dramatically, but only copying
-        #what is actually needed during the merges.
-        intermediate = pd.merge(left=pathset_links_df[[Passenger.PERSONS_COLUMN_PERSON_ID, Trip.STOPTIMES_COLUMN_TRIP_ID,'A_id','A_seq',
-                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                        Passenger.PF_COL_PATH_NUM,
-                                        Passenger.PF_COL_LINK_NUM,
-                                        'B_id', 'B_seq']],
-                 right=veh_trips_df[veh_trip_cols],
-                 left_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq'],
-                 right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
-                          Trip.STOPTIMES_COLUMN_STOP_ID,
-                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
-                 how     ='inner')
+        # This is a little long winded, but it cuts down on memory dramatically, but only copying
+        # what is actually needed during the merges.
+        intermediate = pd.merge(left=pathset_links_df[Passenger.get_id_columns(is_skimming) +
+                                                      [Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq',
+                                                       Passenger.PF_COL_PATH_NUM,
+                                                       Passenger.PF_COL_LINK_NUM,
+                                                       'B_id', 'B_seq']],
+                                right=veh_trips_df[veh_trip_cols],
+                                left_on=[Trip.STOPTIMES_COLUMN_TRIP_ID, 'A_id', 'A_seq'],
+                                right_on=[Trip.STOPTIMES_COLUMN_TRIP_ID,
+                                          Trip.STOPTIMES_COLUMN_STOP_ID,
+                                          Trip.STOPTIMES_COLUMN_STOP_SEQUENCE],
+                                how='inner')
 
         intermediate = intermediate.drop(columns=[Trip.STOPTIMES_COLUMN_STOP_ID,
                                                   Trip.STOPTIMES_COLUMN_STOP_SEQUENCE,
@@ -1479,9 +1482,8 @@ class Assignment(object):
             FastTripsLogger.debug("find_passenger_vehicle_times(): output pathset_links_df len=%d\n%s" % \
                                   (len(pathset_links_df), pathset_links_df.loc[pathset_links_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].to_string()))
 
-        return pd.merge(pathset_links_df, intermediate, on=[Passenger.PERSONS_COLUMN_PERSON_ID,
-                                                            Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
-                                                            Passenger.PF_COL_PATH_NUM,
+        return pd.merge(pathset_links_df, intermediate, on=Passenger.get_id_columns(is_skimming) +
+                                                           [Passenger.PF_COL_PATH_NUM,
                                                             Passenger.PF_COL_LINK_NUM,], how='left')
 
 
@@ -2059,7 +2061,7 @@ class Assignment(object):
         ######################################################################################################
         FastTripsLogger.info("  Step 2. Calculate costs and probabilities for all pathset paths")
         (pathset_paths_df, pathset_links_df) = PathSet.calculate_cost(
-            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, FT.veh_trips_df,
+            Assignment.STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
             FT.passengers.trip_list_df, FT.routes, FT.tazs, FT.transfers, stops=FT.stops,
             reset_bump_iter=simulation_iteration==0)
 

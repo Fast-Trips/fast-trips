@@ -10,7 +10,7 @@ Install Fast-Trips
 System Requirements:
 
 - Fast-Trips has been tested on Windows, Ubuntu, and Mac OS
-- Fast-Trips has been tested on Python 3.6, 3.7, 3.8 & 3.9
+- Fast-Trips has been tested on Python 3.7, 3.8, and for linux additionally on 3.9
 
 Recommended:
 

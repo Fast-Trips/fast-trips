@@ -786,7 +786,7 @@ class PathSet(object):
 
     @staticmethod
     def calculate_cost(STOCH_DISPERSION, pathset_paths_df, pathset_links_df, veh_trips_df,
-                       trip_list_df, routes, tazs, transfers, stops=None, reset_bump_iter=False):
+                       trip_list_df, routes, tazs, transfers, stops=None, reset_bump_iter=False, is_skimming=False):
         """
         This is equivalent to the C++ Path::calculateCost() method.  Would it be faster to do it in C++?
         It would require us to package up the networks and paths and send back and forth.  :p
@@ -827,7 +827,7 @@ class PathSet(object):
             pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "A_id", "A_zone_id")
             pathset_links_df = stops.add_stop_zone_id(pathset_links_df, "B_id", "B_zone_id")
         # This needs to be done fresh each time since simulation might change the board times and therefore the fare periods
-        pathset_links_df = routes.add_fares(pathset_links_df)
+        pathset_links_df = routes.add_fares(pathset_links_df, is_skimming)
 
 
         # base this on pathfinding distance
@@ -841,9 +841,11 @@ class PathSet(object):
 
         # First, we need user class, purpose, demand modes, and value of time
         pathset_links_cost_df = pd.merge(left =pathset_links_to_use,
-                                             right=trip_list_df[[
-                                                        Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             right=trip_list_df[
+                                                        #Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                        #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                        Passenger.get_id_columns(is_skimming) +
+                                                        [
                                                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
                                                         Passenger.TRIP_LIST_COLUMN_PURPOSE,
                                                         Passenger.TRIP_LIST_COLUMN_VOT,
@@ -852,7 +854,8 @@ class PathSet(object):
                                                         Passenger.TRIP_LIST_COLUMN_TRANSIT_MODE,
                                                         ]],
                                              how  ="left",
-                                             on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+                                             on   =Passenger.get_id_columns(is_skimming))
+            #[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
 
         # linkmode = demand_mode_type.  Set demand_mode for the links
         pathset_links_cost_df[PathSet.WEIGHTS_COLUMN_DEMAND_MODE] = None
@@ -895,7 +898,7 @@ class PathSet(object):
         # since generalized cost is in utils, (ivt utils/min)x(60 min/1 hour)x(hour/vot currency) is the weight (utils/currency)
         cost_df.loc[ cost_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME]==Assignment.SIM_COL_PAX_FARE, "weight_value" ] *= (60.0/cost_df[Passenger.TRIP_LIST_COLUMN_VOT])
 
-        if len(Assignment.TRACE_IDS) > 0:
+        if (len(Assignment.TRACE_IDS) > 0) and not is_skimming:
             FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True].sort_values([
                                   Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                   Passenger.PF_COL_PATH_NUM,Passenger.PF_COL_LINK_NUM]).head(20)))
@@ -964,15 +967,17 @@ class PathSet(object):
 
         # Access/egress needs passenger trip departure, arrival and time_target
         cost_accegr_df = pd.merge(left =cost_accegr_df,
-                                      right=trip_list_df[[
-                                                Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                      right=trip_list_df[
+                                                #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                                Passenger.get_id_columns(is_skimming) + [
                                                 Passenger.TRIP_LIST_COLUMN_DEPARTURE_TIME,
                                                 Passenger.TRIP_LIST_COLUMN_ARRIVAL_TIME,
                                                 Passenger.TRIP_LIST_COLUMN_TIME_TARGET,
                                                 ]],
                                       how  ="left",
-                                      on   =[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
+                                      on   =Passenger.get_id_columns(is_skimming))
+                                  #[Passenger.PERSONS_COLUMN_PERSON_ID, Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID])
 
         # drop links that are irrelevant based on departure time for access links, or arrival time for egress links
         cost_accegr_df["check_time"] = cost_accegr_df[Assignment.SIM_COL_PAX_A_TIME]  # departure time for access
@@ -1135,7 +1140,7 @@ class PathSet(object):
             FastTripsLogger.fatal(error_trip_msg)
 
         ##################### Finally, handle Transfer link costs
-        cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df)
+        cost_transfer_df = transfers.add_transfer_attributes(cost_transfer_df, pathset_links_df, is_skimming)
         cost_transfer_df.loc[cost_transfer_df[PathSet.WEIGHTS_COLUMN_WEIGHT_NAME] == "walk_time_min", "var_value"] = cost_transfer_df[Passenger.PF_COL_LINK_TIME]/np.timedelta64(1,'m')
 
         # any numeric column can be used
@@ -1167,8 +1172,9 @@ class PathSet(object):
             raise NotImplementedError("Missing var_values; See log")
 
         ##################### Put them back together into a single dataframe
-        cost_columns = [Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                        Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+        cost_columns = Passenger.get_id_columns(is_skimming) + [
+                       #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                       # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                         Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                         Passenger.TRIP_LIST_COLUMN_TRACE,
                         Passenger.TRIP_LIST_COLUMN_USER_CLASS,
@@ -1200,8 +1206,9 @@ class PathSet(object):
         # calculate link cost a function of the variable, weight and weight type
         Util.calculate_pathweight_costs(cost_df, Assignment.SIM_COL_PAX_COST)
 
-        cost_df.sort_values([Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+        cost_df.sort_values(Passenger.get_id_columns(is_skimming) + [
+                            #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                            # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                              Passenger.PF_COL_PATH_NUM,
                              Passenger.PF_COL_LINK_NUM], inplace=True)
         FastTripsLogger.debug("calculate_cost: cost_df\n%s" % str(cost_df.loc[cost_df[Passenger.TRIP_LIST_COLUMN_TRACE]==True]))
@@ -1213,16 +1220,19 @@ class PathSet(object):
             raise UnexpectedError(msg)
 
         ###################### sum linkcost to links
-        cost_link_df = cost_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+        cost_link_df = cost_df[#[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                               #  Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                Passenger.get_id_columns(is_skimming) + [
                                 Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                 Passenger.TRIP_LIST_COLUMN_TRACE,
                                 Passenger.PF_COL_PATH_NUM,
                                 Passenger.PF_COL_LINK_NUM,
                                 Assignment.SIM_COL_PAX_COST]].groupby(
-                                   [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, # sort by this first
-                                    Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                    Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+
+                                   [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] + # sort by this first
+                                   Passenger.get_id_columns(is_skimming) + [
+                                   # Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                   # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                     Passenger.TRIP_LIST_COLUMN_TRACE,
                                     Passenger.PF_COL_PATH_NUM,
                                     Passenger.PF_COL_LINK_NUM]).aggregate('sum').reset_index()
@@ -1232,8 +1242,9 @@ class PathSet(object):
         pathset_links_df = pd.merge(left =pathset_links_df,
                                         right=cost_link_df,
                                         how  ="left",
-                                        on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        on   =Passenger.get_id_columns(is_skimming) + [
+                                              #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                              # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                Passenger.TRIP_LIST_COLUMN_TRACE,
                                                Passenger.PF_COL_PATH_NUM,
@@ -1243,14 +1254,15 @@ class PathSet(object):
 
         ###################### overlap calcs
         full_overlap_df = None
-        if PathSet.OVERLAP_VARIABLE != PathSet.OVERLAP_NONE:
+        if (PathSet.OVERLAP_VARIABLE != PathSet.OVERLAP_NONE) and not is_skimming:
             full_overlap_df = PathSet.calculate_overlap(pathset_links_to_use)
 
         ###################### sum linkcost to paths
         cost_link_df.drop([Passenger.PF_COL_LINK_NUM], axis=1, inplace=True)
-        cost_path_df = cost_link_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, # order by this
-                                             Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                             Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+        cost_path_df = cost_link_df.groupby([Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] + # order by this
+                                             #Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                             #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                             Passenger.get_id_columns(is_skimming) + [
                                              Passenger.TRIP_LIST_COLUMN_TRACE,
                                              Passenger.PF_COL_PATH_NUM]).aggregate('sum').reset_index()
         if len(Assignment.TRACE_IDS) > 0:
@@ -1259,20 +1271,22 @@ class PathSet(object):
         pathset_paths_df = pd.merge(left =pathset_paths_df,
                                         right=cost_path_df,
                                         how  ="left",
-                                        on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                               Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                        on   =Passenger.get_id_columns(is_skimming) + [
+                                              #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                              # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                Passenger.TRIP_LIST_COLUMN_TRACE,
                                                Passenger.PF_COL_PATH_NUM])
 
-        if PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_NONE:
+        if (PathSet.OVERLAP_VARIABLE == PathSet.OVERLAP_NONE) or is_skimming:
             pathset_paths_df[Assignment.SIM_COL_PAX_LNPS] = 0
         else:
             pathset_paths_df = pd.merge(left =pathset_paths_df,
                                             right=full_overlap_df,
                                             how  ="left",
-                                            on   =[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                                   Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+                                            on   =Passenger.get_id_columns(is_skimming) + [
+                                                  #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                                  # Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                                    Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,
                                                    Passenger.TRIP_LIST_COLUMN_TRACE,
                                                    Passenger.PF_COL_PATH_NUM])
@@ -1290,12 +1304,14 @@ class PathSet(object):
         pathset_paths_df["logsum_component"] = np.exp((-1.0*pathset_paths_df[Assignment.SIM_COL_PAX_COST] + pathset_paths_df[Assignment.SIM_COL_PAX_LNPS])/STOCH_DISPERSION)
 
         # sum across all paths
-        pathset_logsum_df = pathset_paths_df[[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                              Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
+        pathset_logsum_df = pathset_paths_df[Passenger.get_id_columns(is_skimming) + [
+                                              #[Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                              #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID,
                                               Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM,"logsum_component"]].groupby(
-                                [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM, # sort by this
-                                 Passenger.TRIP_LIST_COLUMN_PERSON_ID,
-                                 Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]).aggregate('sum').reset_index()
+                                [Passenger.TRIP_LIST_COLUMN_TRIP_LIST_ID_NUM] +  # sort by this
+                                 Passenger.get_id_columns(is_skimming)).aggregate('sum').reset_index()
+                                 #Passenger.TRIP_LIST_COLUMN_PERSON_ID,
+                                 #Passenger.TRIP_LIST_COLUMN_PERSON_TRIP_ID]
         pathset_logsum_df.rename(columns={"logsum_component":"logsum"}, inplace=True)
         pathset_paths_df = pd.merge(left=pathset_paths_df,
                                         right=pathset_logsum_df,

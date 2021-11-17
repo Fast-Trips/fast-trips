@@ -313,6 +313,15 @@ namespace fasttrips {
                                   const LabelStop& current_label_stop,
                                   double& est_max_path_cost) const;
 
+        void updateStopStatesForFinalLinksAllDestinations(const PathSpecification& path_spec,
+                                  std::ofstream& trace_file,
+                                  const std::map<int, int>& reachable_final_stops,
+                                  StopStates& stop_states,
+                                  LabelStopQueue& label_stop_queue,
+                                  int label_iteration,
+                                  const LabelStop& current_label_stop,
+                                  double& est_max_path_cost) const;
+
 
         /**
          * Iterate through all the stops that are accessible by transit vehicle trip
@@ -355,6 +364,10 @@ namespace fasttrips {
                                     std::ofstream& trace_file,
                                     std::map<int, int>& reachable_final_stops) const;
 
+        bool setReachableFinalStopsAllDestinations(const PathSpecification& path_spec,
+                                    std::ofstream& trace_file,
+                                    std::map<int, int>& reachable_final_stops) const;
+
         /**
          * This is like the reverse of PathFinder::initializeStopStates.
          * Once all the stops are labeled, try to get from the labeled stop to the end TAZ
@@ -392,6 +405,11 @@ namespace fasttrips {
                         int max_prob_i) const;
 
         int getPathSet(const PathSpecification&      path_spec,
+                       std::ofstream&                trace_file,
+                       StopStates&                   stop_states,
+                       PathSet&                      pathset) const;
+
+        int getPathSetAllDestinations(const PathSpecification&      path_spec,
                        std::ofstream&                trace_file,
                        StopStates&                   stop_states,
                        PathSet&                      pathset) const;
