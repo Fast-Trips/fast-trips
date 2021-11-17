@@ -214,13 +214,17 @@ class Skimming(object):
 
         :return: [SkimConfig: {skim_component: Skim}]. A list of results, one for each line in skim_classes_ft.
         """
+
+        # fasttrips has a global pathfinder variable, need to clear any state in case it was run in this interpreter
+        # before
+        _fasttrips.reset()
+
         if veh_trips_df is None:
             veh_trips_df = FT.trips.get_full_trips()
         # For skimming we do not want denied boardings due to capacity constraints. This also resets on board capacities
         # so if a future implementation of crowding ever uses that in deterministic pathfinding, this has to change.
         Trip.reset_onboard(veh_trips_df)
 
-        # run c++ extension
         skim_results = {}
         for skim_config in Skimming.skim_set:
             skim_matrices = Skimming.generate_aggregated_skims(output_dir, FT, veh_trips_df, skim_config=skim_config)
@@ -862,9 +866,10 @@ class SkimmingWorkerTask(ProcessWorkerTask):
         worker_str = "_worker%02d" % worker_num
 
         from .FastTrips import FastTrips
-        setupLogging(infoLogFilename=None,
+        info_log = os.path.join(output_dir, FastTrips.INFO_LOG) % "" if worker_num == 1 else None
+        setupLogging(infoLogFilename=info_log,
                      debugLogFilename=os.path.join(output_dir, FastTrips.DEBUG_LOG % worker_str),
-                     logToConsole=False,
+                     logToConsole=worker_num == 1,
                      append=False
                      )
         FastTripsLogger.info(f"Skimming worker {worker_num} starting")
@@ -897,7 +902,7 @@ class SkimmingWorkerTask(ProcessWorkerTask):
             )
             return True
 
-        FastTripsLogger.info("Processing origin %20s" % (state_obj.origin))
+        FastTripsLogger.debug("Processing origin %20s" % (state_obj.origin))
         out_queue.put(
             SkimmingQueueOutputData(
                 QueueData.STARTING, worker_num, pathdict=None, perf_dict=None, origin=state_obj.origin

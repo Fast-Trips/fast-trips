@@ -590,6 +590,8 @@ namespace fasttrips {
         mode_num_to_str_.clear();
 
         bump_wait_.clear();
+
+        ZERO_WALK_TRANSFER_ATTRIBUTES_ = NULL;
     }
 
     /// This doesn't really do anything because the instance variables are all STL structures

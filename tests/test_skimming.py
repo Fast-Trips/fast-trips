@@ -9,11 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import _fasttrips
 from fasttrips import FastTrips
+from fasttrips import Run
 from fasttrips.Skimming import Skimming
-from fasttrips.PathSet import PathSet
-from fasttrips.Assignment import Assignment
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ""))
 EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
@@ -22,7 +20,7 @@ EXAMPLE_DIR = os.path.join(ROOT_DIR, "fasttrips", "Examples", "Springfield")
 INPUT_NETWORK = os.path.join(EXAMPLE_DIR, "networks", "vermont")
 INPUT_DEMAND = os.path.join(EXAMPLE_DIR, "demand", "general")
 INPUT_CONFIG = os.path.join(EXAMPLE_DIR, "configs", "A")
-OUTPUT_DIR = os.path.join(EXAMPLE_DIR, "output", str(uuid.uuid4()))
+OUTPUT_DIR = os.path.join(EXAMPLE_DIR, "output")
 
 # INPUT FILE LOCATIONS
 CONFIG_FILE = os.path.join(INPUT_CONFIG, "config_skimming_ft.txt")
@@ -30,39 +28,7 @@ INPUT_WEIGHTS = os.path.join(INPUT_CONFIG, "pathweight_ft.txt")
 SKIMMING_CONFIG = os.path.join(INPUT_CONFIG, "skim_classes_ft.csv")
 
 
-@pytest.fixture()
-def ft_inst():
-    # ON CI, PathSet.WEIGHTS_DF seems to get interfered with by other tests because it's not a local variable...
-    # make sure we have the right set of global variables loaded ... need weights_df
-    # We need this other global variable for that to work
-    PathSet.WEIGHTS_FIXED_WIDTH = True
-    Assignment.read_weights(weights_file=INPUT_WEIGHTS)
-
-    Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
-    ft_ = FastTrips(INPUT_NETWORK, INPUT_DEMAND, INPUT_WEIGHTS, CONFIG_FILE, OUTPUT_DIR,
-                    skim_config_file=SKIMMING_CONFIG)
-    ft_.read_configuration()
-    ft_.read_input_files()
-    _fasttrips.reset()
-    yield ft_
-
-
-def files_exist():
-    skim_dir = Path(OUTPUT_DIR) / "skims"
-    skim_params_1 = skim_dir / "user_class_all_purpose_other_access_walk_transit_transit_egress_walk_vot_10"
-    skim_params_2 = skim_dir / "user_class_all_purpose_other_access_walk_transit_transit_egress_walk_vot_20"
-    assert skim_dir.is_dir()
-    # assert mapping exists
-    assert (skim_dir / "skim_index_to_zone_id_mapping.csv").is_file()
-    assert skim_params_1.is_dir()
-    assert skim_params_2.is_dir()
-
-    all_components = Skimming.components
-    for component in all_components:
-        assert (skim_params_1 / f"{component}_900_930_5.omx").is_file()
-        assert (skim_params_2 / f"{component}_930_960_5.omx").is_file()
-
-
+# skimming results
 inf = np.inf
 golden_vals = \
     {'fare': np.array([[inf, 2.75, 2.75, 2.75, 3.3],
@@ -128,17 +94,57 @@ def check_attributes(skim, name):
     assert np.array_equal(skim.index_to_zone_ids, skim_index_array)
 
 
-@pytest.mark.skim_test
-def test_skimming(ft_inst):
+def files_exist(out_dir):
+    skim_dir = Path(out_dir) / "skims"
+    skim_params_1 = skim_dir / "user_class_all_purpose_other_access_walk_transit_transit_egress_walk_vot_10"
+    skim_params_2 = skim_dir / "user_class_all_purpose_other_access_walk_transit_transit_egress_walk_vot_20"
+    assert skim_dir.is_dir()
+    # assert mapping exists
+    assert (skim_dir / "skim_index_to_zone_id_mapping.csv").is_file()
+    assert skim_params_1.is_dir()
+    assert skim_params_2.is_dir()
 
-    skims = ft_inst.run_skimming(OUTPUT_DIR)
+    all_components = Skimming.components
+    for component in all_components:
+        assert (skim_params_1 / f"{component}_900_930_5.omx").is_file()
+        assert (skim_params_2 / f"{component}_930_960_5.omx").is_file()
 
-    files_exist()
+
+# Simple post assignment test - run and check for existence of files
+def test_post_assignment():
+    out_folder = "post_assignment_test"  # str(uuid.uuid4())
+    Run.run_fasttrips(
+        input_network_dir=INPUT_NETWORK,
+        input_demand_dir=INPUT_DEMAND,
+        run_config=CONFIG_FILE,
+        input_weights=INPUT_WEIGHTS,
+        output_dir=OUTPUT_DIR,
+        output_folder=out_folder,
+        skim_config_file=SKIMMING_CONFIG,
+        iters=1
+    )
+    files_exist(Path(OUTPUT_DIR) / out_folder)
+
+
+def test_skimming_incl_results():
+    out_folder = "skimming_test"
+    skims = Run.run_fasttrips_skimming(
+        input_network_dir=INPUT_NETWORK,
+        input_demand_dir=INPUT_DEMAND,
+        run_config=CONFIG_FILE,
+        input_weights=INPUT_WEIGHTS,
+        output_dir=OUTPUT_DIR,
+        output_folder=out_folder,
+        skim_config_file=SKIMMING_CONFIG,
+        iters=1
+    )
+    files_exist(Path(OUTPUT_DIR) / out_folder)
+
     assert len(skims) == 2  # we have two skims
 
     # let's compare to golden values
     # first make sure index mappings are identical
-    map_test = pd.read_csv(Path(OUTPUT_DIR) / "skims" / "skim_index_to_zone_id_mapping.csv")
+    map_test = pd.read_csv(Path(OUTPUT_DIR) / out_folder / "skims" / "skim_index_to_zone_id_mapping.csv")
     map_golden = pd.read_csv(io.StringIO(skim_index_mapping_golden))
     pd.testing.assert_frame_equal(map_test, map_golden)
     # second compare skim values of first skim time period
