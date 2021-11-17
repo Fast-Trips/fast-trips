@@ -84,7 +84,7 @@ namespace fasttrips {
         /// Destructor
         ~AccessEgressLinks() {}
 
-        void clear() { map_.clear(); }
+        void clear() { map_.clear(); allConnectedTaz_.clear(); }
 
         void readLinks(std::ifstream& accegr_file, bool debug_out);
 

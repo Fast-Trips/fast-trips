@@ -119,12 +119,12 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
 {
     PyArrayObject *pyo;
     fasttrips::PathSpecification path_spec;
-    int   hyperpath_i, outbound_i, trace_i;
+    int   hyperpath_i, outbound_i, trace_i, skimming_i;
     char *person_id, *person_trip_id, *user_class, *purpose, *access_mode, *transit_mode, *egress_mode;
-    if (!PyArg_ParseTuple(args, "iiisssssssiiiddi", &path_spec.iteration_, &path_spec.pathfinding_iteration_, &hyperpath_i,
-                          &person_id, &person_trip_id, &user_class, &purpose, &access_mode, &transit_mode, &egress_mode,
-                          &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
-                          &outbound_i, &path_spec.preferred_time_, &path_spec.value_of_time_, &trace_i)) {
+    if (!PyArg_ParseTuple(args, "iiisssssssiiiddii", &path_spec.iteration_, &path_spec.pathfinding_iteration_,
+                          &hyperpath_i, &person_id, &person_trip_id, &user_class, &purpose, &access_mode, &transit_mode,
+                          &egress_mode, &path_spec.origin_taz_id_, &path_spec.destination_taz_id_,
+                          &outbound_i, &path_spec.preferred_time_, &path_spec.value_of_time_, &trace_i, &skimming_i)) {
         return NULL;
     }
     path_spec.hyperpath_      = (hyperpath_i != 0);
@@ -137,7 +137,7 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
     path_spec.access_mode_    = access_mode;
     path_spec.transit_mode_   = transit_mode;
     path_spec.egress_mode_    = egress_mode;
-    path_spec.skimming_       = false;
+    path_spec.skimming_       = (skimming_i != 0);
 
     fasttrips::PathSet pathset;
     fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0, 0, 0};
@@ -206,109 +206,6 @@ _fasttrips_find_pathset(PyObject *self, PyObject *args)
                                         perf_info.workingset_bytes_, perf_info.privateusage_bytes_, perf_info.mem_timestamp_);
     return returnobj;
 }
-
-
-
-static PyObject *
-_fasttrips_find_pathset_skimming(PyObject *self, PyObject *args)
-{
-    PyArrayObject *pyo;
-    fasttrips::PathSpecification path_spec;
-    int   hyperpath_i, outbound_i, trace_i;
-    char *person_id, *person_trip_id, *user_class, *purpose, *access_mode, *transit_mode, *egress_mode;
-
-    //user_class, purpose, access_mode, transit_mode, egress_mode,
-    // origin, num_zones, start_time, mean_vot, 1 if trace else 0
-    if (!PyArg_ParseTuple(args, "sssssiddi",
-                          &user_class, &purpose, &access_mode, &transit_mode, &egress_mode,
-                          &path_spec.origin_taz_id_, &path_spec.preferred_time_, &path_spec.value_of_time_,
-                          &trace_i)) {
-        return NULL;
-    }
-    path_spec.hyperpath_      = false; // Skimming uses deterministic path building
-    path_spec.outbound_       = false; // Skimming operates from one origin to all destinations
-    path_spec.trace_          = (trace_i     != 0);
-    path_spec.person_id_      = "none";
-    path_spec.person_trip_id_ = "none";
-    path_spec.user_class_     = user_class;
-    path_spec.purpose_        = purpose;
-    path_spec.access_mode_    = access_mode;
-    path_spec.transit_mode_   = transit_mode;
-    path_spec.egress_mode_    = egress_mode;
-    path_spec.skimming_       = true;
-
-    fasttrips::PathSet pathset;
-    fasttrips::PerformanceInfo perf_info = { 0, 0, 0, 0, 0, 0};
-    int pf_returnstatus = pathfinder.findPathSet(path_spec, pathset, perf_info);
-
-    // count links
-    int num_links = 0;
-    for (fasttrips::PathSet::const_iterator psi=pathset.begin(); psi != pathset.end(); ++psi) {
-        num_links += (int)psi->first.size();
-    }
-
-    // package for returning.  We'll separate ints and doubles.
-    npy_intp dims_int[2];
-    dims_int[0] = num_links;
-    dims_int[1] = 7; // path_num, stop_id, deparr_mode_, trip_id_, stop_succpred_, seq_, seq_succpred_
-    PyArrayObject *ret_int = (PyArrayObject *)PyArray_SimpleNew(2, dims_int, NPY_INT32);
-
-    npy_intp dims_double[2];
-    dims_double[0] = num_links;
-    dims_double[1] = 8; // label_, deparr_time_, link_time_, link_cost_, link_dist_, cost_, arrdep_time_
-    PyArrayObject *ret_double = (PyArrayObject *)PyArray_SimpleNew(2, dims_double, NPY_DOUBLE);
-
-    // cost, fare, probability, initial cost, initial fare
-    npy_intp dims_paths[2];
-    dims_paths[0] = pathset.size();
-    dims_paths[1] = 5;
-    PyArrayObject *ret_paths = (PyArrayObject*)PyArray_SimpleNew(2, dims_paths, NPY_DOUBLE);
-
-    int ind      = 0;
-    int path_num = 0;
-    for (fasttrips::PathSet::const_iterator psi=pathset.begin(); psi != pathset.end(); ++psi) {
-        const fasttrips::Path& path = psi->first;
-
-        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 0) = path.cost();
-        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 1) = path.fare();
-        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 2) = psi->second.probability_;
-        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 3) = path.initialCost();
-        *(npy_double*)PyArray_GETPTR2(ret_paths, path_num, 4) = path.initialFare();
-
-        for (int link_num = 0; link_num < path.size(); ++link_num) {
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 0) = path_num;
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 1) = path[link_num].first;
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 2) = path[link_num].second.deparr_mode_;
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 3) = path[link_num].second.trip_id_;
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 4) = path[link_num].second.stop_succpred_;
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 5) = path[link_num].second.seq_;
-            *(npy_int32*)PyArray_GETPTR2(ret_int, ind, 6) = path[link_num].second.seq_succpred_;
-
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 0) = 0.0; // TODO: label
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 1) = path[link_num].second.deparr_time_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 2) = path[link_num].second.link_time_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 3) = path[link_num].second.link_fare_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 4) = path[link_num].second.link_cost_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 5) = path[link_num].second.link_dist_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 6) = path[link_num].second.cost_;
-            *(npy_double*)PyArray_GETPTR2(ret_double, ind, 7) = path[link_num].second.arrdep_time_;
-
-            ind += 1;
-        }
-        path_num += 1;
-    }
-
-    PyObject *returnobj = Py_BuildValue("(OOOiiiiilllll)",ret_int,ret_double,ret_paths, pathfinder.processNumber(), pf_returnstatus,
-                                        perf_info.label_iterations_, perf_info.num_labeled_stops_, perf_info.max_process_count_,
-                                        perf_info.milliseconds_labeling_, perf_info.milliseconds_enumerating_,
-                                        perf_info.workingset_bytes_, perf_info.privateusage_bytes_, perf_info.mem_timestamp_);
-    return returnobj;
-}
-
-
-
-
-
 
 static PyObject *
 _fasttrips_reset(PyObject *self, PyObject *args)
@@ -323,7 +220,6 @@ static PyMethodDef fasttripsMethods[] = {
     {"initialize_supply",       _fasttrips_initialize_supply,     METH_VARARGS, "Initialize network supply" },
     {"set_bump_wait",           _fasttrips_set_bump_wait,         METH_VARARGS, "Update bump wait"          },
     {"find_pathset",            _fasttrips_find_pathset,          METH_VARARGS, "Find trip-based path set"  },
-    {"find_pathset_skimming",   _fasttrips_find_pathset_skimming, METH_VARARGS, "Skimming"                  },
     {"reset",                   _fasttrips_reset,                 METH_VARARGS, "Reset pathfinder - done"   },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

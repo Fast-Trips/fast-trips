@@ -473,12 +473,32 @@ class Skimming(object):
             pathdict: A path dictionary for further processing
             perf_dict: Performance statistics from path building
         """
+         #(ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
+         #label_iterations, num_labeled_stops, max_label_process_count,
+         #ms_labeling, ms_enumerating,
+         #bytes_workingset, bytes_privateusage, mem_timestamp) = \
+         #   _fasttrips.find_pathset_skimming(user_class, purpose, access_mode, transit_mode, egress_mode, origin,
+         #                                    start_time, vot, 1 if trace else 0)
+
+        iteration = 1
+        pathfinding_iteration = 0
+        hyperpath = 0
+        person_id = "none"
+        person_trip_id = "none"
+        d_taz_num = -1
+        outbound = 0
         (ret_ints, ret_doubles, path_costs, process_num, pf_returnstatus,
          label_iterations, num_labeled_stops, max_label_process_count,
          ms_labeling, ms_enumerating,
          bytes_workingset, bytes_privateusage, mem_timestamp) = \
-            _fasttrips.find_pathset_skimming(user_class, purpose, access_mode, transit_mode, egress_mode, origin,
-                                             start_time, vot, 1 if trace else 0)
+            _fasttrips.find_pathset(iteration, pathfinding_iteration, hyperpath, person_id,
+                                    person_trip_id,
+                                    user_class, purpose, access_mode, transit_mode,
+                                    egress_mode,
+                                    origin, d_taz_num,
+                                    outbound, float(start_time), vot,
+                                    1 if trace else 0, 1)  # last variable is skimming indicator
+
         FastTripsLogger.debug("Finished finding path for origin %s" % (origin))
         pathdict = {}
         row_num = 0
