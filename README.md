@@ -1,3 +1,4 @@
+<--
 **Test status**
 
 Master Branch:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/test_linux_with_coverage.yml/badge.svg?branch=master)
@@ -19,7 +20,7 @@ Linux:  ![example branch parameter](https://github.com/janzill/fast-trips/action
 **Documentation build status (Master branch)**
 
 Windows:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/documentation.yml/badge.svg)
-
+-->
 
 # fast-trips
 Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++. For more 
@@ -39,8 +40,8 @@ information about this visit the following links:
 ## installing
 
 **Requirements**
-Fast-Trips should work on OSX, Linux and Windows with Python Python 3.6, 3.7, 3.8 & 3.9 installed.  We also recommend 
-using a virtual environment manager such as [Conda](www.conda.io).
+Fast-Trips is tested on OSX, Linux and Windows with Python 3.7 and 3.8, and additionally with 3.9 on Linux.
+We also recommend using a virtual environment manager such as [Conda](www.conda.io).
 
 **Stable Release**
 
