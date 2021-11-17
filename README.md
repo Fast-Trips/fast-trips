@@ -1,4 +1,4 @@
-<--
+<!--
 **Test status**
 
 Master Branch:  ![example branch parameter](https://github.com/janzill/fast-trips/actions/workflows/test_linux_with_coverage.yml/badge.svg?branch=master)
