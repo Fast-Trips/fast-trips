@@ -572,6 +572,10 @@ class Skimming(object):
         time_sampling_points = np.arange(skim_config.start_time, skim_config.end_time, skim_config.sampling_interval)
         FastTripsLogger.debug(f"doing time points {time_sampling_points}")
 
+        # TODO: Is there a better place to define this?
+        # we set the earliest departure time to the start of the time slice, do not allow any earlier departures.
+        PathSet.DEPART_EARLY_ALLOWED_MIN = datetime.timedelta(minutes=0)
+
         # This is semi-redundant, we just need a mutable variable to have broad enough scope to get values from
         # finalizer.
         skims_path_set = {t: {} for t in time_sampling_points}
@@ -862,10 +866,6 @@ class SkimmingWorkerTask(ProcessWorkerTask):
         Assignment.CONFIGURATION_FUNCTIONS_FILE = func_file
         Assignment.read_functions(func_file)
         Assignment.read_configuration(run_config)
-
-        # TODO: Is there a better place to define this?
-        # we set the earliest departure time to the start of the time slice, do not allow any earlier departures.
-        PathSet.DEPART_EARLY_ALLOWED_MIN = datetime.timedelta(minutes=0)
 
         Assignment.initialize_fasttrips_extension(worker_num, output_dir, veh_trips_df)
 
