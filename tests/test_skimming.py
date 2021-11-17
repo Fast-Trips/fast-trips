@@ -128,6 +128,7 @@ def check_attributes(skim, name):
     assert np.array_equal(skim.index_to_zone_ids, skim_index_array)
 
 
+@pytest.mark.skim_test
 def test_skimming(ft_inst):
 
     skims = ft_inst.run_skimming(OUTPUT_DIR)
