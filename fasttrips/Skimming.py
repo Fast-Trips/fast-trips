@@ -479,6 +479,14 @@ class Skimming(object):
         pathdict = {}
         row_num = 0
 
+        # For a disconnected origin, i.e. one w/o any paths there should be at least an access leg, otherwise it
+        # wouldn't be in the all_taz list, right? Maybe there's an edge case where a certain origin can be the
+        # destination for all other origins, but not an origin, but that is highly unlikely.
+        if path_costs.shape[0] == 0:
+            e = f"Empty path return for origin {origin}"
+            FastTripsLogger.error(e)
+            raise ValueError(e)
+
         for path_num in range(path_costs.shape[0]):
 
             pathdict[path_num] = {}
