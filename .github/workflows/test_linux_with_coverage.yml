@@ -27,8 +27,7 @@ jobs:
         pip install -e .
     - name: Runs tests
       run: |
-        py.test -m "not skim_test"
-        py.test -m skim_test
+        py.test
 #    - name: Generate coverage report
 #      run: |
 #        python3 -m pytest --cov=./ --cov-report=xml

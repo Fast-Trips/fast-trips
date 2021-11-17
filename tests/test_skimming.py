@@ -111,7 +111,6 @@ def files_exist(out_dir):
 
 
 # Simple post assignment test - run and check for existence of files
-@pytest.mark.skim_test
 def test_post_assignment():
     out_folder = "post_assignment_test"  # str(uuid.uuid4())
     Run.run_fasttrips(
@@ -127,7 +126,6 @@ def test_post_assignment():
     files_exist(Path(OUTPUT_DIR) / out_folder)
 
 
-@pytest.mark.skim_test
 def test_skimming_incl_results():
     out_folder = "skimming_test"
     skims = Run.run_fasttrips_skimming(
