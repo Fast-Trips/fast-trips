@@ -40,9 +40,10 @@ jobs:
         path: doc/build/
         if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
 
-    - name: Deploy 🚀
-#      if: ${{ github.event_name == 'release'}}
-      uses: JamesIves/github-pages-deploy-action@4.1.4
-      with:
-        branch: gh-pages # The branch the action should deploy to.
-        folder: doc/build # The folder the action should deploy.
+# YOU CAN UNCOMMENT THE SECTION BELOW TO DEPLOY THE DOCUMENTATION TO THE PAGES BRANCH
+#    - name: Deploy 🚀
+##      if: ${{ github.event_name == 'release'}}
+#      uses: JamesIves/github-pages-deploy-action@4.1.4
+#      with:
+#        branch: gh-pages # The branch the action should deploy to.
+#        folder: doc/build # The folder the action should deploy.
