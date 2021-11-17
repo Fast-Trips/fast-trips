@@ -2,7 +2,7 @@
 configparser
 future
 numpy
-pandas
+pandas>=1.2
 partridge
 psutil
 pytest
