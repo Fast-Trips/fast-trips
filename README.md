@@ -7,7 +7,7 @@ Develop Branch [![Develop branch build status: ](https://travis-ci.org/BayAreaMe
 # fast-trips
 Fast-Trips is a Dynamic Transit Passenger Assignment tool written in Python and supplemented by code in C++. For more information about this visit the following links:  
 
- * Documentation  : http://bayareametro.github.io/fast-trips/
+ * Documentation  : http://fast-trips.github.io/fast-trips/
  * Implementaiton Project Website: http://fast-trips.mtc.ca.gov/
 
  **Use Cases**  
