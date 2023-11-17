@@ -4,23 +4,21 @@ import pandas as pd
 
 from fasttrips import PathSet, Run
 
-
-BASE_DIR            = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
-TEST_FOLDER         = 'calculate_cost'
+BASE_DIR = os.path.join(os.getcwd(), 'fasttrips', 'Examples')
+TEST_FOLDER = 'calculate_cost'
 
 # DIRECTORY LOCATIONS
-OUTPUT_DIR          = os.path.join(BASE_DIR, 'output')
-INPUT_NETWORK       = os.path.join(BASE_DIR, 'networks', 'simple')
-INPUT_DEMAND        = os.path.join(BASE_DIR, 'demand', 'demand_twopaths')
-DF_DIR              = os.path.join(BASE_DIR, 'misc', TEST_FOLDER)
+OUTPUT_DIR = os.path.join(BASE_DIR, 'output')
+INPUT_NETWORK = os.path.join(BASE_DIR, 'networks', 'simple')
+INPUT_DEMAND = os.path.join(BASE_DIR, 'demand', 'demand_twopaths')
+DF_DIR = os.path.join(BASE_DIR, 'misc', TEST_FOLDER)
 
 # INPUT FILE LOCATIONS
-CONFIG_FILE         = os.path.join(INPUT_DEMAND, 'config_ft.txt')
-INPUT_FUNCTIONS     = os.path.join(INPUT_DEMAND, 'config_ft.py')
-INPUT_WEIGHTS       = os.path.join(INPUT_DEMAND, 'pathweight_ft.txt')
-PATHSET_PATHS_OUT   = os.path.join(DF_DIR, 'output_pathset_paths_calculate_cost.csv')
-PATHSET_LINKS_OUT   = os.path.join(DF_DIR, 'output_pathset_links_calculate_cost.csv')
-
+CONFIG_FILE = os.path.join(INPUT_DEMAND, 'config_ft.txt')
+INPUT_FUNCTIONS = os.path.join(INPUT_DEMAND, 'config_ft.py')
+INPUT_WEIGHTS = os.path.join(INPUT_DEMAND, 'pathweight_ft.txt')
+PATHSET_PATHS_OUT = os.path.join(DF_DIR, 'output_pathset_paths_calculate_cost.csv')
+PATHSET_LINKS_OUT = os.path.join(DF_DIR, 'output_pathset_links_calculate_cost.csv')
 
 STOCHASTIC_DISPERSION = 0.5
 
@@ -75,24 +73,26 @@ def run_calculate_cost(ft):
     ######## LOAD IN PATHSET PATHS #################
     pathset_paths_loc = os.path.join(DF_DIR, 'input_pathset_paths.csv')
     pathset_paths_cols = [
-        'person_id', 'person_trip_id', 'trip_list_id_num','trace','pathdir', 'pathmode', 'pathnum'
+        'person_id', 'person_trip_id', 'trip_list_id_num', 'trace', 'pathdir', 'pathmode', 'pathnum'
     ]
     pathset_paths_df = pd.read_csv(pathset_paths_loc, usecols=pathset_paths_cols,
-                                   dtype={'person_id':str, 'person_trip_id':str})
+                                   dtype={'person_id': str, 'person_trip_id': str})
 
     ######## LOAD IN PATHSET LINKS #################
     pathset_links_loc = os.path.join(DF_DIR, 'input_pathset_links.csv')
     pathset_links_cols = [
         'person_id', 'person_trip_id', 'trip_list_id_num', 'trace', 'pathnum', 'linkmode',
-        'trip_id_num', 'A_seq', 'B_seq', 'A_id_num', 'B_id_num','pf_A_time','pf_B_time','pf_linkdist','linknum', 'A_id',
-        'B_id', 'trip_id', 'route_id', 'mode_num', 'mode', 'bump_iter', 'board_state','new_A_time',
-        'new_B_time', 'new_linktime', 'pf_linktime','missed_xfer','board_time', 'overcap', 'alight_time',
+        'trip_id_num', 'A_seq', 'B_seq', 'A_id_num', 'B_id_num', 'pf_A_time', 'pf_B_time', 'pf_linkdist', 'linknum',
+        'A_id',
+        'B_id', 'trip_id', 'route_id', 'mode_num', 'mode', 'bump_iter', 'board_state', 'new_A_time',
+        'new_B_time', 'new_linktime', 'pf_linktime', 'missed_xfer', 'board_time', 'overcap', 'alight_time',
     ]
 
     pathset_links_df = pd.read_csv(pathset_links_loc, usecols=pathset_links_cols,
-                                   parse_dates=['new_A_time', 'new_B_time', 'pf_A_time', 'pf_B_time', 'pf_linktime', 'board_time'],
+                                   parse_dates=['new_A_time', 'new_B_time', 'pf_A_time', 'pf_B_time', 'pf_linktime',
+                                                'board_time'],
                                    infer_datetime_format=True,
-                                   dtype={'person_id':str, 'person_trip_id': str})
+                                   dtype={'person_id': str, 'person_trip_id': str})
 
     pathset_links_df['pf_linktime'] = pd.to_timedelta(pathset_links_df['pf_linktime'], 'm')
     pathset_links_df['new_linktime'] = pd.to_timedelta(pathset_links_df['new_linktime'], 'm')
@@ -106,7 +106,7 @@ def run_calculate_cost(ft):
     ]
 
     veh_trips_df = pd.read_csv(veh_trips_loc, usecols=veh_trips_col,
-                               infer_datetime_format=True, parse_dates=['arrival_time','departure_time'])
+                               infer_datetime_format=True, parse_dates=['arrival_time', 'departure_time'])
 
     (paths_df, links_df) = PathSet.calculate_cost(ft, STOCHASTIC_DISPERSION, pathset_paths_df, pathset_links_df,
                                                   veh_trips_df, reset_bump_iter=False)

@@ -10,9 +10,11 @@ from fasttrips.Util import Util
 HOME_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples", )
 NETWORK_HOME_DIR = os.path.join(HOME_DIR, 'networks')
 
+
 @pytest.fixture(scope="module", params=["simple", "psrc_1_1"])
 def network(request):
     yield request.param
+
 
 @pytest.fixture(scope="module")
 def zip_file(network):
@@ -34,6 +36,7 @@ def network_date(network):
     }
     yield dates[network]
 
+
 @pytest.fixture(scope="function")
 def gtfs_feed(zip_file, network_date):
     from fasttrips.Assignment import Assignment
@@ -41,9 +44,9 @@ def gtfs_feed(zip_file, network_date):
     service_ids_by_date = ptg.read_service_ids_by_date(zip_file)
     service_ids = service_ids_by_date[network_date]
     feed = ptg.feed(os.path.join(zip_file),
-                          config=Util.get_fast_trips_config(), view={
-        'trips.txt': {
-            'service_id': service_ids
-        },
-    })
+                    config=Util.get_fast_trips_config(), view={
+            'trips.txt': {
+                'service_id': service_ids
+            },
+        })
     yield feed

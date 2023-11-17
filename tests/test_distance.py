@@ -10,9 +10,10 @@ from fasttrips import Trip
 from fasttrips import Util
 
 TEST_NETWORKS = {"Seattle_Region": "psrc_1_1",
-                 "Springfield"   : "vermont"}
+                 "Springfield": "vermont"}
 
-EXAMPLES_DIR   = os.path.join(os.getcwd(), "fasttrips", "Examples")
+EXAMPLES_DIR = os.path.join(os.getcwd(), "fasttrips", "Examples")
+
 
 @pytest.fixture(scope="module")
 def network_results(network):
@@ -38,12 +39,13 @@ def network_results(network):
     }
     yield results[network]
 
+
 def test_calculate_distance_miles():
     orig_lat, orig_lon = 32.707431, -117.157058
     dest_lat, dest_lon = 32.740792, -117.211333
-    cols = ['orig_lat','orig_lon','dest_lat','dest_lon','dist']
+    cols = ['orig_lat', 'orig_lon', 'dest_lat', 'dest_lon', 'dist']
 
-    df = pd.DataFrame([[orig_lat,orig_lon,dest_lat,dest_lon,np.nan]],
+    df = pd.DataFrame([[orig_lat, orig_lon, dest_lat, dest_lon, np.nan]],
                       columns=cols)
 
     Util.calculate_distance_miles(df, cols[0], cols[1], cols[2], cols[3], cols[4])
